@@ -1722,6 +1722,25 @@ export const adminRouter = router({
         const receiptByDossier = new Set(receiptApprovalRows.map((row) => row.dossierNumber.trim().toUpperCase()));
         const receiptByEmail = new Set(receiptApprovalRows.map((row) => row.candidateEmail.trim().toLowerCase()));
 
+        // Clarifications documentaires en attente — file « Aujourd’hui » + cockpit.
+        const pendingClarificationRows = await db
+          .select({
+            candidateId: documentClarificationRequests.candidateId,
+            dueAt: documentClarificationRequests.dueAt,
+          })
+          .from(documentClarificationRequests)
+          .where(eq(documentClarificationRequests.status, "pending"))
+          .limit(5000);
+        const pendingClarificationsByCandidateId = new Map<number, { count: number; overdue: boolean; urgent: boolean }>();
+        for (const row of pendingClarificationRows) {
+          const current = pendingClarificationsByCandidateId.get(row.candidateId) ?? { count: 0, overdue: false, urgent: false };
+          current.count += 1;
+          const deadline = classifyDocumentClarificationDeadline(row.dueAt);
+          if (deadline.key === "overdue") current.overdue = true;
+          if (deadline.key === "urgent") current.urgent = true;
+          pendingClarificationsByCandidateId.set(row.candidateId, current);
+        }
+
         let candidateRows: Array<{
           id: number;
           email: string;
@@ -1813,6 +1832,16 @@ export const adminRouter = router({
         const getActivationStatus = (email: string): CandidateActivationStatus =>
           activationStatusByEmail.get(email.toLowerCase()) ?? "not_registered";
         const candidateByEmail = new Map(candidateRows.map((candidate) => [candidate.email.toLowerCase(), candidate]));
+        const clarificationFieldsForEmail = (email: string) => {
+          const account = candidateByEmail.get(email.toLowerCase());
+          if (!account) return { pendingClarificationCount: 0, clarificationDeadlineTone: null as "overdue" | "soon" | "pending" | null };
+          const stats = pendingClarificationsByCandidateId.get(account.id);
+          if (!stats || stats.count === 0) return { pendingClarificationCount: 0, clarificationDeadlineTone: null as "overdue" | "soon" | "pending" | null };
+          return {
+            pendingClarificationCount: stats.count,
+            clarificationDeadlineTone: (stats.overdue ? "overdue" : stats.urgent ? "soon" : "pending") as "overdue" | "soon" | "pending",
+          };
+        };
 
         // Mapper les statuts internes vers les statuts admin
         const mapDossierStatus = (status: string): string => {
@@ -1899,6 +1928,7 @@ export const adminRouter = router({
           secondProtocolSigned: Boolean(app.secondAgreementSigned),
           checklistPercent: checklistPercentByLegacyReference.get(`online:${app.id}`) ?? null,
           procedureStep: mapDossierStatus(app.dossierStatus),
+          ...clarificationFieldsForEmail(app.email),
         }));
 
         // Normaliser les dossiers agence
@@ -1939,6 +1969,7 @@ export const adminRouter = router({
           secondProtocolSigned: false,
           checklistPercent: checklistPercentByLegacyReference.get(`agency:${app.id}`) ?? null,
           procedureStep: mapAgencyStatus(app.status),
+          ...clarificationFieldsForEmail(app.email),
         }));
 
         const dossierEmails = new Set([...onlineApps, ...agencyApps].map((record) => record.email.toLowerCase()));
@@ -1985,6 +2016,7 @@ export const adminRouter = router({
             secondProtocolSigned: false,
             checklistPercent: null,
             procedureStep: mapDossierStatus(candidate.dossierStatus),
+            ...clarificationFieldsForEmail(candidate.email),
           }));
 
         // EVAL-AG-{id} est un miroir de préparation du dossier agence 3M-AGN-{id} :
@@ -4529,6 +4561,8 @@ export const adminRouter = router({
           protocolSigned: protocolOneSigned,
           dossierActivated: true,
           pendingDocuments,
+          pendingClarifications: documentClarifications.filter((item) => item.status === "pending").length,
+          clarificationOverdue: documentClarifications.some((item) => item.status === "pending" && classifyDocumentClarificationDeadline(item.dueAt).key === "overdue"),
           workflowStatus: operationalCase.currentStatus,
           destination: destination ?? undefined,
           visaType: visaTypeForJourney ?? undefined,

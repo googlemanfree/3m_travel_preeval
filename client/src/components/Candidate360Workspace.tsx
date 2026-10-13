@@ -1496,7 +1496,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             <p className="mt-2 text-xs text-violet-800" aria-live="polite">Action ciblée et idempotente : les pièces déjà présentes restent inchangées et aucun dossier n’est créé.</p>
           </section>
           {data.communications.documentClarifications?.length > 0 && (
-            <section className="rounded-xl border border-violet-200 bg-violet-50 p-4" aria-labelledby="admin-document-clarifications-title">
+            <section id="candidate360-clarifications-panel" className="scroll-mt-24 rounded-xl border border-violet-200 bg-violet-50 p-4" aria-labelledby="admin-document-clarifications-title" data-testid="candidate360-clarifications-panel">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h4 id="admin-document-clarifications-title" className="font-semibold text-violet-950">Clarifications documentaires</h4>
