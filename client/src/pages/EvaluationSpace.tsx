@@ -25,6 +25,7 @@ import {
   Bell,
   Building2,
   MessageCircle,
+  Camera,
 } from "lucide-react";
 import ClientAdvisorWhatsApp, { clientAdvisorWhatsAppHref } from "@/components/ClientAdvisorWhatsApp";
 import { COMPANY_CONTACTS } from "@/lib/companyContacts";
@@ -611,6 +612,7 @@ export default function EvaluationSpace() {
     paymentDue,
     paymentHref,
     agreementSignatureRequired: agreementAfterPaymentRequired,
+    passportPhotoRequired,
     clarificationUpload: clarificationReadyToUpload
       ? { documentLabel: String(clarificationReadyToUpload.documentLabel) }
       : null,
@@ -630,11 +632,12 @@ export default function EvaluationSpace() {
   const PriorityIcon =
     nextStep.id.includes("message") ? MessageSquare
       : nextStep.id.includes("notification") ? Bell
-        : nextStep.id.includes("clarification") || nextStep.id.includes("document") || nextStep.id.includes("checklist") ? FileText
-          : nextStep.id.includes("payment") ? FolderOpen
-            : nextStep.id.includes("evaluation") || nextStep.id.includes("cv") ? Sparkles
-              : nextStep.id.includes("agreement") ? ShieldCheck
-                : CheckCircle2;
+        : nextStep.id.includes("passport") ? Camera
+          : nextStep.id.includes("clarification") || nextStep.id.includes("document") || nextStep.id.includes("checklist") ? FileText
+            : nextStep.id.includes("payment") ? FolderOpen
+              : nextStep.id.includes("evaluation") || nextStep.id.includes("cv") ? Sparkles
+                : nextStep.id.includes("agreement") ? ShieldCheck
+                  : CheckCircle2;
   const actOnNextStep = (step: NextStep) => {
     if (step.action.kind === "evaluation") openEvaluation();
     else if (step.action.kind === "section") switchToSection(step.action.section);
@@ -660,8 +663,26 @@ export default function EvaluationSpace() {
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-4 sm:px-6 md:flex-row lg:px-8">
           <div className="flex items-center gap-4">
             <div className="relative">
-              <CandidateAvatar avatarUrl={cProfile.avatarUrl} fullName={cProfile.fullName} size="lg" />
-              <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500" />
+              <CandidateAvatar
+                avatarUrl={cProfile.avatarUrl}
+                fullName={cProfile.fullName}
+                size="lg"
+                email={cProfile.email}
+                editable={passportPhotoRequired}
+                passportPhotoRequired={passportPhotoRequired}
+                onUpdated={async () => {
+                  await Promise.all([
+                    trpcUtils.candidate.getProfile.invalidate(),
+                    trpcUtils.candidate.getClientDashboardSummary.invalidate(),
+                  ]);
+                }}
+              />
+              <span
+                className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white ${
+                  passportPhotoRequired ? "bg-amber-500" : "bg-emerald-500"
+                }`}
+                title={passportPhotoRequired ? "Photo type passeport à déposer" : "Profil synchronisé"}
+              />
             </div>
             <div>
               <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Espace client · 3M TRAVEL AGENCY</p>

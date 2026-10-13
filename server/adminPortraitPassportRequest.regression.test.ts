@@ -23,6 +23,23 @@ describe("photo profil admin — aperçu, téléchargement, demande passeport", 
     expect(router).toContain("account_");
   });
 
+  it("bloque la validation du selfie tant que la photo passeport est attendue", () => {
+    const router = read("server/routers/adminCandidateManagement.ts");
+    const panel = read("client/src/components/AdminPortraitReviewPanel.tsx");
+    const space = read("client/src/pages/EvaluationSpace.tsx");
+    const today = read("client/src/components/AdminTodayDashboard.tsx");
+    const workspace = read("client/src/components/Candidate360Workspace.tsx");
+    expect(router).toContain("isPassportPhotoRequestReason");
+    expect(router).toContain("Ne validez pas l’ancien selfie");
+    expect(panel).toContain("passportAwaiting");
+    expect(panel).toContain("portrait-passport-awaiting-badge");
+    expect(space).toContain("passportPhotoRequired");
+    expect(space).toContain("passportPhotoRequired,");
+    expect(today).toContain("passportPhotoAwaiting");
+    expect(today).toContain("Photo passeport attendue");
+    expect(workspace).toContain("candidate360-passport-photo-status");
+  });
+
   it("exige le CV à l’inscription pour le visa travail", () => {
     const register = read("client/src/pages/Register.tsx");
     const candidateRouter = read("server/routers/candidate.ts");

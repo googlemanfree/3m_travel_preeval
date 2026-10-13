@@ -5,6 +5,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { isPassportPhotoRequestReason, hasPassportPhotoDeposited } from "@shared/passportPhotoRequirement";
 
 type PortraitCandidate = {
   id: string | number;
@@ -83,8 +84,10 @@ export default function AdminPortraitReviewPanel({ candidates }: Props) {
           {reviewQueue.map((candidate) => {
             const status = statusCopy[candidate.avatarVerificationStatus];
             const reason = reasons[String(candidate.id)] || "";
+            const passportAwaiting = isPassportPhotoRequestReason(candidate.avatarVerificationReason)
+              && !hasPassportPhotoDeposited(candidate.avatarVerificationReason);
             return (
-              <article key={candidate.id} className="rounded-xl border border-white bg-white p-4 shadow-sm">
+              <article key={candidate.id} className="rounded-xl border border-white bg-white p-4 shadow-sm" data-passport-awaiting={passportAwaiting ? "true" : "false"}>
                 <div className="flex items-start gap-3">
                   <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 ring-1 ring-slate-200">
                     {candidate.avatarUrl ? (
@@ -97,10 +100,18 @@ export default function AdminPortraitReviewPanel({ candidates }: Props) {
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="truncate font-semibold text-slate-900">{candidate.fullName}</h3>
                       <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${status.className}`}>{status.label}</span>
+                      {passportAwaiting ? (
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-900" data-testid="portrait-passport-awaiting-badge">
+                          Photo passeport attendue
+                        </span>
+                      ) : null}
                     </div>
                     <p className="mt-1 truncate text-xs text-slate-500">{candidate.applicationNumber} · {candidate.email}</p>
                     <p className="mt-1 flex items-center gap-1 text-xs text-slate-600"><UserRound className="h-3.5 w-3.5" /> Visages détectés : {candidate.avatarFaceCount}</p>
                     {candidate.avatarVerificationReason && <p className="mt-2 rounded-md bg-slate-50 p-2 text-xs text-slate-600">{candidate.avatarVerificationReason}</p>}
+                    {passportAwaiting ? (
+                      <p className="mt-2 text-xs font-medium text-amber-900">Ne validez pas l’ancien selfie : attendez le dépôt type passeport du candidat.</p>
+                    ) : null}
                   </div>
                 </div>
                 <Textarea
@@ -112,7 +123,14 @@ export default function AdminPortraitReviewPanel({ candidates }: Props) {
                   aria-label={`Motif de revue pour ${candidate.fullName}`}
                 />
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" onClick={() => review(candidate, "approve")} disabled={!candidate.avatarUrl || reviewMutation.isPending} className="bg-emerald-700 text-white hover:bg-emerald-800">
+                  <Button
+                    size="sm"
+                    onClick={() => review(candidate, "approve")}
+                    disabled={!candidate.avatarUrl || reviewMutation.isPending || passportAwaiting}
+                    className="bg-emerald-700 text-white hover:bg-emerald-800"
+                    title={passportAwaiting ? "Photo type passeport encore attendue" : undefined}
+                    data-testid="portrait-approve"
+                  >
                     {reviewMutation.isPending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-1.5 h-4 w-4" />} Valider
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => review(candidate, "request_new")} disabled={reviewMutation.isPending} className="border-amber-300 text-amber-800 hover:bg-amber-50">

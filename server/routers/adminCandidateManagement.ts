@@ -33,7 +33,7 @@ import { createAgreementProtocolOnePdf } from "../agreementProtocolPdfService";
 import { storageKeyFromStoredUrl } from "../../shared/storedFileUrl";
 import { SECOND_AGREEMENT_PROTOCOL_VERSION, dualOpportunityHandoffMessage } from "../../shared/secondAgreementProtocol";
 import { ensureAgencyActiveReference } from "../services/canonicalizeActiveDossier";
-import { isWorkVisaForPassportPhoto } from "../../shared/passportPhotoRequirement";
+import { hasPassportPhotoDeposited, isPassportPhotoRequestReason, isWorkVisaForPassportPhoto } from "../../shared/passportPhotoRequirement";
 import { buildRegistrationInfoRequest, registrationInfoRequestEmailHtml } from "../../shared/registrationInfoRequest";
 import { evaluationRequiresCv } from "../../shared/evaluationVisaCv";
 import { flagPassportPhotoRequirement } from "../passportPhotoRequirementService";
@@ -1582,10 +1582,21 @@ export const adminCandidateManagementRouter = router({
         avatarUrl: candidates.avatarUrl,
         email: candidates.email,
         fullName: candidates.fullName,
+        avatarVerificationReason: candidates.avatarVerificationReason,
       }).from(candidates).where(eq(candidates.id, candidateId)).limit(1);
       if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
       if (input.decision === "approve" && !candidate.avatarUrl) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Impossible de valider un portrait absent." });
+      }
+      if (
+        input.decision === "approve"
+        && isPassportPhotoRequestReason(candidate.avatarVerificationReason)
+        && !hasPassportPhotoDeposited(candidate.avatarVerificationReason)
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Une photo type passeport est encore attendue. Ne validez pas l’ancien selfie : attendez le dépôt candidat, ou relancez la demande.",
+        });
       }
       if (input.decision === "request_passport") {
         const result = await flagPassportPhotoRequirement(db, {

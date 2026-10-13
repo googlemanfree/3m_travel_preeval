@@ -40,6 +40,7 @@ import {
   luxembourgApplicationTaskTitle,
   luxembourgProgressTaskPresets,
 } from "@shared/luxembourgJobPlatforms";
+import { PASSPORT_PHOTO_ADMIN_STATUS_LABEL, passportPhotoAdminStatus } from "@shared/passportPhotoRequirement";
 
 type CandidateSummary = {
   id: string;
@@ -59,6 +60,9 @@ type CandidateSummary = {
   evaluationReviewedBy?: string | null;
   evaluationValidatedAt?: Date | string | null;
   evaluationValidatedBy?: string | null;
+  passportPhotoAwaiting?: boolean | null;
+  passportPhotoStatus?: "awaiting" | "deposited" | "none" | null;
+  avatarVerificationReason?: string | null;
 };
 
 type SiblingProcedureTab = {
@@ -872,6 +876,20 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             <ImagePlus className="mr-1 h-3.5 w-3.5" />
             {requestPassportPhotoMutation.isPending ? "Envoi…" : "Demander photo passeport (+ e-mail)"}
           </Button>
+          {(() => {
+            const photoStatus = candidate.passportPhotoStatus
+              ?? passportPhotoAdminStatus({ avatarVerificationReason: candidate.avatarVerificationReason });
+            if (photoStatus === "none") return null;
+            return (
+              <Badge
+                className={photoStatus === "awaiting" ? "bg-amber-100 text-amber-950" : "bg-emerald-100 text-emerald-900"}
+                data-testid="candidate360-passport-photo-status"
+                data-status={photoStatus}
+              >
+                {PASSPORT_PHOTO_ADMIN_STATUS_LABEL[photoStatus]}
+              </Badge>
+            );
+          })()}
         </div>
         {referenceEditorOpen && (
           <div className="flex flex-col gap-2 rounded-md border border-blue-200 bg-white p-3 sm:flex-row sm:items-end" data-testid="candidate360-reference-editor">

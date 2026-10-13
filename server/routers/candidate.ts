@@ -15,6 +15,7 @@ import {
   CandidateMessage,
   candidateFiles,
   candidateMessages,
+  clientNotifications,
   documentClarificationEvents,
   documentClarificationRequests,
   candidates,
@@ -952,6 +953,44 @@ export const candidateRouter = router({
           avatarVerifiedAt: new Date(),
         })
         .where(eq(candidates.id, ctx.candidate.id));
+
+      if (replacesPassportRequest) {
+        // Ferme la boucle demande admin → dépôt : notifications / messages « photo passeport » ne restent plus « À lire ».
+        const unreadPassportNotifications = await db
+          .select({ id: clientNotifications.id })
+          .from(clientNotifications)
+          .where(and(
+            eq(clientNotifications.candidateId, ctx.candidate.id),
+            eq(clientNotifications.type, "passport_photo_request"),
+            eq(clientNotifications.isRead, false),
+          ));
+        const notificationIds = unreadPassportNotifications.map((row) => row.id);
+        if (notificationIds.length > 0) {
+          await db.update(clientNotifications)
+            .set({ isRead: true })
+            .where(and(
+              eq(clientNotifications.candidateId, ctx.candidate.id),
+              inArray(clientNotifications.id, notificationIds),
+            ));
+          await db.update(candidateMessages)
+            .set({ isRead: true })
+            .where(and(
+              eq(candidateMessages.candidateId, ctx.candidate.id),
+              inArray(candidateMessages.notificationId, notificationIds),
+            ));
+        }
+        try {
+          await notifyAdmins({
+            type: "new_document",
+            title: "Photo type passeport déposée",
+            message: `${ctx.candidate.fullName} (${ctx.candidate.email}) a déposé sa photo type passeport.`,
+            relatedId: String(ctx.candidate.id),
+            targetAdminType: "accompagnement",
+          });
+        } catch (err) {
+          console.warn("[updateAvatar] notifyAdmins passport deposit failed:", err);
+        }
+      }
 
       return {
         success: true,

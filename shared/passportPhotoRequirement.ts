@@ -67,3 +67,24 @@ export function requiresPassportPhotoUpload(input: {
   if (!candidateHasActiveDossierForPassport(input)) return false;
   return isWorkVisaForPassportPhoto(input.visaType) || isWorkVisaForPassportPhoto(input.projectType);
 }
+
+/** Statut lecture seule pour l’admin (Today / 360°) — aucun rewrite de dossier. */
+export type PassportPhotoAdminStatus = "awaiting" | "deposited" | "none";
+
+export function passportPhotoAdminStatus(input: {
+  avatarVerificationReason?: string | null;
+  avatarVerificationStatus?: string | null;
+}): PassportPhotoAdminStatus {
+  if (hasPassportPhotoDeposited(input.avatarVerificationReason)) return "deposited";
+  if (isPassportPhotoRequestReason(input.avatarVerificationReason)) return "awaiting";
+  if (input.avatarVerificationStatus === "pending" && /passeport/i.test(String(input.avatarVerificationReason ?? ""))) {
+    return "awaiting";
+  }
+  return "none";
+}
+
+export const PASSPORT_PHOTO_ADMIN_STATUS_LABEL: Record<PassportPhotoAdminStatus, string> = {
+  awaiting: "Photo passeport attendue",
+  deposited: "Photo passeport déposée",
+  none: "Pas de demande photo passeport",
+};

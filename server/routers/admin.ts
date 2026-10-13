@@ -19,6 +19,7 @@ import { storagePut } from "../storage";
 import { ADMIN_DOCUMENT_TYPES, suggestAdminDocumentMetadata } from "../services/adminDocumentRecognitionAssistant";
 import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray, gte, sql, count } from "drizzle-orm";
 import { buildDocumentClarificationAnsweredNotification, buildDocumentClarificationHistory, classifyDocumentClarificationDeadline } from "../../shared/documentClarification";
+import { passportPhotoAdminStatus } from "../../shared/passportPhotoRequirement";
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
 import { ADMIN_STAGE_TO_AGENCY_STATUS, ADMIN_STAGE_TO_ONLINE_STATUS, describeDossierProgress } from "../../shared/dossierProgress";
@@ -471,6 +472,8 @@ const candidateDetailsSelect = {
   fullName: candidates.fullName,
   phone: candidates.phone,
   avatarUrl: candidates.avatarUrl,
+  avatarVerificationReason: candidates.avatarVerificationReason,
+  avatarVerificationStatus: candidates.avatarVerificationStatus,
   visaType: candidates.visaType,
   destination: candidates.destination,
   preferredDestinations: candidates.preferredDestinations,
@@ -1756,6 +1759,8 @@ export const adminRouter = router({
           evaluationReviewedBy: string | null;
           evaluationReviewNote: string | null;
           activeDossierNumber: string | null;
+          avatarVerificationReason: string | null;
+          avatarVerificationStatus: string | null;
           createdAt: Date;
           updatedAt: Date;
           emailVerified: boolean | null;
@@ -1779,6 +1784,8 @@ export const adminRouter = router({
               evaluationReviewedBy: candidates.evaluationReviewedBy,
               evaluationReviewNote: candidates.evaluationReviewNote,
               activeDossierNumber: candidates.activeDossierNumber,
+              avatarVerificationReason: candidates.avatarVerificationReason,
+              avatarVerificationStatus: candidates.avatarVerificationStatus,
               createdAt: candidates.createdAt,
               updatedAt: candidates.updatedAt,
               emailVerified: candidates.emailVerified,
@@ -1799,6 +1806,8 @@ export const adminRouter = router({
           candidateRows = fallbackRows.map((row) => ({
             ...row,
             activeDossierNumber: null,
+            avatarVerificationReason: (row as { avatarVerificationReason?: string | null }).avatarVerificationReason ?? null,
+            avatarVerificationStatus: (row as { avatarVerificationStatus?: string | null }).avatarVerificationStatus ?? null,
             verificationToken: null,
             verificationExpiresAt: null,
           }));
@@ -1834,12 +1843,28 @@ export const adminRouter = router({
         const candidateByEmail = new Map(candidateRows.map((candidate) => [candidate.email.toLowerCase(), candidate]));
         const clarificationFieldsForEmail = (email: string) => {
           const account = candidateByEmail.get(email.toLowerCase());
-          if (!account) return { pendingClarificationCount: 0, clarificationDeadlineTone: null as "overdue" | "soon" | "pending" | null };
+          if (!account) {
+            return {
+              pendingClarificationCount: 0,
+              clarificationDeadlineTone: null as "overdue" | "soon" | "pending" | null,
+              passportPhotoAwaiting: false,
+              passportPhotoStatus: "none" as const,
+              avatarVerificationReason: null as string | null,
+            };
+          }
           const stats = pendingClarificationsByCandidateId.get(account.id);
-          if (!stats || stats.count === 0) return { pendingClarificationCount: 0, clarificationDeadlineTone: null as "overdue" | "soon" | "pending" | null };
+          const photoStatus = passportPhotoAdminStatus({
+            avatarVerificationReason: account.avatarVerificationReason,
+            avatarVerificationStatus: account.avatarVerificationStatus,
+          });
           return {
-            pendingClarificationCount: stats.count,
-            clarificationDeadlineTone: (stats.overdue ? "overdue" : stats.urgent ? "soon" : "pending") as "overdue" | "soon" | "pending",
+            pendingClarificationCount: stats?.count ?? 0,
+            clarificationDeadlineTone: !stats || stats.count === 0
+              ? null as "overdue" | "soon" | "pending" | null
+              : (stats.overdue ? "overdue" : stats.urgent ? "soon" : "pending") as "overdue" | "soon" | "pending",
+            passportPhotoAwaiting: photoStatus === "awaiting",
+            passportPhotoStatus: photoStatus,
+            avatarVerificationReason: account.avatarVerificationReason ?? null,
           };
         };
 

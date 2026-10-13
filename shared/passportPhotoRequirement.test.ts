@@ -4,6 +4,7 @@ import {
   PASSPORT_PHOTO_REQUEST_BODY,
   hasPassportPhotoDeposited,
   isWorkVisaForPassportPhoto,
+  passportPhotoAdminStatus,
   requiresPassportPhotoUpload,
 } from "./passportPhotoRequirement";
 
@@ -48,5 +49,11 @@ describe("passportPhotoRequirement", () => {
         forceRequest: true,
       }),
     ).toBe(true);
+  });
+
+  it("statut admin lecture seule : attendue / déposée / aucune", () => {
+    expect(passportPhotoAdminStatus({ avatarVerificationReason: PASSPORT_PHOTO_REQUEST_BODY })).toBe("awaiting");
+    expect(passportPhotoAdminStatus({ avatarVerificationReason: PASSPORT_PHOTO_DEPOSITED_REASON })).toBe("deposited");
+    expect(passportPhotoAdminStatus({ avatarVerificationReason: null })).toBe("none");
   });
 });

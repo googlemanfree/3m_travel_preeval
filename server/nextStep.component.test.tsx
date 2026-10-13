@@ -38,6 +38,18 @@ describe("prochaine étape du candidat", () => {
     expect(computeNextStep({ ...base, requirements: [req(2, "pending")] }).id).toBe("documents-pending");
   });
 
+  it("photo type passeport requise : prioritaire sur clarifications / checklist, ouvre le profil", () => {
+    const step = computeNextStep({
+      ...base,
+      passportPhotoRequired: true,
+      clarificationUpload: { documentLabel: "Passeport" },
+      checklist: { total: 5, missing: 2, replace: 0, firstMissingLabel: "CV" },
+    });
+    expect(step.id).toBe("passport-photo");
+    expect(step.action).toEqual({ kind: "section", section: "profile" });
+    expect(step.title).toMatch(/photo type passeport/i);
+  });
+
   it("après réponse conseiller : dépôt de clarification prioritaire sur checklist et « tout est à jour »", () => {
     const step = computeNextStep({
       ...base,

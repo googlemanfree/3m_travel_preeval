@@ -6,7 +6,7 @@
 
 export type NextStepAction =
   | { kind: "evaluation" }
-  | { kind: "section"; section: "dossier" | "documents" | "signatures" | "notifications" | "messages" | "overview" }
+  | { kind: "section"; section: "dossier" | "documents" | "signatures" | "notifications" | "messages" | "overview" | "profile" }
   | { kind: "anchor"; elementId: string }
   | { kind: "link"; href: string }
   | { kind: "none" };
@@ -46,6 +46,11 @@ export type NextStepInput = {
   clarificationUpload?: { documentLabel: string } | null;
   /** Demandes de précision encore en attente de réponse de l’agence (info, non bloquant). */
   pendingClarificationCount?: number;
+  /**
+   * Photo type passeport demandée (dossier travail / demande admin) — pas encore déposée.
+   * Sinon « Tout est à jour » peut coexister avec la bannière ambre du profil.
+   */
+  passportPhotoRequired?: boolean;
   /** Notifications durables non lues (boîte /mon-espace). */
   unreadNotifications?: number;
   /** Messages conseiller non lus. */
@@ -85,6 +90,18 @@ export function computeNextStep(input: NextStepInput): NextStep {
   }
   if (input.agreementSignatureRequired) {
     return { id: "agreement", tone: "action", eyebrow: "Paiement confirmé", title: "Signez votre protocole d’accord", description: "C’est l’étape qui précède le traitement humain de votre dossier.", actionLabel: "Ouvrir le protocole", action: { kind: "section", section: "dossier" } };
+  }
+
+  if (input.passportPhotoRequired) {
+    return {
+      id: "passport-photo",
+      tone: "action",
+      eyebrow: "À faire maintenant",
+      title: "Déposez votre photo type passeport",
+      description: "Fond uni clair, visage de face. Cette photo remplace votre photo de profil pour les employeurs et agences de placement.",
+      actionLabel: "Déposer ma photo",
+      action: { kind: "section", section: "profile" },
+    };
   }
 
   const clarificationUpload = input.clarificationUpload;
