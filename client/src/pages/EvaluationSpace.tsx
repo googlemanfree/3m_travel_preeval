@@ -600,6 +600,10 @@ export default function EvaluationSpace() {
       paymentConfirmed: procedurePaymentConfirmed,
     },
   });
+  const clarificationReadyToUpload = documentClarifications.find(
+    (item) => item.canUpload && typeof item.id === "number" && item.documentLabel?.trim(),
+  );
+  const pendingClarificationCount = documentClarifications.filter((item) => item.status === "pending").length;
   const nextStep = computeNextStep({
     evaluationRequired,
     evaluationStage: structuredStage,
@@ -607,6 +611,10 @@ export default function EvaluationSpace() {
     paymentDue,
     paymentHref,
     agreementSignatureRequired: agreementAfterPaymentRequired,
+    clarificationUpload: clarificationReadyToUpload
+      ? { documentLabel: String(clarificationReadyToUpload.documentLabel) }
+      : null,
+    pendingClarificationCount,
     requirements: (caseTrackingData?.cases ?? []).flatMap((item: any) => item.requirements ?? []),
     checklist: checklistSummary,
     unreadNotifications: unreadNotificationsCount,
@@ -622,7 +630,7 @@ export default function EvaluationSpace() {
   const PriorityIcon =
     nextStep.id.includes("message") ? MessageSquare
       : nextStep.id.includes("notification") ? Bell
-        : nextStep.id.includes("document") || nextStep.id.includes("checklist") ? FileText
+        : nextStep.id.includes("clarification") || nextStep.id.includes("document") || nextStep.id.includes("checklist") ? FileText
           : nextStep.id.includes("payment") ? FolderOpen
             : nextStep.id.includes("evaluation") || nextStep.id.includes("cv") ? Sparkles
               : nextStep.id.includes("agreement") ? ShieldCheck

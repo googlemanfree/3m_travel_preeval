@@ -38,6 +38,25 @@ describe("prochaine étape du candidat", () => {
     expect(computeNextStep({ ...base, requirements: [req(2, "pending")] }).id).toBe("documents-pending");
   });
 
+  it("après réponse conseiller : dépôt de clarification prioritaire sur checklist et « tout est à jour »", () => {
+    const step = computeNextStep({
+      ...base,
+      clarificationUpload: { documentLabel: "Passeport" },
+      checklist: { total: 5, missing: 2, replace: 0, firstMissingLabel: "CV" },
+    });
+    expect(step.id).toBe("clarification-upload");
+    expect(step.title).toMatch(/Déposez/);
+    expect(step.description).toContain("Passeport");
+    expect(step.action).toEqual({ kind: "section", section: "documents" });
+  });
+
+  it("demande de précision encore en attente : info (pas « tout est à jour »)", () => {
+    const step = computeNextStep({ ...base, pendingClarificationCount: 2 });
+    expect(step.id).toBe("clarification-pending");
+    expect(step.tone).toBe("info");
+    expect(step.title).toMatch(/2 demandes/);
+  });
+
   it("accorde les pluriels et ignore les pièces facultatives, reçues ou validées", () => {
     expect(computeNextStep({ ...base, requirements: [req(1, "rejected"), req(2, "rejected")] }).title).toBe("Corrigez 2 pièces refusées");
     expect(computeNextStep({ ...base, requirements: [req(1, "rejected")] }).title).toBe("Corrigez 1 pièce refusée");

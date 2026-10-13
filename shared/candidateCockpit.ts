@@ -24,6 +24,7 @@ export type CockpitBlockerCode =
   | "receipt_missing"
   | "protocol_unsigned"
   | "documents_pending"
+  | "clarification_pending"
   | "activation_pending";
 
 export type CockpitBlocker = {
@@ -65,6 +66,9 @@ export type CandidateCockpitInput = {
   protocolSigned?: boolean | null;
   dossierActivated?: boolean | null;
   pendingDocuments?: number | null;
+  /** Clarifications documentaires en attente de réponse admin. */
+  pendingClarifications?: number | null;
+  clarificationOverdue?: boolean | null;
   workflowStatus?: string | null;
   destination?: string | null;
   visaType?: string | null;
@@ -101,6 +105,8 @@ export function buildCandidateCockpit(input: CandidateCockpitInput): CandidateCo
   const protocolSigned = Boolean(input.protocolSigned);
   const dossierActivated = Boolean(input.dossierActivated);
   const pendingDocuments = Math.max(0, Number(input.pendingDocuments ?? 0));
+  const pendingClarifications = Math.max(0, Number(input.pendingClarifications ?? 0));
+  const clarificationOverdue = Boolean(input.clarificationOverdue);
   const workflow = (input.workflowStatus ?? "").toLowerCase();
   const place = placeSuffix(input.destination, input.visaType);
 
@@ -153,6 +159,15 @@ export function buildCandidateCockpit(input: CandidateCockpitInput): CandidateCo
       tab: "documents",
     });
   }
+  if (pendingClarifications > 0) {
+    blockers.push({
+      code: "clarification_pending",
+      message: clarificationOverdue
+        ? `${pendingClarifications} clarification(s) documentaire(s) en retard de réponse.`
+        : `${pendingClarifications} clarification(s) documentaire(s) en attente de réponse.`,
+      tab: "documents",
+    });
+  }
   if (evaluationValidated && paymentConfirmed && !dossierActivated) {
     blockers.push({
       code: "activation_pending",
@@ -187,7 +202,24 @@ export function buildCandidateCockpit(input: CandidateCockpitInput): CandidateCo
   const doneCount = checklist.filter((item) => item.done).length;
   const progressPercent = Math.round((doneCount / checklist.length) * 100);
 
-  const nextAction = resolveNextAction(stage, blockers, place);
+  let nextAction = resolveNextAction(stage, blockers, place);
+  // Une fois le dossier en traitement / documents, une clarification en attente prime sur « poursuivre ».
+  if (
+    pendingClarifications > 0
+    && (stage === "documents_review" || stage === "in_progress")
+  ) {
+    nextAction = {
+      key: "answer_clarification",
+      label: clarificationOverdue
+        ? `Répondre aux clarifications en retard${place}`
+        : `Répondre aux clarifications${place}`,
+      description: clarificationOverdue
+        ? `${pendingClarifications} demande(s) dépassent l’échéance interne — le candidat attend une réponse.`
+        : `${pendingClarifications} demande(s) de précision du candidat attendent une réponse.`,
+      urgency: clarificationOverdue ? "high" : "normal",
+      tab: "documents",
+    };
+  }
   const canForceActions: CandidateCockpitView["canForceActions"] = [];
   if (!emailVerified) canForceActions.push("confirm_email");
   if (!evaluationValidated) canForceActions.push("validate_evaluation");
@@ -347,6 +379,9 @@ export function cockpitTreatFocusId(key: string): string {
     case "documents_pending":
     case "review_documents":
       return "candidate360-documents-panel";
+    case "clarification_pending":
+    case "answer_clarification":
+      return "candidate360-clarifications-panel";
     case "payment_missing":
     case "confirm_payment":
       return "candidate360-payments-panel";

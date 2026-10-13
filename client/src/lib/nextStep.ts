@@ -39,6 +39,13 @@ export type NextStepInput = {
    * lisait « aucune action attendue » alors que sa checklist était vide.
    */
   checklist?: { total: number; missing: number; replace: number; firstMissingLabel?: string | null; firstReplaceLabel?: string | null };
+  /**
+   * Clarification documentaire : le conseiller a répondu, le candidat peut déposer la pièce.
+   * Prioritaire sur la checklist générique (sinon « tout est à jour » alors qu’un dépôt est attendu).
+   */
+  clarificationUpload?: { documentLabel: string } | null;
+  /** Demandes de précision encore en attente de réponse de l’agence (info, non bloquant). */
+  pendingClarificationCount?: number;
   /** Notifications durables non lues (boîte /mon-espace). */
   unreadNotifications?: number;
   /** Messages conseiller non lus. */
@@ -78,6 +85,20 @@ export function computeNextStep(input: NextStepInput): NextStep {
   }
   if (input.agreementSignatureRequired) {
     return { id: "agreement", tone: "action", eyebrow: "Paiement confirmé", title: "Signez votre protocole d’accord", description: "C’est l’étape qui précède le traitement humain de votre dossier.", actionLabel: "Ouvrir le protocole", action: { kind: "section", section: "dossier" } };
+  }
+
+  const clarificationUpload = input.clarificationUpload;
+  if (clarificationUpload?.documentLabel?.trim()) {
+    const label = clarificationUpload.documentLabel.trim();
+    return {
+      id: "clarification-upload",
+      tone: "action",
+      eyebrow: "Réponse du conseiller reçue",
+      title: "Déposez la pièce demandée",
+      description: `Une précision a été apportée pour « ${label} ». Déposez maintenant la version attendue depuis vos documents.`,
+      actionLabel: "Déposer la pièce",
+      action: { kind: "section", section: "documents" },
+    };
   }
 
   const requirements = list(input.requirements).filter((item) => item.isRequired !== false);
@@ -122,6 +143,21 @@ export function computeNextStep(input: NextStepInput): NextStep {
       description: "Votre conseiller a répondu. Consultez la messagerie pour la suite de votre dossier.",
       actionLabel: "Ouvrir la messagerie",
       action: { kind: "section", section: "messages" },
+    };
+  }
+
+  const pendingClarifications = Math.max(0, Number(input.pendingClarificationCount) || 0);
+  if (pendingClarifications > 0) {
+    return {
+      id: "clarification-pending",
+      tone: "info",
+      eyebrow: "Demande en cours",
+      title: pendingClarifications === 1
+        ? "Votre demande de précision est examinée"
+        : `${pendingClarifications} demandes de précision sont examinées`,
+      description: "L’équipe vous répondra dans votre espace documents. Rien d’autre n’est attendu de votre part pour l’instant.",
+      actionLabel: "Voir mes documents",
+      action: { kind: "section", section: "documents" },
     };
   }
 
