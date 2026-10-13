@@ -8,7 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-type Props = { sessionToken: string; candidateId: number };
+type Props = {
+  sessionToken: string;
+  /** `candidates.id` — jamais l’id application / dossier agence. */
+  candidateId: number;
+  destinationHint?: string | null;
+  procedureHint?: string | null;
+};
 type Fields = { headline: string; profileSummary: string; highlights: string; destination: string; procedure: string; sector: string; experience: string; languages: string };
 
 const labels: Record<string, string> = { draft: "Brouillon", approved: "Validée", rejected: "Refusée", needs_revalidation: "À revalider" };
@@ -40,14 +46,26 @@ const serialize = (fields: Fields) =>
     highlights: highlightLines(fields.highlights).slice(0, MAX_HIGHLIGHTS),
   });
 
-export default function AdminCandidateSummaryCard({ sessionToken, candidateId }: Props) {
-  const query = trpc.placementPortal.adminGetCandidateSummary.useQuery({ sessionToken, candidateId }, { enabled: candidateId > 0, retry: false });
+export default function AdminCandidateSummaryCard({ sessionToken, candidateId, destinationHint, procedureHint }: Props) {
+  const query = trpc.placementPortal.adminGetCandidateSummary.useQuery(
+    {
+      sessionToken,
+      candidateId,
+      destinationHint: destinationHint?.trim() || undefined,
+      procedureHint: procedureHint?.trim() || undefined,
+    },
+    { enabled: candidateId > 0, retry: false },
+  );
   const [fields, setFields] = useState<Fields | null>(null);
   const [note, setNote] = useState("");
   const [preview, setPreview] = useState<string | null>(null);
   const [cvNotice, setCvNotice] = useState<{ unverified: string[]; missing: string[] } | null>(null);
   const [cvFailure, setCvFailure] = useState<string | null>(null);
 
+  const ensure = trpc.placementPortal.adminEnsureCandidateSummary.useMutation({
+    onSuccess: () => { toast.success("Fiche synthèse préparée."); void query.refetch(); },
+    onError: (error) => toast.error(error.message),
+  });
   const review = trpc.placementPortal.adminReviewCandidateSummary.useMutation({
     onSuccess: (result) => { toast.success(result.status === "approved" ? "Fiche validée et PDF généré." : "Fiche refusée avec motif enregistré."); setPreview(null); void query.refetch(); },
     onError: (error) => toast.error(error.message),
@@ -75,8 +93,42 @@ export default function AdminCandidateSummaryCard({ sessionToken, candidateId }:
 
   useEffect(() => { if (query.data?.draft) { setFields(fieldsFromDraft(query.data.draft as never)); setPreview(null); } }, [query.data?.draft]);
 
-  if (query.error) return null;
-  if (query.isLoading || !query.data || !fields) return <section className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 text-sm text-indigo-900">Chargement de la fiche synthèse…</section>;
+  if (candidateId <= 0) {
+    return (
+      <section className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-950" data-testid="admin-candidate-summary-card" role="status">
+        <h4 className="flex items-center gap-2 font-semibold"><FileText className="h-4 w-4" />Fiche synthèse employeur / agence</h4>
+        <p className="mt-2">Aucun compte candidat lié à ce dossier : la fiche synthèse sera disponible dès qu’un compte (e-mail) est associé.</p>
+      </section>
+    );
+  }
+
+  if (query.error) {
+    return (
+      <section className="rounded-xl border border-rose-200 bg-rose-50/70 p-4 text-sm text-rose-950" data-testid="admin-candidate-summary-card" role="alert">
+        <h4 className="flex items-center gap-2 font-semibold"><FileText className="h-4 w-4" />Fiche synthèse employeur / agence</h4>
+        <p className="mt-2">{query.error.message || "Impossible de charger la fiche synthèse."}</p>
+        <Button
+          type="button"
+          size="sm"
+          className="mt-3 bg-indigo-700 text-white hover:bg-indigo-800"
+          disabled={ensure.isPending}
+          data-testid="summary-ensure-profile"
+          onClick={() => ensure.mutate({
+            sessionToken,
+            candidateId,
+            destinationHint: destinationHint?.trim() || undefined,
+            procedureHint: procedureHint?.trim() || undefined,
+          })}
+        >
+          {ensure.isPending ? "Préparation…" : "Préparer la fiche synthèse"}
+        </Button>
+      </section>
+    );
+  }
+
+  if (query.isLoading || !query.data || !fields) {
+    return <section className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 text-sm text-indigo-900" data-testid="admin-candidate-summary-card">Chargement de la fiche synthèse…</section>;
+  }
 
   const data = query.data;
   const status = data.status;

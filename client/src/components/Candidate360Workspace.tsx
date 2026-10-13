@@ -158,6 +158,10 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   const [forceStepReason, setForceStepReason] = useState("");
   const [cancelPaymentDialogOpen, setCancelPaymentDialogOpen] = useState(false);
   const [cancelPaymentReason, setCancelPaymentReason] = useState("");
+  const [correctPaymentOpen, setCorrectPaymentOpen] = useState(false);
+  const [correctPaymentAmount, setCorrectPaymentAmount] = useState("");
+  const [correctPaymentReference, setCorrectPaymentReference] = useState("");
+  const [correctPaymentReason, setCorrectPaymentReason] = useState("");
   const [checklistProcedure, setChecklistProcedure] = useState(() => procedureFromEvaluationContext({ projectType: candidate.projectType }));
   const [customChecklistDocuments, setCustomChecklistDocuments] = useState("");
   const [outboundMessage, setOutboundMessage] = useState("");
@@ -396,6 +400,16 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
     onSuccess: async (result) => { unlockAction("paymentReceipt"); toast.success("Reçu PDF envoyé", { description: `Le reçu signé avec le logo et les mentions de frais a été envoyé à ${result.email}.` }); await refresh(); },
     onError: (mutationError) => { unlockAction("paymentReceipt"); toast.error("Envoi du reçu impossible", { description: mutationError.message }); },
   });
+  const correctPaymentDetailsMutation = trpc.application.adminCorrectPaymentDetails.useMutation({
+    onSuccess: async (result) => {
+      toast.success(result.changed ? "Reçu mis à jour (montant / référence)." : "Aucune modification détectée.");
+      setCorrectPaymentOpen(false);
+      setCorrectPaymentReason("");
+      await refresh();
+      onRefresh?.();
+    },
+    onError: (mutationError) => toast.error(mutationError.message || "Correction du reçu impossible."),
+  });
   const cancelValidatedPaymentMutation = trpc.admin.cancelValidatedDossierPayment.useMutation({
     onSuccess: async (result) => { setCancelPaymentDialogOpen(false); setCancelPaymentReason(""); toast.success("Paiement annulé", { description: `${result.dossierNumber} est remis en attente de règlement.` }); await refresh(); },
     onError: (mutationError) => toast.error("Annulation du paiement impossible", { description: mutationError.message }),
@@ -510,21 +524,34 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   };
   const paymentSnapshot: any = data.payments?.[0] ?? null;
   const agreementState: any = (data as any).agreement ?? (data as any).protocol ?? null;
-  const paymentConfirmed = ["SUCCESS", "success", "completed", "paid", "paye"].includes(String(paymentSnapshot?.status ?? ""));
+  const normalizedPaymentStatus = String(paymentSnapshot?.status ?? "").trim().toUpperCase();
+  const normalizedPaymentMethod = String(paymentSnapshot?.method ?? "").trim().toUpperCase();
+  const paymentConfirmed = ["SUCCESS", "PAID", "CONFIRMED", "CONFIRMÉ", "CONFIRMED_BY_ADVISER", "COMPLETED", "PAYE"].includes(normalizedPaymentStatus)
+    || (normalizedPaymentMethod === "AGENCE" && Boolean(paymentSnapshot?.paidAt))
+    || Boolean(openingPaymentHistory?.payments?.length);
   const receiptApproved = Boolean(paymentSnapshot?.receiptApproval);
   const protocolSigned = Boolean(agreementState?.signed || agreementState?.agreementSigned || agreementState?.signedAt || agreementState?.agreementSignedAt);
+  const summaryCandidateId = Number((data as any)?.candidateAccountId)
+    || (candidate.id.startsWith("account_") ? candidate.internalId : 0);
   const printReceiptA5 = async () => {
     try {
       const result = await utils.adminCandidateManagement.getPaymentReceiptA5Html.fetch({ sessionToken, candidateId: candidate.id });
-      const printWindow = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
+      // Sans noopener : window.open(..., "noopener") renvoie null et bloquait l’impression A5.
+      const blob = new Blob([result.html], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const printWindow = window.open(url, "_blank", "width=900,height=700");
       if (!printWindow) {
+        URL.revokeObjectURL(url);
         toast.error("Autorisez les pop-ups pour imprimer le reçu A5.");
         return;
       }
-      printWindow.document.write(result.html);
-      printWindow.document.close();
       printWindow.focus();
-      printWindow.print();
+      const triggerPrint = () => {
+        try { printWindow.print(); } catch { /* ignore */ }
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      };
+      printWindow.addEventListener?.("load", triggerPrint);
+      window.setTimeout(triggerPrint, 400);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Reçu A5 indisponible.");
     }
@@ -1005,11 +1032,14 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4 pt-4">
-          {candidate.internalId > 0 && (
-            <div id="candidate360-overview-summary" data-testid="candidate360-overview-summary" className="scroll-mt-24">
-              <AdminCandidateSummaryCard sessionToken={sessionToken} candidateId={candidate.internalId} />
-            </div>
-          )}
+          <div id="candidate360-overview-summary" data-testid="candidate360-overview-summary" className="scroll-mt-24">
+            <AdminCandidateSummaryCard
+              sessionToken={sessionToken}
+              candidateId={summaryCandidateId}
+              destinationHint={destinationDraft || candidate.destinationCountry}
+              procedureHint={visaTypeDraft || candidate.projectType}
+            />
+          </div>
           <section className="grid gap-4 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4 shadow-sm lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.8fr)] lg:p-5">
             <div>
               <div className="flex flex-wrap items-center gap-2"><Badge className="border-blue-200 bg-white text-blue-800">Contexte de la demande</Badge>{data.evaluationContext?.projectType && <Badge variant="secondary">{data.evaluationContext.projectType}</Badge>}</div>
@@ -1616,6 +1646,49 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        <Dialog open={correctPaymentOpen} onOpenChange={setCorrectPaymentOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Corriger le reçu (montant / référence)</DialogTitle>
+              <DialogDescription>Met à jour le montant confirmé et la référence de paiement sans annuler la validation. Le reçu A5 et le PDF utiliseront ces valeurs.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="correct-payment-amount">Montant confirmé (XAF)</Label>
+                <Input id="correct-payment-amount" type="number" inputMode="numeric" className="mt-1" value={correctPaymentAmount} onChange={(event) => setCorrectPaymentAmount(event.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="correct-payment-reference">Référence de paiement</Label>
+                <Input id="correct-payment-reference" className="mt-1" value={correctPaymentReference} onChange={(event) => setCorrectPaymentReference(event.target.value)} maxLength={255} placeholder="Ex. OM-998877" />
+              </div>
+              <div>
+                <Label htmlFor="correct-payment-reason">Motif (obligatoire)</Label>
+                <Textarea id="correct-payment-reason" className="mt-1" value={correctPaymentReason} onChange={(event) => setCorrectPaymentReason(event.target.value)} maxLength={500} placeholder="Ex. Erreur de saisie à la caisse…" />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setCorrectPaymentOpen(false)}>Annuler</Button>
+              <Button
+                type="button"
+                className="bg-indigo-700 text-white hover:bg-indigo-800"
+                data-testid="candidate360-receipt-correct-save"
+                disabled={correctPaymentReason.trim().length < 5 || correctPaymentDetailsMutation.isPending || !candidate.id.startsWith("online_")}
+                onClick={() => {
+                  const applicationId = Number(candidate.id.replace(/^online_/, ""));
+                  if (!Number.isInteger(applicationId) || applicationId <= 0) return;
+                  correctPaymentDetailsMutation.mutate({
+                    id: applicationId,
+                    confirmedAmount: correctPaymentAmount.trim() ? Number(correctPaymentAmount) : undefined,
+                    paymentReference: correctPaymentReference.trim() || undefined,
+                    reason: correctPaymentReason.trim(),
+                  });
+                }}
+              >
+                {correctPaymentDetailsMutation.isPending ? "Enregistrement…" : "Enregistrer la correction"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <TabsContent value="payments" className="space-y-3 pt-4">
           <div id="candidate360-payments-panel" className="scroll-mt-24 space-y-3">
           {paymentConfirmed ? (
@@ -1642,6 +1715,25 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
                 >
                   {approvePaymentReceiptMutation.isPending || actionLocks.approveReceipt ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                   Valider et signer
+                </Button>
+              ) : null}
+              {candidate.id.startsWith("online_") ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 border-indigo-300 text-indigo-900 hover:bg-indigo-50"
+                  disabled={!sessionToken || correctPaymentDetailsMutation.isPending}
+                  onClick={() => {
+                    setCorrectPaymentAmount(String(paymentSnapshot?.amount ?? ""));
+                    setCorrectPaymentReference(String(paymentSnapshot?.reference ?? ""));
+                    setCorrectPaymentReason("");
+                    setCorrectPaymentOpen(true);
+                  }}
+                  data-testid="candidate360-receipt-correct"
+                  title="Corriger le montant confirmé ou la référence du reçu"
+                >
+                  Corriger reçu
                 </Button>
               ) : null}
               <Button

@@ -17,6 +17,7 @@ export function generateReceiptA5HTML(receipt: {
   amount: string;
   currency: string;
   paymentMethod: string;
+  paymentReference?: string | null;
   agentName?: string;
   agencyLocation?: string;
   description?: string;
@@ -197,6 +198,13 @@ export function generateReceiptA5HTML(receipt: {
             <span class="label">Méthode :</span>
             <span class="value">${receipt.paymentMethod === "cash" ? "Espèces" : esc(receipt.paymentMethod)}</span>
           </div>
+
+          ${receipt.paymentReference ? `
+          <div class="line">
+            <span class="label">Référence :</span>
+            <span class="value"><strong>${esc(receipt.paymentReference)}</strong></span>
+          </div>
+          ` : ""}
         </div>
 
         <!-- Montant -->
@@ -230,6 +238,7 @@ export function generateReceiptA5ForPrint(receipt: {
   amount: string;
   currency: string;
   paymentMethod: string;
+  paymentReference?: string | null;
   agentName?: string;
   agencyLocation?: string;
   description?: string;

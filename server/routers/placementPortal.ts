@@ -67,6 +67,44 @@ async function loadSharedPortrait(db: SummaryDb, candidateId: number, photoConse
   }
 }
 
+/** Crée un profil de synthèse brouillon si le compte candidat existe mais n’a pas encore de fiche placement. */
+async function ensureSummaryProfile(
+  db: SummaryDb,
+  candidateId: number,
+  adminId: number,
+  hints?: { destination?: string | null; procedure?: string | null },
+) {
+  const candidate = (await db.select().from(candidates).where(eq(candidates.id, candidateId)).limit(1))[0];
+  if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable pour la fiche synthèse." });
+  const existing = (await db.select().from(placementCandidateProfiles).where(and(eq(placementCandidateProfiles.candidateId, candidateId), isNull(placementCandidateProfiles.archivedAt))).orderBy(desc(placementCandidateProfiles.updatedAt)).limit(1))[0];
+  if (existing) return existing;
+  let preferredLabel = "";
+  if (candidate.preferredDestinations) {
+    try {
+      const parsed = JSON.parse(candidate.preferredDestinations);
+      preferredLabel = Array.isArray(parsed) ? String(parsed[0] ?? "") : String(parsed ?? "");
+    } catch {
+      preferredLabel = String(candidate.preferredDestinations);
+    }
+  }
+  const destination = (hints?.destination || preferredLabel || "À préciser").toString().trim().slice(0, 120) || "À préciser";
+  const procedure = (hints?.procedure || candidate.visaType || "À préciser").toString().trim().slice(0, 160) || "À préciser";
+  const summary = "Fiche synthèse à compléter par l’administration avant toute diffusion partenaire.";
+  const profileCode = makeProfileCode();
+  await db.insert(placementCandidateProfiles).values({
+    candidateId,
+    profileCode,
+    summary,
+    targetDestination: destination,
+    targetProcedure: procedure,
+    createdByAdminId: adminId,
+    summaryStatus: "draft",
+  });
+  const reloaded = (await db.select().from(placementCandidateProfiles).where(and(eq(placementCandidateProfiles.candidateId, candidateId), isNull(placementCandidateProfiles.archivedAt))).orderBy(desc(placementCandidateProfiles.updatedAt)).limit(1))[0];
+  if (!reloaded) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Impossible de créer le profil de synthèse." });
+  return reloaded;
+}
+
 /** Tout ce qui alimente la fiche de synthèse d'un candidat, lu dans le dossier (jamais saisi par l'administrateur). */
 async function loadSummarySources(db: SummaryDb, candidateId: number) {
   const profile = (await db.select().from(placementCandidateProfiles).where(and(eq(placementCandidateProfiles.candidateId, candidateId), isNull(placementCandidateProfiles.archivedAt))).orderBy(desc(placementCandidateProfiles.updatedAt)).limit(1))[0];
@@ -202,10 +240,20 @@ export const placementPortalRouter = router({
     return { pdfShareConsent: input.pdfShareConsent, photoShareConsent: input.photoShareConsent };
   }),
 
-  adminGetCandidateSummary: publicProcedure.input(z.object({ sessionToken: z.string().min(20), candidateId: z.number().int().positive() })).query(async ({ input }) => {
+  adminGetCandidateSummary: publicProcedure.input(z.object({
+    sessionToken: z.string().min(20),
+    candidateId: z.number().int().positive(),
+    destinationHint: z.string().trim().max(120).optional(),
+    procedureHint: z.string().trim().max(160).optional(),
+  })).query(async ({ input }) => {
     const admin = await requireValidAdminSession(input.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
+    // Crée un brouillon visible dès qu’un compte candidat existe — sans cela la carte synthèse disparaissait (NOT_FOUND silencieux).
+    await ensureSummaryProfile(db, input.candidateId, admin.id, {
+      destination: input.destinationHint,
+      procedure: input.procedureHint,
+    });
     const sources = await loadSummarySources(db, input.candidateId);
     const { profile, base, sourceFingerprint, portrait, photoId } = sources;
     // Brouillon de travail = ce que l'administrateur a déjà relu (s'il existe) ; les faits du dossier (identité externe, pièces) sont toujours recalculés.
@@ -621,6 +669,23 @@ ${input.sectors || input.targetMarkets ? `<p>${[input.sectors, input.targetMarke
     if (consent[0]?.status !== "granted") throw new TRPCError({ code: "FORBIDDEN", message: "Le candidat doit d’abord consentir au partage d’un profil anonymisé." });
     const result = await db.insert(placementCandidateProfiles).values({ candidateId: input.candidateId, profileCode: makeProfileCode(), summary: input.summary, targetDestination: input.targetDestination, targetProcedure: input.targetProcedure, sector: input.sector ?? null, yearsExperience: input.yearsExperience ?? null, languagesSummary: input.languagesSummary ?? null, createdByAdminId: admin.id });
     return { profileId: Number((result as any)[0]?.insertId ?? 0) };
+  }),
+
+  /** Garantit un brouillon de fiche synthèse pour le compte candidat (candidates.id). */
+  adminEnsureCandidateSummary: publicProcedure.input(z.object({
+    sessionToken: z.string().min(20),
+    candidateId: z.number().int().positive(),
+    destinationHint: z.string().trim().max(120).optional(),
+    procedureHint: z.string().trim().max(160).optional(),
+  })).mutation(async ({ input }) => {
+    const admin = await requireValidAdminSession(input.sessionToken);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
+    const profile = await ensureSummaryProfile(db, input.candidateId, admin.id, {
+      destination: input.destinationHint,
+      procedure: input.procedureHint,
+    });
+    return { profileId: profile.id, profileCode: profile.profileCode, created: true as const };
   }),
 
   adminSubmitProfile: publicProcedure.input(z.object({ sessionToken: z.string().min(20), profileId: z.number().int().positive(), organizationId: z.number().int().positive(), adminNote: z.string().trim().max(1000).optional() })).mutation(async ({ input }) => {

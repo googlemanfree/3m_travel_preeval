@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { BarChart3, CreditCard, CheckCircle2, Clock, XCircle, Download, Eye, Mail, Loader2, AlertCircle, History, FileSpreadsheet, FileText } from "lucide-react";
+import { BarChart3, CreditCard, CheckCircle2, Clock, XCircle, Download, Eye, Mail, Loader2, AlertCircle, History, FileSpreadsheet, FileText, Printer, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { paymentAuditLogsToCsv } from "@shared/paymentAuditCsv";
@@ -65,6 +65,10 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
   const [paymentReference, setPaymentReference] = useState("");
   const [confirmedAmount, setConfirmedAmount] = useState("");
   const [feePayment, setFeePayment] = useState<Payment | null>(null);
+  const [correctPayment, setCorrectPayment] = useState<Payment | null>(null);
+  const [correctAmount, setCorrectAmount] = useState("");
+  const [correctReference, setCorrectReference] = useState("");
+  const [correctReason, setCorrectReason] = useState("");
   const [receiptPreview, setReceiptPreview] = useState<Payment | null>(null);
   const [receiptEmailPayment, setReceiptEmailPayment] = useState<Payment | null>(null);
   const [receiptEmailAction, setReceiptEmailAction] = useState<"initial" | "resend">("initial");
@@ -82,11 +86,65 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
   });
   const { data: auditLogs = [], isLoading: auditLoading, refetch: refetchAuditLogs } = trpc.clientDocuments.getPaymentAuditLogs.useQuery({ limit: 200 });
   const updatePaymentMutation = trpc.application.adminUpdatePaymentStatus.useMutation();
+  const correctPaymentMutation = trpc.application.adminCorrectPaymentDetails.useMutation();
+  const utils = trpc.useUtils();
   const approvePaymentReceiptMutation = trpc.adminCandidateManagement.approvePaymentReceipt.useMutation();
   const sendPaymentReceiptMutation = trpc.application.adminSendPaymentReceipt.useMutation();
   const sendAgreementProtocolMutation = trpc.adminCandidateManagement.sendAgreementProtocol.useMutation();
   const resendAgreementReminderMutation = trpc.adminCandidateManagement.resendAgreementSignatureReminder.useMutation();
   const sendPackageMutation = trpc.adminCandidateManagement.sendReceiptAndProtocol.useMutation();
+
+  const printReceiptA5 = async (payment: Payment) => {
+    try {
+      const result = await utils.adminCandidateManagement.getPaymentReceiptA5Html.fetch({
+        sessionToken,
+        candidateId: `online_${payment.id}`,
+      });
+      const blob = new Blob([result.html], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const printWindow = window.open(url, "_blank", "width=900,height=700");
+      if (!printWindow) {
+        URL.revokeObjectURL(url);
+        toast.error("Autorisez les pop-ups pour imprimer le reçu A5.");
+        return;
+      }
+      printWindow.focus();
+      const triggerPrint = () => {
+        try { printWindow.print(); } catch { /* ignore */ }
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      };
+      printWindow.addEventListener?.("load", triggerPrint);
+      window.setTimeout(triggerPrint, 400);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Reçu A5 indisponible.");
+    }
+  };
+
+  const openCorrectPayment = (payment: Payment) => {
+    setCorrectPayment(payment);
+    setCorrectAmount(String(payment.confirmedAmount ?? payment.expectedAmount ?? payment.amount));
+    setCorrectReference(payment.transactionId || "");
+    setCorrectReason("");
+  };
+
+  const saveCorrectPayment = async () => {
+    if (!correctPayment || correctReason.trim().length < 5) return;
+    try {
+      const result = await correctPaymentMutation.mutateAsync({
+        id: correctPayment.id,
+        confirmedAmount: correctAmount.trim() ? Number(correctAmount) : undefined,
+        paymentReference: correctReference.trim() || undefined,
+        reason: correctReason.trim(),
+      });
+      toast.success(result.changed ? "Montant / référence du reçu mis à jour." : "Aucune modification détectée.");
+      setCorrectPayment(null);
+      refetch();
+      refetchAuditLogs();
+      onPaymentUpdated?.();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Correction impossible.");
+    }
+  };
 
   // Transformer les applications en paiements
   const payments: Payment[] = (Array.isArray(applicationsData) ? applicationsData : []).map((app: any) => ({
@@ -671,6 +729,11 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
                             Modifier le montant
                           </button>
                         )}
+                        {payment.paymentStatus === "SUCCESS" && (
+                          <button type="button" className="mt-0.5 text-[11px] font-semibold text-indigo-700 underline underline-offset-2" data-testid="correct-payment-details" onClick={() => openCorrectPayment(payment)}>
+                            Corriger montant / référence
+                          </button>
+                        )}
                         <p className={payment.confirmedAmount != null && payment.confirmedAmount !== payment.expectedAmount ? "font-bold text-rose-700" : "text-emerald-700"}><span className="text-gray-500">Confirmé :</span> {payment.confirmedAmount != null ? `${payment.confirmedAmount.toLocaleString("fr-FR")} ${payment.currency}` : "—"}</p>
                       </td>
                       <td className="py-3 px-4 text-center">
@@ -757,9 +820,17 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
                             </Button>
                           )}
                           {payment.paymentStatus === "SUCCESS" && (
-                            <Button onClick={() => void handleSendPackage(payment)} variant="ghost" size="sm" title="Envoyer le reçu et le protocole d’accord N°01 ensemble, dans un seul e-mail" aria-label={`Envoyer reçu et protocole du dossier ${payment.dossierNumber}`} className="text-blue-700 hover:bg-blue-50" disabled={sendPackageMutation.isPending} data-testid="send-receipt-and-protocol">
-                              {sendPackageMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}<span className="hidden xl:inline">Reçu + protocole</span>
-                            </Button>
+                            <>
+                              <Button onClick={() => openCorrectPayment(payment)} variant="ghost" size="sm" title="Corriger le montant confirmé ou la référence du reçu" aria-label={`Corriger le reçu du dossier ${payment.dossierNumber}`} className="text-indigo-700 hover:bg-indigo-50" data-testid="correct-payment-details-action">
+                                <Pencil className="h-4 w-4" /><span className="hidden xl:inline">Corriger reçu</span>
+                              </Button>
+                              <Button onClick={() => void printReceiptA5(payment)} variant="ghost" size="sm" title="Imprimer le reçu A5 (caisse)" aria-label={`Imprimer le reçu A5 du dossier ${payment.dossierNumber}`} className="text-slate-700 hover:bg-slate-100" data-testid="print-receipt-a5-payments">
+                                <Printer className="h-4 w-4" /><span className="hidden xl:inline">A5</span>
+                              </Button>
+                              <Button onClick={() => void handleSendPackage(payment)} variant="ghost" size="sm" title="Envoyer le reçu et le protocole d’accord N°01 ensemble, dans un seul e-mail" aria-label={`Envoyer reçu et protocole du dossier ${payment.dossierNumber}`} className="text-blue-700 hover:bg-blue-50" disabled={sendPackageMutation.isPending} data-testid="send-receipt-and-protocol">
+                                {sendPackageMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}<span className="hidden xl:inline">Reçu + protocole</span>
+                              </Button>
+                            </>
                           )}
                           {payment.paymentStatus === "SUCCESS" && !payment.agreementSigned && (
                             <>
@@ -1047,6 +1118,37 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
         </DialogContent>
       </Dialog>
       <AdminOpeningFeeDialog payment={feePayment} onClose={() => setFeePayment(null)} onSaved={() => { setFeePayment(null); refetch(); }} />
+
+      <Dialog open={correctPayment !== null} onOpenChange={(open) => { if (!open) setCorrectPayment(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Corriger le reçu — {correctPayment?.dossierNumber}</DialogTitle>
+            <DialogDescription>
+              {correctPayment?.fullName} · met à jour le montant confirmé et la référence sans annuler le paiement. Le reçu A5 / PDF utiliseront ces valeurs.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="correct-confirmed-amount" className="text-xs font-semibold">Montant confirmé ({correctPayment?.currency ?? "XAF"})</Label>
+              <Input id="correct-confirmed-amount" type="number" inputMode="numeric" className="mt-1" value={correctAmount} onChange={(event) => setCorrectAmount(event.target.value)} data-testid="correct-confirmed-amount" />
+            </div>
+            <div>
+              <Label htmlFor="correct-payment-reference" className="text-xs font-semibold">Référence de paiement</Label>
+              <Input id="correct-payment-reference" className="mt-1" value={correctReference} onChange={(event) => setCorrectReference(event.target.value)} maxLength={255} data-testid="correct-payment-reference" />
+            </div>
+            <div>
+              <Label htmlFor="correct-payment-reason" className="text-xs font-semibold">Motif (obligatoire)</Label>
+              <Input id="correct-payment-reason" className="mt-1" value={correctReason} onChange={(event) => setCorrectReason(event.target.value)} maxLength={500} data-testid="correct-payment-reason" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCorrectPayment(null)} disabled={correctPaymentMutation.isPending}>Annuler</Button>
+            <Button onClick={() => void saveCorrectPayment()} disabled={correctReason.trim().length < 5 || correctPaymentMutation.isPending} data-testid="correct-payment-save">
+              {correctPaymentMutation.isPending ? "Enregistrement…" : "Enregistrer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
