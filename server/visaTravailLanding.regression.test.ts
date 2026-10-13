@@ -20,7 +20,7 @@ describe("hub premium /travail", () => {
     expect(page).toContain("/?project=travail#evaluation-multi");
     expect(page).toContain("getDestinationVisual");
 
-    expect(read("client/src/pages/ProceduresAdvanced.tsx")).toContain('href="/travail"');
+    expect(read("client/src/pages/ProceduresAdvanced.tsx")).toMatch(/href:\s*['"]\/travail['"]/);
     expect(read("client/src/data/serviceCatalog.ts")).toContain('href: "/travail"');
     expect(read("client/src/components/NavbarSearchBar.tsx")).toContain("path: '/travail'");
     expect(read("client/public/sitemap.xml")).toContain("https://www.3mtravelagency.com/travail");

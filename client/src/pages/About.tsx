@@ -6,6 +6,7 @@ import { PremiumCoverImage } from "@/components/PremiumCoverImage";
 import ProofGallerySection from "@/components/ProofGallerySection";
 import { SocialShareButtons } from "@/components/SocialShareButtons";
 import { getServiceVisual } from "@/data/premiumVisuals";
+import { INTERNATIONAL_BRAND } from "@/data/internationalBrand";
 import { setPageSeo } from "@/lib/pageSeo";
 import {
   BRAND_PUBLIC_NAME,
@@ -157,25 +158,29 @@ export default function About() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-slate-50">
+    <main className="premium-page-shell min-h-screen">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(founderJsonLd) }} />
       <section className="relative overflow-hidden px-4 pb-16 pt-20 text-white sm:px-6 lg:px-8">
         <PremiumCoverImage
           visual={heroVisual}
           priority
           className="absolute inset-0"
-          imgClassName="h-full w-full object-cover object-center opacity-90"
+          imgClassName="h-full w-full object-cover object-center opacity-90 brightness-105 saturate-110"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/92 via-[#0a3264]/80 to-[#0e5b9f]/55" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/94 via-[#0a3264]/82 to-[#0e5b9f]/55" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#061a36]/70 via-transparent to-[#061a36]/30" />
         <div className="relative z-10 mx-auto max-w-5xl text-center">
           <p className="font-[Georgia,Cambria,'Times_New_Roman',serif] text-3xl font-normal tracking-tight text-amber-200 sm:text-4xl">
             {BRAND_PUBLIC_NAME}
           </p>
-          <h1 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
+          <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-blue-100/90">
+            {INTERNATIONAL_BRAND.corridor}
+          </p>
+          <h1 className="mt-5 text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
             {FOUNDER.name}, fondateur et PDG de {GROUP_LEGAL_NAME}
           </h1>
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-blue-50">
-            {BRAND_PUBLIC_NAME} accompagne les particuliers, entreprises et professionnels dans la préparation de projets de mobilité internationale&nbsp;: procédures, visas, eVisas, voyages, documents et services connexes.
+            {INTERNATIONAL_BRAND.pageLead.fr}
           </p>
           <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-blue-100/90">
             Sous la direction d’{FOUNDER.name}, fondateur et PDG de {GROUP_LEGAL_NAME}, nous présentons notre mode d’accompagnement — et non des résultats garantis. Chaque dossier est examiné selon sa situation, les exigences applicables et les décisions des organismes compétents.
@@ -342,16 +347,21 @@ export default function About() {
         </div>
       </section>
 
-      <section className="bg-slate-50 px-4 py-16 sm:px-6 lg:px-8" aria-labelledby="operating-principles-heading">
+      <section className="bg-slate-50/80 px-4 py-16 sm:px-6 lg:px-8" aria-labelledby="operating-principles-heading">
         <div className="mx-auto max-w-6xl">
-          <h2 id="operating-principles-heading" className="sr-only">Les principes de fonctionnement de 3M TRAVEL AGENCY</h2>
-          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+          <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Méthode internationale</p>
+          <h2 id="operating-principles-heading" className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+            Les principes de fonctionnement
+          </h2>
+          <p className="premium-section-lead mt-3">{INTERNATIONAL_BRAND.promiseLine.fr}</p>
+          <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
             {OPERATING_PRINCIPLES.map((item) => {
               const Icon = item.icon;
               return (
-                <Card key={item.title} className="border-slate-200 p-6 shadow-sm">
-                  <Icon className="h-7 w-7 text-blue-700" aria-hidden="true" />
-                  <h2 className="mt-4 text-lg font-black text-slate-950">{item.title}</h2>
+                <Card key={item.title} className="premium-surface border-slate-200/80 p-6">
+                  <div className="premium-gold-rule" aria-hidden="true" />
+                  <Icon className="mt-4 h-7 w-7 text-blue-700" aria-hidden="true" />
+                  <h3 className="mt-4 text-lg font-black text-slate-950">{item.title}</h3>
                   <p className="premium-copy mt-2 text-[0.95rem]">{item.text}</p>
                 </Card>
               );

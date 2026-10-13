@@ -7,6 +7,7 @@ import { CORRIDOR_REGIONS, CORRIDOR_ROUTES } from "@shared/talentCorridor";
 import { Button } from "@/components/ui/button";
 import { PremiumCoverImage } from "@/components/PremiumCoverImage";
 import { getServiceVisual } from "@/data/premiumVisuals";
+import { INTERNATIONAL_BRAND } from "@/data/internationalBrand";
 
 /**
  * Hub public des 4 interfaces — porte d’entrée internationale pour recruteurs
@@ -23,24 +24,35 @@ export default function PartnersHub() {
         <PremiumCoverImage visual={visual} priority className="absolute inset-0" imgClassName="h-full w-full object-cover opacity-45" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#071b3d]/70 via-[#0b2f6f]/80 to-[#0b2f6f]/95" />
         <div className="relative z-10">
-        <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-sky-200">
+        <p className="font-[Georgia,Cambria,'Times_New_Roman',serif] text-2xl font-normal tracking-tight text-amber-200 sm:text-3xl">
+          {INTERNATIONAL_BRAND.publicName}
+        </p>
+        <p className="mt-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-sky-200">
           <Globe2 className="h-4 w-4" aria-hidden="true" />
           {en ? "Africa → Europe · Americas · Asia" : "Afrique → Europe · Amériques · Asie"}
         </p>
-        <h1 className="mt-4 max-w-4xl text-4xl font-black tracking-tight text-white sm:text-5xl md:text-6xl">
+        <h1 className="mt-4 max-w-4xl text-3xl font-black tracking-tight text-white sm:text-4xl md:text-5xl">
           {en ? "International talent corridor" : "Corridor de talents international"}
         </h1>
         <p className="mt-5 max-w-3xl text-base leading-7 text-sky-100 sm:text-lg">
           {en
-            ? "Candidates across Africa register and build a selectable profile. Verified placement agencies and employers shortlist anonymised profiles. 3M TRAVEL AGENCY then handles the administrative procedure once contract and invitation letter are approved."
-            : "Les candidats d’Afrique s’inscrivent et construisent un profil sélectionnable. Les agences de placement et employeurs vérifiés présélectionnent des profils anonymisés. 3M TRAVEL AGENCY gère ensuite la procédure administrative une fois le contrat et la lettre d’invitation approuvés."}
+            ? "Candidates across Africa register and build a selectable profile. Verified placement agencies and employers shortlist anonymised profiles. 3M TRAVEL AGENCY then handles the administrative procedure once contract and invitation letter are approved — no job or visa is promised."
+            : "Les candidats d’Afrique s’inscrivent et construisent un profil sélectionnable. Les agences de placement et employeurs vérifiés présélectionnent des profils anonymisés. 3M TRAVEL AGENCY gère ensuite la procédure administrative une fois le contrat et la lettre d’invitation approuvés — aucun emploi ni visa n’est promis."}
         </p>
         <div className="mt-6 flex flex-wrap gap-2">
           {CORRIDOR_REGIONS.map((region) => (
-            <span key={region.id} className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-bold text-white">
+            <span key={region.id} className="rounded-xl border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-bold text-white">
               {en ? region.en : region.fr}
             </span>
           ))}
+        </div>
+        <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+          <a href="/register" className="inline-flex min-h-12 items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-black text-blue-950 hover:bg-blue-50">
+            {en ? INTERNATIONAL_BRAND.cta.space.en : "Créer mon espace candidat"}
+          </a>
+          <a href="/consultation" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-amber-300/50 bg-amber-400/15 px-5 py-3 text-sm font-bold text-amber-50 hover:bg-amber-400/25">
+            {en ? INTERNATIONAL_BRAND.cta.advisor.en : INTERNATIONAL_BRAND.cta.advisor.fr}
+          </a>
         </div>
         </div>
       </section>

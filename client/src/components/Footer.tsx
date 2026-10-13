@@ -14,7 +14,7 @@ type FooterLink = { key: string; href: string; label: Copy; description: Copy };
 type SocialLink = FooterLink & { icon: typeof Facebook; color: string };
 
 const footerCopy = {
-  agencySummary: { fr: "Accompagnement documenté en mobilité internationale, voyage et services administratifs.", en: "Documented support for international mobility, travel and administrative services." },
+  agencySummary: { fr: "Préparation documentée, suivi humain, canaux autorisés — de Yaoundé vers le monde.", en: "Documented preparation, human follow-up, authorised channels — from Yaoundé to the world." },
   fraudLabel: { fr: "Avertissement anti-fraude.", en: "Anti-fraud notice." },
   fraudText: { fr: "Les règlements d’ouverture de dossier s’effectuent uniquement via le guichet sécurisé officiel ou en agence avec reçu officiel.", en: "Case-opening payments are made only through the official secure checkout or at the agency with an official receipt." },
   question: { fr: "Une question sur votre projet ?", en: "Questions about your project?" },
@@ -22,8 +22,8 @@ const footerCopy = {
   whatsapp: { fr: "WhatsApp Yaoundé", en: "Yaoundé WhatsApp" },
   aboutTitle: { fr: "3M TRAVEL AGENCY", en: "3M TRAVEL AGENCY" },
   aboutText: {
-    fr: "Un accompagnement fondé sur vos documents, les sources institutionnelles disponibles et des validations humaines à chaque étape sensible.",
-    en: "Support grounded in your documents, available institutional sources and human validation for every sensitive step.",
+    fr: "Corridor Yaoundé · Ottawa · partenaires internationaux. Un accompagnement fondé sur vos documents, les sources institutionnelles et des validations humaines à chaque étape sensible — sans promesse de visa, d’emploi ou d’admission.",
+    en: "Yaoundé · Ottawa · international partners corridor. Support grounded in your documents, institutional sources and human validation for every sensitive step — without promising a visa, job or admission.",
   },
   aboutPage: { fr: "Qui sommes-nous", en: "About us" },
   navigation: { fr: "Navigation", en: "Navigation" },

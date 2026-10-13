@@ -1,17 +1,22 @@
 import { useEffect } from "react";
-import { ArrowRight, MessageCircle, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, MessageCircle, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { COMPANY_PROFILE } from "@/lib/companyContacts";
+import { INTERNATIONAL_BRAND } from "@/data/internationalBrand";
+import { PremiumCoverImage } from "@/components/PremiumCoverImage";
+import { PremiumAtmosphere } from "@/components/PremiumAtmosphere";
+import { getServiceVisual } from "@/data/premiumVisuals";
 
 const PRIORITY_DESTINATIONS = [
   { href: "/en/procedures/canada-work", flag: "🇨🇦", title: "Canada — Work Visa", blurb: "Job-offer based work visa process, supported end-to-end from Yaoundé." },
-  { href: "/en/procedures/france-study", flag: "🇫🇷", title: "France — Study Visa", blurb: "Admission, documents and visa application for renowned French universities." },
+  { href: "/en/procedures/france-study", flag: "🇫🇷", title: "France — Study Visa", blurb: "Admission, documents and visa application for French higher education." },
   { href: "/en/procedures/germany-work", flag: "🇩🇪", title: "Germany — Work Visa", blurb: "Qualified-professional work visa route for Germany's job market." },
-  { href: "/en/procedures/dubai-evisa", flag: "🇦🇪", title: "Dubai — Tourist e-Visa", blurb: "Fast-track e-Visa processing for the United Arab Emirates." },
+  { href: "/en/procedures/dubai-evisa", flag: "🇦🇪", title: "Dubai — Tourist e-Visa", blurb: "Guided e-Visa preparation for the United Arab Emirates." },
 ];
 
 export default function EnHome() {
+  const heroVisual = getServiceVisual("mobilite");
+
   useEffect(() => {
     document.title = "3M TRAVEL AGENCY | International Mobility from Yaoundé";
     document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
@@ -22,22 +27,34 @@ export default function EnHome() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-slate-50">
-      <section className="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-800 px-4 py-16 text-white sm:px-6 sm:py-24 lg:px-8">
-        <div className="mx-auto max-w-5xl text-center">
-          <p className="inline-flex items-center gap-2 rounded-full border border-amber-300/40 bg-amber-300/10 px-4 py-1.5 text-xs font-black uppercase tracking-wider text-amber-200">
-            <ShieldCheck className="h-4 w-4" aria-hidden="true" /> Documented mobility support, from Yaoundé
+    <PremiumAtmosphere washVisual={heroVisual} washOpacity={14}>
+    <main className="premium-page-shell min-h-screen">
+      <section className="relative min-h-[70vh] overflow-hidden px-4 pb-16 pt-20 text-white sm:min-h-[78vh] sm:px-6 sm:pb-24 lg:px-8">
+        <PremiumCoverImage
+          visual={heroVisual}
+          priority
+          className="absolute inset-0"
+          imgClassName="h-full w-full object-cover object-center opacity-90 brightness-105 saturate-110"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#041428]/94 via-[#0a3264]/75 to-[#0e5b9f]/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#041428]/80 via-transparent to-[#041428]/35" />
+        <div className="relative z-10 mx-auto flex min-h-[56vh] max-w-5xl flex-col justify-end text-center sm:min-h-[62vh]">
+          <p className="font-[Georgia,Cambria,'Times_New_Roman',serif] text-3xl font-normal tracking-tight text-amber-200 sm:text-4xl lg:text-5xl">
+            {INTERNATIONAL_BRAND.publicName}
           </p>
-          <h1 className="mt-6 text-4xl font-black tracking-tight sm:text-5xl">
-            Your international mobility project, prepared with method
+          <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.22em] text-blue-100/90">
+            {INTERNATIONAL_BRAND.corridor}
+          </p>
+          <h1 className="mt-5 text-2xl font-semibold tracking-tight sm:text-3xl lg:text-4xl">
+            {INTERNATIONAL_BRAND.promiseLine.en}
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-blue-100">
-            3M TRAVEL AGENCY accompanies candidates through visa, study, and travel projects with clear steps, verified sources, and human review of every sensitive step. Decisions by authorities, employers, and partners remain independent of the agency.
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-blue-50/95 sm:text-lg">
+            {INTERNATIONAL_BRAND.heroSupport.en}
           </p>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <a href="/?project=travail&destination=canada#evaluation-multi">
-              <Button className="h-12 rounded-xl bg-amber-500 px-7 font-extrabold text-slate-950 hover:bg-amber-600">
-                Start a free evaluation <ArrowRight className="ml-2 h-4 w-4" />
+              <Button className="h-12 rounded-xl bg-white px-7 font-extrabold text-blue-950 hover:bg-blue-50">
+                {INTERNATIONAL_BRAND.cta.evaluate.en} <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </a>
             <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer">
@@ -51,17 +68,20 @@ export default function EnHome() {
 
       <section aria-label="Priority destinations" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
         <h2 className="text-center text-2xl font-black text-slate-950 sm:text-3xl">Most requested procedures from Yaoundé</h2>
+        <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600">
+          Documented routes — decisions remain with authorities, schools and employers.
+        </p>
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {PRIORITY_DESTINATIONS.map((item) => (
             <a key={item.href} href={item.href} className="block">
-              <Card className="h-full rounded-2xl border-slate-200 p-6 shadow-sm transition-shadow hover:shadow-md">
+              <article className="premium-surface flex h-full flex-col rounded-2xl p-6 transition-shadow hover:shadow-md">
                 <span className="text-3xl" aria-hidden="true">{item.flag}</span>
                 <h3 className="mt-3 font-bold text-slate-900">{item.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{item.blurb}</p>
+                <p className="mt-2 flex-1 text-sm leading-6 text-slate-600">{item.blurb}</p>
                 <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
                   Learn more <ArrowRight className="h-3.5 w-3.5" />
                 </span>
-              </Card>
+              </article>
             </a>
           ))}
         </div>
@@ -71,28 +91,21 @@ export default function EnHome() {
         </p>
       </section>
 
-      <section aria-label="Why 3M TRAVEL AGENCY" className="bg-white px-4 py-14 sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-5xl gap-6 sm:grid-cols-3">
-          <Card className="rounded-2xl border-slate-200 p-6">
-            <Sparkles className="h-6 w-6 text-amber-500" aria-hidden="true" />
-            <h3 className="mt-3 font-bold text-slate-900">Documented preparation</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Each step, document, and requirement is checked against verifiable, institutional sources before you proceed.</p>
-          </Card>
-          <Card className="rounded-2xl border-slate-200 p-6">
-            <ShieldCheck className="h-6 w-6 text-blue-700" aria-hidden="true" />
-            <h3 className="mt-3 font-bold text-slate-900">Human review</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Sensitive steps are reviewed by an authorized advisor — no automatic decisions, no guaranteed outcomes.</p>
-          </Card>
-          <Card className="rounded-2xl border-slate-200 p-6">
-            <MessageCircle className="h-6 w-6 text-emerald-600" aria-hidden="true" />
-            <h3 className="mt-3 font-bold text-slate-900">Direct support</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Reach our Yaoundé team on WhatsApp for a first orientation on your project, free of charge.</p>
-          </Card>
+      <section aria-label="Why 3M TRAVEL AGENCY" className="border-y border-slate-200/70 bg-white/70 px-4 py-14 sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {INTERNATIONAL_BRAND.trustPillars.map((pillar) => (
+            <article key={pillar.title.en} className="rounded-2xl border border-slate-200/80 bg-white/90 p-6">
+              <div className="premium-gold-rule" aria-hidden="true" />
+              <ShieldCheck className="mt-4 h-6 w-6 text-blue-700" aria-hidden="true" />
+              <h3 className="mt-3 font-bold text-slate-900">{pillar.title.en}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{pillar.text.en}</p>
+            </article>
+          ))}
         </div>
       </section>
 
       <section aria-label="Contact" className="mx-auto max-w-4xl px-4 py-14 text-center sm:px-6 lg:px-8">
-        <h2 className="text-2xl font-black text-slate-950">Talk to an advisor</h2>
+        <h2 className="text-2xl font-black text-slate-950">{INTERNATIONAL_BRAND.cta.advisor.en}</h2>
         <p className="mt-3 text-slate-600">{COMPANY_PROFILE.offices.cameroon.addressLines.join(", ")}, Yaoundé, Cameroon</p>
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer">
@@ -106,8 +119,10 @@ export default function EnHome() {
             </Button>
           </a>
         </div>
-        <p className="mt-6 text-xs text-slate-400">{COMPANY_PROFILE.legalName} — {COMPANY_PROFILE.legalIdentifiers.registration} · NIU {COMPANY_PROFILE.legalIdentifiers.taxpayerId}</p>
+        <p className="mx-auto mt-6 max-w-lg text-xs leading-5 text-slate-500">{INTERNATIONAL_BRAND.disclaimer.en}</p>
+        <p className="mt-3 text-xs text-slate-400">{COMPANY_PROFILE.legalName} — {COMPANY_PROFILE.legalIdentifiers.registration} · NIU {COMPANY_PROFILE.legalIdentifiers.taxpayerId}</p>
       </section>
     </main>
+    </PremiumAtmosphere>
   );
 }

@@ -6,6 +6,7 @@ import { PremiumCoverImage } from "@/components/PremiumCoverImage";
 import { HOW_IT_WORKS, SERVICE_POLES, SERVICES_FAQ, type ServicePoleId } from "@/data/serviceCatalog";
 import { CheckCircle2 } from "lucide-react";
 import { getServiceVisual, type VisualSources } from "@/data/premiumVisuals";
+import { INTERNATIONAL_BRAND } from "@/data/internationalBrand";
 import { setPageSeo } from "@/lib/pageSeo";
 import { trpc } from "@/lib/trpc";
 
@@ -52,7 +53,7 @@ export default function Services() {
     setPageSeo({
       title: "Tous nos services | 3M TRAVEL AGENCY",
       description:
-        "Immigration, visas, billets d’avion, hôtels, assurance voyage, CNI, passeport, e-Visa et formations : tous les services de 3M à Yaoundé.",
+        "Études, travail, immigration, visas, billets, assurance, CNI, passeport et e-Visa : les services internationaux de 3M TRAVEL AGENCY depuis Yaoundé et Ottawa.",
       image: override?.imageUrl ?? visual.desktop,
       imageAlt: override?.imageAlt ?? visual.alt,
     });
@@ -62,23 +63,27 @@ export default function Services() {
 
   return (
     <ServicePageShell
-      eyebrow="Tous nos services"
-      title="Visas, voyages et démarches administratives : un seul interlocuteur"
-      introduction="3M TRAVEL AGENCY accompagne la mobilité internationale, organise vos déplacements et prépare des démarches administratives et numériques, à Yaoundé et à distance."
+      eyebrow={`${INTERNATIONAL_BRAND.publicName} · ${INTERNATIONAL_BRAND.corridor}`}
+      title="Services internationaux : un interlocuteur, un dossier traçable"
+      introduction={INTERNATIONAL_BRAND.pageLead.fr}
       primaryHref="/consultation"
-      primaryLabel="Parler à un conseiller"
-      notice="Les décisions de visa, de délivrance de documents et de tarification appartiennent aux autorités et prestataires concernés : 3M prépare, oriente et suit votre dossier sans garantir de résultat."
+      primaryLabel={INTERNATIONAL_BRAND.cta.advisor.fr}
+      secondaryHref="/?project=travail#evaluation-multi"
+      secondaryLabel={INTERNATIONAL_BRAND.cta.evaluate.fr}
+      notice={INTERNATIONAL_BRAND.disclaimer.fr}
       heroVisual={heroVisual}
     >
-      <nav aria-label="Pôles de services" className="border-b border-slate-200 bg-white px-4 py-3 sm:px-6 lg:px-8">
+      <nav aria-label="Pôles de services" className="border-b border-slate-200/80 bg-white/90 px-4 py-4 backdrop-blur-sm sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-wrap gap-2">
           {SERVICE_POLES.map((pole) => (
             <a
               key={pole.id}
               href={`#${pole.id}`}
               onClick={() => setActivePole(pole.id)}
-              className={`rounded-full px-4 py-2 text-sm font-bold transition ${
-                activePole === pole.id ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-700 hover:bg-blue-50"
+              className={`rounded-xl px-4 py-2.5 text-sm font-bold transition ${
+                activePole === pole.id
+                  ? "bg-[#0a2b5c] text-white shadow-md"
+                  : "bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-900"
               }`}
               aria-current={activePole === pole.id ? "true" : undefined}
             >
@@ -88,7 +93,11 @@ export default function Services() {
         </div>
       </nav>
 
-      <ServiceSection title="Que voulez-vous accomplir ?" introduction="Partez de votre intention : chaque carte mène directement à la bonne démarche, avec un accompagnement jusqu’au dépôt." tone="slate">
+      <ServiceSection
+        title="Que voulez-vous accomplir ?"
+        introduction="Partez de votre intention : chaque entrée mène à la bonne démarche, avec un suivi jusqu’au dépôt auprès des autorités ou prestataires concernés."
+        tone="slate"
+      >
         <QuickActionsGrid />
       </ServiceSection>
 
@@ -137,11 +146,11 @@ export default function Services() {
         </ServiceSection>
       ))}
 
-      <ServiceSection title="Comment ça marche" introduction="La même méthode pour toutes les demandes, du premier contact au suivi.">
+      <ServiceSection title="Comment ça marche" introduction="La même méthode internationale pour toutes les demandes, du premier contact au suivi dans l’espace client.">
         <ol className="grid gap-4 md:grid-cols-3">
           {HOW_IT_WORKS.map((step, index) => (
-            <li key={step.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-700 text-sm font-black text-white" aria-hidden="true">{index + 1}</span>
+            <li key={step.title} className="premium-surface rounded-2xl border border-slate-200/80 p-5">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0a2b5c] text-sm font-black text-white" aria-hidden="true">{index + 1}</span>
               <h3 className="mt-3 text-base font-black text-slate-950">{step.title}</h3>
               <p className="mt-1.5 text-sm leading-6 text-slate-600">{step.text}</p>
             </li>
@@ -149,8 +158,20 @@ export default function Services() {
         </ol>
       </ServiceSection>
 
+      <ServiceSection title="Pourquoi une méthode internationale" introduction="Quatre piliers qui encadrent chaque dossier — sans promesse de résultat." tone="slate">
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {INTERNATIONAL_BRAND.trustPillars.map((pillar) => (
+            <li key={pillar.title.fr} className="rounded-2xl border border-slate-200/80 bg-white/90 p-5">
+              <div className="premium-gold-rule" aria-hidden="true" />
+              <h3 className="mt-3 text-base font-black text-slate-950">{pillar.title.fr}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{pillar.text.fr}</p>
+            </li>
+          ))}
+        </ul>
+      </ServiceSection>
+
       <ServiceSection title="Questions fréquentes" introduction="Les réponses aux questions que l’on nous pose le plus souvent avant de démarrer.">
-        <div className="mx-auto max-w-3xl divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white" data-testid="services-faq">
+        <div className="mx-auto max-w-3xl divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white shadow-sm" data-testid="services-faq">
           {SERVICES_FAQ.map((item) => (
             <details key={item.question} className="group px-5 py-4">
               <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 text-left text-base font-black text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
@@ -165,8 +186,8 @@ export default function Services() {
 
       <ServiceSection title="Une question avant de commencer ?" tone="blue">
         <div className="flex flex-col gap-3 sm:flex-row">
-          <a href="/consultation" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-700 px-5 py-3 text-sm font-black text-white shadow-lg transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">
-            Prendre rendez-vous <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          <a href="/consultation" className="premium-action inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-black text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">
+            {INTERNATIONAL_BRAND.cta.advisor.fr} <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </a>
           <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white px-5 py-3 text-sm font-bold text-blue-900 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">
             <MessageCircle className="h-4 w-4" aria-hidden="true" /> Écrire sur WhatsApp

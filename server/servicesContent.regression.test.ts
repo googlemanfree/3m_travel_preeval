@@ -6,16 +6,17 @@ const NUMBERS = /\d+\s?(%|€|\$|FCFA|F CFA|h\b|heures?|jours?|semaines?|mois)/i
 const PROMISES = /garanti(?!r)|100\s?%|sans risque|assur[ée]s? de réussir|à coup sûr/i;
 
 describe("page /services : contenu enrichi", () => {
-  it("chaque service explique concrètement ce que 3M prépare (3 repères) sans prix ni promesse", () => {
+  it("chaque service explique concrètement ce que 3M prépare (3 à 4 repères) sans prix ni promesse", () => {
     for (const pole of SERVICE_POLES) {
       for (const service of pole.services) {
-        expect(service.points, service.id).toHaveLength(3);
+        expect(service.points.length, service.id).toBeGreaterThanOrEqual(3);
+        expect(service.points.length, service.id).toBeLessThanOrEqual(4);
         for (const point of service.points) {
           expect(point, `${service.id} : ${point}`).not.toMatch(NUMBERS);
           expect(point, `${service.id} : ${point}`).not.toMatch(PROMISES);
           expect(point.length, point).toBeGreaterThan(20);
         }
-        expect(new Set(service.points).size, service.id).toBe(3);
+        expect(new Set(service.points).size, service.id).toBe(service.points.length);
       }
     }
   });

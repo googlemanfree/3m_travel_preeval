@@ -57,8 +57,9 @@ export function ServicePageShell({
           )}
           <div className="relative z-10 mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.2fr_.8fr] lg:items-end lg:gap-14">
             <div>
-              <p className="inline-flex items-center rounded-full border border-blue-200/40 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[.16em] text-amber-100">{eyebrow}</p>
-              <h1 className="mt-5 max-w-4xl text-4xl font-black tracking-tight !text-white sm:text-5xl lg:text-6xl">{title}</h1>
+              <p className="font-[Georgia,Cambria,'Times_New_Roman',serif] text-2xl font-normal tracking-tight text-amber-200 sm:text-3xl">3M TRAVEL AGENCY</p>
+              <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.18em] text-amber-100/90">{eyebrow}</p>
+              <h1 className="mt-4 max-w-4xl text-3xl font-black tracking-tight !text-white sm:text-4xl lg:text-5xl">{title}</h1>
               <p className="premium-copy-on-dark mt-6 max-w-3xl rounded-2xl bg-[#020C3B]/35 px-4 py-3 !text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] ring-1 ring-white/10 backdrop-blur-[2px] text-base sm:text-lg md:text-xl">{introduction}</p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                 {primaryHref.startsWith("#") ? (

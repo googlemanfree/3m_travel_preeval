@@ -46,7 +46,7 @@ describe("catalogue des services", () => {
     expect(SERVICE_POLES.map((pole) => pole.id)).toEqual(["mobilite", "travel", "services"]);
     expect(SERVICE_POLES.map((pole) => pole.services.length)).toEqual([5, 4, 5]);
     const titles = SERVICE_POLES.flatMap((pole) => pole.services.map((service) => service.title));
-    for (const expected of ["Études", "Travail", "Immigration", "Visas", "Regroupement familial", "Billets d’avion", "Hôtels", "Location de véhicules", "Assurance voyage", "CNI & passeport", "e-Visa Cameroun", "Technologies", "Formations", "Solutions de sécurité"]) {
+    for (const expected of ["Études à l’étranger", "Travail à l’étranger", "Immigration Canada", "Visas & procédures", "Regroupement familial", "Billets d’avion", "Hôtels", "Location de véhicules", "Assurance voyage", "CNI & passeport", "e-Visa Cameroun", "Technologies", "Formations", "Solutions de sécurité"]) {
       expect(titles, expected).toContain(expected);
     }
     const ids = SERVICE_POLES.flatMap((pole) => pole.services.map((service) => service.id));
@@ -129,7 +129,8 @@ describe("accueil : « Que voulez-vous accomplir ? »", () => {
     expect(home.indexOf("<ProofGallerySection />")).toBeLessThan(home.indexOf('id="home-employer-b2b"'));
     expect(home.indexOf("<QuickActionsSection />")).toBeLessThan(home.indexOf("<ServicesOverviewSection />"));
     const hero = read("client/src/components/HeroSectionVIP.tsx");
-    expect(hero).toContain("3M prépare et suit votre dossier — études, travail, visas.");
+    expect(hero).toContain("INTERNATIONAL_BRAND");
+    expect(hero).toContain("promiseLine");
     expect(hero).not.toContain("expertise reconnue");
     for (const pole of SERVICE_POLES) expect(hero).not.toContain(`href="/services#${pole.id}"`);
   });

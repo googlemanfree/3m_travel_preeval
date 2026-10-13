@@ -23,11 +23,14 @@ describe("hero : lisibilité et hiérarchie", () => {
     expect(hero).not.toContain("rounded-2xl bg-[#020C3B]/45");
   });
 
-  it("conserve une composition courte : marque, une phrase, deux CTA", () => {
+  it("conserve une composition courte : marque, promesse, appui, corridor, CTA", () => {
     expect(hero).toContain("3M TRAVEL AGENCY");
-    expect(hero).toContain("3M prépare et suit votre dossier — études, travail, visas.");
+    expect(hero).toContain("INTERNATIONAL_BRAND");
+    expect(hero).toContain("promiseLine");
     expect(hero).toContain('data-testid="hero-cta-group"');
     expect(hero).toContain('data-testid="hero-tagline"');
+    expect(hero).toContain('data-testid="hero-support"');
+    expect(hero).toContain('data-testid="hero-corridor"');
     expect(hero).not.toContain("HERO_OFFERS");
     expect(hero).not.toContain("Évaluation Gratuite en 24h");
     expect(hero).not.toContain("Simulateur CRS Canada");
@@ -37,19 +40,20 @@ describe("hero : lisibilité et hiérarchie", () => {
 
   it("le bouton principal d'évaluation gratuite reste le premier appel à l'action, en orange contrasté", () => {
     const cta = hero.indexOf("<PublicEvaluationCTA");
-    expect(cta).toBeGreaterThan(hero.indexOf("3M prépare et suit votre dossier"));
-    expect(cta).toBeLessThan(hero.indexOf("Parler à un conseiller"));
+    expect(cta).toBeGreaterThan(hero.indexOf('data-testid="hero-tagline"'));
+    expect(cta).toBeLessThan(hero.indexOf("cta.advisor"));
     expect(hero.slice(cta, cta + 900)).toContain("from-orange-400");
-    expect(hero).toContain("Évaluer mon projet — gratuit");
+    expect(hero).toContain("cta.evaluate");
     expect(hero).not.toContain("ÉVALUER MON PROJET — GRATUIT");
     expect(hero).not.toContain("PARLER À UN CONSEILLER");
   });
 
-  it("est bilingue FR/EN via useLanguage", () => {
+  it("est bilingue FR/EN via useLanguage et INTERNATIONAL_BRAND", () => {
     expect(hero).toContain("useLanguage");
-    expect(hero).toContain("3M prepares and follows your file — studies, work, visas.");
-    expect(hero).toContain("Evaluate my project — free");
-    expect(hero).toContain("Talk to an advisor");
+    expect(hero).toContain("INTERNATIONAL_BRAND.promiseLine.fr");
+    expect(hero).toContain("INTERNATIONAL_BRAND.promiseLine.en");
+    expect(hero).toContain("INTERNATIONAL_BRAND.cta.evaluate");
+    expect(hero).toContain("INTERNATIONAL_BRAND.cta.advisor");
   });
 
   it("anime l’apparition en fondu, renforce le survol des CTA et propose un indicateur de défilement", () => {

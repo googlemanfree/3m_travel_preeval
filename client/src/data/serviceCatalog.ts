@@ -18,16 +18,16 @@ export const SERVICE_POLES: ServicePole[] = [
   {
     id: "mobilite",
     title: "Mobilité internationale",
-    tagline: "Notre cœur de métier : un dossier solide, du premier renseignement jusqu’à l’installation.",
-    summary: "Chaque projet commence par une évaluation de votre profil. Un conseiller vous indique la voie la plus réaliste, les pièces à réunir, les frais payés à des tiers et l’ordre des étapes, puis prépare et suit votre dossier jusqu’au dépôt. Les décisions de visa, d’admission ou d’autorisation de travail appartiennent toujours aux autorités, aux établissements et aux employeurs concernés.",
+    tagline: "Cœur de métier international : un dossier traçable, du premier échange jusqu’au dépôt auprès des autorités.",
+    summary: "Chaque projet commence par une évaluation de votre profil (parcours, destination, type de visa). Un conseiller vous indique la voie la plus réaliste, les pièces à réunir, les frais payés à des tiers et l’ordre des étapes, puis prépare et suit votre dossier dans un espace client sécurisé. Corridor Yaoundé–Ottawa et partenaires vérifiés : vous avancez avec une méthode claire. Les décisions de visa, d’admission ou d’autorisation de travail appartiennent toujours aux autorités, aux établissements et aux employeurs concernés.",
     icon: Globe2,
     accent: "text-[#1e3a8a] bg-[#dbeafe]",
     services: [
-      { id: "etudes", title: "Études", description: "Choix de la destination, préparation du dossier d’admission et de la demande de visa.", points: ["Comparaison de destinations et de filières selon votre parcours", "Dossier d’admission : relevés, diplômes, lettre de motivation", "Demande de visa d’études et justificatifs financiers à préparer"], href: "/etudes", icon: GraduationCap },
-      { id: "travail", title: "Travail", description: "Préparation d’un projet professionnel à l’étranger et des démarches qui l’accompagnent.", points: ["Analyse de votre profil, de votre secteur et des destinations accessibles", "CV, pièces et démarches liées à l’offre d’emploi ou au contrat", "Aucun emploi n’est promis : l’offre et le contrat relèvent de l’employeur"], href: "/travail", icon: Briefcase },
-      { id: "immigration", title: "Immigration", description: "Voies d’immigration vers le Canada, avec un simulateur CRS pour situer votre profil.", points: ["Présentation des principales voies d’immigration vers le Canada", "Simulateur CRS pour situer votre profil, à titre indicatif", "Orientation vers les sources officielles avant chaque démarche"], href: "/canada", icon: Globe2 },
-      { id: "visas", title: "Visas", description: "Visas de visite, d’études ou de travail : documents à réunir, dépôt et suivi.", points: ["Choix du visa adapté à votre projet : visite, études ou travail", "Liste des documents à réunir, avec traduction si elle est exigée", "Dépôt du dossier et suivi des étapes dans votre espace client"], href: "/procedures", icon: Stamp },
-      { id: "famille", title: "Regroupement familial", description: "Constitution du dossier pour rejoindre un proche installé à l’étranger.", points: ["Vérification des pièces d’état civil et des liens familiaux à justifier", "Constitution du dossier selon les règles du pays de destination", "Suivi jusqu’à la décision de l’autorité compétente"], href: "/procedures", icon: Users2 },
+      { id: "etudes", title: "Études à l’étranger", description: "Choix de destination, dossier d’admission, justificatifs financiers et visa d’études — structurés avec un conseiller.", points: ["Comparaison de destinations et de filières selon votre parcours académique", "Dossier d’admission : relevés, diplômes, lettre de motivation, preuves de fonds", "Demande de visa d’études, traductions et suivi jusqu’à la décision de l’autorité", "Espace client : pièces, statut et échanges centralisés"], href: "/etudes", icon: GraduationCap },
+      { id: "travail", title: "Travail à l’étranger", description: "Préparation d’un projet professionnel international et des démarches (offre, autorisation, visa) sans promesse d’emploi.", points: ["Analyse de votre profil, secteur et destinations accessibles", "CV, photo type passeport, pièces et démarches liées à l’offre ou au contrat", "Corridor partenaires : agences et employeurs vérifiés, avec votre consentement", "Aucun emploi n’est promis : l’offre et le contrat relèvent de l’employeur"], href: "/travail", icon: Briefcase },
+      { id: "immigration", title: "Immigration Canada", description: "Voies d’immigration vers le Canada, avec simulateur CRS indicatif et orientation vers IRCC.", points: ["Présentation des principales voies (travail, études, résidence) selon votre profil", "Simulateur CRS pour situer votre score, à titre indicatif uniquement", "Orientation vers les sources officielles IRCC avant chaque démarche", "Préparation documentaire et suivi humain dans votre espace"], href: "/canada", icon: Globe2 },
+      { id: "visas", title: "Visas & procédures", description: "Visas de visite, d’études ou de travail : checklist pays × visa, dépôt et suivi traçable.", points: ["Choix du visa adapté : visite, études, travail ou séjour", "Checklist documents, traductions et formalités selon la destination", "Dépôt guidé et suivi des étapes dans l’espace client", "Hub procédures pour comparer corridors et exigences"], href: "/procedures", icon: Stamp },
+      { id: "famille", title: "Regroupement familial", description: "Constitution du dossier pour rejoindre un proche installé à l’étranger, selon les règles du pays.", points: ["Vérification des pièces d’état civil et des liens familiaux à justifier", "Constitution du dossier selon les règles du pays de destination", "Traduction et légalisation orientées si exigées", "Suivi jusqu’à la décision de l’autorité compétente"], href: "/procedures", icon: Users2 },
     ],
   },
   {
@@ -68,23 +68,23 @@ export type QuickAction = { id: string; title: string; hint: string; href: strin
  * les services annexes (vols, assurance, e-Visa).
  */
 export const QUICK_ACTIONS: QuickAction[] = [
-  { id: "dossier", title: "Préparer mon dossier", hint: "Évaluation, pièces et suivi traçable", href: buildFreeEvaluationHref("travail"), icon: FileCheck2 },
-  { id: "travailler", title: "Travailler à l’étranger", hint: "Profil, employeur et autorisations", href: "/travail", icon: Briefcase },
-  { id: "etudier", title: "Étudier à l’étranger", hint: "Admission et visa d’études", href: "/etudes", icon: GraduationCap },
-  { id: "visa", title: "Demander un visa", hint: "Checklist et dépôt guidés", href: "/procedures", icon: Stamp },
-  { id: "recrutement", title: "Recrutement partenaires", hint: "Agences et employeurs vérifiés", href: "/partenaires", icon: Building2 },
-  { id: "conseiller", title: "Parler à un conseiller", hint: "Échange direct, sans engagement", href: "/consultation", icon: MessageCircle },
-  { id: "vol", title: "Réserver un vol", hint: "Après validation du dossier", href: "/flights", icon: Plane },
+  { id: "dossier", title: "Préparer mon dossier", hint: "Évaluation gratuite, pièces et suivi traçable", href: buildFreeEvaluationHref("travail"), icon: FileCheck2 },
+  { id: "travailler", title: "Travailler à l’étranger", hint: "Profil, partenaires et autorisations", href: "/travail", icon: Briefcase },
+  { id: "etudier", title: "Étudier à l’étranger", hint: "Admission, fonds et visa d’études", href: "/etudes", icon: GraduationCap },
+  { id: "visa", title: "Demander un visa", hint: "Checklist pays × visa et dépôt guidé", href: "/procedures", icon: Stamp },
+  { id: "recrutement", title: "Recrutement partenaires", hint: "Agences & employeurs internationaux", href: "/partenaires", icon: Building2 },
+  { id: "conseiller", title: "Parler à un conseiller", hint: "Yaoundé, Ottawa ou WhatsApp", href: "/consultation", icon: MessageCircle },
+  { id: "vol", title: "Réserver un vol", hint: "3M Booking · validation conseiller", href: "/flights", icon: Plane },
   { id: "assurance", title: "M’assurer pour voyager", hint: "Couverture adaptée au séjour", href: "/assurance", icon: HeartHandshake },
-  { id: "evisa", title: "Obtenir un e-Visa", hint: "Autorisation électronique", href: "/evisas", icon: Globe2 },
+  { id: "evisa", title: "Obtenir un e-Visa", hint: "Autorisation électronique guidée", href: "/evisas", icon: Globe2 },
   { id: "cni", title: "Refaire ma CNI ou mon passeport", hint: "Dossier prêt pour Yaoundé", href: "/cni-passeport", icon: IdCard },
 ];
 
 /** Étapes communes à toutes les demandes ; le délai de réponse n'est pas promis ici, il figure sur la page de rendez-vous. */
 export const HOW_IT_WORKS = [
-  { title: "Vous précisez votre projet", text: "Formulaire, WhatsApp ou agence à Yaoundé : quelques informations suffisent pour cadrer votre objectif." },
-  { title: "Nous structurons votre dossier", text: "Un conseiller liste les pièces, les frais tiers éventuels et l’ordre des étapes — avant tout engagement." },
-  { title: "Vous avancez en toute clarté", text: "Votre espace client centralise le statut, les documents et les échanges avec l’équipe 3M." },
+  { title: "Vous précisez votre projet", text: "Formulaire d’évaluation, WhatsApp ou agence à Yaoundé / Ottawa : quelques informations cadrent destination, type de visa et urgence." },
+  { title: "Nous structurons votre dossier", text: "Un conseiller liste les pièces, les frais tiers éventuels, l’ordre des étapes et les sources officielles — avant tout engagement financier." },
+  { title: "Vous avancez en toute clarté", text: "Votre espace client centralise statut, documents, clarifications et échanges. Les décisions finales restent celles des autorités compétentes." },
 ] as const;
 
 /**

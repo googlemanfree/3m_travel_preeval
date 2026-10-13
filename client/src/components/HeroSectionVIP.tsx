@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { INTERNATIONAL_BRAND } from "@/data/internationalBrand";
 
 interface HeroSectionVIPProps {
   onEvalClick?: () => void;
@@ -163,13 +164,30 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={2}
-          className="premium-copy-on-dark mx-auto mb-7 max-w-2xl text-base font-medium !text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.75)] sm:mb-10 sm:text-xl md:text-2xl"
+          className="premium-copy-on-dark mx-auto mb-3 max-w-3xl text-lg font-semibold !text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.75)] sm:mb-4 sm:text-xl md:text-2xl lg:text-3xl"
           data-testid="hero-tagline"
         >
-          {t(
-            "3M prépare et suit votre dossier — études, travail, visas.",
-            "3M prepares and follows your file — studies, work, visas.",
-          )}
+          {t(INTERNATIONAL_BRAND.promiseLine.fr, INTERNATIONAL_BRAND.promiseLine.en)}
+        </motion.p>
+        <motion.p
+          initial="hidden"
+          animate="visible"
+          variants={fadeIn}
+          custom={2.5}
+          className="premium-copy-on-dark mx-auto mb-7 max-w-2xl text-sm font-medium leading-relaxed !text-blue-50/95 drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)] sm:mb-10 sm:text-base md:text-lg"
+          data-testid="hero-support"
+        >
+          {t(INTERNATIONAL_BRAND.heroSupport.fr, INTERNATIONAL_BRAND.heroSupport.en)}
+        </motion.p>
+        <motion.p
+          initial="hidden"
+          animate="visible"
+          variants={fadeIn}
+          custom={2.7}
+          className="mb-6 text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200/90 sm:mb-8"
+          data-testid="hero-corridor"
+        >
+          {INTERNATIONAL_BRAND.corridor}
         </motion.p>
 
         <motion.div
@@ -177,7 +195,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={3}
-          className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4"
+          className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap sm:gap-4"
           data-testid="hero-cta-group"
         >
           <PublicEvaluationCTA
@@ -194,7 +212,7 @@ export default function HeroSectionVIP({
               aria-hidden="true"
             />
             <span className="relative z-10 text-sm transition-transform duration-300 group-hover:tracking-wide sm:text-base">
-              {t("Évaluer mon projet — gratuit", "Evaluate my project — free")}
+              {t(INTERNATIONAL_BRAND.cta.evaluate.fr, INTERNATIONAL_BRAND.cta.evaluate.en)}
             </span>
           </PublicEvaluationCTA>
           <Button
@@ -208,7 +226,18 @@ export default function HeroSectionVIP({
                 aria-hidden="true"
               />
               <span className="relative z-10 text-sm transition-transform duration-300 group-hover:tracking-wide sm:text-base">
-                {t("Parler à un conseiller", "Talk to an advisor")}
+                {t(INTERNATIONAL_BRAND.cta.advisor.fr, INTERNATIONAL_BRAND.cta.advisor.en)}
+              </span>
+            </a>
+          </Button>
+          <Button
+            asChild
+            variant="ghost"
+            className={`group relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl border border-amber-300/50 bg-amber-400/10 px-6 py-4 text-center font-semibold text-amber-50 transition-all duration-300 hover:-translate-y-1 hover:bg-amber-400/20 hover:ring-2 hover:ring-amber-200/40 focus-visible:ring-2 focus-visible:ring-amber-200`}
+          >
+            <a href="/procedures">
+              <span className="relative z-10 text-sm sm:text-base">
+                {t(INTERNATIONAL_BRAND.cta.procedures.fr, INTERNATIONAL_BRAND.cta.procedures.en)}
               </span>
             </a>
           </Button>

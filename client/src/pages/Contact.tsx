@@ -12,6 +12,7 @@ import { setPageSeo } from '@/lib/pageSeo';
 import { trpc } from '@/lib/trpc';
 import { COMPANY_FOUNDER, COMPANY_PROFILE, GROUP_LEGAL_NAME } from '@/lib/companyContacts';
 import { officeMapEmbedUrl, officeMapsUrl } from '@/lib/officeContacts';
+import { INTERNATIONAL_BRAND } from '@/data/internationalBrand';
 
 export default function Contact() {
   const heroVisual = getServiceVisual('services');
@@ -22,7 +23,7 @@ export default function Contact() {
     setPageSeo({
       title: 'Nous contacter | 3M TRAVEL AGENCY',
       description:
-        'Contactez 3M TRAVEL AGENCY à Yaoundé et Ottawa pour vos projets de visas, eVisas, légalisations, traductions et assurances voyage.',
+        'Contactez 3M TRAVEL AGENCY à Yaoundé et Ottawa : études, travail, visas, e-Visas, légalisations, traductions et assurances voyage.',
       image: heroVisual.desktop,
       imageAlt: heroVisual.alt,
     });
@@ -117,16 +118,17 @@ export default function Contact() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <main className="premium-page-shell min-h-screen">
 
       <section className="relative overflow-hidden px-4 pb-16 pt-20 text-white sm:px-6 sm:pb-20 lg:px-8">
         <PremiumCoverImage
           visual={heroVisual}
           priority
           className="absolute inset-0"
-          imgClassName="h-full w-full object-cover object-center opacity-90"
+          imgClassName="h-full w-full object-cover object-center opacity-90 brightness-105 saturate-110"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/92 via-[#0a3264]/80 to-[#0e5b9f]/55" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/94 via-[#0a3264]/82 to-[#0e5b9f]/55" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#061a36]/70 via-transparent to-[#061a36]/30" />
         <div className="relative z-10 mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -134,21 +136,34 @@ export default function Contact() {
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <p className="mb-3 text-sm font-black uppercase tracking-[0.16em] text-blue-100">3M TRAVEL AGENCY</p>
-            <h1 className="premium-section-title mb-6 text-4xl text-white sm:text-5xl lg:text-6xl">
+            <p className="font-[Georgia,Cambria,'Times_New_Roman',serif] text-3xl font-normal tracking-tight text-amber-200 sm:text-4xl">
+              {INTERNATIONAL_BRAND.publicName}
+            </p>
+            <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-blue-100/90">
+              {INTERNATIONAL_BRAND.corridor}
+            </p>
+            <h1 className="premium-section-title mt-5 mb-5 text-3xl !text-white sm:text-4xl lg:text-5xl">
               Nous contacter
             </h1>
 
             <p className="mx-auto mb-8 max-w-2xl text-center text-lg leading-8 text-blue-50 sm:text-xl">
-              Notre équipe est à votre disposition pour répondre à vos questions et vous accompagner dans vos démarches de visas, eVisas, légalisations, traductions et assurances voyage.
+              Une question sur un visa, un e-Visa, une légalisation, une traduction ou une assurance voyage ? L’équipe Yaoundé–Ottawa vous répond et précise les prochaines étapes — sans promesse de résultat.
             </p>
 
-            <a
-              href="/consultation"
-              className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3 font-bold text-blue-950 transition-colors hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            >
-              Prendre rendez-vous
-            </a>
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <a
+                href="/consultation"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-white px-6 py-3 font-black text-blue-950 transition-colors hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                Prendre rendez-vous
+              </a>
+              <a
+                href="/?project=travail#evaluation-multi"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-amber-300/50 bg-amber-400/15 px-6 py-3 font-bold text-amber-50 transition hover:bg-amber-400/25"
+              >
+                {INTERNATIONAL_BRAND.cta.evaluate.fr}
+              </a>
+            </div>
           </motion.div>
         </div>
       </section>

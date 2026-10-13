@@ -18,6 +18,7 @@ import { PremiumAtmosphere } from "@/components/PremiumAtmosphere";
 import { IllustrativeDestinationStrip } from "@/components/IllustrativeDestinationStrip";
 import ProofGallerySection from "@/components/ProofGallerySection";
 import { getDestinationVisual, getServiceVisual } from "@/data/premiumVisuals";
+import { INTERNATIONAL_BRAND } from "@/data/internationalBrand";
 import { setPageSeo } from "@/lib/pageSeo";
 
 const DESTINATIONS = [
@@ -187,13 +188,14 @@ export default function VisaTravail() {
             transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
           >
             <p className="font-[Georgia,Cambria,'Times_New_Roman',serif] text-3xl font-normal tracking-tight text-amber-200 sm:text-4xl lg:text-5xl">
-              3M TRAVEL AGENCY
+              {INTERNATIONAL_BRAND.publicName}
             </p>
-            <h1 className="mt-3 max-w-3xl text-2xl font-semibold tracking-tight text-white sm:text-3xl lg:text-4xl">
+            <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-blue-100/90">{INTERNATIONAL_BRAND.corridor}</p>
+            <h1 className="mt-4 max-w-3xl text-2xl font-semibold tracking-tight text-white sm:text-3xl lg:text-4xl">
               Travailler à l’international, dossier maîtrisé
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-blue-50/95 sm:text-lg">
-              Canada, Europe et Golfe : évaluation de profil, pièces employeur et préparation des autorisations — chaque exigence reste à confirmer auprès des autorités compétentes.
+              Canada, Europe et Golfe : évaluation de profil, pièces employeur et préparation des autorisations — chaque exigence reste à confirmer auprès des autorités compétentes. Aucun emploi n’est promis.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link
@@ -201,14 +203,14 @@ export default function VisaTravail() {
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-black text-blue-950 shadow-lg transition hover:bg-blue-50"
                 data-testid="travail-eval-cta"
               >
-                Évaluer mon profil travail
+                {INTERNATIONAL_BRAND.cta.evaluate.fr}
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
               <a
                 href="#destinations-travail"
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-amber-300/60 bg-amber-400/15 px-5 py-3 text-sm font-black text-amber-100 transition hover:bg-amber-400/25"
               >
-                Voir les destinations
+                {INTERNATIONAL_BRAND.cta.destinations.fr}
               </a>
               <Link
                 href="/ressources"

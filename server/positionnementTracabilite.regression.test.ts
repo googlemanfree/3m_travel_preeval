@@ -78,9 +78,10 @@ describe("positionnement 3M — dossier hub + traçabilité", () => {
       path.resolve(import.meta.dirname, "../client/src/components/DestinationsShowcaseSection.tsx"),
       "utf8",
     );
-    expect(hero).toContain("3M prépare et suit votre dossier — études, travail, visas.");
-    expect(hero).toContain("3M prepares and follows your file — studies, work, visas.");
-    expect(hero).toContain("Évaluer mon projet — gratuit");
+    expect(hero).toContain("INTERNATIONAL_BRAND");
+    expect(hero).toContain("promiseLine");
+    expect(hero).toContain("cta.evaluate");
+    expect(hero).toContain('data-testid="hero-tagline"');
     expect(showcase).toContain("pas au nombre de pays affichés");
     expect(showcase).not.toContain("23 destinations");
   });
