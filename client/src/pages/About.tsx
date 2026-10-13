@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { CheckCircle2, FileSearch, Globe2, ShieldCheck, UsersRound } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { motion, useReducedMotion } from "framer-motion";
+import { ArrowRight, CheckCircle2, FileSearch, Globe2, ShieldCheck, UsersRound } from "lucide-react";
 import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
 import { PremiumCoverImage } from "@/components/PremiumCoverImage";
 import ProofGallerySection from "@/components/ProofGallerySection";
@@ -12,12 +12,7 @@ const FOUNDER = {
   role: "Fondateur & PDG",
   organization: "3M Group SARL",
   brand: "3M TRAVEL AGENCY",
-  imageWebp: "/team/aureol-donfack-fondateur-pdg-3m-group-sarl.webp",
-  imageJpg: "/team/aureol-donfack-fondateur-pdg-3m-group-sarl.jpg",
-  imageHd: "/team/aureol-donfack-fondateur-pdg-3m-group-sarl-hd.jpg",
-  imageSquare: "/team/aureol-donfack-fondateur-pdg-3m-group-sarl-600.webp",
-  alt: "Aureol DONFACK, fondateur et PDG de 3M Group SARL (3M TRAVEL AGENCY), au bureau avec logo 3M et mini drapeaux Canada et Schengen sur le bureau",
-  bio: "Aureol DONFACK dirige 3M Group SARL et 3M TRAVEL AGENCY. Il pilote l’accompagnement des projets de mobilité internationale : évaluation de profil, procédures, visas, eVisas et suivi documentaire, avec une validation humaine à chaque étape sensible.",
+  lead: "3M TRAVEL AGENCY est dirigée depuis Yaoundé par Aureol DONFACK (3M Group SARL) : préparer le dossier, expliquer les étapes, et accompagner jusqu’au dépôt — sans promettre la décision des autorités.",
 };
 
 const founderJsonLd = {
@@ -25,12 +20,6 @@ const founderJsonLd = {
   "@type": "Person",
   name: FOUNDER.name,
   jobTitle: `${FOUNDER.role} — ${FOUNDER.organization}`,
-  image: [
-    `https://www.3mtravelagency.com${FOUNDER.imageHd}`,
-    `https://www.3mtravelagency.com${FOUNDER.imageJpg}`,
-    `https://www.3mtravelagency.com${FOUNDER.imageWebp}`,
-    `https://www.3mtravelagency.com${FOUNDER.imageSquare}`,
-  ],
   worksFor: {
     "@type": "Organization",
     name: FOUNDER.organization,
@@ -38,158 +27,200 @@ const founderJsonLd = {
     url: "https://www.3mtravelagency.com",
   },
   url: "https://www.3mtravelagency.com/about",
-  description: FOUNDER.bio,
+  description: FOUNDER.lead,
 };
 
 const OPERATING_PRINCIPLES = [
   {
     icon: FileSearch,
     title: "Information expliquée",
-    text: "Les étapes, documents et frais applicables sont précisés pour votre situation avant toute décision de votre part.",
+    text: "Étapes, documents et frais applicables à votre situation, avant toute décision de votre part.",
   },
   {
     icon: UsersRound,
     title: "Suivi humain",
-    text: "Un conseiller traite le dossier et confirme les prochaines actions ; aucune décision administrative sensible n’est automatisée.",
+    text: "Un conseiller traite le dossier et confirme les prochaines actions. Rien de sensible n’est automatisé.",
   },
   {
     icon: ShieldCheck,
     title: "Données protégées",
-    text: "Les informations transmises sont utilisées pour le traitement demandé et les documents restent soumis à des contrôles d’accès.",
+    text: "Vos informations servent le traitement demandé ; les accès documents restent contrôlés.",
   },
   {
     icon: Globe2,
     title: "Sources à confirmer",
-    text: "Les exigences et délais peuvent évoluer. Les éléments déterminants sont vérifiés auprès des sources officielles concernées avant soumission.",
+    text: "Exigences et délais évoluent. Les points déterminants sont vérifiés auprès des sources officielles.",
   },
 ];
 
 const PROCESS = [
-  "Vous présentez votre projet par le formulaire gratuit ou à l’agence.",
-  "L’équipe confirme le périmètre, les documents attendus et les honoraires applicables à votre cas.",
-  "Vous choisissez de poursuivre uniquement après avoir reçu les informations nécessaires.",
-  "Les décisions de visa, permis, admission, assurance ou fournisseur restent prises par les autorités ou organismes compétents.",
+  "Vous présentez votre projet via l’évaluation gratuite ou à l’agence de Yaoundé.",
+  "L’équipe précise le périmètre, les pièces attendues et les honoraires applicables à votre cas.",
+  "Vous poursuivez uniquement après avoir reçu ces informations — sans pression.",
+  "Visa, admission, assurance ou prestataire : la décision finale reste celle des autorités ou organismes compétents.",
 ];
 
 export default function About() {
   const heroVisual = getServiceVisual("mobilite");
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     setPageSeo({
       title: "À propos | 3M TRAVEL AGENCY",
       description:
-        "3M TRAVEL AGENCY accompagne particuliers et entreprises dans la préparation de projets de mobilité internationale : procédures, visas, eVisas et suivi documentaire.",
+        "3M TRAVEL AGENCY à Yaoundé : accompagnement mobilité internationale — évaluation, visas, e-Visas et suivi documentaire, avec validation humaine.",
       image: heroVisual.desktop,
       imageAlt: heroVisual.alt,
     });
   }, [heroVisual.desktop, heroVisual.alt]);
 
+  const fade = {
+    hidden: { opacity: prefersReducedMotion ? 1 : 0, y: prefersReducedMotion ? 0 : 18 },
+    visible: (i = 0) => ({
+      opacity: 1,
+      y: 0,
+      transition: prefersReducedMotion
+        ? { duration: 0 }
+        : { duration: 0.65, delay: 0.08 + i * 0.12, ease: [0.22, 1, 0.36, 1] as const },
+    }),
+  };
+
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-slate-50">
+    <main className="min-h-screen bg-[#f3f7fd] text-slate-900">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(founderJsonLd) }} />
-      <section className="relative overflow-hidden px-4 pb-16 pt-20 text-white sm:px-6 lg:px-8">
+
+      {/* Hero plein écran — marque en signal principal, une phrase, un CTA */}
+      <section className="relative flex min-h-[88svh] items-end overflow-hidden px-4 pb-16 pt-28 text-white sm:items-center sm:px-6 sm:pb-24 sm:pt-24 lg:px-8">
         <PremiumCoverImage
           visual={heroVisual}
           priority
           className="absolute inset-0"
-          imgClassName="h-full w-full object-cover object-center opacity-90"
+          imgClassName="h-full w-full object-cover object-[42%_28%] sm:object-[48%_32%]"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/92 via-[#0a3264]/80 to-[#0e5b9f]/55" />
-        <div className="relative z-10 mx-auto max-w-5xl text-center">
-          <p className="text-sm font-black uppercase tracking-[.16em] text-blue-100">3M TRAVEL AGENCY</p>
-          <h1 className="mt-4 text-4xl font-black tracking-tight text-white sm:text-5xl">Qui sommes-nous&nbsp;?</h1>
-          <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-blue-50">
-            3M TRAVEL AGENCY accompagne les particuliers, entreprises et professionnels dans la préparation de projets de mobilité internationale&nbsp;: procédures, visas, eVisas, voyages, documents et services connexes.
+        <div className="absolute inset-0 bg-gradient-to-t from-[#061018]/90 via-[#0a2748]/48 to-[#061018]/25 sm:bg-gradient-to-r sm:from-[#061018]/88 sm:via-[#0a2748]/50 sm:to-[#061018]/15" />
+        <div className="relative z-10 mx-auto w-full max-w-5xl">
+          <motion.div initial="hidden" animate="visible" variants={fade} custom={0} className="max-w-xl sm:max-w-lg lg:max-w-xl">
+            <h1 className="text-3xl font-semibold tracking-tight text-white drop-shadow-sm sm:text-4xl md:text-5xl">
+              3M TRAVEL AGENCY
+            </h1>
+            <p className="mt-4 text-2xl font-semibold leading-tight tracking-tight text-amber-50 sm:text-3xl md:text-4xl">
+              Qui sommes-nous
+            </p>
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-blue-50/95 sm:text-lg">
+              Cabinet de mobilité internationale à Yaoundé : préparer, expliquer et suivre votre dossier jusqu’au dépôt — études, travail, visas et e-Visas.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <PublicEvaluationCTA className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-7 py-3.5 text-base font-bold text-slate-950 shadow-lg transition hover:bg-amber-400 sm:w-auto">
+                Évaluer mon profil gratuitement
+                <ArrowRight size={18} aria-hidden="true" />
+              </PublicEvaluationCTA>
+              <a
+                href="#notre-methode"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/35 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/18"
+              >
+                Notre méthode
+              </a>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Fondateur — mention discrète, sans portrait (réservé à /about uniquement) */}
+      <section
+        id="aureol-fondateur"
+        aria-labelledby="founder-heading"
+        className="scroll-mt-24 border-b border-slate-200 bg-white px-4 py-10 sm:px-6 lg:px-8"
+        data-testid="about-founder"
+      >
+        <div className="mx-auto max-w-3xl">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#165dff]">Direction</p>
+          <h2 id="founder-heading" className="mt-2 text-xl font-semibold tracking-tight text-[#061a36] sm:text-2xl">
+            {FOUNDER.name}
+          </h2>
+          <p className="mt-1 text-sm font-medium text-[#0a3264]">
+            {FOUNDER.role} · {FOUNDER.organization}
           </p>
-          <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-blue-100/90">
-            Nous présentons ici notre mode d’accompagnement, et non des résultats garantis. Chaque dossier est examiné selon sa situation, les exigences applicables et les décisions des organismes compétents.
+          <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">{FOUNDER.lead}</p>
+        </div>
+      </section>
+
+      {/* Une section = une intention */}
+      <section className="border-y border-slate-200/80 bg-[#061a36] px-4 py-14 text-white sm:px-6 sm:py-16 lg:px-8" aria-labelledby="about-mission-title">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 id="about-mission-title" className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            Ce que 3M prépare — ce que les autorités décident
+          </h2>
+          <p className="mt-4 text-base leading-7 text-blue-100/95 sm:text-lg">
+            Nous structurons l’accueil, l’évaluation et le suivi des dossiers. Nous n’inventons ni agrément, ni taux de réussite, ni partenariat institutionnel sans source vérifiable. La décision finale appartient toujours aux organismes compétents.
           </p>
         </div>
       </section>
 
-      <section className="bg-white px-4 py-16 sm:px-6 lg:px-8" aria-labelledby="founder-heading">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-          <figure className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 shadow-sm">
-            <picture>
-              <source srcSet={FOUNDER.imageWebp} type="image/webp" />
-              <img
-                src={FOUNDER.imageJpg}
-                alt={FOUNDER.alt}
-                title={`${FOUNDER.name} — ${FOUNDER.role}, ${FOUNDER.organization}`}
-                width={1152}
-                height={864}
-                loading="eager"
-                decoding="async"
-                className="aspect-[4/3] h-auto w-full object-cover object-center"
-              />
-            </picture>
-            <figcaption className="border-t border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-              <strong className="font-black text-slate-950">{FOUNDER.name}</strong>
-              {" — "}
-              {FOUNDER.role}, {FOUNDER.organization} ({FOUNDER.brand})
-            </figcaption>
-          </figure>
-          <div>
-            <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Direction</p>
-            <h2 id="founder-heading" className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
-              {FOUNDER.name}
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8" aria-labelledby="principles-heading">
+        <div className="mx-auto max-w-6xl">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#165dff]">Principes d’accompagnement</p>
+            <h2 id="principles-heading" className="mt-3 text-3xl font-semibold tracking-tight text-[#061a36]">
+              Quatre règles pour un dossier lisible
             </h2>
-            <p className="mt-2 text-lg font-bold text-blue-800">
-              {FOUNDER.role} · {FOUNDER.organization}
-            </p>
-            <p className="premium-copy mt-5 text-base leading-7">{FOUNDER.bio}</p>
-            <p className="mt-4 text-sm leading-6 text-slate-600">
-              Sous sa direction, 3M TRAVEL AGENCY structure l’accueil, l’évaluation et le suivi des dossiers depuis Yaoundé, avec un accent sur la clarté des honoraires, le consentement des candidats et la vérification humaine avant toute remise d’accès partenaires.
+            <p className="mt-3 text-base leading-7 text-slate-600">
+              Chaque parcours reste explicable : ce qui est préparé par 3M, ce qui vous revient, et ce qui dépend des autorités.
             </p>
           </div>
-        </div>
-      </section>
-
-      <section className="bg-slate-50 px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl">
-          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+          <ul className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {OPERATING_PRINCIPLES.map((item) => {
               const Icon = item.icon;
               return (
-                <Card key={item.title} className="border-slate-200 p-6 shadow-sm">
-                  <Icon className="h-7 w-7 text-blue-700" aria-hidden="true" />
-                  <h2 className="mt-4 text-lg font-black text-slate-950">{item.title}</h2>
-                  <p className="premium-copy mt-2 text-[0.95rem]">{item.text}</p>
-                </Card>
+                <li key={item.title} className="border-t border-[#d5a84b]/70 pt-5">
+                  <Icon className="h-6 w-6 text-[#165dff]" aria-hidden="true" />
+                  <h3 className="mt-4 text-lg font-semibold text-[#061a36]">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.text}</p>
+                </li>
               );
             })}
-          </div>
+          </ul>
         </div>
       </section>
 
-      <section className="px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1.1fr_.9fr] lg:items-start">
+      <section id="notre-methode" className="scroll-mt-24 bg-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8" aria-labelledby="process-heading">
+        <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
           <div>
-            <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Notre manière de travailler</p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Un accompagnement clair, étape par étape</h2>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#165dff]">Méthode</p>
+            <h2 id="process-heading" className="mt-3 text-3xl font-semibold tracking-tight text-[#061a36]">
+              Un accompagnement clair, étape par étape
+            </h2>
             <ol className="mt-8 space-y-4">
               {PROCESS.map((step, index) => (
-                <li key={step} className="flex gap-4 rounded-2xl border border-slate-200 bg-white p-4">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-700 text-xs font-black text-white">{index + 1}</span>
-                  <span className="text-sm leading-6 text-slate-700">{step}</span>
+                <li key={step} className="flex gap-4 border-b border-slate-100 pb-4 last:border-0">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#061a36] text-xs font-bold text-white">
+                    {index + 1}
+                  </span>
+                  <span className="pt-1 text-sm leading-6 text-slate-700 sm:text-base">{step}</span>
                 </li>
               ))}
             </ol>
           </div>
-          <Card className="border-blue-100 bg-blue-950 p-8 text-white shadow-xl">
-            <h2 className="text-2xl font-black">Engagement de transparence</h2>
+          <aside className="rounded-[1.5rem] bg-[#061a36] px-7 py-8 text-white shadow-[0_28px_50px_-30px_rgba(6,26,54,0.55)] sm:px-8">
+            <h3 className="text-xl font-semibold tracking-tight">Engagement de transparence</h3>
             <p className="mt-4 text-sm leading-7 text-blue-100">
-              Nous ne présentons pas de certification, agrément, partenariat institutionnel, volume de dossiers, note client ou taux de réussite sans source vérifiable et autorisation adaptée. Les autorités consulaires, établissements et fournisseurs conservent leurs décisions indépendantes.
+              Pas de certification, agrément ou note client inventés. Les autorités consulaires, établissements et fournisseurs conservent leurs décisions indépendantes.
             </p>
-            <div className="mt-6 border-t border-white/15 pt-6">
-              <p className="text-sm font-bold text-white">Ce qui est confirmé avant toute démarche</p>
-              <ul className="mt-3 space-y-2 text-sm text-blue-100">
-                <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />Le service demandé et les documents attendus.</li>
-                <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />Les honoraires d’agence, les frais tiers éventuels et leurs conditions.</li>
-                <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />Les limites de l’accompagnement et la responsabilité des autorités compétentes.</li>
-              </ul>
-            </div>
-          </Card>
+            <p className="mt-6 text-sm font-semibold text-amber-100">Confirmé avant toute démarche</p>
+            <ul className="mt-3 space-y-2.5 text-sm text-blue-50">
+              <li className="flex gap-2">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#d5a84b]" aria-hidden="true" />
+                Le service demandé et les documents attendus.
+              </li>
+              <li className="flex gap-2">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#d5a84b]" aria-hidden="true" />
+                Honoraires d’agence, frais tiers éventuels et conditions.
+              </li>
+              <li className="flex gap-2">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#d5a84b]" aria-hidden="true" />
+                Limites de l’accompagnement et rôle des autorités.
+              </li>
+            </ul>
+          </aside>
         </div>
       </section>
 
@@ -197,19 +228,25 @@ export default function About() {
         initialFilter="all"
         collapsedCount={3}
         hideWhenEmpty
-        className="bg-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
+        className="bg-[#f3f7fd] px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
         titleFr="Des accompagnements concrets"
         titleEn="Concrete support outcomes"
         leadFr="Extraits anonymisés de visas et autorisations obtenus par des candidats suivis par 3M TRAVEL AGENCY."
         leadEn="Redacted excerpts of visas and authorisations obtained by candidates supported by 3M TRAVEL AGENCY."
       />
 
-      <section className="bg-slate-950 px-4 py-16 text-center sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-black text-white">Parlons de votre projet</h2>
-        <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-slate-300">Commencez par une évaluation gratuite. Elle n’engage aucune procédure et permet de recevoir une première orientation humaine.</p>
-        <PublicEvaluationCTA className="mt-7 inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-6 py-3 text-sm font-black text-blue-900 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950">
-          Commencer l’évaluation gratuite
-        </PublicEvaluationCTA>
+      <section className="relative overflow-hidden px-4 py-16 text-center sm:px-6 sm:py-20 lg:px-8">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#061a36] via-[#0a3264] to-[#165dff]" aria-hidden="true" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_20%,rgba(213,168,75,0.22),transparent_50%)]" aria-hidden="true" />
+        <div className="relative z-10 mx-auto max-w-2xl">
+          <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">Parlons de votre projet</h2>
+          <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-blue-100">
+            Commencez par une évaluation gratuite. Elle n’engage aucune procédure et permet une première orientation humaine par un conseiller 3M.
+          </p>
+          <PublicEvaluationCTA className="mt-8 inline-flex min-h-12 items-center justify-center rounded-xl bg-amber-500 px-7 py-3.5 text-base font-bold text-slate-950 shadow-lg transition hover:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#061a36]">
+            Commencer l’évaluation gratuite
+          </PublicEvaluationCTA>
+        </div>
       </section>
     </main>
   );

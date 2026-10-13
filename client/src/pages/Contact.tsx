@@ -119,36 +119,44 @@ export default function Contact() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
 
-      <section className="relative overflow-hidden px-4 pb-16 pt-20 text-white sm:px-6 sm:pb-20 lg:px-8">
+      <section className="relative flex min-h-[88svh] items-end overflow-hidden px-4 pb-16 pt-28 text-white sm:items-center sm:px-6 sm:pb-24 sm:pt-24 lg:px-8">
         <PremiumCoverImage
           visual={heroVisual}
           priority
           className="absolute inset-0"
-          imgClassName="h-full w-full object-cover object-center opacity-90"
+          imgClassName="h-full w-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/92 via-[#0a3264]/80 to-[#0e5b9f]/55" />
-        <div className="relative z-10 mx-auto max-w-6xl">
+        <div className="absolute inset-0 bg-gradient-to-t from-[#061018]/90 via-[#0a2748]/48 to-[#061018]/25 sm:bg-gradient-to-r sm:from-[#061018]/88 sm:via-[#0a2748]/50 sm:to-[#061018]/15" />
+        <div className="relative z-10 mx-auto w-full max-w-5xl">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center"
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="max-w-xl sm:max-w-lg lg:max-w-xl"
           >
-            <p className="mb-3 text-sm font-black uppercase tracking-[0.16em] text-blue-100">3M TRAVEL AGENCY</p>
-            <h1 className="premium-section-title mb-6 text-4xl text-white sm:text-5xl lg:text-6xl">
-              Nous contacter
+            <h1 className="text-3xl font-semibold tracking-tight text-white drop-shadow-sm sm:text-4xl md:text-5xl">
+              3M TRAVEL AGENCY
             </h1>
-
-            <p className="mx-auto mb-8 max-w-2xl text-center text-lg leading-8 text-blue-50 sm:text-xl">
-              Notre équipe est à votre disposition pour répondre à vos questions et vous accompagner dans vos démarches de visas, eVisas, légalisations, traductions et assurances voyage.
+            <p className="mt-4 text-2xl font-semibold leading-tight tracking-tight text-amber-50 sm:text-3xl md:text-4xl">
+              Nous contacter à Yaoundé
             </p>
-
-            <a
-              href="/consultation"
-              className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3 font-bold text-blue-950 transition-colors hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            >
-              Prendre rendez-vous
-            </a>
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-blue-50/95 sm:text-lg">
+              Visas, e-Visas, légalisations, traductions et assurances : un conseiller vous répond depuis le bureau de Yaoundé — ou à distance.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <a
+                href="/consultation"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-amber-500 px-7 py-3.5 text-base font-bold text-slate-950 shadow-lg transition hover:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200"
+              >
+                Prendre rendez-vous
+              </a>
+              <a
+                href="#carte-yaounde"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/35 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/18"
+              >
+                Voir le bureau
+              </a>
+            </div>
           </motion.div>
         </div>
       </section>

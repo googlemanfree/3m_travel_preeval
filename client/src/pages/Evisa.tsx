@@ -75,19 +75,19 @@ const destinations: Destination[] = [
 ];
 
 const statusConfig: Record<Status, { label: string; color: string; ring: string; tooltip?: string }> = {
-  evisa: { label: '💻 eVisa disponible', color: 'bg-blue-100 text-blue-800', ring: 'border-blue-200' },
-  arrivee: { label: "🛬 Visa à l'arrivée", color: 'bg-amber-100 text-amber-800', ring: 'border-amber-200' },
-  consulaire: { label: '📋 Visa consulaire requis', color: 'bg-gray-200 text-gray-700', ring: 'border-gray-300' },
-  sans_visa: { label: '✅ Sans visa', color: 'bg-green-100 text-green-800', ring: 'border-green-200' },
-  conditionnel: { label: '⚠️ eVisa sous condition', color: 'bg-purple-100 text-purple-800', ring: 'border-purple-200', tooltip: 'eVisa disponible uniquement si vous détenez déjà un visa valide (Schengen, USA, UK, Canada, Irlande ou équivalent)' },
+  evisa: { label: 'eVisa disponible', color: 'bg-blue-100 text-blue-800', ring: 'border-blue-200' },
+  arrivee: { label: "Visa à l'arrivée", color: 'bg-amber-100 text-amber-800', ring: 'border-amber-200' },
+  consulaire: { label: 'Visa consulaire requis', color: 'bg-gray-200 text-gray-700', ring: 'border-gray-300' },
+  sans_visa: { label: 'Sans visa', color: 'bg-green-100 text-green-800', ring: 'border-green-200' },
+  conditionnel: { label: 'eVisa sous condition', color: 'bg-purple-100 text-purple-800', ring: 'border-purple-200', tooltip: 'eVisa disponible uniquement si vous détenez déjà un visa valide (Schengen, USA, UK, Canada, Irlande ou équivalent)' },
 };
 
 const continentLabels: Record<Continent, string> = {
-  tous: '🌐 Tous',
-  afrique: '🌍 Afrique',
-  asie: '🌏 Asie & Moyen-Orient',
-  ameriques: '🌎 Amériques',
-  europe: '🇪🇺 Europe & Océanie',
+  tous: 'Tous',
+  afrique: 'Afrique',
+  asie: 'Asie & Moyen-Orient',
+  ameriques: 'Amériques',
+  europe: 'Europe & Océanie',
 };
 
 export default function Evisa() {
@@ -220,86 +220,99 @@ export default function Evisa() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <section className="relative overflow-hidden px-4 pb-16 pt-20 text-white sm:px-6 sm:pb-20 lg:px-8">
+      <section className="relative flex min-h-[88svh] items-end overflow-hidden px-4 pb-16 pt-28 text-white sm:items-center sm:px-6 sm:pb-24 sm:pt-24 lg:px-8">
         <PremiumCoverImage
           visual={heroVisual}
           priority
           className="absolute inset-0"
-          imgClassName="h-full w-full object-cover object-center opacity-90"
+          imgClassName="h-full w-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/92 via-[#0a3264]/80 to-[#0e5b9f]/55" />
-        <div className="relative z-10 mx-auto max-w-6xl">
+        <div className="absolute inset-0 bg-gradient-to-t from-[#061018]/90 via-[#0a2748]/48 to-[#061018]/25 sm:bg-gradient-to-r sm:from-[#061018]/88 sm:via-[#0a2748]/50 sm:to-[#061018]/15" />
+        <div className="relative z-10 mx-auto w-full max-w-5xl">
           <motion.div
             initial={reduceMotion ? false : { opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: reduceMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
-            className="text-center"
+            transition={{ duration: reduceMotion ? 0 : 0.55, ease: [0.22, 1, 0.36, 1] }}
+            className="max-w-xl sm:max-w-lg lg:max-w-xl"
           >
-            <p className="mb-4 text-sm font-black uppercase tracking-[0.16em] text-blue-100">
-              Annuaire e-Visa · 3M TRAVEL AGENCY
-            </p>
-
-            <h1 className="mb-6 text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
-              Annuaire des e-Visas & autorisations de voyage
+            <h1 className="text-3xl font-semibold tracking-tight text-white drop-shadow-sm sm:text-4xl md:text-5xl">
+              3M TRAVEL AGENCY
             </h1>
-
-            <p className="mx-auto mb-4 max-w-2xl text-center text-lg leading-8 text-blue-50 sm:text-xl">
-              Vérifiez ce qu’il vous faut réellement pour voyager avec un passeport camerounais — eVisa, visa à l’arrivée ou visa consulaire classique — et lancez votre démarche avec notre accompagnement.
+            <p className="mt-4 text-2xl font-semibold leading-tight tracking-tight text-amber-50 sm:text-3xl md:text-4xl">
+              e-Visas & autorisations de voyage
             </p>
-            <p className="mx-auto mb-10 max-w-2xl text-center text-base leading-7 text-blue-100/90">
-              Informations vérifiées pour les titulaires d’un passeport camerounais. Les règles évoluent : nous confirmons toujours votre cas exact avant toute soumission.
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-blue-50/95 sm:text-lg">
+              Pour un passeport camerounais : eVisa, visa à l’arrivée ou consulaire. Nous confirmons votre cas avant toute soumission.
             </p>
-
-            <div className="relative max-w-xl mx-auto mb-6">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tapez le nom d'un pays (ex: Dubaï, Inde, Kenya, Canada...)"
-                maxLength={200}
-                className="pl-12 py-6 text-base rounded-full border-0 bg-white shadow-md text-slate-900"
-                aria-label="Rechercher un pays"
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch('')}
-                  type="button"
-                  aria-label="Effacer la recherche"
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  <XCircle size={20} />
-                </button>
-              )}
-            </div>
-
-            <div className="flex flex-wrap justify-center gap-2">
-              {(Object.keys(continentLabels) as Continent[]).map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setContinent(c)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
-                    continent === c
-                      ? 'bg-white text-blue-950'
-                      : 'bg-white/15 text-blue-50 ring-1 ring-white/25 hover:bg-white/25'
-                  }`}
-                  aria-pressed={continent === c}
-                >
-                  {continentLabels[c]}
-                </button>
-              ))}
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <a
+                href="#annuaire-evisa"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-amber-500 px-7 py-3.5 text-base font-bold text-slate-950 shadow-lg transition hover:bg-amber-400"
+              >
+                Consulter l’annuaire
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </a>
+              <Link
+                href="/evaluation"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/35 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/18"
+              >
+                Évaluer mon profil
+              </Link>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Legend */}
-      <section className="px-4 sm:px-6 lg:px-8 mb-8">
-        <div className="max-w-6xl mx-auto flex flex-wrap gap-3 justify-center text-sm">
-          {(Object.keys(statusConfig) as Status[]).map((s) => (
-            <span key={s} className={`px-3 py-1 rounded-full font-semibold ${statusConfig[s].color}`}>
-              {statusConfig[s].label}
-            </span>
-          ))}
+      <section id="annuaire-evisa" className="scroll-mt-24 border-b border-slate-200 bg-white px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">Rechercher une destination</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+            Filtrez par continent ou tapez un pays. Les règles évoluent : un conseiller confirme toujours avant dépôt.
+          </p>
+          <div className="relative mx-auto mt-6 max-w-xl">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Tapez le nom d'un pays (ex: Dubaï, Inde, Kenya, Canada...)"
+              maxLength={200}
+              className="rounded-xl border-slate-200 bg-white py-6 pl-12 text-base text-slate-900 shadow-sm"
+              aria-label="Rechercher un pays"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                type="button"
+                aria-label="Effacer la recherche"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <XCircle size={20} />
+              </button>
+            )}
+          </div>
+          <div className="mt-5 flex flex-wrap gap-2">
+            {(Object.keys(continentLabels) as Continent[]).map((c) => (
+              <button
+                key={c}
+                onClick={() => setContinent(c)}
+                className={`rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+                  continent === c
+                    ? 'bg-[#061a36] text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+                aria-pressed={continent === c}
+              >
+                {continentLabels[c]}
+              </button>
+            ))}
+          </div>
+          <div className="mt-6 flex flex-wrap gap-2 text-sm">
+            {(Object.keys(statusConfig) as Status[]).map((s) => (
+              <span key={s} className={`rounded-lg px-3 py-1 font-semibold ${statusConfig[s].color}`}>
+                {statusConfig[s].label}
+              </span>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -335,22 +348,21 @@ export default function Evisa() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: reduceMotion ? 0 : Math.min(index * 0.03, 0.24), duration: 0.35 }}
                   >
-                    <Card className={`p-6 hover:shadow-lg transition-all duration-300 h-full flex flex-col border ${statusConfig[d.status].ring}`}>
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="text-4xl">{d.emoji}</div>
-                        <div className="relative group">
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap cursor-help ${statusConfig[d.status].color}`}>
+                    <Card className={`flex h-full flex-col border p-6 transition-all duration-300 hover:shadow-lg ${statusConfig[d.status].ring}`}>
+                      <div className="mb-3 flex items-start justify-between gap-3">
+                        <h3 className="text-lg font-semibold tracking-tight text-slate-950">{d.country}</h3>
+                        <div className="relative group shrink-0">
+                          <span className={`cursor-help whitespace-nowrap rounded-lg px-2 py-1 text-xs font-semibold ${statusConfig[d.status].color}`}>
                             {statusConfig[d.status].label}
                           </span>
                           {statusConfig[d.status].tooltip && (
-                            <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-lg z-10">
+                            <div className="pointer-events-none absolute bottom-full right-0 z-10 mb-2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-xs text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100">
                               {statusConfig[d.status].tooltip}
-                              <div className="absolute top-full right-2 w-2 h-2 bg-gray-900 transform rotate-45"></div>
+                              <div className="absolute right-2 top-full h-2 w-2 rotate-45 transform bg-gray-900" />
                             </div>
                           )}
                         </div>
                       </div>
-                      <h3 className="mb-2 text-lg font-black text-slate-950">{d.country}</h3>
                       <p className="premium-copy mb-4 flex-1 text-[0.95rem]">{d.detail}</p>
                       {ctaFor(d)}
                     </Card>

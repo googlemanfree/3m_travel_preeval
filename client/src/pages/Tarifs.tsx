@@ -61,20 +61,29 @@ export default function Tarifs() {
   return (
     <TooltipProvider delayDuration={180}>
     <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-slate-50">
-      <section className="relative overflow-hidden px-4 pb-14 pt-16 text-white sm:px-6 lg:px-8">
+      <section className="relative flex min-h-[88svh] items-end overflow-hidden px-4 pb-16 pt-28 text-white sm:items-center sm:px-6 sm:pb-24 sm:pt-24 lg:px-8">
         <PremiumCoverImage
           visual={heroVisual}
           priority
           className="absolute inset-0"
-          imgClassName="h-full w-full object-cover object-center opacity-90"
+          imgClassName="h-full w-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/92 via-[#0a3264]/80 to-[#0e5b9f]/55" />
-        <div className="relative z-10 mx-auto max-w-3xl text-center">
-          <p className="text-sm font-black uppercase tracking-[.16em] text-blue-100">3M TRAVEL AGENCY · Information tarifaire</p>
-          <h1 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl">Comprendre les tarifs avant de vous engager</h1>
-          <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-blue-50">
-            Les prestations, frais tiers et modalités applicables dépendent du service choisi et de votre situation. Une confirmation écrite est donnée avant tout règlement.
-          </p>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#061018]/90 via-[#0a2748]/48 to-[#061018]/25 sm:bg-gradient-to-r sm:from-[#061018]/88 sm:via-[#0a2748]/50 sm:to-[#061018]/15" />
+        <div className="relative z-10 mx-auto w-full max-w-5xl">
+          <div className="max-w-xl sm:max-w-lg lg:max-w-xl">
+            <h1 className="text-3xl font-semibold tracking-tight text-white drop-shadow-sm sm:text-4xl md:text-5xl">
+              3M TRAVEL AGENCY
+            </h1>
+            <p className="mt-4 text-2xl font-semibold leading-tight tracking-tight text-amber-50 sm:text-3xl md:text-4xl">
+              Comprendre les tarifs avant de vous engager
+            </p>
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-blue-50/95 sm:text-lg">
+              Honoraires d’agence, frais tiers et modalités : tout est confirmé par écrit selon votre situation, avant tout règlement.
+            </p>
+            <PublicEvaluationCTA className="mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-amber-500 px-7 py-3.5 text-base font-bold text-slate-950 shadow-lg transition hover:bg-amber-400">
+              Demander une orientation
+            </PublicEvaluationCTA>
+          </div>
         </div>
       </section>
 
