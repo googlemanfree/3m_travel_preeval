@@ -118,5 +118,22 @@ describe("pré-rendu public indexable", () => {
     expect(about.html).toContain('"@type":"Person"');
     expect(about.html).toContain('"@type":"AboutPage"');
     expect(about.html).toContain("fondateur");
+    expect(about.html).toContain("<h1>Aureol DONFACK, fondateur et PDG de 3M Group SARL</h1>");
+    expect(about.html).toContain('"legalName":"3M Group SARL"');
+    expect(about.html).toContain('"givenName":"Aureol"');
+    expect(about.html).toContain('"familyName":"DONFACK"');
+  });
+
+  it("l’accueil rattache Aureol DONFACK à 3M Group SARL dans le JSON-LD", () => {
+    const home = composePublicPrerender(template, "/");
+    const jsonLd = home.html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1] ?? "";
+    const graph = (JSON.parse(jsonLd) as { "@graph": Array<Record<string, unknown>> })["@graph"];
+    const organization = graph.find((node) => node["@type"] === "Organization") as Record<string, unknown>;
+    const person = graph.find((node) => node["@type"] === "Person") as Record<string, unknown>;
+    expect(organization?.legalName).toBe("3M Group SARL");
+    expect(JSON.stringify(organization?.alternateName)).toContain("3M Group SARL");
+    expect(person?.name).toBe("Aureol DONFACK");
+    expect(person?.jobTitle).toContain("3M Group SARL");
+    expect(JSON.stringify(person)).toContain("about#aureol-donfack");
   });
 });

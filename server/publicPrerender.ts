@@ -3,7 +3,12 @@ import { PUBLIC_FAQ_ITEMS } from "@shared/publicFaq";
 import { getProcedureDisplayTitle, getProcedureFaqItems } from "@shared/procedureSeo";
 import { getPublicDestinationDetail, PUBLIC_DESTINATION_DETAILS } from "../client/src/lib/publicDestinationCatalog";
 import { getInstitutionalProcedureSource } from "../client/src/data/institutionalProcedureSources";
-import { BRAND_PUBLIC_NAME, COMPANY_PROFILE } from "../client/src/lib/companyContacts";
+import {
+  BRAND_PUBLIC_NAME,
+  COMPANY_FOUNDER,
+  COMPANY_PROFILE,
+  GROUP_LEGAL_NAME,
+} from "../client/src/lib/companyContacts";
 import { OFFICIAL_CONSULAR_PORTALS } from "../client/src/data/officialConsularPortals";
 import { evisasDatabaseComplete } from "../client/src/data/evisasDatabaseComplete";
 import { getStudyDestinationArticle, studyDestinationArticles } from "../client/src/data/studyDestinationArticles";
@@ -20,8 +25,16 @@ const LOCAL_BUSINESS_STRUCTURED_DATA = {
   "@type": "LocalBusiness",
   "@id": `${OFFICIAL_SITE_ORIGIN}/#localbusiness`,
   name: COMPANY_PROFILE.legalName,
+  legalName: GROUP_LEGAL_NAME,
+  alternateName: [BRAND_PUBLIC_NAME, GROUP_LEGAL_NAME],
   url: COMPANY_PROFILE.website,
   email: COMPANY_PROFILE.publicEmail,
+  founder: {
+    "@type": "Person",
+    "@id": `${OFFICIAL_SITE_ORIGIN}/about#aureol-donfack`,
+    name: COMPANY_FOUNDER.name,
+    jobTitle: `${COMPANY_FOUNDER.jobTitle} — ${GROUP_LEGAL_NAME}`,
+  },
   telephone: [
     COMPANY_PROFILE.offices.cameroon.phoneDisplay,
     COMPANY_PROFILE.offices.cameroon.whatsappDisplay,
@@ -69,21 +82,29 @@ const HOME_TITLE = `${BRAND_PUBLIC_NAME} | Voyages, Visas, Études & Mobilité I
 const HOME_DESCRIPTION = `${BRAND_PUBLIC_NAME} accompagne voyages, études, visas, immigration, billets d'avion internationaux et démarches, à Yaoundé et Ottawa.`;
 /** Logo stable (image carrée du site) : le logo des données structurées ne doit pas être l'image de partage, qui change à chaque page. */
 const LOGO_URL = `${OFFICIAL_SITE_ORIGIN}/icon-512.png`;
-/** Portrait SEO du fondateur — Meta / Google doivent identifier Aureol DONFACK sur /about. */
+/** Portrait SEO du fondateur — Meta / Google doivent identifier Aureol DONFACK ↔ 3M Group SARL. */
 const FOUNDER = {
-  name: "Aureol DONFACK",
-  jobTitle: "Fondateur & PDG — 3M Group SARL",
-  organization: "3M Group SARL",
+  name: COMPANY_FOUNDER.name,
+  givenName: COMPANY_FOUNDER.givenName,
+  familyName: COMPANY_FOUNDER.familyName,
+  jobTitle: `${COMPANY_FOUNDER.jobTitle} — ${GROUP_LEGAL_NAME}`,
+  organization: GROUP_LEGAL_NAME,
   brand: BRAND_PUBLIC_NAME,
-  imageHd: `${ORIGIN}/team/aureol-donfack-fondateur-pdg-3m-group-sarl-hd.jpg`,
-  imageJpg: `${ORIGIN}/team/aureol-donfack-fondateur-pdg-3m-group-sarl.jpg`,
-  imageWebp: `${ORIGIN}/team/aureol-donfack-fondateur-pdg-3m-group-sarl.webp`,
-  imageSquare: `${ORIGIN}/team/aureol-donfack-fondateur-pdg-3m-group-sarl-600.webp`,
-  imageAlt: "Aureol DONFACK, fondateur et PDG de 3M Group SARL (3M TRAVEL AGENCY)",
-  aboutUrl: `${ORIGIN}/about`,
-  description:
-    "Aureol DONFACK, fondateur et PDG de 3M Group SARL (3M TRAVEL AGENCY), pilote l’accompagnement des projets de mobilité internationale à Yaoundé.",
+  legalOperatingName: COMPANY_PROFILE.legalName,
+  imageHd: `${ORIGIN}${COMPANY_FOUNDER.imageHd}`,
+  imageJpg: `${ORIGIN}${COMPANY_FOUNDER.imageJpg}`,
+  imageWebp: `${ORIGIN}${COMPANY_FOUNDER.imageWebp}`,
+  imageSquare: `${ORIGIN}${COMPANY_FOUNDER.imageSquare}`,
+  imageAlt: COMPANY_FOUNDER.imageAlt,
+  aboutUrl: `${ORIGIN}${COMPANY_FOUNDER.aboutPath}`,
+  description: COMPANY_FOUNDER.description,
 } as const;
+
+const ORGANIZATION_ALTERNATE_NAMES = [
+  GROUP_LEGAL_NAME,
+  COMPANY_PROFILE.legalName,
+  BRAND_PUBLIC_NAME,
+] as const;
 const socialImageFor = (title: string | undefined, path: string) => `${ORIGIN}/api/og?title=${encodeURIComponent(title?.trim() || SITE)}&path=${encodeURIComponent(path)}`;
 
 type PublicMeta = {
@@ -227,7 +248,22 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/avis": { title: `Avis et retours | ${SITE}`, description: "Retours publiés après modération et informations de transparence de 3M TRAVEL AGENCY.", heading: "Avis et transparence", lead: "Les retours sont traités avec modération ; aucun résultat individuel n’est garanti." },
   "/contact": { title: `Contactez-nous | ${SITE}`, description: "Contactez 3M TRAVEL AGENCY à Yaoundé ou Ottawa pour une orientation sur votre projet de mobilité internationale.", keywords: ["contact 3M TRAVEL AGENCY", "agence visa Yaoundé", "agence voyage Cameroun", "mobilité internationale", "Ottawa"], heading: "Contacter 3M TRAVEL AGENCY", lead: "Nos équipes répondent aux demandes d’orientation et précisent les étapes à confirmer." },
   "/consultation": { title: `Prendre rendez-vous | ${SITE}`, description: "Demandez une consultation avec un conseiller 3M TRAVEL AGENCY : indiquez votre projet et votre pays cible, l’équipe vous recontacte sous 24 à 48 h ouvrées.", keywords: ["rendez-vous conseiller", "consultation visa", "consultation immigration", "agence visa Yaoundé", "3M TRAVEL AGENCY"], heading: "Prendre rendez-vous avec un conseiller", lead: "Indiquez votre projet et votre pays de destination ; un conseiller vous recontacte pour cadrer votre démarche, sans engagement ni promesse de résultat." },
-  "/about": { title: `Aureol DONFACK, fondateur PDG 3M Group SARL | Qui sommes-nous | ${SITE}`, description: "Aureol DONFACK, fondateur et PDG de 3M Group SARL (3M TRAVEL AGENCY) : présentation de l’agence, engagements de transparence et accompagnement mobilité internationale à Yaoundé.", keywords: ["Aureol DONFACK", "fondateur PDG", "3M Group SARL", "3M TRAVEL AGENCY", "agence voyage Yaoundé"], heading: "Une agence de mobilité internationale documentée", lead: "Dirigée par Aureol DONFACK, fondateur et PDG de 3M Group SARL. Notre rôle est d’accompagner la préparation administrative ; les décisions externes restent indépendantes." },
+  "/about": {
+    title: `Aureol DONFACK, fondateur PDG 3M Group SARL | ${SITE}`,
+    description:
+      "Aureol DONFACK, fondateur et PDG de 3M Group SARL (3M TRAVEL AGENCY) : direction de l’agence, engagements de transparence et accompagnement mobilité internationale à Yaoundé.",
+    keywords: [
+      "Aureol DONFACK",
+      "Aureol DONFACK fondateur",
+      "fondateur 3M Group SARL",
+      "PDG 3M Group SARL",
+      "3M Group SARL",
+      "3M TRAVEL AGENCY",
+      "agence voyage Yaoundé",
+    ],
+    heading: "Aureol DONFACK, fondateur et PDG de 3M Group SARL",
+    lead: "Aureol DONFACK dirige 3M Group SARL et 3M TRAVEL AGENCY. Notre rôle est d’accompagner la préparation administrative des projets de mobilité internationale ; les décisions externes restent indépendantes.",
+  },
   "/politique-confidentialite": { title: `Politique de confidentialité | ${SITE}`, description: "Informations sur le traitement des données et documents confiés à 3M TRAVEL AGENCY.", heading: "Confidentialité et données", lead: "Les données sensibles sont limitées aux finalités de traitement et aux accès autorisés." },
   "/conditions-utilisation": { title: `Conditions d’utilisation | ${SITE}`, description: "Conditions d’utilisation des services et informations de responsabilité.", heading: "Conditions d’utilisation", lead: "Les services d’accompagnement ne remplacent ni les autorités compétentes ni les décisions de partenaires externes." },
   "/accessibilite": { title: `Accessibilité | ${SITE}`, description: "Engagements et informations d’accessibilité du site 3M TRAVEL AGENCY : ce qui est déjà en place et comment signaler une difficulté.", heading: "Accessibilité", lead: "Nous cherchons à rendre le site utilisable par le plus grand nombre ; signalez-nous toute difficulté rencontrée." },
@@ -568,29 +604,74 @@ export function composePublicPrerender(template: string, url: string) {
     "@type": "Person",
     "@id": `${ORIGIN}/about#aureol-donfack`,
     name: FOUNDER.name,
+    givenName: FOUNDER.givenName,
+    familyName: FOUNDER.familyName,
     jobTitle: FOUNDER.jobTitle,
     image: [FOUNDER.imageHd, FOUNDER.imageJpg, FOUNDER.imageWebp, FOUNDER.imageSquare],
     url: FOUNDER.aboutUrl,
+    mainEntityOfPage: FOUNDER.aboutUrl,
     description: FOUNDER.description,
+    knowsAbout: [
+      "mobilité internationale",
+      "visas",
+      "immigration",
+      GROUP_LEGAL_NAME,
+      BRAND_PUBLIC_NAME,
+    ],
     worksFor: {
       "@type": "Organization",
       "@id": `${ORIGIN}/#organization`,
       name: FOUNDER.organization,
-      alternateName: FOUNDER.brand,
+      legalName: FOUNDER.organization,
+      alternateName: [FOUNDER.brand, FOUNDER.legalOperatingName],
       url: ORIGIN,
+    },
+    affiliation: {
+      "@type": "Organization",
+      "@id": `${ORIGIN}/#organization`,
+      name: FOUNDER.organization,
+    },
+  };
+  const organizationNode = {
+    "@type": "Organization",
+    "@id": `${ORIGIN}/#organization`,
+    name: BRAND_PUBLIC_NAME,
+    legalName: GROUP_LEGAL_NAME,
+    alternateName: [...ORGANIZATION_ALTERNATE_NAMES],
+    url: ORIGIN,
+    logo: { "@type": "ImageObject", url: LOGO_URL, width: 512, height: 512 },
+    image: LOGO_URL,
+    description: current.description,
+    identifier: [
+      COMPANY_PROFILE.legalIdentifiers.registration,
+      COMPANY_PROFILE.legalIdentifiers.taxpayerId,
+    ],
+    sameAs: ["https://www.facebook.com/3mtravelcm"],
+    founder: { "@id": `${ORIGIN}/about#aureol-donfack` },
+    employee: { "@id": `${ORIGIN}/about#aureol-donfack` },
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Yaoundé",
+      addressCountry: "CM",
     },
   };
   const structuredData = path === "/" || path === "/en"
     ? { "@context": "https://schema.org", "@graph": [
-        { "@type": "Organization", "@id": `${ORIGIN}/#organization`, name: "3M TRAVEL AGENCY", alternateName: "3M TRAVEL AGENCY", url: ORIGIN, logo: { "@type": "ImageObject", url: LOGO_URL, width: 512, height: 512 }, image: LOGO_URL, description: current.description, identifier: ["RC/YAO/2019/A/2567", "M112417203369H"], sameAs: ["https://www.facebook.com/3mtravelcm"], founder: { "@id": `${ORIGIN}/about#aureol-donfack` }, employee: { "@id": `${ORIGIN}/about#aureol-donfack` } },
-        { "@type": "Person", "@id": `${ORIGIN}/about#aureol-donfack`, name: FOUNDER.name, jobTitle: FOUNDER.jobTitle, url: FOUNDER.aboutUrl, image: FOUNDER.imageHd, worksFor: { "@id": `${ORIGIN}/#organization` } },
-        { "@type": "WebSite", "@id": `${ORIGIN}/#website`, name: "3M TRAVEL AGENCY", alternateName: "3M TRAVEL AGENCY", url: ORIGIN, description: current.description, publisher: { "@id": `${ORIGIN}/#organization` }, inLanguage: isEnPath ? "en" : "fr-FR" },
+        organizationNode,
+        founderPerson,
+        { "@type": "WebSite", "@id": `${ORIGIN}/#website`, name: BRAND_PUBLIC_NAME, alternateName: [...ORGANIZATION_ALTERNATE_NAMES], url: ORIGIN, description: current.description, publisher: { "@id": `${ORIGIN}/#organization` }, inLanguage: isEnPath ? "en" : "fr-FR" },
       ] }
     : isAboutPage
       ? { "@context": "https://schema.org", "@graph": [
           founderPerson,
-          { "@type": "Organization", "@id": `${ORIGIN}/#organization`, name: FOUNDER.organization, alternateName: FOUNDER.brand, url: ORIGIN, logo: { "@type": "ImageObject", url: LOGO_URL, width: 512, height: 512 }, founder: { "@id": `${ORIGIN}/about#aureol-donfack` }, employee: { "@id": `${ORIGIN}/about#aureol-donfack` } },
-          { "@type": "AboutPage", "@id": `${ORIGIN}/about#webpage`, url: FOUNDER.aboutUrl, name: current.title, description: current.description, mainEntity: { "@id": `${ORIGIN}/about#aureol-donfack` }, isPartOf: { "@id": `${ORIGIN}/#website` } },
+          {
+            ...organizationNode,
+            name: GROUP_LEGAL_NAME,
+            legalName: GROUP_LEGAL_NAME,
+            alternateName: [BRAND_PUBLIC_NAME, COMPANY_PROFILE.legalName],
+            description: FOUNDER.description,
+          },
+          { "@type": "AboutPage", "@id": `${ORIGIN}/about#webpage`, url: FOUNDER.aboutUrl, name: current.title, description: current.description, mainEntity: { "@id": `${ORIGIN}/about#aureol-donfack` }, about: { "@id": `${ORIGIN}/about#aureol-donfack` }, isPartOf: { "@id": `${ORIGIN}/#website` } },
           breadcrumb,
         ] }
     : path === "/procedures"

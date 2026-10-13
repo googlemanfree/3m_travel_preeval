@@ -30,4 +30,12 @@ describe("accueil : bloc Pourquoi 3M basé sur des faits vérifiables", () => {
     expect(home).not.toContain("98%");
     expect(home).toContain("la décision finale reste celle des autorités compétentes");
   });
+
+  it("cite Aureol DONFACK comme fondateur de 3M Group SARL avec lien About", () => {
+    expect(home).toContain("COMPANY_FOUNDER");
+    expect(home).toContain("GROUP_LEGAL_NAME");
+    expect(home).toContain("/about#aureol-donfack");
+    expect(company).toContain('name: "Aureol DONFACK"');
+    expect(company).toContain('GROUP_LEGAL_NAME = "3M Group SARL"');
+  });
 });

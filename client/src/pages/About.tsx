@@ -6,39 +6,63 @@ import { PremiumCoverImage } from "@/components/PremiumCoverImage";
 import ProofGallerySection from "@/components/ProofGallerySection";
 import { getServiceVisual } from "@/data/premiumVisuals";
 import { setPageSeo } from "@/lib/pageSeo";
+import {
+  BRAND_PUBLIC_NAME,
+  COMPANY_FOUNDER,
+  COMPANY_PROFILE,
+  GROUP_LEGAL_NAME,
+} from "@/lib/companyContacts";
 
-const FOUNDER = {
-  name: "Aureol DONFACK",
-  role: "Fondateur & PDG",
-  organization: "3M Group SARL",
-  brand: "3M TRAVEL AGENCY",
-  imageWebp: "/team/aureol-donfack-fondateur-pdg-3m-group-sarl.webp",
-  imageJpg: "/team/aureol-donfack-fondateur-pdg-3m-group-sarl.jpg",
-  imageHd: "/team/aureol-donfack-fondateur-pdg-3m-group-sarl-hd.jpg",
-  imageSquare: "/team/aureol-donfack-fondateur-pdg-3m-group-sarl-600.webp",
-  alt: "Aureol DONFACK, fondateur et PDG de 3M Group SARL (3M TRAVEL AGENCY), au bureau avec logo 3M et mini drapeaux Canada et Schengen sur le bureau",
-  bio: "Aureol DONFACK dirige 3M Group SARL et 3M TRAVEL AGENCY. Il pilote l’accompagnement des projets de mobilité internationale : évaluation de profil, procédures, visas, eVisas et suivi documentaire, avec une validation humaine à chaque étape sensible.",
-};
+const FOUNDER = COMPANY_FOUNDER;
+const SITE_ORIGIN = COMPANY_PROFILE.website;
 
 const founderJsonLd = {
   "@context": "https://schema.org",
-  "@type": "Person",
-  name: FOUNDER.name,
-  jobTitle: `${FOUNDER.role} — ${FOUNDER.organization}`,
-  image: [
-    `https://www.3mtravelagency.com${FOUNDER.imageHd}`,
-    `https://www.3mtravelagency.com${FOUNDER.imageJpg}`,
-    `https://www.3mtravelagency.com${FOUNDER.imageWebp}`,
-    `https://www.3mtravelagency.com${FOUNDER.imageSquare}`,
+  "@graph": [
+    {
+      "@type": "Person",
+      "@id": `${SITE_ORIGIN}/about#aureol-donfack`,
+      name: FOUNDER.name,
+      givenName: FOUNDER.givenName,
+      familyName: FOUNDER.familyName,
+      jobTitle: `${FOUNDER.jobTitle} — ${GROUP_LEGAL_NAME}`,
+      image: [
+        `${SITE_ORIGIN}${FOUNDER.imageHd}`,
+        `${SITE_ORIGIN}${FOUNDER.imageJpg}`,
+        `${SITE_ORIGIN}${FOUNDER.imageWebp}`,
+        `${SITE_ORIGIN}${FOUNDER.imageSquare}`,
+      ],
+      url: `${SITE_ORIGIN}${FOUNDER.aboutPath}`,
+      mainEntityOfPage: `${SITE_ORIGIN}${FOUNDER.aboutPath}`,
+      description: FOUNDER.description,
+      knowsAbout: ["mobilité internationale", "visas", "immigration", GROUP_LEGAL_NAME, BRAND_PUBLIC_NAME],
+      worksFor: { "@id": `${SITE_ORIGIN}/#organization` },
+      affiliation: { "@id": `${SITE_ORIGIN}/#organization` },
+    },
+    {
+      "@type": "Organization",
+      "@id": `${SITE_ORIGIN}/#organization`,
+      name: GROUP_LEGAL_NAME,
+      legalName: GROUP_LEGAL_NAME,
+      alternateName: [BRAND_PUBLIC_NAME, COMPANY_PROFILE.legalName],
+      url: SITE_ORIGIN,
+      founder: { "@id": `${SITE_ORIGIN}/about#aureol-donfack` },
+      employee: { "@id": `${SITE_ORIGIN}/about#aureol-donfack` },
+      identifier: [
+        COMPANY_PROFILE.legalIdentifiers.registration,
+        COMPANY_PROFILE.legalIdentifiers.taxpayerId,
+      ],
+    },
+    {
+      "@type": "AboutPage",
+      "@id": `${SITE_ORIGIN}/about#webpage`,
+      url: `${SITE_ORIGIN}${FOUNDER.aboutPath}`,
+      name: `${FOUNDER.name}, fondateur et PDG de ${GROUP_LEGAL_NAME}`,
+      description: FOUNDER.description,
+      mainEntity: { "@id": `${SITE_ORIGIN}/about#aureol-donfack` },
+      about: { "@id": `${SITE_ORIGIN}/about#aureol-donfack` },
+    },
   ],
-  worksFor: {
-    "@type": "Organization",
-    name: FOUNDER.organization,
-    alternateName: FOUNDER.brand,
-    url: "https://www.3mtravelagency.com",
-  },
-  url: "https://www.3mtravelagency.com/about",
-  description: FOUNDER.bio,
 };
 
 const OPERATING_PRINCIPLES = [
@@ -76,13 +100,12 @@ export default function About() {
 
   useEffect(() => {
     setPageSeo({
-      title: "À propos | 3M TRAVEL AGENCY",
-      description:
-        "3M TRAVEL AGENCY accompagne particuliers et entreprises dans la préparation de projets de mobilité internationale : procédures, visas, eVisas et suivi documentaire.",
-      image: heroVisual.desktop,
-      imageAlt: heroVisual.alt,
+      title: `${FOUNDER.name}, fondateur PDG ${GROUP_LEGAL_NAME} | ${BRAND_PUBLIC_NAME}`,
+      description: FOUNDER.description,
+      image: FOUNDER.imageHd,
+      imageAlt: FOUNDER.imageAlt,
     });
-  }, [heroVisual.desktop, heroVisual.alt]);
+  }, []);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-slate-50">
@@ -96,26 +119,30 @@ export default function About() {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/92 via-[#0a3264]/80 to-[#0e5b9f]/55" />
         <div className="relative z-10 mx-auto max-w-5xl text-center">
-          <p className="text-sm font-black uppercase tracking-[.16em] text-blue-100">3M TRAVEL AGENCY</p>
-          <h1 className="mt-4 text-4xl font-black tracking-tight text-white sm:text-5xl">Qui sommes-nous&nbsp;?</h1>
+          <p className="font-[Georgia,Cambria,'Times_New_Roman',serif] text-3xl font-normal tracking-tight text-amber-200 sm:text-4xl">
+            {BRAND_PUBLIC_NAME}
+          </p>
+          <h1 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
+            {FOUNDER.name}, fondateur et PDG de {GROUP_LEGAL_NAME}
+          </h1>
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-blue-50">
-            3M TRAVEL AGENCY accompagne les particuliers, entreprises et professionnels dans la préparation de projets de mobilité internationale&nbsp;: procédures, visas, eVisas, voyages, documents et services connexes.
+            {BRAND_PUBLIC_NAME} accompagne les particuliers, entreprises et professionnels dans la préparation de projets de mobilité internationale&nbsp;: procédures, visas, eVisas, voyages, documents et services connexes.
           </p>
           <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-blue-100/90">
-            Nous présentons ici notre mode d’accompagnement, et non des résultats garantis. Chaque dossier est examiné selon sa situation, les exigences applicables et les décisions des organismes compétents.
+            Sous la direction d’{FOUNDER.name}, fondateur et PDG de {GROUP_LEGAL_NAME}, nous présentons notre mode d’accompagnement — et non des résultats garantis. Chaque dossier est examiné selon sa situation, les exigences applicables et les décisions des organismes compétents.
           </p>
         </div>
       </section>
 
-      <section className="bg-white px-4 py-16 sm:px-6 lg:px-8" aria-labelledby="founder-heading">
+      <section className="bg-white px-4 py-16 sm:px-6 lg:px-8" aria-labelledby="founder-heading" id="aureol-donfack">
         <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
           <figure className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 shadow-sm">
             <picture>
               <source srcSet={FOUNDER.imageWebp} type="image/webp" />
               <img
                 src={FOUNDER.imageJpg}
-                alt={FOUNDER.alt}
-                title={`${FOUNDER.name} — ${FOUNDER.role}, ${FOUNDER.organization}`}
+                alt={FOUNDER.imageAlt}
+                title={`${FOUNDER.name} — ${FOUNDER.jobTitle}, ${GROUP_LEGAL_NAME}`}
                 width={1152}
                 height={864}
                 loading="eager"
@@ -126,21 +153,31 @@ export default function About() {
             <figcaption className="border-t border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
               <strong className="font-black text-slate-950">{FOUNDER.name}</strong>
               {" — "}
-              {FOUNDER.role}, {FOUNDER.organization} ({FOUNDER.brand})
+              {FOUNDER.jobTitle}, {GROUP_LEGAL_NAME} ({BRAND_PUBLIC_NAME})
             </figcaption>
           </figure>
           <div>
-            <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Direction</p>
+            <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Direction · {GROUP_LEGAL_NAME}</p>
             <h2 id="founder-heading" className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
               {FOUNDER.name}
             </h2>
             <p className="mt-2 text-lg font-bold text-blue-800">
-              {FOUNDER.role} · {FOUNDER.organization}
+              {FOUNDER.jobTitle} · {GROUP_LEGAL_NAME}
             </p>
-            <p className="premium-copy mt-5 text-base leading-7">{FOUNDER.bio}</p>
+            <p className="premium-copy mt-5 text-base leading-7">{FOUNDER.description}</p>
             <p className="mt-4 text-sm leading-6 text-slate-600">
-              Sous sa direction, 3M TRAVEL AGENCY structure l’accueil, l’évaluation et le suivi des dossiers depuis Yaoundé, avec un accent sur la clarté des honoraires, le consentement des candidats et la vérification humaine avant toute remise d’accès partenaires.
+              Sous sa direction, {BRAND_PUBLIC_NAME} ({COMPANY_PROFILE.legalName}) structure l’accueil, l’évaluation et le suivi des dossiers depuis Yaoundé, avec un accent sur la clarté des honoraires, le consentement des candidats et la vérification humaine avant toute remise d’accès partenaires.
             </p>
+            <dl className="mt-6 grid gap-3 text-sm text-slate-700 sm:grid-cols-2">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <dt className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Fondateur</dt>
+                <dd className="mt-1 font-bold text-slate-950">{FOUNDER.name}</dd>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <dt className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Groupe</dt>
+                <dd className="mt-1 font-bold text-slate-950">{GROUP_LEGAL_NAME}</dd>
+              </div>
+            </dl>
           </div>
         </div>
       </section>
