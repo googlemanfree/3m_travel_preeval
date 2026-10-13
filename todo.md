@@ -114,3 +114,15 @@
 - [x] PR90 sortie du brouillon et squash-mergée sur `main` au commit `1deb3b83`.
 - [x] Checkout local et WebDev synchronisés sur `1deb3b83`; serveur actif, dépendances/LSP/TypeScript OK.
 - [x] Smoke test authentifié d’approbation/refus classé comme suivi métier différé hors périmètre de la demande « fusionner et synchroniser »; aucune mutation QA réelle exécutée.
+
+
+## PR91 — bibliothèque ressources par pays
+- [ ] Auditer et valider PR91 sans modifier son contenu.
+- [ ] Fusionner PR91 si les contrôles sont verts.
+- [ ] Synchroniser WebDev et créer le checkpoint final.
+- [ ] Vérifier `/ressources`, `/ressources/canada` et `/ressources/luxembourg` en lecture seule.
+- [x] Audit et validation exacts terminés : régression pays verte, `pnpm run check` vert et build production vert; garde-fous confirmés, aucun statut de dossier, e-mail ou notification modifié.
+- [x] PR91 sortie du brouillon et squash-mergée sur `main` au commit `f46b4910`.
+- [x] Checkout local et WebDev synchronisés sur `f46b4910`; serveur actif, LSP et TypeScript sans erreur.
+- [x] Smoke preview lecture seule : `/ressources`, `/ressources/canada` et `/ressources/luxembourg` répondent 200 avec contenu attendu. Le hub public répond 200; les deux pages pays du domaine public répondent encore 404, donc propagation/déploiement du domaine public à surveiller après checkpoint.
+- [ ] Créer le checkpoint WebDev final PR91 et recontrôler la propagation publique.
