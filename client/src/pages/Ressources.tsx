@@ -153,6 +153,14 @@ export default function Ressources() {
                 <Sparkles className="h-4 w-4" aria-hidden="true" />
                 Évaluer mon profil
               </Link>
+              <a
+                href="https://wa.me/237698104832?text=Bonjour%2C%20j%27ai%20une%20question%20sur%20les%20guides%20pays."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-emerald-300/50 bg-emerald-500/15 px-5 py-3 text-sm font-bold text-emerald-50 transition hover:bg-emerald-500/25"
+              >
+                WhatsApp conseiller
+              </a>
               <Link
                 href="/guide-procedures"
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/20"

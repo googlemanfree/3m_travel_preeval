@@ -1,9 +1,10 @@
 import { motion, useReducedMotion } from "framer-motion";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, MapPin, MessageCircle, ShieldCheck } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { COMPANY_PROFILE } from "@/lib/companyContacts";
 
 interface HeroSectionVIPProps {
   onEvalClick?: () => void;
@@ -213,16 +214,41 @@ export default function HeroSectionVIP({
             </a>
           </Button>
         </motion.div>
+
+        <motion.ul
+          initial="hidden"
+          animate="visible"
+          variants={fadeIn}
+          custom={3.5}
+          className="mt-8 flex max-w-2xl flex-col gap-2 text-left text-xs font-semibold text-blue-50/95 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-5 sm:gap-y-2 sm:text-sm"
+          data-testid="hero-trust-strip"
+          aria-label={t("Repères de confiance", "Trust signals")}
+        >
+          <li className="inline-flex items-center gap-1.5">
+            <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-amber-200" aria-hidden="true" />
+            {t("Agence enregistrée depuis 2019", "Agency registered since 2019")}
+            <span className="text-blue-200/80">· {COMPANY_PROFILE.legalIdentifiers.registration}</span>
+          </li>
+          <li className="inline-flex items-center gap-1.5">
+            <MapPin className="h-3.5 w-3.5 shrink-0 text-amber-200" aria-hidden="true" />
+            {COMPANY_PROFILE.offices.cameroon.shortLabel}
+            <span className="text-blue-200/80">· Ottawa</span>
+          </li>
+          <li className="inline-flex items-center gap-1.5">
+            <MessageCircle className="h-3.5 w-3.5 shrink-0 text-amber-200" aria-hidden="true" />
+            WhatsApp {COMPANY_PROFILE.offices.cameroon.whatsappDisplay}
+          </li>
+        </motion.ul>
       </div>
 
       <motion.a
-        href="#home-talent-corridor"
+        href="#evaluation-multi"
         initial="hidden"
         animate="visible"
         variants={fadeIn}
         custom={4}
         className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1 rounded-full px-3 py-2 text-white/80 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:bottom-10"
-        aria-label={t("Défiler vers la suite de la page", "Scroll to the rest of the page")}
+        aria-label={t("Défiler vers l’évaluation gratuite", "Scroll to the free assessment")}
         data-testid="hero-scroll-cue"
       >
         <span className="text-[10px] font-semibold uppercase tracking-[0.2em]">{t("Découvrir", "Discover")}</span>

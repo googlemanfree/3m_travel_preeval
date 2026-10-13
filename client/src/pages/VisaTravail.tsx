@@ -207,6 +207,14 @@ export default function VisaTravail() {
               >
                 Voir les destinations
               </a>
+              <a
+                href="https://wa.me/237698104832?text=Bonjour%2C%20j%27ai%20une%20question%20sur%20le%20visa%20travail."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-emerald-300/50 bg-emerald-500/15 px-5 py-3 text-sm font-bold text-emerald-50 transition hover:bg-emerald-500/25"
+              >
+                WhatsApp conseiller
+              </a>
               <Link
                 href="/ressources"
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/20"
@@ -362,30 +370,6 @@ export default function VisaTravail() {
           </Accordion>
         </section>
 
-        <section className="border-t border-slate-200/80 pt-12 text-center">
-          <h2 className="text-2xl font-black text-slate-950">Prêt à cadrer votre projet travail ?</h2>
-          <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">
-            Évaluation gratuite, sans engagement — orientation selon votre profil réel.
-          </p>
-          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
-              href="/?project=travail#evaluation-multi"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-800 px-5 py-3 text-sm font-black text-white transition hover:bg-blue-900"
-            >
-              Faire mon évaluation
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
-            <a
-              href="https://wa.me/237698104832?text=Bonjour%2C%20j%27ai%20une%20question%20sur%20le%20visa%20travail."
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-white px-5 py-3 text-sm font-bold text-emerald-800 transition hover:bg-emerald-50"
-            >
-              <MessageCircle className="h-4 w-4" aria-hidden="true" />
-              Poser une question
-            </a>
-          </div>
-        </section>
       </div>
 
       <ProofGallerySection
@@ -399,6 +383,31 @@ export default function VisaTravail() {
         leadFr="Autorisations et visas obtenus par des candidats accompagnés — pour illustrer le suivi, sans garantir un emploi ou un visa."
         leadEn="Authorisations and visas obtained by accompanied candidates — to illustrate follow-up, without guaranteeing a job or visa."
       />
+
+      <section className="border-t border-slate-200/80 bg-white px-4 py-14 text-center sm:px-6">
+        <h2 className="text-2xl font-black text-slate-950">Prêt à cadrer votre projet travail ?</h2>
+        <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">
+          Évaluation gratuite, sans engagement — orientation selon votre profil réel.
+        </p>
+        <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Link
+            href="/?project=travail#evaluation-multi"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-800 px-5 py-3 text-sm font-black text-white transition hover:bg-blue-900"
+          >
+            Faire mon évaluation
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+          <a
+            href="https://wa.me/237698104832?text=Bonjour%2C%20j%27ai%20une%20question%20sur%20le%20visa%20travail."
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-white px-5 py-3 text-sm font-bold text-emerald-800 transition hover:bg-emerald-50"
+          >
+            <MessageCircle className="h-4 w-4" aria-hidden="true" />
+            Poser une question
+          </a>
+        </div>
+      </section>
     </main>
   );
 }

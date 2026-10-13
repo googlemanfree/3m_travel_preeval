@@ -5,6 +5,7 @@ import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import ProofGallerySection from "@/components/ProofGallerySection";
 
 const REVIEWS_PAGE_SIZE = 6;
 
@@ -303,18 +304,41 @@ export default function ApprovedReviewsSection() {
 
   if (approvedReviews.length === 0) {
     return (
-      <section className="py-16 px-4 bg-gradient-to-b from-white to-slate-50" aria-labelledby="no-reviews-yet-title">
-        <div className="mx-auto max-w-xl rounded-2xl border border-dashed border-slate-300 bg-white/70 px-6 py-12 text-center">
+      <section className="space-y-10 bg-gradient-to-b from-white to-slate-50 py-16" aria-labelledby="no-reviews-yet-title">
+        <div className="mx-auto max-w-2xl px-4 text-center">
           <Quote className="mx-auto h-8 w-8 text-orange-400 opacity-70" aria-hidden="true" />
-          <h2 id="no-reviews-yet-title" className="mt-4 text-xl font-bold text-slate-900">{labels.noReviewsYetTitle}</h2>
-          <p className="premium-copy mt-3 text-[0.95rem]">{labels.noReviewsYetBody}</p>
-          <a
-            href="/avis#deposer-un-avis"
-            className="mt-6 inline-block bg-orange-700 hover:bg-orange-800 text-white font-semibold py-3 px-8 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-700 focus-visible:ring-offset-2"
-          >
-            {labels.noReviewsYetCta}
-          </a>
+          <h2 id="no-reviews-yet-title" className="mt-4 text-2xl font-black text-slate-900">{labels.noReviewsYetTitle}</h2>
+          <p className="premium-copy mx-auto mt-3 max-w-xl text-[0.95rem]">{labels.noReviewsYetBody}</p>
+          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <a
+              href="/avis#deposer-un-avis"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-orange-700 px-6 py-3 text-sm font-black text-white transition hover:bg-orange-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-700 focus-visible:ring-offset-2"
+            >
+              {labels.noReviewsYetCta}
+            </a>
+            <a
+              href="/?project=travail#evaluation-multi"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-blue-200 bg-white px-6 py-3 text-sm font-bold text-blue-900 transition hover:bg-blue-50"
+            >
+              {language === "en" ? "Start free assessment" : "Évaluer mon profil"}
+            </a>
+            <a
+              href="/travail"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-6 py-3 text-sm font-bold text-slate-800 transition hover:bg-white"
+            >
+              {language === "en" ? "Explore work hub" : "Hub Travail"}
+            </a>
+          </div>
         </div>
+        <ProofGallerySection
+          collapsedCount={3}
+          hideWhenEmpty
+          className="bg-transparent px-4 py-0"
+          titleFr="En attendant les avis publiés — preuves de dossiers"
+          titleEn="While reviews are pending — file proofs"
+          leadFr="Extraits anonymisés de pièces réellement suivies. Ce ne sont pas des témoignages textuels inventés."
+          leadEn="Redacted excerpts from real supported files. These are not invented written testimonials."
+        />
       </section>
     );
   }
