@@ -5,6 +5,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import DocumentReceiptButton from "@/components/DocumentReceiptButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { agencyCoffrePublishToastTone, agencyCoffreSyncUploadMessage } from "@shared/agencyCoffreSync";
 
 const DOCUMENT_TYPES = [
   ["passport", "Passeport"],
@@ -40,9 +41,20 @@ export default function AgencyDossierDocumentCenter({ dossierId }: { dossierId: 
   const utils = trpc.useUtils();
   const documentsQuery = trpc.agencyDossierDocuments.listForAdmin.useQuery({ dossierId });
   const statusMutation = trpc.agencyDossierDocuments.updateVerificationStatus.useMutation({
-    onSuccess: async () => {
+    onSuccess: async (result) => {
       await utils.agencyDossierDocuments.listForAdmin.invalidate({ dossierId });
-      toast.success("Statut du document mis à jour.");
+      const sync = (result as { coffreSync?: { publishedToClient?: number; updated?: number; caseNumber?: string | null; reason?: "ok" | "no_case" | "no_files" | null } }).coffreSync;
+      if (sync?.reason === "no_case") {
+        toast.warning("Statut mis à jour en agence. Coffre client non lié — utilisez « Publier vers l’espace client ».", {
+          description: "Aucun dossier opérationnel : la validation n’apparaît pas encore côté candidat.",
+        });
+        return;
+      }
+      toast.success("Statut du document mis à jour.", {
+        description: sync?.caseNumber
+          ? `Coffre client aligné (${sync.caseNumber}).`
+          : undefined,
+      });
     },
     onError: (error) => toast.error(error.message || "Impossible de mettre à jour le document."),
   });
@@ -58,10 +70,12 @@ export default function AgencyDossierDocumentCenter({ dossierId }: { dossierId: 
   });
   const publishMutation = trpc.admin.publishAgencyScannedDocumentsToClient.useMutation({
     onSuccess: (result) => {
-      const whatsappHint = (result as { whatsappSent?: boolean }).whatsappSent
-        ? " WhatsApp envoyé au client."
-        : "";
-      toast.success(`${result.message}${whatsappHint}`);
+      const reason = (result as { reason?: "ok" | "no_case" | "no_files" }).reason;
+      const tone = agencyCoffrePublishToastTone(reason);
+      const message = String(result.message || "Publication terminée.");
+      if (tone === "warning") toast.warning(message);
+      else if (tone === "info") toast.message(message);
+      else toast.success(message);
     },
     onError: (error) => toast.error(error.message || "Publication vers l’espace client impossible."),
   });
@@ -86,12 +100,15 @@ export default function AgencyDossierDocumentCenter({ dossierId }: { dossierId: 
       if (!response.ok) throw new Error(payload.error || "Le dépôt du document a échoué.");
       if (fileRef.current) fileRef.current.value = "";
       await utils.agencyDossierDocuments.listForAdmin.invalidate({ dossierId });
-      const published = Number(payload.publishedToClient || 0);
-      toast.success(
-        published > 0
-          ? "Document scanné et publié dans l’espace client."
-          : "Document ajouté au dossier et synchronisé avec l’espace candidat.",
-      );
+      const feedback = agencyCoffreSyncUploadMessage({
+        publishedToClient: Number(payload.publishedToClient || 0),
+        updated: Number(payload.publishUpdated || 0),
+        caseNumber: typeof payload.caseNumber === "string" ? payload.caseNumber : null,
+        reason: payload.publishReason ?? null,
+      });
+      if (feedback.tone === "warning") toast.warning(feedback.message);
+      else if (feedback.tone === "info") toast.message(feedback.message);
+      else toast.success(feedback.message);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Le dépôt du document a échoué.");
     } finally {
@@ -108,7 +125,7 @@ export default function AgencyDossierDocumentCenter({ dossierId }: { dossierId: 
           <ScanLine className="h-5 w-5 text-blue-400" />
           Centre documentaire du dossier
         </CardTitle>
-        <p className="text-xs text-slate-400">Scannez les pièces remises en agence : elles sont historisées et publiées dans l’espace client du candidat (checklist dynamique pays × visa).</p>
+        <p className="text-xs text-slate-400">Scannez les pièces remises en agence. Elles sont historisées ici ; la publication vers le coffre client est confirmée seulement quand un dossier opérationnel est lié (sinon utilisez le bouton ci-dessous).</p>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-blue-800/60 bg-blue-950/40 px-3 py-2">

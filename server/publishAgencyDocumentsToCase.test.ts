@@ -241,6 +241,7 @@ describe("branchement admin / upload / UI + sync à l’approbation", () => {
     const upload = read("server/routers/agencyDossierUpload.ts");
     expect(upload).toContain("publishAgencyDocumentsToCase");
     expect(upload).toContain("publishedToClient");
+    expect(upload).toContain("publishReason");
 
     const seed = read("server/services/seedCountryProcedureCase.ts");
     expect(seed).toContain("customDocuments");
@@ -248,6 +249,9 @@ describe("branchement admin / upload / UI + sync à l’approbation", () => {
     const center = read("client/src/components/AgencyDossierDocumentCenter.tsx");
     expect(center).toContain("publishAgencyScannedDocumentsToClient");
     expect(center).toContain("Publier vers l’espace client");
+    expect(center).toContain("agencyCoffreSyncUploadMessage");
+    expect(center).toContain("toast.warning");
+    expect(center).not.toContain("synchronisé avec l’espace candidat");
 
     const space = read("client/src/pages/EvaluationSpace.tsx");
     expect(space).toContain("pickActiveCaseRequirements");

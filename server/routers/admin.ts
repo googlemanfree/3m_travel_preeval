@@ -2556,6 +2556,12 @@ export const adminRouter = router({
         let candidateName = "";
         let documentName = "";
         let candidateId: number | null = null;
+        let agencyCoffreSync: {
+          publishedToClient: number;
+          updated: number;
+          caseNumber: string | null;
+          reason: "ok" | "no_case" | "no_files" | null;
+        } | null = null;
 
         if (input.source === "client") {
           const [doc] = await db.select().from(clientDocuments).where(eq(clientDocuments.id, input.documentId)).limit(1);
@@ -2593,7 +2599,7 @@ export const adminRouter = router({
 
           // Automatisation : aligner le coffre sans créer de dossier ni notifier.
           try {
-            await publishAgencyDocumentsToCase(db, {
+            const synced = await publishAgencyDocumentsToCase(db, {
               agencyDossierId: fileRec.dossierId,
               documentIds: [input.documentId],
               actorAdminId: admin.id ?? null,
@@ -2601,6 +2607,12 @@ export const adminRouter = router({
               notify: false,
               createCaseIfMissing: false,
             });
+            agencyCoffreSync = {
+              publishedToClient: synced.published,
+              updated: synced.updated,
+              caseNumber: synced.caseNumber,
+              reason: synced.reason ?? (synced.caseId ? "ok" : "no_case"),
+            };
           } catch (syncErr) {
             console.warn(
               "[Admin updateDocumentStatus] sync agency case_documents:",
@@ -2719,7 +2731,10 @@ export const adminRouter = router({
 
         return {
           success: true,
-          message: "Statut du document mis à jour avec succès",
+          message: agencyCoffreSync?.reason === "no_case"
+            ? "Statut mis à jour en agence. Coffre client non lié — utilisez « Publier vers l’espace client »."
+            : "Statut du document mis à jour avec succès",
+          coffreSync: agencyCoffreSync,
         };
       } catch (err) {
         if (err instanceof TRPCError) throw err;

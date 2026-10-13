@@ -63,7 +63,7 @@ export default function CaseDocumentsPanel({
         <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/80 p-5 text-center">
           <FileText className="mx-auto h-8 w-8 text-slate-300" aria-hidden="true" />
           <p className="mt-2 text-sm font-bold text-slate-800">Aucune pièce synchronisée pour le moment</p>
-          <p className="mt-1 text-sm text-slate-600">Dès qu’un document est déposé (par vous ou en agence), il apparaît ici avec son statut de vérification.</p>
+          <p className="mt-1 text-sm text-slate-600">Les pièces apparaissent ici une fois publiées dans le coffre du dossier (dépôt depuis votre espace, ou publication agence vers l’espace client). Un scan en agence seul ne suffit pas s’il n’est pas encore lié.</p>
         </div>
       ) : (
         <ul className="mt-4 divide-y">

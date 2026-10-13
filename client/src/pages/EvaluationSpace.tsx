@@ -1080,7 +1080,7 @@ export default function EvaluationSpace() {
                     <div><p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-800">Synchronisation agence</p><h2 id="agency-sync-title" className="mt-2 text-xl font-black text-slate-950">Documents reçus et visibles</h2></div>
                     <span className="rounded-2xl bg-emerald-700 p-3 text-white" aria-hidden="true"><FileText className="h-6 w-6" /></span>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-slate-700">Les pièces déposées en agence apparaissent ici avec leur statut de vérification, sans attendre une nouvelle transmission.</p>
+                  <p className="mt-3 text-sm leading-6 text-slate-700">Les pièces publiées depuis l’agence vers votre coffre apparaissent ici avec leur statut. Si le compteur reste à zéro après un dépôt en agence, l’équipe doit encore lier / publier le dossier opérationnel.</p>
                   <div className="mt-4 grid grid-cols-2 gap-3"><div className="rounded-xl bg-white p-3"><p className="text-xs font-semibold text-slate-500">Par l’agence</p><p className="mt-1 text-2xl font-black text-emerald-800">{agencyDocumentCount}</p></div><div className="rounded-xl bg-white p-3"><p className="text-xs font-semibold text-slate-500">Depuis votre espace</p><p className="mt-1 text-2xl font-black text-slate-900">{candidateDocumentCount}</p></div></div>
                   <Button type="button" variant="outline" onClick={() => switchToSection("documents")} className="mt-4 border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100"><FileText className="mr-2 h-4 w-4" />Ouvrir le centre documentaire</Button>
                 </Card>

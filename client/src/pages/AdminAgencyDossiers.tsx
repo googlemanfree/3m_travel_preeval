@@ -1086,7 +1086,7 @@ export default function AdminAgencyDossiers() {
               </div>
               <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-3 text-sm text-blue-100">
                 <p className="font-semibold">Documents remis en agence</p>
-                <p className="mt-1 text-xs leading-5 text-blue-200">Ajoutez ici les scans des pièces déposées physiquement. Chaque dépôt est privé, horodaté et synchronisé avec l’espace client.</p>
+                <p className="mt-1 text-xs leading-5 text-blue-200">Ajoutez ici les scans des pièces déposées physiquement. Chaque dépôt est privé et horodaté ; la sync coffre client n’est confirmée que si un dossier opérationnel est lié (sinon « Publier vers l’espace client »).</p>
               </div>
               <AgencyDossierDocumentCenter dossierId={selectedDossier.id} />
 

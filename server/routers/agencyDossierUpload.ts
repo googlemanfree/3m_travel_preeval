@@ -120,7 +120,9 @@ export function registerAgencyDossierUploadRoute(app: Express): void {
       });
 
       let publishedToClient = 0;
+      let publishUpdated = 0;
       let caseNumber: string | null = null;
+      let publishReason: "ok" | "no_case" | "no_files" | null = null;
       try {
         const published = await publishAgencyDocumentsToCase(db, {
           agencyDossierId: dossierId,
@@ -130,15 +132,20 @@ export function registerAgencyDossierUploadRoute(app: Express): void {
           notify: true,
         });
         publishedToClient = published.published;
+        publishUpdated = published.updated;
         caseNumber = published.caseNumber;
+        publishReason = published.reason ?? (published.caseId ? "ok" : "no_case");
       } catch (publishError) {
         console.error("[AgencyDossierUpload] Publication espace client:", publishError);
+        publishReason = null;
       }
 
       res.status(201).json({
         success: true,
         publishedToClient,
+        publishUpdated,
         caseNumber,
+        publishReason,
         document: {
           id: inserted.id,
           dossierId,

@@ -69,14 +69,26 @@ export const agencyDossierDocumentsRouter = router({
       });
 
       // Automatisation : aligner le coffre (case_documents) sans créer de dossier ni notifier.
+      let coffreSync: {
+        publishedToClient: number;
+        updated: number;
+        caseNumber: string | null;
+        reason: "ok" | "no_case" | "no_files" | null;
+      } = { publishedToClient: 0, updated: 0, caseNumber: null, reason: null };
       try {
-        await publishAgencyDocumentsToCase(db, {
+        const synced = await publishAgencyDocumentsToCase(db, {
           agencyDossierId: document.dossierId,
           documentIds: [input.documentId],
           actorEmail: ctx.user?.email || "admin",
           notify: false,
           createCaseIfMissing: false,
         });
+        coffreSync = {
+          publishedToClient: synced.published,
+          updated: synced.updated,
+          caseNumber: synced.caseNumber,
+          reason: synced.reason ?? (synced.caseId ? "ok" : "no_case"),
+        };
       } catch (syncErr) {
         console.warn(
           "[agencyDossierDocuments.updateVerificationStatus] sync case_documents:",
@@ -84,7 +96,7 @@ export const agencyDossierDocumentsRouter = router({
         );
       }
 
-      return { success: true };
+      return { success: true, coffreSync };
     }),
 
   listAnnotationsForAdmin: protectedProcedure

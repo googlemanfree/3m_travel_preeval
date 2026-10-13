@@ -256,5 +256,6 @@ describe("espace client : documents enregistrés par l'agence", () => {
   it("ne s'affiche pas sans document d'agence", () => {
     const { container } = render(<CaseDocumentsPanel documents={[]} onDownload={vi.fn()} />);
     expect(screen.getByText("Aucune pièce synchronisée pour le moment")).toBeTruthy();
+    expect(screen.getByText(/publication agence vers l’espace client/i)).toBeTruthy();
   });
 });
