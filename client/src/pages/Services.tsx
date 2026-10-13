@@ -3,7 +3,8 @@ import { ArrowRight, MessageCircle } from "lucide-react";
 import { ServicePageShell, ServiceSection } from "@/components/ServicePageShell";
 import { QuickActionsGrid } from "@/components/QuickActionsSection";
 import { PremiumCoverImage } from "@/components/PremiumCoverImage";
-import { HOW_IT_WORKS, SERVICE_POLES, type ServicePoleId } from "@/data/serviceCatalog";
+import { HOW_IT_WORKS, SERVICE_POLES, SERVICES_FAQ, type ServicePoleId } from "@/data/serviceCatalog";
+import { CheckCircle2 } from "lucide-react";
 import { getServiceVisual, type VisualSources } from "@/data/premiumVisuals";
 import { setPageSeo } from "@/lib/pageSeo";
 import { trpc } from "@/lib/trpc";
@@ -93,6 +94,7 @@ export default function Services() {
 
       {SERVICE_POLES.map((pole, index) => (
         <ServiceSection key={pole.id} title={pole.title} introduction={pole.tagline} tone={index % 2 === 0 ? "white" : "blue"}>
+          <p className="mb-6 max-w-3xl text-base leading-7 text-slate-600" data-testid={`pole-summary-${pole.id}`}>{pole.summary}</p>
           <ul id={pole.id} className="grid scroll-mt-24 gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid={`pole-${pole.id}`}>
             {pole.services.map((service) => {
               const override = mediaById.get(service.id);
@@ -114,7 +116,15 @@ export default function Services() {
                         <service.icon className="h-5 w-5" />
                       </span>
                       <span className="mt-4 text-base font-black text-slate-950">{service.title}</span>
-                      <span className="mt-1.5 flex-1 text-sm leading-6 text-slate-600">{service.description}</span>
+                      <span className="mt-1.5 text-sm leading-6 text-slate-600">{service.description}</span>
+                      <span className="mt-3 flex flex-1 flex-col gap-1.5" data-testid={`service-points-${service.id}`}>
+                        {service.points.map((point) => (
+                          <span key={point} className="flex items-start gap-2 text-sm leading-5 text-slate-700">
+                            <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-700" aria-hidden="true" />
+                            <span>{point}</span>
+                          </span>
+                        ))}
+                      </span>
                       <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700">
                         En savoir plus <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                       </span>
@@ -137,6 +147,20 @@ export default function Services() {
             </li>
           ))}
         </ol>
+      </ServiceSection>
+
+      <ServiceSection title="Questions fréquentes" introduction="Les réponses aux questions que l’on nous pose le plus souvent avant de démarrer.">
+        <div className="mx-auto max-w-3xl divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white" data-testid="services-faq">
+          {SERVICES_FAQ.map((item) => (
+            <details key={item.question} className="group px-5 py-4">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 text-left text-base font-black text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+                <span>{item.question}</span>
+                <span className="text-xl font-black text-blue-700 transition-transform group-open:rotate-45" aria-hidden="true">+</span>
+              </summary>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{item.answer}</p>
+            </details>
+          ))}
+        </div>
       </ServiceSection>
 
       <ServiceSection title="Une question avant de commencer ?" tone="blue">
