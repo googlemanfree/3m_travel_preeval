@@ -62,6 +62,14 @@ const HUB_ENTRIES = [
 
 const REGIONS = ['Tous', 'Europe', 'Asie', 'Afrique', 'Amérique du Nord', 'Amérique du Sud', 'Océanie', 'Moyen-Orient'];
 
+const QUICK_HUB_FILTERS = [
+  { key: 'tous', label: 'Tous les hubs', description: 'Voir tout le catalogue' },
+  { key: 'travail', label: 'Travail', description: 'Permis et emploi' },
+  { key: 'etudes', label: 'Études', description: 'Campus et admissions' },
+  { key: 'visiteur', label: 'Visiteur', description: 'Tourisme et courts séjours' },
+  { key: 'canada', label: 'Canada', description: 'Résidence et emploi' },
+] as const;
+
 const VISA_DOCUMENT_CHECKLISTS = {
   travail: ["Passeport valide", "CV adapté au poste", "Diplômes et certifications", "Justificatifs d’expérience", "Offre ou projet professionnel, si disponible", "Preuves de ressources selon la procédure"],
   etudes: ["Passeport valide", "Diplômes et relevés", "Lettre d’admission ou projet académique", "Preuves de ressources et prise en charge", "Projet d’études", "Justificatifs demandés par l’établissement ou le consulat"],
@@ -216,6 +224,25 @@ export default function ProceduresAdvanced() {
   const getEvaluationHref = (country: typeof PUBLIC_PROCEDURES[0]) =>
     `/?project=${encodeURIComponent(country.visaType)}&destination=${encodeURIComponent(country.id)}#evaluation-multi`;
 
+  const activeQuickHub = searchQuery.trim().toLowerCase() === 'canada'
+    ? 'canada'
+    : visaType === 'tous'
+      ? 'tous'
+      : visaType;
+
+  const applyQuickHubFilter = (key: (typeof QUICK_HUB_FILTERS)[number]['key']) => {
+    setSelectedRegion('Tous');
+    setDifficultyFilter('tous');
+    setVerifiedPortalOnly(false);
+    if (key === 'canada') {
+      setVisaType('tous');
+      setSearchQuery('Canada');
+      return;
+    }
+    setSearchQuery('');
+    setVisaType(key === 'tous' ? 'tous' : key);
+  };
+
   const heroVisual = getServiceVisual('mobilite');
 
   useEffect(() => {
@@ -285,6 +312,27 @@ export default function ProceduresAdvanced() {
 
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         {/* Pôles d’entrée illustrés */}
+        <div className="mb-6 rounded-2xl border border-blue-100 bg-white/90 p-3 shadow-sm backdrop-blur-sm sm:p-4" aria-label="Filtres rapides des hubs premium" data-testid="premium-hub-quick-filters">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="mr-1 text-xs font-black uppercase tracking-[0.16em] text-slate-500">Explorer</span>
+            {QUICK_HUB_FILTERS.map((filter) => {
+              const isActive = activeQuickHub === filter.key;
+              return (
+                <button
+                  key={filter.key}
+                  type="button"
+                  aria-pressed={isActive}
+                  title={filter.description}
+                  onClick={() => applyQuickHubFilter(filter.key)}
+                  className={`min-h-11 rounded-xl px-4 py-2 text-sm font-black transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 ${isActive ? 'bg-blue-800 text-white shadow-md shadow-blue-900/15' : 'border border-slate-200 bg-white text-slate-700 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800 hover:shadow-sm'}`}
+                >
+                  {filter.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-testid="procedures-hub-entries">
           {HUB_ENTRIES.map((entry, index) => {
             const visual = getServiceVisual(entry.visualKey);
@@ -298,7 +346,7 @@ export default function ProceduresAdvanced() {
               >
                 <Link
                   href={entry.href}
-                  className="group relative flex min-h-[200px] flex-col justify-end overflow-hidden text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                  className="group relative flex min-h-[200px] flex-col justify-end overflow-hidden rounded-2xl text-white shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-950/20 focus-visible:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2"
                   data-testid={`procedures-hub-${entry.key}`}
                 >
                   <PremiumCoverImage
@@ -310,7 +358,7 @@ export default function ProceduresAdvanced() {
                   <div className="relative z-10 p-4">
                     <h2 className="text-lg font-black tracking-tight">{entry.title}</h2>
                     <p className="mt-1 text-xs leading-5 text-blue-50/90">{entry.lead}</p>
-                    <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-[0.12em] text-amber-200">
+                    <span className="mt-3 inline-flex items-center gap-1 rounded-lg border border-amber-200/30 bg-slate-950/20 px-2.5 py-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-amber-200 transition-all duration-200 group-hover:gap-2 group-hover:border-amber-200/60 group-hover:bg-amber-400/15">
                       {entry.cta} <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                     </span>
                   </div>
@@ -324,11 +372,11 @@ export default function ProceduresAdvanced() {
         <section className="mb-12 grid gap-6 lg:grid-cols-2" aria-label="Outils de préparation du dossier">
           <Card className="border-blue-200 !bg-gradient-to-br !from-blue-700 !to-indigo-800 p-6 text-white shadow-lg">
             <div className="flex items-start gap-4"><div className="rounded-xl bg-white/15 p-3"><Calculator className="h-6 w-6" /></div><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-100">Projet Canada</p><h2 className="mt-1 text-2xl font-black">Vérifier votre score CRS</h2><p className="premium-copy-on-dark mt-2 max-w-xl text-base">Le calculateur Canada compare votre profil, les seuils historiques et les actions utiles. Il s’agit d’un repère d’orientation, non d’une décision d’immigration.</p></div></div>
-            <Link href="/canada" className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-black text-blue-800 hover:bg-blue-50">Ouvrir le calculateur CRS <ExternalLink className="h-4 w-4" /></Link>
+              <Link href="/canada" className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-black text-blue-800 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-blue-800">Ouvrir le calculateur CRS <ExternalLink className="h-4 w-4" aria-hidden="true" /></Link>
           </Card>
           <Card className="border-emerald-200 bg-white p-6 shadow-sm">
             <div className="flex items-start gap-4"><div className="rounded-xl bg-emerald-50 p-3 text-emerald-700"><MessageCircle className="h-6 w-6" /></div><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">Besoin d’orientation</p><h2 className="mt-1 text-2xl font-black text-slate-950">Parler à un conseiller</h2><p className="premium-copy mt-2 text-[0.95rem]">Partagez votre destination, votre procédure et les pièces déjà disponibles pour recevoir une orientation adaptée.</p></div></div>
-            <a href={`https://wa.me/237698104832?text=${encodeURIComponent("Bonjour, je consulte les procédures 3M TRAVEL AGENCY et souhaite être orienté(e) sur mon projet.")}`} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-black text-white hover:bg-emerald-800">WhatsApp +237 698 104 832 <ExternalLink className="h-4 w-4" /></a>
+            <a href={`https://wa.me/237698104832?text=${encodeURIComponent("Bonjour, je consulte les procédures 3M TRAVEL AGENCY et souhaite être orienté(e) sur mon projet.")}`} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-black text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-emerald-800 hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2">WhatsApp +237 698 104 832 <ExternalLink className="h-4 w-4" aria-hidden="true" /></a>
           </Card>
         </section>
 
