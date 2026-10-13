@@ -17,11 +17,37 @@ export type CompanyOffice = {
 /** Nom public unique affiché sur tout le site (UI, SEO, e-mails clients). */
 export const BRAND_PUBLIC_NAME = "3M TRAVEL AGENCY";
 
+/** Groupe / entité de direction — distinct du nom commercial et du nom légal d’exploitation. */
+export const GROUP_LEGAL_NAME = "3M Group SARL";
+
+/** Fondateur & PDG — source canonique pour SEO, JSON-LD et pages publiques. */
+export const COMPANY_FOUNDER = {
+  name: "Aureol DONFACK",
+  givenName: "Aureol",
+  familyName: "DONFACK",
+  jobTitle: "Fondateur & PDG",
+  organization: GROUP_LEGAL_NAME,
+  brand: BRAND_PUBLIC_NAME,
+  aboutPath: "/about",
+  imageHd: "/team/aureol-donfack-fondateur-pdg-3m-group-sarl-hd.jpg",
+  imageJpg: "/team/aureol-donfack-fondateur-pdg-3m-group-sarl.jpg",
+  imageWebp: "/team/aureol-donfack-fondateur-pdg-3m-group-sarl.webp",
+  imageSquare: "/team/aureol-donfack-fondateur-pdg-3m-group-sarl-600.webp",
+  imageAlt:
+    "Aureol DONFACK, fondateur et PDG de 3M Group SARL (3M TRAVEL AGENCY)",
+  description:
+    "Aureol DONFACK est le fondateur et PDG de 3M Group SARL, opérateur de 3M TRAVEL AGENCY. Il pilote l’accompagnement des projets de mobilité internationale depuis Yaoundé.",
+} as const;
+
 export const COMPANY_PROFILE = {
   publicName: BRAND_PUBLIC_NAME,
+  /** Nom légal d’exploitation (contrats, reçus, footer). */
   legalName: "3M Travel Agency SARL",
+  /** Groupe dirigé par le fondateur — à exposer aux moteurs de recherche. */
+  groupLegalName: GROUP_LEGAL_NAME,
   publicEmail: "hello@3mtravelagency.com",
   website: "https://www.3mtravelagency.com",
+  founder: COMPANY_FOUNDER,
   legalIdentifiers: {
     registration: "RC/YAO/2019/A/2567",
     taxpayerId: "M112417203369H",
