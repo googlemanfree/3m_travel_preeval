@@ -1,0 +1,27 @@
+# Gate Manus / WebDev : un check GitHub existe dès qu’une PR n’est plus en brouillon.
+# Manus ne doit publier que si ce check est vert. « Publier » ≠ « fusionner ».
+name: manus-publish-gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
+
+permissions:
+  contents: read
+
+jobs:
+  ready-for-publish:
+    name: Ready for WebDev publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refuser les brouillons (bloque la publication Manus)
+        env:
+          IS_DRAFT: ${{ github.event.pull_request.draft }}
+        run: |
+          if [ "$IS_DRAFT" = "true" ]; then
+            echo "::error::PR encore en brouillon. Marquez-la Ready for review avant publication Manus."
+            exit 1
+          fi
+          echo "PR prête : Manus peut publier sur WebDev."
+          echo "Rappel : publier (WebDev) ≠ fusionner (merge main)."
+          echo "statusCheckRollup ne doit plus être vide grâce à ce workflow."
