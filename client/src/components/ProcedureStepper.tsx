@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { buildStepperView, lockedReason, type ProcedureStep, type StepGroup } from "@/lib/procedureStepper";
 import { PublishedGuideSummaryPanel } from "@/components/PublishedGuideSummaryPanel";
 import { AGENCY_PHASE_STEP_COUNT } from "@shared/dossierPhaseTransparency";
+import { resourceLibraryPathForCountry } from "@shared/countryResourceCatalog";
 
 type PublishedGuideProp = {
   title?: string | null;
@@ -13,6 +14,8 @@ type PublishedGuideProp = {
   summaryHeadline?: string | null;
   summaryOverview?: string | null;
   summaryStepHighlights?: string[] | null;
+  officialPortalUrl?: string | null;
+  officialPortalLabel?: string | null;
 };
 
 type Props = {
@@ -149,17 +152,21 @@ export default function ProcedureStepper({
         </div>
       </div>
 
-      {publishedGuide?.summaryOverview || publishedGuide?.pdfUrl ? (
+      {publishedGuide?.summaryOverview || publishedGuide?.pdfUrl || resourceLibraryPathForCountry(country) ? (
         <div className="mt-4">
           <div data-testid="stepper-published-guide">
             <PublishedGuideSummaryPanel
               tone="admin"
-              headline={publishedGuide.summaryHeadline || publishedGuide.programLabel}
-              overview={publishedGuide.summaryOverview}
-              stepHighlights={publishedGuide.summaryStepHighlights}
-              programLabel={publishedGuide.programLabel}
-              pdfUrl={publishedGuide.pdfUrl}
-              pdfTitle={publishedGuide.title}
+              headline={publishedGuide?.summaryHeadline || publishedGuide?.programLabel}
+              overview={publishedGuide?.summaryOverview}
+              stepHighlights={publishedGuide?.summaryStepHighlights}
+              programLabel={publishedGuide?.programLabel}
+              pdfUrl={publishedGuide?.pdfUrl}
+              pdfTitle={publishedGuide?.title}
+              officialPortalUrl={publishedGuide?.officialPortalUrl}
+              officialPortalLabel={publishedGuide?.officialPortalLabel}
+              resourceLibraryHref={resourceLibraryPathForCountry(country)}
+              resourceLibraryLabel={country ? `Bibliothèque ${country}` : "Bibliothèque pays"}
             />
           </div>
         </div>

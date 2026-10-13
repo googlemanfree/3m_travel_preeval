@@ -64,6 +64,7 @@ import DestinationsHub from "./pages/DestinationsHub";
 const EvisaRequestForm = lazyWithTimeout(() => import("./pages/EvisaRequestForm"));
 const EvaluationResult = lazyWithTimeout(() => import("./pages/EvaluationResult"));
 const Ressources = lazyWithTimeout(() => import("./pages/Ressources"));
+const ResourceCountryPage = lazyWithTimeout(() => import("./pages/ResourceCountryPage"));
 const ProcedureResourceGuide = lazyWithTimeout(() => import("./pages/ProcedureResourceGuide"));
 const Fiches = lazyWithTimeout(() => import("./pages/Fiches"));
 const TranslationOrder = lazyWithTimeout(() => import("./pages/TranslationOrder"));
@@ -342,8 +343,9 @@ function Router() {
       <Route path={"/mon-espace-enhanced"}>{() => <Redirect to="/mon-espace" />}</Route>
       <Route path={"/mon-espace-v2"}>{() => <Redirect to="/mon-espace" />}</Route>
 
-      {/* Bibliothèque de ressources PDF */}
+      {/* Bibliothèque de ressources PDF + pages pays */}
       <Route path={"/ressources"} component={Ressources} />
+      <Route path={"/ressources/:countrySlug"} component={ResourceCountryPage} />
       <Route path={"/guide-procedures"} component={ProcedureResourceGuide} />
 
       {/* Fiches détaillées par pays */}

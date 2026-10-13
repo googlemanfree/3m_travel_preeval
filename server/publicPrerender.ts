@@ -10,6 +10,11 @@ import { getStudyDestinationArticle, studyDestinationArticles } from "../client/
 import { getEnglishContentByEnSlug, getEnglishContentByFrId, type ProcedureEnglishContent } from "../client/src/data/procedures107English";
 import { getCataloguedDestinationImage } from "../client/src/data/premiumVisuals";
 import { getServiceVisual } from "../client/src/data/premiumVisuals";
+import {
+  countryResourceLead,
+  getCountryResourcePage,
+  listCountryResourcePages,
+} from "@shared/countryResourceCatalog";
 
 const LOCAL_BUSINESS_STRUCTURED_DATA = {
   "@type": "LocalBusiness",
@@ -226,7 +231,7 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/politique-confidentialite": { title: `Politique de confidentialité | ${SITE}`, description: "Informations sur le traitement des données et documents confiés à 3M TRAVEL AGENCY.", heading: "Confidentialité et données", lead: "Les données sensibles sont limitées aux finalités de traitement et aux accès autorisés." },
   "/conditions-utilisation": { title: `Conditions d’utilisation | ${SITE}`, description: "Conditions d’utilisation des services et informations de responsabilité.", heading: "Conditions d’utilisation", lead: "Les services d’accompagnement ne remplacent ni les autorités compétentes ni les décisions de partenaires externes." },
   "/accessibilite": { title: `Accessibilité | ${SITE}`, description: "Engagements et informations d’accessibilité du site 3M TRAVEL AGENCY : ce qui est déjà en place et comment signaler une difficulté.", heading: "Accessibilité", lead: "Nous cherchons à rendre le site utilisable par le plus grand nombre ; signalez-nous toute difficulté rencontrée." },
-  "/ressources": { title: `Ressources utiles | ${SITE}`, description: "Ressources utiles et liens d’orientation pour les projets de mobilité internationale.", heading: "Ressources utiles", lead: "Préparez votre projet à partir d’informations vérifiables et de sources institutionnelles." },
+  "/ressources": { title: `Bibliothèque de ressources | ${SITE}`, description: "Guides PDF par pays pour le travail, les études et la visite — pages destinations premium et fiches 3M TRAVEL AGENCY.", heading: "Guides par destination", lead: "Choisissez un pays pour consulter tous les guides PDF associés, avec images premium et renvoi vers les sources officielles." },
   "/guide-procedures": { title: `Guide des procédures | ${SITE}`, description: "Bibliothèque PDF des procédures 3M TRAVEL AGENCY : travail, études, visiteur, avec renvoi vers les portails officiels (IRCC, ADEM, France-Visas…).", heading: "Bibliothèque PDF des procédures de mobilité", lead: "Chaque guide publié est rattaché à sa fiche procédure et aux sources officielles à vérifier avant toute démarche." },
   "/3m-solutions": { title: "3M Solutions | 3M TRAVEL AGENCY", description: "Services numériques et accompagnement documentaire de 3M TRAVEL AGENCY : web, formation, réseaux et sécurité.", heading: "3M Solutions", lead: "Découvrez les services numériques et soumettez une demande détaillée à l’équipe." },
   "/partenaires": { title: `Partenaires B2B internationaux | ${SITE}`, description: "Corridor de talents Afrique → Europe, Amériques et Asie : espace candidat, back-office 3M, agences de placement et employeurs. Profils anonymisés, vérification humaine.", keywords: ["partenaires B2B", "agences de placement", "employeurs internationaux", "mobilité Afrique", "3M TRAVEL AGENCY"], heading: "Corridor de talents international", lead: "Quatre interfaces pour recruteurs et candidats. 3M TRAVEL AGENCY gère la procédure administrative après sélection, contrat et lettre d’invitation." },
@@ -321,6 +326,27 @@ const routeSpecificPrerender = (path: string) => {
   }
   if (path === "/travail") {
     return `<section aria-label="Hub visa travail"><h2>Travailler à l’international</h2><p>Corridor Afrique → Canada, Europe et Golfe : évaluation de profil, pièces employeur et préparation des autorisations — sans promesse d’emploi ou de visa.</p><ul><li><a href="/canada">Canada</a></li><li><a href="/procedures/allemagne-travail">Allemagne</a></li><li><a href="/procedures/luxembourg">Luxembourg</a></li><li><a href="/procedures/france-travail">France</a></li><li><a href="/procedures/pays-bas-travail">Pays-Bas</a></li><li><a href="/procedures/australie-travail">Australie</a></li><li><a href="/procedures/qatar-travail">Qatar</a></li><li><a href="/procedures/royaume-uni-travail">Royaume-Uni</a></li></ul><p><a href="/?project=travail#evaluation-multi">Évaluer mon profil travail</a> · <a href="/etudes">Parcours études</a> · <a href="/procedures">Toutes les procédures</a></p></section>`;
+  }
+  if (path === "/ressources") {
+    const countries = listCountryResourcePages()
+      .map((page) => `<li><a href="${esc(page.path)}">${esc(page.flag)} ${esc(page.country)} — ${page.resources.length} guide(s)</a></li>`)
+      .join("");
+    return `<section aria-label="Bibliothèque de ressources par pays"><h2>Guides PDF par destination</h2><p>Chaque pays regroupe les fiches travail, études et visite publiées par 3M TRAVEL AGENCY.</p><ul>${countries}</ul><p><a href="/guide-procedures">Ouvrir le guide des procédures</a> · <a href="/?project=travail#evaluation-multi">Commencer l’évaluation</a></p></section>`;
+  }
+  {
+    const resourceMatch = path.match(/^\/ressources\/([^/]+)$/);
+    if (resourceMatch) {
+      let slug = resourceMatch[1];
+      try { slug = decodeURIComponent(slug); } catch { /* keep */ }
+      const page = getCountryResourcePage(slug);
+      if (page) {
+        const lead = countryResourceLead(page, "fr");
+        const docs = page.resources
+          .map((resource) => `<li><a href="${esc(resource.url)}">${esc(resource.title)}</a></li>`)
+          .join("");
+        return `<section aria-label="Guides ${esc(page.country)}"><h2>Guides ${esc(page.country)}</h2><p>${esc(lead)}</p><ul>${docs}</ul><p><a href="/ressources">Retour à la bibliothèque</a> · <a href="/?project=travail&amp;destination=${esc(page.slug)}#evaluation-multi">Évaluer mon profil</a>${page.officialSources[0] ? ` · <a href="${esc(page.officialSources[0].url)}" rel="noreferrer">Source officielle</a>` : ""}</p></section>`;
+      }
+    }
   }
   if (path === "/contact") {
     const yaounde = COMPANY_PROFILE.offices.cameroon;
@@ -422,7 +448,23 @@ export function composePublicPrerender(template: string, url: string) {
       : procedureDetail.procedure
     : undefined;
   const evisaPage = evisaMetaForPath(path);
-  const meta = PUBLIC_PAGES[path] ?? procedurePage ?? evisaPage ?? blogArticle;
+  const resourceCountryMatch = path.match(/^\/ressources\/([^/]+)$/);
+  let resourceCountryMeta: PublicMeta | undefined;
+  if (resourceCountryMatch) {
+    let slug = resourceCountryMatch[1];
+    try { slug = decodeURIComponent(slug); } catch { /* keep */ }
+    const resourcePage = getCountryResourcePage(slug);
+    if (resourcePage) {
+      const lead = countryResourceLead(resourcePage, "fr");
+      resourceCountryMeta = {
+        title: `Guides ${resourcePage.country} | ${SITE}`,
+        description: lead,
+        heading: `Guides ${resourcePage.country}`,
+        lead,
+      };
+    }
+  }
+  const meta = PUBLIC_PAGES[path] ?? procedurePage ?? evisaPage ?? blogArticle ?? resourceCountryMeta;
   const isStudyArticle = Boolean(studyArticle);
   const socialType = isStudyArticle ? "article" : "website";
   const privatePath = /^\/(admin|mon-espace|mon-dossier|confirm-email|verify-email-link|verify-email|verify-email-sent|verify-application-email|confirm-email-change|login|panier|document-upload|mes-vols-favoris|flights|payment\/[^/]+|flight-booking\/[^/]+)(?:\/|$)/.test(path);
@@ -469,7 +511,18 @@ export function composePublicPrerender(template: string, url: string) {
     "/cni-passeport": "cni",
     "/formation": "formations",
     "/canada": "immigration",
+    "/ressources": "mobilite",
   };
+  if (resourceCountryMatch) {
+    let slug = resourceCountryMatch[1];
+    try { slug = decodeURIComponent(slug); } catch { /* keep */ }
+    const resourcePage = getCountryResourcePage(slug);
+    const catalogued = resourcePage ? getCataloguedDestinationImage(resourcePage.visualSlug) : undefined;
+    if (catalogued) {
+      procedureImage = catalogued.startsWith("http") ? catalogued : `${ORIGIN}${catalogued}`;
+      procedureImageAlt = resourcePage ? `Illustration mobilité pour ${resourcePage.country}` : SOCIAL_IMAGE_ALT;
+    }
+  }
   const serviceThemeId = serviceHeroPaths[path];
   const serviceVisual = serviceThemeId ? getServiceVisual(serviceThemeId) : null;
   const serviceImage = serviceVisual ? `${ORIGIN}${serviceVisual.desktop}` : undefined;
