@@ -7,6 +7,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 import type { CountryProcedure } from "@/data/countryProcedures/types";
 import ConsultationRequestForm from "@/components/ConsultationRequestForm";
 import DocumentProcessIllustration from "@/components/illustrations/DocumentProcessIllustration";
+import { INTERNATIONAL_BRAND } from "@/data/internationalBrand";
 
 /**
  * Fiche procédure pays réutilisable — structure officielle 3M TRAVEL AGENCY
@@ -22,15 +23,18 @@ export default function CountryProcedureTemplate({ data }: { data: CountryProced
 
   return (
     <main className="min-h-screen bg-gray-50">
-      {/* Bandeau */}
-      <div className="bg-gradient-to-br from-blue-900 to-indigo-900 text-white py-12 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <span className="text-5xl">{data.flag}</span>
-          <h1 className="text-2xl md:text-4xl font-extrabold !text-white mt-4">{data.title}</h1>
-          <p className="text-blue-200 mt-2">{data.subtitle} — édition {data.editionYear}</p>
-          <p className="text-sm text-blue-300 mt-4 italic">« Votre mobilité, notre expertise. Votre réussite, notre mission. »</p>
-          <div className="max-w-sm mx-auto mt-6">
-            <DocumentProcessIllustration className="w-full h-auto opacity-95" />
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#061a36] via-[#0a3264] to-[#0e5b9f] px-4 py-14 text-white">
+        <div className="relative z-10 mx-auto max-w-4xl text-center">
+          <p className="font-[Georgia,Cambria,'Times_New_Roman',serif] text-2xl font-normal tracking-tight text-amber-200 sm:text-3xl">
+            {INTERNATIONAL_BRAND.publicName}
+          </p>
+          <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-blue-100/90">{INTERNATIONAL_BRAND.corridor}</p>
+          <span className="mt-5 inline-block text-5xl" aria-hidden="true">{data.flag}</span>
+          <h1 className="mt-4 text-2xl font-extrabold tracking-tight !text-white md:text-4xl">{data.title}</h1>
+          <p className="mt-2 text-blue-100">{data.subtitle} — édition {data.editionYear}</p>
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-blue-50/95">{INTERNATIONAL_BRAND.promiseLine.fr}</p>
+          <div className="mx-auto mt-8 max-w-sm">
+            <DocumentProcessIllustration className="h-auto w-full opacity-95" />
           </div>
         </div>
       </div>
