@@ -50,10 +50,10 @@ describe("premium polish trio — navbar, pages secondaires, motion", () => {
     expect(reveal).toContain("once: true");
   });
 
-  it("applique l’apparition progressive et un contraste lisible au hero clair", () => {
+  it("applique l’apparition progressive et un contraste lisible au hero photo", () => {
     const hero = read("client/src/components/HeroSectionVIP.tsx");
-    expect(hero).toContain("text-slate-950");
-    expect(hero).toContain("bg-[#f5f5f5]");
+    expect(hero).toContain("text-white drop-shadow-");
+    expect(hero).not.toContain("bg-[#f5f5f5]");
     expect(hero).toContain("variants={fadeIn}");
     expect(hero).toContain("from-orange-400");
   });

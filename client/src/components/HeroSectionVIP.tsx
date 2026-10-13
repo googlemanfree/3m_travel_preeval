@@ -134,7 +134,7 @@ export default function HeroSectionVIP({
       {/* logoUrl conservé pour SEO / props existantes — la maquette met la marque en texte. */}
       <span className="sr-only">{logoUrl}</span>
 
-      <div className="relative z-10 mx-auto w-full max-w-4xl rounded-[1.75rem] border border-white/70 bg-[#f5f5f5]/95 px-5 py-10 shadow-[0_24px_60px_-28px_rgba(7,22,44,0.55)] backdrop-blur-[2px] sm:px-10 sm:py-14 md:px-14">
+      <div className="relative z-10 mx-auto w-full max-w-5xl px-5 py-10 text-white sm:px-10 sm:py-14 md:px-14">
         <motion.p
           initial="hidden"
           animate="visible"
@@ -151,7 +151,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={1}
-          className="mt-5 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl md:text-5xl lg:text-6xl"
+          className="mt-5 text-3xl font-black tracking-tight text-white drop-shadow-[0_3px_12px_rgba(0,0,0,0.45)] sm:text-4xl md:text-5xl lg:text-6xl"
           data-testid="hero-tagline"
         >
           {t(INTERNATIONAL_BRAND.slogan.fr, INTERNATIONAL_BRAND.slogan.en)}
@@ -162,7 +162,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={1.5}
-          className="mt-3 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl md:text-3xl"
+          className="mt-3 text-xl font-bold tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)] sm:text-2xl md:text-3xl"
           data-testid="hero-support"
         >
           {t(INTERNATIONAL_BRAND.headline.fr, INTERNATIONAL_BRAND.headline.en)}
@@ -173,7 +173,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={2}
-          className="mt-6 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-800 sm:text-xs md:text-sm"
+          className="mt-6 text-[11px] font-bold uppercase tracking-[0.12em] text-white/95 drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] sm:text-xs md:text-sm"
           data-testid="hero-corridor"
         >
           {t(INTERNATIONAL_BRAND.categories.fr, INTERNATIONAL_BRAND.categories.en)}
@@ -184,7 +184,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={2.5}
-          className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-slate-700 sm:text-base sm:leading-8"
+          className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-white/95 drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] sm:text-base sm:leading-8"
           data-testid="hero-body"
         >
           {t(INTERNATIONAL_BRAND.heroBody.fr, INTERNATIONAL_BRAND.heroBody.en)}
@@ -229,7 +229,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={3.5}
-          className="mx-auto mt-7 max-w-xl text-xs leading-5 text-slate-500 sm:text-sm"
+          className="mx-auto mt-7 max-w-xl text-xs leading-5 text-white/90 drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] sm:text-sm"
           data-testid="hero-trust"
         >
           {t(INTERNATIONAL_BRAND.heroTrust.fr, INTERNATIONAL_BRAND.heroTrust.en)}
