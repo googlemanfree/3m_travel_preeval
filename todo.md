@@ -35,3 +35,11 @@
 ## Publication ciblée PR96 — SEO fondateur
 - [x] Identifier et exécuter uniquement les régressions SEO PR96 : `founderSeo`, `publicPrerender` et `seoAndPerformance`, 3 suites / 27 tests verts.
 - [x] Publier WebDev sur l’état courant avec verdict limité aux modules ciblés; checkpoint créé en version `9c0d8457`. Les suites hors périmètre et leurs 11 fichiers / 15 tests en échec ne sont pas relancées ni présentées comme validées.
+
+
+## About — actualités du fondateur, partage et ARIA
+- [x] Inspecter la page About et les données publiques existantes du fondateur.
+- [x] Ajouter une section publications/actualités factuelle et non inventée.
+- [x] Ajouter les partages et liens professionnels avec libellés accessibles.
+- [x] Corriger les défauts ARIA reproductibles sur About et auditer les suites publiques/accessibilité : 9 suites / 49 tests verts, sans défaut restant dans ce périmètre.
+- [x] Valider `pnpm run check`, les suites ciblées et le build production; checkpoint à créer.
