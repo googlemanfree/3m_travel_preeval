@@ -207,7 +207,7 @@ export function listDestinationVisualSlugs(): string[] {
 /** Thèmes de service → image évocatrice (destination ou hero métier). */
 const SERVICE_THEME_SLUG: Record<string, string> = {
   // Catalogue services
-  etudes: "france",
+  etudes: "__etudes__",
   travail: "allemagne",
   immigration: "canada",
   visas: "france",
@@ -225,7 +225,7 @@ const SERVICE_THEME_SLUG: Record<string, string> = {
   mobilite: "canada",
   travel: "__mobility__",
   services: "maroc",
-  "visa-etudes": "france",
+  "visa-etudes": "__etudes__",
   schengen: "__schengen__",
   dossier: "luxembourg",
   recrutement: "luxembourg",
@@ -246,6 +246,12 @@ const THEME_FALLBACKS: Record<string, VisualSources> = {
     desktop: THEME_ASSETS.canada,
     mobile: THEME_ASSETS.canadaMobile,
     alt: "Canada — immigration et études",
+  },
+  __etudes__: {
+    desktop: "/photos-pays/etudes-hero-desktop.jpg",
+    mobile: "/photos-pays/etudes-hero-mobile.jpg",
+    localFallback: "/photos-pays/etudes-hero-desktop.jpg",
+    alt: "Étudiante sur une place européenne en automne — visa études avec 3M TRAVEL AGENCY",
   },
 };
 
