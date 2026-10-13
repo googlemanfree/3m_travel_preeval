@@ -67,7 +67,7 @@ import SubmitReview from "@/pages/SubmitReview";
 import CaseDocumentsPanel, { agencyDepositedDocuments, allCaseDocuments } from "@/components/CaseDocumentsPanel";
 import ClientNotificationsInbox from "@/components/ClientNotificationsInbox";
 import { pickActiveCaseRequirements } from "@/lib/documentChecklist";
-import { EVALUATION_ANCHOR_ID, computeNextStep, type NextStep } from "@/lib/nextStep";
+import { EVALUATION_ANCHOR_ID, computeNextStep, countClarificationUploads, type NextStep } from "@/lib/nextStep";
 import { CLIENT_SPACE_SUMMARY_POLL_MS, buildClientSpaceSnapshot, clientSpacePolling, diffClientSpace, limitAnnouncements, mergeClientSpaceSnapshots, type ClientSpaceSnapshot } from "@/lib/clientSpaceSync";
 import { SECONDARY_PROJECT_OPTIONS, procedureLabelForDossier, secondaryDossierEvaluationPath, type SecondaryProjectType } from "@shared/clientMultiDossier";
 
@@ -578,9 +578,11 @@ export default function EvaluationSpace() {
   const structuredStage = structuredEvaluation?.available ? structuredEvaluation.view.stage : undefined;
   const checklistSummary = summarizeChecklist(primaryDestination, latestEvaluation?.projectType, checklistDocuments, customRequirements);
   const checklistReceived = Math.max(0, checklistSummary.total - checklistSummary.missing - checklistSummary.replace);
-  const documentsActionCount = checklistSummary.missing + checklistSummary.replace;
+  const clarificationUploads = countClarificationUploads(documentClarifications);
+  const documentsActionCount = checklistSummary.missing + checklistSummary.replace + clarificationUploads.count;
   const unreadNotificationsCount = Math.max(0, Number(caseTrackingData?.unreadNotifications) || 0);
   const signaturesPendingCount = agreementAfterPaymentRequired ? 1 : 0;
+  const profileActionCount = passportPhotoRequired ? 1 : 0;
   const agencyProofDocuments = agencyDepositedDocuments(caseTrackingData?.cases);
   const paymentDue = Boolean(paymentDossierNumber) && !procedurePaymentConfirmed && Boolean(workflow?.paymentOpeningRequested || workflow?.activationRequested);
   const paymentHref = paymentDossierNumber
@@ -609,6 +611,8 @@ export default function EvaluationSpace() {
     agreementSignatureRequired: agreementAfterPaymentRequired,
     requirements: (caseTrackingData?.cases ?? []).flatMap((item: any) => item.requirements ?? []),
     checklist: checklistSummary,
+    clarificationUploads,
+    passportPhotoRequired,
     unreadNotifications: unreadNotificationsCount,
     unreadMessages: stats.unreadMessages,
     advisorWhatsAppUrl,
@@ -622,11 +626,12 @@ export default function EvaluationSpace() {
   const PriorityIcon =
     nextStep.id.includes("message") ? MessageSquare
       : nextStep.id.includes("notification") ? Bell
-        : nextStep.id.includes("document") || nextStep.id.includes("checklist") ? FileText
-          : nextStep.id.includes("payment") ? FolderOpen
-            : nextStep.id.includes("evaluation") || nextStep.id.includes("cv") ? Sparkles
-              : nextStep.id.includes("agreement") ? ShieldCheck
-                : CheckCircle2;
+        : nextStep.id.includes("clarification") || nextStep.id.includes("document") || nextStep.id.includes("checklist") ? FileText
+          : nextStep.id.includes("passport") ? User
+            : nextStep.id.includes("payment") ? FolderOpen
+              : nextStep.id.includes("evaluation") || nextStep.id.includes("cv") ? Sparkles
+                : nextStep.id.includes("agreement") ? ShieldCheck
+                  : CheckCircle2;
   const actOnNextStep = (step: NextStep) => {
     if (step.action.kind === "evaluation") openEvaluation();
     else if (step.action.kind === "section") switchToSection(step.action.section);
@@ -806,7 +811,7 @@ export default function EvaluationSpace() {
             { id: "signatures", label: "Signatures", icon: ShieldCheck, badge: signaturesPendingCount },
             { id: "documents", label: "Documents", icon: FileText, badge: documentsActionCount },
             { id: "notifications", label: "Notifications", icon: Bell, badge: unreadNotificationsCount },
-            { id: "profile", label: "Profil", icon: User, badge: 0 },
+            { id: "profile", label: "Profil", icon: User, badge: profileActionCount },
             { id: "messages", label: "Messages", icon: MessageSquare, badge: stats.unreadMessages },
           ].map((tab) => {
             const Icon = tab.icon;

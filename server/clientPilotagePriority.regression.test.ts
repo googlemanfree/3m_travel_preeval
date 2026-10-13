@@ -12,23 +12,30 @@ const navigationSource = readFileSync(resolve(projectRoot, "client/src/component
 const base: NextStepInput = { evaluationRequired: false, agreementSignatureRequired: false };
 
 describe("pilotage prioritaire de l’espace client", () => {
-  it("priorise paiement, pièces, notifications puis messages via computeNextStep", () => {
+  it("priorise paiement, clarifications, pièces, notifications puis messages via computeNextStep", () => {
     expect(dashboardSource).toContain("computeNextStep({");
     expect(dashboardSource).toContain("paymentDue");
+    expect(dashboardSource).toContain("clarificationUploads");
     expect(dashboardSource).toContain("unreadNotifications");
     expect(dashboardSource).toContain("unreadMessages");
     expect(nextStepSource.indexOf('id: "payment-due"')).toBeGreaterThan(-1);
-    expect(nextStepSource.indexOf('id: "documents-rejected"')).toBeGreaterThan(nextStepSource.indexOf('id: "payment-due"'));
-    expect(nextStepSource.indexOf('id: "notifications-unread"')).toBeGreaterThan(nextStepSource.indexOf('id: "documents-pending"'));
+    expect(nextStepSource.indexOf('id: "clarification-upload"')).toBeGreaterThan(nextStepSource.indexOf('id: "checklist-replace"'));
+    expect(nextStepSource.indexOf('id: "passport-photo"')).toBeGreaterThan(nextStepSource.indexOf('id: "documents-pending"'));
     expect(nextStepSource.indexOf('id: "messages-unread"')).toBeGreaterThan(nextStepSource.indexOf('id: "notifications-unread"'));
 
     expect(computeNextStep({ ...base, paymentDue: true, unreadMessages: 3 }).id).toBe("payment-due");
     expect(computeNextStep({ ...base, requirements: [{ id: 1, status: "rejected", isRequired: true }], unreadNotifications: 2 }).id).toBe("documents-rejected");
+    expect(computeNextStep({
+      ...base,
+      clarificationUploads: { count: 1, firstLabel: "Passeport" },
+      checklist: { total: 4, missing: 2, replace: 0 },
+    }).id).toBe("clarification-upload");
     expect(dashboardSource).toContain("Lecture seule des dossiers actifs");
   });
 
   it("offre des raccourcis exploitables vers le suivi, les documents et la messagerie", () => {
     expect(navigationSource).toContain('href: "/mon-espace?section=dossier"');
+    expect(navigationSource).toContain('href: "/mon-espace?section=notifications"');
     expect(dashboardSource).toContain('switchToSection("documents")');
     expect(dashboardSource).toContain('switchToSection("messages")');
     expect(dashboardSource).toContain("Référence de dossier");
