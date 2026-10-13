@@ -52,4 +52,27 @@ describe("images premium — index intelligent", () => {
     expect(shell).toContain("heroVisual");
     expect(overview).toContain("getServiceVisual");
   });
+
+  it("fournit un localFallback pour les thèmes manus (dev sans /manus-storage)", () => {
+    const mobility = getServiceVisual("vols");
+    const schengen = getServiceVisual("schengen");
+    expect(mobility.localFallback).toMatch(/^\/(photos-pays|photos-canada)\//);
+    expect(schengen.localFallback).toMatch(/^\/(photos-pays|photos-canada)\//);
+    expect(getDestinationVisual("france")?.localFallback ?? getDestinationVisual("france")?.desktop).toBeTruthy();
+  });
+
+  it("enrichit les pages publiques avec atmosphere premium et bande illustrée", () => {
+    const shell = read("client/src/components/ServicePageShell.tsx");
+    const how = read("client/src/pages/HowItWorks.tsx");
+    const hub = read("client/src/pages/DestinationsHub.tsx");
+    const etudes = read("client/src/pages/VisaEtudes.tsx");
+    const travail = read("client/src/pages/VisaTravail.tsx");
+    expect(shell).toContain("PremiumAtmosphere");
+    expect(how).toContain("IllustrativeDestinationStrip");
+    expect(hub).toContain("PremiumAtmosphere");
+    expect(etudes).toContain("IllustrativeDestinationStrip");
+    expect(travail).toContain("PremiumAtmosphere");
+    expect(read("client/src/components/PremiumAtmosphere.tsx")).toContain("premium-atmosphere");
+    expect(read("client/src/components/IllustrativeDestinationStrip.tsx")).toContain("getDestinationVisual");
+  });
 });

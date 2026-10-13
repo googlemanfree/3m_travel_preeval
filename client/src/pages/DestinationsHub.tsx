@@ -6,6 +6,8 @@ import { ArrowRight } from "lucide-react";
 import { DESTINATIONS_20, REGION_ORDER, type Destination20 } from "@/data/destinations20";
 import { getDestinationVisual, getServiceVisual } from "@/data/premiumVisuals";
 import { PremiumCoverImage } from "@/components/PremiumCoverImage";
+import { PremiumAtmosphere } from "@/components/PremiumAtmosphere";
+import { IllustrativeDestinationStrip } from "@/components/IllustrativeDestinationStrip";
 import { setPageSeo } from "@/lib/pageSeo";
 
 const FEATURED = [
@@ -69,7 +71,8 @@ export default function DestinationsHub() {
   }, [heroVisual.desktop, heroVisual.alt]);
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
+    <PremiumAtmosphere washVisual={heroVisual} washOpacity={16}>
+    <main className="min-h-screen text-slate-900">
       <section className="relative overflow-hidden px-4 pb-14 pt-16 text-white sm:px-6 lg:px-8">
         <PremiumCoverImage
           visual={heroVisual}
@@ -89,6 +92,12 @@ export default function DestinationsHub() {
           </Link>
         </div>
       </section>
+
+      <IllustrativeDestinationStrip
+        title="Aperçu en images"
+        lead="Visuels premium du catalogue — Canada, Europe et Golfe — pour situer chaque corridor avant de choisir."
+        className="border-b border-slate-200/60 bg-white/40"
+      />
 
       <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
         <section>
@@ -142,5 +151,6 @@ export default function DestinationsHub() {
       <ChecklistSection title="Ce qui compte pour choisir une destination" introduction="Six points à examiner avec votre conseiller avant de vous engager dans une procédure." items={DESTINATIONS_CRITERIA} tone="white" testId="destinations-criteria" />
       <FaqSection items={DESTINATIONS_FAQ} tone="slate" testId="destinations-faq" />
     </main>
+    </PremiumAtmosphere>
   );
 }

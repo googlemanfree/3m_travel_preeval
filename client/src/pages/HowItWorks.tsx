@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, Clock, FileText, DollarSign, Upload, Briefcase, Award } from "lucide-react";
 import { Link } from "wouter";
 import { PremiumCoverImage } from "@/components/PremiumCoverImage";
+import { PremiumAtmosphere } from "@/components/PremiumAtmosphere";
+import { IllustrativeDestinationStrip } from "@/components/IllustrativeDestinationStrip";
 import ProofGallerySection from "@/components/ProofGallerySection";
 import { getServiceVisual } from "@/data/premiumVisuals";
 import { setPageSeo } from "@/lib/pageSeo";
@@ -81,7 +83,8 @@ export default function HowItWorks() {
   ];
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <PremiumAtmosphere washVisual={heroVisual} washOpacity={14}>
+    <main className="min-h-screen">
       <section className="relative overflow-hidden px-4 pb-14 pt-16 text-white sm:px-6 lg:px-8">
         <PremiumCoverImage
           visual={heroVisual}
@@ -98,6 +101,12 @@ export default function HowItWorks() {
           </p>
         </div>
       </section>
+
+      <IllustrativeDestinationStrip
+        title="Les corridors que nous préparons"
+        lead="Images premium du catalogue 3M — pour situer l’ambiance de chaque destination avant de démarrer."
+        className="border-b border-slate-200/60 bg-white/50"
+      />
 
       <div className="max-w-4xl mx-auto px-4 py-12">
         <div className="space-y-6">
@@ -217,5 +226,6 @@ export default function HowItWorks() {
         </div>
       </div>
     </main>
+    </PremiumAtmosphere>
   );
 }

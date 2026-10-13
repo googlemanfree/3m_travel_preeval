@@ -7,6 +7,8 @@ import { Link } from 'wouter';
 
 import StudyAbroadIllustration from '@/components/illustrations/StudyAbroadIllustration';
 import { PremiumCoverImage } from '@/components/PremiumCoverImage';
+import { PremiumAtmosphere } from '@/components/PremiumAtmosphere';
+import { IllustrativeDestinationStrip } from '@/components/IllustrativeDestinationStrip';
 import ProofGallerySection from '@/components/ProofGallerySection';
 import { getDestinationVisual, getServiceVisual } from '@/data/premiumVisuals';
 import { setPageSeo } from '@/lib/pageSeo';
@@ -74,7 +76,8 @@ export default function VisaEtudes() {
   ];
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <PremiumAtmosphere washVisual={heroVisual} washOpacity={14}>
+    <main className="min-h-screen">
       {/* Hero */}
       <section className="relative overflow-hidden px-4 pb-24 pt-20 text-white sm:px-6 lg:px-8">
         <PremiumCoverImage
@@ -108,8 +111,22 @@ export default function VisaEtudes() {
         </div>
       </section>
 
+      <IllustrativeDestinationStrip
+        title="Campus et villes en images"
+        lead="Visuels premium du catalogue 3M — pour situer l’ambiance des destinations d’études les plus demandées."
+        destinations={[
+          { slug: "canada", flag: "🇨🇦", label: "Canada", href: "/canada" },
+          { slug: "france", flag: "🇫🇷", label: "France", href: "/etudes" },
+          { slug: "allemagne", flag: "🇩🇪", label: "Allemagne", href: "/procedures/allemagne-formation" },
+          { slug: "belgique", flag: "🇧🇪", label: "Belgique", href: "/procedures/belgique" },
+          { slug: "royaume-uni", flag: "🇬🇧", label: "Royaume-Uni", href: "/procedures/royaume-uni" },
+          { slug: "irlande", flag: "🇮🇪", label: "Irlande", href: "/procedures/irlande" },
+        ]}
+        className="border-b border-slate-200/60 bg-white/50"
+      />
+
       {/* Destinations */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white/80">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-gray-900 mb-4 text-center">Destinations d'études les plus demandées</h2>
           <p className="text-center text-gray-500 mb-12 max-w-2xl mx-auto">
@@ -263,12 +280,13 @@ export default function VisaEtudes() {
         lockFilter
         collapsedCount={3}
         hideWhenEmpty
-        className="bg-slate-50 px-4 py-16 sm:px-6"
+        className="bg-slate-50/70 px-4 py-16 sm:px-6"
         titleFr="Preuves de dossiers de mobilité"
         titleEn="Mobility file proofs"
         leadFr="Visas et autorisations obtenus par des candidats accompagnés — pour illustrer le sérieux du suivi, sans garantir un résultat scolaire ou consulaire."
         leadEn="Visas and authorisations obtained by accompanied candidates — to illustrate serious follow-up, without guaranteeing an academic or consular outcome."
       />
     </main>
+    </PremiumAtmosphere>
   );
 }

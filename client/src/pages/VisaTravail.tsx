@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { PremiumCoverImage } from "@/components/PremiumCoverImage";
+import { PremiumAtmosphere } from "@/components/PremiumAtmosphere";
+import { IllustrativeDestinationStrip } from "@/components/IllustrativeDestinationStrip";
 import ProofGallerySection from "@/components/ProofGallerySection";
 import { getDestinationVisual, getServiceVisual } from "@/data/premiumVisuals";
 import { setPageSeo } from "@/lib/pageSeo";
@@ -167,7 +169,8 @@ export default function VisaTravail() {
   }, [heroVisual.desktop]);
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_#e8eef8_0%,_#f1f5f9_45%,_#e2e8f0_100%)] text-slate-900">
+    <PremiumAtmosphere washVisual={heroVisual} washOpacity={16}>
+    <main className="min-h-screen text-slate-900">
       <section className="relative min-h-[72vh] overflow-hidden px-4 pb-16 pt-20 text-white sm:min-h-[78vh] sm:px-6 sm:pb-20 lg:px-8">
         <PremiumCoverImage
           visual={{ ...heroVisual, alt: "3M TRAVEL AGENCY — travailler à l’international" }}
@@ -217,6 +220,20 @@ export default function VisaTravail() {
           </motion.div>
         </div>
       </section>
+
+      <IllustrativeDestinationStrip
+        title="Corridors travail en images"
+        lead="Catalogue premium 3M — Europe, Canada et Golfe pour situer l’ambiance de chaque marché."
+        destinations={[
+          { slug: "canada", flag: "🇨🇦", label: "Canada", href: "/canada" },
+          { slug: "allemagne", flag: "🇩🇪", label: "Allemagne", href: "/procedures/allemagne-formation" },
+          { slug: "luxembourg", flag: "🇱🇺", label: "Luxembourg", href: "/procedures/luxembourg" },
+          { slug: "emirats", flag: "🇦🇪", label: "Émirats", href: "/ressources/emirats" },
+          { slug: "qatar", flag: "🇶🇦", label: "Qatar", href: "/procedures/qatar-travail" },
+          { slug: "france", flag: "🇫🇷", label: "France", href: "/etudes" },
+        ]}
+        className="border-b border-slate-200/60 bg-white/45"
+      />
 
       <div className="mx-auto max-w-6xl space-y-16 px-4 py-14 sm:px-6 lg:px-8">
         <section id="destinations-travail" aria-labelledby="destinations-travail-title">
@@ -393,12 +410,13 @@ export default function VisaTravail() {
         lockFilter
         collapsedCount={3}
         hideWhenEmpty
-        className="bg-slate-50/80 px-4 py-16 sm:px-6"
+        className="bg-slate-50/70 px-4 py-16 sm:px-6"
         titleFr="Preuves de dossiers de mobilité"
         titleEn="Mobility file proofs"
         leadFr="Autorisations et visas obtenus par des candidats accompagnés — pour illustrer le suivi, sans garantir un emploi ou un visa."
         leadEn="Authorisations and visas obtained by accompanied candidates — to illustrate follow-up, without guaranteeing a job or visa."
       />
     </main>
+    </PremiumAtmosphere>
   );
 }

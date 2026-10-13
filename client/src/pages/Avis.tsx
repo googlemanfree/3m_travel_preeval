@@ -7,6 +7,8 @@ import { ReviewsErrorBoundary } from "@/components/ReviewsErrorBoundary";
 import { trpc } from "@/lib/trpc";
 import { COMPANY_PROFILE } from "@/lib/companyContacts";
 import { PremiumCoverImage } from "@/components/PremiumCoverImage";
+import { PremiumAtmosphere } from "@/components/PremiumAtmosphere";
+import { IllustrativeDestinationStrip } from "@/components/IllustrativeDestinationStrip";
 import { getServiceVisual } from "@/data/premiumVisuals";
 
 const AGGREGATE_RATING_SCRIPT_ID = "avis-aggregate-rating-jsonld";
@@ -49,8 +51,9 @@ export default function Avis() {
   }, [stats]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white px-4 py-14 sm:px-6 lg:px-8">
-      <section className="relative mx-auto mb-4 max-w-4xl overflow-hidden rounded-3xl px-8 py-10 text-white shadow-xl sm:px-12">
+    <PremiumAtmosphere washVisual={visual} washOpacity={14}>
+    <main className="min-h-screen px-4 py-14 sm:px-6 lg:px-8">
+      <section className="relative mx-auto mb-4 max-w-4xl overflow-hidden px-8 py-10 text-white sm:px-12">
         <PremiumCoverImage visual={visual} priority className="absolute inset-0" imgClassName="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/90 via-[#0a3264]/78 to-[#0e5b9f]/50" />
         <div className="relative z-10">
@@ -59,6 +62,11 @@ export default function Avis() {
           <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50">Chaque témoignage est soumis, vérifié et approuvé avant publication.</p>
         </div>
       </section>
+      <IllustrativeDestinationStrip
+        title="Corridors accompagnés"
+        lead="Images premium du catalogue — le même sérieux documentaire que pour les avis publiés ici."
+        className="mx-auto mb-8 max-w-6xl bg-white/40"
+      />
       <section className="mx-auto max-w-4xl rounded-3xl border border-blue-100 bg-white p-8 shadow-sm sm:p-12">
         <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Transparence 3M TRAVEL AGENCY</p>
         <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
@@ -145,5 +153,6 @@ export default function Avis() {
         </section>
       </section>
     </main>
+    </PremiumAtmosphere>
   );
 }
