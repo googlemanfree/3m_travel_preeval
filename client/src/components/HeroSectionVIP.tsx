@@ -1,5 +1,6 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -18,7 +19,51 @@ export default function HeroSectionVIP({
   whatsappNumber = "237698104832",
 }: HeroSectionVIPProps) {
   const { t, language } = useLanguage();
+  const heroRef = useRef<HTMLElement | null>(null);
+  const backgroundRef = useRef<HTMLImageElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    const hero = heroRef.current;
+    const background = backgroundRef.current;
+    if (!hero || !background || typeof window === "undefined") return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let frame = 0;
+
+    const updateParallax = () => {
+      frame = 0;
+      const rect = hero.getBoundingClientRect();
+      const viewportCenter = window.innerHeight / 2;
+      const heroCenter = rect.top + rect.height / 2;
+      const progress = Math.max(
+        -1,
+        Math.min(1, (viewportCenter - heroCenter) / (window.innerHeight + rect.height)),
+      );
+      const strength = window.innerWidth < 768 ? 10 : 24;
+
+      background.style.transform = reduceMotion.matches
+        ? "scale(1.04)"
+        : `translate3d(0, ${progress * strength}px, 0) scale(1.08)`;
+    };
+
+    const requestUpdate = () => {
+      if (frame === 0) frame = window.requestAnimationFrame(updateParallax);
+    };
+
+    const handleMotionPreference = () => requestUpdate();
+    reduceMotion.addEventListener?.("change", handleMotionPreference);
+    window.addEventListener("scroll", requestUpdate, { passive: true });
+    window.addEventListener("resize", requestUpdate, { passive: true });
+    requestUpdate();
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      reduceMotion.removeEventListener?.("change", handleMotionPreference);
+      window.removeEventListener("scroll", requestUpdate);
+      window.removeEventListener("resize", requestUpdate);
+    };
+  }, []);
 
   const fadeIn = {
     hidden: {
@@ -48,17 +93,48 @@ export default function HeroSectionVIP({
   return (
     <section
       key={language}
+      ref={heroRef}
       className="relative flex min-h-[72vh] items-center justify-center overflow-hidden px-4 py-14 text-center sm:min-h-[78vh] sm:px-6 sm:py-16 md:min-h-[86vh] md:py-20"
       style={{
-        background:
-          "radial-gradient(circle at 12% 0%, rgba(37, 99, 235, 0.08), transparent 28rem), radial-gradient(circle at 88% 8%, rgba(249, 115, 22, 0.07), transparent 26rem), linear-gradient(180deg, #f3f4f6 0%, #f8fafc 45%, #ffffff 100%)",
+        background: "radial-gradient(circle at center, #1e3a8a 0%, #07162c 70%)",
       }}
       data-testid="home-hero"
     >
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <picture className="absolute inset-0 block">
+          <source
+            media="(max-width: 767px)"
+            srcSet="/manus-storage/3m-hero-real-woman-man-mobile_335e606e.webp"
+            type="image/webp"
+          />
+          <source
+            srcSet="/manus-storage/3m-hero-real-woman-man_f9790b0e.webp"
+            type="image/webp"
+          />
+          <img
+            src="/manus-storage/agency_hero_real_woman_man_88aca943.png"
+            alt={t(
+              "Voyageurs préparant un projet de mobilité internationale avec 3M TRAVEL AGENCY",
+              "Travellers preparing an international mobility project with 3M TRAVEL AGENCY",
+            )}
+            ref={backgroundRef}
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+            className="absolute -inset-[4%] h-[108%] w-[108%] object-cover object-center opacity-95 brightness-110 saturate-110 will-change-transform"
+            style={{ transform: "translate3d(0, 0, 0) scale(1.08)" }}
+            data-testid="hero-background-image"
+          />
+        </picture>
+        {/* Voile léger : l’image reste visible autour de la carte maquette. */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#07162c]/40 via-[#0a1d3a]/28 to-[#07162c]/65" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,22,44,.22)_0%,transparent_72%)]" />
+      </div>
+
       {/* logoUrl conservé pour SEO / props existantes — la maquette met la marque en texte. */}
       <span className="sr-only">{logoUrl}</span>
 
-      <div className="relative z-10 mx-auto w-full max-w-4xl rounded-[1.75rem] border border-slate-200/80 bg-[#f5f5f5]/95 px-5 py-10 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.35)] sm:px-10 sm:py-14 md:px-14">
+      <div className="relative z-10 mx-auto w-full max-w-4xl rounded-[1.75rem] border border-white/70 bg-[#f5f5f5]/95 px-5 py-10 shadow-[0_24px_60px_-28px_rgba(7,22,44,0.55)] backdrop-blur-[2px] sm:px-10 sm:py-14 md:px-14">
         <motion.p
           initial="hidden"
           animate="visible"
@@ -166,7 +242,7 @@ export default function HeroSectionVIP({
         animate="visible"
         variants={fadeIn}
         custom={4}
-        className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1 rounded-full px-3 py-2 text-slate-500 transition-colors hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:bottom-10"
+        className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1 rounded-full px-3 py-2 text-white/80 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 sm:bottom-10"
         aria-label={t("Défiler vers la suite de la page", "Scroll to the rest of the page")}
         data-testid="hero-scroll-cue"
       >
