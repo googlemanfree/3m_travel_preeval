@@ -1,4 +1,9 @@
-import { getDestinationVisual, normalizeDestinationSlug } from "@/data/premiumVisuals";
+import {
+  getDestinationVisual,
+  getServiceVisual,
+  normalizeDestinationSlug,
+  type VisualSources,
+} from "@/data/premiumVisuals";
 
 export const PROCEDURE_VISUALS = {
   home: "/manus-storage/3m-home-mobility-hero_f9957244.webp",
@@ -57,22 +62,28 @@ export function getProcedureVisual(country: { id: string; name: string; region: 
   return getProcedureVisualSources(country).desktop;
 }
 
-export function getProcedureVisualSources(country: { id: string; name: string; region: string }) {
-  const lot1Visual = LOT_1_DESTINATION_VISUALS[country.id];
-  if (lot1Visual) return lot1Visual;
-
-  // Index partagé : japon-travail, espagne-etudes, emirats-formation, etc.
+export function getProcedureVisualSources(country: { id: string; name: string; region: string }): VisualSources {
   const fromIndex = getDestinationVisual(country.id) ?? getDestinationVisual(normalizeDestinationSlug(country.name));
-  if (fromIndex) {
-    return { desktop: fromIndex.desktop, mobile: fromIndex.mobile };
+  const lot1Visual = LOT_1_DESTINATION_VISUALS[country.id];
+  if (lot1Visual) {
+    return {
+      desktop: lot1Visual.desktop,
+      mobile: lot1Visual.mobile,
+      localFallback:
+        fromIndex?.localFallback ??
+        (fromIndex?.desktop && fromIndex.desktop !== lot1Visual.desktop ? fromIndex.desktop : undefined),
+      alt: fromIndex?.alt ?? `Procédure ${country.name}`,
+    };
   }
+
+  if (fromIndex) return fromIndex;
 
   const haystack = `${country.id} ${country.name} ${country.region}`.toLowerCase();
   if (haystack.includes("canada")) {
-    return { desktop: PROCEDURE_VISUALS.canada, mobile: PROCEDURE_VISUALS.canadaMobile };
+    return { ...getServiceVisual("immigration"), alt: `Canada — ${country.name}` };
   }
   if (haystack.includes("chine") || haystack.includes("china")) {
-    return { desktop: PROCEDURE_VISUALS.home, mobile: PROCEDURE_VISUALS.homeMobile };
+    return { ...getServiceVisual("mobilite"), alt: `Mobilité — ${country.name}` };
   }
   if (
     haystack.includes("europe") ||
@@ -84,9 +95,9 @@ export function getProcedureVisualSources(country: { id: string; name: string; r
     haystack.includes("italie") ||
     haystack.includes("espagne")
   ) {
-    return { desktop: PROCEDURE_VISUALS.schengen, mobile: PROCEDURE_VISUALS.schengenMobile };
+    return { ...getServiceVisual("schengen"), alt: `Schengen — ${country.name}` };
   }
-  return { desktop: PROCEDURE_VISUALS.home, mobile: PROCEDURE_VISUALS.homeMobile };
+  return { ...getServiceVisual("mobilite"), alt: `Procédure ${country.name}` };
 }
 
 export function getProcedureRegionBadges(country: { id: string; name: string; region: string }) {

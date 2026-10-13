@@ -75,4 +75,15 @@ describe("images premium — index intelligent", () => {
     expect(read("client/src/components/PremiumAtmosphere.tsx")).toContain("premium-atmosphere");
     expect(read("client/src/components/IllustrativeDestinationStrip.tsx")).toContain("getDestinationVisual");
   });
+
+  it("premiumise le hub /procedures (atmosphere, strip, tuiles photo)", () => {
+    const procedures = read("client/src/pages/ProceduresAdvanced.tsx");
+    expect(procedures).toContain("PremiumAtmosphere");
+    expect(procedures).toContain("IllustrativeDestinationStrip");
+    expect(procedures).toContain("PremiumCoverImage");
+    expect(procedures).toContain("getServiceVisual");
+    expect(procedures).toContain("procedures-premium-hub");
+    expect(procedures).toContain("procedures-hub-entries");
+    expect(procedures).toContain("/procedures/comparaison");
+  });
 });

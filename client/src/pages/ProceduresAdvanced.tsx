@@ -1,11 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 // Nombre de destinations affichées d'un coup ; le reste s'ouvre avec « Afficher plus » (la page faisait 73 000 px sur mobile).
 const PROCEDURES_PAGE_SIZE = 18;
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'wouter';
-import { Search, Download, Filter, MapPin, Clock, DollarSign, FileText, ChevronDown, Star, Eye, EyeOff, ArrowUpDown, Calculator, CheckSquare, MessageCircle, ExternalLink, X } from 'lucide-react';
+import { Search, Download, Filter, MapPin, Clock, DollarSign, FileText, ChevronDown, Star, Eye, EyeOff, ArrowUpDown, Calculator, CheckSquare, MessageCircle, ExternalLink, X, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +17,48 @@ import { getProcedureVisualSources } from '@/data/procedureVisuals';
 import { getPublicDestinationDetail, getPublicDestinationPath, getPublicDestinationSearchTerms, normalizePublicDestinationSearchTerm, PUBLIC_DESTINATION_DETAILS } from '@/lib/publicDestinationCatalog';
 import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
+import { PremiumAtmosphere } from '@/components/PremiumAtmosphere';
+import { PremiumCoverImage } from '@/components/PremiumCoverImage';
+import { IllustrativeDestinationStrip } from '@/components/IllustrativeDestinationStrip';
+import { getServiceVisual } from '@/data/premiumVisuals';
+import { BRAND_PUBLIC_NAME } from '@/lib/companyContacts';
+import { setPageSeo } from '@/lib/pageSeo';
 // CanadaScoreSimulator déplacé vers la section /canada dédiée
+
+const HUB_ENTRIES = [
+  {
+    key: 'canada',
+    title: 'Canada : résidence & emploi',
+    lead: 'Entrée Express, programmes provinciaux et accompagnement emploi.',
+    href: '/canada',
+    cta: 'Guide Canada',
+    visualKey: 'immigration',
+  },
+  {
+    key: 'travail',
+    title: 'Travail international',
+    lead: 'Canada, Europe et Golfe : permis et préparation des autorisations.',
+    href: '/travail',
+    cta: 'Hub Travail',
+    visualKey: 'travail',
+  },
+  {
+    key: 'schengen',
+    title: 'Visa Schengen',
+    lead: 'Tourisme, affaires, visite familiale et courts séjours européens.',
+    href: '/schengen',
+    cta: 'Guide Schengen',
+    visualKey: 'schengen',
+  },
+  {
+    key: 'etudes',
+    title: 'Études internationales',
+    lead: 'Campus France, IRCC, uni-assist et destinations de référence.',
+    href: '/etudes',
+    cta: 'Hub Études',
+    visualKey: 'visa-etudes',
+  },
+] as const;
 
 const REGIONS = ['Tous', 'Europe', 'Asie', 'Afrique', 'Amérique du Nord', 'Amérique du Sud', 'Océanie', 'Moyen-Orient'];
 
@@ -175,49 +216,107 @@ export default function ProceduresAdvanced() {
   const getEvaluationHref = (country: typeof PUBLIC_PROCEDURES[0]) =>
     `/?project=${encodeURIComponent(country.visaType)}&destination=${encodeURIComponent(country.id)}#evaluation-multi`;
 
-  return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 py-12 px-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <h1 className="premium-section-title mb-4 text-4xl md:text-5xl">
-            Procédures avancées — {PUBLIC_PROCEDURES.length} destinations
-          </h1>
-          <p className="premium-section-lead mx-auto text-center text-lg">
-            Filtres avancés, comparaisons interactives et calculateur de budget pour trouver la meilleure destination.
-          </p>
-        </motion.div>
+  const heroVisual = getServiceVisual('mobilite');
 
-        {/* Blocs distincts des services et du score canadien */}
-        <div className="mb-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <Card className="p-6 border-blue-200 bg-white/90 shadow-sm hover:shadow-md transition-shadow">
-            <span className="text-3xl" aria-hidden="true">🇨🇦</span>
-            <h2 className="mt-3 text-lg font-black text-slate-900">Canada : Résidence & Emploi</h2>
-            <p className="premium-copy mt-2 text-sm">Entrée express, programmes provinciaux, volets régionaux et accompagnement emploi rigoureux.</p>
-            <Link href="/canada" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900">Découvrir le guide Canada →</Link>
-          </Card>
-          <Card className="p-6 border-blue-200 bg-white/90 shadow-sm hover:shadow-md transition-shadow">
-            <span className="text-3xl" aria-hidden="true">💼</span>
-            <h2 className="mt-3 text-lg font-black text-slate-900">Travail International</h2>
-            <p className="premium-copy mt-2 text-sm">Canada, Europe et Golfe : permis, offre d’employeur et préparation des autorisations — corridor Afrique → monde.</p>
-            <Link href="/travail" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900">Explorer le hub Travail →</Link>
-          </Card>
-          <Card className="p-6 border-blue-200 bg-white/90 shadow-sm hover:shadow-md transition-shadow">
-            <span className="text-3xl" aria-hidden="true">🇪🇺</span>
-            <h2 className="mt-3 text-lg font-black text-slate-900">Visa Schengen & Court Séjour</h2>
-            <p className="premium-copy mt-2 text-sm">Tourisme, affaires, visite familiale, études courtes ou transit à travers les 29 pays de l’espace Schengen.</p>
-            <Link href="/schengen" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900">Découvrir le guide Schengen →</Link>
-          </Card>
-          <Card className="p-6 border-blue-200 bg-white/90 shadow-sm hover:shadow-md transition-shadow">
-            <span className="text-3xl" aria-hidden="true">🎓</span>
-            <h2 className="mt-3 text-lg font-black text-slate-900">Études Internationales</h2>
-            <p className="premium-copy mt-2 text-sm">10 destinations de référence (Canada, France, Belgique, Allemagne, USA, UK, etc.) et accompagnement rentrée.</p>
-            <Link href="/etudes" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900">Explorer les 10 destinations →</Link>
-          </Card>
+  useEffect(() => {
+    setPageSeo({
+      title: `Procédures & destinations | ${BRAND_PUBLIC_NAME}`,
+      description:
+        'Annuaire des procédures 3M TRAVEL AGENCY : filtres, comparaison de corridors, documents par type de visa et orientation vers Canada, travail, Schengen et études.',
+      image: heroVisual.desktop,
+      imageAlt: heroVisual.alt,
+    });
+  }, [heroVisual.desktop, heroVisual.alt]);
+
+  return (
+    <PremiumAtmosphere washVisual={heroVisual} washOpacity={14}>
+    <main className="min-h-screen text-slate-900" data-testid="procedures-premium-hub">
+      <section className="relative overflow-hidden px-4 pb-14 pt-16 text-white sm:px-6 lg:px-8">
+        <PremiumCoverImage
+          visual={heroVisual}
+          priority
+          className="absolute inset-0"
+          imgClassName="h-full w-full object-cover object-center opacity-90"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/92 via-[#0a3264]/80 to-[#0e5b9f]/55" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#061a36]/70 via-transparent to-[#061a36]/30" />
+        <div className="relative z-10 mx-auto max-w-5xl">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
+            <p className="font-[Georgia,Cambria,'Times_New_Roman',serif] text-3xl font-normal tracking-tight text-amber-200 sm:text-4xl">
+              {BRAND_PUBLIC_NAME}
+            </p>
+            <h1 className="mt-3 max-w-3xl text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
+              Procédures — {PUBLIC_PROCEDURES.length} destinations
+            </h1>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-blue-50 sm:text-lg">
+              Filtres, comparaison de corridors et repères documentaires pour orienter votre projet — chaque exigence reste à confirmer auprès des autorités compétentes.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <a
+                href="/?project=travail#evaluation-multi"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-black text-blue-950 shadow-lg transition hover:bg-blue-50"
+              >
+                Évaluer mon profil
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </a>
+              <Link
+                href="/procedures/comparaison"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-amber-300/60 bg-amber-400/15 px-5 py-3 text-sm font-black text-amber-100 transition hover:bg-amber-400/25"
+              >
+                Comparer les corridors
+              </Link>
+              <a
+                href="#procedure-country-search"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/20"
+              >
+                Parcourir l’annuaire
+              </a>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      <IllustrativeDestinationStrip
+        title="Corridors en images"
+        lead="Visuels premium du catalogue 3M — pour situer l’ambiance avant de filtrer l’annuaire."
+        className="border-b border-slate-200/60 bg-white/45"
+      />
+
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        {/* Pôles d’entrée illustrés */}
+        <div className="mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-testid="procedures-hub-entries">
+          {HUB_ENTRIES.map((entry, index) => {
+            const visual = getServiceVisual(entry.visualKey);
+            return (
+              <motion.div
+                key={entry.key}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-20px' }}
+                transition={{ duration: 0.35, delay: Math.min(index * 0.04, 0.2) }}
+              >
+                <Link
+                  href={entry.href}
+                  className="group relative flex min-h-[200px] flex-col justify-end overflow-hidden text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                  data-testid={`procedures-hub-${entry.key}`}
+                >
+                  <PremiumCoverImage
+                    visual={{ ...visual, alt: `${BRAND_PUBLIC_NAME} — ${entry.title}` }}
+                    className="absolute inset-0"
+                    imgClassName="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#041428]/92 via-[#0a3264]/40 to-transparent" />
+                  <div className="relative z-10 p-4">
+                    <h2 className="text-lg font-black tracking-tight">{entry.title}</h2>
+                    <p className="mt-1 text-xs leading-5 text-blue-50/90">{entry.lead}</p>
+                    <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-[0.12em] text-amber-200">
+                      {entry.cta} <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    </span>
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Outils d’orientation : le simulateur CRS reste volontairement dans la section Canada pour éviter toute confusion. */}
@@ -598,8 +697,14 @@ export default function ProceduresAdvanced() {
               const destinationMedia = mediaByDestination.get(country.id);
               const procedureVisual = getProcedureVisualSources(country);
               const destinationDetail = getPublicDestinationDetail(country.id);
-              const procedureImage = destinationMedia?.imageUrl ?? procedureVisual.desktop;
-              const procedureMobileImage = destinationMedia?.imageUrl ? undefined : procedureVisual.mobile;
+              const cardVisual = destinationMedia?.imageUrl
+                ? {
+                    ...procedureVisual,
+                    desktop: destinationMedia.imageUrl,
+                    mobile: destinationMedia.imageUrl,
+                    localFallback: procedureVisual.localFallback ?? procedureVisual.desktop,
+                  }
+                : procedureVisual;
               const officialPortal = destinationDetail?.consular.officialPortalUrl;
               const officialPortalLabel = destinationDetail?.consular.officialPortalLabel ?? 'Portail institutionnel';
               const verifiedAt = destinationDetail?.consular.officialVerifiedAt ?? destinationDetail?.lastUpdatedAt;
@@ -621,19 +726,11 @@ export default function ProceduresAdvanced() {
                   >
                     {/* Card Header */}
                     <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white">
-                      <picture className="absolute inset-0 block" aria-hidden="true">
-                        {procedureMobileImage && (
-                          <source media="(max-width: 767px)" srcSet={procedureMobileImage} type="image/webp" />
-                        )}
-                        <img
-                          src={procedureImage}
-                          alt=""
-                          aria-hidden="true"
-                          loading="lazy"
-                          decoding="async"
-                          className="absolute inset-0 h-full w-full object-cover opacity-25"
-                        />
-                      </picture>
+                      <PremiumCoverImage
+                        visual={{ ...cardVisual, alt: '' }}
+                        className="absolute inset-0"
+                        imgClassName="absolute inset-0 h-full w-full object-cover opacity-35"
+                      />
                       <div className="absolute inset-0 bg-gradient-to-r from-blue-800/90 via-blue-700/75 to-blue-600/50" />
                       <div className="relative z-10 flex items-center justify-between mb-3">
                         <Link href={getPublicDestinationPath(country.id)} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-700">
@@ -854,5 +951,6 @@ export default function ProceduresAdvanced() {
         )}
       </div>
     </main>
+    </PremiumAtmosphere>
   );
 }
