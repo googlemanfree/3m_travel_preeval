@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { VisualSources } from "@/data/premiumVisuals";
 
 type PremiumCoverImageProps = {
@@ -9,9 +9,12 @@ type PremiumCoverImageProps = {
   priority?: boolean;
 };
 
+const FAILED_GRADIENT =
+  "bg-[radial-gradient(ellipse_at_30%_20%,rgba(14,91,159,0.55),transparent_50%),radial-gradient(ellipse_at_80%_70%,rgba(245,158,11,0.22),transparent_45%),linear-gradient(145deg,#041428_0%,#0a3264_48%,#0e5b9f_100%)]";
+
 /**
- * Image de couverture avec bascule automatique vers le fallback local
- * lorsque /manus-storage est indisponible (dev local, proxy absent).
+ * Affiche d’abord le fallback local (fiable hors manus-storage),
+ * puis bascule vers le visuel manus s’il charge correctement.
  */
 export function PremiumCoverImage({
   visual,
@@ -19,30 +22,74 @@ export function PremiumCoverImage({
   imgClassName = "h-full w-full object-cover",
   priority = false,
 }: PremiumCoverImageProps) {
-  const [src, setSrc] = useState(visual.desktop);
+  const reliable = visual.localFallback || visual.desktop;
+  const preferred = visual.desktop;
+  const [src, setSrc] = useState(reliable);
   const [failed, setFailed] = useState(false);
 
+  useEffect(() => {
+    const nextReliable = visual.localFallback || visual.desktop;
+    setFailed(false);
+    setSrc(nextReliable);
+
+    if (!visual.desktop || visual.desktop === nextReliable) return;
+
+    let cancelled = false;
+    const probe = new Image();
+    probe.decoding = "async";
+    probe.onload = () => {
+      if (!cancelled) setSrc(visual.desktop);
+    };
+    probe.onerror = () => {
+      /* garder le fallback local */
+    };
+    probe.src = visual.desktop;
+
+    return () => {
+      cancelled = true;
+      probe.onload = null;
+      probe.onerror = null;
+    };
+  }, [visual.desktop, visual.localFallback, visual.mobile]);
+
   if (failed) {
-    return <div className={`bg-gradient-to-br from-blue-900 via-blue-950 to-slate-950 ${className}`} aria-hidden="true" />;
+    return (
+      <div
+        className={`${FAILED_GRADIENT} ${className}`}
+        aria-hidden="true"
+        data-testid="premium-cover-fallback"
+      />
+    );
   }
 
+  const showMobileSource = Boolean(
+    visual.mobile && visual.mobile !== preferred && src === preferred,
+  );
+
   return (
-    <div className={`overflow-hidden bg-gradient-to-br from-blue-900 to-slate-950 ${className}`}>
-      <img
-        src={src}
-        alt={visual.alt}
-        loading={priority ? "eager" : "lazy"}
-        decoding="async"
-        fetchPriority={priority ? "high" : "auto"}
-        className={imgClassName}
-        onError={() => {
-          if (visual.localFallback && src !== visual.localFallback) {
-            setSrc(visual.localFallback);
-            return;
-          }
-          setFailed(true);
-        }}
-      />
+    <div className={`overflow-hidden ${FAILED_GRADIENT} ${className}`}>
+      <picture>
+        {showMobileSource ? <source media="(max-width: 767px)" srcSet={visual.mobile} /> : null}
+        <img
+          src={src}
+          alt={visual.alt}
+          loading={priority ? "eager" : "lazy"}
+          decoding="async"
+          fetchPriority={priority ? "high" : "auto"}
+          className={imgClassName}
+          onError={() => {
+            if (visual.localFallback && src !== visual.localFallback) {
+              setSrc(visual.localFallback);
+              return;
+            }
+            if (src !== reliable && reliable) {
+              setSrc(reliable);
+              return;
+            }
+            setFailed(true);
+          }}
+        />
+      </picture>
     </div>
   );
 }

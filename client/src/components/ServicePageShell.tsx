@@ -4,6 +4,7 @@ import { Link } from "wouter";
 import { SocialShareButtons } from "@/components/SocialShareButtons";
 import { PremiumReveal } from "@/components/PremiumReveal";
 import { PremiumCoverImage } from "@/components/PremiumCoverImage";
+import { PremiumAtmosphere } from "@/components/PremiumAtmosphere";
 import type { VisualSources } from "@/data/premiumVisuals";
 
 type ServicePageShellProps = {
@@ -37,80 +38,86 @@ export function ServicePageShell({
   children,
 }: ServicePageShellProps) {
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
-      <section className="relative overflow-hidden border-b border-blue-900/30 px-4 pb-16 pt-20 text-white sm:px-6 sm:pb-20 lg:px-8">
-        {heroVisual ? (
-          <>
-            <PremiumCoverImage
-              visual={heroVisual}
-              priority
-              className="absolute inset-0"
-              imgClassName="h-full w-full object-cover object-center opacity-90 brightness-105 saturate-110"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/92 via-[#0a3264]/78 to-[#0e5b9f]/55" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#061a36]/70 via-transparent to-[#061a36]/35" />
-          </>
-        ) : (
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_15%,rgba(96,165,250,.45),transparent_28%),linear-gradient(125deg,#061a36,#0a3264_55%,#0e5b9f)]" />
-        )}
-        <div className="relative z-10 mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.2fr_.8fr] lg:items-end lg:gap-14">
-          <div>
-            <p className="inline-flex items-center rounded-full border border-blue-200/40 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[.16em] text-amber-100">{eyebrow}</p>
-            <h1 className="mt-5 max-w-4xl text-4xl font-black tracking-tight !text-white sm:text-5xl lg:text-6xl">{title}</h1>
-            <p className="premium-copy-on-dark mt-6 max-w-3xl rounded-2xl bg-[#020C3B]/35 px-4 py-3 !text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] ring-1 ring-white/10 backdrop-blur-[2px] text-base sm:text-lg md:text-xl">{introduction}</p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              {primaryHref.startsWith("#") ? (
-                <a href={primaryHref} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-black text-blue-950 shadow-lg transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-950">
-                  {primaryLabel}
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </a>
-              ) : (
-                <Link href={primaryHref} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-black text-blue-950 shadow-lg transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-950">
-                  {primaryLabel}
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-              )}
-              {secondaryHref && (
-                <Link href={secondaryHref} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-amber-300/60 bg-amber-400/15 px-5 py-3 text-sm font-black text-amber-100 transition hover:bg-amber-400/25 focus:outline-none focus:ring-2 focus:ring-amber-200">
-                  {secondaryLabel}
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-              )}
-              {officialHref && (
-                <a href={officialHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white">
-                  <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                  {officialLabel}
-                </a>
-              )}
+    <PremiumAtmosphere washVisual={heroVisual ?? null} washOpacity={12}>
+      <main className="min-h-screen text-slate-900">
+        <section className="relative overflow-hidden border-b border-blue-900/30 px-4 pb-16 pt-20 text-white sm:px-6 sm:pb-20 lg:px-8">
+          {heroVisual ? (
+            <>
+              <PremiumCoverImage
+                visual={heroVisual}
+                priority
+                className="absolute inset-0"
+                imgClassName="h-full w-full object-cover object-center opacity-90 brightness-105 saturate-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#061a36]/92 via-[#0a3264]/78 to-[#0e5b9f]/55" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#061a36]/70 via-transparent to-[#061a36]/35" />
+            </>
+          ) : (
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_15%,rgba(96,165,250,.45),transparent_28%),linear-gradient(125deg,#061a36,#0a3264_55%,#0e5b9f)]" />
+          )}
+          <div className="relative z-10 mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.2fr_.8fr] lg:items-end lg:gap-14">
+            <div>
+              <p className="inline-flex items-center rounded-full border border-blue-200/40 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[.16em] text-amber-100">{eyebrow}</p>
+              <h1 className="mt-5 max-w-4xl text-4xl font-black tracking-tight !text-white sm:text-5xl lg:text-6xl">{title}</h1>
+              <p className="premium-copy-on-dark mt-6 max-w-3xl rounded-2xl bg-[#020C3B]/35 px-4 py-3 !text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] ring-1 ring-white/10 backdrop-blur-[2px] text-base sm:text-lg md:text-xl">{introduction}</p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                {primaryHref.startsWith("#") ? (
+                  <a href={primaryHref} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-black text-blue-950 shadow-lg transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-950">
+                    {primaryLabel}
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </a>
+                ) : (
+                  <Link href={primaryHref} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-black text-blue-950 shadow-lg transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-950">
+                    {primaryLabel}
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                )}
+                {secondaryHref && (
+                  <Link href={secondaryHref} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-amber-300/60 bg-amber-400/15 px-5 py-3 text-sm font-black text-amber-100 transition hover:bg-amber-400/25 focus:outline-none focus:ring-2 focus:ring-amber-200">
+                    {secondaryLabel}
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                )}
+                {officialHref && (
+                  <a href={officialHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white">
+                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                    {officialLabel}
+                  </a>
+                )}
+              </div>
             </div>
-          </div>
-          <aside className="rounded-2xl border border-white/25 bg-slate-950/45 p-6 shadow-2xl backdrop-blur-sm sm:p-7">
-            <ShieldCheck className="h-8 w-8 text-amber-200" aria-hidden="true" />
-            <h2 className="mt-4 text-lg font-black !text-white">Une orientation, pas une promesse</h2>
-            <p className="premium-copy-on-dark mt-2 rounded-xl bg-[#020C3B]/30 px-3 py-2 !text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)] text-base">Chaque projet est examiné au regard des informations disponibles et des exigences officielles. La décision finale appartient toujours aux autorités compétentes.</p>
-          </aside>
-        </div>
-      </section>
-      {notice && (
-        <section className="border-b border-amber-200 bg-amber-50 px-4 py-5 sm:px-6 lg:px-8">
-          <div className="mx-auto flex max-w-7xl gap-3 text-base leading-7 text-amber-950">
-            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
-            {notice}
+            <aside className="rounded-2xl border border-white/25 bg-slate-950/45 p-6 shadow-2xl backdrop-blur-sm sm:p-7">
+              <ShieldCheck className="h-8 w-8 text-amber-200" aria-hidden="true" />
+              <h2 className="mt-4 text-lg font-black !text-white">Une orientation, pas une promesse</h2>
+              <p className="premium-copy-on-dark mt-2 rounded-xl bg-[#020C3B]/30 px-3 py-2 !text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)] text-base">Chaque projet est examiné au regard des informations disponibles et des exigences officielles. La décision finale appartient toujours aux autorités compétentes.</p>
+            </aside>
           </div>
         </section>
-      )}
-      <div className="border-b border-slate-200 bg-white px-4 py-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <SocialShareButtons title={title} />
+        {notice && (
+          <section className="border-b border-amber-200/80 bg-amber-50/90 px-4 py-5 sm:px-6 lg:px-8">
+            <div className="mx-auto flex max-w-7xl gap-3 text-base leading-7 text-amber-950">
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
+              {notice}
+            </div>
+          </section>
+        )}
+        <div className="border-b border-slate-200/70 bg-white/70 px-4 py-4 backdrop-blur-sm sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <SocialShareButtons title={title} />
+          </div>
         </div>
-      </div>
-      {children}
-    </main>
+        {children}
+      </main>
+    </PremiumAtmosphere>
   );
 }
 
 export function ServiceSection({ title, introduction, children, tone = "white" }: { title: string; introduction?: string; children: ReactNode; tone?: "white" | "slate" | "blue" }) {
-  const tones = { white: "bg-white", slate: "bg-slate-50", blue: "bg-blue-50" };
+  const tones = {
+    white: "bg-white/80 backdrop-blur-[1px]",
+    slate: "bg-slate-50/70 backdrop-blur-[1px]",
+    blue: "bg-blue-50/75 backdrop-blur-[1px]",
+  };
   return (
     <section className={`${tones[tone]} px-4 py-16 sm:px-6 sm:py-20 lg:px-8`}>
       <div className="mx-auto max-w-7xl">

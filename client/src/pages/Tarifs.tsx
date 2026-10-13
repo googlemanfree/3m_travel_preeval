@@ -9,6 +9,7 @@ import { digitalWhatsAppUrl } from "@/lib/companyContacts";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PremiumReveal } from "@/components/PremiumReveal";
 import { PremiumCoverImage } from "@/components/PremiumCoverImage";
+import { PremiumAtmosphere } from "@/components/PremiumAtmosphere";
 import ProofGallerySection from "@/components/ProofGallerySection";
 import { getServiceVisual } from "@/data/premiumVisuals";
 import { setPageSeo } from "@/lib/pageSeo";
@@ -62,7 +63,8 @@ export default function Tarifs() {
 
   return (
     <TooltipProvider delayDuration={180}>
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-slate-50">
+    <PremiumAtmosphere washVisual={heroVisual} washOpacity={12}>
+    <main className="min-h-screen">
       <section className="relative overflow-hidden px-4 pb-14 pt-16 text-white sm:px-6 lg:px-8">
         <PremiumCoverImage
           visual={heroVisual}
@@ -141,6 +143,7 @@ export default function Tarifs() {
       </div>
       <CommitmentsSection title="Comment se décompose le coût total" introduction="Trois postes distincts, annoncés séparément, pour que vous sachiez toujours qui perçoit quoi." items={TARIFS_COST_PARTS} tone="blue" testId="tarifs-cost-parts" />
     </main>
+    </PremiumAtmosphere>
     </TooltipProvider>
   );
 }

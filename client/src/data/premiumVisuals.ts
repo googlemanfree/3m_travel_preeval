@@ -231,20 +231,30 @@ const SERVICE_THEME_SLUG: Record<string, string> = {
   recrutement: "luxembourg",
 };
 
+/** Photos locales Wikimedia — secours lorsque /manus-storage est absent (dev, preview). */
+const LOCAL_THEME_PHOTOS = {
+  canada: "/photos-canada/canada-vancouver.jpg",
+  france: "/photos-pays/etudes-france-1.jpg",
+  allemagne: "/photos-pays/etudes-allemagne-1.jpg",
+} as const;
+
 const THEME_FALLBACKS: Record<string, VisualSources> = {
   __mobility__: {
     desktop: THEME_ASSETS.home,
     mobile: THEME_ASSETS.homeMobile,
+    localFallback: LOCAL_THEME_PHOTOS.canada,
     alt: "Mobilité internationale avec 3M TRAVEL AGENCY",
   },
   __schengen__: {
     desktop: THEME_ASSETS.schengen,
     mobile: THEME_ASSETS.schengenMobile,
+    localFallback: LOCAL_THEME_PHOTOS.france,
     alt: "Espace Schengen — visas et mobilité européenne",
   },
   __canada__: {
     desktop: THEME_ASSETS.canada,
     mobile: THEME_ASSETS.canadaMobile,
+    localFallback: LOCAL_THEME_PHOTOS.canada,
     alt: "Canada — immigration et études",
   },
 };
