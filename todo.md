@@ -132,4 +132,7 @@
 - [x] Auditer et valider PR92 : conflit unique du pré-rendu résolu en conservant les routes Travail et Ressources; 3 suites / 4 tests verts, `pnpm run check` et build production verts. Aucun statut de dossier actif, e-mail ou notification modifié.
 - [x] Fusionner PR92 : sortie du brouillon et squash-merge sur `main` au commit `1d1ac3c2`.
 - [x] Synchroniser WebDev sur `1d1ac3c2`; serveur actif, LSP et TypeScript sans erreur.
-- [ ] Vérifier `/travail`, `/visa-travail`, la carte Travail et le CTA d’évaluation en lecture seule.
+- [x] Checkpoint WebDev créé : version `0136081e`.
+- [x] Propagation publique confirmée après le déploiement WebDev : `/travail`, `/visa-travail` et `/procedures` répondent 200; le navigateur bascule `/visa-travail` vers `/travail` et affiche le hub Travail.
+- [x] Diagnostic clôturé : le premier 404 correspondait à la fenêtre de propagation post-checkpoint; après déploiement confirmé, le domaine public sert le nouveau build. La recherche Cloudflare ne retourne aucune zone autorisée, donc aucune purge n’a été lancée.
+- [x] Smoke public lecture seule final : carte Travail visible dans `/procedures`, CTA « Évaluer mon profil travail » présent et cible `/?project=travail#evaluation-multi` confirmée; aucun dossier, e-mail ou notification modifié.
