@@ -1810,7 +1810,7 @@ export const adminCandidateManagementRouter = router({
               title: agencyResponse ? "Réponse de l’agence de placement" : input.adminNotes ? "Nouvelle remarque de l’administration" : "Mise à jour de votre dossier",
               body: visibleBody,
               actionUrl: "/mon-espace",
-              sourceLabel: agencyResponse ? "Agence de placement" : "Prime Travel Service",
+              sourceLabel: agencyResponse ? "Agence de placement" : "3M TRAVEL AGENCY",
             })
           : false;
         if (emailSent && notificationId > 0) {
@@ -1846,7 +1846,7 @@ export const adminCandidateManagementRouter = router({
       const notificationResult = await db.insert(clientNotifications).values({
         candidateId,
         type: "admin_message",
-        title: "Nouveau message de Prime Travel Service",
+        title: "Nouveau message de 3M TRAVEL AGENCY",
         body: messageBody,
         actionUrl: "/mon-espace",
         isRead: false,
@@ -1856,10 +1856,10 @@ export const adminCandidateManagementRouter = router({
         ? await sendClientNotificationEmail({
             to: candidateProfile.email,
             fullName: candidateProfile.fullName,
-            title: "Nouveau message de Prime Travel Service",
+            title: "Nouveau message de 3M TRAVEL AGENCY",
             body: messageBody,
             actionUrl: "/mon-espace",
-            sourceLabel: "Prime Travel Service",
+            sourceLabel: "3M TRAVEL AGENCY",
           })
         : false;
       const notificationId = Number((notificationResult as any)[0]?.insertId || 0);

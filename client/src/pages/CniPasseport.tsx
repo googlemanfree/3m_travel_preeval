@@ -1,4 +1,7 @@
 import { type FormEvent, useState } from "react";
+import { FaqSection } from "@/components/PageEnrichment";
+import { CNI_FAQ } from "@/data/pageEnrichment";
+
 import { CheckCircle2, ClipboardCheck, FileCheck2, MessageCircle, Send, UserCheck } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -160,6 +163,8 @@ export default function CniPasseport() {
           ))}
         </ul>
       </ServiceSection>
+
+      <FaqSection introduction="Les points que l’on nous demande le plus souvent avant un dépôt de CNI ou de passeport." items={CNI_FAQ} testId="cni-faq" />
 
       <section id="demande" className="scroll-mt-24 bg-white px-4 py-14 sm:px-6 lg:px-8" aria-labelledby="cni-request-title">
         <div className="mx-auto max-w-4xl">

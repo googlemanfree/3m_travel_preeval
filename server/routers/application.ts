@@ -589,7 +589,7 @@ export const applicationRouter = router({
         transactionId,
         amount,
         currency: "XAF",
-        description: `Frais d’ouverture de dossier Prime Travel Service — ${app.dossierNumber}`,
+        description: `Frais d’ouverture de dossier 3M TRAVEL AGENCY — ${app.dossierNumber}`,
         customerName: app.fullName,
         customerEmail: app.email,
         customerPhone: app.whatsappNumber,

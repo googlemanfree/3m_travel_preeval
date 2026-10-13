@@ -21,7 +21,7 @@ export default function NotFound() {
     { label: "Retour à l’accueil", href: "/" },
     { label: "Évaluation de profil", href: "/evaluation" },
     { label: "Accéder à mon espace", href: "/mon-espace" },
-    { label: "Contacter Prime Travel", href: "/contact" },
+    { label: "Contacter 3M TRAVEL AGENCY", href: "/contact" },
   ];
 
   const handleLink = (href: string) => {

@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { FaqSection, StepsSection } from "@/components/PageEnrichment";
+import { TOURISM_FAQ, TOURISM_STEPS } from "@/data/pageEnrichment";
+
 import { Link, useLocation } from "wouter";
 import {
   BedDouble,
@@ -354,6 +357,8 @@ export default function Tourism() {
           </div>
         </form>
       </div>
+      <StepsSection title="Comment se déroule votre demande" introduction="Un devis personnalisé, étudié par un conseiller, sans engagement de votre part." steps={TOURISM_STEPS} tone="slate" testId="tourism-steps" />
+      <FaqSection items={TOURISM_FAQ} testId="tourism-faq" />
     </main>
   );
 }

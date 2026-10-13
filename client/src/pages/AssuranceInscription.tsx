@@ -1,4 +1,7 @@
 import { FormEvent, useId, useRef, useState } from "react";
+import { ChecklistSection, FaqSection } from "@/components/PageEnrichment";
+import { ASSURANCE_FAQ, ASSURANCE_PREPARE } from "@/data/pageEnrichment";
+
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { MessageCircle, Plus, Shield, Trash2 } from "lucide-react";
@@ -112,6 +115,8 @@ export default function AssuranceInscription() {
           <div className="flex flex-col items-center gap-3"><Button type="submit" size="lg" disabled={createRequest.isPending} className="bg-blue-600 px-8 hover:bg-blue-700"><MessageCircle className="mr-2 h-5 w-5" />{createRequest.isPending ? "Transmission en cours…" : "Envoyer ma demande et ouvrir WhatsApp"}</Button><p className="text-center text-xs text-gray-500">Le numéro de passeport est conservé uniquement dans votre dossier sécurisé et n’est pas envoyé dans le message WhatsApp.</p></div>
         </form>
       </motion.div>
+      <ChecklistSection title="À avoir sous la main pour votre demande" introduction="Avec ces informations, le formulaire se remplit en quelques minutes." items={ASSURANCE_PREPARE} tone="slate" testId="assurance-prepare" />
+      <FaqSection items={ASSURANCE_FAQ} testId="assurance-faq" />
     </main>
   );
 }

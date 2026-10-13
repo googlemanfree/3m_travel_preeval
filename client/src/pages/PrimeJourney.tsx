@@ -1,4 +1,7 @@
 import { useMemo, useState } from "react";
+import { CommitmentsSection, FaqSection, StepsSection } from "@/components/PageEnrichment";
+import { COMMITMENTS, PARCOURS_DELIVERABLES, PARCOURS_FAQ } from "@/data/pageEnrichment";
+
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -108,7 +111,7 @@ function getSourceContext() {
 
   return {
     key: "direct",
-    label: "Prime Travel Service",
+    label: "3M TRAVEL AGENCY",
     helper: "Vous pouvez commencer une évaluation mondiale ou parler à un conseiller.",
   };
 }
@@ -135,7 +138,7 @@ export default function PrimeJourney() {
               <div className="mb-5 flex flex-wrap items-center gap-3">
                 <Badge className="border border-cyan-200/30 bg-white/10 px-3 py-1.5 text-cyan-100 hover:bg-white/10">
                   <Sparkles className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
-                  Parcours mondial Prime Travel
+                  Parcours mondial 3M TRAVEL AGENCY
                 </Badge>
                 <span className="inline-flex items-center gap-1.5 text-sm text-blue-100">
                   <MapPinned className="h-4 w-4" aria-hidden="true" />
@@ -152,7 +155,7 @@ export default function PrimeJourney() {
                 De votre premier message à une <span className="text-cyan-300">opportunité mondiale.</span>
               </motion.h1>
               <p className="mt-6 max-w-2xl text-base leading-7 text-blue-100 sm:text-lg">
-                Prime Travel Service structure votre demande, étudie votre profil et vous accompagne vers la destination qui correspond le mieux à votre projet, selon les opportunités disponibles.
+                3M TRAVEL AGENCY structure votre demande, étudie votre profil et vous accompagne vers la destination qui correspond le mieux à votre projet, selon les opportunités disponibles.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -213,7 +216,7 @@ export default function PrimeJourney() {
             <div>
               <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-700">Un parcours lisible</p>
               <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Chaque étape a un objectif précis.</h2>
-              <p className="mt-4 max-w-xl text-base leading-7 text-slate-600">Vous savez où vous en êtes, ce que Prime Travel Service attend de vous et quelle action vient ensuite. Sélectionnez une étape pour voir son écran principal.</p>
+              <p className="mt-4 max-w-xl text-base leading-7 text-slate-600">Vous savez où vous en êtes, ce que 3M TRAVEL AGENCY attend de vous et quelle action vient ensuite. Sélectionnez une étape pour voir son écran principal.</p>
 
               <div className="mt-8 space-y-2" role="tablist" aria-label="Étapes du parcours utilisateur">
                 {journeyStages.map((stage, index) => {
@@ -322,6 +325,16 @@ export default function PrimeJourney() {
             </motion.div>
           </div>
         </section>
+
+        <StepsSection
+          title="Ce que vous recevez à chaque étape"
+          introduction="Pas de zone d’ombre : voici ce que contient concrètement chacune des cinq étapes du parcours."
+          steps={PARCOURS_DELIVERABLES}
+          tone="slate"
+          testId="parcours-deliverables"
+        />
+        <CommitmentsSection title="Nos engagements" introduction="Cinq règles que 3M applique à chaque dossier, quelle que soit la destination." items={COMMITMENTS} />
+        <FaqSection introduction="Les réponses aux questions que l’on nous pose avant de commencer le parcours." items={PARCOURS_FAQ} tone="slate" testId="parcours-faq" />
 
         <section className="border-y border-slate-200 bg-white">
           <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">

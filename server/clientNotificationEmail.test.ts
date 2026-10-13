@@ -18,7 +18,7 @@ describe("notifications e-mail client", () => {
   it("envoie les remarques et réponses partenaires après la notification interne", () => {
     const router = read("server/routers/adminCandidateManagement.ts");
     expect(router).toContain("sendClientNotificationEmail");
-    expect(router).toContain("sourceLabel: agencyResponse ? \"Agence de placement\" : \"Prime Travel Service\"");
+    expect(router).toContain("sourceLabel: agencyResponse ? \"Agence de placement\" : \"3M TRAVEL AGENCY\"");
     expect(router).toContain("emailSentAt: new Date()");
     expect(router).toContain("type: \"admin_message\"");
   });

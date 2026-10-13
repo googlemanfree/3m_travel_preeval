@@ -19,7 +19,7 @@ describe("notifications synchronisées client-administrateur", () => {
     expect(adminRouter).toContain('type: agencyResponse ? "agency_response"');
     expect(adminRouter).toContain('type: "admin_message"');
     expect(adminRouter).toContain('title: agencyResponse ? "Réponse de l’agence de placement"');
-    expect(adminRouter).toContain('title: "Nouveau message de Prime Travel Service"');
+    expect(adminRouter).toContain('title: "Nouveau message de 3M TRAVEL AGENCY"');
     expect(adminRouter).toContain('actionUrl: "/mon-espace"');
   });
 

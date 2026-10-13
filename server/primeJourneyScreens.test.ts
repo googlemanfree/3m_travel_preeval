@@ -6,7 +6,7 @@ const projectRoot = resolve(import.meta.dirname, "..");
 const readProjectFile = (relativePath: string) =>
   readFileSync(resolve(projectRoot, relativePath), "utf8");
 
-describe("écrans du parcours Prime Travel", () => {
+describe("écrans du parcours 3M TRAVEL AGENCY", () => {
   it("expose le parcours public et ses cinq étapes métier", () => {
     const app = readProjectFile("client/src/App.tsx");
     const page = readProjectFile("client/src/pages/PrimeJourney.tsx");

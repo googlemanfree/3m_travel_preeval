@@ -13,7 +13,7 @@ const defaultConfig = {
     { label: "Retour à l’accueil", href: "/" },
     { label: "Évaluation de profil", href: "/evaluation" },
     { label: "Accéder à mon espace", href: "/mon-espace" },
-    { label: "Contacter Prime Travel", href: "/contact" },
+    { label: "Contacter 3M TRAVEL AGENCY", href: "/contact" },
   ],
 };
 
@@ -219,7 +219,7 @@ Suggère des URL de remplacement HTTPS officielles et pertinentes.` },
       parsed = JSON.parse(textContent);
     } catch {
       parsed = {
-        suggestions: [{ url: "https://www.3mtravelagency.com", reason: "Redirection vers le portail principal de Prime Travel." }],
+        suggestions: [{ url: "https://www.3mtravelagency.com", reason: "Redirection vers le portail principal de 3M TRAVEL AGENCY." }],
         adminAdvice: "Vérifiez manuellement l’URL officielle mise à jour sur le portail consulaire.",
       };
     }

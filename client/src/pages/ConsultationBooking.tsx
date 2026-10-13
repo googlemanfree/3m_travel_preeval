@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { ChecklistSection, FaqSection, StepsSection } from "@/components/PageEnrichment";
+import { CONSULTATION_FAQ, CONSULTATION_PREPARE, CONSULTATION_STEPS } from "@/data/pageEnrichment";
+
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader, Plane, Globe, Briefcase, GraduationCap, Users, MapPin } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -221,6 +224,9 @@ export default function ConsultationBooking() {
           Service gratuit · Aucun engagement · Réponse sous 24-48 h ouvrées
         </p>
       </div>
+      <StepsSection title="Comment se déroule la consultation" steps={CONSULTATION_STEPS} tone="slate" testId="consultation-steps" />
+      <ChecklistSection title="Pour bien préparer votre rendez-vous" introduction="Quelques repères suffisent : vous n’avez pas besoin de réunir tous vos documents avant le premier échange." items={CONSULTATION_PREPARE} tone="white" testId="consultation-prepare" />
+      <FaqSection items={CONSULTATION_FAQ} tone="slate" testId="consultation-faq" />
     </main>
   );
 }

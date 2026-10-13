@@ -1,4 +1,7 @@
 import { ArrowRight, BriefcaseBusiness, Building2, Globe2, ShieldCheck, UsersRound } from "lucide-react";
+import { FaqSection } from "@/components/PageEnrichment";
+import { PARTNERS_FAQ } from "@/data/pageEnrichment";
+
 import { useLanguage } from "@/contexts/LanguageContext";
 import { CORRIDOR_REGIONS, CORRIDOR_ROUTES } from "@shared/talentCorridor";
 import { Button } from "@/components/ui/button";
@@ -126,6 +129,7 @@ export default function PartnersHub() {
           </div>
         </div>
       </section>
+      <FaqSection title={en ? "Frequently asked questions" : "Questions fréquentes"} introduction={en ? "How candidate profiles are shared, and who decides what." : "Comment les profils candidats sont partagés, et qui décide de quoi."} items={en ? PARTNERS_FAQ.en : PARTNERS_FAQ.fr} tone="slate" testId="partners-faq" />
     </main>
   );
 }
