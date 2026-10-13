@@ -59,12 +59,13 @@ describe("hero : lisibilité et hiérarchie", () => {
     expect(hero).not.toContain("repeat: Infinity");
   });
 
-  it("garde la carte maquette lisible sur l’image d’arrière-plan existante", () => {
+  it("montre le détourage des voyageurs autour de la carte maquette", () => {
     expect(hero).toContain("bg-[#f5f5f5]");
     expect(hero).toContain("rounded-[1.75rem]");
     expect(hero).toContain('data-testid="hero-background-image"');
-    expect(hero).toContain("3m-hero-real-woman-man_f9790b0e.webp");
-    expect(hero).toContain("3m-hero-real-woman-man-mobile_335e606e.webp");
+    expect(hero).toContain("/hero/hero-people-cutout.webp");
+    expect(hero).toContain("/hero/hero-people-cutout-mobile.webp");
+    expect(hero).toContain('data-testid="hero-atmosphere"');
     expect(hero).not.toContain("from-[#07162c]/75");
   });
 });

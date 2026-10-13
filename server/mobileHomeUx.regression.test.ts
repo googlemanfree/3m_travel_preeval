@@ -29,14 +29,14 @@ describe("UX mobile accueil — navigation, hero et zones tactiles", () => {
   });
 
   it("adapte le hero au viewport téléphone sans perdre la hiérarchie de marque", () => {
-    expect(hero).toContain("min-h-[72vh]");
-    expect(hero).toContain("sm:min-h-[78vh]");
+    expect(hero).toContain("min-h-[78vh]");
+    expect(hero).toContain("sm:min-h-[84vh]");
     expect(hero).toContain("text-3xl font-black tracking-tight");
     expect(hero).toContain("sm:text-4xl md:text-5xl lg:text-6xl");
     expect(hero).toContain('data-testid="hero-support"');
     expect(hero).toContain('data-testid="hero-tagline"');
-    expect(hero).toContain("bottom-6");
-    expect(hero).toContain("sm:bottom-10");
+    expect(hero).toContain("bottom-3");
+    expect(hero).toContain("sm:bottom-4");
     expect(hero).toContain('data-testid="hero-scroll-cue"');
     expect(hero).toContain('const heroButtonSize = "w-full max-w-[22rem] min-h-14 sm:w-[300px]";');
   });
@@ -85,9 +85,10 @@ describe("UX mobile accueil — navigation, hero et zones tactiles", () => {
     expect(navBlock).not.toContain('href="#evaluation-multi"');
   });
 
-  it("précharge l’image hero adaptée au viewport", () => {
+  it("précharge le détourage hero adapté au viewport", () => {
     expect(indexHtml).toContain('rel="preload" as="image"');
-    expect(indexHtml).toContain("3m-hero-real-woman-man-mobile_335e606e.webp");
+    expect(indexHtml).toContain("hero-people-cutout-mobile.webp");
+    expect(indexHtml).toContain("hero-people-cutout.webp");
     expect(indexHtml).toContain('media="(max-width: 767px)"');
     expect(indexHtml).toContain('fetchpriority="high"');
   });
