@@ -142,6 +142,7 @@ import { ADMIN_OPERATIONAL_STAGES, type AdminProcedureSnapshot } from "@shared/a
 import { procedureLabelForDossier, type SiblingProcedureSummary } from "@shared/clientMultiDossier";
 import { ADMIN_PROCEDURE_TYPES, normalizeAdminProcedureType } from "@shared/dossierProcedureSelection";
 import { POPULAR_DESTINATION_NAMES, getCandidateDestinationOption } from "@shared/candidateDestinationOptions";
+import { resourceLibraryPathForCountry } from "@shared/countryResourceCatalog";
 import { CountrySelect } from "@/components/CountryPicker";
 
 const EvaluationDeliveryEditor = lazy(() => import("@/components/EvaluationDeliveryEditor").then(({ EvaluationDeliveryEditor: Editor }) => ({ default: Editor })));
@@ -3187,6 +3188,7 @@ export default function AdminDashboard() {
                           const pendingStep = pendingInlineChanges[candidate.id]?.procedureStep;
                           const procedureStep = pendingStep ?? currentStep;
                           const journey = candidate.procedureJourney;
+                          const resourceLibraryHref = resourceLibraryPathForCountry(journey?.country);
                           return (
                             <div className="flex min-w-[180px] flex-col items-start gap-1" data-testid="admin-procedure-journey">
                               {(journey?.country || journey?.visaType) && (
@@ -3218,6 +3220,30 @@ export default function AdminDashboard() {
                                   onClick={(event) => event.stopPropagation()}
                                 >
                                   Guide PDF · {journey.publishedGuide.programLabel || journey.publishedGuide.title}
+                                </a>
+                              )}
+                              {resourceLibraryHref && (
+                                <a
+                                  href={resourceLibraryHref}
+                                  className="max-w-[200px] truncate text-[10px] font-semibold text-indigo-800 underline underline-offset-2"
+                                  data-testid="admin-resource-library-link"
+                                  onClick={(event) => event.stopPropagation()}
+                                  title={`Bibliothèque PDF ${journey?.country}`}
+                                >
+                                  Bibliothèque · {journey?.country}
+                                </a>
+                              )}
+                              {journey?.publishedGuide?.officialPortalUrl && (
+                                <a
+                                  href={journey.publishedGuide.officialPortalUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="max-w-[200px] truncate text-[10px] font-semibold text-emerald-800 underline underline-offset-2"
+                                  data-testid="admin-official-portal-link"
+                                  onClick={(event) => event.stopPropagation()}
+                                  title={journey.publishedGuide.officialPortalLabel || "Portail officiel"}
+                                >
+                                  Portail officiel
                                 </a>
                               )}
                               {journey?.publishedGuide?.summaryOverview && (

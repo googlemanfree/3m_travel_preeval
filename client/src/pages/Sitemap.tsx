@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { ArrowRight, BookOpen, Compass, FileText, Landmark, Search, ShieldCheck, UserRound, X } from "lucide-react";
+import { listCountryResourcePages } from "@shared/countryResourceCatalog";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -50,7 +51,21 @@ const SITE_SECTIONS: SitemapSection[] = [
   {
     key: "resources", title: { fr: "Ressources et procédures", en: "Resources & procedures" }, description: { fr: "Les contenus utiles pour préparer un dossier documenté et retrouver les sources institutionnelles.", en: "Useful content to prepare a documented case and find institutional sources." }, icon: BookOpen,
     links: [
-      { key: "resources", label: { fr: "Ressources", en: "Resources" }, href: "/ressources", description: { fr: "Parcourir les ressources et informations pratiques.", en: "Browse practical resources and information." } },
+      { key: "resources", label: { fr: "Ressources", en: "Resources" }, href: "/ressources", description: { fr: "Parcourir la bibliothèque pays et les PDF publiés.", en: "Browse the country library and published PDFs." } },
+      ...listCountryResourcePages()
+        .filter((page) => ["canada", "luxembourg", "france", "allemagne", "belgique", "emirats", "etats-unis", "royaume-uni"].includes(page.slug))
+        .map((page) => ({
+          key: `resources_${page.slug}`,
+          label: {
+            fr: `Guides ${page.country}`,
+            en: `${page.countryEn || page.country} guides`,
+          },
+          href: page.path,
+          description: {
+            fr: `${page.resources.length} fiche(s) PDF — travail, études ou visite.`,
+            en: `${page.resources.length} PDF sheet(s) — work, study or visit.`,
+          },
+        })),
       { key: "procedure_guide", label: { fr: "Guide des procédures", en: "Procedure guide" }, href: "/guide-procedures", description: { fr: "Accéder à un guide structuré des démarches.", en: "Access a structured guide to procedures." } },
       { key: "official_sources", label: { fr: "Sources officielles", en: "Official sources" }, href: "/sources-officielles", description: { fr: "Vérifier les liens gouvernementaux par destination.", en: "Check government links by destination." } },
       { key: "blog", label: { fr: "Blog", en: "Blog" }, href: "/blog", description: { fr: "Lire les articles et mises à jour publiés par l’agence.", en: "Read articles and updates published by the agency." } },

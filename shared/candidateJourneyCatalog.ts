@@ -33,6 +33,9 @@ export type PublishedGuideRef = {
   summaryHeadline?: string;
   summaryOverview?: string;
   summaryStepHighlights?: string[];
+  /** Portail institutionnel — sync admin / candidat / bibliothèque pays. */
+  officialPortalUrl?: string;
+  officialPortalLabel?: string;
 };
 
 export type CandidateJourney = {
@@ -1170,6 +1173,10 @@ function publishedGuideFromTreatment(treatment: PublishedProcedureTreatment): Pu
     summaryHeadline: treatment.summaryHeadline,
     summaryOverview: treatment.summaryOverview,
     summaryStepHighlights: treatment.summaryStepHighlights,
+    officialPortalUrl: treatment.officialSourceUrl || undefined,
+    officialPortalLabel: treatment.officialSourceUrl
+      ? `Portail officiel · ${treatment.country}`
+      : undefined,
   };
 }
 

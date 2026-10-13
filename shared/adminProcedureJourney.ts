@@ -116,6 +116,8 @@ export type AdminProcedureSnapshot = {
     summaryHeadline?: string;
     summaryOverview?: string;
     summaryStepHighlights?: string[];
+    officialPortalUrl?: string;
+    officialPortalLabel?: string;
   } | null;
 };
 
@@ -200,6 +202,8 @@ export function buildAdminProcedureSnapshot(input: {
           summaryHeadline: journey.publishedGuide.summaryHeadline,
           summaryOverview: journey.publishedGuide.summaryOverview,
           summaryStepHighlights: journey.publishedGuide.summaryStepHighlights,
+          officialPortalUrl: journey.publishedGuide.officialPortalUrl,
+          officialPortalLabel: journey.publishedGuide.officialPortalLabel,
         }
       : null,
   };
