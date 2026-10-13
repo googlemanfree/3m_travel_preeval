@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'wouter';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CheckCircle2, Trash2, ExternalLink, Sparkles, Scale, UserCheck, Sliders, Briefcase, GraduationCap, DollarSign } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Trash2, ExternalLink, Sparkles, Scale, UserCheck, Sliders, Briefcase, GraduationCap, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { procedures107Complete, CountryProcedureComplete } from '@/data/procedures107Complete';
+import {
+  CORRIDOR_COMPARISON_PACKS,
+  FAVORITE_COUNTRIES_STORAGE_KEY,
+  mergeCorridorIntoFavorites,
+  type CorridorPack,
+} from '@/data/corridorComparisonPacks';
+import { setPageSeo } from '@/lib/pageSeo';
 import { toast } from 'sonner';
 
 export default function CountryComparisonPage() {
@@ -20,8 +28,16 @@ export default function CountryComparisonPage() {
   });
 
   useEffect(() => {
+    setPageSeo({
+      title: 'Comparateur de destinations | 3M TRAVEL AGENCY',
+      description:
+        'Comparez des corridors Afrique → Canada, Europe et Golfe selon votre profil. Scores indicatifs enregistrés sur votre appareil — sans promesse d’admission ou de visa.',
+    });
+  }, []);
+
+  useEffect(() => {
     try {
-      const favs = JSON.parse(localStorage.getItem('3m_favorite_countries') || '[]');
+      const favs = JSON.parse(localStorage.getItem(FAVORITE_COUNTRIES_STORAGE_KEY) || '[]');
       setFavoriteIds(favs);
       const matched = procedures107Complete.filter(c => favs.includes(c.id));
       setFavoriteCountries(matched);
@@ -36,6 +52,21 @@ export default function CountryComparisonPage() {
     }
   }, []);
 
+  const applyCorridorPack = (pack: CorridorPack) => {
+    try {
+      const updatedIds = mergeCorridorIntoFavorites(favoriteIds, pack);
+      setFavoriteIds(updatedIds);
+      setFavoriteCountries(procedures107Complete.filter((c) => updatedIds.includes(c.id)));
+      localStorage.setItem(FAVORITE_COUNTRIES_STORAGE_KEY, JSON.stringify(updatedIds));
+      if (pack.project !== 'visiteur') {
+        handleProfileChange('targetVisa', pack.project);
+      }
+      toast.success(`Corridor « ${pack.title} » ajouté au comparateur`);
+    } catch {
+      toast.error('Impossible d’ajouter ce corridor');
+    }
+  };
+
   const handleProfileChange = (key: string, value: string) => {
     const updated = { ...userProfile, [key]: value };
     setUserProfile(updated);
@@ -49,7 +80,7 @@ export default function CountryComparisonPage() {
       const updatedIds = favoriteIds.filter(fId => fId !== id);
       setFavoriteIds(updatedIds);
       setFavoriteCountries(procedures107Complete.filter(c => updatedIds.includes(c.id)));
-      localStorage.setItem('3m_favorite_countries', JSON.stringify(updatedIds));
+      localStorage.setItem(FAVORITE_COUNTRIES_STORAGE_KEY, JSON.stringify(updatedIds));
       toast.success("Destination retirée de vos favoris");
     } catch (e) {
       toast.error("Erreur lors de la suppression");
@@ -143,27 +174,35 @@ export default function CountryComparisonPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_#e8eef8_0%,_#f1f5f9_45%,_#e2e8f0_100%)] py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8">
         
         {/* En-tête */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <a href="/procedures" className="inline-flex items-center gap-2 text-blue-700 hover:text-blue-800 font-semibold text-sm transition-colors mb-2">
+            <Link href="/procedures" className="inline-flex items-center gap-2 text-blue-700 hover:text-blue-800 font-semibold text-sm transition-colors mb-2">
               <ArrowLeft className="w-4 h-4" /> Retour aux procédures
-            </a>
-            <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-              <Scale className="w-8 h-8 text-blue-600" /> Comparateur de Destinations Favorites
+            </Link>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">3M TRAVEL AGENCY</p>
+            <h1 className="mt-2 text-3xl sm:text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+              <Scale className="w-8 h-8 text-blue-600" aria-hidden="true" /> Comparateur de corridors
             </h1>
-            <p className="text-slate-600 text-sm mt-1">
-              Ajustez votre profil ci-dessous pour voir les scores de compatibilité se mettre à jour en temps réel.
+            <p className="text-slate-600 text-sm mt-1 max-w-2xl">
+              Choisissez un corridor Afrique → monde ou vos favoris, puis ajustez le profil. Les scores restent indicatifs — aucune promesse d’admission, d’emploi ou de visa.
             </p>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
+              <Link href="/travail" className="text-blue-800 underline underline-offset-2">Hub Travail</Link>
+              <span className="text-slate-300" aria-hidden="true">·</span>
+              <Link href="/etudes" className="text-blue-800 underline underline-offset-2">Hub Études</Link>
+              <span className="text-slate-300" aria-hidden="true">·</span>
+              <Link href="/ressources" className="text-blue-800 underline underline-offset-2">Bibliothèque pays</Link>
+            </div>
           </div>
-          <a href="/procedures">
+          <Link href="/procedures">
             <Button className="bg-blue-700 hover:bg-blue-800 text-white font-bold px-5 py-2.5 rounded-xl shadow">
               + Ajouter d'autres pays
             </Button>
-          </a>
+          </Link>
         </div>
 
         {/* Panneau de profil interactif */}
@@ -239,22 +278,72 @@ export default function CountryComparisonPage() {
         </Card>
 
         {favoriteCountries.length === 0 ? (
-          <Card className="p-12 text-center bg-white border-slate-200 rounded-3xl shadow-sm space-y-4">
-            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto text-2xl font-bold">
-              ⭐
+          <section
+            className="space-y-6 border border-slate-200/80 bg-white/80 p-6 sm:p-8"
+            aria-labelledby="corridor-empty-title"
+            data-testid="corridor-comparer-empty"
+          >
+            <div className="max-w-2xl">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-800">Démarrer sans favoris</p>
+              <h2 id="corridor-empty-title" className="mt-2 text-2xl font-black text-slate-950">
+                Choisissez un corridor international
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Trois packs prêts à comparer — ou ouvrez le catalogue et ajoutez des pays via le cœur sur chaque fiche.
+              </p>
             </div>
-            <h3 className="text-2xl font-bold text-slate-900">Aucune destination en favori</h3>
-            <p className="text-slate-600 max-w-md mx-auto text-sm">
-              Explorez l'annuaire des procédures documentées et cliquez sur le bouton cœur de n'importe quel pays pour l'ajouter à votre comparateur.
-            </p>
-            <div className="pt-2">
-              <a href="/procedures">
-                <Button className="bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 text-white font-bold px-6 py-3 rounded-xl">
-                  Explorer le catalogue des procédures
+            <div className="grid gap-4 md:grid-cols-3">
+              {CORRIDOR_COMPARISON_PACKS.map((pack) => (
+                <article
+                  key={pack.id}
+                  className="flex flex-col border-b border-slate-200 pb-4 md:border-b-0 md:border-r md:border-slate-200 md:pb-0 md:pr-4 last:md:border-r-0"
+                  data-testid={`corridor-pack-${pack.id}`}
+                >
+                  <p className="text-2xl" aria-hidden="true">{pack.flag}</p>
+                  <h3 className="mt-2 text-base font-black text-slate-950">{pack.title}</h3>
+                  <p className="mt-1 flex-1 text-sm leading-6 text-slate-600">{pack.subtitle}</p>
+                  <div className="mt-4 flex flex-col gap-2">
+                    <Button
+                      type="button"
+                      onClick={() => applyCorridorPack(pack)}
+                      className="min-h-11 rounded-xl bg-blue-800 font-black text-white hover:bg-blue-900"
+                      data-testid={`corridor-pack-apply-${pack.id}`}
+                    >
+                      Comparer ce corridor
+                      <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                    </Button>
+                    <Link
+                      href={pack.hubHref}
+                      className="inline-flex min-h-10 items-center justify-center gap-1.5 text-xs font-bold text-blue-800 underline underline-offset-2"
+                    >
+                      Voir le hub {pack.project === "etudes" ? "Études" : "Travail"}
+                    </Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <div className="flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:flex-wrap">
+              <Link href="/procedures">
+                <Button variant="outline" className="min-h-11 rounded-xl border-slate-300 font-bold">
+                  Explorer le catalogue
                 </Button>
-              </a>
+              </Link>
+              <Link
+                href="/ressources"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 text-sm font-bold text-blue-900"
+              >
+                <BookOpen className="h-4 w-4" aria-hidden="true" />
+                Bibliothèque PDF pays
+              </Link>
+              <Link
+                href="/?project=travail#evaluation-multi"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-500/90 px-4 text-sm font-black text-slate-950 hover:bg-amber-400"
+              >
+                Évaluer mon profil
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
             </div>
-          </Card>
+          </section>
         ) : (
           <div className="overflow-x-auto pb-6">
             <div className="min-w-[800px] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
