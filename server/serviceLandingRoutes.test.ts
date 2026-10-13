@@ -10,6 +10,9 @@ describe("routes canoniques des pages de service", () => {
     expect(appSource).toContain('path={"/canada"} component={Canada}');
     expect(appSource).toContain('path={"/schengen"} component={Schengen}');
     expect(appSource).toContain('path={"/etudes"} component={VisaEtudes}');
+    expect(appSource).toContain('path={"/travail"} component={VisaTravail}');
+    expect(appSource).toContain('path={"/visa-travail"}');
+    expect(appSource).toContain('Redirect to="/travail"');
     expect(appSource).toContain('path={"/flights"} component={Flights}');
     expect(appSource).toContain('<Route path={"/billets"}>{() => <Redirect to="/flights" />}</Route>');
     expect(appSource).not.toContain("pages/Billets");
@@ -37,6 +40,7 @@ describe("routes canoniques des pages de service", () => {
     expect(sitemapContent).toContain("<loc>https://www.3mtravelagency.com/canada</loc>");
     expect(sitemapContent).toContain("<loc>https://www.3mtravelagency.com/schengen</loc>");
     expect(sitemapContent).toContain("<loc>https://www.3mtravelagency.com/etudes</loc>");
+    expect(sitemapContent).toContain("<loc>https://www.3mtravelagency.com/travail</loc>");
     expect(sitemapContent).toContain("<loc>https://www.3mtravelagency.com/blog/etudes/canada</loc>");
     expect(sitemapContent).toContain("<loc>https://www.3mtravelagency.com/blog/etudes/maroc</loc>");
   });
@@ -48,6 +52,8 @@ describe("routes canoniques des pages de service", () => {
     expect(homeSource).toContain('id="evaluation-multi"');
     expect(homeSource.indexOf('id="evaluation-multi"')).toBeLessThan(homeSource.indexOf('id="home-quick-access-title"'));
     expect(proceduresSource).toContain("Canada : Résidence & Emploi");
+    expect(proceduresSource).toContain("Travail International");
+    expect(proceduresSource).toContain('href="/travail"');
     expect(proceduresSource).toContain("Visa Schengen & Court Séjour");
     expect(proceduresSource).toContain("Études Internationales");
     expect(proceduresSource).toContain('href="/?project=travail#evaluation-multi"');

@@ -21,8 +21,8 @@ export const SERVICE_POLES: ServicePole[] = [
     icon: Globe2,
     accent: "text-[#1e3a8a] bg-[#dbeafe]",
     services: [
-      { id: "etudes", title: "Études", description: "Choix de la destination, préparation du dossier d’admission et de la demande de visa.", href: "/procedures", icon: GraduationCap },
-      { id: "travail", title: "Travail", description: "Préparation d’un projet professionnel à l’étranger et des démarches qui l’accompagnent.", href: "/procedures", icon: Briefcase },
+      { id: "etudes", title: "Études", description: "Choix de la destination, préparation du dossier d’admission et de la demande de visa.", href: "/etudes", icon: GraduationCap },
+      { id: "travail", title: "Travail", description: "Préparation d’un projet professionnel à l’étranger et des démarches qui l’accompagnent.", href: "/travail", icon: Briefcase },
       { id: "immigration", title: "Immigration", description: "Voies d’immigration vers le Canada, avec un simulateur CRS pour situer votre profil.", href: "/canada", icon: Globe2 },
       { id: "visas", title: "Visas", description: "Visas de visite, d’études ou de travail : documents à réunir, dépôt et suivi.", href: "/procedures", icon: Stamp },
       { id: "famille", title: "Regroupement familial", description: "Constitution du dossier pour rejoindre un proche installé à l’étranger.", href: "/procedures", icon: Users2 },
@@ -65,8 +65,8 @@ export type QuickAction = { id: string; title: string; hint: string; href: strin
  */
 export const QUICK_ACTIONS: QuickAction[] = [
   { id: "dossier", title: "Préparer mon dossier", hint: "Évaluation, pièces et suivi traçable", href: buildFreeEvaluationHref("travail"), icon: FileCheck2 },
-  { id: "travailler", title: "Travailler à l’étranger", hint: "Profil, employeur et autorisations", href: buildFreeEvaluationHref("travail"), icon: Briefcase },
-  { id: "etudier", title: "Étudier à l’étranger", hint: "Admission et visa d’études", href: buildFreeEvaluationHref("etudes"), icon: GraduationCap },
+  { id: "travailler", title: "Travailler à l’étranger", hint: "Profil, employeur et autorisations", href: "/travail", icon: Briefcase },
+  { id: "etudier", title: "Étudier à l’étranger", hint: "Admission et visa d’études", href: "/etudes", icon: GraduationCap },
   { id: "visa", title: "Demander un visa", hint: "Checklist et dépôt guidés", href: "/procedures", icon: Stamp },
   { id: "recrutement", title: "Recrutement partenaires", hint: "Agences et employeurs vérifiés", href: "/partenaires", icon: Building2 },
   { id: "conseiller", title: "Parler à un conseiller", hint: "Échange direct, sans engagement", href: "/consultation", icon: MessageCircle },

@@ -193,12 +193,18 @@ export default function ProceduresAdvanced() {
         </motion.div>
 
         {/* Blocs distincts des services et du score canadien */}
-        <div className="mb-12 grid gap-6 md:grid-cols-3">
+        <div className="mb-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="p-6 border-blue-200 bg-white/90 shadow-sm hover:shadow-md transition-shadow">
             <span className="text-3xl" aria-hidden="true">🇨🇦</span>
             <h2 className="mt-3 text-lg font-black text-slate-900">Canada : Résidence & Emploi</h2>
             <p className="premium-copy mt-2 text-sm">Entrée express, programmes provinciaux, volets régionaux et accompagnement emploi rigoureux.</p>
             <Link href="/canada" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900">Découvrir le guide Canada →</Link>
+          </Card>
+          <Card className="p-6 border-blue-200 bg-white/90 shadow-sm hover:shadow-md transition-shadow">
+            <span className="text-3xl" aria-hidden="true">💼</span>
+            <h2 className="mt-3 text-lg font-black text-slate-900">Travail International</h2>
+            <p className="premium-copy mt-2 text-sm">Canada, Europe et Golfe : permis, offre d’employeur et préparation des autorisations — corridor Afrique → monde.</p>
+            <Link href="/travail" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900">Explorer le hub Travail →</Link>
           </Card>
           <Card className="p-6 border-blue-200 bg-white/90 shadow-sm hover:shadow-md transition-shadow">
             <span className="text-3xl" aria-hidden="true">🇪🇺</span>

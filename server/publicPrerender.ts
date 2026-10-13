@@ -210,6 +210,8 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/hotels": { title: `Hôtels et séjours | ${SITE}`, description: "Ancien accès aux services hôteliers de 3M TRAVEL AGENCY, redirigé vers le parcours tourisme.", heading: "Hôtels et séjours", lead: "Redirection vers le parcours tourisme de 3M TRAVEL AGENCY.", noindex: true },
   "/visa-etudes": { title: `Études à l’international | ${SITE}`, description: "Ancien accès au parcours études, redirigé vers la page canonique des études.", heading: "Études à l’international", lead: "Redirection vers le parcours études de 3M TRAVEL AGENCY.", noindex: true },
   "/etudes": { title: `Visa études à l’international | ${SITE}`, description: "Accompagnement documenté pour les projets d’études à l’international et les dossiers associés.", heading: "Projet d’études à l’international", lead: "L’admission et les décisions consulaires relèvent exclusivement des établissements et autorités compétents." },
+  "/visa-travail": { title: `Travail à l’international | ${SITE}`, description: "Ancien accès au parcours travail, redirigé vers la page canonique du visa travail.", heading: "Travail à l’international", lead: "Redirection vers le parcours travail de 3M TRAVEL AGENCY.", noindex: true },
+  "/travail": { title: `Visa travail & mobilité professionnelle | ${SITE}`, description: "Corridor Afrique → Canada, Europe et Golfe : évaluation, dossier employeur et préparation des autorisations de travail.", heading: "Projet travail à l’international", lead: "L’emploi et les décisions de visa relèvent exclusivement des employeurs et autorités compétents." },
   "/ambassador-program": { title: `Programme Ambassadeur | ${SITE}`, description: "Rejoignez le programme Ambassadeur de 3M TRAVEL AGENCY, partagez des liens de parrainage et suivez les dossiers éligibles depuis Yaoundé.", keywords: ["programme ambassadeur", "parrainage visa", "3M TRAVEL AGENCY", "commission parrainage"], heading: "Programme Ambassadeur 3M TRAVEL AGENCY", lead: "Présentez nos services à votre réseau avec un code de parrainage traçable ; les commissions dépendent des dossiers et paiements effectivement confirmés." },
   "/tourisme": { title: `Tourisme, hôtels et séjours | ${SITE}`, description: "Préparez un séjour avec des repères de destination, des hébergements et une demande de devis accompagnée.", heading: "Tourisme et séjours sur mesure", lead: "Les disponibilités, fournisseurs et tarifs sont confirmés par l’agence avant toute réservation." },
   "/assurance": { title: `Assurance voyage | ${SITE}`, description: "Préparez une demande d’assurance voyage avec un circuit administratif documenté et une validation humaine.", heading: "Assurance voyage", lead: "La couverture, les garanties et le tarif final dépendent du fournisseur et des informations validées." },
@@ -321,6 +323,9 @@ const routeSpecificPrerender = (path: string) => {
   }
   if (path === "/canada/crs") {
     return `<section aria-label="Calculatrice CRS Canada"><h2>Simulateur du Système de classement global</h2><p>Le parcours dédié Canada permet d’examiner l’âge, les études, les langues officielles, l’expérience canadienne, le conjoint, la transférabilité et les points additionnels.</p><p>Les quatre compétences linguistiques — lecture, écriture, écoute et expression orale — doivent être saisies selon le test reconnu par IRCC.</p><p><a href="https://www.canada.ca/fr/immigration-refugies-citoyennete/services/immigrer-canada/entree-express/verifier-note.html#calculatrice" target="_blank" rel="noopener noreferrer">Comparer avec la calculatrice officielle IRCC</a> · <a href="/evaluation?destination=canada">Faire une évaluation complète du profil</a> · <a href="/canada">Retourner à la page Canada</a></p></section>`;
+  }
+  if (path === "/travail") {
+    return `<section aria-label="Hub visa travail"><h2>Travailler à l’international</h2><p>Corridor Afrique → Canada, Europe et Golfe : évaluation de profil, pièces employeur et préparation des autorisations — sans promesse d’emploi ou de visa.</p><ul><li><a href="/canada">Canada</a></li><li><a href="/procedures/allemagne-travail">Allemagne</a></li><li><a href="/procedures/luxembourg">Luxembourg</a></li><li><a href="/procedures/france-travail">France</a></li><li><a href="/procedures/pays-bas-travail">Pays-Bas</a></li><li><a href="/procedures/australie-travail">Australie</a></li><li><a href="/procedures/qatar-travail">Qatar</a></li><li><a href="/procedures/royaume-uni-travail">Royaume-Uni</a></li></ul><p><a href="/?project=travail#evaluation-multi">Évaluer mon profil travail</a> · <a href="/etudes">Parcours études</a> · <a href="/procedures">Toutes les procédures</a></p></section>`;
   }
   if (path === "/ressources") {
     const countries = listCountryResourcePages()
@@ -498,6 +503,9 @@ export function composePublicPrerender(template: string, url: string) {
   const serviceHeroPaths: Record<string, string> = {
     "/services": "mobilite",
     "/visa-etudes": "visa-etudes",
+    "/etudes": "visa-etudes",
+    "/visa-travail": "travail",
+    "/travail": "travail",
     "/schengen": "schengen",
     "/tourisme": "hotels",
     "/cni-passeport": "cni",
