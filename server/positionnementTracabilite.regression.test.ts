@@ -79,7 +79,7 @@ describe("positionnement 3M — dossier hub + traçabilité", () => {
       "utf8",
     );
     expect(hero).toContain("INTERNATIONAL_BRAND");
-    expect(hero).toContain("promiseLine");
+    expect(hero).toContain("slogan");
     expect(hero).toContain("cta.evaluate");
     expect(hero).toContain('data-testid="hero-tagline"');
     expect(showcase).toContain("pas au nombre de pays affichés");

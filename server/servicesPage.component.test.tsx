@@ -130,7 +130,7 @@ describe("accueil : « Que voulez-vous accomplir ? »", () => {
     expect(home.indexOf("<QuickActionsSection />")).toBeLessThan(home.indexOf("<ServicesOverviewSection />"));
     const hero = read("client/src/components/HeroSectionVIP.tsx");
     expect(hero).toContain("INTERNATIONAL_BRAND");
-    expect(hero).toContain("promiseLine");
+    expect(hero).toContain("slogan");
     expect(hero).not.toContain("expertise reconnue");
     for (const pole of SERVICE_POLES) expect(hero).not.toContain(`href="/services#${pole.id}"`);
   });

@@ -8,19 +8,43 @@ export const INTERNATIONAL_BRAND = {
   publicName: "3M TRAVEL AGENCY",
   groupName: "3M Group SARL",
   corridor: "Yaoundé · Ottawa · partenaires internationaux",
+  /** Slogan hero principal — ambition pan-africaine. */
+  slogan: {
+    fr: "L’Afrique vers le monde.",
+    en: "Africa to the world.",
+  },
+  /** Sous-titre hero. */
+  headline: {
+    fr: "Votre projet international commence ici.",
+    en: "Your international project starts here.",
+  },
+  /** Ligne de catégories / pôles. */
+  categories: {
+    fr: "Études · Travail · Voyage · Visas · Immigration · Mobilité internationale",
+    en: "Studies · Work · Travel · Visas · Immigration · International mobility",
+  },
+  /** Corps du hero (maquette). */
+  heroBody: {
+    fr: "De l’Afrique vers le monde, 3M Travel Agency vous accompagne dans vos projets internationaux, de l’orientation à la préparation des démarches, en passant par l’organisation de vos voyages et les services associés. Bénéficiez d’un accompagnement personnalisé, structuré et transparent à chaque étape de votre parcours.",
+    en: "From Africa to the world, 3M Travel Agency supports your international projects — from orientation and document preparation to travel organisation and related services. Receive personalised, structured and transparent support at every step.",
+  },
+  /** Ligne de confiance sous les CTA. */
+  heroTrust: {
+    fr: "Accompagnement personnalisé • Informations vérifiables • Suivi étape par étape",
+    en: "Personalised support • Verifiable information • Step-by-step follow-up",
+  },
+  /** Alias utilisés par d’autres pages (promesse courte). */
   promiseLine: {
-    fr: "Préparation documentée, suivi humain, canaux autorisés — de Yaoundé vers le monde.",
-    en: "Documented preparation, human follow-up, authorised channels — from Yaoundé to the world.",
+    fr: "L’Afrique vers le monde.",
+    en: "Africa to the world.",
   },
-  /** Phrase courte sous le hero (budget 1re vue). */
   heroSupport: {
-    fr: "Études, travail, visas et voyages : un interlocuteur structure votre dossier et oriente vers les sources officielles — sans promettre le résultat.",
-    en: "Studies, work, visas and travel: one partner structures your file and points you to official sources — without promising the outcome.",
+    fr: "Votre projet international commence ici.",
+    en: "Your international project starts here.",
   },
-  /** Texte plus long pour pages services / contact / about. */
   pageLead: {
-    fr: "Études, travail, immigration, visas, billets et e-Visa : 3M TRAVEL AGENCY structure votre dossier, vérifie les pièces et vous oriente vers les sources officielles. Corridor Yaoundé–Ottawa. Les décisions restent celles des autorités, établissements et employeurs.",
-    en: "Studies, work, immigration, visas, flights and e-Visa: 3M TRAVEL AGENCY structures your file, checks documents and points you to official sources. Yaoundé–Ottawa corridor. Decisions remain with authorities, schools and employers.",
+    fr: "De l’Afrique vers le monde, 3M TRAVEL AGENCY structure votre dossier, prépare les démarches et organise vos voyages — corridor Yaoundé–Ottawa. Les décisions restent celles des autorités, établissements et employeurs.",
+    en: "From Africa to the world, 3M TRAVEL AGENCY structures your file, prepares procedures and organises travel — Yaoundé–Ottawa corridor. Decisions remain with authorities, schools and employers.",
   },
   trustPillars: [
     {

@@ -50,11 +50,11 @@ describe("premium polish trio — navbar, pages secondaires, motion", () => {
     expect(reveal).toContain("once: true");
   });
 
-  it("applique le contraste translucide et l’apparition progressive au texte du hero", () => {
+  it("applique l’apparition progressive et un contraste lisible au hero clair", () => {
     const hero = read("client/src/components/HeroSectionVIP.tsx");
-    expect(hero).toContain("premium-copy-on-dark");
-    expect(hero).toContain("from-[#07162c]/45");
-    expect(hero).toContain("!text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.75)]");
+    expect(hero).toContain("text-slate-950");
+    expect(hero).toContain("bg-[#f5f5f5]");
     expect(hero).toContain("variants={fadeIn}");
+    expect(hero).toContain("from-orange-400");
   });
 });

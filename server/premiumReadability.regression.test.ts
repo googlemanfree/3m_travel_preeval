@@ -25,11 +25,10 @@ describe("lisibilité premium site-wide", () => {
   it("rend le hero et /flights avec un contraste lisible", () => {
     const hero = read("client/src/components/HeroSectionVIP.tsx");
     const flights = read("client/src/pages/Flights.tsx");
-    expect(hero).toContain("text-white drop-shadow");
-    expect(hero).toContain("!text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.75)]");
-    expect(hero).toContain("from-[#07162c]/45");
+    expect(hero).toContain("text-slate-950");
+    expect(hero).toContain("text-slate-700");
+    expect(hero).toContain("from-orange-400");
     expect(hero).not.toContain("text-transparent");
-    expect(hero).toContain("premium-copy-on-dark");
     expect(flights).toContain("premium-copy-on-dark");
   });
 

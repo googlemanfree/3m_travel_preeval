@@ -8,6 +8,7 @@ const candidateSpace = readFileSync(resolve(root, "client/src/pages/EvaluationSp
 const adminDashboard = readFileSync(resolve(root, "client/src/pages/AdminDashboard.tsx"), "utf8");
 const adminShortcuts = readFileSync(resolve(root, "client/src/components/AdminNavigationShortcuts.tsx"), "utf8");
 const hero = readFileSync(resolve(root, "client/src/components/HeroSectionVIP.tsx"), "utf8");
+const brand = readFileSync(resolve(root, "client/src/data/internationalBrand.ts"), "utf8");
 
 describe("expérience candidat et navigation admin", () => {
   it("affiche un état de chargement neutre et protecteur", () => {
@@ -31,10 +32,12 @@ describe("expérience candidat et navigation admin", () => {
   });
 
   it("renforce la hiérarchie typographique du hero", () => {
-    expect(hero).toContain("text-4xl font-extrabold tracking-tight");
-    expect(hero).toContain("sm:text-5xl md:mb-6 md:text-6xl lg:text-7xl xl:text-[6.5rem]");
-    expect(hero).toContain("sm:text-xl md:text-2xl");
-    expect(hero).not.toContain("text-2xl sm:text-3xl md:text-4xl");
+    expect(hero).toContain("text-3xl font-black tracking-tight");
+    expect(hero).toContain("sm:text-4xl md:text-5xl lg:text-6xl");
+    expect(hero).toContain("text-xl font-bold tracking-tight");
+    expect(hero).toContain("sm:text-2xl md:text-3xl");
+    expect(hero).toContain("INTERNATIONAL_BRAND.slogan");
+    expect(brand).toContain("L’Afrique vers le monde.");
   });
 
 });

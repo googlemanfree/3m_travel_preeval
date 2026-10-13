@@ -1,6 +1,5 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -19,64 +18,21 @@ export default function HeroSectionVIP({
   whatsappNumber = "237698104832",
 }: HeroSectionVIPProps) {
   const { t, language } = useLanguage();
-  const heroRef = useRef<HTMLElement | null>(null);
-  const backgroundRef = useRef<HTMLImageElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
-
-  useEffect(() => {
-    const hero = heroRef.current;
-    const background = backgroundRef.current;
-    if (!hero || !background || typeof window === "undefined") return;
-
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let frame = 0;
-
-    const updateParallax = () => {
-      frame = 0;
-      const rect = hero.getBoundingClientRect();
-      const viewportCenter = window.innerHeight / 2;
-      const heroCenter = rect.top + rect.height / 2;
-      const progress = Math.max(-1, Math.min(1, (viewportCenter - heroCenter) / (window.innerHeight + rect.height)));
-      const strength = window.innerWidth < 768 ? 10 : 24;
-
-      background.style.transform = reduceMotion.matches
-        ? "scale(1.04)"
-        : `translate3d(0, ${progress * strength}px, 0) scale(1.08)`;
-    };
-
-    const requestUpdate = () => {
-      if (frame === 0) frame = window.requestAnimationFrame(updateParallax);
-    };
-
-    const handleMotionPreference = () => requestUpdate();
-    reduceMotion.addEventListener?.("change", handleMotionPreference);
-    window.addEventListener("scroll", requestUpdate, { passive: true });
-    window.addEventListener("resize", requestUpdate, { passive: true });
-    requestUpdate();
-
-    return () => {
-      if (frame) window.cancelAnimationFrame(frame);
-      reduceMotion.removeEventListener?.("change", handleMotionPreference);
-      window.removeEventListener("scroll", requestUpdate);
-      window.removeEventListener("resize", requestUpdate);
-    };
-  }, []);
 
   const fadeIn = {
     hidden: {
       opacity: prefersReducedMotion ? 1 : 0,
-      y: prefersReducedMotion ? 0 : 16,
-      filter: prefersReducedMotion ? "none" : "blur(4px)",
+      y: prefersReducedMotion ? 0 : 14,
     },
     visible: (i = 0) => ({
       opacity: 1,
       y: 0,
-      filter: "blur(0px)",
       transition: prefersReducedMotion
         ? { duration: 0 }
         : {
-            duration: 0.85,
-            delay: 0.15 + i * 0.18,
+            duration: 0.7,
+            delay: 0.08 + i * 0.12,
             ease: [0.22, 1, 0.36, 1] as const,
           },
     }),
@@ -92,102 +48,70 @@ export default function HeroSectionVIP({
   return (
     <section
       key={language}
-      ref={heroRef}
-      className="relative flex min-h-[72vh] items-center overflow-hidden py-12 text-center text-white sm:min-h-[78vh] sm:py-16 md:min-h-[88vh] md:py-24"
+      className="relative flex min-h-[72vh] items-center justify-center overflow-hidden px-4 py-14 text-center sm:min-h-[78vh] sm:px-6 sm:py-16 md:min-h-[86vh] md:py-20"
       style={{
-        background: "radial-gradient(circle at center, #1e3a8a 0%, #07162c 70%)",
+        background:
+          "radial-gradient(circle at 12% 0%, rgba(37, 99, 235, 0.08), transparent 28rem), radial-gradient(circle at 88% 8%, rgba(249, 115, 22, 0.07), transparent 26rem), linear-gradient(180deg, #f3f4f6 0%, #f8fafc 45%, #ffffff 100%)",
       }}
       data-testid="home-hero"
     >
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <picture className="absolute inset-0 block">
-          <source
-            media="(max-width: 767px)"
-            srcSet="/manus-storage/3m-hero-real-woman-man-mobile_335e606e.webp"
-            type="image/webp"
-          />
-          <source
-            srcSet="/manus-storage/3m-hero-real-woman-man_f9790b0e.webp"
-            type="image/webp"
-          />
-          <img
-            src="/manus-storage/agency_hero_real_woman_man_88aca943.png"
-            alt={t(
-              "Voyageurs préparant un projet de mobilité internationale avec 3M TRAVEL AGENCY",
-              "Travellers preparing an international mobility project with 3M TRAVEL AGENCY",
-            )}
-            ref={backgroundRef}
-            loading="eager"
-            decoding="async"
-            fetchPriority="high"
-            className="absolute -inset-[4%] h-[108%] w-[108%] object-cover object-center opacity-95 brightness-110 saturate-110 will-change-transform"
-            style={{ transform: "translate3d(0, 0, 0) scale(1.08)" }}
-            data-testid="hero-background-image"
-          />
-        </picture>
-        {/* Voile allégé : l’image reste visible, le texte reste lisible. */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#07162c]/45 via-[#0a1d3a]/35 to-[#07162c]/72" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,22,44,.28)_0%,transparent_72%)]" />
-      </div>
+      {/* logoUrl conservé pour SEO / props existantes — la maquette met la marque en texte. */}
+      <span className="sr-only">{logoUrl}</span>
 
-      <div className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-14 sm:pb-16 md:pb-20">
-        <motion.div
+      <div className="relative z-10 mx-auto w-full max-w-4xl rounded-[1.75rem] border border-slate-200/80 bg-[#f5f5f5]/95 px-5 py-10 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.35)] sm:px-10 sm:py-14 md:px-14">
+        <motion.p
           initial="hidden"
           animate="visible"
           variants={fadeIn}
           custom={0}
-          className="mb-6 flex justify-center"
+          className="text-sm font-extrabold uppercase tracking-[0.14em] text-[#2563eb] sm:text-base"
+          data-testid="hero-title"
         >
-          <img
-            src={logoUrl}
-            alt="3M TRAVEL AGENCY"
-            width={96}
-            height={96}
-            decoding="async"
-            className="h-16 w-16 rounded-full border-2 border-white/50 bg-white object-cover shadow-xl md:h-24 md:w-24"
-          />
-        </motion.div>
+          {INTERNATIONAL_BRAND.publicName}
+        </motion.p>
 
         <motion.h1
           initial="hidden"
           animate="visible"
           variants={fadeIn}
           custom={1}
-          className="mb-4 text-4xl font-extrabold tracking-tight text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.55)] will-change-[opacity,transform] sm:mb-5 sm:text-5xl md:mb-6 md:text-6xl lg:text-7xl xl:text-[6.5rem]"
-          data-testid="hero-title"
+          className="mt-5 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl md:text-5xl lg:text-6xl"
+          data-testid="hero-tagline"
         >
-          3M TRAVEL AGENCY
+          {t(INTERNATIONAL_BRAND.slogan.fr, INTERNATIONAL_BRAND.slogan.en)}
         </motion.h1>
 
         <motion.p
           initial="hidden"
           animate="visible"
           variants={fadeIn}
-          custom={2}
-          className="premium-copy-on-dark mx-auto mb-3 max-w-3xl text-lg font-semibold !text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.75)] sm:mb-4 sm:text-xl md:text-2xl lg:text-3xl"
-          data-testid="hero-tagline"
+          custom={1.5}
+          className="mt-3 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl md:text-3xl"
+          data-testid="hero-support"
         >
-          {t(INTERNATIONAL_BRAND.promiseLine.fr, INTERNATIONAL_BRAND.promiseLine.en)}
+          {t(INTERNATIONAL_BRAND.headline.fr, INTERNATIONAL_BRAND.headline.en)}
         </motion.p>
+
+        <motion.p
+          initial="hidden"
+          animate="visible"
+          variants={fadeIn}
+          custom={2}
+          className="mt-6 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-800 sm:text-xs md:text-sm"
+          data-testid="hero-corridor"
+        >
+          {t(INTERNATIONAL_BRAND.categories.fr, INTERNATIONAL_BRAND.categories.en)}
+        </motion.p>
+
         <motion.p
           initial="hidden"
           animate="visible"
           variants={fadeIn}
           custom={2.5}
-          className="premium-copy-on-dark mx-auto mb-7 max-w-2xl text-sm font-medium leading-relaxed !text-blue-50/95 drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)] sm:mb-10 sm:text-base md:text-lg"
-          data-testid="hero-support"
+          className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-slate-700 sm:text-base sm:leading-8"
+          data-testid="hero-body"
         >
-          {t(INTERNATIONAL_BRAND.heroSupport.fr, INTERNATIONAL_BRAND.heroSupport.en)}
-        </motion.p>
-        <motion.p
-          initial="hidden"
-          animate="visible"
-          variants={fadeIn}
-          custom={2.7}
-          className="mb-6 text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200/90 sm:mb-8"
-          data-testid="hero-corridor"
-        >
-          {INTERNATIONAL_BRAND.corridor}
+          {t(INTERNATIONAL_BRAND.heroBody.fr, INTERNATIONAL_BRAND.heroBody.en)}
         </motion.p>
 
         <motion.div
@@ -195,53 +119,45 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={3}
-          className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap sm:gap-4"
+          className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4"
           data-testid="hero-cta-group"
         >
           <PublicEvaluationCTA
             project="travail"
             aria-label={t("Évaluer mon projet gratuitement", "Evaluate my project for free")}
-            className={`group relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 px-6 py-4 text-center font-bold text-white shadow-lg shadow-orange-950/25 transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.04] hover:from-orange-300 hover:via-orange-500 hover:to-amber-400 hover:shadow-[0_18px_40px_-8px_rgba(249,115,22,0.55)] hover:ring-2 hover:ring-orange-200/70 focus-visible:ring-2 focus-visible:ring-orange-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98] will-change-[opacity,transform]`}
+            className={`group relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 px-6 py-4 text-center font-bold uppercase tracking-wide text-white shadow-lg shadow-orange-950/20 transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.04] hover:from-orange-300 hover:via-orange-500 hover:to-amber-400 hover:shadow-[0_18px_40px_-8px_rgba(249,115,22,0.55)] hover:ring-2 hover:ring-orange-200/70 focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 active:scale-[0.98]`}
           >
             <span
               className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
               aria-hidden="true"
             />
-            <span
-              className="pointer-events-none absolute -inset-1 rounded-xl bg-orange-400/0 opacity-0 blur-md transition-all duration-300 group-hover:bg-orange-400/35 group-hover:opacity-100"
-              aria-hidden="true"
-            />
-            <span className="relative z-10 text-sm transition-transform duration-300 group-hover:tracking-wide sm:text-base">
+            <span className="relative z-10 text-sm sm:text-base">
               {t(INTERNATIONAL_BRAND.cta.evaluate.fr, INTERNATIONAL_BRAND.cta.evaluate.en)}
             </span>
           </PublicEvaluationCTA>
           <Button
             asChild
             variant="outline"
-            className={`group relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl border border-white/40 bg-white/10 px-6 py-4 text-center font-semibold text-white shadow-lg shadow-slate-950/10 backdrop-blur-[1px] transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.04] hover:border-white/70 hover:bg-white/20 hover:shadow-[0_18px_40px_-10px_rgba(255,255,255,0.35)] hover:ring-2 hover:ring-white/40 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98]`}
+            className={`group relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl border border-slate-300 bg-white px-6 py-4 text-center font-bold uppercase tracking-wide text-slate-900 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.04] hover:border-slate-400 hover:bg-slate-50 hover:ring-2 hover:ring-slate-200 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 active:scale-[0.98]`}
           >
             <a href={advisorWhatsApp} target="_blank" rel="noopener noreferrer">
-              <span
-                className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
-                aria-hidden="true"
-              />
-              <span className="relative z-10 text-sm transition-transform duration-300 group-hover:tracking-wide sm:text-base">
+              <span className="relative z-10 text-sm sm:text-base">
                 {t(INTERNATIONAL_BRAND.cta.advisor.fr, INTERNATIONAL_BRAND.cta.advisor.en)}
               </span>
             </a>
           </Button>
-          <Button
-            asChild
-            variant="ghost"
-            className={`group relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl border border-amber-300/50 bg-amber-400/10 px-6 py-4 text-center font-semibold text-amber-50 transition-all duration-300 hover:-translate-y-1 hover:bg-amber-400/20 hover:ring-2 hover:ring-amber-200/40 focus-visible:ring-2 focus-visible:ring-amber-200`}
-          >
-            <a href="/procedures">
-              <span className="relative z-10 text-sm sm:text-base">
-                {t(INTERNATIONAL_BRAND.cta.procedures.fr, INTERNATIONAL_BRAND.cta.procedures.en)}
-              </span>
-            </a>
-          </Button>
         </motion.div>
+
+        <motion.p
+          initial="hidden"
+          animate="visible"
+          variants={fadeIn}
+          custom={3.5}
+          className="mx-auto mt-7 max-w-xl text-xs leading-5 text-slate-500 sm:text-sm"
+          data-testid="hero-trust"
+        >
+          {t(INTERNATIONAL_BRAND.heroTrust.fr, INTERNATIONAL_BRAND.heroTrust.en)}
+        </motion.p>
       </div>
 
       <motion.a
@@ -250,7 +166,7 @@ export default function HeroSectionVIP({
         animate="visible"
         variants={fadeIn}
         custom={4}
-        className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1 rounded-full px-3 py-2 text-white/80 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:bottom-10"
+        className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1 rounded-full px-3 py-2 text-slate-500 transition-colors hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:bottom-10"
         aria-label={t("Défiler vers la suite de la page", "Scroll to the rest of the page")}
         data-testid="hero-scroll-cue"
       >
@@ -260,21 +176,6 @@ export default function HeroSectionVIP({
           aria-hidden="true"
         />
       </motion.a>
-
-      <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
-        <svg
-          viewBox="0 0 1440 60"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-full"
-          aria-hidden="true"
-        >
-          <path
-            d="M0 60L1440 60L1440 0C1440 0 1080 60 720 60C360 60 0 0 0 0L0 60Z"
-            fill="white"
-          />
-        </svg>
-      </div>
     </section>
   );
 }

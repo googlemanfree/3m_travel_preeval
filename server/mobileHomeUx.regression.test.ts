@@ -19,22 +19,22 @@ describe("UX mobile accueil — navigation, hero et zones tactiles", () => {
   it("garde un header téléphone compact sur une seule ligne", () => {
     expect(navbar).toContain("flex-nowrap items-center gap-x-2");
     expect(navbar).toContain("order-2 ml-auto flex shrink-0 items-center");
-    expect(navbar).toContain("touch-target lang-chip");
+    expect(navbar).toContain("<select value={language}");
+    expect(navbar).toContain("min-h-10 max-w-[8.5rem]");
+    expect(navbar).toContain("FR · Français");
     expect(navbar).toContain("mobile-scroll-region max-h-[min(70dvh,calc(100dvh-4.5rem))]");
     expect(navbar).toContain("min-h-14 items-center gap-3");
     expect(themeToggle).toContain('compact ? "touch-target h-11 w-11"');
-    expect(styles).toContain(".touch-target.lang-chip");
     expect(styles).toContain("min-height: 3.75rem");
   });
 
   it("adapte le hero au viewport téléphone sans perdre la hiérarchie de marque", () => {
     expect(hero).toContain("min-h-[72vh]");
     expect(hero).toContain("sm:min-h-[78vh]");
-    expect(hero).toContain("text-4xl font-extrabold tracking-tight");
-    expect(hero).toContain("sm:text-5xl md:mb-6 md:text-6xl lg:text-7xl xl:text-[6.5rem]");
-    expect(hero).toContain("text-lg font-semibold");
-    expect(hero).toContain("text-sm font-medium leading-relaxed");
+    expect(hero).toContain("text-3xl font-black tracking-tight");
+    expect(hero).toContain("sm:text-4xl md:text-5xl lg:text-6xl");
     expect(hero).toContain('data-testid="hero-support"');
+    expect(hero).toContain('data-testid="hero-tagline"');
     expect(hero).toContain("bottom-6");
     expect(hero).toContain("sm:bottom-10");
     expect(hero).toContain('data-testid="hero-scroll-cue"');

@@ -5,32 +5,24 @@ import { describe, expect, it } from "vitest";
 const root = resolve(import.meta.dirname, "..");
 const read = (path: string) => readFileSync(resolve(root, path), "utf8").replace(/\r\n/g, "\n");
 const hero = read("client/src/components/HeroSectionVIP.tsx");
+const brand = read("client/src/data/internationalBrand.ts");
 
 describe("hero : lisibilité et hiérarchie", () => {
-  it("le logo est compact et sans halo : il ne recouvre plus les visages de l'image de fond", () => {
-    expect(hero).toContain("h-16 w-16");
-    expect(hero).toContain("md:h-24 md:w-24");
-    expect(hero).not.toContain("w-36 h-36");
-    expect(hero).not.toContain("from-blue-500 via-indigo-500 to-sky-400 opacity-60 blur-md");
-  });
-
-  it("le voile est allégé pour laisser voir l’image de fond", () => {
-    expect(hero).toContain("from-[#07162c]/45");
-    expect(hero).toContain("via-[#0a1d3a]/35");
-    expect(hero).toContain("to-[#07162c]/72");
-    expect(hero).toContain("bg-[radial-gradient(ellipse_at_center,rgba(7,22,44,.28)_0%,transparent_72%)]");
-    expect(hero).not.toContain("from-[#07162c]/75");
-    expect(hero).not.toContain("rounded-2xl bg-[#020C3B]/45");
-  });
-
-  it("conserve une composition courte : marque, promesse, appui, corridor, CTA", () => {
+  it("affiche la composition maquette : marque, slogan Afrique, catégories, deux CTA", () => {
     expect(hero).toContain("3M TRAVEL AGENCY");
     expect(hero).toContain("INTERNATIONAL_BRAND");
-    expect(hero).toContain("promiseLine");
+    expect(hero).toContain("slogan");
+    expect(hero).toContain("headline");
+    expect(hero).toContain("categories");
+    expect(hero).toContain("heroBody");
+    expect(hero).toContain("heroTrust");
     expect(hero).toContain('data-testid="hero-cta-group"');
+    expect(hero).toContain('data-testid="hero-title"');
     expect(hero).toContain('data-testid="hero-tagline"');
     expect(hero).toContain('data-testid="hero-support"');
     expect(hero).toContain('data-testid="hero-corridor"');
+    expect(brand).toContain("L’Afrique vers le monde.");
+    expect(brand).toContain("Votre projet international commence ici.");
     expect(hero).not.toContain("HERO_OFFERS");
     expect(hero).not.toContain("Évaluation Gratuite en 24h");
     expect(hero).not.toContain("Simulateur CRS Canada");
@@ -50,8 +42,8 @@ describe("hero : lisibilité et hiérarchie", () => {
 
   it("est bilingue FR/EN via useLanguage et INTERNATIONAL_BRAND", () => {
     expect(hero).toContain("useLanguage");
-    expect(hero).toContain("INTERNATIONAL_BRAND.promiseLine.fr");
-    expect(hero).toContain("INTERNATIONAL_BRAND.promiseLine.en");
+    expect(hero).toContain("INTERNATIONAL_BRAND.slogan.fr");
+    expect(hero).toContain("INTERNATIONAL_BRAND.slogan.en");
     expect(hero).toContain("INTERNATIONAL_BRAND.cta.evaluate");
     expect(hero).toContain("INTERNATIONAL_BRAND.cta.advisor");
   });
@@ -65,5 +57,12 @@ describe("hero : lisibilité et hiérarchie", () => {
     expect(hero).toContain('href="#home-talent-corridor"');
     expect(hero).toContain("animate-bounce motion-reduce:animate-none");
     expect(hero).not.toContain("repeat: Infinity");
+  });
+
+  it("reste une composition claire sans photo de fond saturée", () => {
+    expect(hero).toContain("bg-[#f5f5f5]");
+    expect(hero).toContain("rounded-[1.75rem]");
+    expect(hero).not.toContain("hero-background-image");
+    expect(hero).not.toContain("from-[#07162c]/75");
   });
 });
