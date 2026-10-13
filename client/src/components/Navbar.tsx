@@ -192,26 +192,14 @@ export default function Navbar() {
               <ShoppingBag className="h-5 w-5" aria-hidden="true" />
               {totalItems > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-orange-700 px-1 text-[10px] font-black text-white">{totalItems > 9 ? "9+" : totalItems}</span>}
             </a>
-            <div className="flex items-center gap-1 rounded-xl bg-blue-50 dark:bg-slate-800 p-1 border border-blue-200/60 dark:border-blue-900/40" role="group" aria-label={copy(NAV_COPY.languageGroup)}>
-              <button
-                type="button"
-                onClick={() => setLanguage('fr')}
-                aria-label="Français"
-                aria-pressed={language === 'fr'}
-                className={`rounded-lg px-2.5 py-1.5 text-sm font-black transition ${language === 'fr' ? 'bg-white text-blue-800 shadow-sm dark:bg-slate-700 dark:text-blue-200' : 'text-slate-800 hover:text-blue-800 dark:text-slate-200'}`}
-              >
-                <Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>FR</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setLanguage('en')}
-                aria-label="English"
-                aria-pressed={language === 'en'}
-                className={`rounded-lg px-2.5 py-1.5 text-sm font-black transition ${language === 'en' ? 'bg-white text-blue-800 shadow-sm dark:bg-slate-700 dark:text-blue-200' : 'text-slate-800 hover:text-blue-800 dark:text-slate-200'}`}
-              >
-                <Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>EN</span>
-              </button>
-            </div>
+            <label className="inline-flex h-12 items-center gap-1.5 rounded-xl border border-blue-200/60 bg-blue-50 px-2.5 text-sm font-black text-blue-900 transition hover:border-blue-300 focus-within:ring-2 focus-within:ring-blue-600 focus-within:ring-offset-2 dark:border-blue-900/40 dark:bg-slate-800 dark:text-blue-100" title={copy(NAV_COPY.languageGroup)}>
+              <Languages className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="sr-only">{copy(NAV_COPY.languageGroup)}</span>
+              <select value={language} onChange={(event) => setLanguage(event.target.value as "fr" | "en")} aria-label={copy(NAV_COPY.languageGroup)} className="min-h-10 cursor-pointer appearance-none bg-transparent pr-1 outline-none">
+                <option value="fr">FR · Français</option>
+                <option value="en">EN · English</option>
+              </select>
+            </label>
             <ThemeToggle />
             {candidate ? (
               <div className="relative flex items-center gap-1">
@@ -311,10 +299,14 @@ export default function Navbar() {
           </div>
 
           <div className="order-2 ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 lg:hidden">
-            <div className="flex items-center gap-0.5 rounded-xl border border-blue-200/60 bg-blue-50 p-0.5 dark:border-slate-600 dark:bg-slate-800" role="group" aria-label={copy(NAV_COPY.languageGroup)}>
-              <button type="button" onClick={() => setLanguage("fr")} aria-label="Français" aria-pressed={language === "fr"} className={`touch-target lang-chip inline-flex items-center gap-1 rounded-lg px-2.5 text-sm font-bold transition ${language === "fr" ? "bg-white text-blue-800 shadow-sm dark:bg-slate-700" : "text-slate-800"}`}><Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>FR</span></button>
-              <button type="button" onClick={() => setLanguage("en")} aria-label="English" aria-pressed={language === "en"} className={`touch-target lang-chip inline-flex items-center gap-1 rounded-lg px-2.5 text-sm font-bold transition ${language === "en" ? "bg-white text-blue-800 shadow-sm dark:bg-slate-700" : "text-slate-800"}`}><Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>EN</span></button>
-            </div>
+            <label className="inline-flex min-h-12 items-center gap-1.5 rounded-xl border border-blue-200/60 bg-blue-50 px-2.5 text-sm font-bold text-blue-900 transition focus-within:ring-2 focus-within:ring-blue-600 focus-within:ring-offset-2 dark:border-slate-600 dark:bg-slate-800 dark:text-blue-100" title={copy(NAV_COPY.languageGroup)}>
+              <Languages className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="sr-only">{copy(NAV_COPY.languageGroup)}</span>
+              <select value={language} onChange={(event) => setLanguage(event.target.value as "fr" | "en")} aria-label={copy(NAV_COPY.languageGroup)} className="min-h-10 max-w-[8.5rem] cursor-pointer appearance-none bg-transparent pr-1 outline-none">
+                <option value="fr">FR · Français</option>
+                <option value="en">EN · English</option>
+              </select>
+            </label>
             <ThemeToggle compact />
             <motion.button
               type="button"
