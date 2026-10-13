@@ -8,6 +8,7 @@ type Handlers = { onSuccess?: (result: any) => unknown; onError?: (error: any) =
 const { state } = vi.hoisted(() => ({
   state: {
     data: undefined as any,
+    error: null as any,
     reviewCalls: [] as any[],
     previewCalls: [] as any[],
     cvCalls: [] as any[],
@@ -19,7 +20,8 @@ const { state } = vi.hoisted(() => ({
 vi.mock("@/lib/trpc", () => ({
   trpc: {
     placementPortal: {
-      adminGetCandidateSummary: { useQuery: () => ({ data: state.data, isLoading: false, isFetching: false, error: null, refetch: vi.fn() }) },
+      adminGetCandidateSummary: { useQuery: () => ({ data: state.data, isLoading: false, isFetching: false, error: state.error, refetch: vi.fn() }) },
+      adminEnsureCandidateSummary: { useMutation: (handlers: Handlers) => ({ isPending: false, mutate: (variables: any) => { handlers.onSuccess?.({ profileId: 1, profileCode: "PRF-TEST", created: true }); } }) },
       adminReviewCandidateSummary: { useMutation: (_handlers: Handlers) => ({ isPending: false, mutate: (variables: any) => state.reviewCalls.push(variables) }) },
       adminPreviewCandidateSummary: { useMutation: (handlers: Handlers) => ({ isPending: false, mutate: (variables: any) => { state.previewCalls.push(variables); handlers.onSuccess?.({ previewPdfDataUrl: "data:application/pdf;base64,APERCU", portraitIncluded: true }); } }) },
       adminGenerateSummaryFromCv: { useMutation: (handlers: Handlers) => ({ isPending: false, mutate: (variables: any) => { state.cvCalls.push(variables); handlers.onSuccess?.(state.cvResult); } }) },
@@ -48,6 +50,7 @@ const field = (label: RegExp) => screen.getByLabelText(label) as HTMLInputElemen
 
 beforeEach(() => {
   state.data = baseData();
+  state.error = null;
   state.reviewCalls.length = 0;
   state.previewCalls.length = 0;
   state.cvCalls.length = 0;
@@ -153,5 +156,13 @@ describe("fiche synthèse (administrateur) : relecture avant diffusion", () => {
     mount();
     expect(screen.getByText("À revalider")).toBeTruthy();
     expect(screen.getAllByRole("status").some((node) => /n’est plus diffusée/.test(node.textContent ?? ""))).toBe(true);
+  });
+
+  it("erreur API : la carte reste visible avec une action de préparation (plus de return null silencieux)", () => {
+    state.data = undefined;
+    state.error = { message: "Profil de synthèse introuvable." };
+    mount();
+    expect(screen.getByTestId("admin-candidate-summary-card").textContent).toContain("Profil de synthèse introuvable");
+    expect(screen.getByTestId("summary-ensure-profile")).toBeTruthy();
   });
 });

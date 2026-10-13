@@ -570,15 +570,22 @@ export function CandidateDetailModal({
   const printReceiptA5 = async (candidateRef: string) => {
     try {
       const result = await detailUtils.adminCandidateManagement.getPaymentReceiptA5Html.fetch({ sessionToken, candidateId: candidateRef });
-      const printWindow = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
+      // Sans noopener : window.open(..., "noopener") renvoie null et bloquait l’impression.
+      const blob = new Blob([result.html], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const printWindow = window.open(url, "_blank", "width=900,height=700");
       if (!printWindow) {
+        URL.revokeObjectURL(url);
         toast({ title: "Pop-up bloquée", description: "Autorisez les fenêtres pour imprimer le reçu A5.", variant: "destructive" });
         return;
       }
-      printWindow.document.write(result.html);
-      printWindow.document.close();
       printWindow.focus();
-      printWindow.print();
+      const triggerPrint = () => {
+        try { printWindow.print(); } catch { /* ignore */ }
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      };
+      printWindow.addEventListener?.("load", triggerPrint);
+      window.setTimeout(triggerPrint, 400);
     } catch (error) {
       toast({
         title: "Reçu A5 indisponible",

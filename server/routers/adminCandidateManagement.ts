@@ -1990,6 +1990,7 @@ export const adminCandidateManagementRouter = router({
       let dossierNumber = "";
       let amount = "65000";
       let paymentMethod = "Paiement en agence";
+      let paymentReference: string | null = null;
       let paid = false;
       let paidAt = new Date();
 
@@ -2001,6 +2002,7 @@ export const adminCandidateManagementRouter = router({
         dossierNumber = application.dossierNumber;
         amount = String(application.paymentConfirmedAmount ?? application.paymentAmount ?? 65000);
         paymentMethod = application.paymentMethod || "Validation administrative";
+        paymentReference = application.paymentTransactionId || null;
         paidAt = application.paymentDate ?? application.paymentValidatedAt ?? new Date();
       } else {
         const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
@@ -2015,6 +2017,9 @@ export const adminCandidateManagementRouter = router({
         const audited = latestAudit?.amount ? String(latestAudit.amount).replace(/[^0-9]/g, "") : "";
         amount = audited || "65000";
         paymentMethod = "Espèces / Mobile Money — agence";
+        paymentReference = latestAudit?.details?.match(/(?:référence|reference)\s*[:：]?\s*([A-Z0-9_-]+)/i)?.[1]
+          ?? latestAudit?.details?.match(/\b(OM|MTN|VIR|TX)[-A-Z0-9]+/i)?.[0]
+          ?? null;
         paidAt = dossier.lastStatusChangeAt ?? dossier.updatedAt ?? new Date();
       }
 
@@ -2030,12 +2035,13 @@ export const adminCandidateManagementRouter = router({
         amount,
         currency: "XAF",
         paymentMethod,
+        paymentReference,
         agentName: admin.fullName || admin.email || "Conseiller 3M",
         agencyLocation: "Yaoundé — Biyem-Assi",
         description: `Frais de dossier ${dossierNumber}`,
       });
 
-      return { success: true, dossierNumber, html };
+      return { success: true, dossierNumber, html, amount, paymentReference };
     }),
 
   /** Envoie (ou renvoie) le reçu et le Protocole d'accord N°01 ensemble, dans un seul e-mail, pour un paiement déjà confirmé. */

@@ -4756,6 +4756,8 @@ export const adminRouter = router({
             updatedAt: submission?.lastResponseAt ?? null,
           };
         })(), null, "placementSummary") : null,
+        /** Identifiant `candidates.id` pour la fiche synthèse / placement — distinct de internalId (application ou dossier agence). */
+        candidateAccountId: candidateRecord?.id ?? null,
         advisors,
         currentAdmin: { id: admin.id, fullName: admin.fullName, email: admin.email },
       };

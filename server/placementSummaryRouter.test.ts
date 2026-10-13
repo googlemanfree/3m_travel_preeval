@@ -26,7 +26,13 @@ vi.mock("./db", () => ({
       // La requête « photo » sélectionne une clé de fichier : elle ne renvoie que les photos (les clauses where ne sont pas évaluées ici).
       select: (fields?: Record<string, unknown>) => ({ from: (table: unknown) => { const rows = state.rows.get(table) ?? []; return chain(table === candidateFiles && fields && "key" in fields ? rows.filter((row) => row.type === "photo") : rows); } }),
       update: (table: unknown) => ({ set: (values: any) => ({ where: async () => { state.updates.push({ table, values }); } }) }),
-      insert: () => ({ values: async () => undefined }),
+      insert: (table: unknown) => ({ values: async (values: any) => {
+        const rows = state.rows.get(table) ?? [];
+        const row = { id: rows.length + 100, ...values, archivedAt: values.archivedAt ?? null, updatedAt: new Date(), createdAt: new Date() };
+        rows.push(row);
+        state.rows.set(table, rows);
+        return [{ insertId: row.id }];
+      } }),
     };
   },
 }));
@@ -102,6 +108,26 @@ beforeEach(() => {
 const pdfOf = (dataUrl: string) => Buffer.from(dataUrl.split(",")[1], "base64").toString("latin1");
 
 describe("fiche de synthèse : aperçu administrateur et portrait", () => {
+  it("sans profil placement : un brouillon est créé automatiquement pour rendre l’outil visible", async () => {
+    state.rows.set(placementCandidateProfiles, []);
+    const result = await caller().adminGetCandidateSummary({
+      sessionToken: token,
+      candidateId: 5,
+      destinationHint: "Luxembourg",
+      procedureHint: "Travail",
+    });
+    const created = state.rows.get(placementCandidateProfiles) ?? [];
+    expect(created).toHaveLength(1);
+    expect(created[0]).toMatchObject({
+      candidateId: 5,
+      targetDestination: "Luxembourg",
+      targetProcedure: "Travail",
+      summaryStatus: "draft",
+    });
+    expect(result.profileCode).toMatch(/^PRF-/);
+    expect(result.status).toBe("draft");
+  });
+
   it("sans accord photo : la photo n'est même pas lue, le PDF part sans portrait", async () => {
     seed({ photoConsent: false });
     const result = await caller().adminGetCandidateSummary({ sessionToken: token, candidateId: 5 });

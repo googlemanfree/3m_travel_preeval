@@ -782,6 +782,76 @@ export const applicationRouter = router({
       return { id: application.id, amount: input.amount, previousAmount: previous, changed: true as const };
     }),
 
+  /**
+   * Corrige le montant confirmé et/ou la référence de paiement d’un dossier déjà validé (SUCCESS).
+   * Ne change pas le statut du dossier ni n’annule le paiement — uniquement le reçu et la trace.
+   */
+  adminCorrectPaymentDetails: protectedProcedure
+    .input(z.object({
+      id: z.number().int().positive(),
+      confirmedAmount: z.number().int().min(MIN_OPENING_FEE_XAF).max(MAX_OPENING_FEE_XAF).optional(),
+      paymentReference: z.string().trim().min(1).max(255).optional(),
+      reason: z.string().trim().min(5).max(500),
+    }).refine((value) => value.confirmedAmount != null || Boolean(value.paymentReference?.trim()), {
+      message: "Indiquez un montant confirmé et/ou une référence de paiement à corriger.",
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+
+      const application = (await db.select().from(applications).where(eq(applications.id, input.id)).limit(1))[0];
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+      if (application.paymentStatus !== "SUCCESS") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "La correction du reçu n’est disponible qu’après validation du paiement. Pour un dossier en attente, utilisez « Modifier le montant » ou validez le paiement avec la bonne référence." });
+      }
+
+      const previousAmount = application.paymentConfirmedAmount ?? application.paymentAmount ?? DEFAULT_OPENING_FEE_XAF;
+      const previousReference = application.paymentTransactionId ?? "";
+      const nextAmount = input.confirmedAmount ?? previousAmount;
+      const nextReference = input.paymentReference?.trim() || previousReference;
+      if (nextAmount === previousAmount && nextReference === previousReference) {
+        return {
+          id: application.id,
+          confirmedAmount: previousAmount,
+          paymentReference: previousReference,
+          previousAmount,
+          previousReference,
+          changed: false as const,
+        };
+      }
+
+      await db.update(applications)
+        .set({
+          paymentConfirmedAmount: nextAmount,
+          paymentAmount: nextAmount,
+          paymentExpectedAmount: application.paymentExpectedAmount ?? nextAmount,
+          paymentTransactionId: nextReference || application.paymentTransactionId,
+        })
+        .where(eq(applications.id, application.id));
+
+      await db.insert(paymentAuditLogs).values({
+        adminName: ctx.user.name || "Administrateur",
+        adminEmail: ctx.user.email || "",
+        action: "payment_details_corrected",
+        paymentId: application.id,
+        candidateEmail: application.email,
+        amount: formatXaf(nextAmount, application.paymentCurrency ?? "XAF"),
+        details: `Correction reçu dossier ${application.dossierNumber} : montant ${formatXaf(previousAmount)} → ${formatXaf(nextAmount)} ; référence « ${previousReference || "—"} » → « ${nextReference || "—"} ». Motif : ${input.reason}`,
+      });
+
+      return {
+        id: application.id,
+        confirmedAmount: nextAmount,
+        paymentReference: nextReference,
+        previousAmount,
+        previousReference,
+        changed: true as const,
+      };
+    }),
+
   /** Valider ou annuler un paiement depuis le tableau de bord administrateur. */
   adminUpdatePaymentStatus: protectedProcedure
     .input(z.object({
