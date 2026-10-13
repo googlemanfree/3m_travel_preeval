@@ -46,6 +46,7 @@ const INDEXABLE_PAGES = [
   "/procedures/arabie-saoudite",
   "/procedures/coree-du-sud",
   "/procedures/japon",
+  "/procedures/comparaison",
 ];
 // Pages personnelles, transactionnelles ou doublons d’une page de référence : 200 non indexable.
 const PRIVATE_PAGES = [
@@ -63,7 +64,6 @@ const PRIVATE_PAGES = [
   "/submit-documents",
   "/evaluation-result",
   "/evisas/request",
-  "/procedures/comparaison",
   "/assurance-inscription",
 ];
 

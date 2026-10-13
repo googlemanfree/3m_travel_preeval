@@ -14,7 +14,7 @@ describe("transparence publique et footer consolidé", () => {
     expect(about).not.toContain("ISO 9001");
     expect(about).not.toContain("Agréé ONU");
     expect(about).not.toContain("Alain Fouda");
-    expect(about).toContain("notre mode d’accompagnement, et non des résultats garantis");
+    expect(about).toContain("notre mode d’accompagnement — et non des résultats garantis");
   });
 
   it("retire les garanties tarifaires non documentées et explique les frais tiers", () => {

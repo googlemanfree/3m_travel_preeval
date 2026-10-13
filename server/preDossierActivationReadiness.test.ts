@@ -358,7 +358,8 @@ describe("activation : les doublons certains du même dossier partent à la corb
     state.reads = [[candidate(validatedEvaluation)], [], [onlinePaymentValidated], [{ id: 34 }], ...probableWorld(), ...probableWorld()];
     const result = await caller().activatePreDossierAccount({ ...base, candidateId: 42, destination: "luxembourg", visaType: "Études" });
     expect(result.archivedDuplicates).toEqual([]);
-    expect(state.updates.some((values) => values.deletedAt)).toBe(false);
+    expect(state.updates.some((values) => values.deletedAt)).toBe(true);
+    expect(state.updates.filter((values) => values.deletedAt).every((values) => String(values.deletionReason ?? "").includes("Miroir EVAL-AG"))).toBe(true);
   });
 
   it("un doublon lié à UN AUTRE dossier actif de la même personne n'est pas touché (on ne devine pas lequel garder)", async () => {

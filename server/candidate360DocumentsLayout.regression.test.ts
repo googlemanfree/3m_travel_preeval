@@ -36,7 +36,7 @@ describe("onglet Documents du dossier (administration) : une vue claire, les out
   it("l'espace client affiche les documents enregistrés par l'agence dans l'onglet Documents", () => {
     const space = source("client/src/pages/EvaluationSpace.tsx");
     const documentsTab = space.slice(space.indexOf('activeTab === "documents"'));
-    expect(documentsTab).toContain("<CaseDocumentsPanel documents={agencyDepositedDocuments(caseTrackingData?.cases)}");
+    expect(documentsTab).toContain("<CaseDocumentsPanel documents={caseVaultDocuments}");
     expect(space).toContain("caseTracking.downloadMyDocument.fetch");
   });
 

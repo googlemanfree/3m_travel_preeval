@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, CheckCircle2, Facebook, FileSearch, Globe2, Linkedin, ShieldCheck, UsersRound } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
@@ -104,6 +104,7 @@ const FOUNDER_PUBLICATIONS = [
     text: "Une présentation publique de la direction, du groupe et des principes de transparence qui encadrent l’accompagnement des projets de mobilité internationale.",
     href: "/about#aureol-donfack",
     linkLabel: "Lire la présentation du fondateur",
+    updatedAt: "2026-10-13",
   },
   {
     label: "Ressource publique",
@@ -111,6 +112,7 @@ const FOUNDER_PUBLICATIONS = [
     text: "La bibliothèque pays rassemble des repères documentaires, des étapes et des liens officiels à vérifier avant toute démarche.",
     href: "/ressources",
     linkLabel: "Consulter la bibliothèque pays",
+    updatedAt: "2026-10-13",
   },
   {
     label: "Actualité éditoriale",
@@ -118,11 +120,32 @@ const FOUNDER_PUBLICATIONS = [
     text: "Le hub Travail présente les corridors, les étapes et les pièces à anticiper, sans promettre d’emploi, de visa ou d’admission.",
     href: "/travail",
     linkLabel: "Découvrir le hub Travail",
+    updatedAt: "2026-10-13",
+  },
+  {
+    label: "Publication précédente",
+    title: "Choisir une destination avec des repères vérifiables",
+    text: "La page Destinations rassemble des aperçus visuels et des points de départ documentaires pour comparer les corridors sans confondre orientation et décision administrative.",
+    href: "/destinations",
+    linkLabel: "Explorer les destinations",
+    updatedAt: "2026-08-06",
   },
 ] as const;
 
+const PUBLICATION_DATE_LABELS: Record<string, string> = {
+  "2026-10-13": "13 octobre 2026",
+  "2026-08-06": "6 août 2026",
+};
+
 export default function About() {
   const heroVisual = getServiceVisual("mobilite");
+  const [publicationDateFilter, setPublicationDateFilter] = useState("all");
+  const visiblePublications = useMemo(
+    () => FOUNDER_PUBLICATIONS
+      .filter((publication) => publicationDateFilter === "all" || publication.updatedAt === publicationDateFilter)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+    [publicationDateFilter],
+  );
 
   useEffect(() => {
     setPageSeo({
@@ -243,21 +266,41 @@ export default function About() {
         </div>
       </section>
 
-      <section className="bg-blue-50/70 px-4 py-16 sm:px-6 lg:px-8" aria-labelledby="founder-publications-heading">
+      <section className="scroll-mt-24 border-t border-blue-100 bg-blue-50/70 px-4 py-16 transition-colors duration-300 sm:px-6 lg:px-8 motion-reduce:transition-none" aria-labelledby="founder-publications-heading">
         <div className="mx-auto max-w-6xl">
           <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Actualités & publications</p>
           <h2 id="founder-publications-heading" className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
             Les publications récentes de {FOUNDER.name}
           </h2>
           <p className="mt-4 max-w-3xl text-base leading-7 text-slate-700">
-            Cette sélection renvoie uniquement vers des pages publiques de {BRAND_PUBLIC_NAME}. Elle présente les sujets éditoriaux portés par la direction ; elle ne constitue ni une promesse de résultat ni une actualité institutionnelle indépendante.
+            Cette sélection renvoie uniquement vers des pages publiques de {BRAND_PUBLIC_NAME}. Les dates correspondent à la dernière mise à jour éditoriale enregistrée dans le projet ; elles ne constituent ni une promesse de résultat ni une actualité institutionnelle indépendante.
           </p>
-          <div className="mt-8 grid gap-5 md:grid-cols-3">
-            {FOUNDER_PUBLICATIONS.map((publication) => (
-              <article key={publication.href} className="flex h-full flex-col rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
+          <div className="mt-7 flex flex-col gap-3 rounded-2xl border border-blue-100 bg-white/80 p-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-bold text-slate-900">Filtrer les publications</p>
+              <p className="mt-1 text-xs leading-5 text-slate-600" id="founder-publications-filter-help">Les plus récentes apparaissent en premier.</p>
+            </div>
+            <div className="sm:min-w-64">
+              <label htmlFor="founder-publications-date" className="sr-only">Filtrer par date de mise à jour</label>
+              <select
+                id="founder-publications-date"
+                value={publicationDateFilter}
+                onChange={(event) => setPublicationDateFilter(event.target.value)}
+                aria-describedby="founder-publications-filter-help"
+                className="min-h-11 w-full rounded-xl border border-blue-200 bg-white px-3 py-2 text-sm font-bold text-slate-800 outline-none transition-colors focus-visible:border-blue-700 focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2"
+              >
+                <option value="all">Toutes les dates</option>
+                {Object.entries(PUBLICATION_DATE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-4" aria-live="polite">
+            {visiblePublications.map((publication) => (
+              <article key={publication.href} className="flex h-full flex-col rounded-2xl border border-blue-100 bg-white p-6 shadow-sm transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-md motion-reduce:transform-none motion-reduce:transition-none">
                 <p className="text-xs font-black uppercase tracking-[.14em] text-blue-700">{publication.label}</p>
                 <h3 className="mt-3 text-xl font-black text-slate-950">{publication.title}</h3>
                 <p className="mt-3 flex-1 text-sm leading-6 text-slate-600">{publication.text}</p>
+                <time dateTime={publication.updatedAt} className="mt-4 text-xs font-semibold text-slate-500">Mise à jour : {PUBLICATION_DATE_LABELS[publication.updatedAt]}</time>
                 <a href={publication.href} className="mt-5 inline-flex min-h-10 items-center gap-2 self-start rounded-xl border border-blue-700 px-3 py-2 text-sm font-bold text-blue-800 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2">
                   {publication.linkLabel}
                   <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
@@ -265,6 +308,7 @@ export default function About() {
               </article>
             ))}
           </div>
+          {visiblePublications.length === 0 && <p role="status" className="mt-8 rounded-2xl border border-dashed border-blue-200 bg-white p-6 text-sm text-slate-700">Aucune publication ne correspond à cette date.</p>}
         </div>
       </section>
 

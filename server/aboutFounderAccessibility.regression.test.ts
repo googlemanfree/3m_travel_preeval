@@ -13,7 +13,22 @@ describe("About — publications du fondateur et accessibilité", () => {
     expect(about).toContain("Actualités & publications");
     expect(about).toContain("/ressources");
     expect(about).toContain("/travail");
-    expect(about).toContain("ne constitue ni une promesse de résultat");
+    expect(about).toContain("ne constituent ni une promesse de résultat");
+  });
+
+  it("filtre les publications par date de mise à jour avec un contrôle nommé", () => {
+    expect(about).toContain("publicationDateFilter");
+    expect(about).toContain('id="founder-publications-date"');
+    expect(about).toContain('aria-describedby="founder-publications-filter-help"');
+    expect(about).toContain('value="all">Toutes les dates');
+    expect(about).toContain("2026-10-13");
+    expect(about).toContain("2026-08-06");
+    expect(about).toContain("aria-live=\"polite\"");
+  });
+
+  it("anime les cartes sans imposer de mouvement aux utilisateurs qui le réduisent", () => {
+    expect(about).toContain("transition-[transform,box-shadow]");
+    expect(about).toContain("motion-reduce:transition-none");
   });
 
   it("expose le partage LinkedIn/Facebook et le contact avec des noms accessibles", () => {

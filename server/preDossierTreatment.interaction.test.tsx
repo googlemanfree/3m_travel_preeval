@@ -47,6 +47,8 @@ vi.mock("@/lib/trpc", () => ({
       sendPaymentReceiptForCandidate: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
       confirmPaymentForCandidate: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
       deliverValidatedEvaluation: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
+      reviewPortrait: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
+      requestRegistrationSupplementaryInfo: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
     },
   },
 }));

@@ -45,8 +45,8 @@ describe("sync admin ↔ client — garde-fous dynamiques", () => {
     const page = read("client/src/pages/EvaluationSpace.tsx");
     expect(page).toContain("Voir le parcours détaillé");
     // Une seule CandidateCountryJourney (onglet dossier), pas en overview.
-    expect(page.match(/<CandidateCountryJourney /g)?.length).toBe(1);
+    expect(page.match(/<CandidateCountryJourney\b/g)?.length).toBe(1);
     const caseDocs = read("client/src/components/CaseDocumentsPanel.tsx");
-    expect(caseDocs).toContain("Aucune pièce déposée en agence pour le moment");
+    expect(caseDocs).toContain("Aucune pièce synchronisée pour le moment");
   });
 });

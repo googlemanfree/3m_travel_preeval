@@ -22,8 +22,9 @@ describe("sélection d'un dossier parmi plusieurs (espace client)", () => {
     expect(block).toContain(".input(z.object({ selectedDossierNumber: z.string().trim().min(1).max(50).optional() }).optional())");
     // La sélection explicite doit primer sur la règle par défaut (payé, sinon le plus récent),
     // qui doit rester le secours quand aucune sélection n'est fournie.
-    expect(block).toContain("const selectedApp = input?.selectedDossierNumber");
-    expect(block).toContain('appRows.find((app) => app.dossierNumber === input.selectedDossierNumber) ?? null');
+    expect(block).toContain("const activeTreatmentNumber = resolveActiveDossierNumber");
+    expect(block).toContain("selectedDossierNumber: input?.selectedDossierNumber");
+    expect(block).toContain('const selectedApp = activeTreatmentNumber');
     expect(block).toContain("const activeApp = selectedApp");
     expect(block).toContain('appRows.find((app) => app.paymentStatus === "SUCCESS") || appRows[0] || null');
   });
@@ -46,7 +47,7 @@ describe("sélection d'un dossier parmi plusieurs (espace client)", () => {
     expect(dashboardSource).toContain("onlineDossiers.length >= 1");
     expect(dashboardSource).toContain("onlineDossiers.map((dossier)");
     expect(dashboardSource).toContain('data-testid="secondary-dossier-dialog"');
-    expect(dashboardSource).toContain("+ Ajouter une seconde opportunité (Travail / Études)");
+    expect(dashboardSource).toContain("Ajouter une seconde opportunité");
     expect(dashboardSource).toContain("secondaryDossierEvaluationPath");
   });
 

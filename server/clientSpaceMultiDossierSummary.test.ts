@@ -14,7 +14,7 @@ describe("espace client multi-dossiers", () => {
 
   it("expose un badge de statut accessible sur chaque dossier", () => {
     expect(source).toContain("clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus)");
-    expect(source).toContain("aria-label={`${dossierSwitcherLabel(dossier)} : ${status.label}`}");
+    expect(source).toContain("aria-label={`${dossierSwitcherLabel(dossier)} : ${status.label}${isSelected ?");
     expect(source).toContain("status.tone");
   });
 
@@ -25,7 +25,8 @@ describe("espace client multi-dossiers", () => {
   });
 
   it("propose d’ouvrir une seconde opportunité travail / études", () => {
-    expect(source).toContain("Ajouter une seconde opportunité (Travail / Études)");
+    expect(source).toContain("Ajouter une seconde opportunité");
+    expect(source).toContain("visa travail et visa études");
     expect(source).toContain("secondary-dossier-dialog");
   });
 });

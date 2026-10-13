@@ -43,3 +43,10 @@
 - [x] Ajouter les partages et liens professionnels avec libellés accessibles.
 - [x] Corriger les défauts ARIA reproductibles sur About et auditer les suites publiques/accessibilité : 9 suites / 49 tests verts, sans défaut restant dans ce périmètre.
 - [x] Valider `pnpm run check`, les suites ciblées et le build production; checkpoint à créer.
+
+## Suite About — filtre daté, transitions, stabilité
+- [x] Vérifier visuellement About et les pages PR95 impactées sur desktop/mobile.
+- [x] Ajouter un filtre interactif par date aux publications du fondateur avec dates sourcées ou explicitement non datées.
+- [x] Améliorer les transitions entre les sections sans gêner le clavier ni le mode mouvement réduit.
+- [x] Corriger les tests historiques en échec par lots, sans modifier les dossiers actifs.
+- [x] Revalider `pnpm run check`, `pnpm test` et le build; sauvegarder un checkpoint final.

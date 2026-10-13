@@ -27,7 +27,8 @@ describe("actions de dossier candidat", () => {
     expect(candidateRouter).toContain("deleteDocument: candidateProcedure");
     expect(candidateRouter).toContain("eq(candidateFiles.candidateId, ctx.candidate.id)");
     expect(candidateRouter).toContain("Un document validé ne peut pas être supprimé");
-    expect(candidateRouter).toContain("documentId: Number");
+    expect(candidateRouter).toContain("fileId: z.number().int().positive()");
+    expect(candidateRouter).toContain("const documentId = Number");
   });
 
   // TODO-VERIFY: legacy feature not found in EvaluationSpace.tsx after ClientDashboard.tsx removal — confirm intentionally dropped or re-add.

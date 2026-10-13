@@ -323,6 +323,7 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/procedures/comparaison": {
     title: `Comparateur de corridors | ${SITE}`,
     description: "Comparez des corridors Afrique → Canada, Europe et Golfe selon votre profil. Scores indicatifs enregistrés sur votre appareil.",
+    keywords: ["comparateur de corridors", "mobilité internationale", "Canada", "Europe", "Golfe"],
     heading: "Comparateur de corridors",
     lead: "Choisissez un pack prêt à comparer ou vos favoris. Les scores restent indicatifs — sans promesse d’admission, d’emploi ou de visa.",
   },
