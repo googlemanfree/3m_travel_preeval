@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { COMPANY_FOUNDER, COMPANY_PROFILE, GROUP_LEGAL_NAME } from "@/lib/companyContacts";
+import { INTERNATIONAL_BRAND } from "@/data/internationalBrand";
 
 import HeroSectionVIP from "@/components/HeroSectionVIP";
 import HomeSearchBar from "@/components/HomeSearchBar";
@@ -109,7 +110,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-white font-sans">
+    <main className="premium-page-shell min-h-screen font-sans">
       <div
         className="fixed inset-x-0 top-0 z-[70] h-1 bg-white/20"
         role="progressbar"
@@ -160,12 +161,15 @@ export default function Home() {
         data-testid="home-talent-corridor"
       >
         <div className="mx-auto max-w-6xl px-4">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-sky-200">{t("Préparation de dossier · canaux autorisés", "File preparation · authorised channels")}</p>
-          <h2 id="home-b2b-title" className="mt-2 text-2xl font-black text-white md:text-3xl">{t("3M prépare et suit — les partenaires recrutent", "3M prepares and follows — partners recruit")}</h2>
+          <p className="font-[Georgia,Cambria,'Times_New_Roman',serif] text-2xl font-normal tracking-tight text-amber-200 sm:text-3xl">
+            {INTERNATIONAL_BRAND.publicName}
+          </p>
+          <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-sky-200">{INTERNATIONAL_BRAND.corridor}</p>
+          <h2 id="home-b2b-title" className="mt-3 text-2xl font-black text-white md:text-3xl">{t("3M prépare et suit — les partenaires recrutent", "3M prepares and follows — partners recruit")}</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-sky-100">
             {t(
-              "Dossiers préparés et suivis par 3M. Agences et employeurs vérifiés : canaux de recrutement autorisés.",
-              "Files prepared and followed by 3M. Verified agencies and employers: authorised recruitment channels.",
+              "Dossiers préparés et suivis par 3M. Agences et employeurs vérifiés : canaux de recrutement autorisés — sans promesse d’emploi ni de visa.",
+              "Files prepared and followed by 3M. Verified agencies and employers: authorised recruitment channels — without promising a job or visa.",
             )}
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -397,19 +401,29 @@ export default function Home() {
       </motion.section>
 
       {/* ─── POURQUOI 3M : preuves concrètes, pas de slogans vides ─────────── */}
-      <section aria-labelledby="why-3m-title" className="py-16 bg-white" data-testid="why-3m-section">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center mb-10 md:mb-12">
-            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Pourquoi 3M TRAVEL AGENCY</p>
-            <h2 id="why-3m-title" className="premium-section-title mb-3 text-3xl md:text-4xl">Des preuves concrètes, pas des promesses vagues</h2>
+      <section aria-labelledby="why-3m-title" className="bg-white py-16" data-testid="why-3m-section">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="mb-10 text-center md:mb-12">
+            <p className="mb-2 text-sm font-bold uppercase tracking-widest text-[#2563eb]">Pourquoi 3M TRAVEL AGENCY</p>
+            <div className="premium-gold-rule mx-auto" aria-hidden="true" />
+            <h2 id="why-3m-title" className="premium-section-title mb-3 mt-4 text-3xl md:text-4xl">Des preuves concrètes, pas des promesses vagues</h2>
             <p className="premium-section-lead mx-auto text-center">
               Agence enregistrée à Yaoundé{registrationYear ? ` depuis ${registrationYear}` : ""} ({COMPANY_PROFILE.legalIdentifiers.registration}). Fondée et dirigée par{" "}
               <a href="/about#aureol-donfack" className="font-semibold text-[#1e3a8a] underline-offset-2 hover:underline">
                 {COMPANY_FOUNDER.name}
               </a>
-              , fondateur et PDG de {GROUP_LEGAL_NAME}. Nous préparons et suivons votre dossier — la décision finale reste celle des autorités compétentes.
+              , fondateur et PDG de {GROUP_LEGAL_NAME}. {INTERNATIONAL_BRAND.promiseLine.fr} Nous préparons et suivons votre dossier — la décision finale reste celle des autorités compétentes.
             </p>
           </div>
+          <ul className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Piliers internationaux">
+            {INTERNATIONAL_BRAND.trustPillars.map((pillar) => (
+              <li key={pillar.title.fr} className="premium-surface rounded-2xl p-5 text-left">
+                <div className="premium-gold-rule" aria-hidden="true" />
+                <h3 className="mt-3 text-base font-black text-slate-950">{pillar.title[lang]}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{pillar.text[lang]}</p>
+              </li>
+            ))}
+          </ul>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
@@ -486,17 +500,20 @@ export default function Home() {
 
       <FlightBookingFAQ />
 
-      {/* CTA final unique : une seule action forte avant le footer */}
-      <section className="py-16" style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)" }} data-testid="home-final-cta" aria-labelledby="home-final-cta-title">
-        <div className="mx-auto max-w-4xl px-4 text-center">
-          <h2 id="home-final-cta-title" className="text-3xl font-extrabold text-white md:text-4xl">Prêt à avancer sur votre projet ?</h2>
+      <section className="relative overflow-hidden py-16" style={{ background: "linear-gradient(135deg, #061a36 0%, #0a3264 48%, #165dff 100%)" }} data-testid="home-final-cta" aria-labelledby="home-final-cta-title">
+        <div className="relative z-10 mx-auto max-w-4xl px-4 text-center">
+          <p className="font-[Georgia,Cambria,'Times_New_Roman',serif] text-2xl font-normal tracking-tight text-amber-200 sm:text-3xl">
+            {INTERNATIONAL_BRAND.publicName}
+          </p>
+          <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-blue-100/90">{INTERNATIONAL_BRAND.corridor}</p>
+          <h2 id="home-final-cta-title" className="mt-4 text-3xl font-extrabold text-white md:text-4xl">Prêt à structurer votre projet international ?</h2>
           <p className="premium-copy-on-dark mx-auto mt-4 max-w-2xl text-lg md:text-xl">
-            Évaluez gratuitement votre parcours ou écrivez directement à un conseiller 3M — sans engagement de résultat.
+            {t(INTERNATIONAL_BRAND.heroSupport.fr, INTERNATIONAL_BRAND.heroSupport.en)}
           </p>
           <div className="mt-8 flex w-full flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
             <a href="#evaluation-multi" className="w-full max-w-[22rem] sm:w-auto">
               <Button size="lg" className="min-h-12 w-full bg-white px-8 font-bold text-[#1e3a8a] shadow-xl transition-transform hover:bg-[#dbeafe] active:scale-[0.97]">
-                Évaluer mon projet — gratuit <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
+                {t(INTERNATIONAL_BRAND.cta.evaluate.fr, INTERNATIONAL_BRAND.cta.evaluate.en)} <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
               </Button>
             </a>
             <a
@@ -510,7 +527,8 @@ export default function Home() {
               </Button>
             </a>
           </div>
-          <p className="mt-5 text-sm text-blue-50">
+          <p className="mx-auto mt-5 max-w-lg text-xs leading-5 text-blue-100/90">{t(INTERNATIONAL_BRAND.disclaimer.fr, INTERNATIONAL_BRAND.disclaimer.en)}</p>
+          <p className="mt-4 text-sm text-blue-50">
             <a href="/sources-officielles" className="font-semibold underline-offset-4 hover:underline">Sources officielles</a>
             {" · "}
             <a href="/contact" className="font-semibold underline-offset-4 hover:underline">Contact agence</a>

@@ -16,14 +16,14 @@ const purposes = [
 export default function Schengen() {
   return (
     <ServicePageShell
-      eyebrow="Espace Schengen · Séjours de courte durée"
-      title="Préparez votre demande de visa Schengen avec méthode"
-      introduction="Le visa Schengen concerne généralement les séjours temporaires. 3M TRAVEL AGENCY vous aide à organiser votre projet, à identifier le consulat compétent et à préparer les pièces exigées pour le motif de voyage concerné."
+      eyebrow="Schengen · corridor Yaoundé · Ottawa"
+      title="Visa Schengen : dossier structuré, sources officielles"
+      introduction="Séjours temporaires (tourisme, affaires, famille, soins, transit) : 3M TRAVEL AGENCY aide à identifier le consulat compétent, à réunir les pièces exigées et à suivre le dépôt — la décision reste celle des autorités Schengen."
       primaryHref="/evaluation?destination=schengen"
       primaryLabel="Évaluer mon projet Schengen"
       officialHref="https://home-affairs.ec.europa.eu/policies/schengen/visa-policy/applying-schengen-visa_en"
       officialLabel="Consulter les règles UE"
-      notice="Un visa Schengen de court séjour couvre généralement jusqu’à 90 jours sur une période de 180 jours. Les études, le travail ou les séjours longs relèvent de procédures nationales distinctes."
+      notice="Un visa Schengen de court séjour couvre généralement jusqu’à 90 jours sur une période de 180 jours. Les études, le travail ou les séjours longs relèvent de procédures nationales distinctes. Aucun visa n’est promis."
       heroVisual={getServiceVisual("schengen")}
     >
       <ServiceSection

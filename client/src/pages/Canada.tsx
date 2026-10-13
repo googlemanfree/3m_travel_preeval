@@ -102,11 +102,11 @@ export default function Canada() {
 
   return (
     <ServicePageShell
-      eyebrow="Canada · Résidence permanente et mobilité"
-      title="Évaluez votre score et construisez votre stratégie Canada"
-      introduction="Pour garantir un accompagnement pertinent, le parcours Canada commence par l’évaluation obligatoire de votre score et de votre profil. Découvrez vos chances indicatives avant d’explorer les programmes officiels."
+      eyebrow="Canada · Yaoundé · Ottawa · sources IRCC"
+      title="Évaluez votre profil et structurez une stratégie Canada réaliste"
+      introduction="Le parcours Canada commence par une évaluation de profil et un score CRS indicatif. 3M TRAVEL AGENCY structure les pièces, oriente vers les programmes IRCC pertinents et suit le dossier — sans promettre invitation, emploi ni résidence permanente."
       primaryHref="/evaluation?destination=canada"
-      primaryLabel="Faire évaluer mon profil Canada complet"
+      primaryLabel="Faire évaluer mon profil Canada"
       secondaryHref="/canada/crs"
       secondaryLabel="Calculatrice CRS Canada"
       officialHref="https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada.html"

@@ -11,10 +11,10 @@ export type CommitmentItem = { title: string; text: string };
 /** Engagements communs à toute la plateforme : chacun correspond à un fonctionnement réel du site. */
 export const COMMITMENTS: CommitmentItem[] = [
   { title: "Frais annoncés avant paiement", text: "Le montant des frais d’ouverture dépend de votre profil et vous est confirmé par écrit avant tout paiement. Les frais payés à des tiers (autorités, centres de visa, assureurs, traducteurs) sont indiqués séparément." },
-  { title: "Aucune promesse de résultat", text: "Les décisions de visa, d’admission ou d’emploi appartiennent aux autorités, aux établissements et aux employeurs. 3M prépare, oriente et suit votre dossier ; elle ne vend ni visa ni emploi." },
-  { title: "Un dossier suivi, pas dispersé", text: "Votre espace client centralise le statut, les pièces demandées et les échanges avec l’équipe : vous savez toujours quelle est la prochaine action." },
+  { title: "Aucune promesse de résultat", text: "Les décisions de visa, d’admission ou d’emploi appartiennent aux autorités, aux établissements et aux employeurs. 3M TRAVEL AGENCY prépare, oriente et suit votre dossier ; elle ne vend ni visa ni emploi." },
+  { title: "Un dossier suivi, pas dispersé", text: "Votre espace client centralise le statut, les pièces demandées, les clarifications et les échanges avec l’équipe : vous savez toujours quelle est la prochaine action." },
   { title: "Vos données sous votre contrôle", text: "Vos pièces ne sont communiquées à un employeur ou à une agence partenaire qu’avec votre accord distinct, que vous pouvez retirer à tout moment." },
-  { title: "Des interlocuteurs identifiés", text: "Agence à Yaoundé, bureau à Ottawa, WhatsApp et rendez-vous : vous échangez avec une équipe réelle, pas avec un formulaire anonyme." },
+  { title: "Corridor international identifié", text: "Agence à Yaoundé, bureau à Ottawa, WhatsApp et rendez-vous : vous échangez avec une équipe réelle du corridor 3M, pas avec un formulaire anonyme." },
 ];
 
 // ---- /parcours -------------------------------------------------------------------------------------------------------
