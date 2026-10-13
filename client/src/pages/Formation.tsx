@@ -1,6 +1,8 @@
 import { BadgeCheck, BookOpenCheck, BriefcaseBusiness, CalendarDays, Clock3, MessageCircleQuestion, Presentation, UsersRound, WalletCards } from "lucide-react";
 import { Link } from "wouter";
 import { ServicePageShell, ServiceSection } from "@/components/ServicePageShell";
+import { FaqSection } from "@/components/PageEnrichment";
+import { FORMATION_FAQ } from "@/data/pageEnrichment";
 import { getServiceVisual } from "@/data/premiumVisuals";
 
 const modules = [
@@ -30,5 +32,6 @@ export default function Formation() {
     <ServiceSection title="Programme détaillé" introduction="Le parcours standard combine apports, exercices et mises en situation. Le contenu peut être adapté après échange avec l’équipe formation."><div className="grid gap-4 md:grid-cols-2">{programme.map(([session, title, text]) => <article key={session} className="rounded-2xl border border-slate-200 bg-slate-50 p-6"><p className="text-xs font-black uppercase tracking-[.14em] text-blue-700">{session}</p><h3 className="mt-3 text-lg font-black text-slate-950">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{text}</p></article>)}</div></ServiceSection>
     <ServiceSection title="Les axes de formation" introduction="Un programme pratique construit autour des situations rencontrées dans une agence de voyage."><div className="grid gap-4 md:grid-cols-2">{modules.map((module) => { const Icon = module.icon; return <article key={module.title} className="rounded-2xl border border-slate-200 bg-white p-6"><Icon className="h-7 w-7 text-blue-700" /><h3 className="mt-4 text-lg font-black">{module.title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{module.text}</p></article>; })}</div></ServiceSection>
     <ServiceSection tone="slate" title="Demander un programme adapté"><div className="grid gap-4 md:grid-cols-3"><div className="rounded-xl bg-white p-5"><CalendarDays className="h-6 w-6 text-blue-700" /><p className="mt-3 text-sm text-slate-600">Recevez les prochaines disponibilités et le format de la session.</p></div><div className="rounded-xl bg-white p-5"><MessageCircleQuestion className="h-6 w-6 text-blue-700" /><p className="mt-3 text-sm text-slate-600">Précisez votre niveau, vos objectifs et la disponibilité souhaitée.</p></div><div className="rounded-xl bg-white p-5"><UsersRound className="h-6 w-6 text-blue-700" /><p className="mt-3 text-sm text-slate-600">Formations individuelles ou à confirmer selon les groupes disponibles.</p></div></div><div className="mt-8"><Link href="/contact?objet=formation" className="inline-flex min-h-12 items-center justify-center rounded-xl bg-blue-700 px-5 py-3 text-sm font-black text-white hover:bg-blue-800">Contacter l’équipe formation</Link></div></ServiceSection>
+    <FaqSection introduction="Ce qu’il faut savoir avant de vous inscrire." items={FORMATION_FAQ} testId="formation-faq" />
   </ServicePageShell>;
 }

@@ -15,6 +15,7 @@ import {
   CONSULTATION_STEPS,
   DESTINATIONS_CRITERIA,
   DESTINATIONS_FAQ,
+  FORMATION_FAQ,
   PARCOURS_DELIVERABLES,
   PARCOURS_FAQ,
   PARTNERS_FAQ,
@@ -44,6 +45,7 @@ const ALL_TEXTS: string[] = [
   ...CONSULTATION_FAQ.flatMap((item) => [item.question, item.answer]),
   ...PARTNERS_FAQ.fr.flatMap((item) => [item.question, item.answer]),
   ...PARTNERS_FAQ.en.flatMap((item) => [item.question, item.answer]),
+  ...FORMATION_FAQ.flatMap((item) => [item.question, item.answer]),
   ...DESTINATIONS_CRITERIA,
   ...DESTINATIONS_FAQ.flatMap((item) => [item.question, item.answer]),
   ...TARIFS_COST_PARTS.flatMap((item) => [item.title, item.text]),
@@ -62,7 +64,7 @@ describe("contenu enrichi des pages : soutenu mais honnête", () => {
   });
 
   it("les questions fréquentes ont de vraies réponses (au moins une phrase complète) et sont toutes différentes", () => {
-    const faqs = [PARCOURS_FAQ, CNI_FAQ, ASSURANCE_FAQ, TOURISM_FAQ, CONSULTATION_FAQ, DESTINATIONS_FAQ, PARTNERS_FAQ.fr, PARTNERS_FAQ.en];
+    const faqs = [PARCOURS_FAQ, CNI_FAQ, ASSURANCE_FAQ, TOURISM_FAQ, CONSULTATION_FAQ, DESTINATIONS_FAQ, FORMATION_FAQ, PARTNERS_FAQ.fr, PARTNERS_FAQ.en];
     for (const faq of faqs) {
       expect(faq.length).toBeGreaterThanOrEqual(4);
       expect(new Set(faq.map((item) => item.question)).size).toBe(faq.length);
@@ -123,6 +125,7 @@ describe("pages enrichies : sections branchées", () => {
     ["client/src/pages/PartnersHub.tsx", ["partners-faq", "PARTNERS_FAQ.en"]],
     ["client/src/pages/DestinationsHub.tsx", ["destinations-criteria", "destinations-faq"]],
     ["client/src/pages/Tarifs.tsx", ["tarifs-cost-parts"]],
+    ["client/src/pages/Formation.tsx", ["formation-faq"]],
   ])("%s affiche ses nouvelles sections", (file, markers) => {
     const source = read(file);
     for (const marker of markers) expect(source, `${file} : ${marker}`).toContain(marker);

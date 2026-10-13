@@ -191,6 +191,31 @@ export const DESTINATIONS_FAQ: FaqItem[] = [
   },
 ];
 
+// ---- /formation ------------------------------------------------------------------------------------------------------
+
+export const FORMATION_FAQ: FaqItem[] = [
+  {
+    question: "À qui s’adresse cette formation ?",
+    answer: "Aux personnes qui souhaitent comprendre l’organisation d’une agence de voyage et renforcer leurs bases en relation client, en billetterie et en suivi de dossier : débutants, personnes en reconversion ou membres d’une petite équipe.",
+  },
+  {
+    question: "La formation permet-elle d’obtenir un visa ou un emploi ?",
+    answer: "Non. Elle transmet des repères professionnels sur le métier d’agent de voyage ; elle n’a aucun lien avec l’obtention d’un visa et ne promet ni poste ni résultat.",
+  },
+  {
+    question: "Délivre-t-elle un diplôme ?",
+    answer: "Non. Une attestation de participation peut être remise lorsque l’assiduité et les exercices prévus sont validés ; ce n’est pas un diplôme.",
+  },
+  {
+    question: "Le programme peut-il être adapté à mon équipe ou à mon besoin ?",
+    answer: "Oui. Le contenu peut être adapté après un échange avec l’équipe formation, qui confirme les dates et le devis avant toute inscription ou tout paiement.",
+  },
+  {
+    question: "Comment m’inscrire ou demander un programme sur mesure ?",
+    answer: "Utilisez la demande de programme adapté en bas de cette page : l’équipe vous répond pour préciser le format, les dates et le devis. Rien n’est facturé avant votre accord.",
+  },
+];
+
 // ---- /tarifs : décomposition du coût total ----------------------------------------------------------------------------
 
 export const TARIFS_COST_PARTS: CommitmentItem[] = [
