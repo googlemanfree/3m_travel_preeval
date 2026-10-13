@@ -244,7 +244,7 @@ describe("espace client : documents enregistrés par l'agence", () => {
   it("montre l'état en français, la note de correction, et déclenche le téléchargement", () => {
     const onDownload = vi.fn();
     render(<CaseDocumentsPanel documents={agencyDepositedDocuments(cases)} onDownload={onDownload} />);
-    expect(screen.getByText("Documents enregistrés par l’agence")).toBeTruthy();
+    expect(screen.getByText("Documents synchronisés du dossier")).toBeTruthy();
     expect(screen.getByText("Reçu — en cours de vérification")).toBeTruthy();
     expect(screen.getByText("À corriger")).toBeTruthy();
     expect(screen.getByText("Scan illisible")).toBeTruthy();
@@ -255,6 +255,6 @@ describe("espace client : documents enregistrés par l'agence", () => {
 
   it("ne s'affiche pas sans document d'agence", () => {
     const { container } = render(<CaseDocumentsPanel documents={[]} onDownload={vi.fn()} />);
-    expect(screen.getByText("Aucune pièce déposée en agence pour le moment")).toBeTruthy();
+    expect(screen.getByText("Aucune pièce synchronisée pour le moment")).toBeTruthy();
   });
 });

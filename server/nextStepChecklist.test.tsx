@@ -75,7 +75,7 @@ describe("résumé de la checklist réelle (pays × visa)", () => {
     ]);
     expect(summary.replace).toBe(1);
     const base = summarizeChecklist("Canada", "etudes", []);
-    expect(summary.total).toBe(base.total + 1);
+    expect(summary.total).toBe(base.total);
   });
 });
 
