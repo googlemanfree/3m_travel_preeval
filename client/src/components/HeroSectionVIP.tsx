@@ -127,8 +127,8 @@ export default function HeroSectionVIP({
           />
         </picture>
         {/* Voile léger : l’image reste visible autour de la carte maquette. */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#07162c]/40 via-[#0a1d3a]/28 to-[#07162c]/65" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,22,44,.22)_0%,transparent_72%)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#07162c]/48 via-[#0a1d3a]/38 to-[#07162c]/72" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,22,44,.58)_0%,rgba(7,22,44,.3)_46%,transparent_80%)]" />
       </div>
 
       {/* logoUrl conservé pour SEO / props existantes — la maquette met la marque en texte. */}
@@ -140,7 +140,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={0}
-          className="text-sm font-extrabold uppercase tracking-[0.14em] text-[#2563eb] sm:text-base"
+          className="text-sm font-extrabold uppercase tracking-[0.14em] text-amber-200 drop-shadow-[0_2px_8px_rgba(0,0,0,0.65)] sm:text-base"
           data-testid="hero-title"
         >
           {INTERNATIONAL_BRAND.publicName}
