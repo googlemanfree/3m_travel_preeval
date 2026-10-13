@@ -5,4 +5,4 @@
 - [x] Sortir PR93 du brouillon et la fusionner : squash-merge confirmé sur `main` au commit `c6c79e1c`.
 - [x] Synchroniser WebDev sur `c6c79e1c`; serveur redémarré, TypeScript/LSP sans erreur.
 - [x] Smoke interactif lecture seule terminé : CTA « Comparer un corridor » depuis Procédures; sélection du pack Travail Canada-Europe; toast de sélection puis cartes Allemagne, Canada et Luxembourg avec scores indicatifs visibles (99 %, 96 %, 99 %) et avertissement sans promesse. Aucun dossier ni favoris métier modifié.
-- [ ] Créer le checkpoint final puis recontrôler la propagation publique.
+- [x] Checkpoint final créé et propagation publique confirmée : version WebDev `431dc5f4`; CTA public vers `/procedures/comparaison`, trois packs visibles, puis sélection du corridor Travail Canada-Europe affichant Allemagne/Canada/Luxembourg avec scores 99/96/99. Aucun dossier, e-mail ou notification modifié.
