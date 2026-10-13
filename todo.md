@@ -126,3 +126,10 @@
 - [x] Checkout local et WebDev synchronisés sur `f46b4910`; serveur actif, LSP et TypeScript sans erreur.
 - [x] Smoke lecture seule après déploiement : preview et domaine public répondent 200 sur `/ressources`, `/ressources/canada` et `/ressources/luxembourg`; le domaine `.click` redirige en 301 vers la version canonique. Contenu attendu présent.
 - [x] Checkpoint WebDev final PR91 créé : version `8dfd4bad`; recontrôle après propagation réussi sur les trois routes publiques, toutes en 200. Aucun contournement code, dossier actif ou donnée métier modifié.
+
+
+## PR92 — hub premium Travail international
+- [x] Auditer et valider PR92 : conflit unique du pré-rendu résolu en conservant les routes Travail et Ressources; 3 suites / 4 tests verts, `pnpm run check` et build production verts. Aucun statut de dossier actif, e-mail ou notification modifié.
+- [x] Fusionner PR92 : sortie du brouillon et squash-merge sur `main` au commit `1d1ac3c2`.
+- [x] Synchroniser WebDev sur `1d1ac3c2`; serveur actif, LSP et TypeScript sans erreur.
+- [ ] Vérifier `/travail`, `/visa-travail`, la carte Travail et le CTA d’évaluation en lecture seule.
