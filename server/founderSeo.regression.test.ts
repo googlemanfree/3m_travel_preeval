@@ -25,6 +25,8 @@ describe("SEO fondateur — Aureol DONFACK / 3M Group SARL", () => {
     expect(about).toContain("COMPANY_FOUNDER");
     expect(about).toContain("GROUP_LEGAL_NAME");
     expect(about).toContain("fondateur et PDG de {GROUP_LEGAL_NAME}");
+    expect(about).toContain("about-founder-identity-line");
+    expect(about).toContain("{GROUP_LEGAL_NAME} — {FOUNDER.jobTitle} {FOUNDER.name}");
     expect(about).toContain("setPageSeo");
     expect(about).toContain("FOUNDER.imageHd");
     expect(about).toContain('"@type": "Person"');
@@ -32,11 +34,13 @@ describe("SEO fondateur — Aureol DONFACK / 3M Group SARL", () => {
     expect(about).toContain("legalName: GROUP_LEGAL_NAME");
   });
 
-  it("le footer cite le fondateur et le groupe", () => {
+  it("le footer n’affiche plus le fondateur (réservé à About)", () => {
     const footer = read("client/src/components/Footer.tsx");
-    expect(footer).toContain("COMPANY_FOUNDER");
-    expect(footer).toContain("GROUP_LEGAL_NAME");
-    expect(footer).toContain("/about#aureol-donfack");
+    expect(footer).not.toContain("COMPANY_FOUNDER");
+    expect(footer).not.toContain("GROUP_LEGAL_NAME");
+    expect(footer).not.toContain("Fondateur & PDG");
+    expect(footer).toContain('href="/about"');
+    expect(footer).toContain("Qui sommes-nous");
   });
 
   it("l’accueil et le contact exposent Aureol DONFACK en texte crawlable", () => {

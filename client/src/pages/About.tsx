@@ -207,7 +207,10 @@ export default function About() {
           </figure>
           <div>
             <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Direction · {GROUP_LEGAL_NAME}</p>
-            <h2 id="founder-heading" className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+            <p className="mt-3 text-base font-semibold text-slate-800" data-testid="about-founder-identity-line">
+              {GROUP_LEGAL_NAME} — {FOUNDER.jobTitle} {FOUNDER.name}
+            </p>
+            <h2 id="founder-heading" className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
               {FOUNDER.name}
             </h2>
             <p className="mt-2 text-lg font-bold text-blue-800">

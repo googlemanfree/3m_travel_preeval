@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { useEffect, useState, type FormEvent } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { AlertCircle, Facebook, MapPin, MessageCircle, Phone, Mail, ArrowUp } from "lucide-react";
-import { COMPANY_CONTACTS, COMPANY_FOUNDER, COMPANY_PROFILE, GROUP_LEGAL_NAME } from "@/lib/companyContacts";
+import { COMPANY_CONTACTS, COMPANY_PROFILE } from "@/lib/companyContacts";
 import { OFFICE_CONTACTS } from "@/lib/officeContacts";
 import { useAnimationPreferences } from "@/contexts/AnimationPreferencesContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -22,9 +22,10 @@ const footerCopy = {
   whatsapp: { fr: "WhatsApp Yaoundé", en: "Yaoundé WhatsApp" },
   aboutTitle: { fr: "3M TRAVEL AGENCY", en: "3M TRAVEL AGENCY" },
   aboutText: {
-    fr: `Fondée et dirigée par ${COMPANY_FOUNDER.name}, PDG de ${GROUP_LEGAL_NAME}. Accompagnement fondé sur vos documents, les sources institutionnelles disponibles et des validations humaines à chaque étape sensible.`,
-    en: `Founded and led by ${COMPANY_FOUNDER.name}, CEO of ${GROUP_LEGAL_NAME}. Support grounded in your documents, available institutional sources and human validation for every sensitive step.`,
+    fr: "Un accompagnement fondé sur vos documents, les sources institutionnelles disponibles et des validations humaines à chaque étape sensible.",
+    en: "Support grounded in your documents, available institutional sources and human validation for every sensitive step.",
   },
+  aboutPage: { fr: "Qui sommes-nous", en: "About us" },
   navigation: { fr: "Navigation", en: "Navigation" },
   destinations: { fr: "Destinations", en: "Destinations" },
   sitemap: { fr: "Mini-plan du site", en: "Mini sitemap" },
@@ -380,16 +381,13 @@ export default function Footer() {
           </div>
           <div className="max-w-2xl text-sm leading-relaxed text-slate-300 sm:text-right">
             <p>
-              <span className="font-medium text-white">{GROUP_LEGAL_NAME}</span>
-              {" — "}
-              {language === "fr" ? "Fondateur & PDG" : "Founder & CEO"}{" "}
-              <Link href="/about#aureol-donfack" className="font-semibold text-amber-100 underline-offset-2 hover:underline">
-                {COMPANY_FOUNDER.name}
-              </Link>
-            </p>
-            <p className="mt-1">
               <span className="font-medium text-white">{COMPANY_PROFILE.legalName}</span>
               {" — "}RC : {COMPANY_PROFILE.legalIdentifiers.registration} | NIU : {COMPANY_PROFILE.legalIdentifiers.taxpayerId}
+            </p>
+            <p className="mt-1">
+              <Link href="/about" className="font-semibold text-slate-100 underline-offset-2 hover:underline">
+                {copy(footerCopy.aboutPage)}
+              </Link>
             </p>
             <p className="mt-1 text-slate-200">{copy(footerCopy.legalNotice)}</p>
             <p className="mt-1">© {new Date().getFullYear()} {COMPANY_PROFILE.legalName}. {language === "fr" ? "Tous droits réservés." : "All rights reserved."}</p>
