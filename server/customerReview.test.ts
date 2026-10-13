@@ -21,7 +21,9 @@ describe("customerReview display names", () => {
   it("réserve le dépôt admin aux avis fournis avec consentement et les laisse en attente", () => {
     expect(customerReviewRouterSource).toContain("createByAdmin");
     expect(customerReviewRouterSource).toContain("consentToPublish: z.literal(true)");
-    expect(customerReviewRouterSource).toContain('status: "pending_review"');
-    expect(customerReviewRouterSource).toContain("Avis fourni par l’administration");
+    // Par défaut « à valider » ; l'administrateur peut publier à la saisie (preuve de l'accord obligatoire).
+    expect(customerReviewRouterSource).toContain('status: input.publishNow ? "approved" : "pending_review"');
+    expect(customerReviewRouterSource).toContain("attestation: z.literal(true)");
+    expect(readFileSync(resolve(__dirname, "services/adminTestimonials.ts"), "utf8")).toContain("Avis fourni par l’administration");
   });
 });

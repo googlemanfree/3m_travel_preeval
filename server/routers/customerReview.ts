@@ -8,7 +8,13 @@ import { requireValidAdminSession } from "./adminAuth";
 import { invokeLLM } from "../_core/llm";
 import { createSubmissionGuard } from "../_core/publicRateLimit";
 import { notifyAdmins } from "./adminNotifications";
+import { randomBytes } from "node:crypto";
+import { CONSENT_CHANNELS, appendAdminNote, buildAdminEntryNotes, consentDateError, isAdminEntered, placeholderEmail } from "../services/adminTestimonials";
+import { createCvDraftLimiter } from "./cvDraft";
 import { logger } from "../_core/logger";
+
+/** Saisie par l'administration : plafond horaire par administrateur (protège contre les saisies en rafale). */
+const allowAdminEntry = createCvDraftLimiter(30);
 
 const displayNameChoiceSchema = z.enum(["full_name", "first_name_only", "initials"]);
 type DisplayNameChoice = z.infer<typeof displayNameChoiceSchema>;
@@ -124,38 +130,66 @@ export const customerReviewRouter = router({
   }),
 
   /**
-   * Dépôt par l’administration d’un avis fourni par un client.
-   * Le consentement reste obligatoire et l’avis arrive en attente : même un
-   * administrateur ne peut pas le publier directement sans la validation prévue.
+   * Saisie par l'administration d'un témoignage réellement donné par un client.
+   * Obligatoires : l'accord de publication du client (canal, date, preuve conservée) et l'attestation que le retour est
+   * authentique. Par défaut l'avis arrive « à valider » ; l'administrateur peut aussi le publier à la saisie.
    */
   createByAdmin: publicProcedure
     .input(z.object({
       sessionToken: z.string().min(1).max(512),
       fullName: z.string().trim().min(3).max(255),
-      email: z.string().email().max(320),
+      email: z.union([z.string().email().max(320), z.literal("")]).optional(),
       destinationCountry: z.string().trim().max(100).optional(),
       serviceType: z.string().trim().max(100).optional(),
       rating: z.number().int().min(1).max(5),
       reviewText: z.string().trim().min(10).max(1000),
       consentToPublish: z.literal(true),
+      attestation: z.literal(true),
+      consentChannel: z.enum(CONSENT_CHANNELS),
+      consentDate: z.string().trim(),
+      consentProof: z.string().trim().min(10).max(500),
+      dossierReference: z.string().trim().max(60).optional(),
       displayNameChoice: displayNameChoiceSchema.default("first_name_only"),
+      publishNow: z.boolean().default(false),
     }))
     .mutation(async ({ input }) => {
-      await requireValidAdminSession(input.sessionToken);
+      const admin = await requireValidAdminSession(input.sessionToken);
+      if (!allowAdminEntry(String(admin.email ?? "admin").toLowerCase(), Date.now())) {
+        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Trop de témoignages saisis en peu de temps : réessayez plus tard." });
+      }
+      const dateError = consentDateError(input.consentDate);
+      if (dateError) throw new TRPCError({ code: "BAD_REQUEST", message: dateError });
       const db = await requireDb();
-      await db.insert(customerReviews).values({
+      const duplicate = await db.select({ id: customerReviews.id }).from(customerReviews).where(eq(customerReviews.reviewText, input.reviewText)).limit(1);
+      if (duplicate.length > 0) {
+        throw new TRPCError({ code: "CONFLICT", message: "Ce témoignage est déjà enregistré." });
+      }
+      const result = await db.insert(customerReviews).values({
         fullName: input.fullName,
-        email: input.email.toLowerCase(),
+        email: input.email ? input.email.toLowerCase() : placeholderEmail(randomBytes(6).toString("hex")),
         destinationCountry: input.destinationCountry || null,
         serviceType: input.serviceType || null,
         rating: input.rating,
         reviewText: input.reviewText,
         consentToPublish: true,
         displayNameChoice: input.displayNameChoice,
-        status: "pending_review",
-        adminNotes: "Avis fourni par l’administration — consentement client confirmé.",
+        status: input.publishNow ? "approved" : "pending_review",
+        adminNotes: buildAdminEntryNotes({
+          channel: input.consentChannel,
+          consentDate: input.consentDate,
+          proof: input.consentProof,
+          dossierReference: input.dossierReference,
+          adminEmail: String(admin.email ?? "administrateur"),
+          publishNow: input.publishNow,
+        }),
+        ...(input.publishNow ? { reviewedByAdminEmail: admin.email ?? null, reviewedAt: new Date() } : {}),
       });
-      return { success: true, message: "Avis enregistré en attente de validation." };
+      logger.info("customer_review.admin_entry", { admin: admin.email, publishNow: input.publishNow, channel: input.consentChannel, id: (result as any)?.[0]?.insertId });
+      return {
+        success: true,
+        published: input.publishNow,
+        message: input.publishNow ? "Témoignage publié." : "Avis enregistré en attente de validation.",
+      };
     }),
 
   listApproved: publicProcedure.query(async () => {
@@ -258,6 +292,8 @@ export const customerReviewRouter = router({
       const rows = await db.select().from(customerReviews).orderBy(desc(customerReviews.createdAt), asc(customerReviews.id)).limit(200);
       return rows.map((review) => ({
         ...review,
+        adminEntered: isAdminEntered(review.adminNotes),
+        displayName: getDisplayName(review.fullName, review.displayNameChoice),
         createdAt: review.createdAt instanceof Date ? review.createdAt.toISOString() : String(review.createdAt),
         reviewedAt: review.reviewedAt instanceof Date ? review.reviewedAt.toISOString() : review.reviewedAt ? String(review.reviewedAt) : null,
       }));
@@ -301,6 +337,62 @@ export const customerReviewRouter = router({
       if (result[0].affectedRows === 0) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Avis non trouvé." });
       }
+      return { success: true };
+    }),
+
+  /**
+   * Correction d'un témoignage (coquille, pays, service, nom affiché). Motif obligatoire, conservé dans l'historique de l'avis.
+   * Le sens du témoignage ne doit pas être modifié : en cas de doute, retirer l'avis et en demander un nouveau au client.
+   */
+  updateByAdmin: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      reviewId: z.number().int().positive(),
+      reviewText: z.string().trim().min(10).max(1000).optional(),
+      destinationCountry: z.string().trim().max(100).optional(),
+      serviceType: z.string().trim().max(100).optional(),
+      rating: z.number().int().min(1).max(5).optional(),
+      displayNameChoice: displayNameChoiceSchema.optional(),
+      reason: z.string().trim().min(5).max(300),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await requireDb();
+      const [current] = await db.select().from(customerReviews).where(eq(customerReviews.id, input.reviewId)).limit(1);
+      if (!current) throw new TRPCError({ code: "NOT_FOUND", message: "Avis non trouvé." });
+      const changes: Record<string, unknown> = {};
+      if (input.reviewText !== undefined && input.reviewText !== current.reviewText) changes.reviewText = input.reviewText;
+      if (input.destinationCountry !== undefined && (input.destinationCountry || null) !== current.destinationCountry) changes.destinationCountry = input.destinationCountry || null;
+      if (input.serviceType !== undefined && (input.serviceType || null) !== current.serviceType) changes.serviceType = input.serviceType || null;
+      if (input.rating !== undefined && input.rating !== current.rating) changes.rating = input.rating;
+      if (input.displayNameChoice !== undefined && input.displayNameChoice !== current.displayNameChoice) changes.displayNameChoice = input.displayNameChoice;
+      if (Object.keys(changes).length === 0) return { success: true, changed: false as const };
+      const line = `Modifié par ${admin.email ?? "administrateur"} le ${new Date().toISOString().slice(0, 10)} (${Object.keys(changes).join(", ")}) : ${input.reason}`;
+      await db.update(customerReviews).set({ ...changes, adminNotes: appendAdminNote(current.adminNotes, line) }).where(eq(customerReviews.id, input.reviewId));
+      logger.info("customer_review.admin_update", { admin: admin.email, id: input.reviewId, fields: Object.keys(changes) });
+      return { success: true, changed: true as const };
+    }),
+
+  /**
+   * Retire un témoignage de la publication (le client retire son accord, ou l'avis est contesté).
+   * L'accord de publication est retiré : l'avis ne s'affiche plus nulle part ; la preuve et l'historique restent dans les notes.
+   */
+  withdrawReview: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1).max(512), reviewId: z.number().int().positive(), reason: z.string().trim().min(3).max(300) }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await requireDb();
+      const [current] = await db.select().from(customerReviews).where(eq(customerReviews.id, input.reviewId)).limit(1);
+      if (!current) throw new TRPCError({ code: "NOT_FOUND", message: "Avis non trouvé." });
+      const line = `Retiré de la publication par ${admin.email ?? "administrateur"} le ${new Date().toISOString().slice(0, 10)} : ${input.reason}`;
+      await db.update(customerReviews).set({
+        status: "rejected",
+        consentToPublish: false,
+        adminNotes: appendAdminNote(current.adminNotes, line),
+        reviewedByAdminEmail: admin.email ?? null,
+        reviewedAt: new Date(),
+      }).where(eq(customerReviews.id, input.reviewId));
+      logger.info("customer_review.admin_withdraw", { admin: admin.email, id: input.reviewId });
       return { success: true };
     }),
 
