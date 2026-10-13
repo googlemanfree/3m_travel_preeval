@@ -54,4 +54,4 @@
 ## About — section biographique professionnelle
 - [x] Ajouter une section distincte avec photo professionnelle et biographie courte du fondateur.
 - [x] Vérifier l’accessibilité, le responsive mobile, le typecheck, les tests ciblés et le build production.
-- [ ] Sauvegarder un checkpoint WebDev après validation.
+- [x] Sauvegarder un checkpoint WebDev après validation.
