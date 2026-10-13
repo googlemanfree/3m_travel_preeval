@@ -109,13 +109,14 @@ describe("page /services", () => {
 });
 
 describe("accueil : « Que voulez-vous accomplir ? »", () => {
-  it("affiche les dix actions, dont l'évaluation gratuite sans compte pour les études et le travail", () => {
+  it("affiche les dix actions, dont les pages Travail et Études (qui proposent l'évaluation gratuite)", () => {
     render(<QuickActionsSection />);
     const links = within(screen.getByTestId("quick-actions")).getAllByRole("link");
     expect(links).toHaveLength(10);
     const hrefs = links.map((link) => link.getAttribute("href"));
-    expect(hrefs).toContain("/?project=travail#evaluation-multi");
-    expect(hrefs).toContain("/?project=etudes#evaluation-multi");
+    expect(hrefs).toContain("/travail");
+    expect(hrefs).toContain("/etudes");
+    expect(hrefs).toContain("/?project=travail#evaluation-multi"); // « Préparer mon dossier » : évaluation gratuite sans compte
     expect(screen.getByRole("link", { name: "Voir tous nos services" }).getAttribute("href")).toBe("/services");
   });
 
