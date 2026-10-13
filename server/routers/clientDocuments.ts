@@ -14,6 +14,7 @@ import { analyzePassportDocument } from "../services/passportAnalyzer";
 import { notifyDocumentSubmission } from "../services/documentSubmissionNotification";
 import { randomBytes } from "node:crypto";
 import { candidateProcedure } from "./candidate";
+import { storedUploadUrlSchema } from "../../shared/storedFileUrl";
 
 async function assertOwnedEvaluation(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, evaluationId: number, candidateId: number, candidateEmail: string) {
   const owned = await db.select({ id: evaluations.id }).from(evaluations).where(and(eq(evaluations.id, evaluationId), or(eq(evaluations.candidateId, candidateId), eq(evaluations.email, candidateEmail)))).limit(1);
@@ -27,7 +28,7 @@ export const clientDocumentsRouter = router({
   analyzePassport: publicProcedure
     .input(z.object({
       fileName: z.string().max(255).optional(),
-      fileUrl: z.string().url().optional(),
+      fileUrl: storedUploadUrlSchema.optional(),
     }))
     .mutation(async ({ input }) => {
       const result = await analyzePassportDocument(undefined, input.fileName);
@@ -58,7 +59,7 @@ export const clientDocumentsRouter = router({
         "other"
       ]),
       documentName: z.string().max(255),
-      documentUrl: z.string().url().max(500),
+      documentUrl: storedUploadUrlSchema,
       fileSize: z.number().int().optional(),
       readabilityScore: z.number().int().optional(),
       readabilityIssues: z.any().optional(),
@@ -308,7 +309,7 @@ export const clientDocumentsRouter = router({
       candidateEmail: z.string().email().max(320),
       documentType: z.string().max(100),
       documentName: z.string().max(255),
-      documentUrl: z.string().url().max(500).optional(),
+      documentUrl: storedUploadUrlSchema.optional(),
       adminNotes: z.string().max(2000).optional(),
     }))
     .mutation(async ({ ctx, input }) => {

@@ -11,6 +11,7 @@ import {
   parsePassportAnalysisResponse,
   passportAnalysisSchema,
 } from '../services/passportAnalysisPayload';
+import { storedUploadUrlSchema } from '../../shared/storedFileUrl';
 
 const MAX_FILE_NAME_LENGTH = 120;
 
@@ -25,7 +26,7 @@ export const passportAnalysisRouter = router({
   analyzePassport: publicProcedure
     .input(
       z.object({
-        passportUrl: z.string().url().max(500).optional(),
+        passportUrl: storedUploadUrlSchema.optional(),
         fileBase64: z.string().max(2000000).optional(),
         fileName: z.string().max(255).optional(),
         fileType: z.string().min(1).max(100),

@@ -30,6 +30,7 @@ import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/p
 import { sendReceiptAndProtocol } from "../services/paymentPackage";
 import { MAX_CLIENT_DOSSIERS, MAX_CLIENT_DOSSIERS_MESSAGE } from "../../shared/clientDossierLimits";
 import { DEFAULT_OPENING_FEE_XAF, MAX_OPENING_FEE_XAF, MIN_OPENING_FEE_XAF, formatXaf } from "../../shared/openingFee";
+import { storedUploadUrlSchema } from "../../shared/storedFileUrl";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -113,10 +114,10 @@ export const applicationRouter = router({
       destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "oceanie", "caucase", "autre"]),
       formulaChosen: z.enum(["integral", "echelonne", "garanti"]).default("integral"),
       candidateId: z.number().int().optional(),
-      // Documents uploadés
-      passportUrl: z.string().url().max(500).optional(),
-      cvUrl: z.string().url().max(500).optional(),
-      diplomaUrl: z.string().url().max(500).optional(),
+      // Documents uploadés (`/manus-storage/…` ou https absolu historique)
+      passportUrl: storedUploadUrlSchema.optional(),
+      cvUrl: storedUploadUrlSchema.optional(),
+      diplomaUrl: storedUploadUrlSchema.optional(),
       // Scoring automatique
       scoringTotal: z.number().int().min(0).max(100).optional(),
       scoringDetails: z.string().max(5000).optional(),

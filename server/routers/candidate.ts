@@ -63,6 +63,7 @@ import { computeProfileCompletion } from "../../shared/profileCompletion";
 import { buildDocumentClarificationHistory } from "../../shared/documentClarification";
 import { duplicateConflictMessage, findPotentialDuplicates, normalizeDuplicateEmail } from "../utils/duplicateDetection";
 import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../loginAttemptsService";
+import { portraitVerificationTokenSchema, storedUploadUrlSchema } from "../../shared/storedFileUrl";
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -432,7 +433,7 @@ export const candidateRouter = router({
         /** CV obligatoire pour visa travail (tous pays) — pièce clé de l’évaluation. */
         cvBase64: z.string().min(32).max(7_200_000).optional(),
         cvFileName: z.string().trim().min(3).max(255).optional(),
-        portraitVerificationToken: z.string().min(20, "Portrait vérifié requis"),
+        portraitVerificationToken: portraitVerificationTokenSchema,
         evaluationAlreadyCompleted: z.boolean().default(false),
       })
     )
@@ -737,7 +738,7 @@ export const candidateRouter = router({
         languageLevel: z.string().max(100).optional(),
         preferredLanguage: z.enum(["fr", "en"]).optional(),
         formulaChosen: z.string().max(100).optional(),
-        avatarUrl: z.string().url().optional(),
+        avatarUrl: storedUploadUrlSchema.optional(),
         preferredDestinations: z.array(z.string().min(1).max(100)).min(1, "Choisissez au moins une destination").max(MAX_PREFERRED_DESTINATIONS, `${MAX_PREFERRED_DESTINATIONS} destinations maximum`).optional(),
       })
     )
@@ -917,7 +918,10 @@ export const candidateRouter = router({
 
   // ── Mettre à jour la photo de profil ──────────────────────────────────────
   updateAvatar: candidateProcedure
-    .input(z.object({ avatarUrl: z.string().url().max(500), portraitVerificationToken: z.string().min(20).max(512) }))
+    .input(z.object({
+      avatarUrl: storedUploadUrlSchema,
+      portraitVerificationToken: portraitVerificationTokenSchema,
+    }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -966,7 +970,7 @@ export const candidateRouter = router({
           "justificatif_domicile", "extrait_naissance", "casier_judiciaire", "justificatif_paiement", "document_remis_main_propre", "autre",
         ]),
         fileName: z.string().max(255),
-        fileUrl: z.string().url().max(500),
+        fileUrl: storedUploadUrlSchema,
         fileKey: z.string().max(512),
         fileSizeBytes: z.number().int().min(0).optional(),
         mimeType: z.string().max(100).optional(),
@@ -2131,7 +2135,7 @@ export const candidateRouter = router({
           z.object({
             fileType: z.string().max(100),
             fileName: z.string().max(255),
-            fileUrl: z.string().url().max(500),
+            fileUrl: storedUploadUrlSchema,
             fileKey: z.string().max(512),
             fileSizeBytes: z.number().int().min(0).optional(),
             mimeType: z.string().max(100).optional(),

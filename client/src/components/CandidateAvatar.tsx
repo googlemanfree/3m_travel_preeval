@@ -19,6 +19,31 @@ function getInitials(fullName: string): string {
   return parts.slice(0, 2).map((p) => p[0]?.toUpperCase() || "").join("") || "?";
 }
 
+/** Messages Zod / tRPC parfois renvoyés en JSON brut — on affiche la première anomalie lisible. */
+function uploadErrorMessage(error: unknown): string {
+  const message = error && typeof error === "object" && "message" in error ? String((error as { message: unknown }).message) : "";
+  if (!message) return "Erreur lors de la mise à jour de la photo.";
+  if (message.trim().startsWith("[")) {
+    try {
+      const issues = JSON.parse(message) as Array<{ path?: Array<string | number>; message?: string }>;
+      const first = issues[0];
+      if (first?.message) {
+        const field = (first.path ?? []).join(".");
+        if (field.includes("avatarUrl") || field.includes("portraitVerificationToken")) {
+          return first.message;
+        }
+        return first.message;
+      }
+    } catch {
+      // message non JSON
+    }
+  }
+  if (/invalid_format|too_big|too_small/i.test(message)) {
+    return "La photo n’a pas pu être enregistrée. Reprenez une photo type passeport puis réessayez.";
+  }
+  return message;
+}
+
 export default function CandidateAvatar({
   fullName,
   avatarUrl,
@@ -89,8 +114,8 @@ export default function CandidateAvatar({
         utils.candidate.getClientDashboardSummary.invalidate(),
       ]);
       onUpdated?.(result.avatarUrl, { passportPhotoDeposited: deposited });
-    } catch (err: any) {
-      setError(err.message || "Erreur lors de la mise à jour de la photo.");
+    } catch (err: unknown) {
+      setError(uploadErrorMessage(err));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";

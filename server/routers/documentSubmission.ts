@@ -9,11 +9,12 @@ import { classifyDocument, classifyMultipleDocuments } from "../documentClassifi
 import { candidateProcedure } from "./candidate";
 import { assertEvaluationCompleted } from "../services/evaluationFirstGate";
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
+import { storedUploadUrlSchema } from "../../shared/storedFileUrl";
 
 export const documentSubmissionRouter = router({
   analyzeDocumentReadability: publicProcedure
     .input(z.object({
-      imageUrl: z.string().url().max(500),
+      imageUrl: storedUploadUrlSchema,
       documentType: z.string().max(100).optional(),
     }))
     .mutation(async ({ input }) => {
@@ -36,7 +37,7 @@ export const documentSubmissionRouter = router({
     }),
   classifyDocument: publicProcedure
     .input(z.object({
-      imageUrl: z.string().url().max(500),
+      imageUrl: storedUploadUrlSchema,
     }))
     .mutation(async ({ input }) => {
       try {
@@ -55,7 +56,7 @@ export const documentSubmissionRouter = router({
     }),
   classifyMultipleDocuments: publicProcedure
     .input(z.object({
-      imageUrls: z.array(z.string().url().max(500)).max(20),
+      imageUrls: z.array(storedUploadUrlSchema).max(20),
     }))
     .mutation(async ({ input }) => {
       try {
@@ -80,7 +81,7 @@ export const documentSubmissionRouter = router({
       submissionMethod: z.enum(["en_ligne", "agence_physique"]),
       documentsUrls: z.array(z.object({
         type: z.string().max(100),
-        url: z.string().url().max(500),
+        url: storedUploadUrlSchema,
         name: z.string().max(255),
       })).max(50).optional(),
       notes: z.string().max(2000).optional(),
