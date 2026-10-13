@@ -3,6 +3,7 @@ import { CheckCircle2, MessageCircle, ShieldCheck, Star } from "lucide-react";
 import SubmitReview from "./SubmitReview";
 import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
 import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
+import IllustrativeMobilityStories from "@/components/IllustrativeMobilityStories";
 import { ReviewsErrorBoundary } from "@/components/ReviewsErrorBoundary";
 import { trpc } from "@/lib/trpc";
 import { COMPANY_PROFILE } from "@/lib/companyContacts";
@@ -129,6 +130,10 @@ export default function Avis() {
       <ReviewsErrorBoundary>
         <ApprovedReviewsSection />
       </ReviewsErrorBoundary>
+
+      <div className="mx-auto mt-6 max-w-6xl overflow-hidden rounded-3xl border border-amber-200/70 bg-white shadow-sm">
+        <IllustrativeMobilityStories />
+      </div>
 
       <section className="mx-auto mt-4 max-w-4xl rounded-3xl border border-blue-100 bg-white p-8 shadow-sm sm:p-12">
         <section id="deposer-un-avis" aria-labelledby="deposer-un-avis-title">

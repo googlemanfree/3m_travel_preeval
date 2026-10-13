@@ -15,6 +15,7 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { PremiumCoverImage } from "@/components/PremiumCoverImage";
 import ProofGallerySection from "@/components/ProofGallerySection";
+import IllustrativeMobilityStories from "@/components/IllustrativeMobilityStories";
 import { getDestinationVisual, getServiceVisual } from "@/data/premiumVisuals";
 import { setPageSeo } from "@/lib/pageSeo";
 
@@ -387,6 +388,11 @@ export default function VisaTravail() {
           </div>
         </section>
       </div>
+
+      <IllustrativeMobilityStories
+        limit={3}
+        className="border-t border-slate-200/80 bg-white/70"
+      />
 
       <ProofGallerySection
         initialFilter="immigration"

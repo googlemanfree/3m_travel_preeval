@@ -12,6 +12,7 @@ import HeroSectionVIP from "@/components/HeroSectionVIP";
 import HomeSearchBar from "@/components/HomeSearchBar";
 import { PublicFAQ } from "@/components/PublicFAQ";
 import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
+import IllustrativeMobilityStories from "@/components/IllustrativeMobilityStories";
 import { ReviewsErrorBoundary } from "@/components/ReviewsErrorBoundary";
 import ProofGallerySection from "@/components/ProofGallerySection";
 import ServicesOverviewSection from "@/components/ServicesOverviewSection";
@@ -207,6 +208,11 @@ export default function Home() {
         <ReviewsErrorBoundary>
           <ApprovedReviewsSection />
         </ReviewsErrorBoundary>
+      </motion.div>
+
+      {/* Exemples illustratifs (fictifs) — après les avis réels, clairement étiquetés. */}
+      <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition bg-slate-50/80">
+        <IllustrativeMobilityStories limit={6} />
       </motion.div>
 
       {/* B2B détaillé — après réassurance, sans saturer le premier écran. */}
