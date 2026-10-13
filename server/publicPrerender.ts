@@ -284,7 +284,12 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/submit-documents": privateShell("Dépôt de vos documents", "Dépôt sécurisé des pièces de votre dossier depuis votre espace client 3M TRAVEL AGENCY."),
   "/evaluation-result": privateShell("Résultat de votre évaluation", "Liste des documents à prévoir issue de votre évaluation préalable, à confirmer avec l’agence."),
   "/evisas/request": privateShell("Demande d’e-Visa", "Formulaire sécurisé de demande d’e-Visa avec validation du dossier par l’équipe 3M TRAVEL AGENCY."),
-  "/procedures/comparaison": privateShell("Comparateur de destinations", "Comparez vos destinations favorites selon votre profil ; les scores sont indicatifs et enregistrés sur votre appareil."),
+  "/procedures/comparaison": {
+    title: `Comparateur de corridors | ${SITE}`,
+    description: "Comparez des corridors Afrique → Canada, Europe et Golfe selon votre profil. Scores indicatifs enregistrés sur votre appareil.",
+    heading: "Comparateur de corridors",
+    lead: "Choisissez un pack prêt à comparer ou vos favoris. Les scores restent indicatifs — sans promesse d’admission, d’emploi ou de visa.",
+  },
   "/assurance-inscription": privateShell("Inscription assurance voyage", "Accès alternatif au formulaire d’assurance voyage, dont la page de référence est /assurance.", "Accès alternatif à une page existante ; cette adresse n’est pas indexée."),
 };
 
@@ -347,6 +352,9 @@ const routeSpecificPrerender = (path: string) => {
         return `<section aria-label="Guides ${esc(page.country)}"><h2>Guides ${esc(page.country)}</h2><p>${esc(lead)}</p><ul>${docs}</ul><p><a href="/ressources">Retour à la bibliothèque</a> · <a href="/?project=travail&amp;destination=${esc(page.slug)}#evaluation-multi">Évaluer mon profil</a>${page.officialSources[0] ? ` · <a href="${esc(page.officialSources[0].url)}" rel="noreferrer">Source officielle</a>` : ""}</p></section>`;
       }
     }
+  }
+  if (path === "/procedures/comparaison") {
+    return `<section aria-label="Comparateur de corridors"><h2>Comparateur de corridors</h2><p>Comparez des packs Afrique → Canada, Europe et Golfe selon votre profil. Les scores sont indicatifs et enregistrés sur votre appareil.</p><ul><li>Corridor travail · Canada &amp; Europe</li><li>Corridor études · destinations prioritaires</li><li>Corridor travail · Golfe &amp; Océanie</li></ul><p><a href="/travail">Hub Travail</a> · <a href="/etudes">Hub Études</a> · <a href="/ressources">Bibliothèque pays</a> · <a href="/?project=travail#evaluation-multi">Évaluer mon profil</a></p></section>`;
   }
   if (path === "/contact") {
     const yaounde = COMPANY_PROFILE.offices.cameroon;

@@ -332,9 +332,9 @@ export default function ProceduresAdvanced() {
                   <TabsTrigger value="visiteur">Visiteur ({VISA_COUNTS.visiteur ?? 0})</TabsTrigger>
                 </TabsList>
               </Tabs>
-              <a href="/procedures/comparaison" className="w-full sm:w-auto shrink-0">
+              <a href="/procedures/comparaison" className="w-full sm:w-auto shrink-0" data-testid="procedures-corridor-comparer-cta">
                 <Button className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 text-white font-bold px-5 py-2.5 rounded-xl shadow flex items-center justify-center gap-2">
-                  ⭐ Comparer mes favoris
+                  ⭐ Comparer un corridor
                 </Button>
               </a>
             </div>
