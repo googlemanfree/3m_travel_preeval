@@ -38,4 +38,26 @@ describe("SEO fondateur — Aureol DONFACK / 3M Group SARL", () => {
     expect(footer).toContain("GROUP_LEGAL_NAME");
     expect(footer).toContain("/about#aureol-donfack");
   });
+
+  it("l’accueil et le contact exposent Aureol DONFACK en texte crawlable", () => {
+    const home = read("client/src/pages/Home.tsx");
+    const contact = read("client/src/pages/Contact.tsx");
+    expect(home).toContain("COMPANY_FOUNDER");
+    expect(home).toContain("/about#aureol-donfack");
+    expect(home).toContain("GROUP_LEGAL_NAME");
+    expect(contact).toContain("contact-founder-identity");
+    expect(contact).toContain("COMPANY_FOUNDER");
+    expect(contact).toContain("GROUP_LEGAL_NAME");
+    expect(contact).toContain("/about#aureol-donfack");
+  });
+
+  it("sitemap et llms.txt priorisent /about et nomment le fondateur", () => {
+    const sitemap = read("client/public/sitemap.xml");
+    const llms = read("client/public/llms.txt");
+    expect(sitemap).toContain("https://www.3mtravelagency.com/about");
+    expect(sitemap).toContain("<priority>0.9</priority>");
+    expect(llms).toContain("Aureol DONFACK");
+    expect(llms).toContain("3M Group SARL");
+    expect(llms).toContain("/about#aureol-donfack");
+  });
 });

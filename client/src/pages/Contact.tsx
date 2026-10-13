@@ -10,7 +10,7 @@ import ProofGallerySection from '@/components/ProofGallerySection';
 import { getServiceVisual } from '@/data/premiumVisuals';
 import { setPageSeo } from '@/lib/pageSeo';
 import { trpc } from '@/lib/trpc';
-import { COMPANY_PROFILE } from '@/lib/companyContacts';
+import { COMPANY_FOUNDER, COMPANY_PROFILE, GROUP_LEGAL_NAME } from '@/lib/companyContacts';
 import { officeMapEmbedUrl, officeMapsUrl } from '@/lib/officeContacts';
 
 export default function Contact() {
@@ -156,6 +156,21 @@ export default function Contact() {
       <section className="px-4 pb-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <OfficeContactPanel />
+          <aside
+            className="mt-8 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-700 sm:px-6"
+            aria-label="Identification de l’agence"
+            data-testid="contact-founder-identity"
+          >
+            <p>
+              <strong className="text-slate-950">{GROUP_LEGAL_NAME}</strong>
+              {" — "}
+              fondateur et PDG{" "}
+              <a href="/about#aureol-donfack" className="font-semibold text-blue-800 underline-offset-2 hover:underline">
+                {COMPANY_FOUNDER.name}
+              </a>
+              . Exploitation commerciale : {COMPANY_PROFILE.legalName} (RC {COMPANY_PROFILE.legalIdentifiers.registration}).
+            </p>
+          </aside>
         </div>
       </section>
 

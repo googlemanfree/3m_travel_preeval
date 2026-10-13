@@ -6,7 +6,7 @@ import {
   Clock, Shield, ChevronUp, Info, MapPin, FileCheck, BookOpen, LayoutDashboard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { COMPANY_PROFILE } from "@/lib/companyContacts";
+import { COMPANY_FOUNDER, COMPANY_PROFILE, GROUP_LEGAL_NAME } from "@/lib/companyContacts";
 
 import HeroSectionVIP from "@/components/HeroSectionVIP";
 import HomeSearchBar from "@/components/HomeSearchBar";
@@ -403,7 +403,11 @@ export default function Home() {
             <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Pourquoi 3M TRAVEL AGENCY</p>
             <h2 id="why-3m-title" className="premium-section-title mb-3 text-3xl md:text-4xl">Des preuves concrètes, pas des promesses vagues</h2>
             <p className="premium-section-lead mx-auto text-center">
-              Agence enregistrée à Yaoundé{registrationYear ? ` depuis ${registrationYear}` : ""} ({COMPANY_PROFILE.legalIdentifiers.registration}). Nous préparons et suivons votre dossier — la décision finale reste celle des autorités compétentes.
+              Agence enregistrée à Yaoundé{registrationYear ? ` depuis ${registrationYear}` : ""} ({COMPANY_PROFILE.legalIdentifiers.registration}). Fondée et dirigée par{" "}
+              <a href="/about#aureol-donfack" className="font-semibold text-[#1e3a8a] underline-offset-2 hover:underline">
+                {COMPANY_FOUNDER.name}
+              </a>
+              , fondateur et PDG de {GROUP_LEGAL_NAME}. Nous préparons et suivons votre dossier — la décision finale reste celle des autorités compétentes.
             </p>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
