@@ -58,7 +58,8 @@ describe("hero : lisibilité et hiérarchie", () => {
     expect(hero).toContain("hover:-translate-y-1.5 hover:scale-[1.04]");
     expect(hero).toContain("group-hover:translate-x-full");
     expect(hero).toContain('data-testid="hero-scroll-cue"');
-    expect(hero).toContain('href="#home-talent-corridor"');
+    expect(hero).toContain('href="#evaluation-multi"');
+    expect(hero).toContain('data-testid="hero-trust-strip"');
     expect(hero).toContain("animate-bounce motion-reduce:animate-none");
     expect(hero).not.toContain("repeat: Infinity");
   });
