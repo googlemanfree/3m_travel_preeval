@@ -50,3 +50,8 @@
 - [x] Améliorer les transitions entre les sections sans gêner le clavier ni le mode mouvement réduit.
 - [x] Corriger les tests historiques en échec par lots, sans modifier les dossiers actifs.
 - [x] Revalider `pnpm run check`, `pnpm test` et le build; sauvegarder un checkpoint final.
+
+## About — section biographique professionnelle
+- [x] Ajouter une section distincte avec photo professionnelle et biographie courte du fondateur.
+- [x] Vérifier l’accessibilité, le responsive mobile, le typecheck, les tests ciblés et le build production.
+- [ ] Sauvegarder un checkpoint WebDev après validation.

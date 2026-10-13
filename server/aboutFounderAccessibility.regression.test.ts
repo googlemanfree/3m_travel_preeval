@@ -40,6 +40,14 @@ describe("About — publications du fondateur et accessibilité", () => {
     expect(about).toContain("aria-hidden=\"true\"");
   });
 
+  it("présente une section biographique distincte avec la photo professionnelle du fondateur", () => {
+    expect(about).toContain('aria-labelledby="founder-bio-heading"');
+    expect(about).toContain('id="founder-bio-heading"');
+    expect(about).toContain("Portrait professionnel de ${FOUNDER.name}");
+    expect(about).toContain("Le fondateur en quelques mots");
+    expect(about).toContain("les autorités et organismes compétents restent seuls décisionnaires");
+  });
+
   it("nomme les régions About qui contiennent plusieurs contenus", () => {
     expect(about).toContain('aria-labelledby="founder-heading"');
     expect(about).toContain('aria-labelledby="founder-publications-heading"');

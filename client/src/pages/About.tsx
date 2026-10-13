@@ -269,6 +269,33 @@ export default function About() {
         </div>
       </section>
 
+      <section className="border-y border-blue-100 bg-slate-50 px-4 py-14 sm:px-6 lg:px-8" aria-labelledby="founder-bio-heading">
+        <div className="mx-auto grid max-w-5xl items-center gap-8 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8 lg:grid-cols-[220px_minmax(0,1fr)]">
+          <figure className="mx-auto w-full max-w-[220px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-sm">
+            <img
+              src={FOUNDER.imageJpg}
+              alt={`Portrait professionnel de ${FOUNDER.name}`}
+              width={640}
+              height={640}
+              loading="lazy"
+              decoding="async"
+              className="aspect-square h-auto w-full object-cover object-center"
+            />
+            <figcaption className="border-t border-slate-200 px-3 py-2 text-center text-xs font-semibold text-slate-600">{FOUNDER.name}</figcaption>
+          </figure>
+          <div>
+            <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Portrait professionnel</p>
+            <h2 id="founder-bio-heading" className="mt-2 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">Le fondateur en quelques mots</h2>
+            <p className="mt-4 text-base leading-7 text-slate-700">
+              {FOUNDER.name} est fondateur et PDG de {GROUP_LEGAL_NAME}. Il porte une approche centrée sur l’écoute, la clarté des informations et le suivi humain des projets de mobilité internationale.
+            </p>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Son rôle consiste à structurer une préparation sérieuse des dossiers, à orienter vers les sources officielles et à rappeler les limites de l’accompagnement : les autorités et organismes compétents restent seuls décisionnaires.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section className="scroll-mt-24 border-t border-blue-100 bg-blue-50/70 px-4 py-16 transition-colors duration-300 sm:px-6 lg:px-8 motion-reduce:transition-none" aria-labelledby="founder-publications-heading">
         <div className="mx-auto max-w-6xl">
           <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Actualités & publications</p>
