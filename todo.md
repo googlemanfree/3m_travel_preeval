@@ -33,5 +33,5 @@
 
 
 ## Publication ciblée PR96 — SEO fondateur
-- [ ] Identifier et exécuter uniquement les régressions SEO PR96.
-- [ ] Publier WebDev sur l’état courant, avec verdict limité aux modules ciblés; ne pas relancer les suites hors périmètre.
+- [x] Identifier et exécuter uniquement les régressions SEO PR96 : `founderSeo`, `publicPrerender` et `seoAndPerformance`, 3 suites / 27 tests verts.
+- [x] Publier WebDev sur l’état courant avec verdict limité aux modules ciblés; checkpoint créé en version `9c0d8457`. Les suites hors périmètre et leurs 11 fichiers / 15 tests en échec ne sont pas relancées ni présentées comme validées.
