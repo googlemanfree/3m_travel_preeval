@@ -13,7 +13,7 @@ async function testEmail() {
     const result = await resend.emails.send({
       from: "onboarding@resend.dev",
       to: "3mtravelandservices@gmail.com",
-      subject: "🌍 Test d'évaluation Luxembourg - 3M Travel & Services",
+      subject: "🌍 Test d'évaluation Luxembourg - 3M TRAVEL AGENCY",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; color:#0a2540;">
           <div style="background: linear-gradient(135deg, #667eea, #764ba2); padding: 24px; border-radius: 10px 10px 0 0; text-align:center;">

@@ -822,7 +822,7 @@ export const evisaRouter = router({
           <body>
             <div class="header">
               <div>
-                <div class="title">3M TRAVEL & SERVICES</div>
+                <div class="title">3M TRAVEL AGENCY</div>
                 <div class="subtitle">Agence de Mobilité Internationale & E-Visas</div>
               </div>
               <div style="text-align: right;">

@@ -3,10 +3,16 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
-const contacts = readFileSync(resolve(root, "client/src/lib/companyContacts.ts"), "utf8");
-const prerender = readFileSync(resolve(root, "server/publicPrerender.ts"), "utf8");
-const flights = readFileSync(resolve(root, "client/src/pages/Flights.tsx"), "utf8");
-const footer = readFileSync(resolve(root, "client/src/components/Footer.tsx"), "utf8");
+const read = (path: string) => readFileSync(resolve(root, path), "utf8");
+const contacts = read("client/src/lib/companyContacts.ts");
+const prerender = read("server/publicPrerender.ts");
+const flights = read("client/src/pages/Flights.tsx");
+const footer = read("client/src/components/Footer.tsx");
+const og = read("server/seoAssets.ts");
+const manifest = read("client/public/manifest.json");
+const sw = read("client/public/sw.js");
+const brand = read("client/src/data/internationalBrand.ts");
+const procedureData = read("shared/procedureData.ts");
 
 describe("marque publique 3M TRAVEL AGENCY", () => {
   it("centralise BRAND_PUBLIC_NAME = 3M TRAVEL AGENCY", () => {
@@ -27,5 +33,24 @@ describe("marque publique 3M TRAVEL AGENCY", () => {
     expect(flights).not.toContain("3M Travel & Services");
     expect(footer).toContain("3M TRAVEL AGENCY");
     expect(footer).toContain("COMPANY_PROFILE.publicName");
+  });
+
+  it("retire Travel & Services des surfaces publiques prioritaires (OG, PWA, SW, fiches, hero)", () => {
+    expect(og).toContain("3M TRAVEL AGENCY");
+    expect(og).not.toContain("TRAVEL &amp; SERVICES");
+    expect(og).not.toContain("Travel &amp; Services");
+    expect(manifest).toContain('"name": "3M TRAVEL AGENCY"');
+    expect(manifest).not.toContain("Travel & Services");
+    expect(sw).toContain("3M TRAVEL AGENCY");
+    expect(sw).not.toContain("Travel & Services");
+    expect(brand).toContain("3M TRAVEL AGENCY vous accompagne");
+    expect(brand).not.toContain("3M Travel Agency vous accompagne");
+    expect(procedureData).not.toContain("3M Travel & Services");
+    expect(procedureData).not.toContain("3M TRAVEL & SERVICES");
+  });
+
+  it("conserve la dénomination juridique dans le profil société", () => {
+    expect(contacts).toContain('legalName: "3M Travel Agency SARL"');
+    expect(contacts).toContain("3M Group SARL");
   });
 });

@@ -972,7 +972,7 @@ export const flightBookingRouter = router({
       }
 
       // Génération d'une quittance au format texte / HTML stockée en S3 ou renvoyée en URL data/signed
-      const receiptContent = `QUITTANCE DE PAIEMENT - 3M TRAVEL & SERVICES\nRéférence: ${existing.requestRef}\nClient: ${existing.candidateEmail}\nMode de Paiement: ${existing.paymentMethod === 'orange_money' ? 'Orange Money' : 'Guichet Agence'}\nID de Transaction: ${existing.paymentTransactionId || 'N/A'}\nStatut: ${existing.clientValidated ? 'Validé' : 'En attente'}\nDate: ${existing.createdAt.toISOString()}`;
+      const receiptContent = `QUITTANCE DE PAIEMENT - 3M TRAVEL AGENCY\nRéférence: ${existing.requestRef}\nClient: ${existing.candidateEmail}\nMode de Paiement: ${existing.paymentMethod === 'orange_money' ? 'Orange Money' : 'Guichet Agence'}\nID de Transaction: ${existing.paymentTransactionId || 'N/A'}\nStatut: ${existing.clientValidated ? 'Validé' : 'En attente'}\nDate: ${existing.createdAt.toISOString()}`;
       const buffer = Buffer.from(receiptContent, "utf-8");
       const { url } = await storagePut(`receipts/${existing.requestRef}-${Date.now()}.txt`, buffer, "text/plain");
 
@@ -1212,7 +1212,7 @@ export const flightBookingRouter = router({
           doc.setFontSize(48);
           doc.setTextColor(230, 235, 245);
           doc.setGState(new (doc as any).GState({ opacity: 0.22 }));
-          doc.text("3M TRAVEL & SERVICES - CERTIFIÉ", 25, 150, { angle: 45 });
+          doc.text("3M TRAVEL AGENCY - CERTIFIÉ", 25, 150, { angle: 45 });
           doc.restoreGraphicsState();
         }
       });

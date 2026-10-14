@@ -146,7 +146,7 @@ export function generateReceiptA5HTML(receipt: {
       <div class="receipt">
         <!-- En-tête -->
         <div class="header">
-          <h1>3M TRAVEL & SERVICES</h1>
+          <h1>3M TRAVEL AGENCY</h1>
           <p>Reçu de Paiement</p>
           <p>Votre mobilité, notre expertise</p>
         </div>
@@ -346,7 +346,7 @@ export function generateMultipleReceiptsA5HTML(receipts: Array<{
         ${idx % 2 === 0 ? '<div class="page">' : ""}
         <div class="receipt">
           <div class="header">
-            <h1>3M TRAVEL & SERVICES</h1>
+            <h1>3M TRAVEL AGENCY</h1>
             <p>Reçu de Paiement</p>
           </div>
           <div class="content">

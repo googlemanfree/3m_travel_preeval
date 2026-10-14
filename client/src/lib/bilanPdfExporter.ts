@@ -63,7 +63,7 @@ export async function exportBilanToPDF(bilanData: BilanData) {
     };
 
     // Header
-    addText("3M TRAVEL & SERVICES", 16, true, [25, 55, 109]);
+    addText("3M TRAVEL AGENCY", 16, true, [25, 55, 109]);
     addText("Bilan d'Admissibilité", 12, true);
     addText(`Généré le ${new Date().toLocaleDateString("fr-FR")}`, 9, false, [100, 100, 100]);
     yPosition += 5;

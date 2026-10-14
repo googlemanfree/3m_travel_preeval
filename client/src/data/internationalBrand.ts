@@ -25,8 +25,8 @@ export const INTERNATIONAL_BRAND = {
   },
   /** Corps du hero (maquette). */
   heroBody: {
-    fr: "De l’Afrique vers le monde, 3M Travel Agency vous accompagne dans vos projets internationaux, de l’orientation à la préparation des démarches, en passant par l’organisation de vos voyages et les services associés. Bénéficiez d’un accompagnement personnalisé, structuré et transparent à chaque étape de votre parcours.",
-    en: "From Africa to the world, 3M Travel Agency supports your international projects — from orientation and document preparation to travel organisation and related services. Receive personalised, structured and transparent support at every step.",
+    fr: "De l’Afrique vers le monde, 3M TRAVEL AGENCY vous accompagne dans vos projets internationaux, de l’orientation à la préparation des démarches, en passant par l’organisation de vos voyages et les services associés. Bénéficiez d’un accompagnement personnalisé, structuré et transparent à chaque étape de votre parcours.",
+    en: "From Africa to the world, 3M TRAVEL AGENCY supports your international projects — from orientation and document preparation to travel organisation and related services. Receive personalised, structured and transparent support at every step.",
   },
   /** Ligne de confiance sous les CTA. */
   heroTrust: {

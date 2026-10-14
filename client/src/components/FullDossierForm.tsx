@@ -388,7 +388,7 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
       pdf.setTextColor(255, 255, 255);
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(20);
-      pdf.text("3M TRAVEL & SERVICES", 15, 20);
+      pdf.text("3M TRAVEL AGENCY", 15, 20);
       
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(10);
@@ -652,7 +652,7 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
                 <div className="flex justify-between items-start border-b pb-4">
                   <div>
-                    <h4 className="font-black text-blue-900 text-xl tracking-wide">3M TRAVEL & SERVICES</h4>
+                    <h4 className="font-black text-blue-900 text-xl tracking-wide">3M TRAVEL AGENCY</h4>
                     <p className="text-xs text-slate-500">Mobilité Internationale & Visa</p>
                   </div>
                   <div className="text-right text-xs text-slate-500">
