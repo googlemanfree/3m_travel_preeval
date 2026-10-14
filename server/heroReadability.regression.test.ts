@@ -13,9 +13,11 @@ describe("hero : lisibilité et hiérarchie", () => {
     expect(hero).toContain("INTERNATIONAL_BRAND");
     expect(hero).toContain('data-testid="hero-logo"');
     expect(hero).toContain("logoUrl");
-    expect(hero).toContain("h-20 w-20 rounded-full");
-    expect(hero).toContain("lg:h-32 lg:w-32");
-    expect(hero).toContain("text-4xl font-extrabold uppercase tracking-tight text-white");
+    expect(hero).toContain("h-24 w-24 rounded-full");
+    expect(hero).toContain("lg:h-36 lg:w-36");
+    expect(hero).toContain("text-5xl font-extrabold uppercase tracking-tight text-white");
+    expect(hero).toContain("text-3xl font-black tracking-tight text-amber-200");
+    expect(hero).toContain("text-xl font-bold tracking-tight text-white");
     expect(hero).toContain("slogan");
     expect(hero).toContain("headline");
     expect(hero).toContain("categories");
@@ -58,7 +60,7 @@ describe("hero : lisibilité et hiérarchie", () => {
     expect(hero).toContain('data-testid="hero-title"');
     expect(hero).toContain("hover:-translate-y-0.5 hover:scale-[1.03]");
     expect(hero).toContain("group-hover/cta:translate-x-full");
-    expect(hero).toContain("group-hover:scale-[1.03] group-hover:rotate-1");
+    expect(hero).toContain("group-hover:scale-[1.04] group-hover:rotate-1");
     expect(hero).toContain("duration-200 ease-out");
     expect(hero).toContain('data-testid="hero-scroll-cue"');
     expect(hero).toContain('href="#home-talent-corridor"');
@@ -72,6 +74,10 @@ describe("hero : lisibilité et hiérarchie", () => {
     expect(hero).toContain('data-testid="hero-background-image"');
     expect(hero).toContain("3m-hero-real-woman-man_f9790b0e.webp");
     expect(hero).toContain("3m-hero-real-woman-man-mobile_335e606e.webp");
+    expect(hero).toContain("opacity-100");
+    expect(hero).toContain("from-[#07162c]/28");
     expect(hero).not.toContain("from-[#07162c]/75");
+    expect(hero).not.toContain("from-[#07162c]/48 via-[#0a1d3a]/38 to-[#07162c]/72");
   });
 });
+

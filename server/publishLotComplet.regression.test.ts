@@ -41,7 +41,7 @@ describe("lot publish complet — demandes regroupées", () => {
     expect(read("client/src/components/HeroSectionVIP.tsx")).toContain("/logo-3m-hd.webp");
     expect(read("client/src/pages/Home.tsx")).toContain("/logo-3m-hd.webp");
     expect(read("client/src/components/Navbar.tsx")).toContain("/logo-3m.webp");
-    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v44-logo-premium-hd");
+    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v45-hero-bg-texte");
   });
 });
 
