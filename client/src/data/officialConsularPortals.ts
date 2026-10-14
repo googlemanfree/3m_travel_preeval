@@ -47,7 +47,7 @@ export const OFFICIAL_CONSULAR_PORTALS: Record<string, OfficialConsularPortal> =
   "turquie": { url: "https://www.evisa.gov.tr/", label: "Portail officiel des visas", sourceUrl: "https://www.mfa.gov.tr/visa-information-for-foreigners.en.mfa", verifiedAt: "19 août 2026" },
   "azerbaidjan": { url: "https://evisa.gov.az/", label: "Portail officiel des visas", sourceUrl: "https://www.mfa.gov.az/en/category/visa/asan-visa", verifiedAt: "19 août 2026" },
   "georgie": { url: "https://www.geoconsul.gov.ge/", label: "Portail consulaire officiel", sourceUrl: "https://www.geoconsul.gov.ge/", verifiedAt: "19 août 2026" },
-  "france": { url: "https://france-visas.gouv.fr/", label: "Portail officiel des visas", sourceUrl: "https://france-visas.gouv.fr/", verifiedAt: "19 août 2026" },
+  "france": { url: "https://france-visas.gouv.fr/", label: "Portail officiel des visas", sourceUrl: "https://france-visas.gouv.fr/", verifiedAt: "14 octobre 2026" },
   "luxembourg": { url: "https://guichet.public.lu/fr/citoyens/immigration.html", label: "Portail officiel des visas et de l’immigration", sourceUrl: "https://guichet.public.lu/fr/citoyens/immigration.html", verifiedAt: "10 octobre 2026" },
   "canada": { url: "https://www.canada.ca/fr/services/immigration-citoyennete.html", label: "Portail officiel d’immigration", sourceUrl: "https://www.canada.ca/fr/services/immigration-citoyennete.html", verifiedAt: "19 août 2026" },
   "nouvelle-zelande": { url: "https://www.immigration.govt.nz", label: "Portail officiel d’immigration et des visas", sourceUrl: "https://www.immigration.govt.nz", verifiedAt: "19 août 2026" },

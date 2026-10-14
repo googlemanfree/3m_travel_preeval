@@ -43,11 +43,14 @@ describe("accès public au formulaire d’évaluation gratuite", () => {
     expect(form).toContain("aria-invalid={whatsappError}");
   });
 
-  it("oriente le succès vers le suivi dans Mon espace avec référence", () => {
+  it("permet le démarrage sans compte puis propose le suivi via compte après envoi", () => {
+    expect(form).toContain('data-testid="evaluation-guest-start"');
+    expect(form).toContain("Accessible sans compte.");
+    expect(form).not.toContain("evaluation-account-gate");
     expect(form).toContain("Suivre ma demande dans Mon espace");
     expect(form).toContain('setLocation("/mon-espace?section=overview")');
+    expect(form).toContain('data-testid="evaluation-create-account-after-submit"');
+    expect(form).toContain("Créer un compte pour suivre mon dossier");
     expect(form).toContain("submittedDossierCode");
-    expect(form).toContain("evaluation-account-gate");
-    expect(form).toContain("Suivi de la demande dans Mon espace");
   });
 });
