@@ -58,6 +58,10 @@ describe("hero : lisibilité et hiérarchie", () => {
 
   it("anime l’apparition en fondu, renforce le survol des CTA et propose un indicateur de défilement", () => {
     expect(hero).toContain("const fadeIn");
+    expect(hero).toContain("scale: prefersReducedMotion ? 1 : 0.98");
+    expect(hero).toContain("duration: 0.34");
+    expect(hero).toContain("delay: 0.06 + i * 0.08");
+    expect(hero).toContain("prefersReducedMotion");
     expect(hero).toContain('data-testid="hero-title"');
     expect(hero).toContain("hover:-translate-y-0.5 hover:scale-[1.03]");
     expect(hero).toContain("group-hover/cta:translate-x-full");

@@ -68,16 +68,18 @@ export default function HeroSectionVIP({
   const fadeIn = {
     hidden: {
       opacity: prefersReducedMotion ? 1 : 0,
-      y: prefersReducedMotion ? 0 : 14,
+      y: prefersReducedMotion ? 0 : 16,
+      scale: prefersReducedMotion ? 1 : 0.98,
     },
     visible: (i = 0) => ({
       opacity: 1,
       y: 0,
+      scale: 1,
       transition: prefersReducedMotion
         ? { duration: 0 }
         : {
-            duration: 0.7,
-            delay: 0.08 + i * 0.12,
+            duration: 0.34,
+            delay: 0.06 + i * 0.08,
             ease: [0.22, 1, 0.36, 1] as const,
           },
     }),
