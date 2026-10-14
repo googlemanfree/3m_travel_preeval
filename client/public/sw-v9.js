@@ -21,7 +21,7 @@ self.addEventListener('message', (event) => {
 });
 
 self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : { title: '3M Travel & Services', body: 'Mise à jour concernant votre vol' };
+  const data = event.data ? event.data.json() : { title: '3M TRAVEL AGENCY', body: 'Mise à jour concernant votre vol' };
   event.waitUntil(self.registration.showNotification(data.title, { body: data.body, icon: '/favicon.png', badge: '/favicon.png', data: { url: data.url || '/' } }));
 });
 

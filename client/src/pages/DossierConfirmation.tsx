@@ -41,7 +41,7 @@ export default function DossierConfirmation() {
   const downloadConfirmation = () => {
     if (!dossierData) return;
     const text = `
-CONFIRMATION DE DOSSIER - 3M TRAVEL & SERVICES
+CONFIRMATION DE DOSSIER - 3M TRAVEL AGENCY
 
 Numéro de dossier: ${dossierData.dossierNumber}
 Candidat: ${dossierData.candidateName}

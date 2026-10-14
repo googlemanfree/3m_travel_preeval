@@ -13,7 +13,7 @@ self.addEventListener('activate', (event) => {
 });
 self.addEventListener('message', (event) => { if (event.data?.type === 'SKIP_WAITING') self.skipWaiting(); });
 self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : { title: '3M Travel & Services', body: 'Mise à jour concernant votre vol' };
+  const data = event.data ? event.data.json() : { title: '3M TRAVEL AGENCY', body: 'Mise à jour concernant votre vol' };
   event.waitUntil(self.registration.showNotification(data.title, { body: data.body, icon: '/favicon.png', badge: '/favicon.png', data: { url: data.url || '/' } }));
 });
 self.addEventListener('notificationclick', (event) => { event.notification.close(); event.waitUntil(clients.openWindow(event.notification.data.url)); });
