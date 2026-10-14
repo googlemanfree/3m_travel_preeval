@@ -10,7 +10,7 @@ describe("accueil : bloc Pourquoi 3M basé sur des faits vérifiables", () => {
   it("présente quatre preuves concrètes avec liens utiles", () => {
     expect(home).toContain('data-testid="why-3m-section"');
     expect(home).toContain("Des preuves concrètes, pas des promesses vagues");
-    expect(home).toContain("Agence physique à Yaoundé");
+    expect(home).toContain("Bureaux + suivi à distance");
     expect(home).toContain("Dossiers réellement traités");
     expect(home).toContain("Sources officielles");
     expect(home).toContain("Suivi dans votre espace");

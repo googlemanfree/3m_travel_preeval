@@ -87,7 +87,8 @@ export default function PolitiqueConfidentialite() {
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">5. Conservation</h2>
             <p className="text-gray-700 leading-relaxed">
-              Vos données sont conservées pendant la durée nécessaire au traitement de votre dossier, puis archivées conformément aux obligations légales applicables.
+              Les pièces de votre coffre-fort documentaire et les données associées sont conservées pendant la durée nécessaire au traitement de votre dossier, puis archivées ou supprimées conformément aux obligations légales applicables. Vous pouvez demander des précisions à{" "}
+              <a href="mailto:hello@3mtravelagency.com" className="text-blue-600 hover:underline">hello@3mtravelagency.com</a>.
             </p>
           </div>
 
@@ -95,7 +96,7 @@ export default function PolitiqueConfidentialite() {
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">6. Sécurité</h2>
             <p className="text-gray-700 leading-relaxed">
-              Les données transmises via le site sont protégées par chiffrement SSL. L'accès à votre espace candidat est protégé par mot de passe.
+              Les données transmises via le site sont protégées par chiffrement SSL. L’accès à votre espace candidat et au coffre documentaire est protégé par authentification : seuls votre compte et l’équipe 3M affectée à votre dossier y accèdent. Les permissions de validation restent celles de l’agence.
             </p>
           </div>
 

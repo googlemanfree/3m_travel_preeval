@@ -7,7 +7,7 @@ import { trpc } from "@/lib/trpc";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { toast } from "sonner";
 
-const LOGO_URL = "/logo-3m.webp";
+const LOGO_URL = "/logo-3m-travel-agency.svg";
 
 export default function VerifyEmail() {
   const [location, navigate] = useLocation();

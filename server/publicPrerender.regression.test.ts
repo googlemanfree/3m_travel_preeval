@@ -23,7 +23,9 @@ describe("pré-rendu public indexable", () => {
     const heading = rendered.html.match(/<h2>([^<]*)<\/h2>/)?.[1] ?? "";
     // Titre et description fixés par l'agence : exactement ces textes, dans des bornes raisonnables.
     expect(title).toBe("3M TRAVEL AGENCY | Voyages, Visas, Études & Mobilité Internationale");
-    expect(description).toBe("3M TRAVEL AGENCY accompagne voyages, études, visas, immigration, billets d'avion internationaux et démarches, à Yaoundé et Ottawa.");
+    expect(description).toContain("candidats africains");
+    expect(description).toContain("suivi à distance");
+    expect(description).toContain("Yaoundé et Ottawa");
     expect(title.length).toBeGreaterThanOrEqual(30);
     expect(title.length).toBeLessThanOrEqual(75);
     expect(description.length).toBeGreaterThanOrEqual(50);
@@ -31,7 +33,7 @@ describe("pré-rendu public indexable", () => {
     expect(keywords.length).toBeGreaterThanOrEqual(3);
     expect(keywords.length).toBeLessThanOrEqual(8);
     expect(heading.length).toBeLessThanOrEqual(80);
-    expect(rendered.html).toContain("<h1>3M TRAVEL AGENCY : voyages, visas, études et mobilité internationale depuis Yaoundé et Ottawa</h1>");
+    expect(rendered.html).toContain("<h1>3M TRAVEL AGENCY : de l’Afrique vers le monde — visas, études et mobilité internationale</h1>");
     expect(rendered.html).toContain("<h2>Informations vérifiables avant toute démarche</h2>");
     expect(rendered.html).toContain('<script type="application/ld+json">');
     expect(rendered.html).toContain('"@type":"Organization"');

@@ -13,7 +13,7 @@ import { resolveCandidateReturnPath } from "@/lib/candidateRedirect";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 
-const LOGO_URL = "/logo-3m.webp";
+const LOGO_URL = "/logo-3m-travel-agency.svg";
 
 function parsePreferredDestinations(raw: unknown): string[] | null {
   if (typeof raw !== "string" || !raw) return null;

@@ -15,7 +15,7 @@ interface HeroSectionVIPProps {
 const heroButtonSize = "w-full max-w-[22rem] min-h-14 sm:w-[300px]";
 
 export default function HeroSectionVIP({
-  logoUrl = "/logo-3m.webp",
+  logoUrl = "/logo-3m-travel-agency.svg",
   whatsappNumber = "237698104832",
 }: HeroSectionVIPProps) {
   const { t, language } = useLanguage();

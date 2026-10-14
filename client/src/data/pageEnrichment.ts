@@ -14,7 +14,7 @@ export const COMMITMENTS: CommitmentItem[] = [
   { title: "Aucune promesse de résultat", text: "Les décisions de visa, d’admission ou d’emploi appartiennent aux autorités, aux établissements et aux employeurs. 3M TRAVEL AGENCY prépare, oriente et suit votre dossier ; elle ne vend ni visa ni emploi." },
   { title: "Un dossier suivi, pas dispersé", text: "Votre espace client centralise le statut, les pièces demandées, les clarifications et les échanges avec l’équipe : vous savez toujours quelle est la prochaine action." },
   { title: "Vos données sous votre contrôle", text: "Vos pièces ne sont communiquées à un employeur ou à une agence partenaire qu’avec votre accord distinct, que vous pouvez retirer à tout moment." },
-  { title: "Corridor international identifié", text: "Agence à Yaoundé, bureau à Ottawa, WhatsApp et rendez-vous : vous échangez avec une équipe réelle du corridor 3M, pas avec un formulaire anonyme." },
+  { title: "Afrique → monde, suivi à distance", text: "Candidats africains et destinations internationales : WhatsApp, espace client et bureaux Yaoundé / Ottawa — une équipe réelle, pas un formulaire anonyme." },
 ];
 
 // ---- /parcours -------------------------------------------------------------------------------------------------------

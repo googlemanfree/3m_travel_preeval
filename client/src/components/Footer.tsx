@@ -14,7 +14,7 @@ type FooterLink = { key: string; href: string; label: Copy; description: Copy };
 type SocialLink = FooterLink & { icon: typeof Facebook; color: string };
 
 const footerCopy = {
-  agencySummary: { fr: "Préparation documentée, suivi humain, canaux autorisés — de Yaoundé vers le monde.", en: "Documented preparation, human follow-up, authorised channels — from Yaoundé to the world." },
+  agencySummary: { fr: "Préparation documentée, suivi à distance, canaux autorisés — de l’Afrique vers le monde.", en: "Documented preparation, remote follow-up, authorised channels — from Africa to the world." },
   fraudLabel: { fr: "Avertissement anti-fraude.", en: "Anti-fraud notice." },
   fraudText: { fr: "Les règlements d’ouverture de dossier s’effectuent uniquement via le guichet sécurisé officiel ou en agence avec reçu officiel.", en: "Case-opening payments are made only through the official secure checkout or at the agency with an official receipt." },
   question: { fr: "Une question sur votre projet ?", en: "Questions about your project?" },
@@ -22,8 +22,8 @@ const footerCopy = {
   whatsapp: { fr: "WhatsApp Yaoundé", en: "Yaoundé WhatsApp" },
   aboutTitle: { fr: "3M TRAVEL AGENCY", en: "3M TRAVEL AGENCY" },
   aboutText: {
-    fr: "Corridor Yaoundé · Ottawa · partenaires internationaux. Un accompagnement fondé sur vos documents, les sources institutionnelles et des validations humaines à chaque étape sensible — sans promesse de visa, d’emploi ou d’admission.",
-    en: "Yaoundé · Ottawa · international partners corridor. Support grounded in your documents, institutional sources and human validation for every sensitive step — without promising a visa, job or admission.",
+    fr: "Afrique · destinations internationales · suivi à distance. Bureaux Yaoundé et Ottawa. Accompagnement fondé sur vos documents et des validations humaines — sans promesse de visa, d’emploi ou d’admission.",
+    en: "Africa · international destinations · remote follow-up. Yaoundé and Ottawa offices. Support grounded in your documents and human validation — without promising a visa, job or admission.",
   },
   aboutPage: { fr: "Qui sommes-nous", en: "About us" },
   navigation: { fr: "Navigation", en: "Navigation" },
@@ -222,7 +222,7 @@ export default function Footer() {
         {/* Marque + CTA */}
         <div className="grid gap-6 border-b border-white/15 pb-8 lg:grid-cols-[1.4fr_1fr] lg:items-end">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            <img src="/logo-3m.webp" alt="Logo 3M TRAVEL AGENCY" className="h-12 w-auto shrink-0 object-contain" />
+            <img src="/logo-3m-travel-agency.svg" alt="Logo 3M TRAVEL AGENCY" className="h-12 w-auto shrink-0 object-contain" />
             <div className="min-w-0">
               <p className="text-lg font-black tracking-tight text-white sm:text-xl">{COMPANY_PROFILE.publicName}</p>
               <p className="mt-1 max-w-xl text-base leading-relaxed text-slate-200">{copy(footerCopy.agencySummary)}</p>
