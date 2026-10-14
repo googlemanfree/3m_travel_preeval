@@ -1078,12 +1078,12 @@ export default function EvaluationSpace() {
                 </Card>
                 <Card className="border-emerald-200 bg-emerald-50/70 p-6 shadow-sm" role="region" aria-labelledby="agency-sync-title">
                   <div className="flex items-start justify-between gap-3">
-                    <div><p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-800">Synchronisation agence</p><h2 id="agency-sync-title" className="mt-2 text-xl font-black text-slate-950">Documents reçus et visibles</h2></div>
+                    <div><p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-800">Coffre-fort documentaire</p><h2 id="agency-sync-title" className="mt-2 text-xl font-black text-slate-950">Pièces synchronisées et manquantes</h2></div>
                     <span className="rounded-2xl bg-emerald-700 p-3 text-white" aria-hidden="true"><FileText className="h-6 w-6" /></span>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-slate-700">Les pièces publiées depuis l’agence vers votre coffre apparaissent ici avec leur statut. Si le compteur reste à zéro après un dépôt en agence, l’équipe doit encore lier / publier le dossier opérationnel.</p>
-                  <div className="mt-4 grid grid-cols-2 gap-3"><div className="rounded-xl bg-white p-3"><p className="text-xs font-semibold text-slate-500">Par l’agence</p><p className="mt-1 text-2xl font-black text-emerald-800">{agencyDocumentCount}</p></div><div className="rounded-xl bg-white p-3"><p className="text-xs font-semibold text-slate-500">Depuis votre espace</p><p className="mt-1 text-2xl font-black text-slate-900">{candidateDocumentCount}</p></div></div>
-                  <Button type="button" variant="outline" onClick={() => switchToSection("documents")} className="mt-4 border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100"><FileText className="mr-2 h-4 w-4" />Ouvrir le centre documentaire</Button>
+                  <p className="mt-3 text-sm leading-6 text-slate-700">Les pièces publiées depuis l’agence vers votre coffre apparaissent avec leur statut. {documentsActionCount > 0 ? `${documentsActionCount} pièce(s) à compléter ou corriger.` : "Checklist à jour ou en attente d’orientation."} Accès sécurisé · notifications · conservation selon la politique de confidentialité.</p>
+                  <div className="mt-4 grid grid-cols-3 gap-3"><div className="rounded-xl bg-white p-3"><p className="text-xs font-semibold text-slate-500">Par l’agence</p><p className="mt-1 text-2xl font-black text-emerald-800">{agencyDocumentCount}</p></div><div className="rounded-xl bg-white p-3"><p className="text-xs font-semibold text-slate-500">Depuis votre espace</p><p className="mt-1 text-2xl font-black text-slate-900">{candidateDocumentCount}</p></div><div className="rounded-xl bg-white p-3"><p className="text-xs font-semibold text-slate-500">À compléter</p><p className="mt-1 text-2xl font-black text-amber-800">{documentsActionCount}</p></div></div>
+                  <Button type="button" variant="outline" onClick={() => switchToSection("documents")} className="mt-4 border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100"><FileText className="mr-2 h-4 w-4" />Ouvrir le coffre documentaire</Button>
                 </Card>
               </section>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1551,10 +1551,10 @@ export default function EvaluationSpace() {
 
           {activeTab === "documents" && (evaluationRequired ? evaluationGateCard : (
             <div className="space-y-6" data-testid="client-document-center">
-              <Card className="border-blue-200 bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-900 p-6 text-white shadow-md" aria-labelledby="document-center-title">
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-200">Espace candidat · centre documentaire</p>
-                <h2 id="document-center-title" className="mt-2 text-2xl font-black">Préparez et suivez vos pièces</h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-100">Jusqu’à 16 documents par dossier. Chaque pièce déposée ici est visible côté agence ; chaque pièce enregistrée par l’agence apparaît automatiquement dans votre espace.</p>
+              <Card className="border-blue-200 bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-900 p-6 text-white shadow-md" aria-labelledby="document-center-title" data-testid="client-coffre-hero">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-200">Espace candidat · coffre-fort documentaire</p>
+                <h2 id="document-center-title" className="mt-2 text-2xl font-black">Votre coffre : dépôt, manquants et suivi</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-100">Jusqu’à 16 documents par dossier. Accès sécurisé (votre compte + équipe 3M). Pièces manquantes visibles ci-dessous ; notifications dans Mon espace quand une pièce est reçue ou à corriger. Lecture seule des dossiers actifs.</p>
                 <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
                   <div className="rounded-xl bg-white/10 p-3"><p className="text-[11px] font-semibold text-blue-200">Checklist</p><p className="mt-1 text-xl font-black tabular-nums">{checklistSummary.total}<span className="text-sm font-semibold text-blue-200">/16</span></p></div>
                   <div className="rounded-xl bg-white/10 p-3"><p className="text-[11px] font-semibold text-blue-200">À compléter</p><p className="mt-1 text-xl font-black tabular-nums">{documentsActionCount}</p></div>
@@ -1583,8 +1583,8 @@ export default function EvaluationSpace() {
               )}
 
               <Card className="p-6 border-blue-100 bg-white shadow-sm" data-testid="client-document-dropzone">
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Déposer vos pièces maintenant</h3>
-                <p className="mb-4 text-sm text-slate-600">Choisissez la pièce de votre checklist (jusqu’à 16), puis déposez le fichier. Chaque dépôt est transmis de façon sécurisée à l’agence et reste visible des deux côtés jusqu’à la vérification humaine.</p>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Déposer vos pièces dans le coffre</h3>
+                <p className="mb-4 text-sm text-slate-600">Choisissez la pièce manquante (jusqu’à 16), puis déposez le fichier. Transmission chiffrée, accès limité à votre compte et à l’équipe 3M, statut contrôlé par l’agence — vous êtes notifié dès qu’une pièce est reçue ou à corriger.</p>
                 <DocumentUploader
                   dossierNumber={cProfile.dossierNumber}
                   requirementOptions={buildRequirementOptions(primaryDestination, latestEvaluation?.projectType, customRequirements)}

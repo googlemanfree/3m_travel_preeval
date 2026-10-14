@@ -79,7 +79,7 @@ const LEGAL = "RC/YAO/2019/A/2567 · NIU M112417203369H";
 const SOCIAL_IMAGE_ALT = `Aperçu ${BRAND_PUBLIC_NAME}`;
 /** Titre et description de l'accueil, fixés par l'agence ; le titre dépasse volontairement les 60 caractères usuels. */
 const HOME_TITLE = `${BRAND_PUBLIC_NAME} | Voyages, Visas, Études & Mobilité Internationale`;
-const HOME_DESCRIPTION = `${BRAND_PUBLIC_NAME} accompagne voyages, études, visas, immigration, billets d'avion internationaux et démarches, à Yaoundé et Ottawa.`;
+const HOME_DESCRIPTION = `${BRAND_PUBLIC_NAME} accompagne candidats africains : visas, études, voyages et suivi à distance — bureaux Yaoundé et Ottawa.`;
 /** Logo stable (image carrée du site) : le logo des données structurées ne doit pas être l'image de partage, qui change à chaque page. */
 const LOGO_URL = `${OFFICIAL_SITE_ORIGIN}/icon-512.png`;
 /** Portrait SEO du fondateur — Meta / Google doivent identifier Aureol DONFACK ↔ 3M Group SARL. */
@@ -132,14 +132,14 @@ const procedureMetaForPath = (path: string): PublicMeta | undefined => {
 
   const projectLabel = procedure.visaType === "etudes" ? "études" : procedure.visaType === "visiteur" ? "visiteur" : "travail";
   const displayTitle = getProcedureDisplayTitle(procedure);
-  const fullTitle = `${displayTitle} à Yaoundé | ${SITE}`;
-  const fullDescription = `Étapes, documents et ressources de préparation pour votre projet ${projectLabel} vers ${procedure.name}, accompagné depuis Yaoundé et à vérifier auprès des autorités compétentes.`;
+  const fullTitle = `${displayTitle} | ${SITE}`;
+  const fullDescription = `Étapes, documents et ressources de préparation pour votre projet ${projectLabel} vers ${procedure.name}, avec accompagnement à distance 3M TRAVEL AGENCY — à vérifier auprès des autorités compétentes.`;
   return {
     title: fullTitle.length <= 65 ? fullTitle : `${displayTitle} | ${SITE}`,
-    description: fullDescription.length <= 175 ? fullDescription : `Étapes, documents et ressources pour votre projet ${projectLabel} vers ${procedure.name}, depuis Yaoundé ; à vérifier auprès des autorités compétentes.`,
-    heading: `${displayTitle} à Yaoundé`,
-    lead: `Consultez les étapes de préparation, les documents à prévoir et les ressources associées à votre projet ${projectLabel} vers ${procedure.name}, avec un accompagnement 3M TRAVEL AGENCY depuis Yaoundé.`,
-    keywords: [`visa ${procedure.name}`, `${projectLabel} ${procedure.name} Yaoundé`, `procédure ${procedure.name}`, projectLabel, "mobilité internationale", "3M TRAVEL AGENCY"],
+    description: fullDescription.length <= 175 ? fullDescription : `Étapes et documents pour votre projet ${projectLabel} vers ${procedure.name}, accompagnement à distance ; à vérifier auprès des autorités.`,
+    heading: displayTitle,
+    lead: `Consultez les étapes de préparation, les documents à prévoir et les ressources associées à votre projet ${projectLabel} vers ${procedure.name}, avec un accompagnement 3M TRAVEL AGENCY à distance.`,
+    keywords: [`visa ${procedure.name}`, `${projectLabel} ${procedure.name}`, `procédure ${procedure.name}`, projectLabel, "mobilité internationale", "Afrique", "3M TRAVEL AGENCY"],
   };
 };
 
@@ -161,11 +161,11 @@ const procedureMetaForPathEn = (path: string): PublicMeta | undefined => {
   const displayTitle = getProcedureDisplayTitle({ name: englishContent.name, visaType: procedure.visaType }, "en");
   const projectLabelEn = procedure.visaType === "etudes" ? "study" : procedure.visaType === "visiteur" ? "visitor" : "work";
   return {
-    title: `${displayTitle} from Yaoundé | ${SITE}`,
-    description: `Steps, documents and preparation resources for your ${projectLabelEn} project to ${englishContent.name}, supported from Yaoundé and to be verified with the competent authorities.`,
-    heading: `${displayTitle} from Yaoundé`,
-    lead: `Review the preparation steps, documents to gather, and related resources for your ${projectLabelEn} project to ${englishContent.name}, with support from 3M TRAVEL AGENCY in Yaoundé.`,
-    keywords: [`${englishContent.name} visa`, `${projectLabelEn} visa ${englishContent.name} Yaoundé`, `${englishContent.name} procedure`, projectLabelEn, "international mobility", "3M TRAVEL AGENCY"],
+    title: `${displayTitle} | ${SITE}`,
+    description: `Steps, documents and preparation resources for your ${projectLabelEn} project to ${englishContent.name}, with remote support from 3M TRAVEL AGENCY — verify with the competent authorities.`,
+    heading: displayTitle,
+    lead: `Review the preparation steps, documents to gather, and related resources for your ${projectLabelEn} project to ${englishContent.name}, with remote support from 3M TRAVEL AGENCY.`,
+    keywords: [`${englishContent.name} visa`, `${projectLabelEn} visa ${englishContent.name}`, `${englishContent.name} procedure`, projectLabelEn, "international mobility", "Africa", "3M TRAVEL AGENCY"],
   };
 };
 
@@ -218,13 +218,13 @@ const privateShell = (heading: string, description: string, lead = "Cette page e
 
 export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/en": {
-    title: `3M TRAVEL AGENCY | International Mobility from Yaoundé`,
-    description: "3M TRAVEL AGENCY supports your international mobility project — visa applications, study abroad, and travel services — from Yaoundé, Cameroon.",
-    keywords: ["visa Cameroon", "Canada work visa Yaoundé", "study in France", "international mobility", "3M TRAVEL AGENCY"],
+    title: `3M TRAVEL AGENCY | International Mobility from Africa`,
+    description: "3M TRAVEL AGENCY supports African candidates’ international mobility — visas, study abroad and travel — with remote follow-up and offices in Yaoundé and Ottawa.",
+    keywords: ["visa Africa", "Canada work visa", "study in France", "international mobility", "remote support", "3M TRAVEL AGENCY"],
     heading: "Your international mobility project, prepared with method",
-    lead: "3M TRAVEL AGENCY supports candidates in preparing their applications. Decisions by authorities, employers and external partners remain independent of the agency.",
+    lead: "3M TRAVEL AGENCY supports candidates across Africa with remote follow-up. Decisions by authorities, employers and external partners remain independent of the agency.",
   },
-  "/": { title: HOME_TITLE, description: HOME_DESCRIPTION, keywords: ["voyages", "visas", "études à l'étranger", "mobilité internationale", "billets d'avion internationaux", "3M TRAVEL AGENCY"], heading: "3M TRAVEL AGENCY : voyages, visas, études et mobilité internationale depuis Yaoundé et Ottawa", lead: "Évaluation gratuite, accompagnement personnalisé par une équipe basée à Yaoundé et à Ottawa, joignable par WhatsApp, agence enregistrée depuis 2019." },
+  "/": { title: HOME_TITLE, description: HOME_DESCRIPTION, keywords: ["voyages", "visas", "études à l'étranger", "mobilité internationale", "Afrique", "suivi à distance", "3M TRAVEL AGENCY"], heading: "3M TRAVEL AGENCY : de l’Afrique vers le monde — visas, études et mobilité internationale", lead: "Évaluation gratuite, accompagnement à distance pour candidats africains, bureaux Yaoundé et Ottawa, joignable par WhatsApp — agence enregistrée depuis 2019." },
   "/canada": { title: `Visa et immigration Canada | ${SITE}`, description: "Préparez votre projet Canada avec des informations officielles et un accompagnement administratif documenté, sans promesse de résultat.", keywords: ["visa Canada", "immigration Canada", "permis de travail", "études au Canada", "3M TRAVEL AGENCY"], heading: "Démarches Canada", lead: "Préparez votre projet avec des informations vérifiables, sans promesse d’admission, d’emploi ou de résidence." },
   "/canada/crs": { title: `Calculatrice CRS Canada | ${SITE}`, description: "Calculez votre score indicatif du Système de classement global pour Entrée express, avec les quatre compétences linguistiques et les repères officiels IRCC.", keywords: ["calculatrice CRS", "score CRS Canada", "Entrée express", "CLB", "NCLC", "IRCC"], heading: "Calculatrice CRS Canada", lead: "Saisissez votre profil et vos résultats linguistiques pour obtenir une estimation indicative du score CRS. Le résultat officiel dépend d’IRCC et de votre profil Entrée express." },
   "/schengen": { title: `Espace Schengen | ${SITE}`, description: "Repères administratifs pour les projets de visa et de mobilité vers l’espace Schengen.", heading: "Démarches Schengen", lead: "Les exigences varient selon le pays et la situation individuelle ; les liens institutionnels sont prioritaires." },

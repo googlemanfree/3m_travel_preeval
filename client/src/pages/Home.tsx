@@ -128,7 +128,7 @@ export default function Home() {
       {/* ─── HERO ────────────────────────────────────────────────────────── */}
       <HeroSectionVIP
         onEvalClick={() => setShowEvalModal(true)}
-        logoUrl="/logo-3m.webp"
+        logoUrl="/logo-3m-travel-agency.svg"
         whatsappNumber={WHATSAPP_NUMBER}
       />
 
@@ -428,8 +428,8 @@ export default function Home() {
             {[
               {
                 icon: MapPin,
-                title: "Agence physique à Yaoundé",
-                desc: `${yaoundeOffice.addressLines.join(" · ")}. Accueil en agence ou suivi à distance, WhatsApp ${yaoundeOffice.whatsappDisplay}.`,
+                title: "Bureaux + suivi à distance",
+                desc: `Yaoundé et Ottawa. Accueil en agence ou suivi à distance partout en Afrique — WhatsApp ${yaoundeOffice.whatsappDisplay}.`,
                 href: "/contact",
                 linkLabel: "Voir le contact",
                 color: "text-[#1e3a8a] bg-[#dbeafe]",

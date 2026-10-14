@@ -245,7 +245,7 @@ export function SimpleMultiProjectForm() {
     const evaluationReturnPath = `/?project=${initialProject}#evaluation-multi`;
     return (
       <Card className="border border-blue-100 bg-white p-6 text-center shadow-xl sm:p-8" data-testid="evaluation-account-gate">
-        <img src="/logo-3m.webp" alt="Logo 3M TRAVEL AGENCY" className="mx-auto h-14 w-auto object-contain" />
+        <img src="/logo-3m-travel-agency.svg" alt="Logo 3M TRAVEL AGENCY" className="mx-auto h-14 w-auto object-contain" />
         <ShieldCheck className="mx-auto mt-4 h-10 w-10 text-[#0B2A52]" aria-hidden="true" />
         <p className="mt-4 text-xs font-black uppercase tracking-[0.16em] text-blue-700">Évaluation gratuite · compte en 2 minutes</p>
         <h3 className="mt-2 text-xl font-black text-slate-950">Créez votre compte pour démarrer et suivre votre demande</h3>

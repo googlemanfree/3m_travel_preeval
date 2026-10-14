@@ -14,7 +14,7 @@ import { CV_ACCEPT_ATTRIBUTE, CV_REQUIRED_AT_REGISTRATION, cvProblemForFile } fr
 import { evaluationRequiresCv } from "@shared/evaluationVisaCv";
 import { DestinationPicker } from "@/components/CountryPicker";
 
-const LOGO_URL = "/logo-3m.webp";
+const LOGO_URL = "/logo-3m-travel-agency.svg";
 
 // Listes courtes pour les questions de projet (facultatives) proposées selon le pays et le type de projet.
 const EDUCATION_LEVEL_OPTIONS = ["Baccalauréat", "Formation professionnelle / BTS", "Licence / Bachelor", "Master", "Doctorat", "Autre"];

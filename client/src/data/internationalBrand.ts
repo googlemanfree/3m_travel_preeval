@@ -1,13 +1,18 @@
 /**
  * Voix de marque internationale — 3M TRAVEL AGENCY.
  * Factuel : pas de faux témoignages, pas de résultat/délai/emploi promis.
- * Utilisé pour enrichir heroes, SEO et sections transverses.
+ * Positionnement panafricain : candidats africains, destinations internationales, suivi à distance.
  */
 
 export const INTERNATIONAL_BRAND = {
   publicName: "3M TRAVEL AGENCY",
   groupName: "3M Group SARL",
-  corridor: "Yaoundé · Ottawa · partenaires internationaux",
+  /** Public cible — pas une ville seule. */
+  corridor: "Afrique · destinations internationales · suivi à distance",
+  officesLine: {
+    fr: "Bureaux Yaoundé · Ottawa · partenaires internationaux",
+    en: "Yaoundé · Ottawa offices · international partners",
+  },
   /** Slogan hero principal — ambition pan-africaine. */
   slogan: {
     fr: "L’Afrique vers le monde.",
@@ -25,13 +30,13 @@ export const INTERNATIONAL_BRAND = {
   },
   /** Corps du hero (maquette). */
   heroBody: {
-    fr: "De l’Afrique vers le monde, 3M TRAVEL AGENCY vous accompagne dans vos projets internationaux, de l’orientation à la préparation des démarches, en passant par l’organisation de vos voyages et les services associés. Bénéficiez d’un accompagnement personnalisé, structuré et transparent à chaque étape de votre parcours.",
-    en: "From Africa to the world, 3M TRAVEL AGENCY supports your international projects — from orientation and document preparation to travel organisation and related services. Receive personalised, structured and transparent support at every step.",
+    fr: "De l’Afrique vers le monde, 3M TRAVEL AGENCY vous accompagne — candidats et projets africains, destinations internationales, orientation, démarches, voyages et suivi à distance. Bureaux à Yaoundé et Ottawa : des points d’appui, pas une limite géographique.",
+    en: "From Africa to the world, 3M TRAVEL AGENCY supports you — African candidates and projects, international destinations, orientation, procedures, travel and remote follow-up. Offices in Yaoundé and Ottawa are support points, not a geographic limit.",
   },
   /** Ligne de confiance sous les CTA. */
   heroTrust: {
-    fr: "Accompagnement personnalisé • Informations vérifiables • Suivi étape par étape",
-    en: "Personalised support • Verifiable information • Step-by-step follow-up",
+    fr: "Accompagnement à distance • Destinations internationales • Informations vérifiables",
+    en: "Remote support • International destinations • Verifiable information",
   },
   /** Alias utilisés par d’autres pages (promesse courte). */
   promiseLine: {
@@ -42,9 +47,13 @@ export const INTERNATIONAL_BRAND = {
     fr: "Votre projet international commence ici.",
     en: "Your international project starts here.",
   },
+  audienceLine: {
+    fr: "Candidats et projets africains, destinations internationales, accompagnement à distance — Yaoundé et Ottawa restent nos bureaux, pas une limite géographique.",
+    en: "African candidates and projects, international destinations, remote support — Yaoundé and Ottawa are our offices, not a geographic limit.",
+  },
   pageLead: {
-    fr: "De l’Afrique vers le monde, 3M TRAVEL AGENCY structure votre dossier, prépare les démarches et organise vos voyages — corridor Yaoundé–Ottawa. Les décisions restent celles des autorités, établissements et employeurs.",
-    en: "From Africa to the world, 3M TRAVEL AGENCY structures your file, prepares procedures and organises travel — Yaoundé–Ottawa corridor. Decisions remain with authorities, schools and employers.",
+    fr: "De l’Afrique vers le monde, 3M TRAVEL AGENCY structure votre dossier, prépare les démarches et organise vos voyages — suivi à distance, destinations internationales, bureaux à Yaoundé et Ottawa. Les décisions restent celles des autorités, établissements et employeurs.",
+    en: "From Africa to the world, 3M TRAVEL AGENCY structures your file, prepares procedures and organises travel — remote follow-up, international destinations, offices in Yaoundé and Ottawa. Decisions remain with authorities, schools and employers.",
   },
   trustPillars: [
     {
@@ -55,17 +64,17 @@ export const INTERNATIONAL_BRAND = {
       },
     },
     {
-      title: { fr: "Suivi humain", en: "Human follow-up" },
+      title: { fr: "Suivi humain à distance", en: "Human remote follow-up" },
       text: {
-        fr: "Un conseiller lit votre dossier, confirme les prochaines actions et journalise les échanges dans votre espace client.",
-        en: "An advisor reviews your file, confirms next actions and logs exchanges in your client space.",
+        fr: "Un conseiller lit votre dossier où que vous soyez en Afrique, confirme les prochaines actions et journalise les échanges dans votre espace client.",
+        en: "An advisor reviews your file wherever you are in Africa, confirms next actions and logs exchanges in your client space.",
       },
     },
     {
-      title: { fr: "Corridor international", en: "International corridor" },
+      title: { fr: "Corridors internationaux", en: "International corridors" },
       text: {
-        fr: "Bureaux Yaoundé et Ottawa, partenaires placement et employeurs vérifiés — un même fil de traçabilité.",
-        en: "Yaoundé and Ottawa offices, verified placement partners and employers — one traceable thread.",
+        fr: "Destinations Canada, Europe, Golfe et au-delà ; bureaux Yaoundé et Ottawa ; partenaires placement vérifiés — un même fil de traçabilité.",
+        en: "Canada, Europe, Gulf and beyond; Yaoundé and Ottawa offices; verified placement partners — one traceable thread.",
       },
     },
     {

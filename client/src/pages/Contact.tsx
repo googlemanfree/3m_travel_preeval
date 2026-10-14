@@ -23,7 +23,7 @@ export default function Contact() {
     setPageSeo({
       title: 'Nous contacter | 3M TRAVEL AGENCY',
       description:
-        'Contactez 3M TRAVEL AGENCY à Yaoundé et Ottawa : études, travail, visas, e-Visas, légalisations, traductions et assurances voyage.',
+        'Contactez 3M TRAVEL AGENCY — accompagnement à distance pour projets africains, bureaux Yaoundé et Ottawa : études, travail, visas, e-Visas, légalisations, traductions et assurances voyage.',
       image: heroVisual.desktop,
       imageAlt: heroVisual.alt,
     });
@@ -147,7 +147,7 @@ export default function Contact() {
             </h1>
 
             <p className="mx-auto mb-8 max-w-2xl text-center text-lg leading-8 text-blue-50 sm:text-xl">
-              Une question sur un visa, un e-Visa, une légalisation, une traduction ou une assurance voyage ? L’équipe Yaoundé–Ottawa vous répond et précise les prochaines étapes — sans promesse de résultat.
+              Une question sur un visa, un e-Visa, une légalisation, une traduction ou une assurance voyage ? L’équipe vous répond à distance (WhatsApp, espace client) avec appuis Yaoundé et Ottawa — sans promesse de résultat.
             </p>
 
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">

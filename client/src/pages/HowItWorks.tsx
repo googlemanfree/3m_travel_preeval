@@ -19,7 +19,7 @@ export default function HowItWorks() {
     setPageSeo({
       title: "Comment ça marche : les étapes | 3M TRAVEL AGENCY",
       description:
-        "Parcours 3M TRAVEL AGENCY : évaluation, structuration du dossier, pièces, réseau de partenaires autorisés et suivi dans l’espace client — de Yaoundé et Ottawa vers le monde.",
+        "Parcours 3M TRAVEL AGENCY : évaluation, structuration du dossier, pièces, réseau de partenaires autorisés et suivi à distance dans l’espace client — de l’Afrique vers le monde.",
       image: heroVisual.desktop,
       imageAlt: heroVisual.alt,
     });
@@ -198,8 +198,8 @@ export default function HowItWorks() {
             className="mt-12 bg-white px-0 py-12"
             titleFr="Preuves de dossiers accompagnés"
             titleEn="Proofs from supported cases"
-            leadFr="Extraits anonymisés de visas et autorisations obtenus par des candidats suivis depuis Yaoundé — jamais de témoignages inventés."
-            leadEn="Redacted excerpts of visas and authorisations obtained by candidates supported from Yaoundé — never invented testimonials."
+            leadFr="Extraits anonymisés de visas et autorisations obtenus par des candidats africains accompagnés à distance — jamais de témoignages inventés."
+            leadEn="Redacted excerpts of visas and authorisations obtained by African candidates supported remotely — never invented testimonials."
           />
 
           <div className="mt-12">

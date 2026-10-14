@@ -8,7 +8,7 @@ import { PremiumAtmosphere } from "@/components/PremiumAtmosphere";
 import { getServiceVisual } from "@/data/premiumVisuals";
 
 const PRIORITY_DESTINATIONS = [
-  { href: "/en/procedures/canada-work", flag: "🇨🇦", title: "Canada — Work Visa", blurb: "Job-offer based work visa process, supported end-to-end from Yaoundé." },
+  { href: "/en/procedures/canada-work", flag: "🇨🇦", title: "Canada — Work Visa", blurb: "Job-offer based work visa process, with remote support from Africa to Ottawa." },
   { href: "/en/procedures/france-study", flag: "🇫🇷", title: "France — Study Visa", blurb: "Admission, documents and visa application for French higher education." },
   { href: "/en/procedures/germany-work", flag: "🇩🇪", title: "Germany — Work Visa", blurb: "Qualified-professional work visa route for Germany's job market." },
   { href: "/en/procedures/dubai-evisa", flag: "🇦🇪", title: "Dubai — Tourist e-Visa", blurb: "Guided e-Visa preparation for the United Arab Emirates." },
@@ -18,10 +18,10 @@ export default function EnHome() {
   const heroVisual = getServiceVisual("mobilite");
 
   useEffect(() => {
-    document.title = "3M TRAVEL AGENCY | International Mobility from Yaoundé";
+    document.title = "3M TRAVEL AGENCY | International Mobility from Africa";
     document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
       "content",
-      "3M TRAVEL AGENCY supports your international mobility project — visa applications, study abroad, and travel services — from Yaoundé, Cameroon.",
+      "3M TRAVEL AGENCY supports African candidates’ international mobility — visas, study abroad and travel — with remote follow-up and offices in Yaoundé and Ottawa.",
     );
     document.documentElement.lang = "en";
   }, []);
@@ -67,9 +67,9 @@ export default function EnHome() {
       </section>
 
       <section aria-label="Priority destinations" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
-        <h2 className="text-center text-2xl font-black text-slate-950 sm:text-3xl">Most requested procedures from Yaoundé</h2>
+        <h2 className="text-center text-2xl font-black text-slate-950 sm:text-3xl">Most requested procedures from Africa</h2>
         <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600">
-          Documented routes — decisions remain with authorities, schools and employers.
+          International destinations with remote support — decisions remain with authorities, schools and employers.
         </p>
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {PRIORITY_DESTINATIONS.map((item) => (

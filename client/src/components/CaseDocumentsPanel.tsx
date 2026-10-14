@@ -1,7 +1,8 @@
 import React from "react";
-import { Building2, Download, FileText, UserRound } from "lucide-react";
+import { Building2, Download, FileText, ShieldCheck, UserRound } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { DOCUMENT_VAULT_POLICY } from "@shared/documentVaultPolicy";
 
 export type ClientCaseDocument = {
   id: number;
@@ -47,7 +48,7 @@ function originLabel(role?: string | null): { label: string; Icon: typeof Buildi
 export default function CaseDocumentsPanel({
   documents,
   onDownload,
-  title = "Documents synchronisés du dossier",
+  title = DOCUMENT_VAULT_POLICY.title,
   description = "Toutes les pièces enregistrées par vous ou par l’agence apparaissent ici avec leur statut — accessibles des deux côtés.",
 }: {
   documents: ClientCaseDocument[];
@@ -59,11 +60,19 @@ export default function CaseDocumentsPanel({
     <Card className="premium-surface border-blue-100/80 p-6" aria-labelledby="agency-deposits-title" data-testid="agency-deposits">
       <h3 id="agency-deposits-title" className="flex items-center gap-2 text-lg font-bold text-slate-950"><Building2 className="h-5 w-5 text-blue-700" aria-hidden="true" /> {title}</h3>
       <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
+      <ul className="mt-3 space-y-1.5 rounded-xl border border-slate-200 bg-slate-50/80 p-3 text-xs leading-5 text-slate-700" data-testid="coffre-policy-summary">
+        <li className="flex gap-2"><ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-700" aria-hidden="true" /><span><strong>Accès sécurisé :</strong> {DOCUMENT_VAULT_POLICY.access.fr}</span></li>
+        <li className="flex gap-2"><ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-700" aria-hidden="true" /><span><strong>Permissions :</strong> {DOCUMENT_VAULT_POLICY.permissions.fr}</span></li>
+        <li className="flex gap-2"><ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-700" aria-hidden="true" /><span><strong>Conservation :</strong> {DOCUMENT_VAULT_POLICY.retention.fr}{" "}
+          <a href={DOCUMENT_VAULT_POLICY.privacyPath} className="font-bold text-blue-800 underline-offset-2 hover:underline">Politique de confidentialité</a>
+        </span></li>
+        <li className="flex gap-2"><ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-700" aria-hidden="true" /><span><strong>Notifications :</strong> {DOCUMENT_VAULT_POLICY.notifications.fr}</span></li>
+      </ul>
       {documents.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/80 p-5 text-center">
           <FileText className="mx-auto h-8 w-8 text-slate-300" aria-hidden="true" />
-          <p className="mt-2 text-sm font-bold text-slate-800">Aucune pièce synchronisée pour le moment</p>
-          <p className="mt-1 text-sm text-slate-600">Les pièces apparaissent ici une fois publiées dans le coffre du dossier (dépôt depuis votre espace, ou publication agence vers l’espace client). Un scan en agence seul ne suffit pas s’il n’est pas encore lié.</p>
+          <p className="mt-2 text-sm font-bold text-slate-800">Aucune pièce dans le coffre pour le moment</p>
+          <p className="mt-1 text-sm text-slate-600">Déposez vos pièces manquantes ci-dessous, ou attendez la publication agence vers l’espace client. Un scan en agence seul ne suffit pas s’il n’est pas encore lié.</p>
         </div>
       ) : (
         <ul className="mt-4 divide-y">

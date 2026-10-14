@@ -223,7 +223,7 @@ export default function About() {
             </p>
             <p className="premium-copy mt-5 text-base leading-7">{FOUNDER.description}</p>
             <p className="mt-4 text-sm leading-6 text-slate-600">
-              Sous sa direction, {BRAND_PUBLIC_NAME} ({COMPANY_PROFILE.legalName}) structure l’accueil, l’évaluation et le suivi des dossiers depuis Yaoundé, avec un accent sur la clarté des honoraires, le consentement des candidats et la vérification humaine avant toute remise d’accès partenaires.
+              Sous sa direction, {BRAND_PUBLIC_NAME} ({COMPANY_PROFILE.legalName}) structure l’accueil, l’évaluation et le suivi à distance des dossiers pour des candidats africains et des destinations internationales, avec bureaux à Yaoundé et Ottawa, clarté des honoraires, consentement des candidats et vérification humaine avant toute remise d’accès partenaires.
             </p>
             <dl className="mt-6 grid gap-3 text-sm text-slate-700 sm:grid-cols-2">
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
