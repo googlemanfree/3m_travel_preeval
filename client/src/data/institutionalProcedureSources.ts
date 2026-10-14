@@ -424,27 +424,27 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
   },
   {
     "procedureId": "france-travail",
-    "officialUrl": "https://www.service-public.gouv.fr/particuliers/vosdroits/R49998",
-    "sourceTitle": "S'inscrire à France Travail (anciennement Pôle emploi)",
-    "consultedOn": "2026-08-27",
+    "officialUrl": "https://france-visas.gouv.fr/activite-salariee",
+    "sourceTitle": "Activité salariée — France-Visas",
+    "consultedOn": "2026-10-14",
     "preparationPoints": [
-      "Création d'un espace personnel en ligne avec une adresse mail valide",
-      "Préparation des pièces justificatives (identité, sécurité sociale, titre de séjour)",
-      "Renseignement du parcours professionnel et du projet de recherche d'emploi"
+      "Identifier le régime applicable (salarié, travailleur temporaire, détachement, talent) selon le contrat et la durée",
+      "L’employeur obtient en général l’autorisation de travail avant la demande de visa",
+      "Préparer un passeport valide et les justificatifs listés par l’assistant France-Visas pour votre nationalité"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche. Cette fiche n’est pas le portail d’inscription à France Travail (emploi en France)."
   },
   {
     "procedureId": "france-visiteur",
-    "officialUrl": "https://france-visas.gouv.fr/web/france-visas/sejour-touristique-de-plus-de-3-mois",
-    "sourceTitle": "Séjour touristique de plus de 3 mois - France-Visas",
-    "consultedOn": "2026-08-27",
+    "officialUrl": "https://france-visas.gouv.fr/visa-de-court-sejour",
+    "sourceTitle": "Visa de court séjour — France-Visas",
+    "consultedOn": "2026-10-14",
     "preparationPoints": [
-      "Engagement formel à n'exercer aucune activité professionnelle en France",
-      "Justification de ressources financières suffisantes et de la situation socio-économique",
-      "Preuve d'hébergement et d'une couverture médicale couvrant le séjour"
+      "Vérifier d’abord si votre nationalité est soumise à visa (assistant France-Visas)",
+      "Passeport : validité d’au moins 3 mois après la date prévue de départ de l’espace Schengen, délivré depuis moins de 10 ans, avec pages libres",
+      "Justificatifs adaptés au motif (hébergement, ressources, assurance voyage, billet) — la liste exacte dépend de votre situation"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Court séjour Schengen ≠ séjour touristique de plus de 3 mois. Les pièces, délais et frais varient selon la nationalité et le motif ; confirmez toujours sur France-Visas avant toute demande."
   },
   {
     "procedureId": "gabon-travail",

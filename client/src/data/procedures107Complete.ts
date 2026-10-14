@@ -911,12 +911,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'italie-visiteur', 'Italie', '🇮🇹', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Italie_2026_643efc18.pdf',
     'Visa visiteur pour l\'Italie - Tourisme et découverte',
-    'Italie destination touristique majeure, patrimoine culturel exceptionnel, cuisine renommée, paysages magnifiques. Processus simple et rapide.',
-    '2-4 semaines', '80-120 EUR', '2000 EUR', '2500-3500 EUR', 'facile',
+    'Italie destination touristique majeure, patrimoine culturel exceptionnel, cuisine renommée, paysages magnifiques. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '80-120 EUR', '2000 EUR', '2500-3500 EUR', 'moyen',
     ['Patrimoine culturel', 'Cuisine renommée', 'Paysages magnifiques', 'Histoire & Art', 'Accueil chaleureux'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance voyage'] },
       { category: 'Financier', documents: ['Ressources financières', 'Relevés bancaires'] }
     ]
@@ -924,13 +924,13 @@ export const procedures107Complete: CountryProcedureComplete[] = [
   createCountry(
     'france-visiteur', 'France', '🇫🇷', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_France_2026_55cee033.pdf',
-    'Visa visiteur pour la France - Culture et patrimoine',
-    'France destination touristique majeure, culture riche, patrimoine exceptionnel, gastronomie renommée. Processus simple.',
-    '2-4 semaines', '99-180 EUR', '2000 EUR', '2500-3500 EUR', 'facile',
+    'Visa court séjour / visiteur France — à confirmer selon nationalité et motif',
+    'Court séjour Schengen (jusqu’à 90 jours / 180) ou autre régime selon votre cas. La dispense de visa, les pièces et les délais varient selon la nationalité, le motif (tourisme, famille, affaires) et la situation du demandeur. Aucune procédure n’est « simple » par défaut : vérifiez votre besoin de visa et la liste officielle sur France-Visas avant toute demande.',
+    'Délais variables (souvent 15 jours, jusqu’à 45 selon le dossier)', 'Frais consulaires selon nationalité (à confirmer)', undefined, undefined, 'moyen',
     ['Culture riche', 'Patrimoine exceptionnel', 'Gastronomie renommée', 'Art & Architecture', 'Charme'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -939,12 +939,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'espagne-visiteur', 'Espagne', '🇪🇸', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Espagne_2026_0b864f1b.pdf',
     'Visa visiteur pour l\'Espagne - Soleil et plages',
-    'Espagne destination touristique majeure, climat méditerranéen, plages magnifiques, culture dynamique. Processus simple.',
-    '2-4 semaines', '85-145 EUR', '1800 EUR', '2300-3200 EUR', 'facile',
+    'Espagne destination touristique majeure, climat méditerranéen, plages magnifiques, culture dynamique. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '85-145 EUR', '1800 EUR', '2300-3200 EUR', 'moyen',
     ['Soleil & Plages', 'Climat méditerranéen', 'Culture dynamique', 'Gastronomie', 'Fêtes'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -953,12 +953,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'allemagne-visiteur', 'Allemagne', '🇩🇪', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Allemagne_2026_23d698cd.pdf',
     'Visa visiteur pour l\'Allemagne - Culture et histoire',
-    'Allemagne destination touristique majeure, histoire riche, culture dynamique, architecture magnifique. Processus simple.',
-    '2-4 semaines', '75-150 EUR', '1800 EUR', '2300-3200 EUR', 'facile',
+    'Allemagne destination touristique majeure, histoire riche, culture dynamique, architecture magnifique. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '75-150 EUR', '1800 EUR', '2300-3200 EUR', 'moyen',
     ['Histoire riche', 'Culture dynamique', 'Architecture magnifique', 'Patrimoine', 'Bière & Cuisine'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -967,12 +967,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'royaume-uni-visiteur', 'Royaume-Uni', '🇬🇧', 'Europe', 'visiteur',
     '',
     'Visa visiteur pour le Royaume-Uni - Culture britannique',
-    'Royaume-Uni destination touristique majeure, culture britannique, histoire fascinante, Londres dynamique. Processus simple.',
-    '2-4 semaines', '719-1035 GBP', '2000 GBP', '2500-3500 GBP', 'facile',
+    'Royaume-Uni destination touristique majeure, culture britannique, histoire fascinante, Londres dynamique. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '719-1035 GBP', '2000 GBP', '2500-3500 GBP', 'moyen',
     ['Culture britannique', 'Histoire fascinante', 'Londres dynamique', 'Patrimoine', 'Traditions'],
     ['Documents voyage', 'Demande visa', 'Biométrie', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -981,12 +981,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'grece-visiteur', 'Grèce', '🇬🇷', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Grece_2026_f7e4d894.pdf',
     'Visa visiteur pour la Grèce - Îles et patrimoine',
-    'Grèce destination touristique majeure, îles magnifiques, patrimoine antique, climat méditerranéen. Processus simple.',
-    '2-4 semaines', '80-140 EUR', '1800 EUR', '2300-3200 EUR', 'facile',
+    'Grèce destination touristique majeure, îles magnifiques, patrimoine antique, climat méditerranéen. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '80-140 EUR', '1800 EUR', '2300-3200 EUR', 'moyen',
     ['Îles magnifiques', 'Patrimoine antique', 'Climat méditerranéen', 'Gastronomie', 'Beauté'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -995,12 +995,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'portugal-visiteur', 'Portugal', '🇵🇹', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Portugal_2026_e1ac1b6f.pdf',
     'Visa visiteur pour le Portugal - Charme méditerranéen',
-    'Portugal destination touristique majeure, charme méditerranéen, climat agréable, Lisbonne dynamique. Processus simple.',
-    '2-4 semaines', '85-145 EUR', '1800 EUR', '2300-3200 EUR', 'facile',
+    'Portugal destination touristique majeure, charme méditerranéen, climat agréable, Lisbonne dynamique. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '85-145 EUR', '1800 EUR', '2300-3200 EUR', 'moyen',
     ['Charme méditerranéen', 'Climat agréable', 'Lisbonne dynamique', 'Patrimoine', 'Gastronomie'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1009,12 +1009,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'suisse-visiteur', 'Suisse', '🇨🇭', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Suisse_2026_0f683035.pdf',
     'Visa visiteur pour la Suisse - Alpes et nature',
-    'Suisse destination touristique majeure, Alpes magnifiques, nature exceptionnelle, lacs cristallins. Processus simple.',
-    '2-4 semaines', '100-200 CHF', '2000 CHF', '2500-3500 CHF', 'facile',
+    'Suisse destination touristique majeure, Alpes magnifiques, nature exceptionnelle, lacs cristallins. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '100-200 CHF', '2000 CHF', '2500-3500 CHF', 'moyen',
     ['Alpes magnifiques', 'Nature exceptionnelle', 'Lacs cristallins', 'Environnement', 'Randonnée'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1023,12 +1023,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'pays-bas-visiteur', 'Pays-Bas', '🇳🇱', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_PaysBas_2026_cccc1578.pdf',
     'Visa visiteur pour les Pays-Bas - Canaux et tulipes',
-    'Pays-Bas destination touristique majeure, canaux pittoresques, tulipes magnifiques, Amsterdam dynamique. Processus simple.',
-    '2-4 semaines', '95-165 EUR', '1800 EUR', '2300-3200 EUR', 'facile',
+    'Pays-Bas destination touristique majeure, canaux pittoresques, tulipes magnifiques, Amsterdam dynamique. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '95-165 EUR', '1800 EUR', '2300-3200 EUR', 'moyen',
     ['Canaux pittoresques', 'Tulipes magnifiques', 'Amsterdam dynamique', 'Culture', 'Vélos'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1037,12 +1037,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'autriche-visiteur', 'Autriche', '🇦🇹', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Autriche_2026_8448685f.pdf',
     'Visa visiteur pour l\'Autriche - Musique et culture',
-    'Autriche destination touristique majeure, musique classique, culture riche, Vienne magnifique. Processus simple.',
-    '2-4 semaines', '90-160 EUR', '1800 EUR', '2300-3200 EUR', 'facile',
+    'Autriche destination touristique majeure, musique classique, culture riche, Vienne magnifique. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '90-160 EUR', '1800 EUR', '2300-3200 EUR', 'moyen',
     ['Musique classique', 'Culture riche', 'Vienne magnifique', 'Patrimoine', 'Gastronomie'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1051,12 +1051,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'suede-visiteur', 'Suède', '🇸🇪', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Suede_2026_0c19153e.pdf',
     'Visa visiteur pour la Suède - Aurores boréales et nature',
-    'Suède destination touristique majeure, aurores boréales, nature sauvage, Stockholm dynamique. Processus simple.',
-    '2-4 semaines', '110-180 EUR', '2000 EUR', '2500-3500 EUR', 'facile',
+    'Suède destination touristique majeure, aurores boréales, nature sauvage, Stockholm dynamique. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '110-180 EUR', '2000 EUR', '2500-3500 EUR', 'moyen',
     ['Aurores boréales', 'Nature sauvage', 'Stockholm dynamique', 'Patrimoine', 'Environnement'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1065,12 +1065,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'danemark-visiteur', 'Danemark', '🇩🇰', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Danemark_2026_4b2cf00d.pdf',
     'Visa visiteur pour le Danemark - Design et nature',
-    'Danemark destination touristique majeure, design scandinave, nature magnifique, Copenhague dynamique. Processus simple.',
-    '2-4 semaines', '110-180 EUR', '2000 EUR', '2500-3500 EUR', 'facile',
+    'Danemark destination touristique majeure, design scandinave, nature magnifique, Copenhague dynamique. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '110-180 EUR', '2000 EUR', '2500-3500 EUR', 'moyen',
     ['Design scandinave', 'Nature magnifique', 'Copenhague dynamique', 'Patrimoine', 'Vélos'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1079,12 +1079,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'finlande-visiteur', 'Finlande', '🇫🇮', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Finlande_2026_80e88499.pdf',
     'Visa visiteur pour la Finlande - Lacs et forêts',
-    'Finlande destination touristique majeure, lacs cristallins, forêts infinies, Helsinki dynamique. Processus simple.',
-    '2-4 semaines', '110-180 EUR', '2000 EUR', '2500-3500 EUR', 'facile',
+    'Finlande destination touristique majeure, lacs cristallins, forêts infinies, Helsinki dynamique. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '110-180 EUR', '2000 EUR', '2500-3500 EUR', 'moyen',
     ['Lacs cristallins', 'Forêts infinies', 'Helsinki dynamique', 'Sauna', 'Nature'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1093,12 +1093,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'norvege-visiteur', 'Norvège', '🇳🇴', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Norvege_2026_9a73fe77.pdf',
     'Visa visiteur pour la Norvège - Fjords et montagnes',
-    'Norvège destination touristique majeure, fjords spectaculaires, montagnes magnifiques, Oslo dynamique. Processus simple.',
-    '2-4 semaines', '120-200 EUR', '2200 EUR', '2700-3700 EUR', 'facile',
+    'Norvège destination touristique majeure, fjords spectaculaires, montagnes magnifiques, Oslo dynamique. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '120-200 EUR', '2200 EUR', '2700-3700 EUR', 'moyen',
     ['Fjords spectaculaires', 'Montagnes magnifiques', 'Oslo dynamique', 'Aurores boréales', 'Nature'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1107,12 +1107,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'islande-visiteur', 'Islande', '🇮🇸', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Islande_2026_9d47b064.pdf',
     'Visa visiteur pour l\'Islande - Géothermie et glaciers',
-    'Islande destination touristique majeure, géothermie unique, glaciers magnifiques, Reykjavik dynamique. Processus simple.',
-    '2-4 semaines', '90-150 EUR', '2200 EUR', '2700-3700 EUR', 'facile',
+    'Islande destination touristique majeure, géothermie unique, glaciers magnifiques, Reykjavik dynamique. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '90-150 EUR', '2200 EUR', '2700-3700 EUR', 'moyen',
     ['Géothermie unique', 'Glaciers magnifiques', 'Reykjavik dynamique', 'Aurores boréales', 'Nature'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1121,12 +1121,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'malte-visiteur', 'Malte', '🇲🇹', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Malte_2026_ce5d45b9.pdf',
     'Visa visiteur pour Malte - Île méditerranéenne',
-    'Malte destination touristique majeure, île méditerranéenne, climat ensoleillé, plages magnifiques. Processus simple.',
-    '2-4 semaines', '75-130 EUR', '1800 EUR', '2300-3200 EUR', 'facile',
+    'Malte destination touristique majeure, île méditerranéenne, climat ensoleillé, plages magnifiques. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '75-130 EUR', '1800 EUR', '2300-3200 EUR', 'moyen',
     ['Île méditerranéenne', 'Climat ensoleillé', 'Plages magnifiques', 'Patrimoine', 'Eau cristalline'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1135,12 +1135,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'chypre-visiteur', 'Chypre', '🇨🇾', 'Europe', 'visiteur',
     '',
     'Visa visiteur pour Chypre - Île méditerranéenne',
-    'Chypre destination touristique majeure, île méditerranéenne, climat chaud, plages dorées. Processus simple.',
-    '2-4 semaines', '70-120 EUR', '1800 EUR', '2300-3200 EUR', 'facile',
+    'Chypre destination touristique majeure, île méditerranéenne, climat chaud, plages dorées. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '70-120 EUR', '1800 EUR', '2300-3200 EUR', 'moyen',
     ['Île méditerranéenne', 'Climat chaud', 'Plages dorées', 'Patrimoine', 'Eau cristalline'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1149,12 +1149,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'croatie-visiteur', 'Croatie', '🇭🇷', 'Europe', 'visiteur',
     '',
     'Visa visiteur pour la Croatie - Côte dalmate',
-    'Croatie destination touristique majeure, côte dalmate magnifique, îles pittoresques, Dubrovnik historique. Processus simple.',
-    '2-4 semaines', '65-110 EUR', '1700 EUR', '2200-3100 EUR', 'facile',
+    'Croatie destination touristique majeure, côte dalmate magnifique, îles pittoresques, Dubrovnik historique. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '65-110 EUR', '1700 EUR', '2200-3100 EUR', 'moyen',
     ['Côte dalmate magnifique', 'Îles pittoresques', 'Dubrovnik historique', 'Patrimoine', 'Mer cristalline'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1163,12 +1163,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'slovenie-visiteur', 'Slovénie', '🇸🇮', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Slovenie_2026_1d356d2b.pdf',
     'Visa visiteur pour la Slovénie - Lacs et montagnes',
-    'Slovénie destination touristique majeure, lacs magnifiques, montagnes verdoyantes, Ljubljana dynamique. Processus simple.',
-    '2-4 semaines', '75-130 EUR', '1700 EUR', '2200-3100 EUR', 'facile',
+    'Slovénie destination touristique majeure, lacs magnifiques, montagnes verdoyantes, Ljubljana dynamique. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '75-130 EUR', '1700 EUR', '2200-3100 EUR', 'moyen',
     ['Lacs magnifiques', 'Montagnes verdoyantes', 'Ljubljana dynamique', 'Patrimoine', 'Nature'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1177,12 +1177,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'republique-tcheque-visiteur', 'Rép. Tchèque', '🇨🇿', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Tcheque_2026_662305e1.pdf',
     'Visa visiteur pour la Rép. Tchèque - Prague et châteaux',
-    'République Tchèque destination touristique majeure, Prague magnifique, châteaux historiques, culture riche. Processus simple.',
-    '2-4 semaines', '65-110 EUR', '1600 EUR', '2100-3000 EUR', 'facile',
+    'République Tchèque destination touristique majeure, Prague magnifique, châteaux historiques, culture riche. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '65-110 EUR', '1600 EUR', '2100-3000 EUR', 'moyen',
     ['Prague magnifique', 'Châteaux historiques', 'Culture riche', 'Patrimoine', 'Bière'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1191,12 +1191,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'hongrie-visiteur', 'Hongrie', '🇭🇺', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Hongrie_2026_64653d6d.pdf',
     'Visa visiteur pour la Hongrie - Budapest et thermes',
-    'Hongrie destination touristique majeure, Budapest magnifique, thermes relaxants, culture riche. Processus simple.',
-    '2-4 semaines', '65-110 EUR', '1600 EUR', '2100-3000 EUR', 'facile',
+    'Hongrie destination touristique majeure, Budapest magnifique, thermes relaxants, culture riche. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '65-110 EUR', '1600 EUR', '2100-3000 EUR', 'moyen',
     ['Budapest magnifique', 'Thermes relaxants', 'Culture riche', 'Patrimoine', 'Danube'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1205,12 +1205,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'pologne-visiteur', 'Pologne', '🇵🇱', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Pologne_2026_821dc4fb.pdf',
     'Visa visiteur pour la Pologne - Varsovie et patrimoine',
-    'Pologne destination touristique majeure, Varsovie dynamique, patrimoine historique, culture riche. Processus simple.',
-    '2-4 semaines', '65-110 EUR', '1600 EUR', '2100-3000 EUR', 'facile',
+    'Pologne destination touristique majeure, Varsovie dynamique, patrimoine historique, culture riche. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '65-110 EUR', '1600 EUR', '2100-3000 EUR', 'moyen',
     ['Varsovie dynamique', 'Patrimoine historique', 'Culture riche', 'Patrimoine', 'Gastronomie'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1219,12 +1219,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'roumanie-visiteur', 'Roumanie', '🇷🇴', 'Europe', 'visiteur',
     '',
     'Visa visiteur pour la Roumanie - Carpates et châteaux',
-    'Roumanie destination touristique majeure, Carpates magnifiques, châteaux historiques, culture riche. Processus simple.',
-    '2-4 semaines', '60-100 EUR', '1500 EUR', '2000-2900 EUR', 'facile',
+    'Roumanie destination touristique majeure, Carpates magnifiques, châteaux historiques, culture riche. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '60-100 EUR', '1500 EUR', '2000-2900 EUR', 'moyen',
     ['Carpates magnifiques', 'Châteaux historiques', 'Culture riche', 'Patrimoine', 'Nature'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1233,12 +1233,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'slovaquie-visiteur', 'Slovaquie', '🇸🇰', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Slovaquie_2026_b6e52c94.pdf',
     'Visa visiteur pour la Slovaquie - Tatras et châteaux',
-    'Slovaquie destination touristique majeure, Tatras magnifiques, châteaux historiques, Bratislava dynamique. Processus simple.',
-    '2-4 semaines', '65-110 EUR', '1600 EUR', '2100-3000 EUR', 'facile',
+    'Slovaquie destination touristique majeure, Tatras magnifiques, châteaux historiques, Bratislava dynamique. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '65-110 EUR', '1600 EUR', '2100-3000 EUR', 'moyen',
     ['Tatras magnifiques', 'Châteaux historiques', 'Bratislava dynamique', 'Patrimoine', 'Nature'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1247,12 +1247,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'lettonie-visiteur', 'Lettonie', '🇱🇻', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Lettonie_2026_cb970802.pdf',
     'Visa visiteur pour la Lettonie - Riga et nature',
-    'Lettonie destination touristique majeure, Riga dynamique, nature sauvage, patrimoine historique. Processus simple.',
-    '2-4 semaines', '60-100 EUR', '1500 EUR', '2000-2900 EUR', 'facile',
+    'Lettonie destination touristique majeure, Riga dynamique, nature sauvage, patrimoine historique. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '60-100 EUR', '1500 EUR', '2000-2900 EUR', 'moyen',
     ['Riga dynamique', 'Nature sauvage', 'Patrimoine historique', 'Accès UE', 'Côte'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1261,12 +1261,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'lituanie-visiteur', 'Lituanie', '🇱🇹', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Lituanie_2026_cd222fbd.pdf',
     'Visa visiteur pour la Lituanie - Vilnius et patrimoine',
-    'Lituanie destination touristique majeure, Vilnius dynamique, patrimoine historique, culture riche. Processus simple.',
-    '2-4 semaines', '65-110 EUR', '1600 EUR', '2100-3000 EUR', 'facile',
+    'Lituanie destination touristique majeure, Vilnius dynamique, patrimoine historique, culture riche. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '65-110 EUR', '1600 EUR', '2100-3000 EUR', 'moyen',
     ['Vilnius dynamique', 'Patrimoine historique', 'Culture riche', 'Accès UE', 'Patrimoine'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1275,12 +1275,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'estonie-visiteur', 'Estonie', '🇪🇪', 'Europe', 'visiteur',
     '',
     'Visa visiteur pour l\'Estonie - Tallinn et îles',
-    'Estonie destination touristique majeure, Tallinn historique, îles pittoresques, nature sauvage. Processus simple.',
-    '2-4 semaines', '70-120 EUR', '1700 EUR', '2200-3100 EUR', 'facile',
+    'Estonie destination touristique majeure, Tallinn historique, îles pittoresques, nature sauvage. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '70-120 EUR', '1700 EUR', '2200-3100 EUR', 'moyen',
     ['Tallinn historique', 'Îles pittoresques', 'Nature sauvage', 'Accès UE', 'Patrimoine'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1289,12 +1289,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'belgique-visiteur', 'Belgique', '🇧🇪', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Belgique_2026_ed1838f7.pdf',
     'Visa visiteur pour la Belgique - Bruxelles et Bruges',
-    'Belgique destination touristique majeure, Bruxelles dynamique, Bruges historique, chocolat renommé. Processus simple.',
-    '2-4 semaines', '50-100 EUR', '1600 EUR', '2100-3000 EUR', 'facile',
+    'Belgique destination touristique majeure, Bruxelles dynamique, Bruges historique, chocolat renommé. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '50-100 EUR', '1600 EUR', '2100-3000 EUR', 'moyen',
     ['Bruxelles dynamique', 'Bruges historique', 'Chocolat renommé', 'Patrimoine', 'Gastronomie'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1303,12 +1303,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'luxembourg-visiteur', 'Luxembourg', '🇱🇺', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Luxembourg_2026_b404e1fb.pdf',
     'Visa visiteur pour le Luxembourg - Châteaux et nature',
-    'Luxembourg destination touristique majeure, châteaux historiques, nature magnifique, Luxembourg-Ville dynamique. Processus simple.',
-    '2-4 semaines', '80-120 EUR', '1800 EUR', '2300-3200 EUR', 'facile',
+    'Luxembourg destination touristique majeure, châteaux historiques, nature magnifique, Luxembourg-Ville dynamique. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '80-120 EUR', '1800 EUR', '2300-3200 EUR', 'moyen',
     ['Châteaux historiques', 'Nature magnifique', 'Luxembourg-Ville dynamique', 'Patrimoine', 'Accès UE'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -1317,12 +1317,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'liechtenstein-visiteur', 'Liechtenstein', '🇱🇮', 'Europe', 'visiteur',
     '/manus-storage/3MTravel_VisaVisiteur_Liechtenstein_2026_12babaae.pdf',
     'Visa visiteur pour le Liechtenstein - Alpes et châteaux',
-    'Liechtenstein destination touristique majeure, Alpes magnifiques, châteaux historiques, nature exceptionnelle. Processus simple.',
-    '2-4 semaines', '120-200 CHF', '2000 CHF', '2500-3500 CHF', 'facile',
+    'Liechtenstein destination touristique majeure, Alpes magnifiques, châteaux historiques, nature exceptionnelle. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
+    '2-4 semaines', '120-200 CHF', '2000 CHF', '2500-3500 CHF', 'moyen',
     ['Alpes magnifiques', 'Châteaux historiques', 'Nature exceptionnelle', 'Patrimoine', 'Environnement'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 3 mois', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport valide ≥ 3 mois après la fin du séjour prévu', 'Copie'] },
       { category: 'Voyage', documents: ['Réservation hôtel', 'Itinéraire', 'Billet avion', 'Assurance'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]

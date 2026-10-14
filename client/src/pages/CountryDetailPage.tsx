@@ -516,12 +516,23 @@ export default function CountryDetailPage() {
                 <p className="rounded-xl border border-sky-100 bg-white/80 p-3 text-xs leading-relaxed text-slate-600">
                   {institutionalSource.caveat}
                 </p>
-                <a href={institutionalSource.officialUrl} target="_blank" rel="noopener noreferrer" className="block">
+                <a
+                  href={institutionalSource.officialUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                  data-testid="procedure-official-source-link"
+                >
                   <Button variant="outline" className="w-full border-sky-200 bg-white text-sky-800 hover:bg-sky-50 font-bold">
                     <ExternalLink className="w-4 h-4 mr-2" /> {L.consultSource} {institutionalSource.sourceTitle}
                   </Button>
                 </a>
-                <p className="text-xs text-slate-500" role="status">{L.sourceVerifiedOn} {sourceVerifiedAt}.</p>
+                <p className="break-all text-xs font-medium text-sky-900" data-testid="procedure-official-source-url">
+                  Source exacte : {institutionalSource.officialUrl}
+                </p>
+                <p className="text-xs text-slate-500" role="status" data-testid="procedure-source-verified-at">
+                  {L.sourceVerifiedOn} {sourceVerifiedAt}.
+                </p>
               </Card>
             ) : null}
 

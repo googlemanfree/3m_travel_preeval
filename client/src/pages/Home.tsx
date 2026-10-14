@@ -348,7 +348,7 @@ export default function Home() {
       <section id="evaluation-multi" className="scroll-mt-24 bg-gradient-to-b from-white to-blue-50 py-14 md:py-20">
         <div className="max-w-4xl mx-auto px-4">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-10">
-            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Gratuit · compte sécurisé · suivi de demande</p>
+            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Gratuit · sans compte pour démarrer · suivi ensuite</p>
             <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Évaluez votre projet avant d’avancer</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">Indiquez votre objectif (travail, études ou tourisme) : un conseiller 3M oriente la procédure et les pièces utiles. Compte en quelques minutes, puis suivi du statut d’examen dans votre espace client.</p>
           </motion.div>
@@ -590,13 +590,13 @@ function PricingSection() {
       borderColor: "border-[#2563eb]/30",
       badgeBg: "",
       textAccent: "text-[#7cb9e8]",
-      description: "Honoraires d’agence réglés en une fois pour la préparation et le suivi de votre dossier. Les frais consulaires ou médicaux restent à part.",
+      description: "Honoraires d’agence réglés en une fois pour la préparation et le suivi. Prestations, échéance unique et éventuel remboursement en cas d’arrêt sont confirmés par écrit avant paiement.",
       features: [
-        "Honoraires d’agence clarifiés avant engagement",
-        "Suivi personnalisé du dossier",
-        "Réponse de l’équipe sous 24h ouvrées (annoncé)",
-        "Accompagnement jusqu’au dépôt",
-        "Frais tiers (autorités) non inclus",
+        "Prestations incluses listées avant engagement",
+        "Échéance unique des honoraires d’agence",
+        "Arrêt du dossier : conditions de remboursement écrites",
+        "Frais consulaires / médicaux / biométriques exclus",
+        "Décision de visa hors de notre contrôle",
       ],
       cta: "Demander cette formule",
       highlight: false,
@@ -611,13 +611,13 @@ function PricingSection() {
       borderColor: "border-[#2563eb]",
       badgeBg: "bg-yellow-400 text-yellow-900",
       textAccent: "text-yellow-300",
-      description: "Échelonnement des honoraires d’agence sur 4 à 5 mois. Le montant exact et le calendrier sont confirmés avant tout règlement.",
+      description: "Honoraires d’agence échelonnés (souvent 4 à 5 mois). Éligibilité, calendrier, prestations et conséquences d’un arrêt de dossier sont fixés dans le protocole avant le 1er paiement.",
       features: [
-        "Honoraires d’agence en plusieurs échéances",
-        "Plan adapté après étude de votre cas",
-        "Suivi régulier du dossier",
-        "Conditions écrites avant paiement",
+        "Échéancier écrit avant le 1er règlement",
+        "Prestations et critères d’éligibilité précisés",
+        "Retard / arrêt : clauses du protocole applicables",
         "Frais tiers (autorités) non inclus",
+        "Décision de visa hors de notre contrôle",
       ],
       cta: "Demander cette formule",
       highlight: true,
@@ -632,13 +632,13 @@ function PricingSection() {
       borderColor: "border-emerald-500/40",
       badgeBg: "bg-emerald-400 text-emerald-900",
       textAccent: "text-emerald-300",
-      description: "Sous réserve d’éligibilité vérifiée, une part des honoraires d’agence peut être réglée en fin de suivi. Aucun visa n’est garanti.",
+      description: "Sous réserve d’éligibilité écrite, une part des honoraires peut être différée en fin de suivi. Ce n’est pas un « permis garanti » : aucun résultat consulaire n’est promis.",
       features: [
-        "Éligibilité vérifiée avant proposition",
-        "Part des honoraires en fin de suivi",
-        "Conditions d’éligibilité à confirmer",
-        "Décision de visa hors de notre contrôle",
-        "Frais tiers (autorités) non inclus",
+        "Critères d’éligibilité validés avant proposition",
+        "Part différée définie dans le contrat",
+        "Remboursement / arrêt : selon le protocole signé",
+        "Distinct du produit « Permis Garanti » (CGU)",
+        "Frais tiers exclus · décision de visa hors contrôle",
       ],
       cta: "Vérifier mon éligibilité",
       highlight: false,
@@ -750,8 +750,10 @@ function PricingSection() {
           className="text-center text-xs text-gray-400 mt-8 max-w-2xl mx-auto"
         >
           <Info className="w-3.5 h-3.5 inline mr-1 text-gray-400" />
-          Honoraires 3M = accompagnement et suivi. Frais tiers = autorités / prestataires externes. Montants communiqués avant engagement. La décision de visa n’appartient qu’aux autorités compétentes.{" "}
-          <a href="/tarifs" className="font-semibold text-blue-700 underline-offset-2 hover:underline">Voir la page tarifs</a>
+          Honoraires 3M = accompagnement et suivi. Frais tiers = autorités / prestataires externes. Montants, échéances, éligibilité, remboursement et arrêt de dossier : conditions écrites avant paiement (voir aussi{" "}
+          <a href="/conditions-utilisation" className="font-semibold text-blue-700 underline-offset-2 hover:underline">CGU</a>
+          ). La décision de visa n’appartient qu’aux autorités.{" "}
+          <a href="/tarifs" className="font-semibold text-blue-700 underline-offset-2 hover:underline">Page tarifs</a>
         </motion.p>
       </div>
     </section>
