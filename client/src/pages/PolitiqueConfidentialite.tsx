@@ -7,13 +7,32 @@ export default function PolitiqueConfidentialite() {
       <section className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-12">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl font-bold mb-2">Politique de Confidentialité</h1>
-          <p className="text-blue-100">Dernière mise à jour : Juillet 2026</p>
+          <p className="text-blue-100">Dernière mise à jour : 14 octobre 2026</p>
         </div>
       </section>
 
       {/* Contenu */}
       <section className="container mx-auto px-4 py-12 max-w-4xl">
         <div className="bg-white rounded-lg shadow-sm p-8 space-y-8">
+
+          <div
+            className="rounded-2xl border border-blue-100 bg-blue-50/80 p-5 space-y-3"
+            data-testid="privacy-concrete-summary"
+            role="region"
+            aria-label="Accès et conservation en résumé"
+          >
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">En résumé</p>
+            <ul className="space-y-2 text-sm leading-6 text-slate-800">
+              <li>
+                <strong>Qui consulte vos documents :</strong> vous (via Mon espace) et les conseillers 3M affectés à votre dossier.
+                Pas de consultation publique, ni par des partenaires B2B, sauf transmission volontaire vers une autorité pour votre procédure.
+              </li>
+              <li>
+                <strong>Combien de temps :</strong> pendant le traitement actif du dossier ; puis archivage interne jusqu’à 5 ans après clôture
+                (obligations comptables / litiges éventuels), sauf demande de suppression recevable plus tôt.
+              </li>
+            </ul>
+          </div>
           
           {/* Section 1 */}
           <div>
@@ -77,19 +96,52 @@ export default function PolitiqueConfidentialite() {
 
           {/* Section 4 */}
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">4. Partage des données</h2>
-            <p className="text-gray-700 leading-relaxed">
-              Vos données peuvent être transmises aux autorités consulaires et administratives compétentes dans le cadre strict de votre demande de visa. Elles ne sont jamais vendues à des tiers à des fins commerciales.
+            <h2 className="text-2xl font-bold text-gray-900 mb-4" id="acces-documents">4. Qui peut consulter vos documents</h2>
+            <p className="text-gray-700 leading-relaxed mb-4">
+              Les pièces déposées dans le coffre (passeport, CV, diplômes, justificatifs, etc.) ne sont pas publiques. En pratique :
+            </p>
+            <ul className="space-y-2 text-gray-700" data-testid="privacy-who-access">
+              <li className="flex items-start gap-3">
+                <span className="text-blue-600 font-bold">•</span>
+                <span><strong>Vous :</strong> via votre compte candidat dans Mon espace (consultation et dépôt).</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-blue-600 font-bold">•</span>
+                <span><strong>L’équipe 3M affectée à votre dossier :</strong> conseillers et opérationnels habilités pour instruire, vérifier ou demander une correction.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-blue-600 font-bold">•</span>
+                <span><strong>Autorités compétentes :</strong> uniquement si vous poursuivez une procédure et que la transmission est nécessaire à cette démarche (consulat, portail officiel, etc.).</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-blue-600 font-bold">•</span>
+                <span><strong>Non concernés :</strong> le public, les moteurs de recherche, et les partenaires B2B (agences / employeurs) — ces derniers ne voient que des profils anonymisés après votre consentement, jamais le contenu brut du coffre.</span>
+              </li>
+            </ul>
+            <p className="mt-4 text-gray-700 leading-relaxed">
+              Vos données ne sont jamais vendues à des tiers à des fins commerciales.
             </p>
           </div>
 
           {/* Section 5 */}
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">5. Conservation</h2>
-            <p className="text-gray-700 leading-relaxed">
-              Les pièces de votre coffre-fort documentaire et les données associées sont conservées pendant la durée nécessaire au traitement de votre dossier, puis archivées ou supprimées conformément aux obligations légales applicables. Vous pouvez demander des précisions à{" "}
-              <a href="mailto:hello@3mtravelagency.com" className="text-blue-600 hover:underline">hello@3mtravelagency.com</a>.
-            </p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4" id="conservation">5. Conservation — combien de temps</h2>
+            <ul className="space-y-2 text-gray-700" data-testid="privacy-retention">
+              <li className="flex items-start gap-3">
+                <span className="text-blue-600 font-bold">•</span>
+                <span><strong>Dossier actif :</strong> conservation des pièces et données utiles pendant toute la durée du traitement (évaluation, protocole, suivi jusqu’à clôture ou abandon confirmé).</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-blue-600 font-bold">•</span>
+                <span><strong>Après clôture :</strong> archivage interne sécurisé jusqu’à <strong>5 ans</strong> pour les obligations comptables, la preuve d’exécution du service et la gestion d’éventuels litiges.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-blue-600 font-bold">•</span>
+                <span><strong>Suppression anticipée :</strong> vous pouvez demander l’effacement à{" "}
+                  <a href="mailto:hello@3mtravelagency.com" className="text-blue-600 hover:underline">hello@3mtravelagency.com</a>
+                  {" "}— traité sous réserve des pièces que la loi nous impose de conserver.</span>
+              </li>
+            </ul>
           </div>
 
           {/* Section 6 */}

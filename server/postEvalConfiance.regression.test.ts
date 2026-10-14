@@ -57,7 +57,30 @@ describe("post-évaluation confiance — prochaine étape, docs, analytics, avis
     expect(submit).toContain("jamais d’avis inventés");
   });
 
+  it("précise accès documents et durée de conservation sur la page confidentialité", () => {
+    const privacy = read("client/src/pages/PolitiqueConfidentialite.tsx");
+    const prerender = read("server/publicPrerender.ts");
+    expect(privacy).toContain('data-testid="privacy-concrete-summary"');
+    expect(privacy).toContain('data-testid="privacy-who-access"');
+    expect(privacy).toContain('data-testid="privacy-retention"');
+    expect(privacy).toContain("Qui peut consulter vos documents");
+    expect(privacy).toContain("jusqu’à 5 ans");
+    expect(privacy).toContain("partenaires B2B");
+    expect(prerender).toContain("consultation limitée à votre compte et à l’équipe 3M affectée");
+    expect(read("shared/documentVaultPolicy.ts")).toContain("jusqu’à 5 ans après clôture");
+  });
+
+  it("annonce le délai indicatif de réponse près de l’évaluation", () => {
+    const form = read("client/src/components/SimpleMultiProjectForm.tsx");
+    const home = read("client/src/pages/Home.tsx");
+    expect(form).toContain('data-testid="evaluation-indicative-sla"');
+    expect(form).toContain("24 heures ouvrées");
+    expect(home).toContain('data-testid="evaluation-response-sla"');
+    expect(home).toContain("sous 24 heures ouvrées");
+    expect(home).toContain("réponse sous 24 h ouvrées");
+  });
+
   it("purge le service worker pour le lot post-évaluation confiance", () => {
-    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v53-post-eval-confiance");
+    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v54-privacy-sla");
   });
 });
