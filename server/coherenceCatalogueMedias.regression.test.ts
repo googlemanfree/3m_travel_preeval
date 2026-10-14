@@ -43,12 +43,15 @@ describe("cohérence catalogue, médias et tarifs (lot confiance)", () => {
     expect(reviews).toContain("isError");
     expect(reviews).toContain("retry: 1");
     expect(reviews).toContain("approved-reviews-loading");
+    expect(reviews).toContain("client réel");
+    expect(reviews).not.toMatch(/témoignage inventé|fabriqué pour l’affichage/i);
 
     const gallery = read("client/src/components/ProofGallerySection.tsx");
-    expect(gallery).toContain("imgRef");
+    expect(gallery).toContain("IntersectionObserver");
+    expect(gallery).toContain("sectionInView");
+    expect(gallery).toContain('loading="eager"');
     expect(gallery).toContain("naturalWidth");
-    expect(gallery).toContain("img?.complete");
-    expect(gallery).toContain("4_000");
+    expect(gallery).toContain("rootMargin");
   });
 
   it("chaque preuve locale existe et les fourchettes d’honoraires sont publiées", () => {
@@ -60,6 +63,7 @@ describe("cohérence catalogue, médias et tarifs (lot confiance)", () => {
     expect(TARIFS_FEE_EXAMPLES.length).toBeGreaterThanOrEqual(3);
     const tarifs = read("client/src/pages/Tarifs.tsx");
     expect(tarifs).toContain("tarifs-fee-examples");
-    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v50-coherence-catalogue");
+    expect(tarifs).toContain("tarifs-sample-devis");
+    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v51-preuves-accueil-tarifs");
   });
 });

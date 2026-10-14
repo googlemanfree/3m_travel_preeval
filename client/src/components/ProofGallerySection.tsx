@@ -25,69 +25,123 @@ export type ProofGallerySectionProps = {
   hideWhenEmpty?: boolean;
 };
 
+/**
+ * Charge l’image dès qu’elle entre dans (ou près de) le viewport.
+ * Évite les spinners « Chargement de l’image » sur des lazy-load jamais démarrés.
+ */
 function ProofImage({ photo, priority = false }: { photo: (typeof PROOF_PHOTOS)[number]; priority?: boolean }) {
+  const frameRef = useRef<HTMLDivElement | null>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+  const [inView, setInView] = useState(priority);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
-  const imgRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
-    setLoading(true);
-    setFailed(false);
-    // Images déjà en cache : onLoad peut ne jamais se déclencher → lire complete/naturalWidth.
-    const img = imgRef.current;
-    if (img?.complete) {
-      if (img.naturalWidth > 0) setLoading(false);
-      else {
-        setLoading(false);
-        setFailed(true);
-      }
+    if (priority) {
+      setInView(true);
       return;
     }
-    // Évite un spinner bloqué si onLoad ne se déclenche pas (cache / navigation directe).
-    const timer = window.setTimeout(() => {
-      setLoading((current) => {
-        if (current) {
-          const currentImg = imgRef.current;
-          if (currentImg?.complete && currentImg.naturalWidth > 0) return false;
+    const node = frameRef.current;
+    if (!node) {
+      setInView(true);
+      return;
+    }
+    if (typeof IntersectionObserver === "undefined") {
+      setInView(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "240px 0px", threshold: 0.01 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [priority, photo.src]);
+
+  useEffect(() => {
+    if (!inView) return;
+    setLoading(true);
+    setFailed(false);
+
+    const syncFromImg = () => {
+      const img = imgRef.current;
+      if (!img) return false;
+      if (img.complete) {
+        if (img.naturalWidth > 0) {
+          setLoading(false);
+          setFailed(false);
+        } else {
+          setLoading(false);
           setFailed(true);
         }
+        return true;
+      }
+      return false;
+    };
+
+    // Le ref peut n’être posé qu’après le paint qui monte le <img>.
+    const raf = window.requestAnimationFrame(() => {
+      syncFromImg();
+    });
+
+    // Filet de sécurité : si onLoad ne part pas, re-vérifier puis échouer.
+    const timer = window.setTimeout(() => {
+      if (syncFromImg()) return;
+      setLoading((current) => {
+        if (!current) return current;
+        const img = imgRef.current;
+        if (img?.complete && img.naturalWidth > 0) return false;
+        setFailed(true);
         return false;
       });
-    }, 4_000);
-    return () => window.clearTimeout(timer);
-  }, [photo.src]);
+    }, 10_000);
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.clearTimeout(timer);
+    };
+  }, [inView, photo.src]);
 
   return (
-    <div className="relative aspect-[4/3] overflow-hidden bg-slate-100" data-testid="proof-image-frame">
-      {loading && !failed && (
+    <div ref={frameRef} className="relative aspect-[4/3] overflow-hidden bg-slate-100" data-testid="proof-image-frame">
+      {(!inView || (loading && !failed)) && (
         <span
           className="absolute inset-0 z-10 flex items-center justify-center bg-slate-100/90 text-blue-700"
           data-testid="proof-image-loading"
-          aria-label="Chargement de l’image"
+          aria-label={inView ? "Chargement de l’image" : "Image en attente d’affichage"}
+          aria-hidden={!inView}
         >
-          <Loader2 className="h-6 w-6 animate-spin" aria-hidden="true" />
+          {inView ? <Loader2 className="h-6 w-6 animate-spin" aria-hidden="true" /> : <span className="h-6 w-6 rounded-full bg-slate-200" aria-hidden="true" />}
         </span>
       )}
       {failed ? (
         <div className="flex h-full items-center justify-center px-4 text-center text-xs font-semibold text-slate-500" role="img" aria-label={photo.alt}>
           Image temporairement indisponible
         </div>
-      ) : (
+      ) : inView ? (
         <img
           ref={imgRef}
           src={photo.src}
           alt={photo.alt}
-          loading={priority ? "eager" : "lazy"}
+          loading="eager"
           decoding="async"
           fetchPriority={priority ? "high" : "auto"}
-          onLoad={() => setLoading(false)}
+          onLoad={() => {
+            setLoading(false);
+            setFailed(false);
+          }}
           onError={() => {
             setLoading(false);
             setFailed(true);
           }}
           className={`h-full w-full object-cover transition-[transform,opacity] duration-300 ease-out motion-reduce:transition-none group-hover:scale-105 ${loading ? "opacity-0" : "opacity-100"}`}
         />
-      )}
+      ) : null}
     </div>
   );
 }
@@ -115,6 +169,8 @@ export default function ProofGallerySection({
   const [filter, setFilter] = useState<ProofFilter>(() => resolveFilter(initialFilter));
   const [expanded, setExpanded] = useState(false);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [sectionInView, setSectionInView] = useState(false);
+  const sectionRef = useRef<HTMLElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const lastFocused = useRef<HTMLElement | null>(null);
 
@@ -123,6 +179,25 @@ export default function ProofGallerySection({
     setExpanded(false);
     setOpenIndex(null);
   }, [initialFilter]);
+
+  useEffect(() => {
+    const node = sectionRef.current;
+    if (!node || typeof IntersectionObserver === "undefined") {
+      setSectionInView(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setSectionInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "320px 0px", threshold: 0.01 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   const filters = proofFilterCounts(PROOF_PHOTOS, language);
   const filtered = filterProofPhotos(PROOF_PHOTOS, filter);
@@ -154,10 +229,16 @@ export default function ProofGallerySection({
   if (hideWhenEmpty && filtered.length === 0) return null;
 
   return (
-    <section aria-labelledby="proof-gallery-title" className={className} data-testid="proof-gallery-section">
+    <section
+      ref={sectionRef}
+      aria-labelledby="proof-gallery-title"
+      className={className}
+      data-testid="proof-gallery-section"
+      data-section-ready={sectionInView ? "true" : "false"}
+    >
       <div className="mx-auto max-w-5xl">
         <div className="mb-8 text-center">
-            <p className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-black uppercase tracking-wider text-blue-700">
+          <p className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-black uppercase tracking-wider text-blue-700">
             <ShieldCheck className="h-4 w-4" aria-hidden="true" /> {t("Preuves et contextes documentaires", "Documentary proofs and context")}
           </p>
           <h2 id="proof-gallery-title" className="premium-section-title mt-4 text-2xl md:text-3xl">
@@ -170,7 +251,7 @@ export default function ProofGallerySection({
             {t(
               leadFr ??
                 "Extraits de dossiers traités par 3M TRAVEL AGENCY et illustrations de parcours, classés par procédure. Les documents sont masqués et les illustrations ne constituent pas une promesse de placement.",
-                leadEn ??
+              leadEn ??
                 "Excerpts from files handled by 3M TRAVEL AGENCY and journey illustrations, sorted by procedure. Documents are redacted; illustrations are not a promise of placement.",
             )}
           </p>
@@ -216,7 +297,8 @@ export default function ProofGallerySection({
               }}
               className="group overflow-hidden rounded-2xl border border-slate-200 text-left shadow-sm transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-1 hover:shadow-lg motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
             >
-              <ProofImage photo={photo} priority={index < 3 && !expanded} />
+              {/* Vignettes affichées : chargement immédiat (pas de lazy) pour éviter les spinners bloqués. */}
+              <ProofImage photo={photo} priority />
               <p className="p-3 text-xs font-semibold text-slate-700">
                 {photo.kind === "context" && (
                   <span className="mb-1 block text-[10px] font-black uppercase tracking-wider text-amber-700">

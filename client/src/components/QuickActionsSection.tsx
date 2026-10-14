@@ -48,14 +48,16 @@ export function QuickActionsGrid({ className = "" }: { className?: string }) {
 export default function QuickActionsSection() {
   const { t } = useLanguage();
   return (
-    <section aria-labelledby="quick-actions-title" className="bg-white pb-6 pt-10 md:pt-14">
+    <section aria-labelledby="quick-actions-title" className="bg-white pb-6 pt-8 md:pt-10" data-testid="home-secondary-services">
       <div className="mx-auto max-w-6xl px-4">
         <div className="mb-6 text-center md:mb-8">
-          <h2 id="quick-actions-title" className="text-2xl font-black text-slate-950 md:text-3xl">{t("Que voulez-vous accomplir ?", "What do you want to achieve?")}</h2>
+          <h2 id="quick-actions-title" className="text-xl font-black text-slate-950 md:text-2xl">
+            {t("Autres services utiles", "Other useful services")}
+          </h2>
           <p className="mx-auto mt-2 max-w-2xl text-sm text-slate-600 md:text-base">
             {t(
-              "Commencez par le dossier ou le recrutement autorisé ; les services de voyage viennent ensuite, avec un conseiller 3M jusqu’au dépôt.",
-              "Start with your file or authorised recruitment; travel services come next, with a 3M advisor through filing.",
+              "Après Études, Travail ou Voyage/visa : dossier, recrutement, vols, assurance, e-Visa ou CNI/passeport.",
+              "After Studies, Work or Travel/visa: file prep, recruitment, flights, insurance, e-Visa or ID/passport.",
             )}
           </p>
         </div>

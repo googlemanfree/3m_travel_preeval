@@ -275,6 +275,32 @@ export const TARIFS_FEE_EXAMPLES: TarifsFeeExample[] = [
   },
 ];
 
+/** Lignes d’un exemple de devis détaillé (honoraires agence uniquement). */
+export type TarifsDevisLine = {
+  poste: string;
+  montant: string;
+  note: string;
+};
+
+export const TARIFS_SAMPLE_DEVIS: {
+  title: string;
+  subtitle: string;
+  lines: TarifsDevisLine[];
+  total: string;
+  disclaimer: string;
+} = {
+  title: "Exemple de devis — visa études France",
+  subtitle: "Honoraires d’agence indicatifs pour un dossier études type (hors frais consulaires et universitaires).",
+  lines: [
+    { poste: "Ouverture de dossier", montant: "65 000 FCFA", note: "Examen conseiller + checklist initiale" },
+    { poste: "Accompagnement documentaire", montant: "180 000 FCFA", note: "Relecture pièces, protocole, suivi statut" },
+    { poste: "Coordination dépôt / rendez-vous", montant: "55 000 FCFA", note: "Selon le centre de visa compétent" },
+  ],
+  total: "300 000 FCFA",
+  disclaimer:
+    "Montants indicatifs pour se situer. Le devis écrit confirmé peut être inférieur ou supérieur selon le profil. Frais de visa, biométrie, traductions, scolarité et billet restent à la charge du candidat.",
+};
+
 // ---- /partenaires (français et anglais) ------------------------------------------------------------------------------
 
 export const PARTNERS_FAQ: { fr: FaqItem[]; en: FaqItem[] } = {

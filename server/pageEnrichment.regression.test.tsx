@@ -96,14 +96,19 @@ describe("contenu enrichi des pages : soutenu mais honnête", () => {
     expect(tarifsPage).toContain("TARIFS_CONCRETE_BLOCKS");
   });
 
-  it("la page Tarifs publie des exemples de fourchettes d’honoraires pour situer le visiteur", async () => {
-    const { TARIFS_FEE_EXAMPLES } = await import("../client/src/data/pageEnrichment");
+  it("la page Tarifs publie des fourchettes et un exemple de devis détaillé en tête de page", async () => {
+    const { TARIFS_FEE_EXAMPLES, TARIFS_SAMPLE_DEVIS } = await import("../client/src/data/pageEnrichment");
     expect(TARIFS_FEE_EXAMPLES.length).toBeGreaterThanOrEqual(3);
     expect(TARIFS_FEE_EXAMPLES.every((example) => /\d[\d\s]*–[\d\s]*FCFA/.test(example.range))).toBe(true);
+    expect(TARIFS_SAMPLE_DEVIS.lines.length).toBeGreaterThanOrEqual(3);
+    expect(TARIFS_SAMPLE_DEVIS.total).toMatch(/FCFA/);
     const tarifsPage = read("client/src/pages/Tarifs.tsx");
     expect(tarifsPage).toContain("tarifs-fee-examples");
     expect(tarifsPage).toContain("TARIFS_FEE_EXAMPLES");
-    expect(tarifsPage).toContain("Exemples de devis");
+    expect(tarifsPage).toContain("tarifs-sample-devis");
+    expect(tarifsPage).toContain("TARIFS_SAMPLE_DEVIS");
+    expect(tarifsPage).toContain("Fourchettes par type de service");
+    expect(tarifsPage.indexOf("tarifs-fee-examples")).toBeLessThan(tarifsPage.indexOf("tarifs-concrete"));
   });
 
   it("l'ancien nom « Prime Travel » n'apparaît plus dans le code vu par les clients", () => {

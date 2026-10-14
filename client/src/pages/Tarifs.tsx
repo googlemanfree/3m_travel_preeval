@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { CommitmentsSection } from "@/components/PageEnrichment";
-import { TARIFS_CONCRETE_BLOCKS, TARIFS_COST_PARTS, TARIFS_FEE_EXAMPLES } from "@/data/pageEnrichment";
+import { TARIFS_CONCRETE_BLOCKS, TARIFS_COST_PARTS, TARIFS_FEE_EXAMPLES, TARIFS_SAMPLE_DEVIS } from "@/data/pageEnrichment";
 import { CheckCircle2, CircleHelp, Info, MessageCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -56,7 +56,7 @@ export default function Tarifs() {
     setPageSeo({
       title: "Tarifs et honoraires | 3M TRAVEL AGENCY",
       description:
-        "Tarifs 3M TRAVEL AGENCY : ouverture dès 65 000 FCFA, services inclus, frais externes exclus, modalités de remboursement — confirmation écrite avant règlement.",
+        "Tarifs 3M TRAVEL AGENCY : fourchettes d’honoraires (65 000 – 800 000 FCFA selon le service), ouverture dès 65 000 FCFA, exemple de devis, frais tiers exclus.",
       image: heroVisual.desktop,
       imageAlt: heroVisual.alt,
     });
@@ -82,12 +82,67 @@ export default function Tarifs() {
           <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-blue-100/90">{INTERNATIONAL_BRAND.corridor}</p>
           <h1 className="mt-5 text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">Comprendre les tarifs avant de vous engager</h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-blue-50">
-            Ouverture de dossier à partir de 65 000 FCFA, honoraires d’accompagnement selon le service, frais consulaires et tiers exclus. Confirmation écrite avant tout règlement — aucun résultat de visa ou d’emploi n’est vendu.
+            Honoraires d’agence indicatifs : <strong className="font-black text-white">65 000 – 150 000 FCFA</strong> (e-Visa / court séjour),{" "}
+            <strong className="font-black text-white">200 000 – 450 000 FCFA</strong> (Schengen / études Europe),{" "}
+            <strong className="font-black text-white">350 000 – 800 000 FCFA</strong> (Canada). Frais consulaires exclus — devis écrit avant règlement.
           </p>
         </div>
       </section>
 
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+
+        <section className="mb-12" aria-labelledby="tarifs-fee-examples-title" data-testid="tarifs-fee-examples">
+          <h2 id="tarifs-fee-examples-title" className="premium-section-title text-2xl">Fourchettes par type de service</h2>
+          <p className="premium-copy mt-3 max-w-3xl text-base">
+            Montants d’honoraires d’agence pour vous situer avant le contact. Le devis écrit confirme le périmètre ; les frais consulaires, biométrie, traductions et scolarité restent exclus.
+          </p>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {TARIFS_FEE_EXAMPLES.map((example) => (
+              <article key={example.label} className="rounded-2xl border border-blue-100 bg-gradient-to-b from-blue-50/80 to-white p-5 sm:p-6">
+                <h3 className="text-sm font-black uppercase tracking-wide text-blue-900">{example.label}</h3>
+                <p className="mt-3 text-2xl font-black tabular-nums text-slate-950" data-testid="tarifs-fee-range">{example.range}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{example.detail}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="mb-12 overflow-hidden rounded-2xl border border-slate-200 bg-white" aria-labelledby="tarifs-sample-devis-title" data-testid="tarifs-sample-devis">
+          <div className="border-b border-slate-100 bg-slate-50 px-5 py-4 sm:px-6">
+            <h2 id="tarifs-sample-devis-title" className="text-lg font-black text-slate-950 sm:text-xl">{TARIFS_SAMPLE_DEVIS.title}</h2>
+            <p className="mt-1 text-sm text-slate-600">{TARIFS_SAMPLE_DEVIS.subtitle}</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[320px] text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 text-xs font-bold uppercase tracking-wide text-slate-500">
+                  <th scope="col" className="px-5 py-3 sm:px-6">Poste</th>
+                  <th scope="col" className="px-5 py-3 sm:px-6">Montant</th>
+                  <th scope="col" className="hidden px-5 py-3 sm:table-cell sm:px-6">Détail</th>
+                </tr>
+              </thead>
+              <tbody>
+                {TARIFS_SAMPLE_DEVIS.lines.map((line) => (
+                  <tr key={line.poste} className="border-b border-slate-50">
+                    <td className="px-5 py-3 font-semibold text-slate-900 sm:px-6">
+                      {line.poste}
+                      <p className="mt-0.5 text-xs font-normal text-slate-500 sm:hidden">{line.note}</p>
+                    </td>
+                    <td className="px-5 py-3 font-black tabular-nums text-slate-950 sm:px-6">{line.montant}</td>
+                    <td className="hidden px-5 py-3 text-slate-600 sm:table-cell sm:px-6">{line.note}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="bg-blue-50/60">
+                  <th scope="row" className="px-5 py-4 text-base font-black text-slate-950 sm:px-6">Total honoraires (exemple)</th>
+                  <td className="px-5 py-4 text-lg font-black tabular-nums text-blue-900 sm:px-6" colSpan={2}>{TARIFS_SAMPLE_DEVIS.total}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <p className="border-t border-slate-100 px-5 py-4 text-xs leading-5 text-slate-500 sm:px-6">{TARIFS_SAMPLE_DEVIS.disclaimer}</p>
+        </section>
 
         <section className="mb-12 grid gap-4 sm:grid-cols-2" aria-label="Tarifs concrets avant contact" data-testid="tarifs-concrete">
           {TARIFS_CONCRETE_BLOCKS.map((block) => (
@@ -96,22 +151,6 @@ export default function Tarifs() {
               <p className="mt-2 text-sm leading-6 text-slate-600">{block.text}</p>
             </article>
           ))}
-        </section>
-
-        <section className="mb-12" aria-labelledby="tarifs-fee-examples-title" data-testid="tarifs-fee-examples">
-          <h2 id="tarifs-fee-examples-title" className="premium-section-title text-2xl">Exemples de devis — honoraires d’agence</h2>
-          <p className="premium-copy mt-3 max-w-3xl text-base">
-            Fourchettes indicatives pour vous situer avant le contact. Le montant exact dépend du pays, du type de visa et du volume de pièces ; il est confirmé par écrit. Les frais consulaires et tiers restent exclus.
-          </p>
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {TARIFS_FEE_EXAMPLES.map((example) => (
-              <article key={example.label} className="rounded-2xl border border-blue-100 bg-gradient-to-b from-blue-50/80 to-white p-5 sm:p-6">
-                <h3 className="text-sm font-black uppercase tracking-wide text-blue-900">{example.label}</h3>
-                <p className="mt-3 text-xl font-black tabular-nums text-slate-950">{example.range}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{example.detail}</p>
-              </article>
-            ))}
-          </div>
         </section>
 
         <section className="grid gap-6 md:grid-cols-3 md:gap-8" aria-label="Repères tarifaires">

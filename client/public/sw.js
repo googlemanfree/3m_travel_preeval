@@ -1,4 +1,4 @@
-const CACHE_NAME = '3m-travel-pwa-v50-coherence-catalogue';
+const CACHE_NAME = '3m-travel-pwa-v51-preuves-accueil-tarifs';
 const IS_PREVIEW_HOST = /\.manus\.computer$|\.manuspre\.computer$|\.manuscomputer\.ai$/i.test(self.location.hostname);
 const ASSETS_TO_CACHE = [
   '/manifest.json'

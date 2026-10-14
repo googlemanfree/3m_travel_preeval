@@ -255,8 +255,8 @@ export default function ApprovedReviewsSection() {
         sortDateDesc: "Most recent",
         sortDateAsc: "Oldest",
         noReviewsYetTitle: "Be the first to share your experience",
-        noReviewsYetBody: "No review has been approved yet. Every review is checked by our team before publishing — no fabricated testimonials, ever.",
-        noReviewsYetCta: "Leave the first review",
+        noReviewsYetBody: "No review has been approved yet. If you are a real client of 3M TRAVEL AGENCY, we invite you to leave a verified testimonial — every review is checked before publishing. We never invent reviews.",
+        noReviewsYetCta: "Leave a verified review",
       }
     : {
         loading: "Chargement des avis approuvés...",
@@ -287,8 +287,8 @@ export default function ApprovedReviewsSection() {
         sortDateDesc: "Les plus récents",
         sortDateAsc: "Les plus anciens",
         noReviewsYetTitle: "Soyez le premier à partager votre expérience",
-        noReviewsYetBody: "Aucun avis n'est encore approuvé. Chaque avis est vérifié par notre équipe avant publication — aucun témoignage fabriqué, jamais.",
-        noReviewsYetCta: "Laisser le premier avis",
+        noReviewsYetBody: "Aucun avis n’est encore approuvé. Si vous êtes un client réel de 3M TRAVEL AGENCY, nous vous invitons à témoigner — chaque avis est vérifié avant publication. Nous n’inventons jamais de témoignages.",
+        noReviewsYetCta: "Laisser un avis vérifié",
       };
 
   if (showLoadingSkeleton) {

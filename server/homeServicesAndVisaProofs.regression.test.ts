@@ -52,8 +52,10 @@ describe("page d'accueil : « Nos services » et preuves de visas Schengen", () 
     const home = read("client/src/pages/Home.tsx");
     expect(home).toContain('import ServicesOverviewSection from "@/components/ServicesOverviewSection"');
     expect(home.indexOf("<ServicesOverviewSection />")).toBeGreaterThan(-1);
-    expect(home.indexOf("<ProofGallerySection />")).toBeLessThan(home.indexOf("<ServicesOverviewSection />"));
-    expect(home.indexOf("<ApprovedReviewsSection />")).toBeLessThan(home.indexOf("<ServicesOverviewSection />"));
+    expect(home.indexOf("<HomePrimaryPathsSection />")).toBeLessThan(home.indexOf("<ProofGallerySection />"));
+    expect(home.indexOf("<ProofGallerySection />")).toBeLessThan(home.indexOf("<ApprovedReviewsSection />"));
+    expect(home.indexOf("<ApprovedReviewsSection />")).toBeLessThan(home.indexOf("<QuickActionsSection />"));
+    expect(home.indexOf("<QuickActionsSection />")).toBeLessThan(home.indexOf("<ServicesOverviewSection />"));
     expect(home.indexOf("<ServicesOverviewSection />")).toBeLessThan(home.indexOf('aria-label="Procédures les plus demandées"'));
   });
 

@@ -17,6 +17,7 @@ import { ReviewsErrorBoundary } from "@/components/ReviewsErrorBoundary";
 import ProofGallerySection from "@/components/ProofGallerySection";
 import ServicesOverviewSection from "@/components/ServicesOverviewSection";
 import QuickActionsSection from "@/components/QuickActionsSection";
+import HomePrimaryPathsSection from "@/components/HomePrimaryPathsSection";
 import DestinationsShowcaseSection from "@/components/DestinationsShowcaseSection";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
 import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
@@ -197,9 +198,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Intentions dossier / mobilité — vols & annexes en second rang. */}
+      {/* Trois parcours prioritaires — orientation rapide avant le reste. */}
       <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
-        <QuickActionsSection />
+        <HomePrimaryPathsSection />
       </motion.div>
 
       {/* Preuves + avis tôt : confiance avant le détail B2B. */}
@@ -211,6 +212,11 @@ export default function Home() {
         <ReviewsErrorBoundary>
           <ApprovedReviewsSection />
         </ReviewsErrorBoundary>
+      </motion.div>
+
+      {/* Autres services (dossier, vols, assurance…) — après la triade et les preuves. */}
+      <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
+        <QuickActionsSection />
       </motion.div>
 
       {/* B2B détaillé — après réassurance, sans saturer le premier écran. */}
