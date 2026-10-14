@@ -622,5 +622,5 @@ for (const destination of evisasDatabaseComplete) {
   if (!reference) continue;
   destination.officialPortalUrl = reference.url;
   destination.officialPortalLabel = reference.label;
-  destination.officialVerifiedAt = "17 août 2026";
+  destination.officialVerifiedAt = "14 octobre 2026";
 }
