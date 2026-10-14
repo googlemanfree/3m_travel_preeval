@@ -58,6 +58,40 @@ def knock_white(im: Image.Image, threshold: int = 248) -> Image.Image:
     return rgba
 
 
+def crop_content(im: Image.Image, pad: int = 16, threshold: int = 245) -> Image.Image:
+    """Tight crop around non-white artwork so the lockup can span the header."""
+    rgba = im.convert("RGBA")
+    px = rgba.load()
+    w, h = rgba.size
+    minx, miny, maxx, maxy = w, h, 0, 0
+    found = False
+    for y in range(h):
+        for x in range(w):
+            r, g, b, a = px[x, y]
+            if a < 8:
+                continue
+            if r >= threshold and g >= threshold and b >= threshold:
+                continue
+            found = True
+            if x < minx:
+                minx = x
+            if y < miny:
+                miny = y
+            if x > maxx:
+                maxx = x
+            if y > maxy:
+                maxy = y
+    if not found:
+        return rgba
+    box = (
+        max(0, minx - pad),
+        max(0, miny - pad),
+        min(w, maxx + pad + 1),
+        min(h, maxy + pad + 1),
+    )
+    return rgba.crop(box)
+
+
 def load_fonts(scale: float):
     def f(path: str, size: float):
         return ImageFont.truetype(path, int(round(size * scale)))
@@ -149,36 +183,51 @@ def render_letterhead_png(
 
     draw = ImageDraw.Draw(img)
 
-    # Logo
-    logo = knock_white(Image.open(LOGO_PATH))
-    logo_h = int(22 / 25.4 * dpi)  # ~22mm tall
-    ratio = logo_h / logo.height
-    logo_w = int(logo.width * ratio)
-    # Cap width ~95mm
-    max_w = int(95 / 25.4 * dpi)
-    if logo_w > max_w:
-        logo_w = max_w
-        logo_h = int(logo.height * (logo_w / logo.width))
+    # Logo — extended across the full header band
+    content_w = w - 2 * margin
+    logo = knock_white(crop_content(Image.open(LOGO_PATH)))
+    logo_w = content_w  # span edge-to-edge within margins
+    logo_h = int(round(logo.height * (logo_w / logo.width)))
+    # Allow full content width (cropped lockup ~2.7:1 → ~22% page height)
+    max_h = int(h * 0.225)
+    if logo_h > max_h:
+        logo_h = max_h
+        logo_w = int(round(logo.width * (logo_h / logo.height)))
     logo = logo.resize((logo_w, logo_h), Image.Resampling.LANCZOS)
-    logo_y = margin
-    img.paste(logo, (margin, logo_y), logo)
+    logo_y = int(10 / 25.4 * dpi)
+    logo_x = margin + (content_w - logo_w) // 2
+    img.paste(logo, (logo_x, logo_y), logo)
 
-    # Right contact block
-    contact_x = w - margin
-    line_h = int(fonts["contact"].size * 1.55)
-    contact_top = logo_y + int(logo_h * 0.12)
-    # Small label
-    tag = "3M GROUP SARL"
-    tw = draw.textlength(tag, font=fonts["tag"])
-    draw.text((contact_x - tw, contact_top), tag, font=fonts["tag"], fill=NAVY)
-    y = contact_top + int(line_h * 1.15)
-    for line in LINES_RIGHT:
-        tw = draw.textlength(line, font=fonts["contact"])
-        draw.text((contact_x - tw, y), line, font=fonts["contact"], fill=MUTED)
-        y += line_h
+    # Contact meta strip under the extended logo
+    meta = "  ·  ".join(
+        [
+            "hello@3mtravelagency.com",
+            "+237 620 996 045",
+            "WhatsApp +237 698 104 832",
+            "www.3mtravelagency.com",
+        ]
+    )
+    meta_y = logo_y + logo_h + int(3.2 / 25.4 * dpi)
+    tw = draw.textlength(meta, font=fonts["contact_sm"])
+    # If too wide, split into two centered lines
+    if tw > content_w:
+        line1 = "hello@3mtravelagency.com  ·  +237 620 996 045"
+        line2 = "WhatsApp +237 698 104 832  ·  www.3mtravelagency.com"
+        for i, line in enumerate((line1, line2)):
+            tw = draw.textlength(line, font=fonts["contact_sm"])
+            draw.text(
+                ((w - tw) / 2, meta_y + i * int(fonts["contact_sm"].size * 1.55)),
+                line,
+                font=fonts["contact_sm"],
+                fill=MUTED,
+            )
+        meta_bottom = meta_y + int(fonts["contact_sm"].size * 1.55) + fonts["contact_sm"].size
+    else:
+        draw.text(((w - tw) / 2, meta_y), meta, font=fonts["contact_sm"], fill=MUTED)
+        meta_bottom = meta_y + fonts["contact_sm"].size
 
     # Header rule under logo/contact
-    rule_y = max(logo_y + logo_h, y) + int(4 / 25.4 * dpi)
+    rule_y = meta_bottom + int(3.5 / 25.4 * dpi)
     draw_gradient_rule(draw, margin, w - margin, rule_y, max(2, int(0.55 / 25.4 * dpi)))
     # Thin secondary hairline
     hair_y = rule_y + max(3, int(1.1 / 25.4 * dpi))
@@ -233,9 +282,9 @@ def render_letterhead_png(
 
 
 def logo_data_uri() -> str:
-    logo = knock_white(Image.open(LOGO_PATH))
-    # Reasonable embed size
-    logo.thumbnail((1400, 630), Image.Resampling.LANCZOS)
+    logo = knock_white(crop_content(Image.open(LOGO_PATH)))
+    # Higher embed res for full-width header
+    logo.thumbnail((2400, 1000), Image.Resampling.LANCZOS)
     buf = io.BytesIO()
     logo.save(buf, format="PNG", optimize=True)
     b64 = base64.b64encode(buf.getvalue()).decode("ascii")
@@ -243,8 +292,20 @@ def logo_data_uri() -> str:
 
 
 def write_svg(out_path: Path) -> None:
-    """Print-oriented SVG letterhead (A4 mm), logo embedded."""
+    """Print-oriented SVG letterhead (A4 mm), logo spanning header."""
     uri = logo_data_uri()
+    cropped = knock_white(crop_content(Image.open(LOGO_PATH)))
+    aspect = cropped.width / cropped.height
+    logo_w = 178.0  # full content width
+    logo_h = round(logo_w / aspect, 2)
+    max_h = 66.0
+    if logo_h > max_h:
+        logo_h = max_h
+        logo_w = round(logo_h * aspect, 2)
+    logo_x = round((210 - logo_w) / 2, 2)
+    meta_y = 10 + logo_h + 4
+    rule_y = meta_y + 5
+    hair_y = rule_y + 2.2
     svg = f'''<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
      width="210mm" height="297mm" viewBox="0 0 210 297">
@@ -259,30 +320,26 @@ def write_svg(out_path: Path) -> None:
       <stop offset="40%" stop-color="#F7F9FC"/>
       <stop offset="100%" stop-color="#FCFDFE"/>
     </linearGradient>
-    <radialGradient id="wm" cx="50%" cy="48%" r="38%">
+    <radialGradient id="wm" cx="50%" cy="52%" r="38%">
       <stop offset="0%" stop-color="#0B2A52" stop-opacity="0.035"/>
       <stop offset="100%" stop-color="#0B2A52" stop-opacity="0"/>
     </radialGradient>
   </defs>
   <rect width="210" height="297" fill="url(#paper)"/>
-  <circle cx="105" cy="150" r="72" fill="url(#wm)"/>
+  <circle cx="105" cy="160" r="72" fill="url(#wm)"/>
 
-  <!-- Logo -->
-  <image x="16" y="14" width="92" height="41.4" preserveAspectRatio="xMinYMid meet"
+  <!-- Logo extended across header -->
+  <image x="{logo_x}" y="10" width="{logo_w}" height="{logo_h}" preserveAspectRatio="xMidYMid meet"
          xlink:href="{uri}"/>
 
-  <!-- Contact -->
-  <g font-family="Noto Sans, Helvetica, Arial, sans-serif" text-anchor="end">
-    <text x="194" y="22" font-size="3.1" font-weight="700" fill="#0B2A52" letter-spacing="0.6">3M GROUP SARL</text>
-    <text x="194" y="28.2" font-size="3.15" fill="#5A6C82">hello@3mtravelagency.com</text>
-    <text x="194" y="33.2" font-size="3.15" fill="#5A6C82">+237 620 996 045</text>
-    <text x="194" y="38.2" font-size="3.15" fill="#5A6C82">WhatsApp +237 698 104 832</text>
-    <text x="194" y="43.2" font-size="3.15" fill="#5A6C82">www.3mtravelagency.com</text>
+  <!-- Contact meta under logo -->
+  <g font-family="Noto Sans, Helvetica, Arial, sans-serif" text-anchor="middle">
+    <text x="105" y="{meta_y}" font-size="2.9" fill="#5A6C82">hello@3mtravelagency.com  ·  +237 620 996 045  ·  WhatsApp +237 698 104 832  ·  www.3mtravelagency.com</text>
   </g>
 
   <!-- Rules -->
-  <rect x="16" y="58" width="178" height="0.55" fill="url(#rule)"/>
-  <line x1="16" y1="60.2" x2="194" y2="60.2" stroke="#B4C6DC" stroke-width="0.2"/>
+  <rect x="16" y="{rule_y}" width="178" height="0.55" fill="url(#rule)"/>
+  <line x1="16" y1="{hair_y}" x2="194" y2="{hair_y}" stroke="#B4C6DC" stroke-width="0.2"/>
 
   <!-- Footer -->
   <line x1="16" y1="272" x2="194" y2="272" stroke="#B4C6DC" stroke-width="0.25"/>
@@ -297,32 +354,34 @@ def write_svg(out_path: Path) -> None:
 
 
 def write_pdf(out_path: Path, preview_png: Path) -> None:
-    """Vector-ish PDF: draw layout in ReportLab + embed high-res logo."""
+    """Vector-ish PDF: logo spans header width."""
     pdfmetrics.registerFont(TTFont("Noto", FONT_REG))
     pdfmetrics.registerFont(TTFont("NotoBold", FONT_BOLD))
 
     c = canvas.Canvas(str(out_path), pagesize=A4)
     page_w, page_h = A4
     margin = 16 * mm
+    content_w = page_w - 2 * margin
 
     # Paper wash
     c.setFillColorRGB(247 / 255, 249 / 255, 252 / 255)
     c.rect(0, 0, page_w, page_h, fill=1, stroke=0)
 
-    # Logo
-    logo = knock_white(Image.open(LOGO_PATH))
+    # Logo — extended across header
+    logo = knock_white(crop_content(Image.open(LOGO_PATH)))
     tmp = Path("/tmp/3m-letterhead-logo.png")
     logo.save(tmp, "PNG")
-    logo_w = 92 * mm
+    logo_w = content_w
     logo_h = logo_w * (logo.height / logo.width)
-    # Cap height ~22mm
-    if logo_h > 22 * mm:
-        logo_h = 22 * mm
+    max_h = 66 * mm
+    if logo_h > max_h:
+        logo_h = max_h
         logo_w = logo_h * (logo.width / logo.height)
-    logo_y = page_h - margin - logo_h - 2 * mm
+    logo_x = margin + (content_w - logo_w) / 2
+    logo_y = page_h - 10 * mm - logo_h
     c.drawImage(
         str(tmp),
-        margin,
+        logo_x,
         logo_y,
         width=logo_w,
         height=logo_h,
@@ -331,20 +390,15 @@ def write_pdf(out_path: Path, preview_png: Path) -> None:
         anchor="sw",
     )
 
-    # Contact right
-    c.setFillColorRGB(*[x / 255 for x in NAVY])
-    c.setFont("NotoBold", 8)
-    right = page_w - margin
-    y = page_h - margin - 5 * mm
-    c.drawRightString(right, y, "3M GROUP SARL")
+    # Contact meta under logo
     c.setFillColorRGB(*[x / 255 for x in MUTED])
-    c.setFont("Noto", 8)
-    for line in LINES_RIGHT:
-        y -= 4.2 * mm
-        c.drawRightString(right, y, line)
+    c.setFont("Noto", 7.5)
+    meta = "  ·  ".join(LINES_RIGHT)
+    meta_y = logo_y - 4.5 * mm
+    c.drawCentredString(page_w / 2, meta_y, meta)
 
-    # Gradient rule approximated with strips
-    rule_y = min(logo_y, y) - 5 * mm
+    # Gradient rule
+    rule_y = meta_y - 4 * mm
     x0, x1 = margin, page_w - margin
     steps = 80
     for i in range(steps):
