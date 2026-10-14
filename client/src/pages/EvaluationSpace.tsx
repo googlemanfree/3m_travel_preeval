@@ -1584,7 +1584,12 @@ export default function EvaluationSpace() {
 
               <Card className="p-6 border-blue-100 bg-white shadow-sm" data-testid="client-document-dropzone">
                 <h3 className="text-lg font-bold text-gray-900 mb-2">Déposer vos pièces dans le coffre</h3>
-                <p className="mb-4 text-sm text-slate-600">Choisissez la pièce manquante (jusqu’à 16), puis déposez le fichier. Transmission chiffrée, accès limité à votre compte et à l’équipe 3M, statut contrôlé par l’agence — vous êtes notifié dès qu’une pièce est reçue ou à corriger.</p>
+                <p className="mb-3 text-sm text-slate-600">Choisissez la pièce manquante (jusqu’à 16), puis déposez le fichier. Transmission chiffrée, accès limité à votre compte et à l’équipe 3M, statut contrôlé par l’agence — vous êtes notifié dès qu’une pièce est reçue ou à corriger.</p>
+                <p className="mb-4 rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-2.5 text-xs leading-5 text-slate-700" data-testid="client-docs-privacy-note">
+                  <strong>Qui y a accès :</strong> votre compte candidat et l’équipe 3M affectée à votre dossier.{" "}
+                  <strong>Pourquoi :</strong> pour instruire votre procédure et demander des corrections si besoin — jamais pour une publication publique.{" "}
+                  <a href="/politique-confidentialite" className="font-bold text-blue-800 underline underline-offset-2 hover:text-blue-950">Politique de confidentialité</a>
+                </p>
                 <DocumentUploader
                   dossierNumber={cProfile.dossierNumber}
                   requirementOptions={buildRequirementOptions(primaryDestination, latestEvaluation?.projectType, customRequirements)}

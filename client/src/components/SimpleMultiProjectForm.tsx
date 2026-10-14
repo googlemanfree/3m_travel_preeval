@@ -15,6 +15,13 @@ import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, FileText, LoaderCircle, MailCheck, MessageCircleMore, Pencil, ShieldCheck, Sparkles, UploadCloud } from "lucide-react";
 import { CountrySelect } from "@/components/CountryPicker";
 import { getCandidateDestinationOption } from "@shared/candidateDestinationOptions";
+import { DOCUMENT_VAULT_POLICY } from "@shared/documentVaultPolicy";
+
+/** Analytics anonymes (gtag) — pas de données personnelles. */
+function trackEvent(eventName: string, params?: Record<string, unknown>) {
+  const gtag = (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag;
+  if (typeof gtag === "function") gtag("event", eventName, params);
+}
 
 type ProjectType = "travail" | "etudes" | "tourisme";
 
@@ -135,6 +142,8 @@ export function SimpleMultiProjectForm() {
   const [selectedDocumentType, setSelectedDocumentType] = React.useState<"passport" | "cv" | "diploma" | "certificate" | "bank_statement" | "language_test" | "other">("other");
   const [uploadedDocumentCount, setUploadedDocumentCount] = React.useState(0);
   const [submittedDossierCode, setSubmittedDossierCode] = React.useState<string | null>(null);
+  const [submittedReviewDeadline, setSubmittedReviewDeadline] = React.useState<string | null>(null);
+  const [hasTrackedStart, setHasTrackedStart] = React.useState(false);
   const [orientationPreview, setOrientationPreview] = React.useState<null | { summary: string; strengths: string[]; gapsToClarify: string[]; documentPriorities: string[]; advisorQuestions: string[]; alternatives: Array<{ country: string; rationale: string; checks: string[] }>; disclaimer: string }>(null);
   const [dynamicResponses, setDynamicResponses] = React.useState<DynamicResponse[]>([]);
 
@@ -146,6 +155,16 @@ export function SimpleMultiProjectForm() {
   const officialSourceKey = formData.destinationCountry ? OFFICIAL_SOURCE_KEY_BY_COUNTRY[formData.destinationCountry] : undefined;
   const officialPortal = officialSourceKey ? OFFICIAL_CONSULAR_PORTALS[officialSourceKey] : undefined;
   const progress = Math.round(((currentStep + 1) / STEPS.length) * 100);
+
+  const markEvaluationStarted = React.useCallback(() => {
+    if (hasTrackedStart) return;
+    trackEvent("evaluation_started", {
+      project_type: formData.projectType,
+      destination: formData.destinationCountry || "unset",
+      event_category: "public_evaluation",
+    });
+    setHasTrackedStart(true);
+  }, [formData.destinationCountry, formData.projectType, hasTrackedStart]);
 
   React.useEffect(() => {
     if (projectParam && ["travail", "etudes", "tourisme"].includes(projectParam)) setFormData((prev) => ({ ...prev, projectType: projectParam }));
@@ -168,7 +187,10 @@ export function SimpleMultiProjectForm() {
     setDynamicResponses((previous) => data.advisorQuestions.map((question) => ({ question, answer: previous.find((response) => response.question === question)?.answer ?? "" })));
   }, onError: (error: { message?: string }) => toast.error(error.message || "Les questions personnalisées sont indisponibles. Vous pouvez poursuivre avec le questionnaire standard.") });
 
-  const update = (name: keyof FormData, value: string) => setFormData((prev) => ({ ...prev, [name]: value }));
+  const update = (name: keyof FormData, value: string) => {
+    markEvaluationStarted();
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
   const onTextChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => update(event.target.name as keyof FormData, event.target.value);
 
   const validateStep = (step: number) => {
@@ -194,16 +216,27 @@ export function SimpleMultiProjectForm() {
     return true;
   };
 
-  const next = () => { if (validateStep(currentStep)) setCurrentStep((step) => Math.min(step + 1, STEPS.length - 1)); };
+  const next = () => {
+    markEvaluationStarted();
+    if (validateStep(currentStep)) setCurrentStep((step) => Math.min(step + 1, STEPS.length - 1));
+  };
   const previous = () => setCurrentStep((step) => Math.max(step - 1, 0));
 
   const addDocuments = (files: FileList | null) => {
     if (!files) return;
+    markEvaluationStarted();
     const accepted = Array.from(files).filter((file) => ["application/pdf", "image/jpeg", "image/png"].includes(file.type) && file.size <= 10 * 1024 * 1024).slice(0, Math.max(0, 5 - selectedDocuments.length));
     if (accepted.length !== files.length) toast.message("Seuls 5 fichiers PDF, JPG ou PNG de 10 Mo maximum peuvent être ajoutés.");
     setSelectedDocuments((previous) => [...previous, ...accepted.map((file) => ({ file, documentType: selectedDocumentType }))]);
   };
   const readFileAsDataUrl = (file: File) => new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(new Error("Lecture du fichier impossible")); reader.readAsDataURL(file); });
+
+  const formatReviewDeadline = (value: unknown): string | null => {
+    if (!value) return null;
+    const date = value instanceof Date ? value : new Date(String(value));
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" });
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -224,6 +257,13 @@ export function SimpleMultiProjectForm() {
       }
       setUploadedDocumentCount(uploaded);
       setSubmittedDossierCode(typeof created.dossierCode === "string" && created.dossierCode.trim() ? created.dossierCode.trim() : null);
+      setSubmittedReviewDeadline(formatReviewDeadline(created.reviewDeadline));
+      trackEvent("evaluation_completed", {
+        project_type: formData.projectType,
+        destination: formData.destinationCountry || "unset",
+        has_documents: uploaded > 0,
+        event_category: "public_evaluation",
+      });
       toast.success("Évaluation soumise avec succès. Vérifiez votre e-mail.");
       setIsSuccessVisible(true);
     } finally { setIsSubmitting(false); }
@@ -269,6 +309,36 @@ export function SimpleMultiProjectForm() {
               Un conseiller examine vos éléments. {uploadedDocumentCount > 0 ? `${uploadedDocumentCount} pièce(s) ont été ajoutée(s) pour vérification. ` : ""}
               Vérifiez votre e-mail : un accusé de réception confirme l’enregistrement.
             </p>
+            <div
+              className="mx-auto mt-5 max-w-md rounded-2xl border border-emerald-300 bg-white p-4 text-left"
+              data-testid="evaluation-next-steps"
+            >
+              <h4 className="text-sm font-black text-emerald-950">Prochaine étape</h4>
+              <dl className="mt-3 space-y-3 text-sm text-emerald-950">
+                <div>
+                  <dt className="text-xs font-bold uppercase tracking-wide text-emerald-700">Délai de réponse attendu</dt>
+                  <dd className="mt-1 leading-6">
+                    {submittedReviewDeadline
+                      ? <>Réponse d’un conseiller sous environ 24 h ouvrées (cible interne : avant le {submittedReviewDeadline}).</>
+                      : <>Réponse d’un conseiller sous environ 24 heures ouvrées.</>}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-bold uppercase tracking-wide text-emerald-700">Mode de contact</dt>
+                  <dd className="mt-1 leading-6">
+                    Principalement par <strong>e-mail</strong> (accusé puis avis). WhatsApp reste disponible pour une question urgente au conseiller.
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-bold uppercase tracking-wide text-emerald-700">Où retrouver le suivi</dt>
+                  <dd className="mt-1 leading-6">
+                    {isAuthenticated
+                      ? <>Dans <strong>Mon espace</strong> (vue d’ensemble), avec la référence ci-dessus.</>
+                      : <>Après création de compte, dans <strong>Mon espace</strong> — la référence ci-dessus permet de rattacher la demande.</>}
+                  </dd>
+                </div>
+              </dl>
+            </div>
             <ol className="mx-auto mt-4 max-w-md space-y-2 text-left text-sm text-emerald-950">
               <li className="flex gap-2"><span className="font-black text-emerald-700">1.</span><span>{isAuthenticated ? <>Ouvrez <strong>Mon espace</strong> pour suivre le statut d’examen.</> : <>Créez un compte pour enregistrer le dossier et suivre le statut dans <strong>Mon espace</strong>.</>}</span></li>
               <li className="flex gap-2"><span className="font-black text-emerald-700">2.</span><span>Répondez aux notifications ou demandes de complément si elles apparaissent.</span></li>
@@ -309,6 +379,7 @@ export function SimpleMultiProjectForm() {
               onClick={() => {
                 setIsSuccessVisible(false);
                 setSubmittedDossierCode(null);
+                setSubmittedReviewDeadline(null);
                 setCurrentStep(0);
                 setSelectedDocuments([]);
                 setUploadedDocumentCount(0);
@@ -347,7 +418,7 @@ export function SimpleMultiProjectForm() {
                   {formData.destinationCountry === "Allemagne" && <div className="md:col-span-2 rounded-xl border border-blue-100 bg-blue-50 p-4"><h4 className="font-black text-blue-950">Questions Allemagne</h4><div className="mt-3 grid gap-4 md:grid-cols-2"><Field label="Niveau d’allemand ou d’anglais"><Input name="germanyLanguageLevel" value={formData.germanyLanguageLevel || ""} onChange={onTextChange} placeholder="Ex. A2, B1, anglais professionnel" maxLength={255} /></Field><Field label="Situation de la qualification"><Input name="germanyRecognitionStatus" value={formData.germanyRecognitionStatus || ""} onChange={onTextChange} placeholder="À vérifier, traduction disponible, reconnaissance en cours…" maxLength={255} /></Field></div><p className="mt-3 text-xs text-blue-900">La reconnaissance dépend notamment du métier ; l’équipe vérifie les critères applicables avant toute démarche.</p></div>}
                   {formData.destinationCountry && <div className="md:col-span-2 rounded-2xl border border-violet-200 bg-violet-50 p-4"><div className="flex items-start gap-3"><Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-violet-700" aria-hidden="true" /><div><h4 className="font-black text-violet-950">Adapter les questions à votre projet</h4><p className="mt-1 text-sm leading-6 text-violet-950">Vous pouvez demander quelques questions de préparation adaptées à vos réponses. Elles aident à organiser l’échange avec le conseiller, sans confirmer une procédure ni un résultat.</p></div></div><label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-violet-100 bg-white p-3 text-sm text-slate-800"><input type="checkbox" checked={Boolean(formData.geminiAnalysisConsent)} onChange={(event) => { setFormData((previous) => ({ ...previous, geminiAnalysisConsent: event.target.checked })); if (!event.target.checked) { setOrientationPreview(null); setDynamicResponses([]); } }} className="mt-1 h-4 w-4 accent-[#0B2A52]" /><span><strong>J’accepte l’adaptation des questions à partir de mes réponses déclarées.</strong><br /><span className="text-xs leading-5 text-slate-600">N’indiquez pas de numéro de document, coordonnées bancaires, adresse précise, information médicale ou autre donnée sensible. Les fichiers joints ne sont pas utilisés pour cette préparation.</span></span></label><Button type="button" variant="outline" className="mt-3 w-full gap-2 border-violet-200 bg-white text-violet-900 hover:bg-violet-100" onClick={requestOrientationPreview} disabled={!formData.geminiAnalysisConsent || previewGeminiOrientation.isPending}>{previewGeminiOrientation.isPending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}{previewGeminiOrientation.isPending ? "Préparation des questions…" : "Personnaliser mes questions"}</Button>{previewGeminiOrientation.isPending && <p role="status" aria-live="polite" className="mt-3 flex items-center gap-2 rounded-xl border border-violet-200 bg-white p-3 text-xs text-violet-950"><LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />Préparation personnalisée en cours. Vos pièces jointes ne sont pas concernées.</p>}{orientationPreview && <div className="mt-3 rounded-xl border border-violet-200 bg-white p-4" aria-live="polite"><h5 className="font-black text-violet-950">Questions complémentaires</h5>{dynamicResponses.length > 0 ? <div className="mt-3 space-y-4">{dynamicResponses.map((response, index) => <label key={response.question} className="block text-sm font-semibold text-slate-800">{response.question}<Textarea value={response.answer} onChange={(event) => setDynamicResponses((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, answer: event.target.value.slice(0, 1000) } : item))} maxLength={1000} className="mt-2 bg-white" placeholder="Réponse facultative, à compléter uniquement si vous disposez de l’information." /></label>)}</div> : <p className="mt-2 text-sm text-slate-700">Aucune précision complémentaire n’est nécessaire à cette étape. Vous pouvez poursuivre le questionnaire.</p>}<p className="mt-3 text-xs leading-5 text-slate-600">Les éléments ci-dessus restent préparatoires et seront revus par un conseiller avec les sources officielles.</p></div>}</div>}
                 </div>}
-                {currentStep === 3 && <div className="space-y-5"><div className="rounded-2xl border border-[#D8A928]/35 bg-amber-50/70 p-4"><div className="flex gap-3"><ClipboardList className="mt-0.5 h-5 w-5 shrink-0 text-[#9A7200]" /><div><h4 className="font-black text-slate-950">Catalogue documentaire — {formData.destinationCountry || "sélectionnez un pays"}</h4><p className="mt-1 text-sm text-slate-600">Préparez les pièces pertinentes. La liste finale est confirmée par l’équipe selon votre cas et la procédure officielle.</p></div></div><div className="mt-4 grid gap-2 sm:grid-cols-2">{requirements.map((item) => <div key={`${item.category}-${item.label}`} className="rounded-xl border border-amber-100 bg-white p-3"><span className="text-[11px] font-black uppercase tracking-wide text-[#9A7200]">{item.category} · {item.priority}</span><p className="mt-1 flex gap-2 text-sm font-bold text-slate-900"><FileText className="h-4 w-4 shrink-0 text-blue-700" />{item.label}</p><p className="mt-1 text-xs leading-5 text-slate-600">{item.detail}</p></div>)}</div></div><div className="rounded-2xl border border-blue-100 bg-slate-50 p-4"><div className="flex items-start gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-700" /><div><h4 className="font-black text-slate-950">Dépôt sécurisé facultatif</h4><p className="mt-1 text-xs leading-5 text-slate-600">Ajoutez au maximum 5 fichiers PDF, JPG ou PNG de 10 Mo. Ils sont envoyés après la création du dossier, puis restent à vérifier par l’équipe.</p></div></div><div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]"><Select value={selectedDocumentType} onValueChange={(value) => setSelectedDocumentType(value as typeof selectedDocumentType)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="passport">Passeport</SelectItem><SelectItem value="cv">CV</SelectItem><SelectItem value="diploma">Diplôme</SelectItem><SelectItem value="certificate">Attestation</SelectItem><SelectItem value="bank_statement">Ressources financières</SelectItem><SelectItem value="language_test">Test de langue</SelectItem><SelectItem value="other">Autre pièce</SelectItem></SelectContent></Select><Label className="flex cursor-pointer items-center justify-center gap-2 rounded-md bg-[#0B2A52] px-4 py-2 text-sm font-bold text-white hover:bg-[#163d73]"><UploadCloud className="h-4 w-4" />Ajouter<input className="sr-only" type="file" accept="application/pdf,image/jpeg,image/png" multiple onChange={(event) => { addDocuments(event.target.files); event.target.value = ""; }} /></Label></div>{selectedDocuments.length > 0 && <ul className="mt-3 space-y-2" aria-label="Documents sélectionnés">{selectedDocuments.map((item, index) => <li key={`${item.file.name}-${index}`} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"><span className="min-w-0 truncate"><strong>{item.file.name}</strong> <span className="text-slate-500">({Math.ceil(item.file.size / 1024)} Ko)</span></span><Button type="button" variant="ghost" size="sm" onClick={() => setSelectedDocuments((items) => items.filter((_, itemIndex) => itemIndex !== index))}>Retirer</Button></li>)}</ul>}</div><Field label="Lien vers votre CV (optionnel)"><Input name="cvLink" type="url" value={formData.cvLink || ""} onChange={onTextChange} placeholder="https://drive.google.com/..." maxLength={500} /></Field></div>}
+                {currentStep === 3 && <div className="space-y-5"><div className="rounded-2xl border border-[#D8A928]/35 bg-amber-50/70 p-4"><div className="flex gap-3"><ClipboardList className="mt-0.5 h-5 w-5 shrink-0 text-[#9A7200]" /><div><h4 className="font-black text-slate-950">Catalogue documentaire — {formData.destinationCountry || "sélectionnez un pays"}</h4><p className="mt-1 text-sm text-slate-600">Préparez les pièces pertinentes. La liste finale est confirmée par l’équipe selon votre cas et la procédure officielle.</p></div></div><div className="mt-4 grid gap-2 sm:grid-cols-2">{requirements.map((item) => <div key={`${item.category}-${item.label}`} className="rounded-xl border border-amber-100 bg-white p-3"><span className="text-[11px] font-black uppercase tracking-wide text-[#9A7200]">{item.category} · {item.priority}</span><p className="mt-1 flex gap-2 text-sm font-bold text-slate-900"><FileText className="h-4 w-4 shrink-0 text-blue-700" />{item.label}</p><p className="mt-1 text-xs leading-5 text-slate-600">{item.detail}</p></div>)}</div></div><div className="rounded-2xl border border-blue-100 bg-slate-50 p-4" data-testid="evaluation-docs-privacy"><div className="flex items-start gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-700" /><div><h4 className="font-black text-slate-950">Dépôt sécurisé facultatif</h4><p className="mt-1 text-xs leading-5 text-slate-600">Ajoutez au maximum 5 fichiers PDF, JPG ou PNG de 10 Mo. Ils sont envoyés après la création du dossier, puis restent à vérifier par l’équipe.</p><ul className="mt-3 space-y-1.5 text-xs leading-5 text-slate-700"><li><strong>Qui y a accès :</strong> {DOCUMENT_VAULT_POLICY.access.fr}</li><li><strong>Pourquoi elles sont demandées :</strong> pour préparer votre dossier et permettre au conseiller de vérifier la cohérence avec la procédure — jamais pour une publication publique.</li><li><strong>Confidentialité :</strong>{" "}<a href={DOCUMENT_VAULT_POLICY.privacyPath} className="font-bold text-blue-800 underline underline-offset-2 hover:text-blue-950">Politique de confidentialité</a></li></ul></div></div><div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]"><Select value={selectedDocumentType} onValueChange={(value) => setSelectedDocumentType(value as typeof selectedDocumentType)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="passport">Passeport</SelectItem><SelectItem value="cv">CV</SelectItem><SelectItem value="diploma">Diplôme</SelectItem><SelectItem value="certificate">Attestation</SelectItem><SelectItem value="bank_statement">Ressources financières</SelectItem><SelectItem value="language_test">Test de langue</SelectItem><SelectItem value="other">Autre pièce</SelectItem></SelectContent></Select><Label className="flex cursor-pointer items-center justify-center gap-2 rounded-md bg-[#0B2A52] px-4 py-2 text-sm font-bold text-white hover:bg-[#163d73]"><UploadCloud className="h-4 w-4" />Ajouter<input className="sr-only" type="file" accept="application/pdf,image/jpeg,image/png" multiple onChange={(event) => { addDocuments(event.target.files); event.target.value = ""; }} /></Label></div>{selectedDocuments.length > 0 && <ul className="mt-3 space-y-2" aria-label="Documents sélectionnés">{selectedDocuments.map((item, index) => <li key={`${item.file.name}-${index}`} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"><span className="min-w-0 truncate"><strong>{item.file.name}</strong> <span className="text-slate-500">({Math.ceil(item.file.size / 1024)} Ko)</span></span><Button type="button" variant="ghost" size="sm" onClick={() => setSelectedDocuments((items) => items.filter((_, itemIndex) => itemIndex !== index))}>Retirer</Button></li>)}</ul>}</div><Field label="Lien vers votre CV (optionnel)"><Input name="cvLink" type="url" value={formData.cvLink || ""} onChange={onTextChange} placeholder="https://drive.google.com/..." maxLength={500} /><p className="mt-1.5 text-xs leading-5 text-slate-600">Si vous préférez un lien plutôt qu’un fichier : utilisez un partage privé. Seule l’équipe affectée à votre dossier le consulte.</p></Field></div>}
                 {currentStep === 4 && <div className="space-y-4"><div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4"><div className="flex gap-3"><MailCheck className="mt-0.5 h-5 w-5 text-emerald-700" /><div><h4 className="font-black text-emerald-950">Vérifiez votre évaluation avant l’envoi</h4><p className="mt-1 text-sm text-emerald-900">Utilisez Modifier pour corriger une étape. Aucun résultat automatique, visa, admission ou emploi n’est garanti.</p></div></div></div><SummarySection title="Projet" onEdit={() => setCurrentStep(0)} lines={[formData.projectType, formData.destinationCountry, COUNTRY_GUIDANCE[formData.destinationCountry] || "Orientation à confirmer"]} /><SummarySection title="Profil" onEdit={() => setCurrentStep(1)} lines={[formData.fullName, formData.email, formData.whatsappPhone, formData.nationality]} /><SummarySection title="Critères" onEdit={() => setCurrentStep(2)} lines={[formData.sector, formData.languages, formData.financialGuarantee, formData.franceProjectStatus, formData.belgiumRegion, formData.germanyLanguageLevel, formData.germanyRecognitionStatus, dynamicResponses.filter((response) => response.answer.trim()).length ? `${dynamicResponses.filter((response) => response.answer.trim()).length} réponse(s) complémentaire(s)` : ""].filter(Boolean) as string[]} /><SummarySection title="Documents" onEdit={() => setCurrentStep(3)} lines={[`${selectedDocuments.length} pièce(s) sélectionnée(s)`, formData.cvLink ? "Lien CV indiqué" : "Aucun lien CV indiqué"]} /><p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-700">Après soumission, l’équipe examine les informations déclarées et les pièces séparément. Seule une réponse relue et validée par un conseiller sera envoyée par e-mail et visible dans votre espace.</p></div>}
               </motion.section>
             </AnimatePresence>

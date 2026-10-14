@@ -114,7 +114,11 @@ export default function SubmitReview({ embedded = false, initialFullName = "", i
         >
           <Heading className="text-4xl font-bold text-slate-900 mb-4">Partagez votre Expérience</Heading>
           <p className="text-lg text-slate-600">
-            Votre avis nous aide à améliorer nos services et guide d'autres candidats
+            Réservé aux clients ayant réellement échangé avec 3M TRAVEL AGENCY. Chaque avis est vérifié avant publication.
+          </p>
+          <p className="mx-auto mt-4 max-w-xl rounded-xl border border-blue-100 bg-blue-50/80 px-4 py-3 text-left text-sm leading-6 text-slate-700" data-testid="review-eligibility-note">
+            <strong>Éligibilité :</strong> évaluation, dossier ou accompagnement initié avec l’agence.{" "}
+            <strong>Vérification :</strong> contrôle manuel de cohérence + consentement de publication — jamais d’avis inventés ni de mise en ligne automatique.
           </p>
         </motion.div>
 
@@ -344,11 +348,11 @@ export default function SubmitReview({ embedded = false, initialFullName = "", i
           transition={{ delay: 0.2 }}
           className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg"
         >
-          <h3 className="font-semibold text-blue-900 mb-2">Pourquoi laisser un avis ?</h3>
+          <h3 className="font-semibold text-blue-900 mb-2">Avis authentiques uniquement</h3>
           <ul className="text-sm text-blue-800 space-y-1">
-            <li>✓ Aider d'autres candidats à prendre une décision éclairée</li>
-            <li>✓ Nous permettre d'améliorer nos services</li>
-            <li>✓ Partager votre succès avec la communauté</li>
+            <li>✓ Réservé aux clients ayant réellement été accompagnés</li>
+            <li>✓ Modération humaine avant toute publication</li>
+            <li>✓ Consentement explicite requis — jamais d’avis inventés</li>
           </ul>
         </motion.div>
       </div>

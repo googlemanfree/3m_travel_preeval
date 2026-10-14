@@ -385,6 +385,33 @@ export default function CountryDetailPage() {
                   : 'Chiffres non revérifiés ici récemment — confirmez montants et délais sur le portail officiel avant toute demande.'}
               </p>
             )}
+            <p
+              className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600"
+              data-testid="procedure-fee-control-stamp"
+              role="status"
+            >
+              <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-700" aria-hidden="true" />
+              <span>
+                {sourceVerifiedAt || portal?.officialVerifiedAt
+                  ? `${L.sourceVerifiedOn} ${sourceVerifiedAt || portal?.officialVerifiedAt}`
+                  : locale === 'en'
+                    ? 'Official control date to confirm'
+                    : 'Date de contrôle officiel à confirmer'}
+              </span>
+              {(verifiedFee?.officialUrl || portal?.officialPortalUrl) && (
+                <>
+                  <span className="text-slate-300" aria-hidden="true">·</span>
+                  <a
+                    href={verifiedFee?.officialUrl || portal?.officialPortalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-bold text-blue-700 underline-offset-2 hover:underline"
+                  >
+                    {locale === 'en' ? 'Official source' : 'Lien officiel'}
+                  </a>
+                </>
+              )}
+            </p>
           </Card>
         )}
 
@@ -470,6 +497,33 @@ export default function CountryDetailPage() {
               <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                 <Clock className="w-6 h-6 text-indigo-700" /> {L.stepsTitle} {country.name}
               </h2>
+              <p
+                className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-sky-100 bg-sky-50/70 px-3 py-2 text-xs text-slate-700"
+                data-testid="procedure-steps-control-stamp"
+                role="status"
+              >
+                <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-sky-700" aria-hidden="true" />
+                <span>
+                  {sourceVerifiedAt || portal?.officialVerifiedAt
+                    ? `${L.sourceVerifiedOn} ${sourceVerifiedAt || portal?.officialVerifiedAt}`
+                    : locale === 'en'
+                      ? 'Confirm each step on the official portal'
+                      : 'Confirmez chaque étape sur le portail officiel'}
+                </span>
+                {(institutionalSource?.officialUrl || portal?.officialPortalUrl) && (
+                  <>
+                    <span className="text-slate-300" aria-hidden="true">·</span>
+                    <a
+                      href={institutionalSource?.officialUrl || portal?.officialPortalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-bold text-blue-700 underline-offset-2 hover:underline"
+                    >
+                      {locale === 'en' ? 'Official source' : 'Lien officiel'}
+                    </a>
+                  </>
+                )}
+              </p>
               <div className="space-y-4">
                 {country.steps.map((step, idx) => (
                   <div key={idx} className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
@@ -537,6 +591,33 @@ export default function CountryDetailPage() {
               >
                 Liste indicative. Les pièces exactes dépendent du type de séjour ({country.visaType}), de votre
                 nationalité et de votre situation. Vérifiez toujours la source officielle affichée sur cette fiche.
+              </p>
+              <p
+                className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-600"
+                data-testid="procedure-documents-control-stamp"
+                role="status"
+              >
+                <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-700" aria-hidden="true" />
+                <span>
+                  {sourceVerifiedAt || portal?.officialVerifiedAt
+                    ? `${L.sourceVerifiedOn} ${sourceVerifiedAt || portal?.officialVerifiedAt}`
+                    : locale === 'en'
+                      ? 'Official control date to confirm'
+                      : 'Date de contrôle officiel à confirmer'}
+                </span>
+                {(institutionalSource?.officialUrl || portal?.officialPortalUrl) && (
+                  <>
+                    <span className="text-slate-300" aria-hidden="true">·</span>
+                    <a
+                      href={institutionalSource?.officialUrl || portal?.officialPortalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-bold text-blue-700 underline-offset-2 hover:underline"
+                    >
+                      {locale === 'en' ? 'Official source' : 'Lien officiel'}
+                    </a>
+                  </>
+                )}
               </p>
               <div className="space-y-5">
                 {country.requiredDocuments.map((cat, idx) => (

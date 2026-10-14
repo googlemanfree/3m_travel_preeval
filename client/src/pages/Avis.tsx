@@ -76,19 +76,19 @@ export default function Avis() {
           Nous ne publions pas de notes, statistiques ou témoignages attribués à des clients sans source vérifiable et autorisation adaptée. Les avis affichés ci-dessous sont des retours réellement soumis, vérifiés et approuvés par l’équipe avant publication, avec le consentement explicite de leur auteur.
         </p>
 
-        <div className="mt-10 grid gap-5 sm:grid-cols-2">
+        <div className="mt-10 grid gap-5 sm:grid-cols-2" data-testid="avis-authenticity">
           <article className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
             <ShieldCheck className="h-7 w-7 text-blue-700" aria-hidden="true" />
-            <h2 className="mt-4 text-lg font-black text-slate-950">Information vérifiable</h2>
+            <h2 className="mt-4 text-lg font-black text-slate-950">Qui peut témoigner</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Les conditions, étapes et délais indicatifs affichés sur le site ne remplacent jamais une confirmation individuelle d’un conseiller.
+              Les personnes ayant réellement initié une évaluation, un dossier ou un accompagnement avec 3M TRAVEL AGENCY. Les avis inventés ou anonymes non vérifiables ne sont pas publiés.
             </p>
           </article>
           <article className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
             <CheckCircle2 className="h-7 w-7 text-emerald-700" aria-hidden="true" />
-            <h2 className="mt-4 text-lg font-black text-slate-950">Votre dossier reste suivi</h2>
+            <h2 className="mt-4 text-lg font-black text-slate-950">Comment les avis sont vérifiés</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Les demandes soumises reçoivent une référence et sont traitées par l’équipe selon le parcours applicable.
+              Chaque témoignage est modéré manuellement : cohérence avec un contact ou un dossier connu, consentement de publication, et rejet des contenus trompeurs. Aucune note n’apparaît automatiquement.
             </p>
           </article>
         </div>
@@ -146,7 +146,7 @@ export default function Avis() {
               Partagez votre expérience
             </h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              Votre retour est transmis à l’équipe pour modération. Il n’est jamais affiché automatiquement et ne peut être publié qu’après vérification et accord de publication.
+              Formulaire court ci-dessous. Indiquez le même e-mail que celui de votre dossier lorsque c’est possible : cela accélère la vérification. Votre retour n’est jamais affiché automatiquement et ne peut être publié qu’après contrôle humain et consentement explicite.
             </p>
           </div>
           <SubmitReview embedded />

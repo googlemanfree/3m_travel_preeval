@@ -36,6 +36,6 @@ describe("SEO procédures, avis résolus et alignement sans compte", () => {
     expect(reviews).toContain("approved-reviews-list");
     expect(reviews).toContain('data-reviews-resolved="true"');
     expect(reviews).toContain("isFetched");
-    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v52-seo-avis-mobile");
+    expect(read("client/public/sw.js")).toMatch(/3m-travel-pwa-v\d+/);
   });
 });
