@@ -14,8 +14,8 @@ export const DOCUMENT_VAULT_POLICY = {
     en: "You upload and view your documents; the agency validates, requests a correction, or publishes a file to this vault. Statuses remain those set by the agency.",
   },
   retention: {
-    fr: "Conservation pendant le traitement du dossier, puis archivage selon les obligations légales. Voir la politique de confidentialité (§ Conservation).",
-    en: "Kept for the duration of case processing, then archived under applicable legal duties. See the privacy policy (Retention).",
+    fr: "Conservation pendant le traitement actif, puis archivage interne jusqu’à 5 ans après clôture (sauf suppression anticipée recevable). Détail : politique de confidentialité (§ Conservation).",
+    en: "Kept during active case processing, then archived internally for up to 5 years after closure (unless an earlier deletion request can be granted). Details: privacy policy (Retention).",
   },
   notifications: {
     fr: "Vous êtes averti dans Mon espace (et par e-mail selon vos préférences) lorsqu’une pièce manque, est reçue ou doit être corrigée.",

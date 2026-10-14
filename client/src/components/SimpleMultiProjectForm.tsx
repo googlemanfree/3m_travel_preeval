@@ -282,6 +282,13 @@ export function SimpleMultiProjectForm() {
       <Card className="premium-form-surface border border-slate-100 bg-white p-5 shadow-xl sm:p-8">
         <div className="mb-7">
           <div className="flex items-end justify-between gap-3"><div><h2 className="premium-section-title text-2xl">Évaluation guidée</h2><p className="premium-copy mt-1 text-sm">Sans compte pour démarrer — projet, destination, nationalité et contact. Le compte sert ensuite au suivi et aux documents confidentiels.</p></div><span className="text-sm font-bold text-blue-800">{progress}%</span></div>
+          <p
+            className="mt-3 rounded-xl border border-blue-100 bg-blue-50/80 px-3 py-2 text-xs leading-5 text-blue-950"
+            data-testid="evaluation-indicative-sla"
+            role="status"
+          >
+            <strong>Délai indicatif :</strong> un conseiller répond sous environ <strong>24 heures ouvrées</strong> après soumission (e-mail ; WhatsApp si besoin).
+          </p>
           {!isAuthenticated && (
             <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-950" role="status" data-testid="evaluation-guest-start">
               <strong>Accessible sans compte.</strong> Remplissez ce premier formulaire court. Créez un compte seulement si vous souhaitez enregistrer le dossier, suivre le statut ou déposer des pièces sensibles.
@@ -426,7 +433,7 @@ export function SimpleMultiProjectForm() {
           </form>
         )}
         {!isSuccessVisible && <div className="mt-5 grid gap-2 sm:grid-cols-2"><button type="button" onClick={() => window.open(`https://wa.me/237698104832?text=${encodeURIComponent(summary)}`, "_blank")} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-3 text-sm font-bold text-white transition-transform duration-150 hover:-translate-y-0.5 hover:bg-emerald-800 active:scale-[0.98]"><MessageCircleMore className="h-4 w-4" />Partager au conseiller WhatsApp</button><button type="button" onClick={async () => { try { await navigator.clipboard.writeText(summary); toast.success("Récapitulatif copié"); } catch { toast.error("Copie non disponible sur cet appareil"); } }} className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-800 px-4 py-3 text-sm font-bold text-white transition-transform duration-150 hover:-translate-y-0.5 hover:bg-slate-900 active:scale-[0.98]"><MailCheck className="h-4 w-4" />Copier le récapitulatif</button></div>}
-        <p className="mt-5 text-center text-sm text-slate-600">Évaluation gratuite · Réponse par un conseiller · Informations confidentielles</p>
+        <p className="mt-5 text-center text-sm text-slate-600">Évaluation gratuite · Réponse sous 24 h ouvrées · Informations confidentielles</p>
       </Card>
     </motion.div>
   );
