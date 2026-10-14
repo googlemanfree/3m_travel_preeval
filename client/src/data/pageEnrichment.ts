@@ -247,6 +247,34 @@ export const TARIFS_CONCRETE_BLOCKS: CommitmentItem[] = [
   },
 ];
 
+/**
+ * Exemples de fourchettes d’honoraires d’agence (hors frais tiers).
+ * Indicatifs uniquement — devis écrit avant engagement.
+ */
+export type TarifsFeeExample = {
+  label: string;
+  range: string;
+  detail: string;
+};
+
+export const TARIFS_FEE_EXAMPLES: TarifsFeeExample[] = [
+  {
+    label: "e-Visa / court séjour simple",
+    range: "65 000 – 150 000 FCFA",
+    detail: "Ouverture + préparation et dépôt guidé. Exemple typique pour une démarche e-Visa ou un visa court séjour à faible complexité.",
+  },
+  {
+    label: "Visa Schengen / études Europe",
+    range: "200 000 – 450 000 FCFA",
+    detail: "Honoraires d’accompagnement (checklist, relecture, protocole, suivi). Hors frais consulaires, biométrie et traductions.",
+  },
+  {
+    label: "Canada études ou travail",
+    range: "350 000 – 800 000 FCFA",
+    detail: "Dossier plus dense (pièces, chronologie, suivi prolongé). Le devis précise le périmètre et la formule (intégral, échelonné ou différé).",
+  },
+];
+
 // ---- /partenaires (français et anglais) ------------------------------------------------------------------------------
 
 export const PARTNERS_FAQ: { fr: FaqItem[]; en: FaqItem[] } = {

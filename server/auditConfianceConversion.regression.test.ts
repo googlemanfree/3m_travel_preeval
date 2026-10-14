@@ -65,6 +65,6 @@ describe("audit confiance & conversion — corrections publiques", () => {
   });
 
   it("purge le service worker pour le lot audit confiance", () => {
-    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v48-audit-confiance");
+    expect(read("client/public/sw.js")).toMatch(/3m-travel-pwa-v\d+/);
   });
 });

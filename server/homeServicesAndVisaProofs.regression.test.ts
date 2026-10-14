@@ -34,13 +34,16 @@ describe("page d'accueil : « Nos services » et preuves de visas Schengen", () 
     for (const lien of liens) expect(app.includes(`path="${lien}"`) || app.includes(`path={"${lien}"}`), lien).toBe(true);
   });
 
-  it("le paragraphe « Nos services » cite chaque activité avec un lien réel, et le nombre de destinations est compté depuis le catalogue réel", () => {
+  it("le paragraphe « Nos services » cite chaque activité avec un lien réel, et le catalogue suit la source canonique (fiches ≠ destinations)", () => {
     const section = read("client/src/components/ServicesOverviewSection.tsx");
-    expect(section).toContain("countUniqueDestinations");
+    expect(section).toContain("PUBLIC_CATALOGUE_STATS");
+    expect(section).toContain("formatCatalogueFichesLabel");
     expect(section).toContain("DESTINATION_COUNT");
-    expect(section).toContain("PROCEDURE_COUNT");
+    expect(section).toContain("FICHE_COUNT");
     expect(section).toContain("centre de préparation et de suivi de dossiers");
-    expect(section).toContain("{PROCEDURE_COUNT} procédures sur {DESTINATION_COUNT} destinations");
+    expect(section).toContain("{CATALOGUE_LABEL}");
+    expect(section).toContain("{CATALOGUE_COMPOSITION}");
+    expect(section).toContain("Une fiche = une procédure");
     expect(section).toContain("canaux autorisés");
     expect(section).toContain("Une seule ambition : transformer votre projet international en une démarche claire, préparée et crédible.");
   });

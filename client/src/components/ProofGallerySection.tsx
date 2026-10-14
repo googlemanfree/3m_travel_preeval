@@ -28,17 +28,32 @@ export type ProofGallerySectionProps = {
 function ProofImage({ photo, priority = false }: { photo: (typeof PROOF_PHOTOS)[number]; priority?: boolean }) {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  const imgRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
     setLoading(true);
     setFailed(false);
+    // Images déjà en cache : onLoad peut ne jamais se déclencher → lire complete/naturalWidth.
+    const img = imgRef.current;
+    if (img?.complete) {
+      if (img.naturalWidth > 0) setLoading(false);
+      else {
+        setLoading(false);
+        setFailed(true);
+      }
+      return;
+    }
     // Évite un spinner bloqué si onLoad ne se déclenche pas (cache / navigation directe).
     const timer = window.setTimeout(() => {
       setLoading((current) => {
-        if (current) setFailed(true);
+        if (current) {
+          const currentImg = imgRef.current;
+          if (currentImg?.complete && currentImg.naturalWidth > 0) return false;
+          setFailed(true);
+        }
         return false;
       });
-    }, 8_000);
+    }, 4_000);
     return () => window.clearTimeout(timer);
   }, [photo.src]);
 
@@ -59,6 +74,7 @@ function ProofImage({ photo, priority = false }: { photo: (typeof PROOF_PHOTOS)[
         </div>
       ) : (
         <img
+          ref={imgRef}
           src={photo.src}
           alt={photo.alt}
           loading={priority ? "eager" : "lazy"}

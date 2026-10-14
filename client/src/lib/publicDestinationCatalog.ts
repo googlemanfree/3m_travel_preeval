@@ -1,6 +1,7 @@
 import { ADMIN_CONSULAR_CATALOG, type AdminConsularCatalogEntry } from "@/lib/adminConsularCatalog";
 import { evisasDatabaseComplete } from "@/data/evisasDatabaseComplete";
 import { procedures107Complete, type CountryProcedureComplete } from "@/data/procedures107Complete";
+import { countUniqueDestinations } from "@shared/procedureCatalogStats";
 
 export type PublicDestinationDetail = {
   procedure: CountryProcedureComplete;
@@ -180,6 +181,18 @@ export const PUBLIC_DESTINATION_DETAILS: PublicDestinationDetail[] = [
 ].map(detailFromProcedure);
 
 export const PUBLIC_DESTINATION_PAGE_COUNT = PUBLIC_DESTINATION_DETAILS.length;
+
+/**
+ * Compteurs canoniques pour l’accueil et /procedures — une seule source de vérité.
+ * ficheCount = pages catalogue ; destinationCount = pays distincts couverts.
+ */
+export const PUBLIC_CATALOGUE_STATS = {
+  documentedProcedureCount: procedures107Complete.length,
+  evisaFicheCount: evisaProcedures.length,
+  ficheCount: PUBLIC_DESTINATION_PAGE_COUNT,
+  destinationCount: countUniqueDestinations(PUBLIC_DESTINATION_DETAILS.map((detail) => detail.procedure.id)),
+  documentedDestinationCount: countUniqueDestinations(procedures107Complete.map((procedure) => procedure.id)),
+} as const;
 
 /**
  * Résout les identifiants canoniques, les anciennes URL à base de nom de pays

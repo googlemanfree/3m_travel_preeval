@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   getPublicDestinationDetail,
   getPublicDestinationPath,
+  PUBLIC_CATALOGUE_STATS,
   PUBLIC_DESTINATION_DETAILS,
   PUBLIC_DESTINATION_PAGE_COUNT,
 } from "../client/src/lib/publicDestinationCatalog";
+import { formatCatalogueComposition, formatCatalogueFichesLabel } from "../shared/procedureCatalogStats";
 import { INSTITUTIONAL_PROCEDURE_SOURCES } from "../client/src/data/institutionalProcedureSources";
 import { composePublicPrerender } from "./publicPrerender";
 import { readFileSync } from "node:fs";
@@ -17,6 +19,15 @@ describe("couverture publique des 107 fiches de procédure", () => {
     expect(PUBLIC_DESTINATION_PAGE_COUNT).toBe(107);
     expect(PUBLIC_DESTINATION_DETAILS).toHaveLength(107);
     expect(new Set(PUBLIC_DESTINATION_DETAILS.map((detail) => detail.procedure.id)).size).toBe(107);
+    expect(PUBLIC_CATALOGUE_STATS).toMatchObject({
+      documentedProcedureCount: 91,
+      evisaFicheCount: 16,
+      ficheCount: 107,
+      destinationCount: 58,
+      documentedDestinationCount: 42,
+    });
+    expect(formatCatalogueFichesLabel(107, 58)).toBe("107 fiches sur 58 destinations");
+    expect(formatCatalogueComposition(91, 16, 107)).toContain("91 procédures documentées");
   });
 
   it("associe une référence institutionnelle assainie et traçable à chacune des 107 procédures", () => {
@@ -25,7 +36,7 @@ describe("couverture publique des 107 fiches de procédure", () => {
     for (const source of INSTITUTIONAL_PROCEDURE_SOURCES) {
       expect(source.officialUrl).toMatch(/^https:\/\//);
       expect(source.consultedOn).toMatch(/^2026-\d{2}-\d{2}$/);
-      expect(source.caveat).toContain("autorité compétente");
+      expect(source.caveat).toMatch(/Confirmez toujours/i);
     }
   });
 

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { CommitmentsSection } from "@/components/PageEnrichment";
-import { TARIFS_CONCRETE_BLOCKS, TARIFS_COST_PARTS } from "@/data/pageEnrichment";
+import { TARIFS_CONCRETE_BLOCKS, TARIFS_COST_PARTS, TARIFS_FEE_EXAMPLES } from "@/data/pageEnrichment";
 import { CheckCircle2, CircleHelp, Info, MessageCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -30,8 +30,8 @@ const SERVICE_OPTIONS = [
   },
   {
     name: "Accompagnement sur mesure",
-    detail: "Honoraires d’accompagnement (intégral, échelonné ou différé) selon destination et prestations — devis avant engagement.",
-    points: ["Devis écrit avant engagement", "Frais tiers (consulat, biométrie, etc.) exclus", "Aucune décision consulaire garantie"],
+    detail: "Honoraires d’accompagnement (intégral, échelonné ou différé) selon destination et prestations — fourchettes indicatives ci-dessous, devis écrit avant engagement.",
+    points: ["Fourchettes publiées à titre indicatif", "Devis écrit avant engagement", "Frais tiers (consulat, biométrie, etc.) exclus"],
     accent: "border-emerald-200 bg-emerald-50",
   },
 ];
@@ -96,6 +96,22 @@ export default function Tarifs() {
               <p className="mt-2 text-sm leading-6 text-slate-600">{block.text}</p>
             </article>
           ))}
+        </section>
+
+        <section className="mb-12" aria-labelledby="tarifs-fee-examples-title" data-testid="tarifs-fee-examples">
+          <h2 id="tarifs-fee-examples-title" className="premium-section-title text-2xl">Exemples de devis — honoraires d’agence</h2>
+          <p className="premium-copy mt-3 max-w-3xl text-base">
+            Fourchettes indicatives pour vous situer avant le contact. Le montant exact dépend du pays, du type de visa et du volume de pièces ; il est confirmé par écrit. Les frais consulaires et tiers restent exclus.
+          </p>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {TARIFS_FEE_EXAMPLES.map((example) => (
+              <article key={example.label} className="rounded-2xl border border-blue-100 bg-gradient-to-b from-blue-50/80 to-white p-5 sm:p-6">
+                <h3 className="text-sm font-black uppercase tracking-wide text-blue-900">{example.label}</h3>
+                <p className="mt-3 text-xl font-black tabular-nums text-slate-950">{example.range}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{example.detail}</p>
+              </article>
+            ))}
+          </div>
         </section>
 
         <section className="grid gap-6 md:grid-cols-3 md:gap-8" aria-label="Repères tarifaires">

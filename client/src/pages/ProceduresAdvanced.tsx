@@ -14,7 +14,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
 import { getProcedureVisualSources } from '@/data/procedureVisuals';
-import { getPublicDestinationDetail, getPublicDestinationPath, getPublicDestinationSearchTerms, normalizePublicDestinationSearchTerm, PUBLIC_DESTINATION_DETAILS } from '@/lib/publicDestinationCatalog';
+import { getPublicDestinationDetail, getPublicDestinationPath, getPublicDestinationSearchTerms, normalizePublicDestinationSearchTerm, PUBLIC_CATALOGUE_STATS, PUBLIC_DESTINATION_DETAILS } from '@/lib/publicDestinationCatalog';
+import { formatCatalogueComposition, formatCatalogueFichesLabel } from '@shared/procedureCatalogStats';
 import { getVerifiedProcedureFee } from '@/data/verifiedProcedureFees';
 import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
@@ -79,6 +80,12 @@ const VISA_DOCUMENT_CHECKLISTS = {
 
 const visaChecklistLabels = { travail: "Travail", etudes: "Études", visiteur: "Visiteur / tourisme" } as const;
 const PUBLIC_PROCEDURES = PUBLIC_DESTINATION_DETAILS.map((detail) => detail.procedure);
+const CATALOGUE_LABEL = formatCatalogueFichesLabel(PUBLIC_CATALOGUE_STATS.ficheCount, PUBLIC_CATALOGUE_STATS.destinationCount);
+const CATALOGUE_COMPOSITION = formatCatalogueComposition(
+  PUBLIC_CATALOGUE_STATS.documentedProcedureCount,
+  PUBLIC_CATALOGUE_STATS.evisaFicheCount,
+  PUBLIC_CATALOGUE_STATS.ficheCount,
+);
 const VISA_COUNTS = PUBLIC_PROCEDURES.reduce<Record<string, number>>((counts, procedure) => {
   counts[procedure.visaType] = (counts[procedure.visaType] ?? 0) + 1;
   return counts;
@@ -275,10 +282,10 @@ export default function ProceduresAdvanced() {
             </p>
             <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-blue-100/90">Yaoundé · Ottawa · partenaires internationaux</p>
             <h1 className="mt-4 max-w-3xl text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
-              Procédures internationales — {PUBLIC_PROCEDURES.length} destinations
+              Procédures internationales — {CATALOGUE_LABEL}
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-blue-50 sm:text-lg">
-              Filtres, comparaison de corridors et checklists documentaires pour orienter votre projet. Chaque exigence reste à confirmer auprès des autorités compétentes — aucun visa ni emploi n’est promis.
+              {CATALOGUE_COMPOSITION}. Filtres, comparaison de corridors et checklists documentaires pour orienter votre projet. Chaque exigence reste à confirmer auprès des autorités compétentes — aucun visa ni emploi n’est promis.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <a

@@ -96,6 +96,16 @@ describe("contenu enrichi des pages : soutenu mais honnête", () => {
     expect(tarifsPage).toContain("TARIFS_CONCRETE_BLOCKS");
   });
 
+  it("la page Tarifs publie des exemples de fourchettes d’honoraires pour situer le visiteur", async () => {
+    const { TARIFS_FEE_EXAMPLES } = await import("../client/src/data/pageEnrichment");
+    expect(TARIFS_FEE_EXAMPLES.length).toBeGreaterThanOrEqual(3);
+    expect(TARIFS_FEE_EXAMPLES.every((example) => /\d[\d\s]*–[\d\s]*FCFA/.test(example.range))).toBe(true);
+    const tarifsPage = read("client/src/pages/Tarifs.tsx");
+    expect(tarifsPage).toContain("tarifs-fee-examples");
+    expect(tarifsPage).toContain("TARIFS_FEE_EXAMPLES");
+    expect(tarifsPage).toContain("Exemples de devis");
+  });
+
   it("l'ancien nom « Prime Travel » n'apparaît plus dans le code vu par les clients", () => {
     // git grep rend le code 1 quand il ne trouve rien : c'est le résultat attendu.
     const result = spawnSync("git", ["grep", "-l", "Prime Travel", "--", "client/src", "server", "shared", ":!*.test.*"], { cwd: process.cwd(), encoding: "utf8" });

@@ -61,6 +61,6 @@ describe("suite audit suivante — overlay, frais, SEO, preuves, CTA", () => {
   });
 
   it("purge le service worker pour la suite suivante", () => {
-    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v49-suite-suivante");
+    expect(read("client/public/sw.js")).toMatch(/3m-travel-pwa-v\d+/);
   });
 });

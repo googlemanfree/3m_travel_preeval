@@ -105,10 +105,20 @@ function formatReviewDate(value: Review["createdAt"], language: "fr" | "en") {
   return date.toLocaleDateString(language === "en" ? "en-GB" : "fr-FR");
 }
 
+const REVIEWS_LOAD_TIMEOUT_MS = 6_000;
+
 export default function ApprovedReviewsSection() {
   const { language } = useLanguage();
-  const { data: reviews, isLoading } = trpc.customerReview.listApproved.useQuery();
-  const { data: stats } = trpc.customerReview.getStats.useQuery();
+  const { data: reviews, isLoading, isError } = trpc.customerReview.listApproved.useQuery(undefined, {
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+  const { data: stats } = trpc.customerReview.getStats.useQuery(undefined, {
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
   const translateReview = trpc.customerReview.translateApproved.useMutation();
   const [destinationFilter, setDestinationFilter] = useState<DestinationFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -118,8 +128,20 @@ export default function ApprovedReviewsSection() {
   const [visibleCount, setVisibleCount] = useState(REVIEWS_PAGE_SIZE);
   const [sortBy, setSortBy] = useState<SortOption>("rating-desc");
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const [loadTimedOut, setLoadTimedOut] = useState(false);
 
   const approvedReviews = useMemo(() => (reviews ?? []) as Review[], [reviews]);
+  const showLoadingSkeleton = isLoading && !isError && !loadTimedOut;
+
+  useEffect(() => {
+    if (!isLoading) {
+      setLoadTimedOut(false);
+      return;
+    }
+    // Ne jamais laisser le skeleton indéfiniment (API lente / réseau coupé).
+    const timer = window.setTimeout(() => setLoadTimedOut(true), REVIEWS_LOAD_TIMEOUT_MS);
+    return () => window.clearTimeout(timer);
+  }, [isLoading]);
 
   useEffect(() => {
     // Revenir à la première page de résultats lorsque le filtre, la recherche ou le tri change.
@@ -269,9 +291,9 @@ export default function ApprovedReviewsSection() {
         noReviewsYetCta: "Laisser le premier avis",
       };
 
-  if (isLoading) {
+  if (showLoadingSkeleton) {
     return (
-      <div className="py-16 px-4 bg-gradient-to-b from-white to-slate-50" aria-busy="true" aria-label={labels.loading}>
+      <div className="py-16 px-4 bg-gradient-to-b from-white to-slate-50" aria-busy="true" aria-label={labels.loading} data-testid="approved-reviews-loading">
         <div className="max-w-6xl mx-auto">
           <div className="mx-auto mb-10 max-w-2xl text-center">
             <Skeleton className="mx-auto h-8 w-64" />
