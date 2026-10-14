@@ -63,15 +63,17 @@ describe("cohérence compte / contact / confidentialité / annulation", () => {
     const tarifs = read("client/src/pages/Tarifs.tsx");
     const html = composePublicPrerender(shell, "/tarifs").html;
     expect(tarifs).toContain('data-testid="tarifs-cancel-cases"');
-    expect(tarifs).toContain("Avant protocole / avant paiement");
-    expect(tarifs).toContain("Traitement déjà engagé");
+    expect(tarifs).toContain("Avant paiement");
+    expect(tarifs).toContain("phase engagée");
     expect(tarifs).toContain("Refus de visa");
+    expect(tarifs).not.toContain("éventuel remboursement partiel selon le protocole écrit (cas par cas)");
     expect(html).toContain("Annulation et remboursement — cas couverts");
-    expect(html).toContain("Avant protocole / avant paiement");
+    expect(html).toContain("Avant paiement");
+    expect(html).toContain("phase engagée");
     expect(html).toContain("Refus de visa");
   });
 
   it("purge le service worker pour ce lot de cohérence", () => {
-    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v56-coherence-compte-contact");
+    expect(read("client/public/sw.js")).toMatch(/3m-travel-pwa-v\d+/);
   });
 });

@@ -48,4 +48,24 @@ test.describe("Confiance mobile — évaluation, annuaire, avis", () => {
     await expect(page.getByTestId("review-eligibility-note")).toBeVisible();
     await expect(page.getByRole("button", { name: /Soumettre mon Avis/i })).toBeVisible();
   });
+
+  test("parcours public confiance : contact, tarifs, confidentialité lisibles sur mobile", async ({ page }) => {
+    await page.goto("/contact");
+    const yaounde = page.getByTestId("contact-yaounde-numbers");
+    await expect(yaounde).toBeVisible({ timeout: 15_000 });
+    await expect(yaounde.getByText(/698 104 832/)).toBeVisible();
+    await expect(yaounde.getByText(/620 996 045/)).toBeVisible();
+    await expect(yaounde.getByText(/appels vocaux uniquement/i)).toBeVisible();
+
+    await page.goto("/tarifs");
+    const cancel = page.getByTestId("tarifs-cancel-cases");
+    await expect(cancel).toBeVisible({ timeout: 15_000 });
+    await expect(cancel.getByText(/Avant paiement/i)).toBeVisible();
+    await expect(cancel.getByText(/phase engagée/i)).toBeVisible();
+
+    await page.goto("/politique-confidentialite");
+    await expect(page.getByTestId("privacy-concrete-summary")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/Qui consulte vos documents/i).first()).toBeVisible();
+    await expect(page.getByText(/5 ans/i).first()).toBeVisible();
+  });
 });

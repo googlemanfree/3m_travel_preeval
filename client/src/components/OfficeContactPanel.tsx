@@ -69,7 +69,7 @@ export default function OfficeContactPanel() {
           <textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Décrivez brièvement votre demande…" aria-label="Votre message" required rows={4} maxLength={2000} className="mt-3 w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-blue-500" />
           {error && <p role="alert" className="mt-2 text-xs font-semibold text-red-700">{error}</p>}
           <Button type="submit" className="mt-4 h-11 w-full rounded-xl bg-[#0f6b46] font-bold text-white hover:bg-[#0b5538] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f6b46]"><Send className="mr-2 h-4 w-4" /> Continuer vers WhatsApp · {office.shortLabel}</Button>
-          <p className="mt-2 text-center text-[11px] leading-4 text-slate-500">Pour un message enregistré par e-mail (réponse sous 24 h), utilisez le formulaire plus bas sur cette page.</p>
+          <p className="mt-2 text-center text-[11px] leading-4 text-slate-500">Pour un message enregistré par e-mail (objectif : sous 24 h ouvrées), utilisez le formulaire plus bas sur cette page.</p>
         </form>
       </div>
     </section>

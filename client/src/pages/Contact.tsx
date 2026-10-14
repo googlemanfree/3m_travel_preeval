@@ -381,7 +381,7 @@ export default function Contact() {
                   <CheckCircle className="text-green-600 flex-shrink-0" size={20} />
                   <div>
                     <p className="text-green-800 font-semibold">Message envoyé avec succès!</p>
-                    <p className="text-green-700 text-sm">Vous recevrez une réponse dans les 24 heures.</p>
+                    <p className="text-green-700 text-sm">Objectif : réponse sous 24 heures ouvrées (jours ouvrés Yaoundé).</p>
                   </div>
                 </motion.div>
               )}
