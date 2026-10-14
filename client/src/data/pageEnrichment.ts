@@ -224,6 +224,29 @@ export const TARIFS_COST_PARTS: CommitmentItem[] = [
   { title: "Frais payés à des tiers", text: "Autorités, consulats, centres de visa ou biométriques, assureurs, traducteurs : ces frais sont facturés par ces organismes, indiqués séparément et jamais présumés inclus." },
 ];
 
+/**
+ * Blocs concrets affichés sur /tarifs (montants indicatifs autorisés ici uniquement).
+ * Distinct de TARIFS_COST_PARTS, qui reste sans chiffre pour les autres pages enrichies.
+ */
+export const TARIFS_CONCRETE_BLOCKS: CommitmentItem[] = [
+  {
+    title: "Ouverture de dossier — à partir de 65 000 FCFA",
+    text: "Lance l’examen conseiller et le suivi administratif. Le montant dépend du type de projet (travail, études, visiteur) et vous est confirmé par écrit avant règlement.",
+  },
+  {
+    title: "Services inclus dans les honoraires d’agence",
+    text: "Orientation du parcours, checklist documentaire, relecture des pièces, protocole d’accompagnement, suivi de statut et messagerie avec un conseiller — dans le périmètre écrit du service choisi.",
+  },
+  {
+    title: "Frais externes exclus",
+    text: "Autorités et consulats, centres de visa / biométrie, examens médicaux, assurances, traductions, billets d’avion, frais d’inscription universitaire et tout fournisseur tiers.",
+  },
+  {
+    title: "Remboursement et annulation",
+    text: "Pas de remboursement automatique. Les conditions d’arrêt ou de remboursement figurent dans le protocole signé avant paiement. Les frais déjà versés à des tiers suivent les règles de ces organismes ; les frais d’ouverture ne sont en principe pas remboursables une fois le traitement engagé, sauf disposition légale impérative contraire.",
+  },
+];
+
 // ---- /partenaires (français et anglais) ------------------------------------------------------------------------------
 
 export const PARTNERS_FAQ: { fr: FaqItem[]; en: FaqItem[] } = {

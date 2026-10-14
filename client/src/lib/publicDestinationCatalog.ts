@@ -95,8 +95,8 @@ const detailFromProcedure = (procedure: CountryProcedureComplete): PublicDestina
   return {
     procedure,
     sources,
-    lastUpdatedAt: consular?.officialVerifiedAt ?? "19 août 2026",
-    lastUpdatedIso: "2026-08-19",
+    lastUpdatedAt: consular?.officialVerifiedAt ?? "14 octobre 2026",
+    lastUpdatedIso: "2026-10-14",
     consular: {
       countryCode: consular?.countryCode ?? normalizeDestination(procedure.name),
       officialPortalUrl: consular?.officialPortalUrl,
@@ -112,7 +112,7 @@ const detailFromProcedure = (procedure: CountryProcedureComplete): PublicDestina
 
 export const getGuideLastUpdatedAt = (resource: { title: string }) => {
   const year = resource.title.match(/20\d{2}/)?.[0];
-  return year ? `Mis à jour en ${year} — vérifié le 19 août 2026` : "Vérifié le 19 août 2026";
+  return year ? `Mis à jour en ${year} — vérifié le 14 octobre 2026` : "Vérifié le 14 octobre 2026";
 };
 
 export const isRecentlyUpdated = (isoDate: string, days = 45) => {

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { CommitmentsSection } from "@/components/PageEnrichment";
-import { TARIFS_COST_PARTS } from "@/data/pageEnrichment";
+import { TARIFS_CONCRETE_BLOCKS, TARIFS_COST_PARTS } from "@/data/pageEnrichment";
 import { CheckCircle2, CircleHelp, Info, MessageCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -18,20 +18,20 @@ import { setPageSeo } from "@/lib/pageSeo";
 const SERVICE_OPTIONS = [
   {
     name: "Évaluation gratuite",
-    detail: "Première orientation sur votre projet et les informations à confirmer.",
-    points: ["Accessible sans compte", "Sans engagement de procédure", "Réponse et périmètre confirmés par un conseiller"],
+    detail: "Première orientation sur votre projet. Compte gratuit puis dépôt de CV pour un suivi complet — ou formulaire rapide sans compte.",
+    points: ["Sans engagement de procédure", "Créer un compte gratuit, puis déposer mon CV", "Réponse et périmètre confirmés par un conseiller"],
     accent: "border-blue-200 bg-blue-50",
   },
   {
-    name: "Ouverture et suivi de dossier",
-    detail: "Les honoraires d’agence sont communiqués pour le service demandé, avant tout règlement.",
-    points: ["Périmètre du service expliqué", "Documents et prochaines étapes confirmés", "Reçu et suivi administratif après validation"],
+    name: "Ouverture de dossier — dès 65 000 FCFA",
+    detail: "Frais d’ouverture indicatifs selon le profil ; montant exact confirmé par écrit avant tout paiement, avec reçu officiel.",
+    points: ["À partir de 65 000 FCFA", "Périmètre et checklist confirmés", "Suivi administratif après validation du règlement"],
     accent: "border-slate-200 bg-white",
   },
   {
     name: "Accompagnement sur mesure",
-    detail: "Certaines demandes exigent un devis individualisé selon la destination, les documents et les prestations retenues.",
-    points: ["Devis avant engagement", "Frais tiers distingués des honoraires d’agence", "Aucune décision consulaire ou fournisseur garantie"],
+    detail: "Honoraires d’accompagnement (intégral, échelonné ou différé) selon destination et prestations — devis avant engagement.",
+    points: ["Devis écrit avant engagement", "Frais tiers (consulat, biométrie, etc.) exclus", "Aucune décision consulaire garantie"],
     accent: "border-emerald-200 bg-emerald-50",
   },
 ];
@@ -56,7 +56,7 @@ export default function Tarifs() {
     setPageSeo({
       title: "Tarifs et honoraires | 3M TRAVEL AGENCY",
       description:
-        "Comprendre les tarifs 3M TRAVEL AGENCY : honoraires d’agence, frais tiers et confirmation écrite avant tout règlement.",
+        "Tarifs 3M TRAVEL AGENCY : ouverture dès 65 000 FCFA, services inclus, frais externes exclus, modalités de remboursement — confirmation écrite avant règlement.",
       image: heroVisual.desktop,
       imageAlt: heroVisual.alt,
     });
@@ -82,12 +82,21 @@ export default function Tarifs() {
           <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-blue-100/90">{INTERNATIONAL_BRAND.corridor}</p>
           <h1 className="mt-5 text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">Comprendre les tarifs avant de vous engager</h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-blue-50">
-            Honoraires d’agence, frais tiers et modalités : tout dépend du service et de votre situation. Une confirmation écrite est donnée avant tout règlement — aucun résultat de visa ou d’emploi n’est vendu.
+            Ouverture de dossier à partir de 65 000 FCFA, honoraires d’accompagnement selon le service, frais consulaires et tiers exclus. Confirmation écrite avant tout règlement — aucun résultat de visa ou d’emploi n’est vendu.
           </p>
         </div>
       </section>
 
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+
+        <section className="mb-12 grid gap-4 sm:grid-cols-2" aria-label="Tarifs concrets avant contact" data-testid="tarifs-concrete">
+          {TARIFS_CONCRETE_BLOCKS.map((block) => (
+            <article key={block.title} className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+              <h2 className="text-base font-black text-slate-950 sm:text-lg">{block.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{block.text}</p>
+            </article>
+          ))}
+        </section>
 
         <section className="grid gap-6 md:grid-cols-3 md:gap-8" aria-label="Repères tarifaires">
           {SERVICE_OPTIONS.map((option, index) => (
@@ -100,7 +109,11 @@ export default function Tarifs() {
                     <li key={point} className="flex gap-2 text-base leading-7 text-slate-700"><CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-blue-700" />{point}</li>
                   ))}
                 </ul>
-                <PublicEvaluationCTA className="mt-8 inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-700 px-4 py-3 text-sm font-black text-white transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+                <PublicEvaluationCTA
+                  hint
+                  hintClassName="text-center text-xs leading-5 text-slate-600"
+                  className="mt-8 inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-700 px-4 py-3 text-sm font-black text-white transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                >
                   Demander une orientation
                 </PublicEvaluationCTA>
               </Card>

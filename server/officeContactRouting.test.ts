@@ -69,7 +69,7 @@ describe("contacts multi-bureaux", () => {
     expect(officeWhatsAppUrl(OFFICE_CONTACTS.ottawa, ottawaMessage)).toContain("wa.me/16728972999");
     expect(officeWhatsAppUrl(OFFICE_CONTACTS.cameroon, cameroonMessage)).toContain("wa.me/237698104832");
     expect(officeMapsUrl(OFFICE_CONTACTS.ottawa)).toContain(encodeURIComponent("Ottawa, Ontario, Canada"));
-    expect(officeMapEmbedUrl(OFFICE_CONTACTS.cameroon)).toContain(encodeURIComponent("Avenue Marché Biyem-Assi, Yaoundé, Cameroun"));
+    expect(officeMapEmbedUrl(OFFICE_CONTACTS.cameroon)).toContain(encodeURIComponent("Biyem-Assi, Montée Chapelle Obili, Yaoundé, Cameroun"));
   });
 
   it("refuse les données incomplètes avant toute ouverture de WhatsApp", () => {

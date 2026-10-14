@@ -1,78 +1,79 @@
-import React from 'react';
-import { MapPin, Clock, Phone } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React from "react";
+import { MapPin, Clock, Phone } from "lucide-react";
+import { COMPANY_PROFILE } from "@/lib/companyContacts";
+import { officeMapsUrl } from "@/lib/officeContacts";
+
+const cameroon = { id: "cameroon" as const, ...COMPANY_PROFILE.offices.cameroon };
 
 export default function LocationBanner() {
   return (
-    <section className="py-12 px-4 bg-gradient-to-r from-blue-900 via-blue-800 to-blue-700 text-white">
-      <div className="max-w-5xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Address */}
+    <section className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-700 px-4 py-12 text-white">
+      <div className="mx-auto max-w-5xl">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           <div className="flex gap-4">
-            <div className="flex-shrink-0">
-              <MapPin className="w-8 h-8 text-blue-300" />
-            </div>
+            <MapPin className="h-8 w-8 shrink-0 text-blue-300" aria-hidden="true" />
             <div>
-              <h3 className="text-lg font-bold mb-1">📍 Siège Social & Agence Physique</h3>
-              <p className="text-blue-100 text-sm leading-relaxed">
-                Avenue Marché Biyem-Assi<br />
-                Montée Chapelle Obili<br />
-                Yaoundé, Cameroun
+              <h3 className="mb-1 text-lg font-bold">Siège &amp; bureau Yaoundé</h3>
+              <p className="text-sm leading-relaxed text-blue-100">
+                {cameroon.addressLines.map((line) => (
+                  <React.Fragment key={line}>
+                    {line}
+                    <br />
+                  </React.Fragment>
+                ))}
               </p>
             </div>
           </div>
 
-          {/* Hours */}
           <div className="flex gap-4">
-            <div className="flex-shrink-0">
-              <Clock className="w-8 h-8 text-blue-300" />
-            </div>
+            <Clock className="h-8 w-8 shrink-0 text-blue-300" aria-hidden="true" />
             <div>
-              <h3 className="text-lg font-bold mb-1">🕒 Horaires d'Ouverture</h3>
-              <p className="text-blue-100 text-sm leading-relaxed">
-                Lundi - Vendredi<br />
-                08h00 - 17h30<br />
-                Samedi sur RDV
+              <h3 className="mb-1 text-lg font-bold">Horaires</h3>
+              <p className="text-sm leading-relaxed text-blue-100">
+                {cameroon.openingHours.map((line) => (
+                  <React.Fragment key={line}>
+                    {line}
+                    <br />
+                  </React.Fragment>
+                ))}
               </p>
             </div>
           </div>
 
-          {/* Contact */}
           <div className="flex gap-4">
-            <div className="flex-shrink-0">
-              <Phone className="w-8 h-8 text-blue-300" />
-            </div>
+            <Phone className="h-8 w-8 shrink-0 text-blue-300" aria-hidden="true" />
             <div>
-              <h3 className="text-lg font-bold mb-2">📞 Prise de RDV</h3>
-              <div className="flex gap-2 flex-wrap">
+              <h3 className="mb-2 text-lg font-bold">Prise de RDV</h3>
+              <div className="flex flex-wrap gap-2">
                 <a
-                  href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%2C%20je%20souhaite%20prendre%20un%20rendez-vous%20%C3%A0%20l%27agence."
+                  href={`https://wa.me/${cameroon.whatsappNumber}?text=${encodeURIComponent("Bonjour 3M TRAVEL AGENCY, je souhaite prendre un rendez-vous à l’agence de Yaoundé.")}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-green-700 hover:bg-green-800 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-all"
+                  className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800"
                 >
                   WhatsApp
                 </a>
-                <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-all">
+                <a
+                  href="/consultation"
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                >
                   Réserver
-                </button>
+                </a>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Bottom CTA */}
-        <div className="mt-8 pt-8 border-t border-blue-400/30 text-center">
-          <p className="text-blue-100 mb-4">
-            Visitez notre agence pour une consultation personnalisée avec nos experts.
-          </p>
+        <div className="mt-8 border-t border-blue-400/30 pt-8 text-center">
+          <p className="mb-4 text-blue-100">Visitez notre bureau Yaoundé pour un échange avec l’équipe.</p>
           <a
-            href="https://maps.google.com/?q=Avenue+Marché+Biyem-Assi,+Yaoundé,+Cameroun"
+            href={officeMapsUrl(cameroon)}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block bg-white text-blue-900 font-bold py-2 px-6 rounded-lg hover:bg-blue-50 transition-all"
+            className="inline-block rounded-lg bg-white px-6 py-2 font-bold text-blue-900 transition hover:bg-blue-50"
+            data-testid="location-banner-maps"
           >
-            📍 Voir sur Google Maps
+            Voir sur Google Maps
           </a>
         </div>
       </div>

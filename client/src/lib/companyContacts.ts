@@ -64,7 +64,7 @@ export const COMPANY_PROFILE = {
       timeZoneLabel: "Heure du Cameroun (WAT)",
       openingHours: ["Lun–ven : 08 h 00 – 20 h 00", "Sam–dim : 09 h 00 – 18 h 00"],
       addressLines: ["Biyem-Assi, Montée Chapelle Obili", "À 10 m de EHS, Yaoundé, Cameroun"],
-      mapQuery: "Avenue Marché Biyem-Assi, Yaoundé, Cameroun",
+      mapQuery: "Biyem-Assi, Montée Chapelle Obili, Yaoundé, Cameroun",
     },
     ottawa: {
       label: "Bureau 3M TRAVEL AGENCY d’Ottawa, Canada",
