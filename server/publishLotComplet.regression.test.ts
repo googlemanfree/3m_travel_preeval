@@ -35,14 +35,13 @@ describe("lot publish complet — demandes regroupées", () => {
     expect(space).toContain("Ouvrir le coffre documentaire");
   });
 
-  it("logo marque TRAVEL AGENCY (SVG) sur surfaces publiques", () => {
-    expect(existsSync(resolve(root, "client/public/logo-3m-travel-agency.svg"))).toBe(true);
-    const svg = read("client/public/logo-3m-travel-agency.svg");
-    expect(svg).toContain("TRAVEL");
-    expect(svg).toContain("AGENCY");
-    expect(svg).not.toContain("SERVICES");
-    expect(read("client/src/components/HeroSectionVIP.tsx")).toContain("/logo-3m-travel-agency.svg");
-    expect(read("client/src/components/Navbar.tsx")).toContain("/logo-3m-travel-agency.svg");
-    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v43-publish-lot");
+  it("logo premium HD TRAVEL AGENCY sur surfaces publiques", () => {
+    expect(existsSync(resolve(root, "client/public/logo-3m.webp"))).toBe(true);
+    expect(existsSync(resolve(root, "client/public/logo-3m-hd.webp"))).toBe(true);
+    expect(read("client/src/components/HeroSectionVIP.tsx")).toContain("/logo-3m-hd.webp");
+    expect(read("client/src/pages/Home.tsx")).toContain("/logo-3m-hd.webp");
+    expect(read("client/src/components/Navbar.tsx")).toContain("/logo-3m.webp");
+    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v44-logo-premium-hd");
   });
 });
+

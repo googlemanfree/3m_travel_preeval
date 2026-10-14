@@ -78,8 +78,9 @@ describe("performance : ce que la page d'accueil télécharge au démarrage", ()
     const hero = read("client/src/components/HeroSectionVIP.tsx");
     expect(hero).not.toContain("repeat: Infinity");
     expect(hero).not.toContain("animate-pulse");
-    expect(hero).toContain('logoUrl = "/logo-3m-travel-agency.svg"');
-    expect(statSync(publicFile("logo-3m-travel-agency.svg")).size).toBeLessThan(40 * 1024);
+    expect(hero).toContain('logoUrl = "/logo-3m-hd.webp"');
+    expect(statSync(publicFile("logo-3m.webp")).size).toBeLessThan(40 * 1024);
+    expect(statSync(publicFile("logo-3m-hd.webp")).size).toBeGreaterThan(20 * 1024);
     for (const file of ["client/src/components/Navbar.tsx", "client/src/components/Footer.tsx", "client/src/pages/Home.tsx"]) {
       expect(read(file), file).not.toContain("pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg");
     }

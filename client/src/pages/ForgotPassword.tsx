@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
-const LOGO_URL = "/logo-3m-travel-agency.svg";
+const LOGO_URL = "/logo-3m.webp";
 
 export default function ForgotPassword() {
   const [location] = useLocation();

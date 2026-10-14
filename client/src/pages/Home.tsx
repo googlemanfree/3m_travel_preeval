@@ -128,7 +128,7 @@ export default function Home() {
       {/* ─── HERO ────────────────────────────────────────────────────────── */}
       <HeroSectionVIP
         onEvalClick={() => setShowEvalModal(true)}
-        logoUrl="/logo-3m-travel-agency.svg"
+        logoUrl="/logo-3m-hd.webp"
         whatsappNumber={WHATSAPP_NUMBER}
       />
 
