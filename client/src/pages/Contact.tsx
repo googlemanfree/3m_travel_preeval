@@ -306,11 +306,15 @@ export default function Contact() {
             whileInView={{ opacity: 1 }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">
-              Envoyez-nous un message
+            <h2 className="text-3xl font-bold text-gray-900 mb-3 text-center">
+              Message par e-mail à l’agence
             </h2>
+            <p className="mx-auto mb-10 max-w-2xl text-center text-sm leading-6 text-slate-600">
+              Ce formulaire est distinct du message WhatsApp ci-dessus. Votre message est transmis à{" "}
+              <strong>{COMPANY_PROFILE.publicEmail}</strong>. Après envoi, vous recevez un accusé et une réponse sous 24 heures ouvrées.
+            </p>
 
-            <Card className="p-8">
+            <Card className="p-8" data-testid="contact-email-form">
               {error && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
@@ -448,10 +452,13 @@ export default function Contact() {
                   ) : (
                     <>
                       <Send size={20} />
-                      <span>Envoyer le message</span>
+                      <span>Envoyer le message par e-mail</span>
                     </>
                   )}
                 </motion.button>
+                <p className="text-center text-xs leading-5 text-slate-500">
+                  Besoin d’une réponse immédiate ? Utilisez plutôt le parcours WhatsApp en haut de page — le message s’ouvre dans WhatsApp, pas dans cette boîte mail.
+                </p>
               </form>
             </Card>
           </motion.div>

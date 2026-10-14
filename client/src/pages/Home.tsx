@@ -547,13 +547,16 @@ export default function Home() {
           role="region"
           aria-label={t("Action rapide d’évaluation", "Quick evaluation action")}
         >
-          <div className="mx-auto flex max-w-lg items-center gap-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+          <div className="mx-auto flex max-w-lg flex-col gap-1 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
             <a
               href="#evaluation-multi"
               className="touch-target inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-3 text-center text-sm font-black text-white shadow-md shadow-orange-900/20 transition active:scale-[0.98]"
             >
               {t("Évaluer mon projet — gratuit", "Evaluate my project — free")}
             </a>
+            <p className="px-1 text-center text-[11px] leading-4 text-slate-600">
+              {t("Créer un compte gratuit, puis déposer mon CV", "Create a free account, then upload your CV")}
+            </p>
           </div>
         </div>
       )}

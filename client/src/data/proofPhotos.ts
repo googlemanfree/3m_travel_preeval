@@ -18,19 +18,19 @@ export const PROOF_CATEGORY_LABELS: Record<ProofCategory, { fr: string; en: stri
 /** Toutes les informations personnelles de ces images (noms, numéros, MRZ, dates, codes-barres, signataire) sont masquées avant publication. */
 export const PROOF_PHOTOS: ProofPhoto[] = [
   {
-    src: "/manus-storage/proof-studies-france-pr44_f1acad06.jpg",
-    alt: "Parcours d’études en France présenté sans donnée personnelle identifiable",
-    caption: "Parcours études — préparation et suivi du dossier académique",
+    src: "/proof-photos/proof-visa-france-1.jpg",
+    alt: "Parcours d’études / mobilité France présenté sans donnée personnelle identifiable",
+    caption: "Parcours études — préparation et suivi du dossier académique (extrait masqué)",
     category: "etudes",
   },
   {
-    src: "/manus-storage/proof-immigration-canada_661463c1.jpg",
+    src: "/proof-photos/proof-express-entry-letter-1.jpg",
     alt: "Document de parcours d’immigration Canada avec les informations personnelles masquées",
     caption: "Immigration — exemple de document de parcours traité avec données masquées",
     category: "immigration",
   },
   {
-    src: "/manus-storage/proof-placement-context_b6484919.jpg",
+    src: "/proof-photos/proof-passports-letters-1.jpg",
     alt: "Illustration contextuelle d’un parcours professionnel international, sans promesse de placement",
     caption: "Placements — illustration du parcours professionnel international, sans promesse de résultat",
     category: "placements",
@@ -43,7 +43,7 @@ export const PROOF_PHOTOS: ProofPhoto[] = [
     category: "immigration",
   },
   {
-    src: "/proof-photos/proof-passports-letters-1.jpg",
+    src: "/proof-photos/proof-pr-letters-passports-1.jpg",
     alt: "Confirmations de résidence permanente et passeports de clients, informations personnelles masquées",
     caption: "Dossiers de résidence permanente Canada traités par 3M TRAVEL AGENCY",
     category: "immigration",
@@ -65,18 +65,6 @@ export const PROOF_PHOTOS: ProofPhoto[] = [
     alt: "Visa Chine approuvé dans un passeport de client, informations personnelles masquées",
     caption: "Dossier de visa Chine traité et validé pour un candidat camerounais",
     category: "visas",
-  },
-  {
-    src: "/proof-photos/proof-pr-letters-passports-1.jpg",
-    alt: "Confirmations de résidence permanente Canada et passeports de clients, informations personnelles masquées",
-    caption: "Quatre dossiers de résidence permanente Canada traités simultanément",
-    category: "immigration",
-  },
-  {
-    src: "/proof-photos/proof-express-entry-letter-1.jpg",
-    alt: "Lettre IRCC de suivi de dossier Entrée express, informations personnelles masquées",
-    caption: "Suivi officiel IRCC — dossier Entrée express en voie de finalisation",
-    category: "immigration",
   },
   {
     src: "/proof-photos/proof-canada-visa-1.jpg",
@@ -136,12 +124,6 @@ export const PROOF_PHOTOS: ProofPhoto[] = [
     src: "/proof-photos/proof-visa-espagne-1.jpg",
     alt: "Visa Schengen Espagne approuvé, informations personnelles masquées",
     caption: "Visa Schengen Espagne obtenu pour un candidat accompagné par 3M TRAVEL AGENCY",
-    category: "visas",
-  },
-  {
-    src: "/proof-photos/proof-visa-france-1.jpg",
-    alt: "Visa Schengen France (tourisme) approuvé, informations personnelles masquées",
-    caption: "Visa Schengen France — tourisme — obtenu pour un candidat accompagné par 3M TRAVEL AGENCY",
     category: "visas",
   },
   {

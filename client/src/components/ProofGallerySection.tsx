@@ -25,9 +25,22 @@ export type ProofGallerySectionProps = {
   hideWhenEmpty?: boolean;
 };
 
-function ProofImage({ photo }: { photo: (typeof PROOF_PHOTOS)[number] }) {
+function ProofImage({ photo, priority = false }: { photo: (typeof PROOF_PHOTOS)[number]; priority?: boolean }) {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    setFailed(false);
+    // Évite un spinner bloqué si onLoad ne se déclenche pas (cache / navigation directe).
+    const timer = window.setTimeout(() => {
+      setLoading((current) => {
+        if (current) setFailed(true);
+        return false;
+      });
+    }, 8_000);
+    return () => window.clearTimeout(timer);
+  }, [photo.src]);
 
   return (
     <div className="relative aspect-[4/3] overflow-hidden bg-slate-100" data-testid="proof-image-frame">
@@ -48,8 +61,9 @@ function ProofImage({ photo }: { photo: (typeof PROOF_PHOTOS)[number] }) {
         <img
           src={photo.src}
           alt={photo.alt}
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
           decoding="async"
+          fetchPriority={priority ? "high" : "auto"}
           onLoad={() => setLoading(false)}
           onError={() => {
             setLoading(false);
@@ -180,7 +194,7 @@ export default function ProofGallerySection({
               }}
               className="group overflow-hidden rounded-2xl border border-slate-200 text-left shadow-sm transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-1 hover:shadow-lg motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
             >
-              <ProofImage photo={photo} />
+              <ProofImage photo={photo} priority={index < 3 && !expanded} />
               <p className="p-3 text-xs font-semibold text-slate-700">
                 {photo.kind === "context" && (
                   <span className="mb-1 block text-[10px] font-black uppercase tracking-wider text-amber-700">

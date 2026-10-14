@@ -66,6 +66,7 @@ const NAV_COPY = {
   openSpace: { fr: "Ouvrir mon espace", en: "Open my space" },
   connected: { fr: "Connecté", en: "Signed in" },
   evaluate: { fr: "Évaluer mon profil", en: "Assess my profile" },
+  evaluateHint: { fr: "Compte gratuit, puis dépôt du CV", en: "Free account, then CV upload" },
   openMenu: { fr: "Ouvrir le menu", en: "Open menu" },
   closeMenu: { fr: "Fermer le menu", en: "Close menu" },
 } satisfies Record<string, NavCopy>;
@@ -431,6 +432,9 @@ export default function Navbar() {
                 >
                   <Star className="h-4 w-4" aria-hidden="true" /> {copy(NAV_COPY.evaluate)}
                 </a>
+                <p className="px-1 text-center text-[11px] leading-4 text-slate-500" data-testid="mobile-eval-hint">
+                  {copy(NAV_COPY.evaluateHint)}
+                </p>
                 <a
                   href="/login"
                   onMouseEnter={() => handleNavigationIntent("/login")}

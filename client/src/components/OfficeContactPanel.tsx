@@ -53,12 +53,23 @@ export default function OfficeContactPanel() {
           </div>
         </div>
 
-        <form onSubmit={submitQuickContact} className="min-w-0 rounded-2xl bg-slate-50 p-4 md:p-5" noValidate>
-          <div className="flex items-center gap-2"><MessageCircle className="h-5 w-5 text-blue-700" /><div><h3 className="font-black text-slate-900">Message rapide</h3><p className="text-xs text-slate-600">Votre message sera préparé pour le {office.label} sélectionné.</p></div></div>
+        <form onSubmit={submitQuickContact} className="min-w-0 rounded-2xl border border-emerald-100 bg-slate-50 p-4 md:p-5" noValidate data-testid="office-whatsapp-form">
+          <div className="flex items-start gap-2">
+            <MessageCircle className="mt-0.5 h-5 w-5 shrink-0 text-[#0f6b46]" />
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#0f6b46]">Parcours WhatsApp</p>
+              <h3 className="font-black text-slate-900">Message rapide via WhatsApp</h3>
+              <p className="mt-1 text-xs leading-5 text-slate-600">
+                Ce formulaire n’envoie rien au site. Il ouvre WhatsApp avec un message prérempli pour le{" "}
+                <strong>{office.label}</strong>. Vous validez l’envoi dans l’application WhatsApp.
+              </p>
+            </div>
+          </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2"><Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Votre nom" aria-label="Votre nom" required maxLength={255} /><Input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="votre@email.com" aria-label="Votre adresse e-mail" type="email" required maxLength={320} /></div>
           <textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Décrivez brièvement votre demande…" aria-label="Votre message" required rows={4} maxLength={2000} className="mt-3 w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-blue-500" />
           {error && <p role="alert" className="mt-2 text-xs font-semibold text-red-700">{error}</p>}
           <Button type="submit" className="mt-4 h-11 w-full rounded-xl bg-[#0f6b46] font-bold text-white hover:bg-[#0b5538] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f6b46]"><Send className="mr-2 h-4 w-4" /> Continuer vers WhatsApp · {office.shortLabel}</Button>
+          <p className="mt-2 text-center text-[11px] leading-4 text-slate-500">Pour un message enregistré par e-mail (réponse sous 24 h), utilisez le formulaire plus bas sur cette page.</p>
         </form>
       </div>
     </section>

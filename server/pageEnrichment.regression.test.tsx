@@ -19,6 +19,7 @@ import {
   PARCOURS_DELIVERABLES,
   PARCOURS_FAQ,
   PARTNERS_FAQ,
+  TARIFS_CONCRETE_BLOCKS,
   TARIFS_COST_PARTS,
   TOURISM_FAQ,
   TOURISM_STEPS,
@@ -86,6 +87,15 @@ describe("contenu enrichi des pages : soutenu mais honnête", () => {
     expect(DESTINATIONS_CRITERIA).toHaveLength(6);
   });
 
+  it("la page Tarifs publie des blocs concrets (ouverture, inclus, exclus, remboursement)", () => {
+    expect(TARIFS_CONCRETE_BLOCKS).toHaveLength(4);
+    expect(TARIFS_CONCRETE_BLOCKS[0].title).toMatch(/65[\s .]?000\s*FCFA/);
+    expect(TARIFS_CONCRETE_BLOCKS.map((block) => block.title).join(" ")).toMatch(/inclus|exclus|Remboursement/i);
+    const tarifsPage = read("client/src/pages/Tarifs.tsx");
+    expect(tarifsPage).toContain("tarifs-concrete");
+    expect(tarifsPage).toContain("TARIFS_CONCRETE_BLOCKS");
+  });
+
   it("l'ancien nom « Prime Travel » n'apparaît plus dans le code vu par les clients", () => {
     // git grep rend le code 1 quand il ne trouve rien : c'est le résultat attendu.
     const result = spawnSync("git", ["grep", "-l", "Prime Travel", "--", "client/src", "server", "shared", ":!*.test.*"], { cwd: process.cwd(), encoding: "utf8" });
@@ -124,7 +134,7 @@ describe("pages enrichies : sections branchées", () => {
     ["client/src/pages/AssuranceInscription.tsx", ["assurance-prepare", "assurance-faq"]],
     ["client/src/pages/PartnersHub.tsx", ["partners-faq", "PARTNERS_FAQ.en"]],
     ["client/src/pages/DestinationsHub.tsx", ["destinations-criteria", "destinations-faq"]],
-    ["client/src/pages/Tarifs.tsx", ["tarifs-cost-parts"]],
+    ["client/src/pages/Tarifs.tsx", ["tarifs-cost-parts", "tarifs-concrete"]],
     ["client/src/pages/Formation.tsx", ["formation-faq"]],
   ])("%s affiche ses nouvelles sections", (file, markers) => {
     const source = read(file);
