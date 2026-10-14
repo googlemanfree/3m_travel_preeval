@@ -42,4 +42,12 @@ describe("accès public au formulaire d’évaluation gratuite", () => {
     expect(form).toContain("aria-invalid={emailError}");
     expect(form).toContain("aria-invalid={whatsappError}");
   });
+
+  it("oriente le succès vers le suivi dans Mon espace avec référence", () => {
+    expect(form).toContain("Suivre ma demande dans Mon espace");
+    expect(form).toContain('setLocation("/mon-espace?section=overview")');
+    expect(form).toContain("submittedDossierCode");
+    expect(form).toContain("evaluation-account-gate");
+    expect(form).toContain("Suivi de la demande dans Mon espace");
+  });
 });

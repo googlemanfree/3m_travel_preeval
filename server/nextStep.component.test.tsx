@@ -32,6 +32,22 @@ describe("prochaine étape du candidat", () => {
     expect(computeNextStep({ ...base, evaluationStage: "published", cvOnFile: false }).id).toBe("evaluation-published");
   });
 
+  it("suivi en examen : référence visible et CTA vers le statut", () => {
+    const step = computeNextStep({
+      ...base,
+      evaluationStage: "pending",
+      cvOnFile: true,
+      evaluationReference: "3M-EVAL-42",
+      advisorWhatsAppUrl: "https://wa.me/237698104832",
+    });
+    expect(step.id).toBe("waiting-review");
+    expect(step.eyebrow).toMatch(/suivi actif/i);
+    expect(step.description).toContain("3M-EVAL-42");
+    expect(step.description).toMatch(/e-mail/i);
+    expect(step.actionLabel).toBe("Voir le statut");
+    expect(step.action).toEqual({ kind: "anchor", elementId: EVALUATION_ANCHOR_ID });
+  });
+
   it("protocole à signer, puis pièces refusées, puis pièces demandées, dans cet ordre", () => {
     expect(computeNextStep({ ...base, agreementSignatureRequired: true, requirements: [req(1, "rejected")] }).id).toBe("agreement");
     expect(computeNextStep({ ...base, requirements: [req(1, "rejected"), req(2, "pending")] }).id).toBe("documents-rejected");

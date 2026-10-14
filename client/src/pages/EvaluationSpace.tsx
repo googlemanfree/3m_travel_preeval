@@ -608,6 +608,7 @@ export default function EvaluationSpace() {
   const nextStep = computeNextStep({
     evaluationRequired,
     evaluationStage: structuredStage,
+    evaluationReference: evaluationCaseNumber || displayReference || null,
     cvOnFile: structuredEvaluation?.available ? structuredEvaluation.view.cv.onFile : undefined,
     paymentDue,
     paymentHref,
@@ -1086,7 +1087,7 @@ export default function EvaluationSpace() {
                 </Card>
               </section>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="p-5 border-violet-100 bg-white shadow-sm">
+                <Card className="p-5 border-violet-100 bg-white shadow-sm" data-testid="client-evaluation-status-card">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Évaluation</p>
@@ -1095,8 +1096,16 @@ export default function EvaluationSpace() {
                     <div className="rounded-xl bg-violet-50 p-3 text-violet-700"><Sparkles className="h-6 w-6" /></div>
                   </div>
                   <p className="mt-3 text-xs leading-5 text-violet-800">{evaluationStatusDetail}</p>
+                  {evaluationCaseNumber ? (
+                    <p className="mt-2 font-mono text-xs font-bold text-violet-950">Réf. {evaluationCaseNumber}</p>
+                  ) : null}
                   {reviewDueLabel && <p className="mt-2 text-xs font-semibold text-violet-900">Revue estimée au plus tard le {reviewDueLabel}</p>}
                   {validatedEvaluationResponse && <p className="mt-2 text-xs font-semibold text-emerald-800">Réponse validée par l’agence.</p>}
+                  {evaluationRequired ? (
+                    <Button type="button" onClick={openEvaluation} className="mt-3 h-10 bg-violet-700 text-white hover:bg-violet-800">Faire mon évaluation</Button>
+                  ) : latestEvaluation && !validatedEvaluationResponse ? (
+                    <p className="mt-3 text-[11px] leading-5 text-slate-600">Suivi actif : e-mail + notifications dans cet espace dès qu’une réponse est publiée.</p>
+                  ) : null}
                 </Card>
                 <Card className="p-5 border-blue-100 bg-white shadow-sm">
                   <div className="flex items-center justify-between">
@@ -1170,7 +1179,7 @@ export default function EvaluationSpace() {
                     <div className="flex min-w-0 gap-3">
                       <span className="shrink-0 rounded-xl bg-white/80 p-3 shadow-sm"><PriorityIcon className="h-5 w-5" aria-hidden="true" /></span>
                       <div>
-                        <p className="text-xs font-black uppercase tracking-[0.16em] opacity-75">À faire maintenant</p>
+                        <p className="text-xs font-black uppercase tracking-[0.16em] opacity-75">{nextStep.eyebrow}</p>
                         <h3 id="client-priority-title" className="mt-1 text-lg font-black">{nextStep.title}</h3>
                         <p className="mt-2 max-w-2xl text-sm leading-6 opacity-90">{nextStep.description}</p>
                         <p className="mt-2 text-xs leading-5 opacity-80">Lecture seule des dossiers actifs : les statuts restent ceux validés par l’agence. Aucune réécriture automatique ici.</p>
@@ -1644,7 +1653,7 @@ export default function EvaluationSpace() {
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 shadow-[0_-8px_30px_rgba(15,23,42,0.12)] backdrop-blur md:hidden" data-testid="client-sticky-next-step">
           <div className="mx-auto flex max-w-7xl items-center gap-3">
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[11px] font-black uppercase tracking-[0.12em] text-blue-700">À faire maintenant</p>
+              <p className="truncate text-[11px] font-black uppercase tracking-[0.12em] text-blue-700">{nextStep.eyebrow}</p>
               <p className="truncate text-sm font-bold text-slate-950">{nextStep.title}</p>
             </div>
             <Button type="button" onClick={() => actOnNextStep(nextStep)} className="h-11 shrink-0 bg-blue-800 text-white hover:bg-blue-900">

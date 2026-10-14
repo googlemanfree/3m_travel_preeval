@@ -134,6 +134,7 @@ export function SimpleMultiProjectForm() {
   const [selectedDocuments, setSelectedDocuments] = React.useState<Array<{ file: File; documentType: "passport" | "cv" | "diploma" | "certificate" | "bank_statement" | "language_test" | "other" }>>([]);
   const [selectedDocumentType, setSelectedDocumentType] = React.useState<"passport" | "cv" | "diploma" | "certificate" | "bank_statement" | "language_test" | "other">("other");
   const [uploadedDocumentCount, setUploadedDocumentCount] = React.useState(0);
+  const [submittedDossierCode, setSubmittedDossierCode] = React.useState<string | null>(null);
   const [orientationPreview, setOrientationPreview] = React.useState<null | { summary: string; strengths: string[]; gapsToClarify: string[]; documentPriorities: string[]; advisorQuestions: string[]; alternatives: Array<{ country: string; rationale: string; checks: string[] }>; disclaimer: string }>(null);
   const [dynamicResponses, setDynamicResponses] = React.useState<DynamicResponse[]>([]);
 
@@ -227,6 +228,7 @@ export function SimpleMultiProjectForm() {
         uploaded += 1;
       }
       setUploadedDocumentCount(uploaded);
+      setSubmittedDossierCode(typeof created.dossierCode === "string" && created.dossierCode.trim() ? created.dossierCode.trim() : null);
       toast.success("Évaluation soumise avec succès. Vérifiez votre e-mail.");
       setIsSuccessVisible(true);
     } finally { setIsSubmitting(false); }
@@ -242,16 +244,24 @@ export function SimpleMultiProjectForm() {
   if (!isAuthenticated) {
     const evaluationReturnPath = `/?project=${initialProject}#evaluation-multi`;
     return (
-      <Card className="border border-blue-100 bg-white p-6 text-center shadow-xl sm:p-8">
+      <Card className="border border-blue-100 bg-white p-6 text-center shadow-xl sm:p-8" data-testid="evaluation-account-gate">
         <img src="/logo-3m.webp" alt="Logo 3M TRAVEL AGENCY" className="mx-auto h-14 w-auto object-contain" />
         <ShieldCheck className="mx-auto mt-4 h-10 w-10 text-[#0B2A52]" aria-hidden="true" />
-        <h3 className="mt-4 text-xl font-black text-slate-950">Créez votre compte avant l’évaluation</h3>
-        <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-600">Votre évaluation et votre CV seront associés à un espace candidat sécurisé. Les autres pièces pourront être ajoutées ensuite, selon les besoins de votre dossier.</p>
+        <p className="mt-4 text-xs font-black uppercase tracking-[0.16em] text-blue-700">Évaluation gratuite · compte en 2 minutes</p>
+        <h3 className="mt-2 text-xl font-black text-slate-950">Créez votre compte pour démarrer et suivre votre demande</h3>
+        <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-600">
+          L’évaluation est gratuite. Le compte sécurise votre dossier : statut d’examen, notifications et prochaines étapes restent visibles dans votre espace client.
+        </p>
+        <ol className="mx-auto mt-5 max-w-md space-y-2 text-left text-sm text-slate-700">
+          <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" /><span>Compte et activation (lien e-mail)</span></li>
+          <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" /><span>Évaluation guidée (projet, profil, pièces utiles)</span></li>
+          <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" /><span>Suivi de la demande dans Mon espace</span></li>
+        </ol>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <Button type="button" onClick={() => setLocation(`/register?from=${encodeURIComponent(evaluationReturnPath)}`)} className="bg-[#0B2A52] text-white hover:bg-[#163d73]">Créer mon compte</Button>
           <Button type="button" variant="outline" onClick={() => setLocation(`/login?redirect=1&from=${encodeURIComponent(evaluationReturnPath)}`)} className="border-blue-200 text-blue-900 hover:bg-blue-50">Se connecter</Button>
         </div>
-        <p className="mt-4 text-sm text-slate-600">Après activation, vous reviendrez directement à cette évaluation.</p>
+        <p className="mt-4 text-sm text-slate-600">Après activation, vous revenez directement à cette évaluation.</p>
       </Card>
     );
   }
@@ -271,7 +281,55 @@ export function SimpleMultiProjectForm() {
         </div>
 
         {isSuccessVisible ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center" role="status" aria-live="polite"><CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600" /><h3 className="mt-3 text-xl font-black text-emerald-950">Votre évaluation a été transmise</h3><p className="mt-2 text-sm leading-6 text-emerald-900">Un conseiller examinera les éléments communiqués. {uploadedDocumentCount > 0 ? `${uploadedDocumentCount} pièce(s) ont été ajoutée(s) au dossier pour vérification.` : ""} Cette pré-évaluation ne constitue pas une décision de visa, d’admission ou d’emploi.</p><Button type="button" className="mt-5 bg-emerald-700 text-white hover:bg-emerald-800" onClick={() => { setIsSuccessVisible(false); setCurrentStep(0); setSelectedDocuments([]); setUploadedDocumentCount(0); }}>Envoyer une autre évaluation</Button></div>
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center" role="status" aria-live="polite" data-testid="evaluation-submit-success">
+            <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600" aria-hidden="true" />
+            <h3 className="mt-3 text-xl font-black text-emerald-950">Votre évaluation a été transmise</h3>
+            {submittedDossierCode ? (
+              <p className="mt-3 inline-flex items-center gap-2 rounded-xl border border-emerald-300 bg-white px-4 py-2 font-mono text-sm font-bold text-emerald-950">
+                Réf. {submittedDossierCode}
+              </p>
+            ) : null}
+            <p className="mt-3 text-sm leading-6 text-emerald-900">
+              Un conseiller examine vos éléments. {uploadedDocumentCount > 0 ? `${uploadedDocumentCount} pièce(s) ont été ajoutée(s) pour vérification. ` : ""}
+              Vérifiez votre e-mail : un accusé de réception confirme l’enregistrement.
+            </p>
+            <ol className="mx-auto mt-4 max-w-md space-y-2 text-left text-sm text-emerald-950">
+              <li className="flex gap-2"><span className="font-black text-emerald-700">1.</span><span>Ouvrez <strong>Mon espace</strong> pour suivre le statut d’examen.</span></li>
+              <li className="flex gap-2"><span className="font-black text-emerald-700">2.</span><span>Répondez aux notifications ou demandes de complément si elles apparaissent.</span></li>
+              <li className="flex gap-2"><span className="font-black text-emerald-700">3.</span><span>Cette pré-évaluation ne constitue pas une décision de visa, d’admission ou d’emploi.</span></li>
+            </ol>
+            <div className="mt-5 flex flex-col items-stretch justify-center gap-2 sm:flex-row sm:items-center">
+              <Button
+                type="button"
+                className="bg-[#0B2A52] text-white hover:bg-[#163d73]"
+                onClick={() => setLocation("/mon-espace?section=overview")}
+              >
+                Suivre ma demande dans Mon espace
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100"
+                onClick={() => window.open(`https://wa.me/237698104832?text=${encodeURIComponent(`Bonjour 3M TRAVEL AGENCY, mon évaluation ${submittedDossierCode || ""} vient d’être transmise.`.trim())}`, "_blank")}
+              >
+                <MessageCircleMore className="mr-2 h-4 w-4" />WhatsApp conseiller
+              </Button>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              className="mt-3 text-emerald-900 hover:bg-emerald-100"
+              onClick={() => {
+                setIsSuccessVisible(false);
+                setSubmittedDossierCode(null);
+                setCurrentStep(0);
+                setSelectedDocuments([]);
+                setUploadedDocumentCount(0);
+              }}
+            >
+              Envoyer une autre évaluation
+            </Button>
+          </div>
         ) : (
           <form onSubmit={handleSubmit} noValidate>
             <AnimatePresence mode="wait" initial={false}>

@@ -348,9 +348,9 @@ export default function Home() {
       <section id="evaluation-multi" className="scroll-mt-24 bg-gradient-to-b from-white to-blue-50 py-14 md:py-20">
         <div className="max-w-4xl mx-auto px-4">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-10">
-            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Sans engagement · réponse structurée</p>
+            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Gratuit · compte sécurisé · suivi de demande</p>
             <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Évaluez votre projet avant d’avancer</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">Indiquez votre objectif (travail, études ou tourisme) : un conseiller 3M vous oriente sur la bonne procédure, les pièces à préparer et les prochaines étapes — gratuitement.</p>
+            <p className="text-gray-600 max-w-2xl mx-auto">Indiquez votre objectif (travail, études ou tourisme) : un conseiller 3M oriente la procédure et les pièces utiles. Compte en quelques minutes, puis suivi du statut d’examen dans votre espace client.</p>
           </motion.div>
           <SimpleMultiProjectForm />
         </div>
