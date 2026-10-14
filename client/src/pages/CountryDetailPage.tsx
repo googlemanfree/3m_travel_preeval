@@ -449,6 +449,13 @@ export default function CountryDetailPage() {
               <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                 <FileText className="w-5 h-5 text-purple-700" /> {L.requiredDocuments}
               </h3>
+              <p
+                className="rounded-xl border border-amber-100 bg-amber-50/80 px-3 py-2 text-xs leading-5 text-amber-950"
+                data-testid="procedure-documents-context-note"
+              >
+                Liste indicative. Les pièces exactes dépendent du type de séjour ({country.visaType}), de votre
+                nationalité et de votre situation. Vérifiez toujours la source officielle affichée sur cette fiche.
+              </p>
               <div className="space-y-5">
                 {country.requiredDocuments.map((cat, idx) => (
                   <div key={idx} className="space-y-2">

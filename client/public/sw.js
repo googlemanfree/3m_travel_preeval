@@ -1,4 +1,4 @@
-const CACHE_NAME = '3m-travel-pwa-v46-qa-controle';
+const CACHE_NAME = '3m-travel-pwa-v47-qa-trois-types';
 const IS_PREVIEW_HOST = /\.manus\.computer$|\.manuspre\.computer$|\.manuscomputer\.ai$/i.test(self.location.hostname);
 const ASSETS_TO_CACHE = [
   '/manifest.json'

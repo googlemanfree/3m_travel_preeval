@@ -17,10 +17,22 @@ const company = read("client/src/lib/companyContacts.ts");
 const aureol = read("shared/aureolSiteKnowledge.ts");
 
 describe("QA contrôle — procédures, évaluation, vols, marque", () => {
-  it("France Visiteur : source officielle court séjour, date de vérif et passeport contextualisé", () => {
-    expect(procedures).toContain("'france-visiteur'");
+  it("couvre les trois types : visiteur, travail et études (passeports contextualisés, sans « processus simple »)", () => {
     expect(procedures).not.toContain("Processus simple");
     expect(procedures).toContain("Passeport valide ≥ 3 mois après la fin du séjour prévu");
+    expect(procedures).toContain(
+      "Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)",
+    );
+    expect(procedures.match(/createCountry\(\s*'[^']+-visiteur'/g)?.length ?? 0).toBeGreaterThanOrEqual(30);
+    expect(procedures.match(/createCountry\(\s*'[^']+-travail'/g)?.length ?? 0).toBeGreaterThanOrEqual(40);
+    expect(procedures.match(/createCountry\(\s*'[^']+-etudes'/g)?.length ?? 0).toBeGreaterThanOrEqual(20);
+    // aucune difficulté « facile » restante sur travail/études
+    expect(procedures).not.toMatch(/createCountry\(\s*'[^']+-travail'[\s\S]*?'facile'/);
+    expect(procedures).not.toMatch(/createCountry\(\s*'[^']+-etudes'[\s\S]*?'facile'/);
+  });
+
+  it("France (visiteur + travail + études) : sources France-Visas à jour + date de vérif", () => {
+    expect(procedures).toContain("'france-visiteur'");
     expect(procedures).toContain("Aucune procédure n’est « simple » par défaut");
 
     const franceVisiteurBlock = institutional.slice(
@@ -38,13 +50,41 @@ describe("QA contrôle — procédures, évaluation, vols, marque", () => {
     expect(franceTravailBlock).toContain("https://france-visas.gouv.fr/activite-salariee");
     expect(franceTravailBlock).not.toContain("R49998");
     expect(franceTravailBlock).toContain('"consultedOn": "2026-10-14"');
+
+    const franceEtudesBlock = institutional.slice(
+      institutional.indexOf('"procedureId": "france-etudes"'),
+      institutional.indexOf('"procedureId": "france-travail"'),
+    );
+    expect(franceEtudesBlock).toContain("https://france-visas.gouv.fr/etudiant");
+    expect(franceEtudesBlock).toContain('"consultedOn": "2026-10-14"');
   });
 
-  it("affiche le lien exact et la date de vérification sur la fiche procédure", () => {
+  it("Canada travail/études et Allemagne travail/études : sources officielles reconsultées", () => {
+    const canadaEtudes = institutional.slice(
+      institutional.indexOf('"procedureId": "canada-etudes"'),
+      institutional.indexOf('"procedureId": "canada-travail"'),
+    );
+    expect(canadaEtudes).toContain("permis-etudes");
+    expect(canadaEtudes).toContain('"consultedOn": "2026-10-14"');
+    const canadaTravail = institutional.slice(
+      institutional.indexOf('"procedureId": "canada-travail"'),
+      institutional.indexOf('"procedureId": "chypre-travail"'),
+    );
+    expect(canadaTravail).toContain("travailler-canada");
+    expect(canadaTravail).toContain('"consultedOn": "2026-10-14"');
+    expect(institutional).toContain('"procedureId": "allemagne-etudes"');
+    expect(institutional).toContain('"procedureId": "allemagne-travail"');
+    expect(institutional.match(/"consultedOn": "2026-10-14"/g)?.length ?? 0).toBeGreaterThanOrEqual(6);
+  });
+
+  it("affiche le lien exact, la date de vérification et un avertissement sur les documents", () => {
     expect(countryDetail).toContain('data-testid="procedure-official-source-link"');
     expect(countryDetail).toContain('data-testid="procedure-official-source-url"');
     expect(countryDetail).toContain("Source exacte : {institutionalSource.officialUrl}");
     expect(countryDetail).toContain('data-testid="procedure-source-verified-at"');
+    expect(countryDetail).toContain('data-testid="procedure-documents-context-note"');
+    expect(countryDetail).toContain("Liste indicative");
+    expect(institutional).toContain("type de séjour, de la nationalité et de la situation du demandeur");
   });
 
   it("évaluation gratuite : formulaire court sans compte préalable", () => {

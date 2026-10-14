@@ -70,7 +70,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     ['Marché dynamique', 'Salaires compétitifs', 'Système de santé', 'Tech & Ingénierie', 'Accès UE'],
     ['Offre d\'emploi', 'Autorisation Agentur für Arbeit', 'Dossier ambassade', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie certifiée', 'Certificat naissance'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie certifiée', 'Certificat naissance'] },
       { category: 'Professionnel', documents: ['Offre d\'emploi', 'Contrat', 'CV', 'Diplômes', 'Lettres recommandation'] },
       { category: 'Financier', documents: ['Relevés bancaires 3 mois', 'Lettre employeur', 'Impôts 2 ans'] },
       { category: 'Santé', documents: ['Certificat médical', 'Radiographie', 'Vaccination', 'Assurance', 'Police'] }
@@ -80,12 +80,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'australie-travail', 'Australie', '🇦🇺', 'Océanie', 'travail',
     '/manus-storage/3MTravel_VisaTravail_Australie_2026_916008e9.pdf',
     'Visa de travail temporaire - Expérience professionnelle en Océanie',
-    'Australie offre excellente qualité de vie, salaires attractifs (3500-5500 AUD/mois), économie en croissance. Opportunités IT, santé, construction, ressources. Processus rigoureux mais transparent.',
+    'Australie offre excellente qualité de vie, salaires attractifs (3500-5500 AUD/mois), économie en croissance. Opportunités IT, santé, construction, ressources. Procédure souvent exigeante ; la liste exacte dépend de votre profil — confirmez sur la source officielle.',
     '8-16 semaines', '300-500 AUD', '3500 AUD/mois', '3500-4500 AUD', 'difficile',
     ['Qualité de vie', 'Salaires attractifs', 'Économie croissance', 'IT & Santé', 'Multiculturel'],
     ['Évaluation qualifications', 'Profil SkillSelect', 'Demande visa', 'Examen médical', 'Décision'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie', 'Certificat naissance'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie', 'Certificat naissance'] },
       { category: 'Professionnel', documents: ['Skills Assessment', 'Diplômes', 'CV', 'Lettre emploi', 'Attestations'] },
       { category: 'Financier', documents: ['Ressources financières', 'Relevés 3 mois', 'Solvabilité'] },
       { category: 'Santé', documents: ['Certificat médical', 'Radiographie', 'Vaccination', 'Police'] }
@@ -95,7 +95,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'canada-travail', 'Canada', '🍁', 'Amérique du Nord', 'travail',
     '/manus-storage/3MTravel_VisaTravail_Canada_Complet_2026_6ddf7e2c.pdf',
     'Visa de travail pour le Canada - Opportunités nord-américaines',
-    'Canada offre économie stable, système santé universel, qualité vie élevée. Salaires compétitifs (3000-5000 CAD/mois). Processus transparent avec perspectives résidence permanente.',
+    'Canada offre économie stable, système santé universel, qualité vie élevée. Salaires compétitifs (3000-5000 CAD/mois). Des parcours vers la résidence permanente peuvent exister selon le programme ; rien n’est automatique — confirmez sur la source officielle.',
     '6-12 semaines', '155-275 CAD', '3000 CAD/mois', '3500-4500 CAD', 'moyen',
     ['Économie stable', 'Santé universel', 'Qualité vie', 'Tech & Services', 'Résidence permanente'],
     [
@@ -108,7 +108,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
       'Arrivée et formalités au Canada',
     ],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie', 'Certificat naissance'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie', 'Certificat naissance'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'Contrat', 'CV', 'Diplômes', 'Lettres'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés bancaires', 'Solvabilité'] },
       { category: 'Sécurité', documents: ['Certificat médical', 'Police', 'Antécédents'] }
@@ -118,12 +118,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'france-travail', 'France', '🇫🇷', 'Europe', 'travail',
     '/manus-storage/3MTravel_VisaTravail_France_2026_65fca802.pdf',
     'Visa de travail pour la France - Accès au marché du travail européen',
-    'France offre qualité vie exceptionnelle, accès marché UE. Leader luxe, technologie, art, culture. Salaires compétitifs (2200-4000€/mois). Processus bien structuré avec délais prévisibles.',
+    'France offre qualité vie exceptionnelle, accès marché UE. Leader luxe, technologie, art, culture. Salaires compétitifs (2200-4000€/mois). La procédure est encadrée, mais délais et pièces varient selon le dossier : confirmez sur la source officielle.',
     '6-10 semaines', '99-180 EUR', '2200 EUR/mois', '2500-3500 EUR', 'moyen',
     ['Qualité vie', 'Accès UE', 'Culture riche', 'Luxe & Tech', 'Protection sociale'],
     ['Offre emploi', 'Autorisation travail', 'Dossier consulat', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide 6 mois', 'Copie', 'Certificat naissance'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie', 'Certificat naissance'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'Contrat', 'CV', 'Diplômes', 'Lettres'] },
       { category: 'Administratif', documents: ['Autorisation travail', 'Formulaire visa', 'Photos', 'Résidence'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés bancaires', 'Assurance maladie'] }
@@ -133,12 +133,11 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'luxembourg-travail', 'Luxembourg', '🇱🇺', 'Europe', 'travail',
     '/manus-storage/3MTravel_VisaTravail_Luxembourg_2026_6eae8854.pdf',
     'Visa de travail pour le Luxembourg - Centre financier européen',
-    'Luxembourg centre financier mondial, salaires plus élevés Europe (3500-6000€/mois). Stabilité économique exceptionnelle. Opportunités finance, technologie, services. Processus rapide et efficace.',
-    '5-8 semaines', '80-120 EUR', '3500 EUR/mois', '3500-4500 EUR', 'facile',
-    ['Salaires élevés', 'Centre financier', 'Stabilité économique', 'Finance & Tech', 'Qualité vie'],
+    'Luxembourg centre financier mondial, salaires plus élevés Europe (3500-6000€/mois). Stabilité économique exceptionnelle. Opportunités finance, technologie, services. Les délais et pièces dépendent de votre nationalité et de votre situation : confirmez sur la source officielle.',
+    '5-8 semaines', '80-120 EUR', '3500 EUR/mois', '3500-4500 EUR', 'moyen', ['Salaires élevés', 'Centre financier', 'Stabilité économique', 'Finance & Tech', 'Qualité vie'],
     ['Offre emploi', 'Autorisation', 'Dossier ambassade', 'Entretien si nécessaire', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie', 'Certificat naissance'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie', 'Certificat naissance'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'Contrat', 'CV', 'Diplômes'] },
       { category: 'Administratif', documents: ['Autorisation travail', 'Formulaire visa', 'Photos'] }
     ]
@@ -147,12 +146,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'suisse-travail', 'Suisse', '🇨🇭', 'Europe', 'travail',
     '/manus-storage/3MTravel_VisaTravail_Suisse_2026_5f00cf79.docx',
     'Visa de travail pour la Suisse - Économie stable et prospère',
-    'Suisse offre salaires plus élevés monde (4000-7000 CHF/mois), qualité vie exceptionnelle. Leader pharma, finance, horlogerie, technologie. Processus rigoureux mais transparent.',
+    'Suisse offre salaires plus élevés monde (4000-7000 CHF/mois), qualité vie exceptionnelle. Leader pharma, finance, horlogerie, technologie. Procédure souvent exigeante ; la liste exacte dépend de votre profil — confirmez sur la source officielle.',
     '6-10 semaines', '100-200 CHF', '4000 CHF/mois', '4500-5500 CHF', 'moyen',
     ['Salaires élevés', 'Qualité vie', 'Stabilité politique', 'Pharma & Finance', 'Protection sociale'],
     ['Offre emploi', 'Permis travail', 'Dossier consulat', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie', 'Certificat naissance'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie', 'Certificat naissance'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'Contrat', 'CV', 'Diplômes', 'Lettres'] },
       { category: 'Administratif', documents: ['Permis travail', 'Formulaire visa', 'Photos', 'Résidence'] }
     ]
@@ -161,12 +160,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'royaume-uni-travail', 'Royaume-Uni', '🇬🇧', 'Europe', 'travail',
     '/manus-storage/3MTravel_VisaTravail_RoyaumeUni_2026_d17acd9e.pdf',
     'Visa de travail pour le Royaume-Uni - Opportunités post-Brexit',
-    'Royaume-Uni offre économie dynamique, opportunités finance, technologie, services. Salaires compétitifs (2500-5000 GBP/mois). Processus bien structuré et transparent.',
+    'Royaume-Uni offre économie dynamique, opportunités finance, technologie, services. Salaires compétitifs (2500-5000 GBP/mois). La procédure est encadrée ; exigences et délais se confirment sur la source officielle selon votre cas.',
     '4-8 semaines', '719-1035 GBP', '2500 GBP/mois', '3500-4500 GBP', 'moyen',
     ['Économie dynamique', 'Salaires compétitifs', 'Finance & Tech', 'Services qualité', 'Multiculturel'],
     ['Offre emploi', 'Certificat parrainage', 'Demande en ligne', 'Biométrie', 'Décision'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie', 'Certificat naissance'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie', 'Certificat naissance'] },
       { category: 'Professionnel', documents: ['Certificat parrainage', 'Offre emploi', 'CV', 'Diplômes'] },
       { category: 'Sécurité', documents: ['Police', 'Examen médical', 'Antécédents'] }
     ]
@@ -180,7 +179,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     ['Plus grande économie', 'Salaires compétitifs', 'Innovation', 'Tous secteurs', 'Carrière mondiale'],
     ['Offre emploi', 'Pétition I-129', 'Approbation USCIS', 'NVC', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie', 'Certificat naissance'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie', 'Certificat naissance'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV', 'Diplômes', 'Lettres', 'Attestations'] },
       { category: 'Administratif', documents: ['Pétition approuvée', 'Formulaire I-485', 'Photos', 'I-864'] },
       { category: 'Sécurité', documents: ['Police', 'Examen médical', 'Antécédents'] }
@@ -191,11 +190,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaTravail_Bulgarie_2026_75c99ff8.pdf',
     'Visa de travail pour la Bulgarie - Opportunités en Europe de l\'Est',
     'Bulgarie offre coût vie bas, opportunités croissantes IT et services. Membre UE avec accès marché européen. Salaires modérés (1200-2500 EUR/mois) mais coût vie très bas.',
-    '3-6 semaines', '60-100 EUR', '1200 EUR/mois', '1500-2000 EUR', 'facile',
-    ['Coût vie bas', 'Opportunités IT', 'Accès UE', 'Climat méditerranéen', 'Patrimoine culturel'],
+    '3-6 semaines', '60-100 EUR', '1200 EUR/mois', '1500-2000 EUR', 'moyen', ['Coût vie bas', 'Opportunités IT', 'Accès UE', 'Climat méditerranéen', 'Patrimoine culturel'],
     ['Offre emploi', 'Dossier consulat', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie', 'Certificat naissance'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie', 'Certificat naissance'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV', 'Diplômes'] }
     ]
   ),
@@ -204,11 +202,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaTravail_Chypre_2026_ac29e62b.pdf',
     'Visa de travail pour Chypre - Île méditerranéenne',
     'Chypre offre climat méditerranéen, opportunités tourisme et services financiers. Membre UE avec accès marché européen. Salaires modérés (1500-3000 EUR/mois), coût vie raisonnable.',
-    '3-6 semaines', '70-120 EUR', '1500 EUR/mois', '2000-2500 EUR', 'facile',
-    ['Climat méditerranéen', 'Tourisme & Services', 'Accès UE', 'Qualité vie', 'Île paradisiaque'],
+    '3-6 semaines', '70-120 EUR', '1500 EUR/mois', '2000-2500 EUR', 'moyen', ['Climat méditerranéen', 'Tourisme & Services', 'Accès UE', 'Qualité vie', 'Île paradisiaque'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -217,11 +214,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaTravail_Croatie_2026_556f2566.pdf',
     'Visa de travail pour la Croatie - Opportunités en Méditerranée',
     'Croatie offre climat méditerranéen, économie en croissance, tourisme dynamique. Membre UE. Salaires modérés (1300-2800 EUR/mois), coût vie abordable.',
-    '3-6 semaines', '65-110 EUR', '1300 EUR/mois', '1600-2200 EUR', 'facile',
-    ['Climat méditerranéen', 'Économie croissance', 'Tourisme', 'Accès UE', 'Beauté naturelle'],
+    '3-6 semaines', '65-110 EUR', '1300 EUR/mois', '1600-2200 EUR', 'moyen', ['Climat méditerranéen', 'Économie croissance', 'Tourisme', 'Accès UE', 'Beauté naturelle'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV', 'Diplômes'] }
     ]
   ),
@@ -234,7 +230,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     ['Hub technologique', 'Startup dynamique', 'Gouvernement numérique', 'Accès UE', 'Qualité vie'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV', 'Diplômes'] }
     ]
   ),
@@ -243,11 +239,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaTravail_Hongrie_2026_a6adcc08.pdf',
     'Visa de travail pour la Hongrie - Opportunités en Europe centrale',
     'Hongrie offre coût vie bas, opportunités croissantes, capitale Budapest dynamique. Membre UE. Salaires modérés (1400-2900 EUR/mois), coût vie très abordable.',
-    '3-6 semaines', '65-110 EUR', '1400 EUR/mois', '1700-2300 EUR', 'facile',
-    ['Coût vie bas', 'Budapest dynamique', 'Opportunités croissance', 'Accès UE', 'Culture riche'],
+    '3-6 semaines', '65-110 EUR', '1400 EUR/mois', '1700-2300 EUR', 'moyen', ['Coût vie bas', 'Budapest dynamique', 'Opportunités croissance', 'Accès UE', 'Culture riche'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -260,7 +255,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     ['Hub technologique', 'Sièges géants tech', 'Salaires compétitifs', 'Accès UE', 'Qualité vie'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV', 'Diplômes'] }
     ]
   ),
@@ -268,12 +263,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'islande-travail', 'Islande', '🇮🇸', 'Europe', 'travail',
     '/manus-storage/3MTravel_VisaTravail_Islande_2026_0374dd20.pdf',
     'Visa de travail pour l\'Islande - Économie stable nordique',
-    'Islande offre économie stable, qualité vie exceptionnelle, environnement magnifique. Salaires élevés (2700-5000 EUR/mois). Processus transparent.',
+    'Islande offre économie stable, qualité vie exceptionnelle, environnement magnifique. Salaires élevés (2700-5000 EUR/mois). Exigences et délais à confirmer sur la source officielle selon nationalité et situation.',
     '4-8 semaines', '90-150 EUR', '2700 EUR/mois', '3200-4000 EUR', 'moyen',
     ['Économie stable', 'Qualité vie exceptionnelle', 'Environnement magnifique', 'Salaires élevés', 'Sécurité'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -286,7 +281,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     ['Patrimoine culturel', 'Économie diversifiée', 'Qualité vie', 'Cuisine renommée', 'Accès UE'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV', 'Diplômes'] }
     ]
   ),
@@ -299,7 +294,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     ['Économie dynamique', 'Hub technologique', 'Startup croissance', 'Coût vie abordable', 'Opportunités'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -308,11 +303,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaTravail_Lettonie_2026_724960ba.pdf',
     'Visa de travail pour la Lettonie - Opportunités en Baltique',
     'Lettonie offre coût vie bas, opportunités croissantes, capitale Riga dynamique. Membre UE. Salaires modérés (1300-2700 EUR/mois).',
-    '3-6 semaines', '60-100 EUR', '1300 EUR/mois', '1600-2200 EUR', 'facile',
-    ['Coût vie bas', 'Riga dynamique', 'Opportunités croissance', 'Accès UE', 'Patrimoine'],
+    '3-6 semaines', '60-100 EUR', '1300 EUR/mois', '1600-2200 EUR', 'moyen', ['Coût vie bas', 'Riga dynamique', 'Opportunités croissance', 'Accès UE', 'Patrimoine'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -320,12 +314,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'liechtenstein-travail', 'Liechtenstein', '🇱🇮', 'Europe', 'travail',
     '/manus-storage/3MTravel_VisaTravail_Liechtenstein_2026_316445f5.pdf',
     'Visa de travail pour le Liechtenstein - Micro-État prospère',
-    'Liechtenstein micro-état prospère, salaires très élevés (4500-7500 CHF/mois), qualité vie exceptionnelle. Processus rigoureux.',
+    'Liechtenstein micro-état prospère, salaires très élevés (4500-7500 CHF/mois), qualité vie exceptionnelle. Procédure souvent exigeante ; confirmez les critères sur la source officielle.',
     '6-10 semaines', '120-200 CHF', '4500 CHF/mois', '5000-6000 CHF', 'difficile',
     ['Salaires très élevés', 'Qualité vie', 'Stabilité', 'Environnement magnifique', 'Prospérité'],
     ['Offre emploi', 'Permis', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV', 'Diplômes'] }
     ]
   ),
@@ -334,11 +328,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaTravail_Lituanie_2026_ac5cd4ab.pdf',
     'Visa de travail pour la Lituanie - Opportunités en Baltique',
     'Lituanie offre coût vie bas, opportunités IT croissantes, capitale Vilnius dynamique. Membre UE. Salaires modérés (1400-2800 EUR/mois).',
-    '3-6 semaines', '65-110 EUR', '1400 EUR/mois', '1700-2300 EUR', 'facile',
-    ['Coût vie bas', 'Vilnius dynamique', 'Opportunités IT', 'Accès UE', 'Patrimoine'],
+    '3-6 semaines', '65-110 EUR', '1400 EUR/mois', '1700-2300 EUR', 'moyen', ['Coût vie bas', 'Vilnius dynamique', 'Opportunités IT', 'Accès UE', 'Patrimoine'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -351,7 +344,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     ['Hub technologique', 'Économie dynamique', 'Coût vie bas', 'Multiculturel', 'Croissance'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -360,11 +353,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaTravail_Malte_2026_935afe5a.pdf',
     'Visa de travail pour Malte - Île méditerranéenne',
     'Malte offre climat méditerranéen, économie stable, opportunités finance et tourisme. Membre UE. Salaires modérés (1600-3200 EUR/mois).',
-    '3-6 semaines', '75-130 EUR', '1600 EUR/mois', '2000-2600 EUR', 'facile',
-    ['Climat méditerranéen', 'Économie stable', 'Finance & Tourisme', 'Accès UE', 'Île paradisiaque'],
+    '3-6 semaines', '75-130 EUR', '1600 EUR/mois', '2000-2600 EUR', 'moyen', ['Climat méditerranéen', 'Économie stable', 'Finance & Tourisme', 'Accès UE', 'Île paradisiaque'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -373,11 +365,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaTravail_Maurice_2026_1_22c9681b.pdf',
     'Visa de travail pour Maurice - Île prospère de l\'Océan Indien',
     'Maurice île prospère, économie stable, qualité vie élevée. Salaires modérés (1200-2500 USD/mois). Environnement multiculturel.',
-    '4-8 semaines', '100-180 USD', '1200 USD/mois', '1500-2200 USD', 'facile',
-    ['Île prospère', 'Économie stable', 'Qualité vie', 'Multiculturel', 'Sécurité'],
+    '4-8 semaines', '100-180 USD', '1200 USD/mois', '1500-2200 USD', 'moyen', ['Île prospère', 'Économie stable', 'Qualité vie', 'Multiculturel', 'Sécurité'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -385,12 +376,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'norvege-travail', 'Norvège', '🇳🇴', 'Europe', 'travail',
     '/manus-storage/3MTravel_VisaTravail_Norvege_2026_601b7ba0.pdf',
     'Visa de travail pour la Norvège - Économie nordique prospère',
-    'Norvège offre salaires très élevés (3500-6500 EUR/mois), qualité vie exceptionnelle, stabilité économique. Processus transparent.',
+    'Norvège offre salaires très élevés (3500-6500 EUR/mois), qualité vie exceptionnelle, stabilité économique. Exigences et délais à confirmer sur la source officielle selon nationalité et situation.',
     '6-10 semaines', '120-200 EUR', '3500 EUR/mois', '4000-5000 EUR', 'moyen',
     ['Salaires très élevés', 'Qualité vie exceptionnelle', 'Stabilité économique', 'Environnement magnifique', 'Sécurité'],
     ['Offre emploi', 'Permis', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV', 'Diplômes'] }
     ]
   ),
@@ -403,7 +394,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     ['Qualité vie élevée', 'Salaires compétitifs', 'Économie stable', 'Environnement magnifique', 'Sécurité'],
     ['Offre emploi', 'Skills Assessment', 'Demande', 'Examen médical', 'Décision'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV', 'Diplômes'] }
     ]
   ),
@@ -412,11 +403,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaTravail_Pologne_2026_d7fe44ee.pdf',
     'Visa de travail pour la Pologne - Opportunités en Europe centrale',
     'Pologne offre coût vie bas, économie dynamique, capitale Varsovie croissance. Membre UE. Salaires modérés (1400-2900 EUR/mois).',
-    '3-6 semaines', '65-110 EUR', '1400 EUR/mois', '1700-2300 EUR', 'facile',
-    ['Coût vie bas', 'Varsovie dynamique', 'Économie croissance', 'Accès UE', 'Opportunités'],
+    '3-6 semaines', '65-110 EUR', '1400 EUR/mois', '1700-2300 EUR', 'moyen', ['Coût vie bas', 'Varsovie dynamique', 'Économie croissance', 'Accès UE', 'Opportunités'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -425,11 +415,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaTravail_Portugal_2026_8608abfa.pdf',
     'Visa de travail pour le Portugal - Qualité de vie méditerranéenne',
     'Portugal offre qualité vie élevée, climat méditerranéen, coût vie abordable. Salaires modérés (1500-3000 EUR/mois). Membre UE.',
-    '4-8 semaines', '85-145 EUR', '1500 EUR/mois', '1900-2500 EUR', 'facile',
-    ['Qualité vie élevée', 'Climat méditerranéen', 'Coût vie abordable', 'Accès UE', 'Patrimoine'],
+    '4-8 semaines', '85-145 EUR', '1500 EUR/mois', '1900-2500 EUR', 'moyen', ['Qualité vie élevée', 'Climat méditerranéen', 'Coût vie abordable', 'Accès UE', 'Patrimoine'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -442,7 +431,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     ['Salaires élevés', 'Économie prospère', 'Opportunités diversifiées', 'Avantages expatriés', 'Croissance'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -451,11 +440,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaTravail_Roumanie_2026_bdb62ec5.pdf',
     'Visa de travail pour la Roumanie - Opportunités en Europe de l\'Est',
     'Roumanie offre coût vie très bas, opportunités IT croissantes, capitale Bucarest dynamique. Membre UE. Salaires modérés (1200-2500 EUR/mois).',
-    '3-6 semaines', '60-100 EUR', '1200 EUR/mois', '1500-2000 EUR', 'facile',
-    ['Coût vie très bas', 'Bucarest dynamique', 'Opportunités IT', 'Accès UE', 'Croissance'],
+    '3-6 semaines', '60-100 EUR', '1200 EUR/mois', '1500-2000 EUR', 'moyen', ['Coût vie très bas', 'Bucarest dynamique', 'Opportunités IT', 'Accès UE', 'Croissance'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -468,7 +456,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     ['Hub économique', 'Économie stable', 'Opportunités croissance', 'Coût vie abordable', 'Stabilité'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -477,11 +465,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaTravail_Slovaquie_2026_0dc020e6.pdf',
     'Visa de travail pour la Slovaquie - Opportunités en Europe centrale',
     'Slovaquie offre coût vie bas, économie dynamique, capitale Bratislava croissance. Membre UE. Salaires modérés (1300-2700 EUR/mois).',
-    '3-6 semaines', '65-110 EUR', '1300 EUR/mois', '1600-2200 EUR', 'facile',
-    ['Coût vie bas', 'Bratislava dynamique', 'Économie croissance', 'Accès UE', 'Opportunités'],
+    '3-6 semaines', '65-110 EUR', '1300 EUR/mois', '1600-2200 EUR', 'moyen', ['Coût vie bas', 'Bratislava dynamique', 'Économie croissance', 'Accès UE', 'Opportunités'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -494,7 +481,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     ['Qualité vie élevée', 'Économie stable', 'Environnement magnifique', 'Accès UE', 'Sécurité'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -503,11 +490,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaTravail_Tcheque_2026_a312f39d.pdf',
     'Visa de travail pour la Rép. Tchèque - Opportunités en Europe centrale',
     'République Tchèque offre coût vie bas, économie dynamique, capitale Prague magnifique. Membre UE. Salaires modérés (1400-2900 EUR/mois).',
-    '3-6 semaines', '65-110 EUR', '1400 EUR/mois', '1700-2300 EUR', 'facile',
-    ['Coût vie bas', 'Prague magnifique', 'Économie croissance', 'Accès UE', 'Culture'],
+    '3-6 semaines', '65-110 EUR', '1400 EUR/mois', '1700-2300 EUR', 'moyen', ['Coût vie bas', 'Prague magnifique', 'Économie croissance', 'Accès UE', 'Culture'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -520,7 +506,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     ['Économie stable', 'Secteur pétrolier', 'Services croissance', 'Coût vie modéré', 'Opportunités'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -528,12 +514,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'suede-travail', 'Suède', '🇸🇪', 'Europe', 'travail',
     '',
     'Visa de travail pour la Suède - Économie nordique innovante',
-    'Suède offre salaires élevés (3000-5500 EUR/mois), qualité vie exceptionnelle, innovation. Membre UE. Processus transparent.',
+    'Suède offre salaires élevés (3000-5500 EUR/mois), qualité vie exceptionnelle, innovation. Membre UE. Exigences et délais à confirmer sur la source officielle selon nationalité et situation.',
     '6-10 semaines', '110-180 EUR', '3000 EUR/mois', '3500-4500 EUR', 'moyen',
     ['Salaires élevés', 'Qualité vie exceptionnelle', 'Innovation', 'Accès UE', 'Stabilité'],
     ['Offre emploi', 'Permis', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV', 'Diplômes'] }
     ]
   ),
@@ -541,12 +527,12 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     'danemark-travail', 'Danemark', '🇩🇰', 'Europe', 'travail',
     '',
     'Visa de travail pour le Danemark - Économie nordique prospère',
-    'Danemark offre salaires élevés (3200-5800 EUR/mois), qualité vie exceptionnelle, innovation. Membre UE. Processus transparent.',
+    'Danemark offre salaires élevés (3200-5800 EUR/mois), qualité vie exceptionnelle, innovation. Membre UE. Exigences et délais à confirmer sur la source officielle selon nationalité et situation.',
     '6-10 semaines', '110-180 EUR', '3200 EUR/mois', '3700-4800 EUR', 'moyen',
     ['Salaires élevés', 'Qualité vie exceptionnelle', 'Innovation', 'Accès UE', 'Stabilité'],
     ['Offre emploi', 'Permis', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV', 'Diplômes'] }
     ]
   ),
@@ -559,7 +545,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     ['Salaires compétitifs', 'Qualité vie élevée', 'Culture riche', 'Accès UE', 'Stabilité'],
     ['Offre emploi', 'Permis', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -572,7 +558,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     ['Hub technologique', 'Salaires élevés', 'Qualité vie exceptionnelle', 'Accès UE', 'Innovation'],
     ['Offre emploi', 'Permis', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -585,7 +571,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     ['Qualité vie élevée', 'Climat méditerranéen', 'Économie diversifiée', 'Accès UE', 'Culture'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -594,11 +580,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '',
     'Visa de travail pour la Grèce - Opportunités méditerranéennes',
     'Grèce offre climat méditerranéen, patrimoine culturel, économie croissance. Salaires modérés (1300-2700 EUR/mois). Membre UE.',
-    '4-8 semaines', '80-140 EUR', '1300 EUR/mois', '1700-2300 EUR', 'facile',
-    ['Climat méditerranéen', 'Patrimoine culturel', 'Économie croissance', 'Accès UE', 'Île'],
+    '4-8 semaines', '80-140 EUR', '1300 EUR/mois', '1700-2300 EUR', 'moyen', ['Climat méditerranéen', 'Patrimoine culturel', 'Économie croissance', 'Accès UE', 'Île'],
     ['Offre emploi', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -611,7 +596,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     ['Hub technologique', 'Salaires compétitifs', 'Qualité vie', 'Accès UE', 'Innovation'],
     ['Offre emploi', 'Permis', 'Dossier', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Professionnel', documents: ['Offre emploi', 'CV'] }
     ]
   ),
@@ -622,11 +607,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaEtudes_Belgique_2026_61179d43.pdf',
     'Visa d\'études pour la Belgique - Universités européennes réputées',
     'Belgique offre universités réputées, frais modérés (800-2500 EUR/an), accès UE. Coût vie raisonnable (800-1200 EUR/mois).',
-    '4-8 semaines', '50-100 EUR', '1000 EUR/mois', '1500-2500 EUR/an', 'facile',
-    ['Universités réputées', 'Frais modérés', 'Accès UE', 'Qualité vie', 'Multiculturel'],
+    '4-8 semaines', '50-100 EUR', '1000 EUR/mois', '1500-2500 EUR/an', 'moyen', ['Universités réputées', 'Frais modérés', 'Accès UE', 'Qualité vie', 'Multiculturel'],
     ['Admission universitaire', 'Documents financiers', 'Demande visa', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie', 'Certificat naissance'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie', 'Certificat naissance'] },
       { category: 'Académique', documents: ['Lettre admission', 'Diplômes', 'Relevés notes', 'Certificat langue'] },
       { category: 'Financier', documents: ['Ressources financières', 'Relevés 3 mois', 'Parrainage', 'Solvabilité'] }
     ]
@@ -636,11 +620,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '',
     'Visa d\'études pour la France - Universités de renommée mondiale',
     'France offre universités renommées, frais très modérés (200-600 EUR/an), qualité vie. Coût vie raisonnable (900-1300 EUR/mois).',
-    '4-8 semaines', '99-180 EUR', '1000 EUR/mois', '1200-2000 EUR/an', 'facile',
-    ['Universités renommées', 'Frais très modérés', 'Qualité vie', 'Culture', 'Gastronomie'],
+    '4-8 semaines', '99-180 EUR', '1000 EUR/mois', '1200-2000 EUR/an', 'moyen', ['Universités renommées', 'Frais très modérés', 'Qualité vie', 'Culture', 'Gastronomie'],
     ['Admission', 'Documents', 'Demande', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Académique', documents: ['Lettre admission', 'Diplômes', 'Relevés notes'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés bancaires'] }
     ]
@@ -650,11 +633,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaEtudes_Allemagne_2026_9895729b.pdf',
     'Visa d\'études pour l\'Allemagne - Universités de qualité',
     'Allemagne offre universités qualité, frais très bas (0-300 EUR/semestre), accès UE. Coût vie modéré (800-1200 EUR/mois).',
-    '4-8 semaines', '75-150 EUR', '1000 EUR/mois', '1200-2000 EUR/an', 'facile',
-    ['Universités qualité', 'Frais très bas', 'Accès UE', 'Système éducatif', 'Opportunités'],
+    '4-8 semaines', '75-150 EUR', '1000 EUR/mois', '1200-2000 EUR/an', 'moyen', ['Universités qualité', 'Frais très bas', 'Accès UE', 'Système éducatif', 'Opportunités'],
     ['Admission', 'Documents', 'Demande', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Académique', documents: ['Lettre admission', 'Diplômes'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -676,7 +658,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
       'Décision, arrivée et conditions du permis',
     ],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Académique', documents: ['Lettre admission', 'Diplômes', 'Code DLI'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés', 'Preuve de fonds'] }
     ]
@@ -690,7 +672,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     ['Universités qualité', 'Frais modérés', 'Qualité vie', 'Travail études', 'Opportunités'],
     ['Admission', 'Documents', 'Demande', 'Examen médical', 'Décision'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Académique', documents: ['Lettre admission', 'Diplômes'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -704,7 +686,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     ['Universités prestigieuses', 'Qualité éducation', 'Qualité vie', 'Opportunités', 'Réseau'],
     ['Admission', 'Documents', 'Demande', 'Biométrie', 'Décision'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Académique', documents: ['Lettre admission', 'Diplômes'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -718,7 +700,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     ['Universités renommées', 'Frais modérés', 'Qualité vie exceptionnelle', 'Stabilité', 'Environnement'],
     ['Admission', 'Documents', 'Demande', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Académique', documents: ['Lettre admission', 'Diplômes'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -728,11 +710,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaEtudes_PaysBas_2026_04a4fd0d.pdf',
     'Visa d\'études pour les Pays-Bas - Universités innovantes',
     'Pays-Bas offre universités innovantes, frais modérés (1500-2000 EUR/an), qualité vie élevée.',
-    '4-8 semaines', '95-165 EUR', '1000 EUR/mois', '1500-2500 EUR/an', 'facile',
-    ['Universités innovantes', 'Frais modérés', 'Qualité vie', 'Accès UE', 'Anglais'],
+    '4-8 semaines', '95-165 EUR', '1000 EUR/mois', '1500-2500 EUR/an', 'moyen', ['Universités innovantes', 'Frais modérés', 'Qualité vie', 'Accès UE', 'Anglais'],
     ['Admission', 'Documents', 'Demande', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Académique', documents: ['Lettre admission', 'Diplômes'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -742,11 +723,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaEtudes_Suede_2026_8e44b90e.pdf',
     'Visa d\'études pour la Suède - Universités nordiques',
     'Suède offre universités nordiques, frais modérés (0-15000 EUR/an), qualité vie exceptionnelle.',
-    '6-10 semaines', '110-180 EUR', '1200 EUR/mois', '1500-3000 EUR/an', 'facile',
-    ['Universités nordiques', 'Frais modérés', 'Qualité vie exceptionnelle', 'Innovation', 'Accès UE'],
+    '6-10 semaines', '110-180 EUR', '1200 EUR/mois', '1500-3000 EUR/an', 'moyen', ['Universités nordiques', 'Frais modérés', 'Qualité vie exceptionnelle', 'Innovation', 'Accès UE'],
     ['Admission', 'Documents', 'Demande', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Académique', documents: ['Lettre admission', 'Diplômes'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -756,11 +736,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaEtudes_Danemark_2026_95fb9e7b.pdf',
     'Visa d\'études pour le Danemark - Universités nordiques',
     'Danemark offre universités nordiques, frais modérés (0-6000 EUR/an), qualité vie exceptionnelle.',
-    '6-10 semaines', '110-180 EUR', '1200 EUR/mois', '1500-2500 EUR/an', 'facile',
-    ['Universités nordiques', 'Frais modérés', 'Qualité vie exceptionnelle', 'Innovation', 'Accès UE'],
+    '6-10 semaines', '110-180 EUR', '1200 EUR/mois', '1500-2500 EUR/an', 'moyen', ['Universités nordiques', 'Frais modérés', 'Qualité vie exceptionnelle', 'Innovation', 'Accès UE'],
     ['Admission', 'Documents', 'Demande', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Académique', documents: ['Lettre admission', 'Diplômes'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -770,11 +749,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaEtudes_Finlande_2026_54039c1e.pdf',
     'Visa d\'études pour la Finlande - Universités innovantes',
     'Finlande offre universités innovantes, frais modérés (0-18000 EUR/an), qualité vie exceptionnelle.',
-    '6-10 semaines', '110-180 EUR', '1200 EUR/mois', '1500-3000 EUR/an', 'facile',
-    ['Universités innovantes', 'Frais modérés', 'Qualité vie exceptionnelle', 'Technologie', 'Accès UE'],
+    '6-10 semaines', '110-180 EUR', '1200 EUR/mois', '1500-3000 EUR/an', 'moyen', ['Universités innovantes', 'Frais modérés', 'Qualité vie exceptionnelle', 'Technologie', 'Accès UE'],
     ['Admission', 'Documents', 'Demande', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Académique', documents: ['Lettre admission', 'Diplômes'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -784,11 +762,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaEtudes_Espagne_2026_9e2f2cf4.pdf',
     'Visa d\'études pour l\'Espagne - Universités méditerranéennes',
     'Espagne offre universités méditerranéennes, frais modérés (1000-3000 EUR/an), qualité vie.',
-    '4-8 semaines', '85-145 EUR', '900 EUR/mois', '1200-2000 EUR/an', 'facile',
-    ['Universités méditerranéennes', 'Frais modérés', 'Qualité vie', 'Climat', 'Culture'],
+    '4-8 semaines', '85-145 EUR', '900 EUR/mois', '1200-2000 EUR/an', 'moyen', ['Universités méditerranéennes', 'Frais modérés', 'Qualité vie', 'Climat', 'Culture'],
     ['Admission', 'Documents', 'Demande', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Académique', documents: ['Lettre admission', 'Diplômes'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -798,11 +775,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaEtudes_Italie_2026_99eeb1a3.pdf',
     'Visa d\'études pour l\'Italie - Universités méditerranéennes',
     'Italie offre universités méditerranéennes, frais modérés (900-2500 EUR/an), patrimoine culturel.',
-    '4-8 semaines', '80-140 EUR', '800 EUR/mois', '1000-1800 EUR/an', 'facile',
-    ['Universités méditerranéennes', 'Frais modérés', 'Patrimoine culturel', 'Climat', 'Art'],
+    '4-8 semaines', '80-140 EUR', '800 EUR/mois', '1000-1800 EUR/an', 'moyen', ['Universités méditerranéennes', 'Frais modérés', 'Patrimoine culturel', 'Climat', 'Art'],
     ['Admission', 'Documents', 'Demande', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Académique', documents: ['Lettre admission', 'Diplômes'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -812,11 +788,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaEtudes_Autriche_2026_3416cfaa.pdf',
     'Visa d\'études pour l\'Autriche - Universités de qualité',
     'Autriche offre universités qualité, frais modérés (0-750 EUR/semestre), culture riche.',
-    '5-9 semaines', '90-160 EUR', '1000 EUR/mois', '1200-2000 EUR/an', 'facile',
-    ['Universités qualité', 'Frais modérés', 'Culture riche', 'Accès UE', 'Musique'],
+    '5-9 semaines', '90-160 EUR', '1000 EUR/mois', '1200-2000 EUR/an', 'moyen', ['Universités qualité', 'Frais modérés', 'Culture riche', 'Accès UE', 'Musique'],
     ['Admission', 'Documents', 'Demande', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Académique', documents: ['Lettre admission', 'Diplômes'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -826,11 +801,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaEtudes_Pologne_2026_5d8e278c.pdf',
     'Visa d\'études pour la Pologne - Universités abordables',
     'Pologne offre universités abordables, frais très bas (1000-3000 EUR/an), coût vie bas.',
-    '3-6 semaines', '65-110 EUR', '600 EUR/mois', '800-1500 EUR/an', 'facile',
-    ['Universités abordables', 'Frais très bas', 'Coût vie bas', 'Accès UE', 'Opportunités'],
+    '3-6 semaines', '65-110 EUR', '600 EUR/mois', '800-1500 EUR/an', 'moyen', ['Universités abordables', 'Frais très bas', 'Coût vie bas', 'Accès UE', 'Opportunités'],
     ['Admission', 'Documents', 'Demande', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Académique', documents: ['Lettre admission', 'Diplômes'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -840,11 +814,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaEtudes_RepubliqueTcheque_2026_d6df1fe2.pdf',
     'Visa d\'études pour la Rép. Tchèque - Universités abordables',
     'République Tchèque offre universités abordables, frais bas (1500-4000 EUR/an), Prague magnifique.',
-    '3-6 semaines', '65-110 EUR', '700 EUR/mois', '1000-1800 EUR/an', 'facile',
-    ['Universités abordables', 'Frais bas', 'Prague magnifique', 'Accès UE', 'Culture'],
+    '3-6 semaines', '65-110 EUR', '700 EUR/mois', '1000-1800 EUR/an', 'moyen', ['Universités abordables', 'Frais bas', 'Prague magnifique', 'Accès UE', 'Culture'],
     ['Admission', 'Documents', 'Demande', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Académique', documents: ['Lettre admission', 'Diplômes'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -854,11 +827,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaEtudes_Hongrie_2026_8ec52b9d.pdf',
     'Visa d\'études pour la Hongrie - Universités abordables',
     'Hongrie offre universités abordables, frais très bas (1200-3500 EUR/an), Budapest dynamique.',
-    '3-6 semaines', '65-110 EUR', '600 EUR/mois', '800-1500 EUR/an', 'facile',
-    ['Universités abordables', 'Frais très bas', 'Budapest dynamique', 'Accès UE', 'Culture'],
+    '3-6 semaines', '65-110 EUR', '600 EUR/mois', '800-1500 EUR/an', 'moyen', ['Universités abordables', 'Frais très bas', 'Budapest dynamique', 'Accès UE', 'Culture'],
     ['Admission', 'Documents', 'Demande', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Académique', documents: ['Lettre admission', 'Diplômes'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -868,11 +840,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaEtudes_Roumanie_2026_2278bfe7.docx',
     'Visa d\'études pour la Roumanie - Universités très abordables',
     'Roumanie offre universités très abordables, frais très bas (1000-2500 EUR/an), coût vie très bas.',
-    '3-6 semaines', '60-100 EUR', '500 EUR/mois', '700-1300 EUR/an', 'facile',
-    ['Universités très abordables', 'Frais très bas', 'Coût vie très bas', 'Accès UE', 'Opportunités'],
+    '3-6 semaines', '60-100 EUR', '500 EUR/mois', '700-1300 EUR/an', 'moyen', ['Universités très abordables', 'Frais très bas', 'Coût vie très bas', 'Accès UE', 'Opportunités'],
     ['Admission', 'Documents', 'Demande', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Académique', documents: ['Lettre admission', 'Diplômes'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -882,11 +853,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaEtudes_Slovaquie_2026_67896fef.docx',
     'Visa d\'études pour la Slovaquie - Universités abordables',
     'Slovaquie offre universités abordables, frais bas (1500-4000 EUR/an), Bratislava dynamique.',
-    '3-6 semaines', '65-110 EUR', '700 EUR/mois', '1000-1800 EUR/an', 'facile',
-    ['Universités abordables', 'Frais bas', 'Bratislava dynamique', 'Accès UE', 'Opportunités'],
+    '3-6 semaines', '65-110 EUR', '700 EUR/mois', '1000-1800 EUR/an', 'moyen', ['Universités abordables', 'Frais bas', 'Bratislava dynamique', 'Accès UE', 'Opportunités'],
     ['Admission', 'Documents', 'Demande', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Académique', documents: ['Lettre admission', 'Diplômes'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
@@ -896,11 +866,10 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '',
     'Visa d\'études pour la Slovénie - Universités de qualité',
     'Slovénie offre universités qualité, frais modérés (0-500 EUR/an), environnement magnifique.',
-    '4-8 semaines', '75-130 EUR', '900 EUR/mois', '1200-1800 EUR/an', 'facile',
-    ['Universités qualité', 'Frais modérés', 'Environnement magnifique', 'Accès UE', 'Sécurité'],
+    '4-8 semaines', '75-130 EUR', '900 EUR/mois', '1200-1800 EUR/an', 'moyen', ['Universités qualité', 'Frais modérés', 'Environnement magnifique', 'Accès UE', 'Sécurité'],
     ['Admission', 'Documents', 'Demande', 'Entretien', 'Délivrance'],
     [
-      { category: 'Identité', documents: ['Passeport valide', 'Copie'] },
+      { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
       { category: 'Académique', documents: ['Lettre admission', 'Diplômes'] },
       { category: 'Financier', documents: ['Ressources', 'Relevés'] }
     ]
