@@ -60,6 +60,8 @@ describe("audit confiance & conversion — corrections publiques", () => {
     expect(procedures).not.toContain("Détails de la procédure & Culture");
     expect(portals).toContain("14 octobre 2026");
     expect(portals).not.toContain("19 août 2026");
+    expect(read("client/src/data/evisasDatabaseComplete.ts")).toContain('officialVerifiedAt = "14 octobre 2026"');
+    expect(read("client/src/data/evisasDatabaseComplete.ts")).not.toContain("17 août 2026");
   });
 
   it("purge le service worker pour le lot audit confiance", () => {

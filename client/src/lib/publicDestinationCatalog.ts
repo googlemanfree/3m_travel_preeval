@@ -91,18 +91,23 @@ const guideMatchesProcedure = (
 
 const detailFromProcedure = (procedure: CountryProcedureComplete): PublicDestinationDetail => {
   const consular = consularForCountry(procedure.name);
+  const evisaMatch = evisasDatabaseComplete.find(
+    (destination) =>
+      procedure.id === `${destination.id}-evisa` || normalizeDestination(destination.country) === normalizeDestination(procedure.name),
+  );
+  const verifiedAt = consular?.officialVerifiedAt ?? evisaMatch?.officialVerifiedAt ?? "14 octobre 2026";
   const sources = (consular?.resources ?? []).filter((resource) => guideMatchesProcedure(procedure, resource));
   return {
     procedure,
     sources,
-    lastUpdatedAt: consular?.officialVerifiedAt ?? "14 octobre 2026",
+    lastUpdatedAt: verifiedAt,
     lastUpdatedIso: "2026-10-14",
     consular: {
       countryCode: consular?.countryCode ?? normalizeDestination(procedure.name),
-      officialPortalUrl: consular?.officialPortalUrl,
-      officialPortalLabel: consular?.officialPortalLabel,
-      officialVerifiedAt: consular?.officialVerifiedAt,
-      verificationStatus: consular?.verificationStatus ?? "a_completer",
+      officialPortalUrl: consular?.officialPortalUrl ?? evisaMatch?.officialPortalUrl,
+      officialPortalLabel: consular?.officialPortalLabel ?? evisaMatch?.officialPortalLabel,
+      officialVerifiedAt: verifiedAt,
+      verificationStatus: consular?.verificationStatus ?? (evisaMatch?.officialPortalUrl ? "verifie" : "a_completer"),
       sourceSummary: sources.length
         ? `${sources.length} guide${sources.length > 1 ? "s" : ""} 3M associé${sources.length > 1 ? "s" : ""} à cette procédure`
         : "Guide 3M en cours de consolidation pour cette procédure",
