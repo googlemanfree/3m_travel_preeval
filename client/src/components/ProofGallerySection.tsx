@@ -286,7 +286,7 @@ export default function ProofGallerySection({
           </div>
         )}
 
-        <div className="grid gap-5 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5">
           {visible.map((photo, index) => (
             <button
               key={photo.src}
@@ -295,11 +295,11 @@ export default function ProofGallerySection({
                 lastFocused.current = event.currentTarget;
                 setOpenIndex(index);
               }}
-              className="group overflow-hidden rounded-2xl border border-slate-200 text-left shadow-sm transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-1 hover:shadow-lg motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+              className="group min-w-0 overflow-hidden rounded-2xl border border-slate-200 text-left shadow-sm transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-1 hover:shadow-lg motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
             >
               {/* Vignettes affichées : chargement immédiat (pas de lazy) pour éviter les spinners bloqués. */}
               <ProofImage photo={photo} priority />
-              <p className="p-3 text-xs font-semibold text-slate-700">
+              <p className="p-2.5 text-[11px] font-semibold leading-5 text-slate-700 sm:p-3 sm:text-xs">
                 {photo.kind === "context" && (
                   <span className="mb-1 block text-[10px] font-black uppercase tracking-wider text-amber-700">
                     {t("Illustration contextuelle", "Context illustration")}

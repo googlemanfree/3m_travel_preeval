@@ -96,11 +96,11 @@ export default function Tarifs() {
           <p className="premium-copy mt-3 max-w-3xl text-base">
             Montants d’honoraires d’agence pour vous situer avant le contact. Le devis écrit confirme le périmètre ; les frais consulaires, biométrie, traductions et scolarité restent exclus.
           </p>
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {TARIFS_FEE_EXAMPLES.map((example) => (
               <article key={example.label} className="rounded-2xl border border-blue-100 bg-gradient-to-b from-blue-50/80 to-white p-5 sm:p-6">
                 <h3 className="text-sm font-black uppercase tracking-wide text-blue-900">{example.label}</h3>
-                <p className="mt-3 text-2xl font-black tabular-nums text-slate-950" data-testid="tarifs-fee-range">{example.range}</p>
+                <p className="mt-3 text-xl font-black tabular-nums leading-tight text-slate-950 sm:text-2xl" data-testid="tarifs-fee-range">{example.range}</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{example.detail}</p>
               </article>
             ))}
@@ -128,7 +128,7 @@ export default function Tarifs() {
                       {line.poste}
                       <p className="mt-0.5 text-xs font-normal text-slate-500 sm:hidden">{line.note}</p>
                     </td>
-                    <td className="px-5 py-3 font-black tabular-nums text-slate-950 sm:px-6">{line.montant}</td>
+                    <td className="whitespace-nowrap px-5 py-3 font-black tabular-nums text-slate-950 sm:px-6">{line.montant}</td>
                     <td className="hidden px-5 py-3 text-slate-600 sm:table-cell sm:px-6">{line.note}</td>
                   </tr>
                 ))}
@@ -136,7 +136,7 @@ export default function Tarifs() {
               <tfoot>
                 <tr className="bg-blue-50/60">
                   <th scope="row" className="px-5 py-4 text-base font-black text-slate-950 sm:px-6">Total honoraires (exemple)</th>
-                  <td className="px-5 py-4 text-lg font-black tabular-nums text-blue-900 sm:px-6" colSpan={2}>{TARIFS_SAMPLE_DEVIS.total}</td>
+                  <td className="whitespace-nowrap px-5 py-4 text-lg font-black tabular-nums text-blue-900 sm:px-6" colSpan={2}>{TARIFS_SAMPLE_DEVIS.total}</td>
                 </tr>
               </tfoot>
             </table>

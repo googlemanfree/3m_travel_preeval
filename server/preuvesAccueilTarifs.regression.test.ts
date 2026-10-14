@@ -37,4 +37,13 @@ describe("lot preuves, accueil allégé et tarifs chiffrés", () => {
     expect(tarifs).toContain("<table");
     expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v51-preuves-accueil-tarifs");
   });
+
+  it("garde une grille compacte et des montants lisibles sur mobile", () => {
+    const gallery = read("client/src/components/ProofGallerySection.tsx");
+    const tarifs = read("client/src/pages/Tarifs.tsx");
+    expect(gallery).toContain("grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5");
+    expect(gallery).toContain("min-w-0 overflow-hidden");
+    expect(tarifs).toContain("sm:grid-cols-2 sm:gap-4 lg:grid-cols-3");
+    expect(tarifs).toContain("whitespace-nowrap px-5 py-3");
+  });
 });
