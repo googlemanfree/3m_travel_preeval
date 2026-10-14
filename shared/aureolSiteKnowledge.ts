@@ -40,7 +40,7 @@ export const AUREOL_FORBIDDEN_CLAIMS = [
 ] as const;
 
 export function matchesOfficeCanadaQuestion(question: string): boolean {
-  const q = question.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+  const q = question.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const mentionsOffice = /\b(bureau|bureaux|agence|agences|office|offices|siege|antenne)\b/.test(q);
   const mentionsCanadaOrOttawa = /\b(canada|canadien|canadienne|ottawa|ontario)\b/.test(q);
   const deniesPresence =
