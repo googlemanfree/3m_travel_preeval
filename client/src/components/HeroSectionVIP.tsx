@@ -15,7 +15,7 @@ interface HeroSectionVIPProps {
 const heroButtonSize = "w-full max-w-[22rem] min-h-14 sm:w-[300px]";
 
 export default function HeroSectionVIP({
-  logoUrl = "/logo-3m-travel-agency.svg",
+  logoUrl = "/logo-3m-hd.webp",
   whatsappNumber = "237698104832",
 }: HeroSectionVIPProps) {
   const { t, language } = useLanguage();
@@ -141,12 +141,14 @@ export default function HeroSectionVIP({
         >
           <img
             src={logoUrl}
+            srcSet="/logo-3m.webp 480w, /logo-3m-hd.webp 1024w"
+            sizes="(min-width: 1024px) 144px, (min-width: 768px) 128px, 96px"
             alt="3M TRAVEL AGENCY"
-            width={128}
-            height={128}
+            width={144}
+            height={144}
             decoding="async"
             fetchPriority="high"
-            className="h-20 w-20 rounded-full border-[3px] border-white/70 bg-white object-cover shadow-[0_12px_40px_rgba(0,0,0,0.45)] transition-transform duration-200 ease-out group-hover:scale-[1.03] group-hover:rotate-1 motion-reduce:transition-none sm:h-24 sm:w-24 md:h-28 md:w-28 lg:h-32 lg:w-32"
+            className="h-24 w-24 rounded-full border-[3px] border-amber-200/80 bg-white object-cover shadow-[0_16px_48px_rgba(0,0,0,0.5)] ring-2 ring-white/40 transition-transform duration-200 ease-out group-hover:scale-[1.04] group-hover:rotate-1 motion-reduce:transition-none sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-36 lg:w-36"
             data-testid="hero-logo"
           />
         </motion.div>

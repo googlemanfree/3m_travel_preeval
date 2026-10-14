@@ -150,7 +150,7 @@ export default function Navbar() {
             className="order-1 flex w-16 shrink-0 items-center justify-start gap-2 group hover:opacity-80 transition-opacity sm:w-16 sm:gap-3 lg:w-20"
           >
             <img
-              src="/logo-3m-travel-agency.svg"
+              src="/logo-3m.webp"
               alt="Logo 3M TRAVEL AGENCY"
               className="h-10 w-auto max-w-full object-contain sm:h-12"
             />
