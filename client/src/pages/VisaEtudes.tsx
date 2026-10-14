@@ -12,7 +12,7 @@ import { IllustrativeDestinationStrip } from '@/components/IllustrativeDestinati
 import ProofGallerySection from '@/components/ProofGallerySection';
 import { getDestinationVisual, getServiceVisual } from '@/data/premiumVisuals';
 import { INTERNATIONAL_BRAND } from '@/data/internationalBrand';
-import { buildFreeEvaluationHref } from '@/components/PublicEvaluationCTA';
+import { buildFreeEvaluationHref, EVALUATION_CTA_HINT } from '@/components/PublicEvaluationCTA';
 import { setPageSeo } from '@/lib/pageSeo';
 import { trpc } from '@/lib/trpc';
 import { SimulatorRetryBoundary } from '@/components/SimulatorRetryBoundary';
@@ -102,13 +102,18 @@ export default function VisaEtudes() {
               Admission, justificatifs financiers et visa étudiant : Campus France, IRCC, uni-assist et autres procédures officielles — préparés avec un conseiller, sans promesse d&apos;admission ni de visa.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Link
-                href={buildFreeEvaluationHref("etudes")}
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-black text-blue-950 shadow-lg transition hover:bg-blue-50"
-              >
-                {INTERNATIONAL_BRAND.cta.evaluate.fr}
-                <ArrowRight size={18} aria-hidden="true" />
-              </Link>
+              <span className="inline-flex flex-col items-stretch gap-1 sm:items-start">
+                <Link
+                  href={buildFreeEvaluationHref("etudes")}
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-black text-blue-950 shadow-lg transition hover:bg-blue-50"
+                >
+                  {INTERNATIONAL_BRAND.cta.evaluate.fr}
+                  <ArrowRight size={18} aria-hidden="true" />
+                </Link>
+                <span className="max-w-sm text-center text-[11px] leading-4 text-blue-50/95 sm:text-left" data-testid="etudes-eval-hint">
+                  {EVALUATION_CTA_HINT.fr}
+                </span>
+              </span>
               <Link
                 href="/procedures"
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-amber-300/60 bg-amber-400/15 px-5 py-3 text-sm font-black text-amber-100 transition hover:bg-amber-400/25"
@@ -278,9 +283,10 @@ export default function VisaEtudes() {
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-blue-50">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-6">Prêt à démarrer votre projet d'études ?</h2>
-          <p className="text-lg text-gray-600 mb-8">Une évaluation gratuite et sans engagement pour savoir où vous en êtes.</p>
+          <p className="text-lg text-gray-600 mb-2">Une évaluation gratuite et sans engagement pour savoir où vous en êtes.</p>
+          <p className="mb-8 text-sm text-slate-600">{EVALUATION_CTA_HINT.fr}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/evaluation?destination=etudes">
+            <Link href={buildFreeEvaluationHref("etudes")}>
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold rounded-full text-lg transition-all duration-300 shadow-lg hover:shadow-xl inline-flex items-center justify-center gap-2">
                 Faire mon évaluation gratuite
                 <ArrowRight size={20} />

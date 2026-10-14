@@ -15,6 +15,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
 import { getProcedureVisualSources } from '@/data/procedureVisuals';
 import { getPublicDestinationDetail, getPublicDestinationPath, getPublicDestinationSearchTerms, normalizePublicDestinationSearchTerm, PUBLIC_DESTINATION_DETAILS } from '@/lib/publicDestinationCatalog';
+import { getVerifiedProcedureFee } from '@/data/verifiedProcedureFees';
 import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
 import { PremiumAtmosphere } from '@/components/PremiumAtmosphere';
@@ -769,7 +770,8 @@ export default function ProceduresAdvanced() {
                     localFallback: procedureVisual.localFallback ?? procedureVisual.desktop,
                   }
                 : procedureVisual;
-              const officialPortal = destinationDetail?.consular.officialPortalUrl;
+              const verifiedFee = getVerifiedProcedureFee(country.id);
+              const officialPortal = verifiedFee?.officialUrl ?? destinationDetail?.consular.officialPortalUrl;
               const officialPortalLabel = destinationDetail?.consular.officialPortalLabel ?? 'Portail institutionnel';
               const verifiedAt = destinationDetail?.consular.officialVerifiedAt ?? destinationDetail?.lastUpdatedAt;
 
@@ -833,12 +835,21 @@ export default function ProceduresAdvanced() {
                         <span className="text-xs font-semibold text-slate-500">{country.region}</span>
                       </div>
                       <p className="line-clamp-2 text-sm leading-5 text-slate-600">{country.description}</p>
+                      {verifiedFee ? (
+                        <p className="text-[11px] font-semibold leading-4 text-slate-700">
+                          {verifiedFee.costLabel} · {verifiedFee.delayLabel}
+                        </p>
+                      ) : null}
                       <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs leading-5 text-slate-600">
                         <div className="flex items-center gap-1.5 font-semibold text-slate-800">
                           <Clock className="h-3.5 w-3.5 text-blue-700" aria-hidden="true" />
                           {verifiedAt ? `Vérifié le ${verifiedAt}` : 'Date de vérification à confirmer'}
                         </div>
-                        <p className="mt-1 text-[11px] text-slate-500">Délais et coûts : confirmez sur le portail officiel (repères indicatifs seulement).</p>
+                        <p className="mt-1 text-[11px] text-slate-500">
+                          {verifiedFee
+                            ? verifiedFee.note
+                            : 'Délais et coûts : confirmez sur le portail officiel (repères indicatifs seulement).'}
+                        </p>
                         {officialPortal ? (
                           <a
                             href={officialPortal}

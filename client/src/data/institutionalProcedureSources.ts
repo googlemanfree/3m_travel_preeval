@@ -178,7 +178,8 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "preparationPoints": [
       "Lettre d’acceptation d’un établissement d’enseignement désigné (EED)",
       "Preuve de ressources financières suffisantes pour le séjour",
-      "Passeport valide : IRCC n’émet pas de permis au-delà de la date d’expiration du passeport"
+      "Passeport valide : IRCC n’émet pas de permis au-delà de la date d’expiration du passeport",
+      "Frais IRCC indicatifs : 150 CAD (permis d’études) + 85 CAD biométrie si exigée — confirmez sur Canada.ca"
     ],
     "caveat": "Les exigences (pièces, délais, frais, besoin de visa/AVE) dépendent de la nationalité et du programme. Confirmez toujours sur Canada.ca / IRCC avant toute demande."
   },
@@ -190,7 +191,8 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "preparationPoints": [
       "Identifier le type de permis (avec ou sans EIMT) selon l’offre d’emploi",
       "Préparer les formulaires et pièces exigés par IRCC pour votre nationalité",
-      "Passeport valide : la durée du permis ne peut pas dépasser celle du passeport"
+      "Passeport valide : la durée du permis ne peut pas dépasser celle du passeport",
+      "Frais IRCC indicatifs : 155 CAD (permis de travail) + 85 CAD biométrie si exigée — confirmez sur Canada.ca"
     ],
     "caveat": "Les exigences (EIMT, permis, visa/AVE) dépendent de la nationalité, de l’employeur et du métier. Confirmez toujours sur Canada.ca / IRCC avant toute demande."
   },
@@ -446,7 +448,8 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "preparationPoints": [
       "Vérifier d’abord si votre nationalité est soumise à visa (assistant France-Visas)",
       "Passeport : validité d’au moins 3 mois après la date prévue de départ de l’espace Schengen, délivré depuis moins de 10 ans, avec pages libres",
-      "Justificatifs adaptés au motif (hébergement, ressources, assurance voyage, billet) — la liste exacte dépend de votre situation"
+      "Justificatifs adaptés au motif (hébergement, ressources, assurance voyage, billet) — la liste exacte dépend de votre situation",
+      "Frais indicatifs barème UE : 80 EUR (adulte, visa Schengen C) — confirmez le montant exact sur France-Visas"
     ],
     "caveat": "Court séjour Schengen ≠ séjour touristique de plus de 3 mois. Les pièces, délais et frais varient selon la nationalité et le motif ; confirmez toujours sur France-Visas avant toute demande."
   },

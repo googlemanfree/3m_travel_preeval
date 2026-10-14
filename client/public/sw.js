@@ -1,4 +1,4 @@
-const CACHE_NAME = '3m-travel-pwa-v48-audit-confiance';
+const CACHE_NAME = '3m-travel-pwa-v49-suite-suivante';
 const IS_PREVIEW_HOST = /\.manus\.computer$|\.manuspre\.computer$|\.manuscomputer\.ai$/i.test(self.location.hostname);
 const ASSETS_TO_CACHE = [
   '/manifest.json'

@@ -5,11 +5,20 @@ import { FloatingActionMenu } from "@/components/FloatingActionMenu";
 import AiCopilotWidgetEnhanced from "@/components/AiCopilotWidgetEnhanced";
 import { SmartFlightAssistant } from "@/components/SmartFlightAssistant";
 
-const DOCK_HINT_KEY = "3m-floating-dock-hint-seen";
+const DOCK_HINT_KEY = "3m-floating-dock-hint-seen-v2";
+
+function persistHintSeen() {
+  try {
+    window.localStorage.setItem(DOCK_HINT_KEY, "1");
+  } catch {
+    /* ignore storage */
+  }
+}
 
 /**
  * Sur mobile : un seul bouton ouvre/ferme la pile WhatsApp + Aureol + vols.
  * Sur desktop : les trois pastilles restent toujours visibles.
+ * L’infobulle mobile est courte, auto-fermée, et ne masque plus durablement les CTA.
  */
 export function FloatingToolsDock() {
   const prefersReducedMotion = useReducedMotion();
@@ -44,17 +53,27 @@ export function FloatingToolsDock() {
     } catch {
       /* ignore storage */
     }
-    const timer = window.setTimeout(() => setShowHint(true), 900);
-    return () => window.clearTimeout(timer);
+    const showTimer = window.setTimeout(() => setShowHint(true), 1_200);
+    return () => window.clearTimeout(showTimer);
   }, []);
+
+  useEffect(() => {
+    if (!showHint || typeof window === "undefined") return;
+    const hide = () => {
+      setShowHint(false);
+      persistHintSeen();
+    };
+    const autoHide = window.setTimeout(hide, 3_200);
+    window.addEventListener("scroll", hide, { passive: true, once: true });
+    return () => {
+      window.clearTimeout(autoHide);
+      window.removeEventListener("scroll", hide);
+    };
+  }, [showHint]);
 
   const dismissHint = () => {
     setShowHint(false);
-    try {
-      window.localStorage.setItem(DOCK_HINT_KEY, "1");
-    } catch {
-      /* ignore storage */
-    }
+    persistHintSeen();
   };
 
   const toggleDock = () => {
@@ -72,27 +91,27 @@ export function FloatingToolsDock() {
           {showHint && !expanded && (
             <motion.div
               role="status"
-              initial={prefersReducedMotion ? false : { opacity: 0, y: 8, scale: 0.96 }}
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 6, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={prefersReducedMotion ? undefined : { opacity: 0, y: 6, scale: 0.96 }}
-              transition={{ duration: prefersReducedMotion ? 0 : 0.32, ease: [0.22, 1, 0.36, 1] }}
-              className="pointer-events-auto absolute bottom-full right-0 mb-3 w-[min(16.5rem,calc(100vw-2.5rem))] rounded-2xl border border-blue-100 bg-white px-3.5 py-3 text-left shadow-xl shadow-slate-900/15"
+              exit={prefersReducedMotion ? undefined : { opacity: 0, y: 4, scale: 0.97 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.24, ease: [0.22, 1, 0.36, 1] }}
+              className="pointer-events-auto absolute bottom-full right-0 mb-2 w-[min(12.5rem,calc(100vw-5rem))] rounded-xl border border-blue-100 bg-white/95 px-2.5 py-2 text-left shadow-lg shadow-slate-900/10 backdrop-blur"
               data-testid="floating-tools-hint"
             >
-              <p className="text-xs font-bold text-[#0b2f6f]">Assistants 3M</p>
-              <p className="mt-1 text-[11px] leading-relaxed text-slate-600">
+              <p className="text-[11px] font-bold text-[#0b2f6f]">Assistants 3M</p>
+              <p className="mt-0.5 text-[10px] leading-snug text-slate-600">
                 Touchez ici pour afficher WhatsApp, Aureol et l’assistant de vol — puis refermez pour libérer l’écran.
               </p>
               <button
                 type="button"
                 onClick={dismissHint}
-                className="mt-2 text-[11px] font-semibold text-blue-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="mt-1.5 text-[10px] font-semibold text-blue-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
                 Compris
               </button>
               <span
                 aria-hidden="true"
-                className="absolute -bottom-1.5 right-5 h-3 w-3 rotate-45 border-b border-r border-blue-100 bg-white"
+                className="absolute -bottom-1 right-5 h-2 w-2 rotate-45 border-b border-r border-blue-100 bg-white"
               />
             </motion.div>
           )}

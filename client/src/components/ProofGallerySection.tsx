@@ -158,6 +158,12 @@ export default function ProofGallerySection({
                 "Excerpts from files handled by 3M TRAVEL AGENCY and journey illustrations, sorted by procedure. Documents are redacted; illustrations are not a promise of placement.",
             )}
           </p>
+          <p className="mx-auto mt-2 max-w-2xl text-center text-xs font-semibold text-slate-500" data-testid="proof-brand-note">
+            {t(
+              "Marque publique : 3M TRAVEL AGENCY (tout filigrane « Travel & Services » sur d’anciens extraits désigne la même agence).",
+              "Public brand: 3M TRAVEL AGENCY (any legacy “Travel & Services” watermark on excerpts refers to the same agency).",
+            )}
+          </p>
           {!lockFilter && (
             <p className="mt-3 text-sm font-bold text-blue-800" data-testid="proof-count" aria-live="polite">
               {PROOF_PHOTOS.length} {t("preuves publiées", "published proofs")}
