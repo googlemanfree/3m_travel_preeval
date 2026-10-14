@@ -131,7 +131,7 @@ export default function HeroSectionVIP({
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,22,44,.58)_0%,rgba(7,22,44,.3)_46%,transparent_80%)]" />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-5xl px-5 py-10 text-white sm:px-10 sm:py-14 md:px-14">
+      <div className="group relative z-10 mx-auto w-full max-w-5xl px-5 py-10 text-white sm:px-10 sm:py-14 md:px-14">
         <motion.div
           initial="hidden"
           animate="visible"
@@ -146,7 +146,7 @@ export default function HeroSectionVIP({
             height={128}
             decoding="async"
             fetchPriority="high"
-            className="h-20 w-20 rounded-full border-[3px] border-white/70 bg-white object-cover shadow-[0_12px_40px_rgba(0,0,0,0.45)] sm:h-24 sm:w-24 md:h-28 md:w-28 lg:h-32 lg:w-32"
+            className="h-20 w-20 rounded-full border-[3px] border-white/70 bg-white object-cover shadow-[0_12px_40px_rgba(0,0,0,0.45)] transition-transform duration-200 ease-out group-hover:scale-[1.03] group-hover:rotate-1 motion-reduce:transition-none sm:h-24 sm:w-24 md:h-28 md:w-28 lg:h-32 lg:w-32"
             data-testid="hero-logo"
           />
         </motion.div>
@@ -156,7 +156,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={0.5}
-          className="text-4xl font-extrabold uppercase tracking-tight text-white drop-shadow-[0_3px_16px_rgba(0,0,0,0.55)] sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.75rem]"
+          className="text-4xl font-extrabold uppercase tracking-tight text-white drop-shadow-[0_3px_16px_rgba(0,0,0,0.55)] transition-[transform,text-shadow] duration-200 ease-out group-hover:-translate-y-0.5 group-hover:drop-shadow-[0_5px_20px_rgba(0,0,0,0.7)] motion-reduce:transition-none sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.75rem]"
           data-testid="hero-title"
         >
           {INTERNATIONAL_BRAND.publicName}

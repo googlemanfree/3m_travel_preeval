@@ -52,6 +52,7 @@ const QUICK_ACTION_BUTTONS = [
 
 export default function AiCopilotWidgetEnhanced() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isOpening, setIsOpening] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -146,6 +147,15 @@ export default function AiCopilotWidgetEnhanced() {
     }
   };
 
+  const openAssistant = () => {
+    if (isOpening) return;
+    setIsOpening(true);
+    window.setTimeout(() => {
+      setIsOpen(true);
+      setIsOpening(false);
+    }, 220);
+  };
+
   return (
     <>
       {/* Bouton flottant */}
@@ -156,11 +166,13 @@ export default function AiCopilotWidgetEnhanced() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
-              onClick={() => setIsOpen(true)}
+              onClick={openAssistant}
+              disabled={isOpening}
               aria-label="Ouvrir Aureol, le guide 3M TRAVEL AGENCY"
-              className="w-11 h-11 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg flex items-center justify-center text-white hover:shadow-xl transition-shadow hover:scale-110 focus-visible:ring-4 focus-visible:ring-blue-200 focus-visible:ring-offset-2"
+              aria-busy={isOpening}
+              className="w-11 h-11 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg flex items-center justify-center text-white hover:shadow-xl transition-[box-shadow,transform] duration-200 hover:scale-110 focus-visible:ring-4 focus-visible:ring-blue-200 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-80 motion-reduce:transition-none"
             >
-              <MessageSquare className="w-5 h-5 md:w-6 md:h-6" />
+              {isOpening ? <Loader className="w-5 h-5 animate-spin md:w-6 md:h-6" aria-hidden="true" /> : <MessageSquare className="w-5 h-5 md:w-6 md:h-6" aria-hidden="true" />}
             </motion.button>
           )}
         </AnimatePresence>

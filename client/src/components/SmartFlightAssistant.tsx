@@ -159,7 +159,7 @@ export const SmartFlightAssistant = () => {
   };
 
   return (
-    <div className="safe-bottom-floating-flight fixed right-4 z-50 md:right-6">
+    <div className="safe-bottom-floating-flight fixed bottom-3 right-3 z-50 sm:bottom-4 sm:right-4 md:bottom-6 md:right-6">
       <AnimatePresence>
         {!isOpen && (
           <motion.button
@@ -189,7 +189,7 @@ export const SmartFlightAssistant = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl w-[360px] max-w-[calc(100vw-32px)] overflow-hidden flex flex-col h-[500px]"
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl w-[min(360px,calc(100vw-1.5rem))] max-w-full overflow-hidden flex flex-col h-[min(500px,calc(100dvh-6rem))] min-h-[360px]"
           >
             {/* En-tête du chat */}
             <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] text-white p-4 flex items-center justify-between">
