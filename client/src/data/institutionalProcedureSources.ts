@@ -1,5 +1,5 @@
 /**
- * Références institutionnelles collectées le 27 août 2026 pour les fiches publiques.
+ * Références institutionnelles pour les fiches publiques (visiteur, travail, études). Contrôle qualité élargi le 14 octobre 2026 : chaque fiche affiche le lien exact et la date de consultation ; les pièces restent indicatives selon nationalité et situation.
  * Les points de préparation excluent volontairement les montants, délais et appréciations
  * individuelles : le portail de l'autorité reste la source de référence.
  */
@@ -23,31 +23,31 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Documents traduits en albanais ou anglais et scannés en format PDF",
       "Justificatifs incluant une photo aux normes, la réservation du vol retour et une preuve d'hébergement"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "allemagne-etudes",
     "officialUrl": "https://www.auswaertiges-amt.de/fr/02-entree-sejour/02-etudier-en-allemagne-seite-1281874",
-    "sourceTitle": "FAQ : Etudier en Allemagne - Ministère fédéral des Affaires étrangères",
-    "consultedOn": "2026-08-27",
+    "sourceTitle": "FAQ : Étudier en Allemagne — Ministère fédéral des Affaires étrangères",
+    "consultedOn": "2026-10-14",
     "preparationPoints": [
-      "Justification de l'admission ou inscription universitaire",
-      "Preuve de financement garanti des études",
-      "Vérification de la reconnaissance des diplômes étrangers via anabin"
+      "Admission / inscription universitaire (ou équivalent)",
+      "Preuve de financement des études",
+      "Passeport valide avec pages libres ; reconnaissance des diplômes via anabin selon le cas"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (visa national, pièces, délais) dépendent de la nationalité et du parcours. Confirmez toujours sur le portail officiel allemand avant toute demande."
   },
   {
     "procedureId": "allemagne-travail",
     "officialUrl": "https://www.make-it-in-germany.com/fr/visa-sejour/types/travailleurs-qualifies",
-    "sourceTitle": "Visa de travail pour travailleurs qualifiés - Make it in Germany",
-    "consultedOn": "2026-08-27",
+    "sourceTitle": "Visa de travail pour travailleurs qualifiés — Make it in Germany",
+    "consultedOn": "2026-10-14",
     "preparationPoints": [
-      "Obtention d'une reconnaissance d'équivalence pour les diplômes étrangers",
-      "Présentation d'une offre d'emploi concrète pour un poste qualifié",
-      "Approbation préalable de l'Agence fédérale pour l'emploi (BA)"
+      "Reconnaissance / équivalence des diplômes étrangers si requise",
+      "Offre d’emploi concrète pour un poste qualifié",
+      "Approbation préalable éventuelle de l’Agence fédérale pour l’emploi (BA)"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (visa, reconnaissance, BA) dépendent de la nationalité et du métier. Confirmez toujours sur Make it in Germany / Auswärtiges Amt avant toute demande."
   },
   {
     "procedureId": "allemagne-visiteur",
@@ -59,7 +59,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Présenter un passeport valide et des justificatifs relatifs à l'objet et aux conditions du séjour",
       "Justifier de moyens de subsistance suffisants ou d'une déclaration d'engagement de l'hôte et d'une assurance voyage"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "australie-etudes",
@@ -71,7 +71,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Souscription à une couverture santé pour étudiants étrangers (OSHC)",
       "Soumission de la demande en ligne via ImmiAccount"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "australie-travail",
@@ -82,7 +82,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Identifier le visa adapté au projet professionnel",
       "Préparer un passeport valide et les preuves de compétences"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "autriche-etudes",
@@ -93,7 +93,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Admission : Obtention d'une notification d'admission (Zulassungsbescheid) d'un établissement d'enseignement supérieur autrichien",
       "Logement et Santé : Preuve d'un hébergement adéquat et d'une assurance maladie couvrant tous les risques en Autriche"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "autriche-travail",
@@ -105,7 +105,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Justification de ressources financières mensuelles suffisantes",
       "Preuve d'une couverture d'assurance maladie complète en Autriche"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "autriche-visiteur",
@@ -115,7 +115,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "preparationPoints": [
       "Justificatifs de ressources financières suffisantes ou déclaration de prise en charge électronique"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "bahrein-evisa",
@@ -126,7 +126,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Billet d'avion retour et preuve d'hébergement à Bahreïn",
       "Relevé bancaire récent au nom du demandeur"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "belgique-etudes",
@@ -138,7 +138,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Consulter les portails officiels Study in Belgium ou Study in Flanders",
       "Vérifier l'équivalence des diplômes étrangers auprès des Communautés"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "belgique-visiteur",
@@ -146,7 +146,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "sourceTitle": "Court séjour - Office des Étrangers",
     "consultedOn": "2026-08-27",
     "preparationPoints": [],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "bulgarie-travail",
@@ -158,7 +158,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Sollicitation d'un visa de type D au consulat",
       "Preuves de ressources, logement et assurance santé"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "cambodge-evisa",
@@ -168,29 +168,31 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "preparationPoints": [
       "Remplissage du formulaire de demande en ligne avec les détails du passeport"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "canada-etudes",
     "officialUrl": "https://www.canada.ca/fr/immigration-refugies-citoyennete/services/etudier-canada/permis-etudes.html",
-    "sourceTitle": "Permis d'études : À propos du processus",
-    "consultedOn": "2026-08-27",
+    "sourceTitle": "Permis d'études — Immigration, Réfugiés et Citoyenneté Canada",
+    "consultedOn": "2026-10-14",
     "preparationPoints": [
-      "Inscription dans un établissement d'enseignement désigné (EED)",
-      "Preuve de ressources financières suffisantes",
-      "Obtention d'une lettre d'acceptation officielle"
+      "Lettre d’acceptation d’un établissement d’enseignement désigné (EED)",
+      "Preuve de ressources financières suffisantes pour le séjour",
+      "Passeport valide : IRCC n’émet pas de permis au-delà de la date d’expiration du passeport"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa/AVE) dépendent de la nationalité et du programme. Confirmez toujours sur Canada.ca / IRCC avant toute demande."
   },
   {
     "procedureId": "canada-travail",
-    "officialUrl": "https://www.canada.ca/fr/immigration-refugies-citoyennete/services/travailler-canada/permis-exterieur.html",
-    "sourceTitle": "Permis de travail : Présentation d’une demande à l’extérieur du Canada",
-    "consultedOn": "2026-08-27",
+    "officialUrl": "https://www.canada.ca/fr/immigration-refugies-citoyennete/services/travailler-canada.html",
+    "sourceTitle": "Travailler au Canada — Immigration, Réfugiés et Citoyenneté Canada",
+    "consultedOn": "2026-10-14",
     "preparationPoints": [
-      "Préparer les formulaires et documents requis par le bureau des visas local"
+      "Identifier le type de permis (avec ou sans EIMT) selon l’offre d’emploi",
+      "Préparer les formulaires et pièces exigés par IRCC pour votre nationalité",
+      "Passeport valide : la durée du permis ne peut pas dépasser celle du passeport"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (EIMT, permis, visa/AVE) dépendent de la nationalité, de l’employeur et du métier. Confirmez toujours sur Canada.ca / IRCC avant toute demande."
   },
   {
     "procedureId": "chypre-travail",
@@ -202,7 +204,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Certificat de casier judiciaire et examens médicaux (tests sanguins et radio)",
       "Passeport en cours de validité et assurance santé locale"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "chypre-visiteur",
@@ -213,7 +215,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Soumission du formulaire MVIS8 avec documents justificatifs traduits et certifiés",
       "Entrée légale avec visa et document de voyage valides via les points officiels"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "croatie-travail",
@@ -225,7 +227,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Test du marché du travail préalable par l'employeur",
       "Travail limité au poste et à l'employeur spécifiés"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "croatie-visiteur",
@@ -235,7 +237,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "preparationPoints": [
       "Formulaire de demande complété et signé avec photo aux normes ICAO"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "danemark-etudes",
@@ -247,7 +249,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Preuve de compétences linguistiques",
       "Capacité financière à subvenir à ses besoins"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "danemark-travail",
@@ -259,7 +261,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Identification du programme de permis adapté au profil (Pay Limit, Positive List)",
       "Demande conjointe de permis de séjour et de travail auprès de SIRI"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "danemark-visiteur",
@@ -271,7 +273,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Vérifier les conditions spécifiques selon le groupe de pays du demandeur",
       "Présenter des preuves de l'objet du séjour privé ou touristique"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "djibouti-evisa",
@@ -282,7 +284,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Réservation de vol et adresse d'hébergement",
       "Lettre d'invitation (organisation ou hôte)"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "dubai-evisa",
@@ -294,7 +296,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Passeport valide et photographie en couleur",
       "Assurance médicale couvrant le séjour aux Émirats"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "egypte-evisa",
@@ -302,7 +304,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "sourceTitle": "Egypt e-Visa Portal",
     "consultedOn": "2026-08-27",
     "preparationPoints": [],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "espagne-etudes",
@@ -313,7 +315,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Admission dans un établissement d'enseignement agréé",
       "Assurance maladie auprès d'un assureur autorisé en Espagne"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "espagne-travail",
@@ -325,7 +327,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Absence d'antécédents pénaux sur les cinq dernières années",
       "Vérification de la situation nationale de l'emploi"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "espagne-visiteur",
@@ -336,7 +338,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Souscription à une assurance maladie complète auprès d'un assureur agréé en Espagne",
       "Présentation d'un certificat d'antécédents pénaux et d'un certificat médical officiel"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "estonie-travail",
@@ -347,7 +349,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Justifier des compétences et de l'expérience professionnelle adaptées au poste",
       "Vérifier que l'employeur est enregistré en Estonie et dispose de l'autorisation de recrutement"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "estonie-visiteur",
@@ -358,7 +360,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Remplir le formulaire de demande de visa Schengen en ligne, l'imprimer et le signer",
       "Disposer d'un passeport valide au moins trois mois après le départ prévu avec deux pages vierges"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "etats-unis-travail",
@@ -370,7 +372,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Dépôt d'une pétition par l'employeur auprès de l'USCIS",
       "Demande de visa auprès du Département d'État pour les résidents hors USA"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "ethiopie-evisa",
@@ -380,7 +382,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "preparationPoints": [
       "Photo récente format passeport"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "finlande-etudes",
@@ -390,7 +392,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "preparationPoints": [
       "Acceptation préalable dans un établissement d'enseignement supérieur ou professionnel finlandais"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "finlande-travail",
@@ -401,7 +403,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Emploi confirmé requis avant le dépôt de la demande",
       "Dépôt de la première demande de permis de séjour depuis l'étranger"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "finlande-visiteur",
@@ -409,18 +411,20 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "sourceTitle": "A visa to visit Finland - Ministry for Foreign Affairs",
     "consultedOn": "2026-08-27",
     "preparationPoints": [],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "france-etudes",
     "officialUrl": "https://france-visas.gouv.fr/etudiant",
-    "sourceTitle": "France-Visas - Étudiant",
-    "consultedOn": "2026-08-27",
+    "sourceTitle": "Étudiant — France-Visas",
+    "consultedOn": "2026-10-14",
     "preparationPoints": [
-      "Inscription préalable dans un établissement d'enseignement supérieur",
-      "Numérisation des pièces justificatives pour la demande en ligne"
+      "Admission / inscription dans un établissement d’enseignement supérieur (procédure Études en France selon nationalité)",
+      "Court séjour (< 3 mois) ou long séjour / VLS-TS selon la durée de formation",
+      "Passeport valide au minimum 3 mois après la fin du visa (règle long séjour FR) — pages libres, délivré depuis moins de 10 ans",
+      "Justificatifs listés par l’assistant France-Visas pour votre nationalité (ressources, hébergement, couverture)"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (visa, pièces, délais) dépendent de la nationalité, de la durée et de l’établissement. Confirmez toujours sur France-Visas / Campus France avant toute demande."
   },
   {
     "procedureId": "france-travail",
@@ -432,7 +436,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "L’employeur obtient en général l’autorisation de travail avant la demande de visa",
       "Préparer un passeport valide et les justificatifs listés par l’assistant France-Visas pour votre nationalité"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche. Cette fiche n’est pas le portail d’inscription à France Travail (emploi en France)."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche. Cette fiche n’est pas le portail d’inscription à France Travail (emploi en France)."
   },
   {
     "procedureId": "france-visiteur",
@@ -456,7 +460,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "CV, copies des diplômes et du passeport du travailleur",
       "Dossier juridique de l'entreprise employeuse (fiche circuit, statuts, CNSS)"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "grece-travail",
@@ -468,7 +472,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Demande de permis de séjour auprès de l'Administration Décentralisée dès l'arrivée",
       "Présentation d'un contrat de travail d'au moins un an et d'une assurance santé complète"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "grece-visiteur",
@@ -480,7 +484,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Certificats de santé et de moralité",
       "Assurance médicale de voyage"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "hongrie-etudes",
@@ -492,7 +496,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Justificatif de ressources financières suffisantes",
       "Preuve d'assurance maladie complète"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "hongrie-travail",
@@ -504,7 +508,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "La demande peut être déposée par voie électronique via la plateforme Enter Hungary ou en personne auprès d'une direction régionale",
       "Un document de voyage valide et une preuve de relation d'emploi (contrat ou offre d'emploi) sont requis"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "hongrie-visiteur",
@@ -515,7 +519,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Lettre d'invitation notariée ou déclaration signée",
       "Justificatifs de ressources financières suffisantes"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "inde-evisa",
@@ -527,7 +531,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Photographie récente sur fond blanc et scan du passeport",
       "Billet de retour ou de continuation et fonds suffisants"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "irlande-travail",
@@ -538,7 +542,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Soumission d'un contrat de travail signé par les deux parties",
       "Vérification de la nécessité d'un test du marché du travail (annonce EURES)"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "islande-travail",
@@ -548,7 +552,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "preparationPoints": [
       "Contrat de travail et preuve de qualification"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "islande-visiteur",
@@ -558,7 +562,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "preparationPoints": [
       "Justificatifs de moyens financiers suffisants ou garantie de l'hôte"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "italie-etudes",
@@ -568,7 +572,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "preparationPoints": [
       "Demande de visa d'études national (type D) auprès de la représentation diplomatique italienne"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "italie-travail",
@@ -578,7 +582,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "preparationPoints": [
       "Obtention préalable d'un \"nulla osta\" au travail par l'employeur auprès du Sportello Unico per l'Immigrazione"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "italie-visiteur",
@@ -590,7 +594,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Preuve d'hébergement en Italie via un titre de propriété ou un contrat de location enregistré",
       "Assurance médicale internationale avec couverture complète des risques"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "kenya-travail",
@@ -602,7 +606,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Téléchargement des documents justificatifs requis lors de la procédure numérique",
       "Impression et présentation du permis aux services d'immigration pour endossement final"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "lettonie-travail",
@@ -614,7 +618,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Demande de parrainage soumise par l'employeur à l'OCMA",
       "Dépôt du dossier de permis de séjour en mission diplomatique"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "lettonie-visiteur",
@@ -624,7 +628,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "preparationPoints": [
       "Assurance médicale de voyage couvrant toute la zone Schengen"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "liechtenstein-travail",
@@ -635,7 +639,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Justification des qualifications professionnelles",
       "Responsabilité de l'employeur pour le dépôt de la demande"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "liechtenstein-visiteur",
@@ -647,7 +651,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Réglementations d'entrée alignées sur celles de la Suisse",
       "Vérification de l'obligation de visa via le portail du SEM suisse"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "lituanie-travail",
@@ -659,7 +663,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Contrat de travail ou engagement d'embauche valide",
       "Assurance santé couvrant la durée du séjour en Lituanie"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "lituanie-visiteur",
@@ -669,7 +673,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "preparationPoints": [
       "Preuves de moyens financiers (relevés bancaires récents) et justificatifs d'hébergement ou lettre d'invitation"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "luxembourg-travail",
@@ -681,7 +685,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Demande d’autorisation de séjour temporaire avant l’entrée sur le territoire",
       "Justification des qualifications et du contrat de travail signé"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "luxembourg-visiteur",
@@ -693,7 +697,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Demande auprès du consulat luxembourgeois ou de la mission représentative",
       "Traduction conforme des documents par un traducteur assermenté"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "malaisie-travail",
@@ -704,7 +708,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Diplômes traduits en anglais ou malais par une autorité agréée",
       "Enregistrement préalable de l'employeur auprès de l'Expatriate Services Division (ESD)"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "malte-travail",
@@ -715,7 +719,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "La procédure de permis unique regroupe l'autorisation de travail et le permis de séjour en un seul document",
       "L'autorisation est strictement liée à un employeur spécifique et à une activité professionnelle désignée"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "malte-visiteur",
@@ -726,7 +730,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Titulaire d'une autorisation de séjour ou visa valide",
       "Soumission en ligne via le portail Expatriates Unit"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "maroc-evisa",
@@ -738,7 +742,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Passeport en cours de validité couvrant la durée du séjour",
       "Copie numérique de la page d'identité du passeport"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "maurice-travail",
@@ -749,7 +753,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Diplômes et qualifications professionnelles certifiés",
       "Certificat médical de moins de six mois"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "norvege-travail",
@@ -760,7 +764,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Offre d'emploi concrète d'un employeur norvégien",
       "Justification de qualifications académiques ou professionnelles"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "norvege-visiteur",
@@ -772,7 +776,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Assurance médicale de voyage valide",
       "Preuve de moyens financiers suffisants pour la durée du séjour"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "nouvelle-zelande-travail",
@@ -784,7 +788,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Vérifier les conditions d'âge et de nationalité pour les programmes spécifiques comme le visa vacances-travail",
       "Consulter les exigences relatives aux conditions de travail et à la rémunération minimale applicable"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "oman-evisa",
@@ -795,7 +799,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Réservation d'hôtel confirmée",
       "Billet de retour et assurance santé"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "ouganda-evisa",
@@ -806,7 +810,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Photo d'identité récente",
       "Certificat de vaccination contre la fièvre jaune"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "pays-bas-etudes",
@@ -817,7 +821,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Inscription auprès d'un établissement d'enseignement supérieur agréé",
       "Test de tuberculose (TB) à effectuer après l'arrivée"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "pays-bas-travail",
@@ -829,7 +833,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Vérifier les seuils de revenus minimums applicables selon la catégorie d'emploi",
       "S'assurer que l'employeur est enregistré comme sponsor reconnu par l'IND si requis par la procédure"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "pays-bas-visiteur",
@@ -839,7 +843,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "preparationPoints": [
       "Justificatifs de moyens financiers suffisants"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "pologne-etudes",
@@ -851,7 +855,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Justificatifs de ressources et assurance santé",
       "Demande de permis de séjour temporaire"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "pologne-travail",
@@ -863,7 +867,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Obtenir une autorisation de travail (permis de travail via l'employeur ou permis unique de séjour et de travail)",
       "Exercer l'activité pour l'employeur et au poste spécifiés dans l'autorisation"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "pologne-visiteur",
@@ -873,7 +877,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "preparationPoints": [
       "Justificatifs de l'objet du voyage, de l'hébergement et des ressources financières"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "portugal-travail",
@@ -885,7 +889,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Justificatif de ressources financières suffisantes",
       "Certificat de casier judiciaire apostillé ou légalisé"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "portugal-visiteur",
@@ -897,7 +901,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Passeport valide et assurance médicale de voyage couvrant toute la durée du séjour",
       "Preuves de moyens de subsistance et justificatif d'hébergement ou attestation d'accueil"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "qatar-travail",
@@ -908,7 +912,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Parrainage par un employeur qatari requis",
       "Documents d'état civil authentifiés pour le parrainage familial"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "republique-tcheque-etudes",
@@ -920,7 +924,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Justificatif de ressources financières suffisantes et preuve d'hébergement",
       "Traduction officielle en tchèque et légalisation des documents publics étrangers"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "republique-tcheque-travail",
@@ -932,7 +936,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "La demande peut être déposée auprès d'une mission diplomatique tchèque à l'étranger pour les ressortissants de pays tiers",
       "La durée de validité est généralement fixée selon le contrat de travail pour un maximum de deux ans renouvelables"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "republique-tcheque-visiteur",
@@ -944,7 +948,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Hébergement, moyens financiers et transport",
       "Assurance médicale et biométrie"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "roumanie-etudes",
@@ -956,7 +960,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Dépôt de la demande de visa de long séjour (Type D) via le portail officiel e-VISA",
       "Justification de ressources financières suffisantes et d'une assurance médicale valide"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "roumanie-travail",
@@ -968,7 +972,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Obtention d'un visa de long séjour D/AM via la plateforme WorkinRomania",
       "Présentation d'un contrat de travail individuel enregistré"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "roumanie-visiteur",
@@ -978,7 +982,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "preparationPoints": [
       "Justificatif de moyens de subsistance financiers pour le séjour"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "royaume-uni-etudes",
@@ -989,7 +993,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Obtention d'une Confirmation d'Acceptation d'Études (CAS) auprès d'un établissement agréé",
       "Preuve de maîtrise de la langue anglaise et paiement de la surtaxe santé (IHS)"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "royaume-uni-travail",
@@ -1001,7 +1005,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Certificat de parrainage (CoS)",
       "Preuve de maîtrise de l'anglais"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "royaume-uni-visiteur",
@@ -1013,7 +1017,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Détenir un passeport valide pour la durée totale du séjour",
       "Justifier de ressources financières suffisantes pour le séjour et le retour"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "rwanda-evisa",
@@ -1023,7 +1027,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "preparationPoints": [
       "Demande possible en ligne via le portail Irembo ou à l'arrivée"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "senegal-travail",
@@ -1035,7 +1039,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Casier judiciaire du pays d'origine et certificat médical",
       "Justification de ressources ou contrat de travail visé"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "slovaquie-etudes",
@@ -1047,7 +1051,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Présentation d'un justificatif d'admission scolaire, d'un extrait de casier judiciaire et de preuves de ressources financières",
       "Obligation de souscrire une assurance santé et de fournir un certificat médical après l'obtention du permis"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "slovaquie-travail",
@@ -1058,7 +1062,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Formulaire de demande complété, passeport valide et photo aux normes OACI",
       "Justificatif du but du séjour comme un contrat de travail ou une promesse d'embauche"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "slovaquie-visiteur",
@@ -1069,7 +1073,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Formulaire de demande dûment rempli et signé",
       "Document de voyage valide au moins trois mois après le départ prévu"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "slovenie-etudes",
@@ -1080,7 +1084,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Dépôt de la demande de permis de séjour temporaire auprès de l'unité administrative locale ou de l'ambassade",
       "Preuve d'inscription, assurance santé et casier judiciaire de moins de trois mois requis"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "slovenie-travail",
@@ -1092,7 +1096,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Dépôt possible via l'employeur ou une représentation diplomatique",
       "Vérification de la conformité fiscale et légale de l'employeur"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "slovenie-visiteur",
@@ -1104,7 +1108,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Lettre de garantie (Garantno pismo) ou d'invitation pour les visites privées",
       "Justification de moyens financiers et assurance médicale de voyage"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "srilanka-evisa",
@@ -1115,7 +1119,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Billet de retour ou de continuation confirmé",
       "Preuve de fonds suffisants pour couvrir les dépenses durant le séjour"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "suede-etudes",
@@ -1127,7 +1131,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Justification de ressources financières suffisantes pour la durée du séjour",
       "Détention d'une assurance maladie complète pour les programmes de moins d'un an"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "suede-travail",
@@ -1138,7 +1142,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Détenir un passeport valide et un contrat de travail signé par l'employeur et l'employé",
       "S'assurer que l'employeur a souscrit les assurances obligatoires (santé, vie, accidents et retraite)"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "suede-visiteur",
@@ -1148,7 +1152,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "preparationPoints": [
       "Présenter un passeport valide au moins trois mois après l'expiration du visa"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "suisse-etudes",
@@ -1160,7 +1164,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Justificatif de ressources financières suffisantes",
       "Plan d'études et engagement de départ après la formation"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "suisse-travail",
@@ -1171,7 +1175,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Contrat de travail valide requis",
       "Conditions spécifiques selon la nationalité (UE/AELE vs États tiers)"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "suisse-visiteur",
@@ -1183,7 +1187,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Justifier l'objet et les conditions du séjour",
       "Présenter des moyens financiers suffisants ou une assurance-voyage"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "tanzanie-evisa",
@@ -1195,7 +1199,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Billet de retour ou de continuation",
       "Photo d'identité couleur sur fond uni (JPEG)"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "turquie-evisa",
@@ -1206,7 +1210,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Paiement par carte bancaire (Visa, Mastercard ou UnionPay) avec 3D Secure",
       "Usage limité aux séjours touristiques ou commerciaux uniquement"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
     "procedureId": "vietnam-evisa",
@@ -1217,7 +1221,7 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
       "Détention d'un passeport valide et non suspendu d'entrée",
       "Saisie précise des informations en anglais sur le portail officiel"
     ],
-    "caveat": "Les exigences applicables à votre situation doivent être confirmées directement auprès de l’autorité compétente avant toute démarche."
+    "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   }
 ];
 
