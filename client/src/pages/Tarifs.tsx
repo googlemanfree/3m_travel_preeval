@@ -19,7 +19,7 @@ const SERVICE_OPTIONS = [
   {
     name: "Évaluation gratuite",
     detail: "Première orientation sur votre projet. Compte gratuit puis dépôt de CV pour un suivi complet — ou formulaire rapide sans compte.",
-    points: ["Sans engagement de procédure", "Créer un compte gratuit, puis déposer mon CV", "Réponse et périmètre confirmés par un conseiller"],
+    points: ["Sans engagement de procédure", "Formulaire rapide sans compte pour démarrer", "Compte ensuite pour le suivi et le dépôt de CV"],
     accent: "border-blue-200 bg-blue-50",
   },
   {

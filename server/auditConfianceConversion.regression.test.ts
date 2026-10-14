@@ -16,14 +16,14 @@ describe("audit confiance & conversion — corrections publiques", () => {
     expect(prerender).toContain("Évaluation gratuite (sans compte pour démarrer)");
   });
 
-  it("clarifie le CTA évaluation (compte + CV) près des boutons principaux", () => {
+  it("clarifie le CTA évaluation (sans compte pour démarrer) près des boutons principaux", () => {
     const hero = read("client/src/components/HeroSectionVIP.tsx");
     const brand = read("client/src/data/internationalBrand.ts");
     const home = read("client/src/pages/Home.tsx");
     expect(brand).toContain("evaluateHint");
-    expect(brand).toContain("Créer un compte gratuit, puis déposer mon CV");
+    expect(brand).toContain("Sans compte pour démarrer");
     expect(hero).toContain("hero-eval-hint");
-    expect(home).toContain("Créer un compte gratuit, puis déposer mon CV");
+    expect(home).toContain("Sans compte pour démarrer");
   });
 
   it("sépare clairement WhatsApp et e-mail sur Contact", () => {

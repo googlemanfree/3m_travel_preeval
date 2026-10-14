@@ -8,8 +8,8 @@ export function buildFreeEvaluationHref(project: EvaluationProject = "travail") 
 
 /** Texte d’accompagnement attendu près des CTA d’évaluation (évite la surprise compte / CV). */
 export const EVALUATION_CTA_HINT = {
-  fr: "Créer un compte gratuit, puis déposer mon CV — ou commencer le formulaire rapide sans compte.",
-  en: "Create a free account, then upload your CV — or start the short form without an account.",
+  fr: "Formulaire rapide sans compte pour démarrer — ou créez un compte gratuit puis déposez mon CV pour le suivi.",
+  en: "Short form without an account to start — or create a free account then upload my CV for follow-up.",
 } as const;
 
 export function PublicEvaluationCTA({

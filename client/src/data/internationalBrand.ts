@@ -35,8 +35,8 @@ export const INTERNATIONAL_BRAND = {
   },
   /** Ligne de confiance sous les CTA. */
   heroTrust: {
-    fr: "Créer un compte gratuit, puis déposer mon CV — ou formulaire rapide sans compte • Informations vérifiables",
-    en: "Create a free account, then upload your CV — or short form without an account • Verifiable information",
+    fr: "Formulaire rapide sans compte pour démarrer — ou compte gratuit puis dépôt de CV pour le suivi • Informations vérifiables",
+    en: "Short form without an account to start — or free account then CV upload for follow-up • Verifiable information",
   },
   /** Alias utilisés par d’autres pages (promesse courte). */
   promiseLine: {
@@ -88,8 +88,8 @@ export const INTERNATIONAL_BRAND = {
   cta: {
     evaluate: { fr: "Évaluer mon projet — gratuit", en: "Evaluate my project — free" },
     evaluateHint: {
-      fr: "Créer un compte gratuit, puis déposer mon CV",
-      en: "Create a free account, then upload your CV",
+      fr: "Sans compte pour démarrer — compte ensuite pour le suivi",
+      en: "No account to start — account later for follow-up",
     },
     advisor: { fr: "Parler à un conseiller", en: "Talk to an advisor" },
     procedures: { fr: "Explorer les procédures", en: "Explore procedures" },

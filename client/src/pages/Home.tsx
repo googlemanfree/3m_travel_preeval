@@ -561,7 +561,7 @@ export default function Home() {
               {t("Évaluer mon projet — gratuit", "Evaluate my project — free")}
             </a>
             <p className="px-1 text-center text-[11px] leading-4 text-slate-600">
-              {t("Créer un compte gratuit, puis déposer mon CV", "Create a free account, then upload your CV")}
+              {t("Sans compte pour démarrer — compte ensuite pour le suivi", "No account to start — account later for follow-up")}
             </p>
           </div>
         </div>
