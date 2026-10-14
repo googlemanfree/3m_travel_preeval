@@ -424,6 +424,58 @@ export default function Home() {
               , fondateur et PDG de {GROUP_LEGAL_NAME}. {INTERNATIONAL_BRAND.promiseLine.fr} Nous préparons et suivons votre dossier — la décision finale reste celle des autorités compétentes.
             </p>
           </div>
+          <aside
+            className="mx-auto mb-10 max-w-3xl rounded-2xl border border-slate-200 bg-slate-50/90 p-5 text-left sm:p-6"
+            data-testid="home-legal-registration-proof"
+            aria-labelledby="home-legal-registration-title"
+          >
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Preuve d’enregistrement vérifiable</p>
+            <h3 id="home-legal-registration-title" className="mt-2 text-lg font-black text-slate-950">
+              Identité légale — {COMPANY_PROFILE.legalName}
+            </h3>
+            <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pays</dt>
+                <dd className="mt-0.5 font-bold text-slate-900">{COMPANY_PROFILE.legalIdentifiers.country}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Registre</dt>
+                <dd className="mt-0.5 font-bold text-slate-900">{COMPANY_PROFILE.legalIdentifiers.registryAuthority}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">N° RC</dt>
+                <dd className="mt-0.5 font-mono font-bold text-slate-900">{COMPANY_PROFILE.legalIdentifiers.registration}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">NIU</dt>
+                <dd className="mt-0.5 font-mono font-bold text-slate-900">{COMPANY_PROFILE.legalIdentifiers.taxpayerId}</dd>
+              </div>
+            </dl>
+            <p className="mt-4 text-xs leading-5 text-slate-600">
+              Vérifiez ces identifiants sur le portail RCCM-OHADA Cameroun (recherche par n° RCCM ou dénomination).
+            </p>
+            <div className="mt-3 flex flex-wrap gap-3 text-sm font-bold">
+              <a
+                href={COMPANY_PROFILE.legalIdentifiers.registryPortalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-800 underline-offset-2 hover:underline"
+              >
+                Portail RCCM Cameroun ↗
+              </a>
+              <a
+                href={COMPANY_PROFILE.legalIdentifiers.registrySearchUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-800 underline-offset-2 hover:underline"
+              >
+                Recherche au registre ↗
+              </a>
+              <a href="/about" className="text-slate-700 underline-offset-2 hover:underline">
+                Page À propos
+              </a>
+            </div>
+          </aside>
           <ul className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Piliers internationaux">
             {INTERNATIONAL_BRAND.trustPillars.map((pillar) => (
               <li key={pillar.title.fr} className="premium-surface rounded-2xl p-5 text-left">
@@ -438,7 +490,7 @@ export default function Home() {
               {
                 icon: MapPin,
                 title: "Bureaux + suivi à distance",
-                desc: `Yaoundé et Ottawa. Accueil en agence ou suivi à distance partout en Afrique — WhatsApp ${yaoundeOffice.whatsappDisplay}.`,
+                desc: `Yaoundé (accueil) et Ottawa (coordination sur RDV). Canal principal : WhatsApp ${yaoundeOffice.whatsappDisplay} — fixe ${yaoundeOffice.phoneDisplay} pour les appels.`,
                 href: "/contact",
                 linkLabel: "Voir le contact",
                 color: "text-[#1e3a8a] bg-[#dbeafe]",

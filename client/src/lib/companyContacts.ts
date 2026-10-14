@@ -51,6 +51,23 @@ export const COMPANY_PROFILE = {
   legalIdentifiers: {
     registration: "RC/YAO/2019/A/2567",
     taxpayerId: "M112417203369H",
+    country: "Cameroun",
+    registryAuthority: "RCCM — greffe du tribunal de commerce de Yaoundé (OHADA)",
+    /** Portail officiel OHADA / Cameroun pour orienter une vérification externe. */
+    registryPortalUrl: "https://rccm.ohada.org/staticPage/index?alias=cm",
+    registrySearchUrl: "https://rccm.ohada.org/prsIndividual/index",
+  },
+  /** Rôles explicites des numéros publics — éviter la confusion WhatsApp / fixe / Ottawa. */
+  contactRoles: {
+    yaoundeWhatsapp: "WhatsApp Yaoundé — canal principal (messages, dossiers, urgences)",
+    yaoundePhone: "Ligne fixe Yaoundé — appels vocaux",
+    ottawaWhatsapp: "WhatsApp Ottawa — coordination Canada (secondaire, sur rendez-vous)",
+  },
+  /** Engagement de délai annoncé côté public — à mesurer en opération. */
+  responseSla: {
+    label: "sous 24 heures ouvrées",
+    definition:
+      "Jours ouvrés Yaoundé (lun–ven, hors jours fériés camerounais). Compteur à partir de la réception de l’évaluation ou du message e-mail/WhatsApp complet. Objectif d’accusé ou de première réponse humaine — pas une décision de visa.",
   },
   offices: {
     cameroon: {
@@ -74,7 +91,7 @@ export const COMPANY_PROFILE = {
       whatsappDisplay: "+1 672 897 2999",
       timeZone: "America/Toronto",
       timeZoneLabel: "Heure de Toronto (ET)",
-      openingHours: ["Lun–ven : 08 h 00 – 20 h 00", "Sam–dim : 09 h 00 – 18 h 00"],
+      openingHours: ["Coordination Canada — sur rendez-vous uniquement", "Pas d’horaires d’accueil walk-in publiés"],
       addressLines: ["Ottawa, Ontario, Canada"],
       mapQuery: "Ottawa, Ontario, Canada",
     },

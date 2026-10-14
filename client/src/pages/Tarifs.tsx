@@ -153,6 +153,40 @@ export default function Tarifs() {
           ))}
         </section>
 
+        <section
+          className="mb-12 grid gap-4 lg:grid-cols-2"
+          aria-labelledby="tarifs-payment-cancel-title"
+          data-testid="tarifs-payment-cancel"
+        >
+          <article className="rounded-2xl border border-blue-100 bg-blue-50/50 p-5 sm:p-6">
+            <h2 id="tarifs-payment-cancel-title" className="text-base font-black text-slate-950 sm:text-lg">
+              Étapes de paiement
+            </h2>
+            <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-6 text-slate-700">
+              <li>Évaluation gratuite — aucun paiement exigé.</li>
+              <li>Devis / périmètre écrit (honoraires + frais tiers connus).</li>
+              <li>Signature du protocole d’accord avant le premier règlement.</li>
+              <li>Paiement via canaux officiels 3M uniquement (en ligne ou en agence) → reçu.</li>
+              <li>Traitement et suivi dans Mon espace selon le périmètre payé.</li>
+            </ol>
+          </article>
+          <article className="rounded-2xl border border-amber-100 bg-amber-50/60 p-5 sm:p-6">
+            <h2 className="text-base font-black text-slate-950 sm:text-lg">Annulation et remboursement</h2>
+            <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
+              <li><strong>Pas de remboursement automatique.</strong> Les conditions figurent dans le protocole signé avant paiement.</li>
+              <li>Frais d’ouverture : en principe non remboursables une fois le traitement engagé, sauf obligation légale contraire.</li>
+              <li>Frais déjà versés à des autorités ou fournisseurs tiers : règles de ces organismes.</li>
+              <li>
+                Détail juridique :{" "}
+                <a href="/conditions-utilisation" className="font-bold text-blue-800 underline-offset-2 hover:underline">
+                  Conditions d’utilisation
+                </a>
+                .
+              </li>
+            </ul>
+          </article>
+        </section>
+
         <section className="grid gap-6 md:grid-cols-3 md:gap-8" aria-label="Repères tarifaires">
           {SERVICE_OPTIONS.map((option, index) => (
             <PremiumReveal key={option.name} delay={index * 0.06}>

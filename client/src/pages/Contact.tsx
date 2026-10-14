@@ -47,15 +47,18 @@ export default function Contact() {
     {
       icon: MapPin,
       title: 'Adresse',
-      details: [cameroon.addressLines.join(', '), ottawa.addressLines.join(', ')],
+      details: [cameroon.addressLines.join(', '), `${ottawa.addressLines.join(', ')} (coordination sur RDV)`],
       color: 'text-red-500',
     },
     {
       icon: Phone,
-      title: 'Téléphone',
-      details: [cameroon.whatsappDisplay, cameroon.phoneDisplay ?? ottawa.whatsappDisplay],
+      title: 'Canaux Yaoundé',
+      details: [
+        `${COMPANY_PROFILE.contactRoles.yaoundeWhatsapp} : ${cameroon.whatsappDisplay}`,
+        `${COMPANY_PROFILE.contactRoles.yaoundePhone} : ${cameroon.phoneDisplay}`,
+      ],
       color: 'text-green-500',
-      link: true,
+      link: false,
     },
     {
       icon: Mail,
@@ -67,7 +70,10 @@ export default function Contact() {
     {
       icon: Clock,
       title: 'Horaires',
-      details: [...cameroon.openingHours],
+      details: [
+        `Yaoundé — ${cameroon.openingHours.join(' · ')}`,
+        `Ottawa — ${ottawa.openingHours.join(' · ')}`,
+      ],
       color: 'text-purple-500',
     },
   ];
@@ -75,15 +81,15 @@ export default function Contact() {
   const faqs = [
     {
       question: 'Quel est le délai de réponse ?',
-      answer: 'Notre équipe répond à toutes les demandes dans les 24 heures ouvrables.',
+      answer: `Objectif annoncé : ${COMPANY_PROFILE.responseSla.label}. ${COMPANY_PROFILE.responseSla.definition}`,
     },
     {
-      question: 'Puis-je appeler directement ?',
-      answer: 'Oui, nos conseillers sont disponibles par téléphone du lundi au dimanche.',
+      question: 'Quel numéro utiliser : WhatsApp ou fixe ?',
+      answer: `${COMPANY_PROFILE.contactRoles.yaoundeWhatsapp} (${cameroon.whatsappDisplay}). ${COMPANY_PROFILE.contactRoles.yaoundePhone} (${cameroon.phoneDisplay}). ${COMPANY_PROFILE.contactRoles.ottawaWhatsapp} (${ottawa.whatsappDisplay}).`,
     },
     {
       question: 'Proposez-vous des consultations en ligne ?',
-      answer: 'Absolument ! Nous proposons des consultations vidéo et WhatsApp.',
+      answer: 'Oui — WhatsApp, e-mail et espace client. Le bureau d’Ottawa est une coordination Canada sur rendez-vous, sans horaires d’accueil walk-in publiés.',
     },
     {
       question: 'Comment suivre mon dossier ?',
@@ -236,8 +242,10 @@ export default function Contact() {
               className="rounded-lg overflow-hidden shadow-lg"
             >
               <div className="bg-white p-4">
-                <h3 className="text-lg font-bold text-gray-900 mb-2">{ottawa.shortLabel}</h3>
-                <p className="text-sm text-gray-600 mb-4">{ottawa.label}</p>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Coordination Canada</p>
+                <h3 className="mt-1 text-lg font-bold text-gray-900 mb-2">{ottawa.shortLabel}</h3>
+                <p className="text-sm text-gray-600 mb-2">{ottawa.label}</p>
+                <p className="text-xs leading-5 text-slate-600">{ottawa.openingHours.join(" · ")}</p>
               </div>
               <iframe
                 src={officeMapEmbedUrl({ id: "ottawa", ...ottawa })}
@@ -507,10 +515,11 @@ export default function Contact() {
             >
               <Card className="p-6 text-center hover:shadow-lg transition-all duration-300">
                 <MessageSquare className="text-blue-600 mx-auto mb-4" size={40} />
-                <h3 className="text-lg font-bold text-gray-900 mb-2">WhatsApp</h3>
-                <p className="text-gray-600 mb-6">Discutez directement avec notre équipe</p>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">WhatsApp Yaoundé</h3>
+                <p className="text-gray-600 mb-2 text-sm">Canal principal — messages et dossiers</p>
+                <p className="mb-6 font-mono text-sm font-bold text-slate-800">{cameroon.whatsappDisplay}</p>
                 <a
-                  href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%20%26%20Services"
+                  href={`https://wa.me/${cameroon.whatsappNumber}?text=${encodeURIComponent("Bonjour 3M TRAVEL AGENCY,")}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-block bg-[#0f6b46] text-white px-6 py-2 rounded-lg hover:bg-[#0b5538] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f6b46]"
@@ -528,13 +537,14 @@ export default function Contact() {
             >
               <Card className="p-6 text-center hover:shadow-lg transition-all duration-300">
                 <Phone className="text-green-600 mx-auto mb-4" size={40} />
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Appel Direct</h3>
-                <p className="text-gray-600 mb-6">Appelez nos conseillers</p>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Ligne fixe Yaoundé</h3>
+                <p className="text-gray-600 mb-2 text-sm">Appels vocaux (distinct du WhatsApp)</p>
+                <p className="mb-6 font-mono text-sm font-bold text-slate-800">{cameroon.phoneDisplay}</p>
                 <a
-                  href="tel:+237698104832"
+                  href={`tel:${cameroon.phoneDisplay?.replace(/\s/g, "")}`}
                   className="inline-block bg-[#0b2f6b] !text-white px-6 py-2 rounded-lg hover:bg-[#08244f] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0b2f6b]"
                 >
-                  +237 698 104 832
+                  {cameroon.phoneDisplay}
                 </a>
               </Card>
             </motion.div>

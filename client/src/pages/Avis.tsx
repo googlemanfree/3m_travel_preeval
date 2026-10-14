@@ -89,6 +89,7 @@ export default function Avis() {
             <h2 className="mt-4 text-lg font-black text-slate-950">Comment les avis sont vérifiés</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               Chaque témoignage est modéré manuellement : cohérence avec un contact ou un dossier connu, consentement de publication, et rejet des contenus trompeurs. Aucune note n’apparaît automatiquement.
+              Les avis publiés indiquent une date et ne sont jamais inventés ; sans avis approuvé, la galerie reste vide — c’est volontaire.
             </p>
           </article>
         </div>

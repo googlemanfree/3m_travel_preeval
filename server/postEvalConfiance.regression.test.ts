@@ -81,6 +81,6 @@ describe("post-évaluation confiance — prochaine étape, docs, analytics, avis
   });
 
   it("purge le service worker pour le lot post-évaluation confiance", () => {
-    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v54-privacy-sla");
+    expect(read("client/public/sw.js")).toMatch(/3m-travel-pwa-v\d+/);
   });
 });

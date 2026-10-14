@@ -9,6 +9,7 @@ export type OfficeContact = {
   flag: string;
   whatsappNumber: string;
   whatsappDisplay: string;
+  phoneDisplay?: string;
   timeZone: string;
   timeZoneLabel: string;
   openingHours: readonly string[];

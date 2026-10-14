@@ -287,7 +287,9 @@ export function SimpleMultiProjectForm() {
             data-testid="evaluation-indicative-sla"
             role="status"
           >
-            <strong>Délai indicatif :</strong> un conseiller répond sous environ <strong>24 heures ouvrées</strong> après soumission (e-mail ; WhatsApp si besoin).
+            <strong>Délai indicatif :</strong> un conseiller répond sous environ <strong>24 heures ouvrées</strong> après soumission
+            (jours ouvrés Yaoundé, lun–ven hors jours fériés). Il s’agit d’un <strong>accusé ou d’une première réponse humaine</strong> — pas d’une décision de visa.
+            Canal principal : e-mail ; WhatsApp Yaoundé si besoin.
           </p>
           {!isAuthenticated && (
             <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-950" role="status" data-testid="evaluation-guest-start">
