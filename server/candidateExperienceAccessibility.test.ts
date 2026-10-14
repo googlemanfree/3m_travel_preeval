@@ -32,10 +32,14 @@ describe("expérience candidat et navigation admin", () => {
   });
 
   it("renforce la hiérarchie typographique du hero", () => {
-    expect(hero).toContain("text-3xl font-black tracking-tight");
-    expect(hero).toContain("sm:text-4xl md:text-5xl lg:text-6xl");
-    expect(hero).toContain("text-xl font-bold tracking-tight");
-    expect(hero).toContain("sm:text-2xl md:text-3xl");
+    expect(hero).toContain('data-testid="hero-logo"');
+    expect(hero).toContain("h-20 w-20 rounded-full");
+    expect(hero).toContain("md:h-28 md:w-28 lg:h-32 lg:w-32");
+    expect(hero).toContain("text-4xl font-extrabold uppercase tracking-tight");
+    expect(hero).toContain("sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.75rem]");
+    expect(hero).toContain("text-2xl font-black tracking-tight");
+    expect(hero).toContain("sm:text-3xl md:text-4xl lg:text-5xl");
+    expect(hero).toContain("INTERNATIONAL_BRAND.publicName");
     expect(hero).toContain("INTERNATIONAL_BRAND.slogan");
     expect(brand).toContain("L’Afrique vers le monde.");
   });

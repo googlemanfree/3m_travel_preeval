@@ -31,8 +31,9 @@ describe("UX mobile accueil — navigation, hero et zones tactiles", () => {
   it("adapte le hero au viewport téléphone sans perdre la hiérarchie de marque", () => {
     expect(hero).toContain("min-h-[72vh]");
     expect(hero).toContain("sm:min-h-[78vh]");
-    expect(hero).toContain("text-3xl font-black tracking-tight");
-    expect(hero).toContain("sm:text-4xl md:text-5xl lg:text-6xl");
+    expect(hero).toContain('data-testid="hero-logo"');
+    expect(hero).toContain("text-4xl font-extrabold uppercase tracking-tight");
+    expect(hero).toContain("sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.75rem]");
     expect(hero).toContain('data-testid="hero-support"');
     expect(hero).toContain('data-testid="hero-tagline"');
     expect(hero).toContain("bottom-6");
@@ -60,11 +61,15 @@ describe("UX mobile accueil — navigation, hero et zones tactiles", () => {
     expect(styles).toContain('body:has([data-testid="home-sticky-cta"]) .safe-bottom-floating-whatsapp');
   });
 
-  it("n’empile pas Aureol / vols sur l’accueil (WhatsApp seul + sticky)", () => {
+  it("affiche Aureol, l’assistant de vol et WhatsApp sur l’accueil", () => {
     const app = read("client/src/App.tsx");
-    expect(app).toContain("isHomeRoute");
-    expect(app).toContain("{!isHomeRoute && <AiCopilotWidgetEnhanced />}");
-    expect(app).toContain("{!isHomeRoute && <SmartFlightAssistant />}");
+    expect(app).toContain("<FloatingActionMenu />");
+    expect(app).toContain("<AiCopilotWidgetEnhanced />");
+    expect(app).toContain("<SmartFlightAssistant />");
+    expect(app).not.toContain("{!isHomeRoute && <AiCopilotWidgetEnhanced />}");
+    expect(app).not.toContain("{!isHomeRoute && <SmartFlightAssistant />}");
+    expect(styles).toContain(".safe-bottom-floating-flight");
+    expect(styles).toContain(".safe-bottom-floating-chat");
   });
 
   it("affiche une progression de défilement et des transitions accessibles", () => {

@@ -25,8 +25,8 @@ describe("lisibilité premium site-wide", () => {
   it("rend le hero et /flights avec un contraste lisible", () => {
     const hero = read("client/src/components/HeroSectionVIP.tsx");
     const flights = read("client/src/pages/Flights.tsx");
-    expect(hero).toContain("text-slate-950");
-    expect(hero).toContain("text-slate-700");
+    expect(hero).toContain("text-white drop-shadow-");
+    expect(hero).toContain('data-testid="hero-logo"');
     expect(hero).toContain("from-orange-400");
     expect(hero).not.toContain("text-transparent");
     expect(flights).toContain("premium-copy-on-dark");

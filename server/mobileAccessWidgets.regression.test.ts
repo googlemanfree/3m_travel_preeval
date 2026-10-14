@@ -13,7 +13,9 @@ describe("widgets flottants et accès client mobile", () => {
     }
     expect(appSource).toContain("&& !isAccessRoute");
     expect(appSource).toContain("{showFloatingTools && floatingToolsReady && (");
-    expect(appSource).toContain("{!isHomeRoute && <AiCopilotWidgetEnhanced />}");
-    expect(appSource).toContain("{!isHomeRoute && <SmartFlightAssistant />}");
+    expect(appSource).toContain("<AiCopilotWidgetEnhanced />");
+    expect(appSource).toContain("<SmartFlightAssistant />");
+    expect(appSource).not.toContain("{!isHomeRoute && <AiCopilotWidgetEnhanced />}");
+    expect(appSource).not.toContain("{!isHomeRoute && <SmartFlightAssistant />}");
   });
 });

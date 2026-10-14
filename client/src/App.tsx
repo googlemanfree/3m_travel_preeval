@@ -555,8 +555,6 @@ function AppShell() {
   );
   const isAdminRoute = pathnameOnly === "/admin" || pathnameOnly.startsWith("/admin/");
   const showFloatingTools = widgetsVisible && !isAdminRoute && location !== "/contact" && !isAccessRoute;
-  /** Accueil : WhatsApp seul — Aureol / vols n’empilent pas 3 pastilles sur le sticky CTA. */
-  const isHomeRoute = pathnameOnly === "/" || pathnameOnly === "/en";
   const showPublicFooter = !isAdminRoute;
   /** Widgets flottants après le premier paint : ils ne doivent pas concurrencer le hero / le LCP. */
   const [floatingToolsReady, setFloatingToolsReady] = React.useState(false);
@@ -655,8 +653,8 @@ function AppShell() {
                       {showFloatingTools && floatingToolsReady && (
                         <React.Suspense fallback={null}>
                           <FloatingActionMenu />
-                          {!isHomeRoute && <AiCopilotWidgetEnhanced />}
-                          {!isHomeRoute && <SmartFlightAssistant />}
+                          <AiCopilotWidgetEnhanced />
+                          <SmartFlightAssistant />
                         </React.Suspense>
                       )}
                     </>

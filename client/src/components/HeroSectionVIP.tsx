@@ -131,38 +131,54 @@ export default function HeroSectionVIP({
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,22,44,.58)_0%,rgba(7,22,44,.3)_46%,transparent_80%)]" />
       </div>
 
-      {/* logoUrl conservé pour SEO / props existantes — la maquette met la marque en texte. */}
-      <span className="sr-only">{logoUrl}</span>
-
       <div className="relative z-10 mx-auto w-full max-w-5xl px-5 py-10 text-white sm:px-10 sm:py-14 md:px-14">
-        <motion.p
+        <motion.div
           initial="hidden"
           animate="visible"
           variants={fadeIn}
           custom={0}
-          className="text-sm font-extrabold uppercase tracking-[0.14em] text-amber-200 drop-shadow-[0_2px_8px_rgba(0,0,0,0.65)] sm:text-base"
-          data-testid="hero-title"
+          className="mb-5 flex justify-center sm:mb-6"
         >
-          {INTERNATIONAL_BRAND.publicName}
-        </motion.p>
+          <img
+            src={logoUrl}
+            alt="3M TRAVEL AGENCY"
+            width={128}
+            height={128}
+            decoding="async"
+            fetchPriority="high"
+            className="h-20 w-20 rounded-full border-[3px] border-white/70 bg-white object-cover shadow-[0_12px_40px_rgba(0,0,0,0.45)] sm:h-24 sm:w-24 md:h-28 md:w-28 lg:h-32 lg:w-32"
+            data-testid="hero-logo"
+          />
+        </motion.div>
 
         <motion.h1
           initial="hidden"
           animate="visible"
           variants={fadeIn}
-          custom={1}
-          className="mt-5 text-3xl font-black tracking-tight text-white drop-shadow-[0_3px_12px_rgba(0,0,0,0.45)] sm:text-4xl md:text-5xl lg:text-6xl"
-          data-testid="hero-tagline"
+          custom={0.5}
+          className="text-4xl font-extrabold uppercase tracking-tight text-white drop-shadow-[0_3px_16px_rgba(0,0,0,0.55)] sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.75rem]"
+          data-testid="hero-title"
         >
-          {t(INTERNATIONAL_BRAND.slogan.fr, INTERNATIONAL_BRAND.slogan.en)}
+          {INTERNATIONAL_BRAND.publicName}
         </motion.h1>
 
         <motion.p
           initial="hidden"
           animate="visible"
           variants={fadeIn}
+          custom={1}
+          className="mt-4 text-2xl font-black tracking-tight text-amber-200 drop-shadow-[0_3px_12px_rgba(0,0,0,0.5)] sm:text-3xl md:text-4xl lg:text-5xl"
+          data-testid="hero-tagline"
+        >
+          {t(INTERNATIONAL_BRAND.slogan.fr, INTERNATIONAL_BRAND.slogan.en)}
+        </motion.p>
+
+        <motion.p
+          initial="hidden"
+          animate="visible"
+          variants={fadeIn}
           custom={1.5}
-          className="mt-3 text-xl font-bold tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)] sm:text-2xl md:text-3xl"
+          className="mt-3 text-lg font-bold tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)] sm:text-xl md:text-2xl"
           data-testid="hero-support"
         >
           {t(INTERNATIONAL_BRAND.headline.fr, INTERNATIONAL_BRAND.headline.en)}

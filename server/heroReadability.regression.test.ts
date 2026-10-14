@@ -11,6 +11,11 @@ describe("hero : lisibilité et hiérarchie", () => {
   it("affiche la composition maquette : marque, slogan Afrique, catégories, deux CTA", () => {
     expect(hero).toContain("3M TRAVEL AGENCY");
     expect(hero).toContain("INTERNATIONAL_BRAND");
+    expect(hero).toContain('data-testid="hero-logo"');
+    expect(hero).toContain("logoUrl");
+    expect(hero).toContain("h-20 w-20 rounded-full");
+    expect(hero).toContain("lg:h-32 lg:w-32");
+    expect(hero).toContain("text-4xl font-extrabold uppercase tracking-tight text-white");
     expect(hero).toContain("slogan");
     expect(hero).toContain("headline");
     expect(hero).toContain("categories");
