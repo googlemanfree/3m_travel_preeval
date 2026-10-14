@@ -28,7 +28,7 @@ export default function ConditionsUtilisation() {
             <h2 className="mb-4 text-2xl font-bold text-gray-900">1. Entité éditrice</h2>
             <p className="leading-relaxed text-gray-700">
               Le site est édité par <strong>{COMPANY_PROFILE.legalName}</strong> (exploitation commerciale de{" "}
-              <strong>{GROUP_LEGAL_NAME}</strong>), agence enregistrée sous le numéro RC {COMPANY_PROFILE.legalIdentifiers.registration}
+              <strong>{GROUP_LEGAL_NAME}</strong>), agence enregistrée sous le numéro {COMPANY_PROFILE.legalIdentifiers.registration}
               {COMPANY_PROFILE.legalIdentifiers.taxpayerId ? ` (NIU : ${COMPANY_PROFILE.legalIdentifiers.taxpayerId})` : ""}, spécialisée dans
               l’accompagnement à la mobilité internationale.
             </p>
