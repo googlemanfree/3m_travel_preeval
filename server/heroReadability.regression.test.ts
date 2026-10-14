@@ -56,8 +56,10 @@ describe("hero : lisibilité et hiérarchie", () => {
   it("anime l’apparition en fondu, renforce le survol des CTA et propose un indicateur de défilement", () => {
     expect(hero).toContain("const fadeIn");
     expect(hero).toContain('data-testid="hero-title"');
-    expect(hero).toContain("hover:-translate-y-1.5 hover:scale-[1.04]");
-    expect(hero).toContain("group-hover:translate-x-full");
+    expect(hero).toContain("hover:-translate-y-0.5 hover:scale-[1.03]");
+    expect(hero).toContain("group-hover/cta:translate-x-full");
+    expect(hero).toContain("group-hover:scale-[1.03] group-hover:rotate-1");
+    expect(hero).toContain("duration-200 ease-out");
     expect(hero).toContain('data-testid="hero-scroll-cue"');
     expect(hero).toContain('href="#home-talent-corridor"');
     expect(hero).toContain("animate-bounce motion-reduce:animate-none");

@@ -12,6 +12,6 @@ describe("Fournisseur global de coordonnées", () => {
     expect(appSource).toContain("<OfficeContactProvider>");
     expect(appSource).toContain("<Router />");
     expect(appSource.indexOf("<OfficeContactProvider>")).toBeLessThan(appSource.indexOf("<Router />"));
-    expect(appSource.indexOf("<OfficeContactProvider>")).toBeLessThan(appSource.indexOf("<FloatingActionMenu />"));
+    expect(appSource.indexOf("<OfficeContactProvider>")).toBeLessThan(appSource.indexOf("<FloatingToolsDock />"));
   });
 });

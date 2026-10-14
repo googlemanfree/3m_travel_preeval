@@ -36,12 +36,29 @@ const QUICK_ACTIONS = [
   { label: "💬 Appel WhatsApp", whatsapp: true },
 ];
 
-const WELCOME_MESSAGE: ChatMessage = {
-  role: "assistant",
-  content:
-    "Bonjour ! Je suis Aureol, votre guide 3M TRAVEL AGENCY. Je peux répondre à vos questions sur les évaluations, les visas, les destinations et nos procédures. Comment puis-je vous aider ?",
-  feedback: null,
-  showActions: true,
+const buildWelcomeMessage = (pathname: string): ChatMessage => {
+  const path = pathname.replace(/\/+$/, "") || "/";
+  let content =
+    "Bienvenue chez 3M TRAVEL AGENCY ! Je suis Aureol, votre guide 3M TRAVEL AGENCY. Pour démarrer vite : lancez une évaluation gratuite, explorez les procédures, ou posez-moi une question sur visas, études et mobilité.";
+
+  if (path === "/" || path === "/en") {
+    content =
+      "Bienvenue sur l’accueil 3M TRAVEL AGENCY ! Je suis Aureol, votre guide 3M TRAVEL AGENCY. Commencez par « Évaluer mon projet — gratuit », parcourez les procédures, ou demandez-moi par où commencer.";
+  } else if (path.startsWith("/procedures") || path.startsWith("/guide-procedures") || path.startsWith("/ressources")) {
+    content =
+      "Bonjour, je suis Aureol, votre guide 3M TRAVEL AGENCY. Vous consultez les procédures : je peux vous orienter sur les documents, étapes et destinations. Que souhaitez-vous clarifier ?";
+  } else if (path.startsWith("/flights") || path.startsWith("/billets") || path.includes("vol")) {
+    content =
+      "Bonjour, je suis Aureol, votre guide 3M TRAVEL AGENCY. Pour les vols, l’assistant dédié gère réservation et sièges ; je reste là pour visas, délais et préparation du dossier. Comment puis-je vous aider ?";
+  } else if (path.startsWith("/canada")) {
+    content =
+      "Bonjour, je suis Aureol, votre guide 3M TRAVEL AGENCY. Projet Canada : je vous oriente sur CRS, documents et étapes IRCC — sans promettre d’invitation ni de résultat. Par où commencer ?";
+  } else if (path.startsWith("/visa-travail") || path.startsWith("/visa-etudes") || path.startsWith("/services")) {
+    content =
+      "Bonjour, je suis Aureol, votre guide 3M TRAVEL AGENCY. Je vous oriente sur ce parcours (étapes, pièces, limites). Posez votre question ou lancez une évaluation gratuite.";
+  }
+
+  return { role: "assistant", content, feedback: null, showActions: true };
 };
 
 const QUICK_ACTION_BUTTONS = [
@@ -53,10 +70,13 @@ const QUICK_ACTION_BUTTONS = [
 export default function AiCopilotWidgetEnhanced() {
   const [isOpen, setIsOpen] = useState(false);
   const [isOpening, setIsOpening] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
+  const [location, navigate] = useLocation();
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [
+    buildWelcomeMessage(typeof window !== "undefined" ? window.location.pathname : "/"),
+  ]);
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [, navigate] = useLocation();
+  const hasUserChattedRef = useRef(false);
 
   const chatMutation = trpc.aiCopilot.chat.useMutation({
     onSuccess: (data) => {
@@ -92,8 +112,14 @@ export default function AiCopilotWidgetEnhanced() {
     });
   }, [messages, chatMutation.isPending]);
 
+  useEffect(() => {
+    if (hasUserChattedRef.current) return;
+    setMessages([buildWelcomeMessage(location)]);
+  }, [location]);
+
   const sendMessage = (text: string) => {
     if (!text.trim() || chatMutation.isPending) return;
+    hasUserChattedRef.current = true;
     const newMessages: ChatMessage[] = [
       ...messages,
       { role: "user", content: text.trim(), feedback: null },
@@ -113,7 +139,10 @@ export default function AiCopilotWidgetEnhanced() {
       );
       return;
     }
-    if (action.question) sendMessage(action.question);
+    if (action.question) {
+      hasUserChattedRef.current = true;
+      sendMessage(action.question);
+    }
   };
 
   const handleFeedback = (messageIndex: number, feedback: "up" | "down") => {

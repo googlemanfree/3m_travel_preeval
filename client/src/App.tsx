@@ -87,13 +87,9 @@ const AdminLogin = lazyWithTimeout(() => import("./pages/AdminLogin"));
 const AdminChangePasswordRequired = lazyWithTimeout(() => import("./pages/AdminChangePasswordRequired"));
 const AdminEvaluations = lazyWithTimeout(() => import("./pages/AdminEvaluations"));
 import Tourism from "./pages/Tourism";
-const FloatingActionMenu = lazyWithTimeout(() =>
-  import("./components/FloatingActionMenu").then((module) => ({ default: module.FloatingActionMenu })),
+const FloatingToolsDock = lazyWithTimeout(() =>
+  import("./components/FloatingToolsDock").then((module) => ({ default: module.FloatingToolsDock })),
 );
-const SmartFlightAssistant = lazyWithTimeout(() =>
-  import("./components/SmartFlightAssistant").then((module) => ({ default: module.SmartFlightAssistant })),
-);
-const AiCopilotWidgetEnhanced = lazyWithTimeout(() => import("./components/AiCopilotWidgetEnhanced"));
 import ConfirmEmail from "./pages/ConfirmEmail";
 const SubmitDocuments = lazyWithTimeout(() => import("./pages/SubmitDocuments"));
 import HowItWorks from "./pages/HowItWorks";
@@ -652,9 +648,7 @@ function AppShell() {
                       {showPublicFooter && <FooterLegal />}
                       {showFloatingTools && floatingToolsReady && (
                         <React.Suspense fallback={null}>
-                          <FloatingActionMenu />
-                          <AiCopilotWidgetEnhanced />
-                          <SmartFlightAssistant />
+                          <FloatingToolsDock />
                         </React.Suspense>
                       )}
                     </>

@@ -15,10 +15,15 @@ describe("widgets flottants et accès client mobile", () => {
     }
     expect(appSource).toContain("&& !isAccessRoute");
     expect(appSource).toContain("{showFloatingTools && floatingToolsReady && (");
-    expect(appSource).toContain("<AiCopilotWidgetEnhanced />");
-    expect(appSource).toContain("<SmartFlightAssistant />");
+    expect(appSource).toContain("<FloatingToolsDock />");
     expect(appSource).not.toContain("{!isHomeRoute && <AiCopilotWidgetEnhanced />}");
     expect(appSource).not.toContain("{!isHomeRoute && <SmartFlightAssistant />}");
+  });
+
+  it("personnalise le message d’accueil Aureol selon la page", () => {
+    expect(aureolSource).toContain("const buildWelcomeMessage");
+    expect(aureolSource).toContain("Bienvenue sur l’accueil 3M TRAVEL AGENCY");
+    expect(aureolSource).toContain("hasUserChattedRef");
   });
 
   it("contraint le panneau de vol à la largeur et à la hauteur disponibles sur mobile", () => {

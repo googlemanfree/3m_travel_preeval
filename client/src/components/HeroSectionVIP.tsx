@@ -217,10 +217,10 @@ export default function HeroSectionVIP({
           <PublicEvaluationCTA
             project="travail"
             aria-label={t("Évaluer mon projet gratuitement", "Evaluate my project for free")}
-            className={`group relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 px-6 py-4 text-center font-bold uppercase tracking-wide text-white shadow-lg shadow-orange-950/20 transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.04] hover:from-orange-300 hover:via-orange-500 hover:to-amber-400 hover:shadow-[0_18px_40px_-8px_rgba(249,115,22,0.55)] hover:ring-2 hover:ring-orange-200/70 focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 active:scale-[0.98]`}
+            className={`group/cta relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 px-6 py-4 text-center font-bold uppercase tracking-wide text-white shadow-lg shadow-orange-950/20 transition-[transform,box-shadow,background-color] duration-200 ease-out hover:-translate-y-0.5 hover:scale-[1.03] hover:from-orange-300 hover:via-orange-500 hover:to-amber-400 hover:shadow-[0_14px_32px_-10px_rgba(249,115,22,0.5)] hover:ring-2 hover:ring-orange-200/70 focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 active:scale-[0.98] motion-reduce:transition-none`}
           >
             <span
-              className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
+              className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-500 ease-out group-hover/cta:translate-x-full motion-reduce:transition-none"
               aria-hidden="true"
             />
             <span className="relative z-10 text-sm sm:text-base">
@@ -230,7 +230,7 @@ export default function HeroSectionVIP({
           <Button
             asChild
             variant="outline"
-            className={`group relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl border border-slate-300 bg-white px-6 py-4 text-center font-bold uppercase tracking-wide text-slate-900 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.04] hover:border-slate-400 hover:bg-slate-50 hover:ring-2 hover:ring-slate-200 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 active:scale-[0.98]`}
+            className={`group/cta relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl border border-slate-300 bg-white px-6 py-4 text-center font-bold uppercase tracking-wide text-slate-900 shadow-sm transition-[transform,box-shadow,border-color,background-color] duration-200 ease-out hover:-translate-y-0.5 hover:scale-[1.03] hover:border-slate-400 hover:bg-slate-50 hover:ring-2 hover:ring-slate-200 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 active:scale-[0.98] motion-reduce:transition-none`}
           >
             <a href={advisorWhatsApp} target="_blank" rel="noopener noreferrer">
               <span className="relative z-10 text-sm sm:text-base">

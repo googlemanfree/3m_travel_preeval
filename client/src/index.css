@@ -716,6 +716,68 @@ html.motion-disabled .admin-glass-table tbody tr:hover {
   bottom: calc(12.5rem + env(safe-area-inset-bottom));
 }
 
+/*
+ * Dock mobile rétractable : un bouton bas ouvre/ferme WhatsApp + Aureol + vols.
+ * Desktop : pastilles toujours visibles (body.floating-dock-expanded forcé).
+ */
+@media (max-width: 767px) {
+  body.floating-dock-collapsed .safe-bottom-floating-whatsapp,
+  body.floating-dock-collapsed .safe-bottom-floating-flight,
+  body.floating-dock-collapsed .safe-bottom-floating-chat,
+  body.floating-dock-collapsed .safe-bottom-floating-panel {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    transform: translateY(0.75rem) scale(0.92);
+  }
+
+  body.floating-dock-expanded .safe-bottom-floating-whatsapp {
+    bottom: calc(8.5rem + env(safe-area-inset-bottom));
+  }
+
+  body.floating-dock-expanded .safe-bottom-floating-flight {
+    bottom: calc(12.5rem + env(safe-area-inset-bottom));
+  }
+
+  body.floating-dock-expanded .safe-bottom-floating-chat,
+  body.floating-dock-expanded .safe-bottom-floating-panel {
+    bottom: calc(16.5rem + env(safe-area-inset-bottom));
+  }
+
+  body.floating-dock-expanded:has([data-testid="home-sticky-cta"]) .safe-bottom-floating-whatsapp,
+  body.floating-dock-expanded:has([data-testid="flights-sticky-cta"]) .safe-bottom-floating-whatsapp {
+    bottom: calc(12.25rem + env(safe-area-inset-bottom));
+  }
+
+  body.floating-dock-expanded:has([data-testid="home-sticky-cta"]) .safe-bottom-floating-flight,
+  body.floating-dock-expanded:has([data-testid="flights-sticky-cta"]) .safe-bottom-floating-flight {
+    bottom: calc(16.25rem + env(safe-area-inset-bottom));
+  }
+
+  body.floating-dock-expanded:has([data-testid="home-sticky-cta"]) .safe-bottom-floating-chat,
+  body.floating-dock-expanded:has([data-testid="home-sticky-cta"]) .safe-bottom-floating-panel,
+  body.floating-dock-expanded:has([data-testid="flights-sticky-cta"]) .safe-bottom-floating-chat,
+  body.floating-dock-expanded:has([data-testid="flights-sticky-cta"]) .safe-bottom-floating-panel {
+    bottom: calc(20.25rem + env(safe-area-inset-bottom));
+  }
+
+  .safe-bottom-floating-whatsapp,
+  .safe-bottom-floating-flight,
+  .safe-bottom-floating-chat,
+  .safe-bottom-floating-panel {
+    transition: opacity 180ms ease, transform 180ms cubic-bezier(0.23, 1, 0.32, 1), visibility 180ms ease, bottom 180ms ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .safe-bottom-floating-whatsapp,
+  .safe-bottom-floating-flight,
+  .safe-bottom-floating-chat,
+  .safe-bottom-floating-panel {
+    transition: none !important;
+  }
+}
+
 /* Téléphone : header compact, une seule ligne. */
 @media (max-width: 767px) {
   .tablet-compact-header {

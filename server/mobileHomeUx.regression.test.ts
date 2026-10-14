@@ -61,13 +61,16 @@ describe("UX mobile accueil — navigation, hero et zones tactiles", () => {
     expect(styles).toContain('body:has([data-testid="home-sticky-cta"]) .safe-bottom-floating-whatsapp');
   });
 
-  it("affiche Aureol, l’assistant de vol et WhatsApp sur l’accueil", () => {
+  it("affiche Aureol, l’assistant de vol et WhatsApp via un dock rétractable mobile", () => {
     const app = read("client/src/App.tsx");
-    expect(app).toContain("<FloatingActionMenu />");
-    expect(app).toContain("<AiCopilotWidgetEnhanced />");
-    expect(app).toContain("<SmartFlightAssistant />");
-    expect(app).not.toContain("{!isHomeRoute && <AiCopilotWidgetEnhanced />}");
-    expect(app).not.toContain("{!isHomeRoute && <SmartFlightAssistant />}");
+    const dock = read("client/src/components/FloatingToolsDock.tsx");
+    expect(app).toContain("<FloatingToolsDock />");
+    expect(dock).toContain("<FloatingActionMenu />");
+    expect(dock).toContain("<AiCopilotWidgetEnhanced />");
+    expect(dock).toContain("<SmartFlightAssistant />");
+    expect(dock).toContain('data-testid="floating-tools-toggle"');
+    expect(dock).toContain("floating-dock-collapsed");
+    expect(styles).toContain("body.floating-dock-collapsed");
     expect(styles).toContain(".safe-bottom-floating-flight");
     expect(styles).toContain(".safe-bottom-floating-chat");
   });
