@@ -25,6 +25,8 @@ export type NextStepInput = {
   evaluationRequired: boolean;
   /** Étape de l'évaluation à validation administrateur, quand elle existe. */
   evaluationStage?: "not_started" | "pending" | "info_requested" | "published";
+  /** Référence dossier / évaluation (affichée pendant l’attente d’examen). */
+  evaluationReference?: string | null;
   /** Faux quand le CV manque : l'évaluation ne peut pas être finalisée sans lui. */
   cvOnFile?: boolean;
   /** Frais d’ouverture demandés et pas encore confirmés par l’agence. */
@@ -182,7 +184,16 @@ export function computeNextStep(input: NextStepInput): NextStep {
     return { id: "evaluation-published", tone: "info", eyebrow: "Votre évaluation est prête", title: "Consultez votre rapport", description: "Il a été relu et validé par notre équipe. Parlez-en à un conseiller pour préparer la suite.", actionLabel: "Voir mon évaluation", action: { kind: "anchor", elementId: EVALUATION_ANCHOR_ID } };
   }
   if (input.evaluationStage === "pending") {
-    return { id: "waiting-review", tone: "info", eyebrow: "En cours d’examen", title: "Votre évaluation est examinée par notre équipe", description: "Rien à faire de votre côté pour l’instant. Vous serez averti ici dès qu’elle sera publiée.", actionLabel: input.advisorWhatsAppUrl ? "Écrire sur WhatsApp" : null, action: input.advisorWhatsAppUrl ? { kind: "link", href: input.advisorWhatsAppUrl } : { kind: "none" } };
+    const ref = typeof input.evaluationReference === "string" ? input.evaluationReference.trim() : "";
+    return {
+      id: "waiting-review",
+      tone: "info",
+      eyebrow: "Demande reçue — suivi actif",
+      title: "Votre évaluation est en examen",
+      description: `${ref ? `Référence ${ref}. ` : ""}Un conseiller vérifie vos éléments. Vous serez averti par e-mail et dans cet espace dès qu’une réponse est publiée — rien d’autre n’est attendu de votre part pour l’instant.`,
+      actionLabel: "Voir le statut",
+      action: { kind: "anchor", elementId: EVALUATION_ANCHOR_ID },
+    };
   }
   return {
     id: "all-clear",

@@ -41,7 +41,7 @@ describe("espace client confiance — priorité lecture seule", () => {
     const source = readFileSync(resolve(__dirname, "../client/src/pages/EvaluationSpace.tsx"), "utf8");
     // Garde-fou : pas de mutation admin / rewrite de statut dossier dans l’espace client de cette vague.
     expect(source).not.toMatch(/admin\.(updateDossier|setDossierStatus|rewrite|forceStatus)/);
-    expect(source).toContain("À faire maintenant");
+    expect(source).toContain("{nextStep.eyebrow}");
     expect(source).toContain("client-agency-proofs");
     expect(source).toContain("client-sticky-next-step");
     expect(source).toContain("ClientAdvisorWhatsApp");
