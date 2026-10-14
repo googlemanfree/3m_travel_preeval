@@ -24,6 +24,12 @@ describe("widgets flottants et accès client mobile", () => {
     expect(aureolSource).toContain("const buildWelcomeMessage");
     expect(aureolSource).toContain("Bienvenue sur l’accueil 3M TRAVEL AGENCY");
     expect(aureolSource).toContain("hasUserChattedRef");
+    expect(aureolSource).toContain("Hub Travail");
+    expect(aureolSource).toContain("Hub Études");
+    expect(aureolSource).toContain("Espace Schengen");
+    expect(aureolSource).toContain("Hub Destinations");
+    expect(aureolSource).toContain("Espace partenaires B2B");
+    expect(aureolSource).toContain("Parcours premium");
   });
 
   it("contraint le panneau de vol à la largeur et à la hauteur disponibles sur mobile", () => {

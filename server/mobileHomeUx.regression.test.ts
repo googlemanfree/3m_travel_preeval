@@ -69,8 +69,12 @@ describe("UX mobile accueil — navigation, hero et zones tactiles", () => {
     expect(dock).toContain("<AiCopilotWidgetEnhanced />");
     expect(dock).toContain("<SmartFlightAssistant />");
     expect(dock).toContain('data-testid="floating-tools-toggle"');
+    expect(dock).toContain('data-testid="floating-tools-hint"');
+    expect(dock).toContain("Touchez ici pour afficher WhatsApp, Aureol et l’assistant de vol");
     expect(dock).toContain("floating-dock-collapsed");
     expect(styles).toContain("body.floating-dock-collapsed");
+    expect(styles).toContain("transition-delay: 55ms");
+    expect(styles).toContain("cubic-bezier(0.22, 1, 0.36, 1)");
     expect(styles).toContain(".safe-bottom-floating-flight");
     expect(styles).toContain(".safe-bottom-floating-chat");
   });

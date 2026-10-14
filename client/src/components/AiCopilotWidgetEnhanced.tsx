@@ -44,18 +44,42 @@ const buildWelcomeMessage = (pathname: string): ChatMessage => {
   if (path === "/" || path === "/en") {
     content =
       "Bienvenue sur l’accueil 3M TRAVEL AGENCY ! Je suis Aureol, votre guide 3M TRAVEL AGENCY. Commencez par « Évaluer mon projet — gratuit », parcourez les procédures, ou demandez-moi par où commencer.";
+  } else if (path.startsWith("/travail") || path.startsWith("/visa-travail")) {
+    content =
+      "Bonjour, je suis Aureol, votre guide 3M TRAVEL AGENCY. Hub Travail : je vous oriente sur offres, permis et pièces à préparer — sans promettre d’emploi. Posez votre question ou lancez une évaluation gratuite.";
+  } else if (path.startsWith("/etudes") || path.startsWith("/visa-etudes")) {
+    content =
+      "Bonjour, je suis Aureol, votre guide 3M TRAVEL AGENCY. Hub Études : établissements, dossiers et permis — l’admission reste celle de l’école. Que souhaitez-vous clarifier en premier ?";
+  } else if (path.startsWith("/schengen")) {
+    content =
+      "Bonjour, je suis Aureol, votre guide 3M TRAVEL AGENCY. Espace Schengen : visa court séjour, documents et consulats compétents. Je vous oriente vers les sources officielles — la décision reste consulaire.";
+  } else if (path.startsWith("/canada")) {
+    content =
+      "Bonjour, je suis Aureol, votre guide 3M TRAVEL AGENCY. Hub Canada : CRS, Entrée express, études ou travail — je vous aide à structurer les prochaines vérifications IRCC, sans promettre d’invitation.";
+  } else if (path.startsWith("/destinations")) {
+    content =
+      "Bonjour, je suis Aureol, votre guide 3M TRAVEL AGENCY. Hub Destinations : comparez les corridors et les exigences. Dites-moi le pays ou le type de projet (travail, études, visite).";
+  } else if (path.startsWith("/partenaires") || path.startsWith("/agences-placement") || path.startsWith("/employeurs")) {
+    content =
+      "Bonjour, je suis Aureol, votre guide 3M TRAVEL AGENCY. Espace partenaires B2B : accès vérifié, profils anonymisés et suivi corridor. Quelle étape souhaitez-vous clarifier ?";
+  } else if (path.startsWith("/parcours")) {
+    content =
+      "Bonjour, je suis Aureol, votre guide 3M TRAVEL AGENCY. Parcours premium : je vous explique les étapes, livrables et limites avant toute ouverture de dossier. Par où commencer ?";
+  } else if (path.startsWith("/tarifs")) {
+    content =
+      "Bonjour, je suis Aureol, votre guide 3M TRAVEL AGENCY. Page Tarifs : honoraires d’agence vs frais tiers. Je peux vous orienter vers une évaluation gratuite avant tout engagement.";
+  } else if (path.startsWith("/services")) {
+    content =
+      "Bonjour, je suis Aureol, votre guide 3M TRAVEL AGENCY. Catalogue services : travail, études, visas, billets et démarches. Quel objectif voulez-vous prioriser ?";
   } else if (path.startsWith("/procedures") || path.startsWith("/guide-procedures") || path.startsWith("/ressources")) {
     content =
-      "Bonjour, je suis Aureol, votre guide 3M TRAVEL AGENCY. Vous consultez les procédures : je peux vous orienter sur les documents, étapes et destinations. Que souhaitez-vous clarifier ?";
+      "Bonjour, je suis Aureol, votre guide 3M TRAVEL AGENCY. Vous consultez les procédures : profils, documents, frais connus et sources officielles. Que souhaitez-vous clarifier ?";
   } else if (path.startsWith("/flights") || path.startsWith("/billets") || path.includes("vol")) {
     content =
       "Bonjour, je suis Aureol, votre guide 3M TRAVEL AGENCY. Pour les vols, l’assistant dédié gère réservation et sièges ; je reste là pour visas, délais et préparation du dossier. Comment puis-je vous aider ?";
-  } else if (path.startsWith("/canada")) {
+  } else if (path.startsWith("/sources-officielles")) {
     content =
-      "Bonjour, je suis Aureol, votre guide 3M TRAVEL AGENCY. Projet Canada : je vous oriente sur CRS, documents et étapes IRCC — sans promettre d’invitation ni de résultat. Par où commencer ?";
-  } else if (path.startsWith("/visa-travail") || path.startsWith("/visa-etudes") || path.startsWith("/services")) {
-    content =
-      "Bonjour, je suis Aureol, votre guide 3M TRAVEL AGENCY. Je vous oriente sur ce parcours (étapes, pièces, limites). Posez votre question ou lancez une évaluation gratuite.";
+      "Bonjour, je suis Aureol, votre guide 3M TRAVEL AGENCY. Sources officielles : portails institutionnels à vérifier avant toute démarche. Aucune garantie d’éligibilité ni de décision favorable.";
   }
 
   return { role: "assistant", content, feedback: null, showActions: true };

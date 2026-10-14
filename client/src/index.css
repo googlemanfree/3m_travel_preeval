@@ -728,7 +728,7 @@ html.motion-disabled .admin-glass-table tbody tr:hover {
     opacity: 0;
     pointer-events: none;
     visibility: hidden;
-    transform: translateY(0.75rem) scale(0.92);
+    transform: translate3d(0, 1.1rem, 0) scale(0.88);
   }
 
   body.floating-dock-expanded .safe-bottom-floating-whatsapp {
@@ -761,11 +761,43 @@ html.motion-disabled .admin-glass-table tbody tr:hover {
     bottom: calc(20.25rem + env(safe-area-inset-bottom));
   }
 
+  /* Ouverture en cascade : WhatsApp d’abord, puis vols, puis Aureol. */
   .safe-bottom-floating-whatsapp,
   .safe-bottom-floating-flight,
   .safe-bottom-floating-chat,
   .safe-bottom-floating-panel {
-    transition: opacity 180ms ease, transform 180ms cubic-bezier(0.23, 1, 0.32, 1), visibility 180ms ease, bottom 180ms ease;
+    transition:
+      opacity 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
+      visibility 320ms linear,
+      bottom 380ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform, opacity;
+  }
+
+  body.floating-dock-expanded .safe-bottom-floating-whatsapp {
+    transition-delay: 0ms;
+  }
+
+  body.floating-dock-expanded .safe-bottom-floating-flight {
+    transition-delay: 55ms;
+  }
+
+  body.floating-dock-expanded .safe-bottom-floating-chat,
+  body.floating-dock-expanded .safe-bottom-floating-panel {
+    transition-delay: 110ms;
+  }
+
+  body.floating-dock-collapsed .safe-bottom-floating-whatsapp {
+    transition-delay: 90ms;
+  }
+
+  body.floating-dock-collapsed .safe-bottom-floating-flight {
+    transition-delay: 45ms;
+  }
+
+  body.floating-dock-collapsed .safe-bottom-floating-chat,
+  body.floating-dock-collapsed .safe-bottom-floating-panel {
+    transition-delay: 0ms;
   }
 }
 
