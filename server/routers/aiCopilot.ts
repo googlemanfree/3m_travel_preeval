@@ -15,33 +15,14 @@ import { aureolQuestions, faqFeedback } from "../../drizzle/schema";
 import { desc, sql, count } from "drizzle-orm";
 import { requireValidAdminSession } from "./adminAuth";
 import { searchDestinationKnowledge } from "../destinationDocumentService";
+import {
+  AUREOL_OFFICE_FACTS,
+  buildAureolSystemPrompt,
+  tryCanonicalAureolAnswer,
+} from "../../shared/aureolSiteKnowledge";
 
-const SYSTEM_PROMPT = `Tu es "Aureol", le guide d'information de 3M TRAVEL AGENCY, agence d'accompagnement en mobilité internationale basée à Yaoundé, Cameroun.
-
-Ne mentionne jamais l'utilisation d'un outil automatisé, d'un modèle, d'une IA ou d'une analyse technique. Présente-toi seulement comme le guide d'information 3M TRAVEL AGENCY et privilégie la formulation « notre équipe vérifie votre dossier ».
-
-Ton rôle : répondre brièvement et clairement aux questions générales des visiteurs sur :
-- Les évaluations d'éligibilité pour les visas
-- Les démarches d'immigration
-- Les destinations disponibles (107 pays)
-- Les frais et documents requis
-- Le processus d'évaluation primaire
-
-Informations factuelles à utiliser si pertinentes :
-- Frais d'ouverture de dossier : montant variable selon le type de profil, confirmé par écrit par l'agence avant tout paiement (n'annonce jamais de montant précis), dus après validation de l'évaluation
-- Destinations : 107 pays disponibles (Travail, Études, Visiteur)
-- Processus : Évaluation primaire (CV + informations) → Révision du dossier → Validation administrative → Paiement → Documents → Traitement
-- Documents généralement demandés : CV, diplômes, casier judiciaire, passeport valide, preuve de ressources
-- Contact : WhatsApp +237 698 104 832, email hello@3mtravelagency.com
-- Adresse : Biyem-Assi, Montée Chapelle Obili, Yaoundé
-
-Règles strictes :
-- Ne donne JAMAIS de garantie d'obtention de visa — la décision finale appartient aux autorités
-- Pour une évaluation personnalisée, oriente vers l'évaluation primaire gratuite
-- Réponses courtes (3-5 phrases maximum)
-- Si la question sort du cadre (immigration/visa/études), dis poliment que ce n'est pas ton domaine
-- Ne prétends jamais être un humain
-- Sois toujours professionnel, chaleureux et encourageant`;
+/** Prompt système exporté pour les tests de cohérence site. */
+export const SYSTEM_PROMPT = buildAureolSystemPrompt();
 
 const messageSchema = z.object({
   role: z.enum(["user", "assistant"]),
@@ -62,11 +43,36 @@ export const aiCopilotRouter = router({
       try {
         // Récupérer la dernière question utilisateur pour enrichir le contexte via le RAG dynamique des destinations
         const lastUserMsg = [...input.messages].reverse().find(m => m.role === "user")?.content || "";
+
+        // Faits site non négociables (bureaux, etc.) : réponse canonique avant le LLM.
+        const canonical = tryCanonicalAureolAnswer(lastUserMsg);
+        if (canonical) {
+          try {
+            const db = await getDb();
+            if (db && lastUserMsg) {
+              await db.insert(aureolQuestions).values({
+                question: lastUserMsg,
+                answer: canonical,
+                sourceWidget: "copilot_canonical",
+              });
+            }
+          } catch (logErr) {
+            console.error("Failed to log aureol canonical answer:", logErr);
+          }
+          return { reply: canonical, sources: [] as Array<{ title: string; url: string; country: string }> };
+        }
+
         const sources = await searchDestinationKnowledge(lastUserMsg);
 
         const destinationContext = sources.map(s => `[Source: ${s.sourceTitle} - ${s.country}]\n${s.text}`).join("\n\n");
 
         const dynamicSystemPrompt = `${SYSTEM_PROMPT}
+
+=== FAITS BUREAUX (PRIORITAIRES SUR LE RAG) ===
+Yaoundé : ${AUREOL_OFFICE_FACTS.yaounde.address} · WhatsApp ${AUREOL_OFFICE_FACTS.yaounde.whatsapp}
+Ottawa : ${AUREOL_OFFICE_FACTS.ottawa.address} · ${AUREOL_OFFICE_FACTS.ottawa.whatsapp}
+Ne jamais affirmer qu'il n'y a pas de bureau au Canada.
+================================================
 
 === EXTRAITS OFFICIELS DES GUIDES DE DESTINATION (RAG 107 PAYS) ===
 ${destinationContext}
@@ -81,7 +87,7 @@ ${destinationContext}
               content: m.content,
             })),
           ],
-          max_tokens: 300,
+          max_tokens: 400,
         });
 
         const responseContent = response.choices[0]?.message?.content || "";
@@ -120,7 +126,7 @@ ${destinationContext}
       } catch (err) {
         console.error("ai_copilot.chat_failed", err);
         return {
-          reply: "Désolé, je rencontre un souci technique. Contactez directement notre équipe sur WhatsApp au +237 698 104 832, elle vous répondra rapidement.",
+          reply: `Désolé, je rencontre un souci technique. Contactez notre équipe WhatsApp Yaoundé ${AUREOL_OFFICE_FACTS.yaounde.whatsapp} ou Ottawa ${AUREOL_OFFICE_FACTS.ottawa.whatsapp}, ou écrivez à ${AUREOL_OFFICE_FACTS.email}.`,
         };
       }
     }),
@@ -136,9 +142,16 @@ ${destinationContext}
     )
     .query(async ({ input }) => {
       try {
+        const canonical = tryCanonicalAureolAnswer(input.question);
+        if (canonical) return { answer: canonical };
+
         const sources = await searchDestinationKnowledge(input.question);
         const destinationContext = sources.map(s => `[Source: ${s.sourceTitle} - ${s.country}]\n${s.text}`).join("\n\n");
         const dynamicSystemPrompt = `${SYSTEM_PROMPT}
+
+=== FAITS BUREAUX (PRIORITAIRES SUR LE RAG) ===
+Yaoundé et Ottawa existent tous les deux. Ne jamais nier le bureau Canada.
+================================================
 
 === EXTRAITS OFFICIELS DES GUIDES DE DESTINATION (RAG 107 PAYS) ===
 ${destinationContext}
@@ -152,7 +165,7 @@ ${destinationContext}
               content: input.question,
             },
           ],
-          max_tokens: 200,
+          max_tokens: 280,
         });
 
         const responseContent = response.choices[0]?.message?.content || "";
@@ -268,11 +281,11 @@ ${destinationContext}
 
       const questionsListText = topQuestions.map((q, i) => `${i + 1}. "${q.question}" (posée ${q.count} fois)`).join("\n");
 
-      const prompt = `Tu es l'expert en mobilité internationale de 3M TRAVEL AGENCY à Yaoundé, Cameroun.
+      const prompt = `Tu es l'expert en mobilité internationale de 3M TRAVEL AGENCY (bureaux Yaoundé et Ottawa).
 Voici les questions les plus fréquentes posées par nos candidats au chatbot Aureol :
 ${questionsListText}
 
-Pour chacune de ces questions, rédige une suggestion de réponse officielle, claire, professionnelle, chaleureuse et factuelle (3 à 4 phrases max), incluant si pertinent les contacts officiels (WhatsApp +237 698 104 832, email hello@3mtravelagency.com) et, si la question porte sur les frais, précisant que le montant d'ouverture de dossier dépend du type de profil et est confirmé par écrit avant tout paiement.
+Pour chacune de ces questions, rédige une suggestion de réponse officielle, claire, professionnelle, chaleureuse et factuelle (3 à 4 phrases max), alignée sur le site : corridor Yaoundé–Ottawa (jamais « unique agence à Yaoundé »), contacts WhatsApp Yaoundé ${AUREOL_OFFICE_FACTS.yaounde.whatsapp} / Ottawa ${AUREOL_OFFICE_FACTS.ottawa.whatsapp}, email ${AUREOL_OFFICE_FACTS.email}. Si la question porte sur les frais, précise que le montant d'ouverture dépend du profil et est confirmé par écrit avant tout paiement.
 
 Format de sortie attendu en JSON strict (sans markdown autour si possible, ou dans un bloc json) :
 [
