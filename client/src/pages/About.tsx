@@ -415,7 +415,11 @@ export default function About() {
       <section className="bg-slate-950 px-4 py-16 text-center sm:px-6 lg:px-8" aria-labelledby="about-final-cta-heading">
         <h2 id="about-final-cta-heading" className="text-3xl font-black text-white">Parlons de votre projet</h2>
         <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-slate-300">Commencez par une évaluation gratuite. Elle n’engage aucune procédure et permet de recevoir une première orientation humaine.</p>
-        <PublicEvaluationCTA className="mt-7 inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-6 py-3 text-sm font-black text-blue-900 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950">
+        <PublicEvaluationCTA
+          hint
+          hintClassName="text-center text-xs leading-5 text-slate-300"
+          className="mt-7 inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-6 py-3 text-sm font-black text-blue-900 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+        >
           Commencer l’évaluation gratuite
         </PublicEvaluationCTA>
       </section>

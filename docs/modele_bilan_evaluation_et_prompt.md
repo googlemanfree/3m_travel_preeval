@@ -31,7 +31,7 @@ Le cas suivant est fictif. Il sert uniquement à montrer la présentation attend
 
 ```text
 ╔══════════════════════════════════════════════════════════════════════════════════════╗
-║               3M TRAVEL & SERVICES — ÉVALUATION PRÉLIMINAIRE 2026                  ║
+║               3M TRAVEL AGENCY — ÉVALUATION PRÉLIMINAIRE 2026                       ║
 ║             DIRECTION MOBILITÉ INTERNATIONALE & RECRUTEMENT                          ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 
@@ -82,7 +82,7 @@ Activez ou consultez votre espace client sécurisé pour recevoir les demandes d
 les messages du conseiller et la version PDF du bilan. Les frais éventuels, les prestations
 incluses et les modalités de paiement doivent être affichés et acceptés avant engagement.
 
-CONTACTS 3M TRAVEL & SERVICES
+CONTACTS 3M TRAVEL AGENCY
 Téléphone : +1 672 897 2999 / +237 698 104 832 / +237 620 996 045
 E-mail    : hello@3mtravelagency.com
 Portail   : https://www.3mtravelagency.com/mon-espace

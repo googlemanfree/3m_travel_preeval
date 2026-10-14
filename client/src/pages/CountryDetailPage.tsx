@@ -15,12 +15,14 @@ import { getLocalizedPdfUrl } from '@shared/pdfResources';
 import { getProcedureDisplayTitle, getProcedureFaqItems } from '@shared/procedureSeo';
 import { getProcedureRegionBadges, getProcedureVisualSources } from '@/data/procedureVisuals';
 import { getInstitutionalProcedureSource } from '@/data/institutionalProcedureSources';
+import { getVerifiedProcedureFee } from '@/data/verifiedProcedureFees';
 import { getEnglishContentByEnSlug } from '@/data/procedures107English';
 import { getCountryDetailLabels } from './CountryDetailPage.i18n';
 import { trpc } from '@/lib/trpc';
 import { DestinationVisualSheet } from '@/components/DestinationVisualSheet';
 import { PublishedGuideSummaryPanel } from '@/components/PublishedGuideSummaryPanel';
 import ProofGallerySection from '@/components/ProofGallerySection';
+import { EVALUATION_CTA_HINT } from '@/components/PublicEvaluationCTA';
 import { proofFilterForProcedure } from '@/data/destinationGallery';
 import { setPageSeo } from '@/lib/pageSeo';
 import { resolvePublishedGuideSummary } from '@shared/publishedGuideSummaries';
@@ -84,19 +86,28 @@ export default function CountryDetailPage() {
     const displayTitle = getProcedureDisplayTitle(country, locale);
     const procedureVisual = getProcedureVisualSources(country);
     const seoImage = destinationMedia?.imageUrl ?? procedureVisual.desktop;
+    const visaLabelFr =
+      country.visaType === 'etudes' ? 'études' : country.visaType === 'visiteur' ? 'visite / court séjour' : 'travail';
+    const visaLabelEn =
+      country.visaType === 'etudes' ? 'studies' : country.visaType === 'visiteur' ? 'visitor / short stay' : 'work';
+    const verifiedFee = getVerifiedProcedureFee(country.id);
     if (locale === 'en') {
       document.documentElement.lang = 'en';
       setPageSeo({
-        title: `${displayTitle} from Yaoundé | 3M TRAVEL AGENCY`,
-        description: `Steps, documents and FAQ for your ${country.visaType === 'etudes' ? 'study' : country.visaType === 'visiteur' ? 'visitor' : 'work'} project to ${country.name}, supported from Yaoundé by 3M TRAVEL AGENCY.`,
+        title: `${displayTitle} — ${visaLabelEn} visa guide | 3M TRAVEL AGENCY`,
+        description: verifiedFee
+          ? `${displayTitle}: official fees about ${verifiedFee.costLabel}, timelines ${verifiedFee.delayLabel}. Steps, documents and FAQ with 3M TRAVEL AGENCY support from Yaoundé.`
+          : `Steps, required documents, official portal and FAQ for your ${visaLabelEn} project to ${country.name} — prepared with 3M TRAVEL AGENCY from Yaoundé.`,
         image: seoImage,
         imageAlt: `International mobility illustration for ${country.name}`,
       });
     } else {
       document.documentElement.lang = 'fr';
       setPageSeo({
-        title: `${displayTitle} à Yaoundé | 3M TRAVEL AGENCY`,
-        description: `Étapes, documents et FAQ pour votre projet ${country.visaType === 'etudes' ? "d'études" : country.visaType === 'visiteur' ? 'de séjour' : 'de travail'} vers ${country.name}, accompagné depuis Yaoundé par 3M TRAVEL AGENCY.`,
+        title: `${displayTitle} — visa ${visaLabelFr} | 3M TRAVEL AGENCY`,
+        description: verifiedFee
+          ? `${displayTitle} : frais ${verifiedFee.costLabel}, délais ${verifiedFee.delayLabel}. Étapes, documents, portail officiel et FAQ — accompagnement 3M TRAVEL AGENCY depuis Yaoundé.`
+          : `Étapes, documents exigés, portail officiel et FAQ pour votre projet ${visaLabelFr} vers ${country.name} — accompagnement 3M TRAVEL AGENCY depuis Yaoundé.`,
         image: seoImage,
         imageAlt: `Illustration mobilité internationale pour ${country.name}`,
       });
@@ -150,6 +161,7 @@ export default function CountryDetailPage() {
     ? publicPortal
     : destinationDetail?.consular;
   const institutionalSource = getInstitutionalProcedureSource(country.id);
+  const verifiedFee = getVerifiedProcedureFee(country.id);
   const sourceVerifiedAt = institutionalSource
     ? new Date(`${institutionalSource.consultedOn}T00:00:00Z`).toLocaleDateString("fr-FR", { timeZone: "UTC" })
     : null;
@@ -157,6 +169,8 @@ export default function CountryDetailPage() {
   const pageUpdatedAt = publicPortal?.updatedAt
     ? new Date(publicPortal.updatedAt).toLocaleDateString("fr-FR")
     : destinationDetail?.lastUpdatedAt;
+  const displayCost = verifiedFee?.costLabel ?? country.cost;
+  const displayDelay = verifiedFee?.delayLabel ?? country.processingTime;
 
   const getDifficultyColor = (diff: string) => {
     switch (diff) {
@@ -287,11 +301,16 @@ export default function CountryDetailPage() {
                 {isFavorite ? L.favoriteRemove : L.favoriteAdd}
               </Button>
 
-              <a href={evaluationUrl} className="w-full sm:w-auto flex-1 md:flex-initial">
-                <Button className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-6 py-3 rounded-xl shadow-lg transition-all hover:scale-105">
-                  {L.startProcedure}
-                </Button>
-              </a>
+              <div className="w-full sm:w-auto flex-1 md:flex-initial">
+                <a href={evaluationUrl} className="block">
+                  <Button className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-6 py-3 rounded-xl shadow-lg transition-all hover:scale-105">
+                    {L.startProcedure}
+                  </Button>
+                </a>
+                <p className="mt-1.5 text-center text-[11px] leading-4 text-blue-100/90" data-testid="procedure-eval-hint">
+                  {locale === 'en' ? EVALUATION_CTA_HINT.en : EVALUATION_CTA_HINT.fr}
+                </p>
+              </div>
               {country.pdfUrl && locale === 'fr' && (
                 <a href={getLocalizedPdfUrl(country, language)} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto flex-1 md:flex-initial">
                   <Button variant="outline" className="w-full bg-white/10 hover:bg-white/20 text-white border-white/20 font-bold px-6 py-3 rounded-xl">
@@ -305,6 +324,69 @@ export default function CountryDetailPage() {
             </div>
           </div>
         </motion.div>
+
+        <nav
+          aria-label={locale === 'en' ? 'Related pages' : 'Pages liées'}
+          className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm"
+          data-testid="procedure-internal-links"
+        >
+          <a href={locale === 'en' ? '/en' : '/procedures'} className="font-semibold text-blue-700 underline-offset-2 hover:underline">
+            {locale === 'en' ? 'Procedures directory' : 'Annuaire des procédures'}
+          </a>
+          <span className="text-slate-300" aria-hidden="true">·</span>
+          <a href="/sources-officielles" className="font-semibold text-blue-700 underline-offset-2 hover:underline">
+            {locale === 'en' ? 'Official sources' : 'Sources officielles'}
+          </a>
+          <span className="text-slate-300" aria-hidden="true">·</span>
+          <a href={evaluationUrl} className="font-semibold text-blue-700 underline-offset-2 hover:underline">
+            {locale === 'en' ? 'Free assessment' : 'Évaluation gratuite'}
+          </a>
+          <span className="text-slate-300" aria-hidden="true">·</span>
+          <a href="/tarifs" className="font-semibold text-blue-700 underline-offset-2 hover:underline">
+            {locale === 'en' ? 'Fees' : 'Tarifs'}
+          </a>
+          <span className="text-slate-300" aria-hidden="true">·</span>
+          <a href="/contact" className="font-semibold text-blue-700 underline-offset-2 hover:underline">
+            Contact
+          </a>
+        </nav>
+
+        {(verifiedFee || country.cost || country.processingTime) && (
+          <Card className="space-y-2 border-slate-200 bg-white p-5 shadow-sm sm:p-6" data-testid="procedure-fee-summary">
+            <h2 className="text-lg font-black text-slate-950">
+              {locale === 'en' ? 'Fees and timelines' : 'Frais et délais'}
+            </h2>
+            <dl className="grid gap-3 sm:grid-cols-2 text-sm">
+              <div>
+                <dt className="text-slate-500">{locale === 'en' ? 'Indicative fee' : 'Frais indicatifs'}</dt>
+                <dd className="font-bold text-slate-900">{displayCost}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">{locale === 'en' ? 'Indicative timeline' : 'Délai indicatif'}</dt>
+                <dd className="font-bold text-slate-900">{displayDelay}</dd>
+              </div>
+            </dl>
+            {verifiedFee ? (
+              <p className="text-xs leading-5 text-slate-600">
+                {verifiedFee.note}{' '}
+                <a
+                  href={verifiedFee.officialUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-blue-700 underline-offset-2 hover:underline"
+                >
+                  {locale === 'en' ? 'Open the official portal' : 'Ouvrir le portail officiel'}
+                </a>
+              </p>
+            ) : (
+              <p className="text-xs leading-5 text-amber-800">
+                {locale === 'en'
+                  ? 'Figures not recently re-verified here — confirm amounts and timelines on the official portal before any application.'
+                  : 'Chiffres non revérifiés ici récemment — confirmez montants et délais sur le portail officiel avant toute demande.'}
+              </p>
+            )}
+          </Card>
+        )}
 
         <DestinationVisualSheet
           slugOrId={country.id}

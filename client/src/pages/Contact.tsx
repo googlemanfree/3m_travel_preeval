@@ -157,12 +157,17 @@ export default function Contact() {
               >
                 Prendre rendez-vous
               </a>
-              <a
-                href="/?project=travail#evaluation-multi"
-                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-amber-300/50 bg-amber-400/15 px-6 py-3 font-bold text-amber-50 transition hover:bg-amber-400/25"
-              >
-                {INTERNATIONAL_BRAND.cta.evaluate.fr}
-              </a>
+              <span className="inline-flex flex-col items-center gap-1">
+                <a
+                  href="/?project=travail#evaluation-multi"
+                  className="inline-flex min-h-12 items-center justify-center rounded-xl border border-amber-300/50 bg-amber-400/15 px-6 py-3 font-bold text-amber-50 transition hover:bg-amber-400/25"
+                >
+                  {INTERNATIONAL_BRAND.cta.evaluate.fr}
+                </a>
+                <span className="max-w-xs text-center text-[11px] leading-4 text-amber-50/90" data-testid="contact-eval-hint">
+                  {INTERNATIONAL_BRAND.cta.evaluateHint.fr}
+                </span>
+              </span>
             </div>
           </motion.div>
         </div>

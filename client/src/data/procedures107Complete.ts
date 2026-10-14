@@ -66,7 +66,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaTravail_Allemagne_2026_64549fc5.docx',
     'Visa de travail pour l\'Allemagne - Accès au marché du travail européen',
     'L\'Allemagne offre des opportunités exceptionnelles pour les professionnels qualifiés. Marché dynamique avec forte demande en technologie, ingénierie, santé. Salaires compétitifs (2500-4500€/mois), système de protection sociale excellent.',
-    '4-8 semaines', '75-150 EUR', '2500 EUR/mois', '2500-3000 EUR', 'moyen',
+    'Souvent 4–8 semaines (consulat)', '75 EUR (visa D — confirmer)', '2500 EUR/mois', 'Selon le dossier', 'moyen',
     ['Marché dynamique', 'Salaires compétitifs', 'Système de santé', 'Tech & Ingénierie', 'Accès UE'],
     ['Offre d\'emploi', 'Autorisation Agentur für Arbeit', 'Dossier ambassade', 'Entretien', 'Délivrance'],
     [
@@ -96,7 +96,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaTravail_Canada_Complet_2026_6ddf7e2c.pdf',
     'Visa de travail pour le Canada - Opportunités nord-américaines',
     'Canada offre économie stable, système santé universel, qualité vie élevée. Salaires compétitifs (3000-5000 CAD/mois). Des parcours vers la résidence permanente peuvent exister selon le programme ; rien n’est automatique — confirmez sur la source officielle.',
-    '6-12 semaines', '155-275 CAD', '3000 CAD/mois', '3500-4500 CAD', 'moyen',
+    'Selon IRCC', '155 CAD + 85 CAD biométrie (si exigée)', '3000 CAD/mois', 'Selon IRCC', 'moyen',
     ['Économie stable', 'Santé universel', 'Qualité vie', 'Tech & Services', 'Résidence permanente'],
     [
       'Évaluation du profil et du métier visé',
@@ -119,7 +119,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaTravail_France_2026_65fca802.pdf',
     'Visa de travail pour la France - Accès au marché du travail européen',
     'France offre qualité vie exceptionnelle, accès marché UE. Leader luxe, technologie, art, culture. Salaires compétitifs (2200-4000€/mois). La procédure est encadrée, mais délais et pièces varient selon le dossier : confirmez sur la source officielle.',
-    '6-10 semaines', '99-180 EUR', '2200 EUR/mois', '2500-3500 EUR', 'moyen',
+    'Selon France-Visas / autorisation', 'Selon le titre (souvent 99–180 EUR)', '2200 EUR/mois', 'Selon France-Visas', 'moyen',
     ['Qualité vie', 'Accès UE', 'Culture riche', 'Luxe & Tech', 'Protection sociale'],
     ['Offre emploi', 'Autorisation travail', 'Dossier consulat', 'Entretien', 'Délivrance'],
     [
@@ -134,7 +134,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaTravail_Luxembourg_2026_6eae8854.pdf',
     'Visa de travail pour le Luxembourg - Centre financier européen',
     'Luxembourg centre financier mondial, salaires plus élevés Europe (3500-6000€/mois). Stabilité économique exceptionnelle. Opportunités finance, technologie, services. Les délais et pièces dépendent de votre nationalité et de votre situation : confirmez sur la source officielle.',
-    '5-8 semaines', '80-120 EUR', '3500 EUR/mois', '3500-4500 EUR', 'moyen', ['Salaires élevés', 'Centre financier', 'Stabilité économique', 'Finance & Tech', 'Qualité vie'],
+    'Selon ADEM / immigration', 'Selon Guichet.lu (souvent ~80 EUR visa)', '3500 EUR/mois', 'Selon Guichet.lu', 'moyen', ['Salaires élevés', 'Centre financier', 'Stabilité économique', 'Finance & Tech', 'Qualité vie'],
     ['Offre emploi', 'Autorisation', 'Dossier ambassade', 'Entretien si nécessaire', 'Délivrance'],
     [
       { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie', 'Certificat naissance'] },
@@ -620,7 +620,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '',
     'Visa d\'études pour la France - Universités de renommée mondiale',
     'France offre universités renommées, frais très modérés (200-600 EUR/an), qualité vie. Coût vie raisonnable (900-1300 EUR/mois).',
-    '4-8 semaines', '99-180 EUR', '1000 EUR/mois', '1200-2000 EUR/an', 'moyen', ['Universités renommées', 'Frais très modérés', 'Qualité vie', 'Culture', 'Gastronomie'],
+    'Selon Campus France / consulat', 'Selon France-Visas (souvent ~99 EUR)', '1000 EUR/mois', 'Selon établissement', 'moyen', ['Universités renommées', 'Frais très modérés', 'Qualité vie', 'Culture', 'Gastronomie'],
     ['Admission', 'Documents', 'Demande', 'Entretien', 'Délivrance'],
     [
       { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
@@ -633,7 +633,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaEtudes_Allemagne_2026_9895729b.pdf',
     'Visa d\'études pour l\'Allemagne - Universités de qualité',
     'Allemagne offre universités qualité, frais très bas (0-300 EUR/semestre), accès UE. Coût vie modéré (800-1200 EUR/mois).',
-    '4-8 semaines', '75-150 EUR', '1000 EUR/mois', '1200-2000 EUR/an', 'moyen', ['Universités qualité', 'Frais très bas', 'Accès UE', 'Système éducatif', 'Opportunités'],
+    'Souvent 4–8 semaines (consulat)', '75 EUR (visa D — confirmer)', '1000 EUR/mois', 'Selon le dossier', 'moyen', ['Universités qualité', 'Frais très bas', 'Accès UE', 'Système éducatif', 'Opportunités'],
     ['Admission', 'Documents', 'Demande', 'Entretien', 'Délivrance'],
     [
       { category: 'Identité', documents: ['Passeport en cours de validité (durée exacte selon pays et type de séjour — à confirmer officiellement)', 'Copie'] },
@@ -646,7 +646,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaEtudes_Canada_2026_264a723d.pdf',
     'Visa d\'études pour le Canada - Universités nord-américaines',
     'Canada offre universités réputées, frais modérés (8000-20000 CAD/an), qualité vie. Accès résidence permanente.',
-    '4-8 semaines', '155-275 CAD', '1200 CAD/mois', '2000-3500 CAD/an', 'moyen',
+    'Selon IRCC', '150 CAD + 85 CAD biométrie (si exigée)', '1200 CAD/mois', 'Selon IRCC', 'moyen',
     ['Universités réputées', 'Frais modérés', 'Qualité vie', 'Résidence permanente', 'Multiculturel'],
     [
       'Évaluation du projet d’études et du budget',
@@ -895,7 +895,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaVisiteur_France_2026_55cee033.pdf',
     'Visa court séjour / visiteur France — à confirmer selon nationalité et motif',
     'Court séjour Schengen (jusqu’à 90 jours / 180) ou autre régime selon votre cas. La dispense de visa, les pièces et les délais varient selon la nationalité, le motif (tourisme, famille, affaires) et la situation du demandeur. Aucune procédure n’est « simple » par défaut : vérifiez votre besoin de visa et la liste officielle sur France-Visas avant toute demande.',
-    'Délais variables (souvent 15 jours, jusqu’à 45 selon le dossier)', 'Frais consulaires selon nationalité (à confirmer)', undefined, undefined, 'moyen',
+    'Souvent ~15 jours, jusqu’à 45 selon le dossier', '80 EUR (Schengen C adulte — barème UE)', undefined, undefined, 'moyen',
     ['Culture riche', 'Patrimoine exceptionnel', 'Gastronomie renommée', 'Art & Architecture', 'Charme'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
@@ -923,7 +923,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaVisiteur_Allemagne_2026_23d698cd.pdf',
     'Visa visiteur pour l\'Allemagne - Culture et histoire',
     'Allemagne destination touristique majeure, histoire riche, culture dynamique, architecture magnifique. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
-    '2-4 semaines', '75-150 EUR', '1800 EUR', '2300-3200 EUR', 'moyen',
+    'Souvent ~15 jours, jusqu’à 45 selon le dossier', '80 EUR (Schengen C adulte — barème UE)', undefined, undefined, 'moyen',
     ['Histoire riche', 'Culture dynamique', 'Architecture magnifique', 'Patrimoine', 'Bière & Cuisine'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
@@ -1273,7 +1273,7 @@ export const procedures107Complete: CountryProcedureComplete[] = [
     '/manus-storage/3MTravel_VisaVisiteur_Luxembourg_2026_b404e1fb.pdf',
     'Visa visiteur pour le Luxembourg - Châteaux et nature',
     'Luxembourg destination touristique majeure, châteaux historiques, nature magnifique, Luxembourg-Ville dynamique. Les exigences dépendent de la nationalité, du motif et de la durée du séjour : confirmez-les sur le portail officiel.',
-    '2-4 semaines', '80-120 EUR', '1800 EUR', '2300-3200 EUR', 'moyen',
+    'Souvent ~15 jours, jusqu’à 45 selon le dossier', '80 EUR (Schengen C adulte — barème UE)', undefined, undefined, 'moyen',
     ['Châteaux historiques', 'Nature magnifique', 'Luxembourg-Ville dynamique', 'Patrimoine', 'Accès UE'],
     ['Documents voyage', 'Demande visa', 'Entretien si nécessaire', 'Examen', 'Délivrance'],
     [
