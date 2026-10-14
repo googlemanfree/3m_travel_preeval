@@ -69,7 +69,7 @@ export const getProcedureFaqItems = (procedure: ProcedureSeoInput, locale: Proce
       },
       {
         question: `How do I start my evaluation for ${procedure.name}?`,
-        answer: `Use the site's evaluation form, specifying your destination and project type, or contact 3M TRAVEL AGENCY in Yaoundé for an initial orientation.`,
+        answer: `Use the site's free evaluation form without an account to get started, specifying your destination and project type. Create an account afterwards for follow-up and document upload, or contact 3M TRAVEL AGENCY in Yaoundé for an initial orientation.`,
       },
     ];
   }
@@ -91,7 +91,7 @@ export const getProcedureFaqItems = (procedure: ProcedureSeoInput, locale: Proce
     },
     {
       question: `Comment démarrer mon évaluation pour ${procedure.name} ?`,
-      answer: `Utilisez le formulaire d'évaluation du site en précisant votre destination et votre type de projet, ou contactez 3M TRAVEL AGENCY à Yaoundé pour une première orientation.`,
+      answer: `Utilisez le formulaire d'évaluation gratuit du site sans compte pour démarrer, en précisant votre destination et votre type de projet. Créez un compte ensuite pour le suivi et le dépôt de pièces, ou contactez 3M TRAVEL AGENCY à Yaoundé pour une première orientation.`,
     },
   ];
 };

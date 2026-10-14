@@ -99,12 +99,15 @@ export default function ConditionsUtilisation() {
           </div>
 
           <div>
-            <h2 className="mb-4 text-2xl font-bold text-gray-900">5. Annulation et remboursement</h2>
+            <h2 id="annulation" className="mb-4 text-2xl font-bold text-gray-900">5. Annulation et remboursement</h2>
             <p className="leading-relaxed text-gray-700">
               Il n’existe pas de remboursement automatique. Les conditions d’arrêt de dossier ou de remboursement partiel sont celles
-              du protocole signé avant paiement. Les frais d’ouverture ne sont en principe pas remboursables une fois le traitement
-              engagé, sauf disposition légale impérative contraire. Les sommes déjà versées à des autorités ou fournisseurs tiers
-              suivent les règles de ces organismes.
+              du protocole signé avant paiement. En résumé public : l’évaluation est gratuite ; avant protocole et paiement, aucun
+              engagement financier ; après paiement, un éventuel remboursement partiel dépend du protocole si le traitement n’est pas
+              engagé ; une fois le traitement engagé, les frais d’ouverture et diligences déjà réalisées ne sont en principe pas
+              remboursables, sauf disposition légale impérative contraire ; les sommes déjà versées à des autorités ou fournisseurs
+              tiers suivent les règles de ces organismes ; un refus de visa ou un résultat négatif n’entraîne pas de remboursement
+              automatique des honoraires d’accompagnement.
             </p>
           </div>
 

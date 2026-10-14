@@ -184,7 +184,10 @@ export default function PolitiqueConfidentialite() {
                 </a>
               </p>
               <p>
-                <a href="tel:+237698104832" className="text-blue-600 hover:underline">+237 698 104 832</a> /{" "}
+                WhatsApp (canal principal) :{" "}
+                <a href="tel:+237698104832" className="text-blue-600 hover:underline">+237 698 104 832</a>
+                {" · "}
+                Fixe (appels) :{" "}
                 <a href="tel:+237620996045" className="text-blue-600 hover:underline">+237 620 996 045</a>
               </p>
             </div>

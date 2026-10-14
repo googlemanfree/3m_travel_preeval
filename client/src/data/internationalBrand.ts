@@ -35,8 +35,8 @@ export const INTERNATIONAL_BRAND = {
   },
   /** Ligne de confiance sous les CTA. */
   heroTrust: {
-    fr: "Formulaire rapide sans compte pour démarrer — ou compte gratuit puis dépôt de CV pour le suivi • Informations vérifiables",
-    en: "Short form without an account to start — or free account then CV upload for follow-up • Verifiable information",
+    fr: "Sans compte pour démarrer et envoyer l’évaluation — compte ensuite pour le suivi et le dépôt de CV • Informations vérifiables",
+    en: "No account to start and submit the assessment — account afterwards for follow-up and CV upload • Verifiable information",
   },
   /** Alias utilisés par d’autres pages (promesse courte). */
   promiseLine: {

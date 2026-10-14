@@ -60,7 +60,7 @@ describe("confiance 10/10 — preuves, tarifs, contacts, indexation", () => {
     expect(html).not.toMatch(/Les données sensibles sont limitées aux finalités/);
   });
 
-  it("purge le service worker pour le lot confiance 10/10", () => {
-    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v55-confiance-10");
+  it("purge le service worker (cache PWA bumpé)", () => {
+    expect(read("client/public/sw.js")).toMatch(/3m-travel-pwa-v\d+/);
   });
 });

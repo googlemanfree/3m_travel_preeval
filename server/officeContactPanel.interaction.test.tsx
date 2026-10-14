@@ -38,7 +38,7 @@ describe("OfficeContactPanel — parcours interactif", () => {
     renderPanel();
     expect(getOfficeSwitch("Yaoundé").getAttribute("aria-pressed")).toBe("true");
     expect(screen.getAllByText("🇨🇲").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByRole("link", { name: /WhatsApp : \+237 698 104 832/i }).getAttribute("href")).toContain("wa.me/237698104832");
+    expect(screen.getByRole("link", { name: /WhatsApp \(canal principal\) : \+237 698 104 832/i }).getAttribute("href")).toContain("wa.me/237698104832");
     expect(screen.getByRole("link", { name: /Discuter sur WhatsApp/i }).getAttribute("href")).toContain("wa.me/237698104832");
     expect(screen.getByTitle(/Carte Bureau de Yaoundé/i).getAttribute("src")).toContain("Mont%C3%A9e%20Chapelle%20Obili");
 

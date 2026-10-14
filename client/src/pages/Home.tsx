@@ -490,7 +490,7 @@ export default function Home() {
               {
                 icon: MapPin,
                 title: "Bureaux + suivi à distance",
-                desc: `Yaoundé (accueil) et Ottawa (coordination sur RDV). Canal principal : WhatsApp ${yaoundeOffice.whatsappDisplay} — fixe ${yaoundeOffice.phoneDisplay} pour les appels.`,
+                desc: `Yaoundé (accueil) et Ottawa (coordination sur RDV). Canal principal : WhatsApp ${yaoundeOffice.whatsappDisplay} (messages) — fixe ${yaoundeOffice.phoneDisplay} pour les appels vocaux uniquement.`,
                 href: "/contact",
                 linkLabel: "Voir le contact",
                 color: "text-[#1e3a8a] bg-[#dbeafe]",

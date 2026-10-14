@@ -60,7 +60,7 @@ export const COMPANY_PROFILE = {
   /** Rôles explicites des numéros publics — éviter la confusion WhatsApp / fixe / Ottawa. */
   contactRoles: {
     yaoundeWhatsapp: "WhatsApp Yaoundé — canal principal (messages, dossiers, urgences)",
-    yaoundePhone: "Ligne fixe Yaoundé — appels vocaux",
+    yaoundePhone: "Ligne fixe Yaoundé — appels vocaux uniquement (pas WhatsApp)",
     ottawaWhatsapp: "WhatsApp Ottawa — coordination Canada (secondaire, sur rendez-vous)",
   },
   /** Engagement de délai annoncé côté public — à mesurer en opération. */

@@ -183,6 +183,39 @@ export default function Contact() {
         <div className="mx-auto max-w-6xl">
           <OfficeContactPanel />
           <aside
+            className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-5 py-4 text-sm leading-6 text-slate-800 sm:px-6"
+            aria-label="Numéros Yaoundé : WhatsApp et fixe"
+            data-testid="contact-yaounde-numbers"
+          >
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-800">Numéros Yaoundé — même logique que l’accueil</p>
+            <ul className="mt-2 space-y-1.5">
+              <li>
+                <strong>WhatsApp {cameroon.whatsappDisplay}</strong> — canal principal pour messages, dossiers et urgences
+                {" "}(
+                <a
+                  href={`https://wa.me/${cameroon.whatsappNumber}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-emerald-900 underline-offset-2 hover:underline"
+                >
+                  ouvrir WhatsApp
+                </a>
+                ).
+              </li>
+              <li>
+                <strong>Fixe {cameroon.phoneDisplay}</strong> — appels vocaux uniquement (pas WhatsApp)
+                {" "}(
+                <a href={`tel:${cameroon.phoneDisplay?.replace(/\s/g, "")}`} className="font-semibold text-slate-900 underline-offset-2 hover:underline">
+                  appeler
+                </a>
+                ).
+              </li>
+              <li>
+                <strong>Ottawa {ottawa.whatsappDisplay}</strong> — WhatsApp secondaire, coordination Canada sur rendez-vous.
+              </li>
+            </ul>
+          </aside>
+          <aside
             className="mt-8 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-700 sm:px-6"
             aria-label="Identification de l’agence"
             data-testid="contact-founder-identity"
@@ -538,7 +571,7 @@ export default function Contact() {
               <Card className="p-6 text-center hover:shadow-lg transition-all duration-300">
                 <Phone className="text-green-600 mx-auto mb-4" size={40} />
                 <h3 className="text-lg font-bold text-gray-900 mb-2">Ligne fixe Yaoundé</h3>
-                <p className="text-gray-600 mb-2 text-sm">Appels vocaux (distinct du WhatsApp)</p>
+                <p className="text-gray-600 mb-2 text-sm">Appels vocaux uniquement — distinct du WhatsApp</p>
                 <p className="mb-6 font-mono text-sm font-bold text-slate-800">{cameroon.phoneDisplay}</p>
                 <a
                   href={`tel:${cameroon.phoneDisplay?.replace(/\s/g, "")}`}

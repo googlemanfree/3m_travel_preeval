@@ -18,8 +18,8 @@ import { setPageSeo } from "@/lib/pageSeo";
 const SERVICE_OPTIONS = [
   {
     name: "Évaluation gratuite",
-    detail: "Première orientation sur votre projet. Compte gratuit puis dépôt de CV pour un suivi complet — ou formulaire rapide sans compte.",
-    points: ["Sans engagement de procédure", "Formulaire rapide sans compte pour démarrer", "Compte ensuite pour le suivi et le dépôt de CV"],
+    detail: "Première orientation sur votre projet. Formulaire rapide sans compte pour démarrer et envoyer ; compte ensuite pour le suivi et le dépôt de CV.",
+    points: ["Sans engagement de procédure", "Sans compte pour démarrer et envoyer", "Compte ensuite pour le suivi et le dépôt de CV"],
     accent: "border-blue-200 bg-blue-50",
   },
   {
@@ -172,13 +172,20 @@ export default function Tarifs() {
           </article>
           <article className="rounded-2xl border border-amber-100 bg-amber-50/60 p-5 sm:p-6">
             <h2 className="text-base font-black text-slate-950 sm:text-lg">Annulation et remboursement</h2>
-            <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
-              <li><strong>Pas de remboursement automatique.</strong> Les conditions figurent dans le protocole signé avant paiement.</li>
-              <li>Frais d’ouverture : en principe non remboursables une fois le traitement engagé, sauf obligation légale contraire.</li>
-              <li>Frais déjà versés à des autorités ou fournisseurs tiers : règles de ces organismes.</li>
+            <p className="mt-2 text-sm leading-6 text-slate-700">
+              <strong>Pas de remboursement automatique.</strong> Le protocole signé avant paiement précise votre cas ;
+              voici le résumé public des situations courantes :
+            </p>
+            <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700" data-testid="tarifs-cancel-cases">
+              <li><strong>Évaluation gratuite :</strong> aucun paiement — rien à rembourser.</li>
+              <li><strong>Avant protocole / avant paiement :</strong> aucun engagement financier ; vous pouvez arrêter sans frais.</li>
+              <li><strong>Après paiement, traitement non engagé :</strong> éventuel remboursement partiel selon le protocole écrit (cas par cas).</li>
+              <li><strong>Traitement déjà engagé :</strong> frais d’ouverture et diligences déjà réalisées en principe non remboursables, sauf obligation légale contraire.</li>
+              <li><strong>Frais tiers</strong> (consulat, biométrie, traduction, etc.) déjà versés : règles de ces organismes — non présumés remboursables par 3M.</li>
+              <li><strong>Refus de visa ou résultat négatif :</strong> les honoraires d’accompagnement ne sont pas remboursés automatiquement ; la décision appartient à l’autorité compétente.</li>
               <li>
                 Détail juridique :{" "}
-                <a href="/conditions-utilisation" className="font-bold text-blue-800 underline-offset-2 hover:underline">
+                <a href="/conditions-utilisation#annulation" className="font-bold text-blue-800 underline-offset-2 hover:underline">
                   Conditions d’utilisation
                 </a>
                 .
