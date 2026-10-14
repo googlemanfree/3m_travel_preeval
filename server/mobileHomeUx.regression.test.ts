@@ -32,6 +32,9 @@ describe("UX mobile accueil — navigation, hero et zones tactiles", () => {
     expect(hero).toContain("min-h-[72vh]");
     expect(hero).toContain("sm:min-h-[78vh]");
     expect(hero).toContain('data-testid="hero-logo"');
+    expect(hero).toContain("object-[50%_38%]");
+    expect(hero).toContain("overflow-hidden rounded-full");
+    expect(hero).toContain("scale-[1.16] object-cover");
     expect(hero).toContain("text-5xl font-extrabold uppercase tracking-tight");
     expect(hero).toContain("sm:text-6xl md:text-7xl lg:text-8xl xl:text-[6.25rem]");
     expect(hero).toContain('data-testid="hero-support"');

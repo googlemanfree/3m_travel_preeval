@@ -121,7 +121,7 @@ export default function HeroSectionVIP({
             loading="eager"
             decoding="async"
             fetchPriority="high"
-            className="absolute -inset-[4%] h-[108%] w-[108%] object-cover object-center opacity-100 brightness-[1.12] contrast-[1.04] saturate-[1.12] will-change-transform"
+            className="absolute -inset-[4%] h-[108%] w-[108%] object-cover object-[50%_38%] opacity-100 brightness-[1.12] contrast-[1.04] saturate-[1.12] will-change-transform sm:object-center"
             style={{ transform: "translate3d(0, 0, 0) scale(1.08)" }}
             data-testid="hero-background-image"
           />
@@ -139,18 +139,20 @@ export default function HeroSectionVIP({
           custom={0}
           className="mb-5 flex justify-center sm:mb-6"
         >
-          <img
-            src={logoUrl}
-            srcSet="/logo-3m.webp 480w, /logo-3m-hd.webp 1024w"
-            sizes="(min-width: 1024px) 144px, (min-width: 768px) 128px, 96px"
-            alt="3M TRAVEL AGENCY"
-            width={144}
-            height={144}
-            decoding="async"
-            fetchPriority="high"
-            className="h-24 w-24 rounded-full border-[3px] border-amber-200/80 bg-white object-cover shadow-[0_16px_48px_rgba(0,0,0,0.5)] ring-2 ring-white/40 transition-transform duration-200 ease-out group-hover:scale-[1.04] group-hover:rotate-1 motion-reduce:transition-none sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-36 lg:w-36"
-            data-testid="hero-logo"
-          />
+          <div className="h-24 w-24 overflow-hidden rounded-full border-[3px] border-amber-200/80 bg-white shadow-[0_16px_48px_rgba(0,0,0,0.5)] ring-2 ring-white/40 transition-transform duration-200 ease-out group-hover:scale-[1.04] group-hover:rotate-1 motion-reduce:transition-none sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-36 lg:w-36">
+            <img
+              src={logoUrl}
+              srcSet="/logo-3m.webp 480w, /logo-3m-hd.webp 1024w"
+              sizes="(min-width: 1024px) 144px, (min-width: 768px) 128px, 96px"
+              alt="3M TRAVEL AGENCY"
+              width={144}
+              height={144}
+              decoding="async"
+              fetchPriority="high"
+              className="h-full w-full scale-[1.16] object-cover motion-reduce:scale-100"
+              data-testid="hero-logo"
+            />
+          </div>
         </motion.div>
 
         <motion.h1

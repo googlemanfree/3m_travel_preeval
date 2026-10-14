@@ -13,7 +13,8 @@ describe("hero : lisibilité et hiérarchie", () => {
     expect(hero).toContain("INTERNATIONAL_BRAND");
     expect(hero).toContain('data-testid="hero-logo"');
     expect(hero).toContain("logoUrl");
-    expect(hero).toContain("h-24 w-24 rounded-full");
+    expect(hero).toContain("h-24 w-24 overflow-hidden rounded-full");
+    expect(hero).toContain("scale-[1.16] object-cover");
     expect(hero).toContain("lg:h-36 lg:w-36");
     expect(hero).toContain("text-5xl font-extrabold uppercase tracking-tight text-white");
     expect(hero).toContain("text-3xl font-black tracking-tight text-amber-200");
@@ -80,4 +81,3 @@ describe("hero : lisibilité et hiérarchie", () => {
     expect(hero).not.toContain("from-[#07162c]/48 via-[#0a1d3a]/38 to-[#07162c]/72");
   });
 });
-
