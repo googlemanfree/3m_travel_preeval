@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 480" role="img" aria-labelledby="title desc">
+  <title id="title">3M GROUP SARL</title>
+  <desc id="desc">Improved 3M GROUP SARL logo - navy and gold</desc>
+  <rect width="920" height="480" fill="#FFFFFF"/>
+
+  <!-- Wordmark -->
+  <text x="40" y="250" fill="#0B2A52" font-family="Arial Black, Impact, sans-serif" font-size="168" font-weight="900" letter-spacing="-6">3M</text>
+  <text x="48" y="330" fill="#0B2A52" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="800" letter-spacing="12">GROUP</text>
+  <text x="300" y="372" fill="#0B2A52" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700" letter-spacing="5">SARL</text>
+
+  <!-- Icon -->
+  <g transform="translate(420 40)">
+    <!-- Globe -->
+    <circle cx="120" cy="120" r="78" fill="none" stroke="#0B2A52" stroke-width="8"/>
+    <ellipse cx="120" cy="120" rx="32" ry="78" fill="none" stroke="#0B2A52" stroke-width="5"/>
+    <path d="M48 96h144M48 144h144" fill="none" stroke="#0B2A52" stroke-width="5" stroke-linecap="round"/>
+    <path d="M58 70c26 12 98 12 124 0M58 170c26-12 98-12 124 0" fill="none" stroke="#0B2A52" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
+
+    <!-- Network accents -->
+    <path d="M42 130C24 86 52 40 96 28" fill="none" stroke="#D8A928" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="96" cy="28" r="7" fill="#D8A928"/>
+    <path d="M188 52c30 14 44 52 24 90" fill="none" stroke="#D8A928" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="212" cy="144" r="7" fill="#D8A928"/>
+    <path d="M168 22c32-8 62 14 70 44" fill="none" stroke="#D8A928" stroke-width="2.8" stroke-linecap="round"/>
+    <circle cx="238" cy="68" r="5.5" fill="#D8A928"/>
+
+    <!-- Arrow shafts + heads (left navy) -->
+    <path d="M70 188 C96 128 128 92 168 68" fill="none" stroke="#0B2A52" stroke-width="14" stroke-linecap="round"/>
+    <path d="M152 48 L188 62 L164 92 Z" fill="#0B2A52"/>
+
+    <!-- Center gold (dominant) -->
+    <path d="M108 196 C142 124 184 86 232 58" fill="none" stroke="#D8A928" stroke-width="16" stroke-linecap="round"/>
+    <path d="M214 34 L256 48 L228 84 Z" fill="#D8A928"/>
+
+    <!-- Right navy -->
+    <path d="M146 198 C178 136 222 100 268 80" fill="none" stroke="#0B2A52" stroke-width="12" stroke-linecap="round"/>
+    <path d="M250 58 L286 74 L262 100 Z" fill="#0B2A52"/>
+  </g>
+</svg>
