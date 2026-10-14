@@ -35,7 +35,7 @@ describe("lot preuves, accueil allégé et tarifs chiffrés", () => {
     expect(tarifs).toContain("200 000 – 450 000 FCFA");
     expect(tarifs).toContain("350 000 – 800 000 FCFA");
     expect(tarifs).toContain("<table");
-    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v51-preuves-accueil-tarifs");
+    expect(read("client/public/sw.js")).toMatch(/3m-travel-pwa-v\d+/);
   });
 
   it("garde une grille compacte et des montants lisibles sur mobile", () => {

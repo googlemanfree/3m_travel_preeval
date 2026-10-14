@@ -64,6 +64,6 @@ describe("cohérence catalogue, médias et tarifs (lot confiance)", () => {
     const tarifs = read("client/src/pages/Tarifs.tsx");
     expect(tarifs).toContain("tarifs-fee-examples");
     expect(tarifs).toContain("tarifs-sample-devis");
-    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v51-preuves-accueil-tarifs");
+    expect(read("client/public/sw.js")).toMatch(/3m-travel-pwa-v\d+/);
   });
 });

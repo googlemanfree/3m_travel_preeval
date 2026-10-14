@@ -105,11 +105,11 @@ function formatReviewDate(value: Review["createdAt"], language: "fr" | "en") {
   return date.toLocaleDateString(language === "en" ? "en-GB" : "fr-FR");
 }
 
-const REVIEWS_LOAD_TIMEOUT_MS = 6_000;
+const REVIEWS_LOAD_TIMEOUT_MS = 2_500;
 
 export default function ApprovedReviewsSection() {
   const { language } = useLanguage();
-  const { data: reviews, isLoading, isError } = trpc.customerReview.listApproved.useQuery(undefined, {
+  const { data: reviews, isLoading, isError, isFetched, isFetching } = trpc.customerReview.listApproved.useQuery(undefined, {
     staleTime: 5 * 60 * 1000,
     retry: 1,
     refetchOnWindowFocus: false,
@@ -131,17 +131,18 @@ export default function ApprovedReviewsSection() {
   const [loadTimedOut, setLoadTimedOut] = useState(false);
 
   const approvedReviews = useMemo(() => (reviews ?? []) as Review[], [reviews]);
-  const showLoadingSkeleton = isLoading && !isError && !loadTimedOut;
+  // Skeleton court uniquement ; dès timeout / erreur / données reçues → avis ou état vide transparent.
+  const showLoadingSkeleton = isLoading && !isError && !isFetched && !loadTimedOut;
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading || isFetched || isError) {
       setLoadTimedOut(false);
       return;
     }
     // Ne jamais laisser le skeleton indéfiniment (API lente / réseau coupé).
     const timer = window.setTimeout(() => setLoadTimedOut(true), REVIEWS_LOAD_TIMEOUT_MS);
     return () => window.clearTimeout(timer);
-  }, [isLoading]);
+  }, [isLoading, isFetched, isError]);
 
   useEffect(() => {
     // Revenir à la première page de résultats lorsque le filtre, la recherche ou le tri change.
@@ -325,11 +326,21 @@ export default function ApprovedReviewsSection() {
 
   if (approvedReviews.length === 0) {
     return (
-      <section className="py-16 px-4 bg-gradient-to-b from-white to-slate-50" aria-labelledby="no-reviews-yet-title">
+      <section
+        className="py-16 px-4 bg-gradient-to-b from-white to-slate-50"
+        aria-labelledby="no-reviews-yet-title"
+        data-testid="approved-reviews-empty"
+        data-reviews-resolved="true"
+      >
         <div className="mx-auto max-w-xl rounded-2xl border border-dashed border-slate-300 bg-white/70 px-6 py-12 text-center">
           <Quote className="mx-auto h-8 w-8 text-orange-400 opacity-70" aria-hidden="true" />
           <h2 id="no-reviews-yet-title" className="mt-4 text-xl font-bold text-slate-900">{labels.noReviewsYetTitle}</h2>
           <p className="premium-copy mt-3 text-[0.95rem]">{labels.noReviewsYetBody}</p>
+          {isFetching && !isError ? (
+            <p className="mt-3 text-xs font-semibold text-slate-400" aria-live="polite">
+              {language === "en" ? "Checking for newly approved reviews…" : "Vérification des avis récemment approuvés…"}
+            </p>
+          ) : null}
           <a
             href="/avis#deposer-un-avis"
             className="mt-6 inline-block bg-orange-700 hover:bg-orange-800 text-white font-semibold py-3 px-8 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-700 focus-visible:ring-offset-2"
@@ -349,7 +360,7 @@ export default function ApprovedReviewsSection() {
   ];
 
   return (
-    <section className="py-16 px-4 bg-gradient-to-b from-white to-slate-50" aria-labelledby="approved-reviews-title">
+    <section className="py-16 px-4 bg-gradient-to-b from-white to-slate-50" aria-labelledby="approved-reviews-title" data-testid="approved-reviews-list" data-reviews-resolved="true">
       <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: -20 }}

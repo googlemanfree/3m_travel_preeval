@@ -428,9 +428,9 @@ export default function ProceduresAdvanced() {
                 </tr>
                 <tr>
                   <th scope="row" className="bg-slate-50 px-4 py-4 font-bold text-slate-700">Parcours 3M</th>
-                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Compte → sélection du pays → évaluation → pièces et paiement selon le dossier → orientation vers les étapes admissibles.</td>
-                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Compte → choix de destination → évaluation → recherche de programme → admission et préparation du dossier.</td>
-                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Compte → motif et destination → checklist → réservation ou justificatifs → demande selon le consulat compétent.</td>
+                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Évaluation gratuite sans compte → choix du pays → compte pour le suivi → pièces et paiement selon le dossier → orientation vers les étapes admissibles.</td>
+                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Évaluation gratuite sans compte → destination → compte pour le suivi → recherche de programme → admission et préparation du dossier.</td>
+                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Évaluation gratuite sans compte → motif et destination → checklist → compte pour le suivi → demande selon le consulat compétent.</td>
                 </tr>
                 <tr>
                   <th scope="row" className="bg-slate-50 px-4 py-4 font-bold text-slate-700">Repère important</th>

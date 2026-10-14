@@ -19,10 +19,12 @@ describe("signaux publics de marque et d’évaluation", () => {
     expect(html).not.toContain("3M Travel &amp; Services | Voyages, Visas, Études &amp; Mobilité Internationale");
   });
 
-  it("garde la réponse compte et CV obligatoire identique dans la FAQ partagée", () => {
+  it("aligne la FAQ compte sur le démarrage sans compte puis suivi avec compte", () => {
     const accountQuestion = PUBLIC_FAQ_ITEMS.find((item) => item.question === "Faut-il créer un compte avant de commencer ?");
-    expect(accountQuestion?.answer).toContain("Créez d’abord votre compte");
-    expect(accountQuestion?.answer).toContain("déposez votre CV");
+    expect(accountQuestion?.answer).toMatch(/Non pour démarrer/i);
+    expect(accountQuestion?.answer).toContain("sans compte");
+    expect(accountQuestion?.answer).toContain("Créez un compte ensuite");
+    expect(accountQuestion?.answer).not.toContain("Créez d’abord votre compte");
   });
 
   it("n’expose pas de liens sociaux non confirmés ni de promesse sans compte dans le footer", () => {

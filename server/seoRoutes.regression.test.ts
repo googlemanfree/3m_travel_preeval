@@ -64,7 +64,9 @@ describe("SEO dynamique", () => {
     expect(html).toContain('"@type":"Question"');
     expect(html).toContain("L’évaluation gratuite engage-t-elle une procédure ?");
     expect(html).toContain("Questions fréquentes");
-    expect(html).toContain("Oui. Créez d’abord votre compte");
+    expect(html).toContain("Non pour démarrer");
+    expect(html).toContain("sans compte");
+    expect(html).not.toContain("Oui. Créez d’abord votre compte");
   });
 
   it("ne sert pas le placeholder de maintenance sur la route d’évaluation protégée", () => {
