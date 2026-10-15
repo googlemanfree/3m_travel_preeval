@@ -648,7 +648,7 @@ export function CandidateDetailModal({
 
   return (
     <>
-      <Dialog open={!evaluationEditorOpen} onOpenChange={onClose}>
+      <Dialog open={!evaluationEditorOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] !max-w-none overflow-y-auto rounded-2xl border-0 bg-slate-50 p-0 shadow-2xl transition-opacity duration-200 sm:h-[calc(100vh-2rem)] sm:w-[calc(100vw-2rem)] sm:!max-w-none">
         <DialogHeader className="sticky top-0 z-20 border-b border-slate-200 bg-white px-5 py-4 shadow-sm sm:px-7">
           <DialogTitle className="flex items-center gap-2 text-lg text-blue-950 sm:text-xl">
@@ -1334,7 +1334,7 @@ function ImportAgencyModal({
     setForm((prev) => ({ ...prev, [key]: value }));
 
   return (
-    <Dialog open onOpenChange={onClose}>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-blue-900">
@@ -3383,7 +3383,10 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="pre-dossiers" className="space-y-6">
-            <AdminPreDossierAccountsPanel sessionToken={sessionToken} />
+            <AdminPreDossierAccountsPanel
+              sessionToken={sessionToken}
+              onOpenCandidate={(openId) => setSelectedCandidateId(openId)}
+            />
             <AdminNoEvaluationOutreachPanel sessionToken={sessionToken} />
           </TabsContent>
 

@@ -83,8 +83,11 @@ function formatDate(value: string | Date | null) {
 
 export default function AdminPreDossierAccountsPanel({
   sessionToken,
+  onOpenCandidate,
 }: {
   sessionToken: string;
+  /** Ouvre la fiche 360° (account_N) — même geste que les autres listes admin. */
+  onOpenCandidate?: (openId: string) => void;
 }) {
   const { toast } = useToast();
   const utils = trpc.useUtils();
@@ -581,8 +584,24 @@ export default function AdminPreDossierAccountsPanel({
                     account.pendingEvaluationReference &&
                     !account.evaluationValidated
                   );
+                  const openId = `account_${account.id}`;
+                  const openFiche = () => onOpenCandidate?.(openId);
                   return (
-                    <tr key={account.id} className="hover:bg-slate-50">
+                    <tr
+                      key={account.id}
+                      className="cursor-pointer hover:bg-slate-50 focus-visible:bg-blue-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500"
+                      onClick={openFiche}
+                      onKeyDown={event => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          openFiche();
+                        }
+                      }}
+                      tabIndex={0}
+                      role="link"
+                      aria-label={`Ouvrir le pré-dossier de ${account.fullName}`}
+                      data-testid={`predossier-row-${account.id}`}
+                    >
                       <td className="px-4 py-3">
                         <p className="font-semibold text-slate-900">
                           {account.fullName}
@@ -640,7 +659,10 @@ export default function AdminPreDossierAccountsPanel({
                         {account.paymentValidated && (
                           <button
                             type="button"
-                            onClick={() => setPaymentPreview(account as PreDossierAccount)}
+                            onClick={event => {
+                              event.stopPropagation();
+                              setPaymentPreview(account as PreDossierAccount);
+                            }}
                             data-testid={`opening-payment-validated-${account.id}`}
                             title="Paiement des frais d’ouverture validé"
                             className="ml-1 mt-1 inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -670,7 +692,7 @@ export default function AdminPreDossierAccountsPanel({
                       <td className="px-4 py-3 text-xs text-slate-600">
                         {formatDate(account.createdAt)}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-right" onClick={event => event.stopPropagation()}>
                         <Button
                           size="sm"
                           className={
@@ -739,9 +761,9 @@ export default function AdminPreDossierAccountsPanel({
       </Dialog>
       <Dialog
         open={Boolean(selected)}
-        onOpenChange={open =>
-          !open && !busy && !activationSuccess && setSelected(null)
-        }
+        onOpenChange={open => {
+          if (!open && !busy && !activationSuccess) setSelected(null);
+        }}
       >
         <DialogContent>
           <DialogHeader>

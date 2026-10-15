@@ -631,12 +631,23 @@ export default function AdminAgencyDossiers() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0 }}
                             transition={{ delay: i * 0.03 }}
-                            className="border-slate-700 hover:bg-slate-700/50 transition-colors"
+                            className="cursor-pointer border-slate-700 transition-colors hover:bg-slate-700/50 focus-visible:bg-slate-700/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-400"
+                            onClick={() => openDetailModal(d)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                openDetailModal(d);
+                              }
+                            }}
+                            tabIndex={0}
+                            role="link"
+                            aria-label={`Ouvrir le pré-dossier de ${d.fullName}`}
+                            data-testid={`agency-predossier-row-${d.id}`}
                           >
                             <TableCell>
                               <div>
                                 <p className="text-white font-medium">{d.fullName}</p>
-                                <div className="mt-0.5 flex items-center gap-1">
+                                <div className="mt-0.5 flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
                                   <p className="text-slate-400 text-xs font-mono" data-testid={`dossier-reference-${d.id}`}>{dossierReference(d)}</p>
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
@@ -704,7 +715,7 @@ export default function AdminAgencyDossiers() {
                                 {formatDate(d.createdAt)}
                               </span>
                             </TableCell>
-                            <TableCell>
+                            <TableCell onClick={(event) => event.stopPropagation()}>
                               <div className="flex items-center justify-end gap-1">
                                 <Button
                                   size="icon"
