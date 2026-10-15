@@ -222,7 +222,7 @@ export default function Footer() {
         {/* Marque + CTA */}
         <div className="grid gap-6 border-b border-white/15 pb-8 lg:grid-cols-[1.4fr_1fr] lg:items-end">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            <img src="/logo-3m.webp" alt="Logo 3M TRAVEL AGENCY" className="h-12 w-auto shrink-0 object-contain" />
+            <img src="/logo-3m.webp" alt="Logo 3M TRAVEL AGENCY" className="h-12 w-12 shrink-0 rounded-full bg-white object-contain" />
             <div className="min-w-0">
               <p className="text-lg font-black tracking-tight text-white sm:text-xl">{COMPANY_PROFILE.publicName}</p>
               <p className="mt-1 max-w-xl text-base leading-relaxed text-slate-200">{copy(footerCopy.agencySummary)}</p>

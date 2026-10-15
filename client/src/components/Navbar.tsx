@@ -149,15 +149,22 @@ export default function Navbar() {
             onMouseEnter={() => handleNavigationIntent("/")}
             onFocus={() => handleNavigationIntent("/")}
             onClick={handleNavigationClick}
-            className="group order-1 flex w-16 shrink-0 items-center justify-start gap-2 rounded-xl transition-opacity duration-200 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 sm:w-16 sm:gap-3 lg:w-20"
+            className="group order-1 flex shrink-0 items-center justify-start gap-2 rounded-xl transition-opacity duration-200 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 sm:gap-3"
+            data-testid="navbar-brand-wordmark"
           >
             <img
               src="/logo-3m.webp"
-              alt="Logo 3M TRAVEL AGENCY"
+              alt=""
+              aria-hidden="true"
               onLoad={() => setLogoLoaded(true)}
               onError={() => setLogoLoaded(true)}
-              className={`h-10 w-auto max-w-full origin-center object-contain transition-[opacity,transform,filter] duration-300 ease-out motion-reduce:transition-none sm:h-12 ${logoLoaded ? "opacity-100 blur-0" : "opacity-0 blur-[3px]"} group-hover:scale-105 group-focus-visible:scale-105 motion-reduce:group-hover:scale-100 motion-reduce:group-focus-visible:scale-100`}
+              className={`h-10 w-10 origin-center object-contain transition-[opacity,transform,filter] duration-300 ease-out motion-reduce:transition-none sm:h-12 sm:w-12 ${logoLoaded ? "opacity-100 blur-0" : "opacity-0 blur-[3px]"} group-hover:scale-105 group-focus-visible:scale-105 motion-reduce:group-hover:scale-100 motion-reduce:group-focus-visible:scale-100`}
             />
+            <span className="hidden min-w-0 flex-col leading-tight sm:flex">
+              <span className="font-[family-name:Sora,Manrope,sans-serif] text-sm font-extrabold tracking-tight text-[#071b3d] sm:text-base">3M TRAVEL</span>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-700/80">Agency</span>
+            </span>
+            <span className="sr-only">3M TRAVEL AGENCY</span>
           </a>
 
           <nav

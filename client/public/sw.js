@@ -1,4 +1,4 @@
-const CACHE_NAME = '3m-travel-pwa-v59-offline-brand';
+const CACHE_NAME = '3m-travel-pwa-v60-logo-partage-wordmark';
 const IS_PREVIEW_HOST = /\.manus\.computer$|\.manuspre\.computer$|\.manuscomputer\.ai$/i.test(self.location.hostname);
 const ASSETS_TO_CACHE = [
   '/manifest.json',
