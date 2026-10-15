@@ -1,8 +1,8 @@
 
 
-## Logo navigation et installation PWA
-- [x] Fondu de chargement du logo avec gestion `onLoad`/`onError`.
-- [x] Survol et focus visibles du logo circulaire, avec respect de `prefers-reduced-motion`.
-- [x] Bouton d’installation PWA personnalisé via `beforeinstallprompt` et `appinstalled`, largeur mobile adaptée.
-- [x] Régression ciblée : 1 suite / 2 tests verts; `git diff --check` vert.
-- [x] Le typage de `Candidate360Workspace.tsx:285` a été normalisé en filtrant les entrées timeline incomplètes; `pnpm run check` est maintenant vert.
+## PWA — invite et hors connexion
+- [x] Ajout de « Plus tard » (session) et « Ne plus proposer » (stockage permanent) pour l’invite d’installation.
+- [x] Ajout d’une pulsation limitée à trois cycles, désactivée avec `prefers-reduced-motion`.
+- [x] Nouvelle page `/offline.html` avec logo circulaire, état hors connexion et bouton Réessayer.
+- [x] Service Worker v59 : cache de la page hors ligne et du logo, fallback navigation vers `/offline.html`.
+- [x] Validation : `pnpm run check`, 1 suite / 2 tests ciblés et build production verts; page hors ligne vérifiée visuellement.

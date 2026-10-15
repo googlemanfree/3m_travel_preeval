@@ -1,7 +1,9 @@
-const CACHE_NAME = '3m-travel-pwa-v58-nouveau-logo';
+const CACHE_NAME = '3m-travel-pwa-v59-offline-brand';
 const IS_PREVIEW_HOST = /\.manus\.computer$|\.manuspre\.computer$|\.manuscomputer\.ai$/i.test(self.location.hostname);
 const ASSETS_TO_CACHE = [
-  '/manifest.json'
+  '/manifest.json',
+  '/offline.html',
+  '/logo-3m.webp'
 ];
 
 function isCacheableResponse(response) {
@@ -100,7 +102,7 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse;
         })
-        .catch(() => caches.match(event.request).then((cachedResponse) => cachedResponse || caches.match('/')))
+        .catch(() => caches.match(event.request).then((cachedResponse) => cachedResponse || caches.match('/offline.html')))
     );
     return;
   }
