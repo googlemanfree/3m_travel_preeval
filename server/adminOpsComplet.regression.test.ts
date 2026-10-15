@@ -63,4 +63,16 @@ describe("admin ops complet — câblage UI", () => {
     expect(dashboard).toContain("canManageSensitiveOps");
     expect(css).toContain("[data-admin-ops-mobile]");
   });
+
+  it("corbeille doublon depuis la fiche 360° + file paiements preuve reçue", () => {
+    const workspace = read("client/src/components/Candidate360Workspace.tsx");
+    const payments = read("client/src/components/AdminPaymentManagement.tsx");
+    const dashboard = read("client/src/pages/AdminDashboard.tsx");
+    expect(workspace).toContain("candidate360-archive-duplicate");
+    expect(workspace).toContain("archiveDuplicateRecord");
+    expect(payments).toContain("proof_pending");
+    expect(payments).toContain("Preuve reçue · à confirmer");
+    expect(payments).toContain("payment-open-dossier-");
+    expect(dashboard).toContain("onOpenCandidate={(openId) => setSelectedCandidateId(openId)}");
+  });
 });

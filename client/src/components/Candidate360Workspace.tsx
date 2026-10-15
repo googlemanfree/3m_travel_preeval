@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   Bell, Briefcase, CalendarClock, CheckCircle2, ClipboardCheck, CreditCard, ExternalLink, FileCheck2, FileText,
   FolderKanban, History, ImagePlus, KeyRound, Mail, MessageSquare, Plus, Printer, Save, Send, ShieldAlert, UserCheck, Loader2,
-  ArrowRight, CircleAlert, Gauge, LockKeyhole, RefreshCw, Sparkles, TimerReset, UserRoundCheck, Zap, Download, FileSpreadsheet, X,
+  ArrowRight, CircleAlert, Gauge, LockKeyhole, RefreshCw, Sparkles, TimerReset, Trash2, UserRoundCheck, Zap, Download, FileSpreadsheet, X,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
@@ -446,6 +446,19 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
       await refresh();
     },
     onError: (mutationError) => { unlockAction("resendAccess"); toast.error("Renvoi d’accès impossible", { description: mutationError.message }); },
+  });
+  const archiveDuplicateMutation = trpc.admin.archiveDuplicateRecord.useMutation({
+    onSuccess: async (result) => {
+      unlockAction("archiveDuplicate");
+      toast.success("Dossier placé en corbeille", {
+        description: `${result.reference || candidate.folderCode} — ${result.message || "Archivage réversible."}`,
+      });
+      await refresh();
+    },
+    onError: (mutationError) => {
+      unlockAction("archiveDuplicate");
+      toast.error("Archivage impossible", { description: mutationError.message });
+    },
   });
   const protocolRemindMutation = trpc.adminCandidateManagement.resendAgreementSignatureReminder.useMutation({
     onSuccess: async (result) => {
@@ -1335,6 +1348,35 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
                 >
                   {resendAccessMutation.isPending || actionLocks.resendAccess ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
                   Renvoyer l’accès
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-2 border-rose-200 text-rose-800 hover:bg-rose-50"
+                  disabled={!sessionToken || archiveDuplicateMutation.isPending || actionLocks.archiveDuplicate || !/^(account|online|agency)_\d+$/.test(candidate.id)}
+                  data-testid="candidate360-archive-duplicate"
+                  title="Placer ce dossier en corbeille réversible (doublon / erreur)"
+                  onClick={() => {
+                    const reason = window.prompt(
+                      `Motif d’archivage pour ${candidate.folderCode} (min. 8 caractères) :`,
+                      "Doublon à vérifier",
+                    );
+                    if (!reason || reason.trim().length < 8) {
+                      toast.error("Motif obligatoire", { description: "Saisissez au moins 8 caractères." });
+                      return;
+                    }
+                    if (!window.confirm(`Confirmer la mise en corbeille de ${candidate.folderCode} ? Action réversible.`)) return;
+                    lockAction("archiveDuplicate");
+                    archiveDuplicateMutation.mutate({
+                      sessionToken,
+                      candidateId: candidate.id,
+                      reason: reason.trim(),
+                      confirmation: "CORBEILLE",
+                    });
+                  }}
+                >
+                  {archiveDuplicateMutation.isPending || actionLocks.archiveDuplicate ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  Corbeille (doublon)
                 </Button>
               </div>
             </div>

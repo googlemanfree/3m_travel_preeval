@@ -3465,6 +3465,7 @@ export default function AdminDashboard() {
             <AdminPaymentInstructions sessionToken={sessionToken || ""} />
             <AdminPaymentManagement
               sessionToken={sessionToken || ""}
+              onOpenCandidate={(openId) => setSelectedCandidateId(openId)}
               onPaymentUpdated={() => {
                 void trpcUtils.admin.listCandidates.invalidate();
                 void trpcUtils.application.listApplications.invalidate();
