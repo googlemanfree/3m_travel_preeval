@@ -25,7 +25,7 @@ export const GROUP_BRAND_MOTTO = "L’Afrique vers le monde.";
 
 /** Pôles de services du groupe — ligne d’en-tête papier en-tête / kit brand. */
 export const GROUP_SERVICES_LINE =
-  "Études · Travail · Voyages · Visas · Immigration · Hôtellerie · Digital · Sécurité · Assurance · Conseil";
+  "Études · Travail · Voyages · Visas · Immigration · Hôtellerie · Informatique · Sécurité · Assurance · Prestations de services";
 
 /** Fondateur & PDG — source canonique pour SEO, JSON-LD et pages publiques. */
 export const COMPANY_FOUNDER = {

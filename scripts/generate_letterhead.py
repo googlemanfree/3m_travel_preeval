@@ -19,6 +19,8 @@ BRAND = ROOT / "client/public/brand"
 ARTIFACTS = Path("/opt/cursor/artifacts")
 LOGO_PATH = BRAND / "3m-group-logo.png"
 MARK_PATH = BRAND / "3m-group-mark.png"
+CIRCULAR_PATH = BRAND / "3m-group-logo-circular.png"
+CIRCULAR_MARK_PATH = BRAND / "3m-group-logo-circular-mark.png"
 
 NAVY = (11, 42, 82)  # #0B2A52
 NAVY_DEEP = (6, 26, 54)  # #061A36
@@ -41,7 +43,7 @@ BRAND_MOTTO = "L’Afrique vers le monde."
 # Services du groupe (emblème multi-pôles — labels pour l’en-tête)
 GROUP_SERVICES = (
     "Études · Travail · Voyages · Visas · Immigration · "
-    "Hôtellerie · Digital · Sécurité · Assurance · Conseil"
+    "Hôtellerie · Informatique · Sécurité · Assurance · Prestations de services"
 )
 
 # Contact block (GROUP letterhead — parent entity)
@@ -209,12 +211,14 @@ def render_letterhead_png(
     margin = int(18 / 25.4 * dpi)  # 18mm
     img = paper_background(w, h)
 
-    # Watermark
-    if MARK_PATH.exists():
-        place_watermark(img, Image.open(MARK_PATH), opacity=0.04)
+    # Watermark — prefer circular seal
+    wm_src = CIRCULAR_PATH if CIRCULAR_PATH.exists() else (
+        CIRCULAR_MARK_PATH if CIRCULAR_MARK_PATH.exists() else MARK_PATH
+    )
+    if wm_src.exists():
+        place_watermark(img, Image.open(wm_src), opacity=0.045)
     elif LOGO_PATH.exists():
         logo_full = Image.open(LOGO_PATH)
-        # crop left emblem roughly
         place_watermark(img, logo_full.crop((0, 0, int(logo_full.width * 0.42), logo_full.height)), 0.04)
 
     draw = ImageDraw.Draw(img)
@@ -293,6 +297,17 @@ def render_letterhead_png(
 
     # Footer
     foot_top = h - margin - int(14 / 25.4 * dpi)
+
+    # Sceau circulaire — bas droite, au-dessus du pied
+    seal_src = CIRCULAR_PATH if CIRCULAR_PATH.exists() else CIRCULAR_MARK_PATH
+    if seal_src.exists():
+        seal = knock_white(Image.open(seal_src))
+        seal_d = int(28 / 25.4 * dpi)  # ~28mm
+        seal = seal.resize((seal_d, seal_d), Image.Resampling.LANCZOS)
+        seal_x = w - margin - seal_d
+        seal_y = foot_top - seal_d - int(3 / 25.4 * dpi)
+        img.paste(seal, (seal_x, seal_y), seal)
+
     draw.line([(margin, foot_top), (w - margin, foot_top)], fill=RULE, width=max(1, int(0.25 / 25.4 * dpi)))
     # Accent tick left
     tick_w = int(14 / 25.4 * dpi)
@@ -516,8 +531,24 @@ def write_pdf(out_path: Path, preview_png: Path) -> None:
     c.setLineWidth(0.4)
     c.line(margin, rule_y - 1.6 * mm, page_w - margin, rule_y - 1.6 * mm)
 
-    # Footer
+    # Footer + circular seal (bottom-right)
     foot_y = margin + 12 * mm
+    seal_path = CIRCULAR_PATH if CIRCULAR_PATH.exists() else CIRCULAR_MARK_PATH
+    if seal_path.exists():
+        seal_im = knock_white(Image.open(seal_path))
+        seal_tmp = Path("/tmp/3m-letterhead-seal.png")
+        seal_im.save(seal_tmp, "PNG")
+        seal_d = 28 * mm
+        c.drawImage(
+            str(seal_tmp),
+            page_w - margin - seal_d,
+            foot_y + 8 * mm,
+            width=seal_d,
+            height=seal_d,
+            mask="auto",
+            preserveAspectRatio=True,
+            anchor="sw",
+        )
     c.setStrokeColorRGB(*[x / 255 for x in RULE])
     c.setLineWidth(0.5)
     c.line(margin, foot_y + 6 * mm, page_w - margin, foot_y + 6 * mm)
