@@ -196,7 +196,7 @@ Conservez ce numéro précieusement pour suivre votre dossier.
                 <div>
                   <h3 className="font-semibold text-gray-900">Contact WhatsApp</h3>
                   <p className="text-sm text-gray-600">
-                    Un conseiller vous contactera sous 24h
+                    Un conseiller vous contactera sous 24 h ouvrées
                   </p>
                 </div>
               </div>

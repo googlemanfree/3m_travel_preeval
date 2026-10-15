@@ -178,9 +178,8 @@ export default function Tarifs() {
             </p>
             <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700" data-testid="tarifs-cancel-cases">
               <li><strong>Évaluation gratuite :</strong> aucun paiement — rien à rembourser.</li>
-              <li><strong>Avant protocole / avant paiement :</strong> aucun engagement financier ; vous pouvez arrêter sans frais.</li>
-              <li><strong>Après paiement, traitement non engagé :</strong> éventuel remboursement partiel selon le protocole écrit (cas par cas).</li>
-              <li><strong>Traitement déjà engagé :</strong> frais d’ouverture et diligences déjà réalisées en principe non remboursables, sauf obligation légale contraire.</li>
+              <li><strong>Avant paiement :</strong> aucun engagement financier ; vous pouvez arrêter sans frais.</li>
+              <li><strong>Après paiement / phase engagée :</strong> frais d’ouverture et diligences déjà réalisées en principe non remboursables (protocole + reçu), sauf disposition légale impérative contraire ; toute situation particulière est examinée selon le protocole signé.</li>
               <li><strong>Frais tiers</strong> (consulat, biométrie, traduction, etc.) déjà versés : règles de ces organismes — non présumés remboursables par 3M.</li>
               <li><strong>Refus de visa ou résultat négatif :</strong> les honoraires d’accompagnement ne sont pas remboursés automatiquement ; la décision appartient à l’autorité compétente.</li>
               <li>
