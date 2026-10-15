@@ -245,13 +245,36 @@ describe("dialogue « Activer le dossier client »", () => {
   it("filtre les comptes dont le paiement d’ouverture est encore en attente", () => {
     h.account = account({ paymentValidated: false });
     render(<AdminPreDossierAccountsPanel sessionToken="jeton" />);
-    fireEvent.click(screen.getByRole("button", { name: "Paiements en attente" }));
+    fireEvent.click(screen.getByTestId("predossier-filter-payment_pending"));
     expect(screen.getByText("DJAMBONG TESSA")).toBeTruthy();
     h.account = account({ paymentValidated: true });
     cleanup();
     render(<AdminPreDossierAccountsPanel sessionToken="jeton" />);
-    fireEvent.click(screen.getByRole("button", { name: "Paiements en attente" }));
+    fireEvent.click(screen.getByTestId("predossier-filter-payment_pending"));
     expect(screen.getByText("Aucun compte pré-dossier ne correspond à la recherche.")).toBeTruthy();
+  });
+
+  it("filtre Éval à valider, Prêt à activer et Sans CV", () => {
+    h.account = account({ evaluationValidated: false, paymentValidated: true, evaluationWithoutCv: true });
+    render(<AdminPreDossierAccountsPanel sessionToken="jeton" />);
+    fireEvent.click(screen.getByTestId("predossier-filter-eval_pending"));
+    expect(screen.getByText("DJAMBONG TESSA")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("predossier-filter-ready"));
+    expect(screen.getByText("Aucun compte pré-dossier ne correspond à la recherche.")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("predossier-filter-without_cv"));
+    expect(screen.getByText("DJAMBONG TESSA")).toBeTruthy();
+  });
+
+  it("ouvre le dialogue d’activation depuis activateAccountId (fiche 360°)", () => {
+    render(
+      <AdminPreDossierAccountsPanel
+        sessionToken="jeton"
+        activateAccountId={42}
+        onActivateAccountConsumed={vi.fn()}
+      />
+    );
+    expect(screen.getByRole("dialog").textContent).toContain("Activer le dossier client");
+    expect(screen.getByRole("dialog").textContent).toContain("DJAMBONG TESSA");
   });
 
   it("accepte une preuve déposée par glisser-déposer avec un état de zone actif", async () => {

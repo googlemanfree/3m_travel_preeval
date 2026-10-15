@@ -81,19 +81,31 @@ function formatDate(value: string | Date | null) {
     : "—";
 }
 
+type PreDossierListFilter =
+  | "all"
+  | "payment_pending"
+  | "eval_pending"
+  | "ready"
+  | "without_cv";
+
 export default function AdminPreDossierAccountsPanel({
   sessionToken,
   onOpenCandidate,
+  activateAccountId = null,
+  onActivateAccountConsumed,
 }: {
   sessionToken: string;
   /** Ouvre la fiche 360° (account_N) — même geste que les autres listes admin. */
   onOpenCandidate?: (openId: string) => void;
+  /** Depuis la fiche 360° : ouvre automatiquement le dialogue d’activation pour ce compte. */
+  activateAccountId?: number | null;
+  onActivateAccountConsumed?: () => void;
 }) {
   const { toast } = useToast();
   const utils = trpc.useUtils();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [paymentFilter, setPaymentFilter] = useState<"all" | "pending">("all");
+  const [listFilter, setListFilter] = useState<PreDossierListFilter>("all");
   const [selected, setSelected] = useState<PreDossierAccount | null>(null);
   const [paymentPreview, setPaymentPreview] = useState<PreDossierAccount | null>(null);
   useEffect(() => {
@@ -449,7 +461,41 @@ export default function AdminPreDossierAccountsPanel({
   };
 
   const paymentPreviewIsVideo = Boolean(paymentPreview?.paymentProofUrl && /\.(mp4|mov|webm)(?:$|[?#])/i.test(paymentPreview.paymentProofUrl));
-  const visibleAccounts = (query.data?.accounts ?? []).filter(account => paymentFilter === "all" || !account.paymentValidated);
+  const allAccounts = query.data?.accounts ?? [];
+  const matchesListFilter = (account: PreDossierAccount, filter: PreDossierListFilter) => {
+    if (filter === "all") return true;
+    if (filter === "payment_pending") return !account.paymentValidated;
+    if (filter === "eval_pending") return !account.evaluationValidated;
+    if (filter === "ready") return Boolean(account.evaluationValidated && account.paymentValidated);
+    if (filter === "without_cv") return Boolean(account.evaluationWithoutCv);
+    return true;
+  };
+  const filterCounts = {
+    all: allAccounts.length,
+    payment_pending: allAccounts.filter((account) => !account.paymentValidated).length,
+    eval_pending: allAccounts.filter((account) => !account.evaluationValidated).length,
+    ready: allAccounts.filter((account) => Boolean(account.evaluationValidated && account.paymentValidated)).length,
+    without_cv: allAccounts.filter((account) => Boolean(account.evaluationWithoutCv)).length,
+  };
+  const visibleAccounts = allAccounts.filter((account) => matchesListFilter(account as PreDossierAccount, listFilter));
+
+  useEffect(() => {
+    if (!activateAccountId || query.isLoading) return;
+    const account = (query.data?.accounts ?? []).find((row) => row.id === activateAccountId);
+    if (!account) {
+      toast({
+        title: "Pré-dossier introuvable",
+        description: "Ce compte n’apparaît plus dans la liste à ouvrir (déjà activé ou filtré).",
+        variant: "destructive",
+      });
+      onActivateAccountConsumed?.();
+      return;
+    }
+    openActivation(account as PreDossierAccount);
+    onActivateAccountConsumed?.();
+    // One-shot handoff depuis la fiche 360° : on consomme l’id dès l’ouverture.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activateAccountId, query.data?.accounts, query.isLoading]);
 
   const evaluationOk = readiness.data
     ? readiness.data.evaluationValidated
@@ -558,24 +604,43 @@ export default function AdminPreDossierAccountsPanel({
             </p>
           </div>
         </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <Input
-            value={search}
-            onChange={event => setSearch(event.target.value)}
-            placeholder="Rechercher par nom, e-mail, téléphone ou destination…"
-            className="pl-9"
-            maxLength={200}
-          />
-          <Button
-            type="button"
-            variant={paymentFilter === "pending" ? "default" : "outline"}
-            onClick={() => setPaymentFilter(current => current === "pending" ? "all" : "pending")}
-            className="mt-2 w-full gap-2 sm:w-auto"
-            aria-pressed={paymentFilter === "pending"}
-          >
-            <FileText className="h-4 w-4" /> Paiements en attente
-          </Button>
+        <div className="space-y-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              value={search}
+              onChange={event => setSearch(event.target.value)}
+              placeholder="Rechercher par nom, e-mail, téléphone ou destination…"
+              className="pl-9"
+              maxLength={200}
+            />
+          </div>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrer les pré-dossiers" data-testid="predossier-list-filters">
+            {(
+              [
+                { id: "all", label: "Tous", count: filterCounts.all },
+                { id: "eval_pending", label: "Éval à valider", count: filterCounts.eval_pending },
+                { id: "payment_pending", label: "Paiement en attente", count: filterCounts.payment_pending },
+                { id: "ready", label: "Prêt à activer", count: filterCounts.ready },
+                { id: "without_cv", label: "Sans CV", count: filterCounts.without_cv },
+              ] as const
+            ).map((chip) => (
+              <button
+                key={chip.id}
+                type="button"
+                data-testid={`predossier-filter-${chip.id}`}
+                aria-pressed={listFilter === chip.id}
+                onClick={() => setListFilter(chip.id)}
+                className={`rounded-full border px-3 py-1.5 text-xs font-bold transition ${
+                  listFilter === chip.id
+                    ? "border-slate-900 bg-slate-900 text-white"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-blue-300"
+                }`}
+              >
+                {chip.label} ({chip.count})
+              </button>
+            ))}
+          </div>
         </div>
         {query.isLoading ? (
           <p className="py-10 text-center text-sm text-slate-500">

@@ -24,6 +24,20 @@ describe("activation et rattachement pré-dossier", () => {
     expect(panel).toContain("Ouvrir {activationSuccess.dossierReference}");
   });
 
+  it("filtre métier + assistant d’activation depuis la fiche 360°", () => {
+    const panel = read("client/src/components/AdminPreDossierAccountsPanel.tsx");
+    const dashboard = read("client/src/pages/AdminDashboard.tsx");
+    expect(panel).toContain('data-testid="predossier-list-filters"');
+    expect(panel).toContain("predossier-filter-${chip.id}");
+    expect(panel).toContain('id: "eval_pending"');
+    expect(panel).toContain('id: "ready"');
+    expect(panel).toContain('id: "without_cv"');
+    expect(panel).toContain("activateAccountId");
+    expect(dashboard).toContain("onOpenFullActivation");
+    expect(dashboard).toContain("predossier-open-full-activation");
+    expect(dashboard).toContain("Assistant d’activation complet");
+  });
+
   it("conserve la validation humaine de l’évaluation avant l’activation", () => {
     const panel = read("client/src/components/AdminPreDossierAccountsPanel.tsx");
     expect(panel).toContain("Valider l’évaluation avant activation");

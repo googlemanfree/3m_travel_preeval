@@ -42,6 +42,7 @@ import {
   Users,
   Clock,
   FileCheck,
+  FolderPlus,
   Send,
   CheckCircle,
   Globe,
@@ -386,6 +387,7 @@ export function CandidateDetailModal({
   onStatusUpdated,
   onOpenOperations,
   onNavigateToCandidate,
+  onOpenFullActivation,
   openEvaluationEditor = false,
 }: {
   candidateId: string;
@@ -394,6 +396,8 @@ export function CandidateDetailModal({
   onStatusUpdated: () => void;
   onOpenOperations: (area: "payments" | "documents" | "emails", folderCode: string) => void;
   onNavigateToCandidate?: (candidateId: string) => void;
+  /** Ouvre l’assistant d’activation complet (liste Pré-dossiers) pour ce compte. */
+  onOpenFullActivation?: (accountId: number) => void;
   openEvaluationEditor?: boolean;
 }) {
   const { toast } = useToast();
@@ -906,7 +910,22 @@ export function CandidateDetailModal({
                       </div>
                     </div>
                     <div className="mt-4"><Label htmlFor="predossier-notes-modal">Note interne</Label><textarea id="predossier-notes-modal" value={preDossierNotes} onChange={(event) => setPreDossierNotes(event.target.value)} placeholder="Pièces déposées, suite attendue, décision de l’agence…" maxLength={2000} className="mt-2 min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50" /></div>
-                    <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center"><Button onClick={() => setPreDossierConfirmationOpen(true)} disabled={isPreDossierActivationDisabled} aria-describedby="predossier-activation-guidance" className="bg-blue-700 hover:bg-blue-800"><FileCheck className="mr-2 h-4 w-4" />Ouvrir le dossier et activer le suivi</Button><p id="predossier-activation-guidance" role="status" aria-live="polite" className="text-xs text-slate-500">{preDossierActivationGuidance}</p></div>
+                    <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+                      <Button onClick={() => setPreDossierConfirmationOpen(true)} disabled={isPreDossierActivationDisabled} aria-describedby="predossier-activation-guidance" className="bg-blue-700 hover:bg-blue-800"><FileCheck className="mr-2 h-4 w-4" />Ouvrir le dossier et activer le suivi</Button>
+                      {onOpenFullActivation && candidate?.internalId ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          data-testid="predossier-open-full-activation"
+                          onClick={() => onOpenFullActivation(candidate.internalId)}
+                          className="border-blue-300 text-blue-900"
+                        >
+                          <FolderPlus className="mr-2 h-4 w-4" />
+                          Assistant d’activation complet
+                        </Button>
+                      ) : null}
+                      <p id="predossier-activation-guidance" role="status" aria-live="polite" className="text-xs text-slate-500">{preDossierActivationGuidance}</p>
+                    </div>
                   </section>
                 ) : (
                   <section className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm" aria-label="Dossier déjà activé">
@@ -1532,6 +1551,7 @@ export default function AdminDashboard() {
   const [nextActionSort, setNextActionSort] = useState<"default" | "urgency_desc" | "label">("default");
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [openEvaluationEditor, setOpenEvaluationEditor] = useState(false);
+  const [preDossierActivateAccountId, setPreDossierActivateAccountId] = useState<number | null>(null);
   const [activeAdminTab, setActiveAdminTab] = useState("pilotage");
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
@@ -3386,6 +3406,8 @@ export default function AdminDashboard() {
             <AdminPreDossierAccountsPanel
               sessionToken={sessionToken}
               onOpenCandidate={(openId) => setSelectedCandidateId(openId)}
+              activateAccountId={preDossierActivateAccountId}
+              onActivateAccountConsumed={() => setPreDossierActivateAccountId(null)}
             />
             <AdminNoEvaluationOutreachPanel sessionToken={sessionToken} />
           </TabsContent>
@@ -3451,6 +3473,16 @@ export default function AdminDashboard() {
             setActiveAdminTab(area);
             setSelectedCandidateId(null);
             toast({ title: "Centre de traitement ouvert", description: `Module ${area === "documents" ? "documents" : area === "payments" ? "paiements" : "e-mails"} ouvert pour poursuivre le traitement du dossier ${folderCode}.` });
+          }}
+          onOpenFullActivation={(accountId) => {
+            setOpenEvaluationEditor(false);
+            setSelectedCandidateId(null);
+            setActiveAdminTab("pre-dossiers");
+            setPreDossierActivateAccountId(accountId);
+            toast({
+              title: "Assistant d’activation",
+              description: "Dialogue d’activation ouvert depuis la fiche 360° (paiement, double procédure, checklist).",
+            });
           }}
         />
       )}
