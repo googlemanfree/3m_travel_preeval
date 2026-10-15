@@ -1249,3 +1249,20 @@ html.high-contrast .btn-submit { color: #ffffff !important; background: #082b5c 
     min-height: 2.75rem;
   }
 }
+
+/* Mode guichet tactile : cibles élargies (stand / tablette comptoir). */
+[data-admin-guichet="true"] [data-testid="today-priority-item"],
+[data-admin-guichet="true"] [data-testid="cockpit-open-row"],
+[data-admin-guichet="true"] [data-testid^="predossier-row-"],
+[data-admin-guichet="true"] [data-testid="admin-guichet-tile"] {
+  min-height: 4.5rem;
+}
+[data-admin-guichet="true"] button,
+[data-admin-guichet="true"] [role="button"],
+[data-admin-guichet="true"] a[data-testid^="admin-guichet-"] {
+  min-height: 3rem;
+  font-size: 1rem;
+}
+[data-admin-guichet="true"] [data-admin-guichet-panel] {
+  font-size: 1.05rem;
+}

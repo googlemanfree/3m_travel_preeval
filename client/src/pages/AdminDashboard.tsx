@@ -71,6 +71,7 @@ import {
   X,
   Trash2,
   UserCheck,
+  Hand,
 } from "lucide-react";
 import {
   BarChart,
@@ -96,6 +97,7 @@ import AdminContractsReceiptsDesk from "@/components/AdminContractsReceiptsDesk"
 import AdminNoEvaluationOutreachPanel from "@/components/AdminNoEvaluationOutreachPanel";
 import AdminPreDossierAccountsPanel from "@/components/AdminPreDossierAccountsPanel";
 import AdminRedundantPreAccountsPanel from "@/components/AdminRedundantPreAccountsPanel";
+import AdminGuichetPanel from "@/components/AdminGuichetPanel";
 import AdminCockpitControlBoard from "@/components/AdminCockpitControlBoard";
 import AdminCandidateCockpitStrip from "@/components/AdminCandidateCockpitStrip";
 import AdminClientSpacePreview from "@/components/AdminClientSpacePreview";
@@ -1554,6 +1556,7 @@ export default function AdminDashboard() {
   const [openEvaluationEditor, setOpenEvaluationEditor] = useState(false);
   const [preDossierActivateAccountId, setPreDossierActivateAccountId] = useState<number | null>(null);
   const [activeAdminTab, setActiveAdminTab] = useState("pilotage");
+  const [guichetMode, setGuichetMode] = useState(false);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
   const [showImportModal, setShowImportModal] = useState(false);
@@ -2065,7 +2068,7 @@ export default function AdminDashboard() {
   ] as const;
 
   return (
-    <main data-admin-ops-mobile className="premium-page-shell min-h-screen text-slate-900 transition-colors duration-300 dark:bg-[#071426] dark:text-slate-100">
+    <main data-admin-ops-mobile data-admin-guichet={guichetMode ? "true" : undefined} className="premium-page-shell min-h-screen text-slate-900 transition-colors duration-300 dark:bg-[#071426] dark:text-slate-100">
       {/* En-tête fixe */}
       <div className="glass-admin-header sticky top-0 z-50 bg-gradient-to-r from-[#071b3d]/96 via-[#0b2f6f]/96 to-[#123c86]/96 text-white shadow-lg backdrop-blur-xl transition-colors duration-300">
         <div className="mx-auto w-full max-w-[1920px] space-y-3 px-4 py-4 sm:px-6 xl:px-8 2xl:px-10">
@@ -2140,6 +2143,20 @@ export default function AdminDashboard() {
                 className="gap-1.5 border-white/30 text-white hover:bg-white/10"
               >
                 <Search className="w-4 h-4" /> Vérifier un dossier
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setGuichetMode((current) => !current);
+                  setActiveAdminTab("pilotage");
+                }}
+                aria-pressed={guichetMode}
+                data-testid="admin-guichet-toggle"
+                className={`gap-1.5 border-white/30 text-white hover:bg-white/10 ${guichetMode ? "bg-amber-400/30 ring-1 ring-amber-200/60" : ""}`}
+                title="Mode guichet tactile — grandes tuiles pour le comptoir"
+              >
+                <Hand className="w-4 h-4" /> {guichetMode ? "Guichet ON" : "Mode guichet"}
               </Button>
             </div>
             <nav aria-label="Fil d’Ariane du pilotage admin" className="flex w-full items-center gap-2 border-t border-white/15 pt-3 text-sm text-blue-100">
@@ -2474,7 +2491,15 @@ export default function AdminDashboard() {
           </div>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white/70 px-3 py-2 text-xs text-slate-600"><span>Section active : <strong className="text-slate-950">{activeAdminTab === "candidates" ? "Dossiers" : activeAdminTab === "pre-dossiers" ? "Pré-dossiers" : activeAdminTab === "flights" ? "Réservations vols" : activeAdminTab}</strong></span><div className="flex items-center gap-2"><SchedulerModeBadge compact /><span className="hidden sm:inline">Les changements sensibles nécessitent une validation humaine.</span></div></div>
 
-          <TabsContent value="pilotage" className="space-y-6"><AdminTodayDashboard candidates={candidates as TodayCandidate[]} isRefreshing={isFetchingCandidates} lastUpdatedAt={dataUpdatedAt ? new Date(dataUpdatedAt) : null} onRefresh={() => void handleRefresh()} onOpen={(candidateId) => setSelectedCandidateId(candidateId)} />
+          <TabsContent value="pilotage" className="space-y-6">
+            {guichetMode ? (
+              <AdminGuichetPanel
+                candidates={candidates as TodayCandidate[]}
+                onOpen={(candidateId) => setSelectedCandidateId(candidateId)}
+                onExit={() => setGuichetMode(false)}
+              />
+            ) : null}
+            <AdminTodayDashboard candidates={candidates as TodayCandidate[]} isRefreshing={isFetchingCandidates} lastUpdatedAt={dataUpdatedAt ? new Date(dataUpdatedAt) : null} onRefresh={() => void handleRefresh()} onOpen={(candidateId) => setSelectedCandidateId(candidateId)} />
             <AdminOperationsControlCenter sessionToken={sessionToken} totalCandidates={total} pendingEvaluations={pendingEvaluationCandidates.length} pendingPayments={pendingPaymentApplications.length} pendingFlights={flightQueueSummary?.pending_review ?? 0} openDeadlines={advisorDeadlineGroups.reduce((count, group) => count + group.items.length, 0)} smtpFailures={smtpSummary.failed} lastSyncedAt={lastSyncedAt} isRefreshing={isRefreshing} onRefresh={handleRefresh} onNavigate={setActiveAdminTab} />
             <AdminCockpitControlBoard sessionToken={sessionToken} onOpen={(openId) => setSelectedCandidateId(openId)} />
             <AdminPilotageQueue sessionToken={sessionToken} onOpen={(openId) => setSelectedCandidateId(openId)} />

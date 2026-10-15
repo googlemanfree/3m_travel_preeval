@@ -35,6 +35,12 @@ import { buildAgreementProtocolText, buildSecondAgreementProtocolText, AGREEMENT
 import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from "@shared/adminSync";
 import { ADMIN_MESSAGE_TEMPLATES, fillAdminTemplate, formatActivationTransition } from "@shared/adminOpsToolkit";
 import {
+  buildUnifiedCommunicationsTimeline,
+  candidateIdFromActiveReference,
+  channelLabel,
+  suggestDuplicateMerges,
+} from "@shared/adminUnifiedTimeline";
+import {
   LUXEMBOURG_JOB_PLATFORMS,
   isLuxembourgDestination,
   luxembourgApplicationTaskDescription,
@@ -238,6 +244,56 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
     { sessionToken, candidateId: candidate.id },
     { enabled: Boolean(sessionToken && /^(online|agency)_\d+$/.test(candidate.id)), retry: false },
   );
+  const redundantQuery = trpc.adminCandidateManagement.listRedundantPreAccounts.useQuery(
+    { sessionToken },
+    { enabled: Boolean(sessionToken), retry: false, staleTime: 60_000 },
+  );
+  const archiveRedundantMutation = trpc.adminCandidateManagement.archiveRedundantPreAccounts.useMutation({
+    onSuccess: (result) => {
+      toast.success(`${result.archivedCount} pré-compte(s) placé(s) en corbeille`, {
+        description: result.message,
+      });
+      void redundantQuery.refetch();
+      onRefresh();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  const duplicateSuggestions = useMemo(
+    () =>
+      suggestDuplicateMerges({
+        currentFolderCode: (data as { canonicalFolderCode?: string | null } | undefined)?.canonicalFolderCode || candidate.folderCode,
+        currentCandidateId: candidate.id,
+        items: (redundantQuery.data?.items ?? []) as Array<{
+          kind: "agency_pre_dossier" | "account";
+          id: number;
+          reference: string;
+          fullName: string;
+          confidence: "certain" | "probable";
+          reason: string;
+          activeDossierReference: string;
+        }>,
+      }),
+    [redundantQuery.data, candidate.folderCode, candidate.id, data],
+  );
+  const unifiedTimeline = useMemo(() => {
+    if (!data) return [];
+    return buildUnifiedCommunicationsTimeline({
+      messages: data.communications?.messages ?? [],
+      notifications: data.communications?.notifications ?? [],
+      clarifications: data.communications?.documentClarifications ?? [],
+      emails: candidate.emailHistory ?? [],
+      operational: (data.timeline ?? []).map((entry: { id: string; kind?: string; label?: string; comment?: string; actor?: string; status?: string; createdAt: Date | string }) => ({
+        id: entry.id,
+        kind: entry.kind,
+        label: entry.label,
+        comment: entry.comment,
+        actor: entry.actor,
+        status: entry.status,
+        createdAt: entry.createdAt,
+      })),
+      limit: 100,
+    });
+  }, [data, candidate.emailHistory]);
 
   const dossierProgress = useMemo(() => {
     if (!data) return { value: 0, currentLabel: "Chargement du dossier", documentsLabel: "" };
@@ -851,6 +907,81 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             })}
           </p>
           <p className="mt-1 text-xs text-emerald-800">Transition COMPTE-… → 3M-… conservée pour le suivi ops.</p>
+        </div>
+      ) : null}
+      {duplicateSuggestions.length > 0 ? (
+        <div
+          className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+          data-testid="candidate360-duplicate-merge"
+          role="status"
+        >
+          <p className="text-xs font-bold uppercase tracking-wide text-amber-800">Doublons intelligents</p>
+          <p className="mt-1 text-sm text-amber-900">
+            {duplicateSuggestions[0]?.viewingRedundant
+              ? `Ce pré-compte semble déjà couvert par le dossier actif ${duplicateSuggestions[0].activeDossierReference}.`
+              : `${duplicateSuggestions.length} pré-compte(s) redondant(s) pointent vers ce dossier actif.`}
+          </p>
+          <ul className="mt-3 space-y-2">
+            {duplicateSuggestions.map((item) => {
+              const openId = candidateIdFromActiveReference(item.activeDossierReference);
+              return (
+                <li
+                  key={`${item.kind}-${item.id}`}
+                  className="flex flex-col gap-2 rounded-lg border border-amber-200 bg-white/90 p-3 sm:flex-row sm:items-center sm:justify-between"
+                  data-testid="candidate360-duplicate-row"
+                  data-confidence={item.confidence}
+                >
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-900">
+                      {item.viewingRedundant
+                        ? `Fusionner avec ${item.activeDossierReference}`
+                        : `Archiver ${item.reference}`}
+                      <Badge className={`ml-2 ${item.confidence === "certain" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
+                        {item.confidence === "certain" ? "Certain" : "À vérifier"}
+                      </Badge>
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-600">{item.fullName} · {item.reason}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {item.viewingRedundant && openId && onSelectSibling ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5"
+                        data-testid="candidate360-duplicate-open-active"
+                        onClick={() => onSelectSibling(openId)}
+                      >
+                        Ouvrir {item.activeDossierReference}
+                      </Button>
+                    ) : null}
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5 border-rose-200 text-rose-800 hover:bg-rose-50"
+                      disabled={archiveRedundantMutation.isPending}
+                      data-testid="candidate360-duplicate-archive"
+                      onClick={() => {
+                        const label = item.viewingRedundant
+                          ? `Archiver ${item.reference} et conserver ${item.activeDossierReference}`
+                          : `Archiver le pré-compte ${item.reference}`;
+                        if (!window.confirm(`${label} ? Action réversible (corbeille).`)) return;
+                        archiveRedundantMutation.mutate({
+                          sessionToken,
+                          items: [{ kind: item.kind, id: item.id }],
+                          confirmation: "CORBEILLE",
+                        });
+                      }}
+                    >
+                      {archiveRedundantMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                      {item.viewingRedundant ? "Fusionner (archiver)" : "Archiver le doublon"}
+                    </Button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       ) : null}
       <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600" aria-live="polite" data-testid="candidate360-sync">
@@ -1860,6 +1991,29 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
         </TabsContent>
 
         <TabsContent value="messages" className="grid gap-3 pt-4 sm:grid-cols-2">
+          {unifiedTimeline.filter((entry) => ["message", "notification", "clarification", "email", "whatsapp"].includes(entry.channel)).length > 0 ? (
+            <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 sm:col-span-2" data-testid="candidate360-messages-unified-preview">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h4 className="flex items-center gap-2 font-semibold text-slate-900"><History className="h-4 w-4 text-indigo-700" />Aperçu chronologie unifiée</h4>
+                <Button type="button" size="sm" variant="outline" onClick={() => setActiveTab("history")}>Voir tout l’historique</Button>
+              </div>
+              <div className="mt-3 space-y-2">
+                {unifiedTimeline
+                  .filter((entry) => ["message", "notification", "clarification", "email", "whatsapp"].includes(entry.channel))
+                  .slice(0, 5)
+                  .map((entry) => (
+                    <div key={entry.id} className="rounded-lg border border-indigo-100 bg-white p-3" data-channel={entry.channel}>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-medium text-slate-900">{entry.label}</p>
+                        <Badge variant="outline" className="text-[10px]">{channelLabel(entry.channel)}</Badge>
+                      </div>
+                      <p className="mt-1 line-clamp-2 text-xs text-slate-600">{entry.detail}</p>
+                      <p className="mt-1 text-xs text-slate-400">{formatDate(entry.createdAt)}</p>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          ) : null}
           <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 sm:col-span-2" data-testid="candidate360-message-templates">
             <h4 className="flex items-center gap-2 font-semibold text-slate-900"><Send className="h-4 w-4 text-blue-700" />Envoyer une communication au candidat</h4>
             <p className="mt-1 text-sm text-slate-600">Modèles par étape, puis envoi journalisé (espace client + e-mail si disponible).</p>
@@ -1906,8 +2060,53 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
         </TabsContent>
 
         <TabsContent value="history" className="space-y-4 pt-4">
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4 shadow-sm" data-testid="candidate360-unified-timeline">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h4 className="flex items-center gap-2 font-semibold text-slate-950"><History className="h-4 w-4 text-indigo-700" />Timeline unifiée</h4>
+                <p className="mt-1 text-sm text-slate-600">Messages, notifications, clarifications, e-mails et événements ops — une seule chronologie.</p>
+              </div>
+              <Badge variant="outline">{unifiedTimeline.length} événement(s)</Badge>
+            </div>
+            <div className="mt-4">
+              {unifiedTimeline.length ? (
+                <ol aria-label="Timeline unifiée des communications" className="space-y-0">
+                  {unifiedTimeline.map((entry, index) => {
+                    const toneDot =
+                      entry.tone === "emerald" ? "bg-emerald-500"
+                      : entry.tone === "violet" ? "bg-violet-500"
+                      : entry.tone === "amber" ? "bg-amber-500"
+                      : entry.tone === "rose" ? "bg-rose-500"
+                      : entry.tone === "blue" ? "bg-blue-700"
+                      : "bg-slate-500";
+                    return (
+                      <li key={entry.id} className="grid grid-cols-[82px_24px_minmax(0,1fr)] gap-3" data-testid="unified-timeline-entry" data-channel={entry.channel}>
+                        <time dateTime={new Date(entry.createdAt).toISOString()} className="pt-1 text-right text-xs text-slate-500">
+                          {new Date(entry.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
+                        </time>
+                        <div className="relative flex justify-center">
+                          <span className={`z-10 mt-1 h-3 w-3 rounded-full border-2 border-white shadow ${toneDot}`} />
+                          {index < unifiedTimeline.length - 1 && <span className="absolute top-4 h-full w-px bg-indigo-100" />}
+                        </div>
+                        <div className="pb-5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-semibold text-slate-900">{entry.label}</p>
+                            <Badge variant="outline" className="text-[10px]">{channelLabel(entry.channel)}</Badge>
+                          </div>
+                          <p className="mt-1 line-clamp-3 text-sm leading-6 text-slate-600">{entry.detail}</p>
+                          <p className="mt-1 text-xs text-slate-400">{entry.actor} · {formatDate(entry.createdAt)}</p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              ) : (
+                <p className="rounded-lg border border-dashed p-4 text-sm text-slate-500">Aucun événement de communication ni d’activité pour ce dossier.</p>
+              )}
+            </div>
+          </div>
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex flex-wrap items-start justify-between gap-3"><div><h4 className="flex items-center gap-2 font-semibold text-slate-950"><History className="h-4 w-4 text-blue-700" />Timeline complète du dossier</h4><p className="mt-1 text-sm text-slate-500">Statuts, échéances et actions sont affichés dans l’ordre de réception depuis les journaux serveur.</p></div><Badge variant="outline">{(data.timeline ?? []).length} événement(s)</Badge></div>
+            <div className="flex flex-wrap items-start justify-between gap-3"><div><h4 className="flex items-center gap-2 font-semibold text-slate-950"><History className="h-4 w-4 text-blue-700" />Timeline opérationnelle (statuts)</h4><p className="mt-1 text-sm text-slate-500">Statuts, échéances et actions sont affichés dans l’ordre de réception depuis les journaux serveur.</p></div><Badge variant="outline">{(data.timeline ?? []).length} événement(s)</Badge></div>
             <div className="mt-5">{data.timeline?.length ? <ol aria-label="Historique détaillé du dossier" className="space-y-0">{data.timeline.map((entry: any, index: number) => <li key={entry.id} className="grid grid-cols-[82px_24px_minmax(0,1fr)] gap-3"><time dateTime={new Date(entry.createdAt).toISOString()} className="pt-1 text-right text-xs text-slate-500">{new Date(entry.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</time><div className="relative flex justify-center"><span className={`z-10 mt-1 h-3 w-3 rounded-full border-2 border-white shadow ${entry.kind === "status" ? "bg-blue-700" : entry.status === "deadline_updated" ? "bg-amber-500" : "bg-slate-500"}`} />{index < data.timeline.length - 1 && <span className="absolute top-4 h-full w-px bg-blue-100" />}</div><div className="pb-5"><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-semibold capitalize text-slate-900">{entry.label}</p><Badge variant="outline" className="text-[10px]">{entry.kind === "status" ? "Statut" : entry.status === "deadline_updated" ? "Échéance" : "Activité"}</Badge></div><p className="mt-1 text-sm leading-6 text-slate-600">{entry.comment || "Événement enregistré"}</p><p className="mt-1 text-xs text-slate-400">{entry.actor || "Système"} · {formatDate(entry.createdAt)}</p></div></li>)}</ol> : <p className="rounded-lg border border-dashed p-4 text-sm text-slate-500">Aucun événement serveur n’est encore enregistré pour ce dossier.</p>}</div>
           </div>
           <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><h4 className="flex items-center gap-2 font-semibold text-slate-950"><Mail className="h-4 w-4 text-blue-700" />Historique des e-mails d’évaluation</h4><p className="mt-1 text-sm text-slate-600">Suivi opérationnel des envois et des ouvertures détectées. Le contenu intégral des e-mails n’est pas exposé dans cette timeline.</p></div><div className="flex flex-wrap items-center gap-2"><Badge variant="outline">{(candidate.emailHistory ?? []).length} e-mail(s)</Badge><Button size="sm" variant="outline" disabled={evaluationReminderMutation.isPending} onClick={() => setResendDialogOpen(true)}><Mail className="mr-1 h-4 w-4" />Renvoyer le bilan</Button></div></div><div className="mt-4 space-y-2">{candidate.emailHistory?.length ? candidate.emailHistory.map((email: any) => <div key={email.id} className="grid gap-2 rounded-lg border border-blue-100 bg-white p-3 sm:grid-cols-[minmax(0,1fr)_auto]"><div><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-semibold text-slate-900">{email.emailType === "reminder" ? "Relance de bilan" : email.emailType === "follow_up" ? "Suivi" : "Bilan d’évaluation"}</p><Badge variant="outline" className="text-[10px]">{email.language === "en" ? "English" : "Français"}</Badge><StateBadge status={email.status} /></div><p className="mt-1 text-xs text-slate-500">Canal : {email.sentVia || "email"} · Créé le {formatDate(email.createdAt)}</p>{email.failureReason && <p className="mt-1 text-xs text-rose-700">Échec : {email.failureReason}</p>}</div><div className="text-left text-xs text-slate-500 sm:text-right"><p>Envoyé : {email.sentAt ? formatDate(email.sentAt) : "Non envoyé"}</p><p className={email.openedAt ? "font-medium text-emerald-700" : "text-amber-700"}>{email.openedAt ? `Lu le ${formatDate(email.openedAt)}` : "Non lu — ouverture non confirmée"}</p>{email.clickedAt && <p className="text-emerald-700">Lien cliqué : {formatDate(email.clickedAt)}</p>}</div></div>) : <p className="rounded-lg border border-dashed border-blue-200 bg-white p-3 text-sm text-slate-500">Aucun e-mail d’évaluation enregistré pour ce dossier.</p>}</div></div>
