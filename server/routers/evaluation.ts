@@ -335,6 +335,20 @@ export const evaluationRouter = router({
         await db.update(evaluations).set({ receiptSentAt: new Date() }).where(eq(evaluations.id, evaluationId));
       }
 
+      // Formulaire d’évaluation préliminaire du pays choisi → e-mail (PDF) + coffre dès que possible.
+      try {
+        const { deliverCountryEvaluationForm } = await import("../services/deliverCountryEvaluationForm");
+        await deliverCountryEvaluationForm(db, {
+          destination: input.destinationCountry || "",
+          email: input.email,
+          fullName: input.fullName,
+          evaluationId,
+          sendEmail: true,
+        });
+      } catch (formErr) {
+        console.warn("[MultiProjectEvaluation] Livraison formulaire pays non effectuée:", formErr);
+      }
+
       return { success: true, evaluationId, documentUploadToken: createEvaluationUploadToken(evaluationId, input.email), message: "Votre évaluation est reçue et placée en revue humaine.", dossierCode, reviewDeadline, emailSent };
     }),
 
@@ -531,6 +545,19 @@ export const evaluationRouter = router({
       });
       if (emailSent && evaluationId) {
         await db.update(evaluations).set({ receiptSentAt: new Date() }).where(eq(evaluations.id, evaluationId));
+      }
+
+      try {
+        const { deliverCountryEvaluationForm } = await import("../services/deliverCountryEvaluationForm");
+        await deliverCountryEvaluationForm(db, {
+          destination: input.destinationCountry || input.destinationCategory || "",
+          email: input.email,
+          fullName: input.fullName,
+          evaluationId: evaluationId ?? null,
+          sendEmail: true,
+        });
+      } catch (formErr) {
+        console.warn("[Evaluation] Livraison formulaire pays non effectuée:", formErr);
       }
 
       return { success: true, message: "Votre évaluation est reçue et placée en revue humaine.", emailSent, dossierCode, reviewDeadline, cvStored: Boolean(cvFileUrl) };

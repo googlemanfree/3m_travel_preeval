@@ -1423,6 +1423,30 @@ export const adminCandidateManagementRouter = router({
         console.error("[activatePreDossierAccount] Seed checklist pays/procédure non effectué:", err);
       }
       try {
+        const { deliverCountryEvaluationForm } = await import("../services/deliverCountryEvaluationForm");
+        await deliverCountryEvaluationForm(db, {
+          destination: primaryProcedure.destination,
+          email: candidate.email,
+          fullName: candidate.fullName,
+          candidateId: candidate.id,
+          caseId: checklistSeed?.caseId ?? null,
+          agencyDossierId,
+          sendEmail: true,
+        });
+        if (additionalAgencyDossierId && additionalProcedure) {
+          await deliverCountryEvaluationForm(db, {
+            destination: additionalProcedure.destination,
+            email: candidate.email,
+            fullName: candidate.fullName,
+            candidateId: candidate.id,
+            agencyDossierId: additionalAgencyDossierId,
+            sendEmail: false,
+          });
+        }
+      } catch (err) {
+        console.error("[activatePreDossierAccount] Livraison formulaire d’évaluation pays non effectuée:", err);
+      }
+      try {
         await db.insert(clientNotifications).values({
           candidateId: candidate.id,
           type: "admin_status_update",

@@ -87,7 +87,11 @@ export const caseTrackingRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     const rows = await db.select({ fileKey: caseDocuments.fileKey, fileName: caseDocuments.fileName }).from(caseDocuments).innerJoin(cases, and(eq(caseDocuments.caseId, cases.id), eq(cases.candidateId, ctx.candidate.id))).where(eq(caseDocuments.id, input.documentId)).limit(1);
     if (!rows[0]?.fileKey) throw new TRPCError({ code: "NOT_FOUND", message: "Document introuvable ou non autorisé." });
-    return { url: await storageGetSignedUrl(rows[0].fileKey), fileName: rows[0].fileName };
+    const key = rows[0].fileKey;
+    if (key.startsWith("/forms/") || key.startsWith("forms/")) {
+      return { url: key.startsWith("/") ? key : `/${key}`, fileName: rows[0].fileName };
+    }
+    return { url: await storageGetSignedUrl(key.replace(/^\/manus-storage\//, "")), fileName: rows[0].fileName };
   }),
 
   getMyInsuranceRequests: candidateProcedure.query(async ({ ctx }) => {

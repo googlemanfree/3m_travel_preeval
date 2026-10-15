@@ -2485,9 +2485,10 @@ export const candidateRouter = router({
           .where(eq(agencyDossierDocuments.dossierId, agencyDossier[0].id))
           .orderBy(desc(agencyDossierDocuments.createdAt))
       : [];
+    const { resolveClientDocumentUrl } = await import("../services/resolveClientDocumentUrl");
     const agencyDocuments = await Promise.all(rawAgencyDocuments.map(async document => ({
       ...document,
-      documentUrl: await storageGetSignedUrl(document.documentUrl.replace(/^\/manus-storage\//, "")),
+      documentUrl: await resolveClientDocumentUrl(document.documentUrl),
     })));
     const evaluationReportPdfUrl = app[0]?.evaluationReportPdfKey
       ? await storageGetSignedUrl(app[0].evaluationReportPdfKey)
@@ -2694,9 +2695,10 @@ export const candidateRouter = router({
       .where(eq(agencyDossierDocumentAnnotations.dossierId, dossier.id))
       .orderBy(desc(agencyDossierDocumentAnnotations.createdAt));
 
+    const { resolveClientDocumentUrl } = await import("../services/resolveClientDocumentUrl");
     const documents = await Promise.all(rawDocuments.map(async document => ({
       ...document,
-      documentUrl: await storageGetSignedUrl(document.documentUrl.replace(/^\/manus-storage\//, "")),
+      documentUrl: await resolveClientDocumentUrl(document.documentUrl),
       annotations: annotations.filter(annotation => annotation.documentId === document.id),
     })));
 
@@ -3034,9 +3036,10 @@ export const candidateRouter = router({
       agencyDossier: (!selectedApp && activeAgencyDossier) ? { id: activeAgencyDossier.id, status: activeAgencyDossier.status } : null,
       onlineApplication: activeApp ? { dossierNumber: activeApp.dossierNumber, paymentStatus: activeApp.paymentStatus, paymentValidatedAt: (activeApp as any).paymentValidatedAt ?? null } : null,
     });
+    const { resolveClientDocumentUrl } = await import("../services/resolveClientDocumentUrl");
     const synchronizedAgencyDocuments = await Promise.all(agencyDocRows.map(async (document) => ({
       ...document,
-      documentUrl: await storageGetSignedUrl(document.documentUrl.replace(/^\/manus-storage\//, "")),
+      documentUrl: await resolveClientDocumentUrl(document.documentUrl),
     })));
     const clientEvaluations = evalRows.map((evaluation) => ({
       id: evaluation.id,

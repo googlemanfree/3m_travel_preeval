@@ -1551,6 +1551,51 @@ export default function EvaluationSpace() {
 
           {activeTab === "documents" && (evaluationRequired ? evaluationGateCard : (
             <div className="space-y-6" data-testid="client-document-center">
+              {(() => {
+                const evaluationFormDocs = [
+                  ...(agencyDocuments as any[] ?? []),
+                  ...caseVaultDocuments.map((document) => ({
+                    documentName: document.fileName,
+                    documentType: document.documentType,
+                    documentUrl: null as string | null,
+                    caseDocumentId: document.id,
+                  })),
+                ].filter((document) => /formulaire.*évaluation|évaluation préliminaire/i.test(`${document.documentType ?? ""} ${document.documentName ?? ""}`));
+                if (!evaluationFormDocs.length) return null;
+                const first = evaluationFormDocs[0];
+                const destinationLabel = primaryDestination || activeDossier?.destination || "votre destination";
+                return (
+                  <Card className="border-teal-200 bg-gradient-to-br from-teal-50 via-white to-cyan-50 p-5 shadow-sm" data-testid="country-evaluation-form-note">
+                    <p className="text-xs font-black uppercase tracking-[0.14em] text-teal-800">Formulaire à remplir — {destinationLabel}</p>
+                    <h3 className="mt-1 text-lg font-bold text-slate-950">Votre formulaire d’évaluation préliminaire est dans le coffre</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">
+                      Ce PDF sert à préparer votre orientation {destinationLabel} avec un conseiller 3M (profil, études, expérience, langues, budget, objectif).
+                      Ce n’est <strong>pas</strong> une demande de visa ni une garantie d’admission. Remplissez-le, enregistrez-le sous votre nom, puis redéposez-le ici.
+                    </p>
+                    <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-slate-700">
+                      <li>Téléchargez le formulaire ci-dessous (ou celui reçu par e-mail).</li>
+                      <li>Complétez tous les champs demandés — sans numéro de passeport ni données bancaires.</li>
+                      <li>Enregistrez le fichier, puis déposez-le dans « Déposer vos pièces ».</li>
+                    </ol>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {first.documentUrl ? (
+                        <Button asChild type="button" className="bg-teal-700 text-white hover:bg-teal-800">
+                          <a href={first.documentUrl} target="_blank" rel="noreferrer" download>
+                            <Download className="mr-2 h-4 w-4" />Télécharger le formulaire
+                          </a>
+                        </Button>
+                      ) : first.caseDocumentId ? (
+                        <Button type="button" className="bg-teal-700 text-white hover:bg-teal-800" onClick={() => { void downloadCaseDocument(first.caseDocumentId); }}>
+                          <Download className="mr-2 h-4 w-4" />Télécharger le formulaire
+                        </Button>
+                      ) : null}
+                      <Button type="button" variant="outline" className="border-teal-300 text-teal-900" onClick={() => document.getElementById("client-document-dropzone")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
+                        Déposer le PDF rempli
+                      </Button>
+                    </div>
+                  </Card>
+                );
+              })()}
               <Card className="border-blue-200 bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-900 p-6 text-white shadow-md" aria-labelledby="document-center-title" data-testid="client-coffre-hero">
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-200">Espace candidat · coffre-fort documentaire</p>
                 <h2 id="document-center-title" className="mt-2 text-2xl font-black">Votre coffre : dépôt, manquants et suivi</h2>

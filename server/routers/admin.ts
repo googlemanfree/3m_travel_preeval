@@ -2881,6 +2881,20 @@ export const adminRouter = router({
           });
           checklistAdded = seeded.added;
           checklistLabel = seeded.label;
+          try {
+            const { deliverCountryEvaluationForm } = await import("../services/deliverCountryEvaluationForm");
+            await deliverCountryEvaluationForm(db, {
+              destination: procedure.destination,
+              email: input.email,
+              fullName: input.fullName,
+              candidateId: linkedCandidateId ?? null,
+              caseId: seeded.caseId,
+              agencyDossierId: dossierId,
+              sendEmail: true,
+            });
+          } catch (formErr) {
+            console.error("[Import Agency Dossier] Livraison formulaire pays:", formErr);
+          }
         } catch (seedErr) {
           console.error("[Import Agency Dossier] Seed checklist:", seedErr);
         }
