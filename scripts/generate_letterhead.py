@@ -38,6 +38,12 @@ FONT_ITALIC = "/usr/share/fonts/truetype/noto/NotoSansDisplay-Italic.ttf"
 # Devise de marque (alignée sur INTERNATIONAL_BRAND.slogan)
 BRAND_MOTTO = "L’Afrique vers le monde."
 
+# Services du groupe (emblème multi-pôles — labels pour l’en-tête)
+GROUP_SERVICES = (
+    "Études · Travail · Voyages · Visas · Immigration · "
+    "Hôtellerie · Digital · Sécurité · Assurance · Conseil"
+)
+
 # Contact block (GROUP letterhead — parent entity)
 LINES_RIGHT = [
     "hello@3mtravelagency.com",
@@ -104,6 +110,7 @@ def load_fonts(scale: float):
     return {
         "contact": f(FONT_REG, 9.5),
         "contact_sm": f(FONT_REG, 8.2),
+        "services": f(FONT_BOLD, 7.6),
         "motto": f(FONT_ITALIC, 11.5),
         "footer": f(FONT_REG, 7.4),
         "footer_bold": f(FONT_BOLD, 7.4),
@@ -238,12 +245,33 @@ def render_letterhead_png(
     )
     motto_bottom = motto_y + fonts["motto"].size
 
-    # Contact meta strip under the motto
+    # Services — bandeau sous la devise
+    services_y = motto_bottom + int(2.2 / 25.4 * dpi)
+    tw = draw.textlength(GROUP_SERVICES, font=fonts["services"])
+    if tw > content_w:
+        # Split into two balanced lines if needed
+        parts = GROUP_SERVICES.split(" · ")
+        mid = (len(parts) + 1) // 2
+        svc_lines = [" · ".join(parts[:mid]), " · ".join(parts[mid:])]
+    else:
+        svc_lines = [GROUP_SERVICES]
+    svc_step = int(fonts["services"].size * 1.45)
+    for i, line in enumerate(svc_lines):
+        tw = draw.textlength(line, font=fonts["services"])
+        draw.text(
+            ((w - tw) / 2, services_y + i * svc_step),
+            line,
+            font=fonts["services"],
+            fill=ROYAL,
+        )
+    services_bottom = services_y + (len(svc_lines) - 1) * svc_step + fonts["services"].size
+
+    # Contact meta strip under the services
     meta_lines = [
         "hello@3mtravelagency.com  ·  +237 620 996 045  ·  www.3mtravelagency.com",
         "WhatsApp Yaoundé +237 698 104 832  ·  WhatsApp Ottawa +1 672 897 2999",
     ]
-    meta_y = motto_bottom + int(2.8 / 25.4 * dpi)
+    meta_y = services_bottom + int(2.6 / 25.4 * dpi)
     line_step = int(fonts["contact_sm"].size * 1.55)
     for i, line in enumerate(meta_lines):
         tw = draw.textlength(line, font=fonts["contact_sm"])
@@ -333,7 +361,8 @@ def write_svg(out_path: Path) -> None:
         logo_w = round(logo_h * aspect, 2)
     logo_x = round((210 - logo_w) / 2, 2)
     motto_y = 10 + logo_h + 5
-    meta_y1 = motto_y + 5
+    services_y = motto_y + 4.8
+    meta_y1 = services_y + 4.6
     meta_y2 = meta_y1 + 4.2
     rule_y = meta_y2 + 4.5
     hair_y = rule_y + 2.2
@@ -370,7 +399,12 @@ def write_svg(out_path: Path) -> None:
           letter-spacing="1.4">{motto_svg}</text>
   </g>
 
-  <!-- Contact meta under motto (Yaoundé + Ottawa) -->
+  <!-- Services -->
+  <g font-family="Noto Sans, Helvetica, Arial, sans-serif" text-anchor="middle">
+    <text x="105" y="{services_y}" font-size="2.7" font-weight="700" fill="#2563B4">{GROUP_SERVICES}</text>
+  </g>
+
+  <!-- Contact meta under services (Yaoundé + Ottawa) -->
   <g font-family="Noto Sans, Helvetica, Arial, sans-serif" text-anchor="middle">
     <text x="105" y="{meta_y1}" font-size="2.85" fill="#5A6C82">hello@3mtravelagency.com  ·  +237 620 996 045  ·  www.3mtravelagency.com</text>
     <text x="105" y="{meta_y2}" font-size="2.85" fill="#5A6C82">WhatsApp Yaoundé +237 698 104 832  ·  WhatsApp Ottawa +1 672 897 2999</text>
@@ -443,10 +477,16 @@ def write_pdf(out_path: Path, preview_png: Path) -> None:
         c.drawString(x, motto_y, ch)
         x += cw + gap
 
-    # Contact meta under motto (Yaoundé + Ottawa)
+    # Services under motto
+    c.setFillColorRGB(*[x / 255 for x in ROYAL])
+    c.setFont("NotoBold", 7)
+    services_y = motto_y - 4.5 * mm
+    c.drawCentredString(page_w / 2, services_y, GROUP_SERVICES)
+
+    # Contact meta under services (Yaoundé + Ottawa)
     c.setFillColorRGB(*[x / 255 for x in MUTED])
     c.setFont("Noto", 7.2)
-    meta_y1 = motto_y - 4.8 * mm
+    meta_y1 = services_y - 4.5 * mm
     meta_y2 = meta_y1 - 4.0 * mm
     c.drawCentredString(
         page_w / 2,

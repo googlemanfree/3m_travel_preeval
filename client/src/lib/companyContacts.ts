@@ -23,6 +23,10 @@ export const GROUP_LEGAL_NAME = "3M Group SARL";
 /** Devise de marque du groupe (papier en-tête, kit brand) — alignée sur INTERNATIONAL_BRAND.slogan. */
 export const GROUP_BRAND_MOTTO = "L’Afrique vers le monde.";
 
+/** Pôles de services du groupe — ligne d’en-tête papier en-tête / kit brand. */
+export const GROUP_SERVICES_LINE =
+  "Études · Travail · Voyages · Visas · Immigration · Hôtellerie · Digital · Sécurité · Assurance · Conseil";
+
 /** Fondateur & PDG — source canonique pour SEO, JSON-LD et pages publiques. */
 export const COMPANY_FOUNDER = {
   name: "Aureol DONFACK",
