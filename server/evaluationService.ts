@@ -348,7 +348,7 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
 <body>
   <div class="container">
     <div class="header">
-      <img class="brand-logo" src="https://www.3mtravelagency.com/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg" alt="Logo 3M TRAVEL AGENCY" />
+      <img class="brand-logo" src="https://www.3mtravelagency.com/logo-3m-hd.webp" alt="Logo 3M TRAVEL AGENCY" />
       <p class="brand-name">3M Travel Agency SARL</p>
       <h1>📋 Indice de Faisabilité Préliminaire (IFP 3M)</h1>
       <p>Évaluation indicative d’agence — 3M TRAVEL AGENCY</p>

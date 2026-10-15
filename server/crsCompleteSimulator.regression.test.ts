@@ -68,7 +68,7 @@ describe("simulateur CRS complet", () => {
 
 	it("compose un PDF avec marque et coordonnées de l’agence", () => {
 		expect(source).toContain("3M TRAVEL AGENCY");
-		expect(source).toContain("pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg");
+		expect(source).toContain("/logo-3m-travel-agency-hd.png");
 		expect(source).toContain("Yaoundé · Ottawa");
 		expect(source).toContain("Résultats indicatifs, sans garantie d'invitation");
 	});

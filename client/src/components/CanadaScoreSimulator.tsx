@@ -442,8 +442,8 @@ export default function CanadaScoreSimulator() {
       doc.setFillColor(212, 160, 23);
       doc.rect(0, 35, 210, 3, "F");
       try {
-        const logo = await loadImageAsDataUrl("/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg");
-        doc.addImage(logo, "JPEG", 15, 5, 22, 22);
+        const logo = await loadImageAsDataUrl("/logo-3m-travel-agency-hd.png");
+        doc.addImage(logo, "PNG", 15, 5, 22, 22);
       } catch {
         // The report remains usable if the remote logo is temporarily unavailable.
       }

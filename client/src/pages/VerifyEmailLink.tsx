@@ -7,7 +7,7 @@ import { trpc } from "@/lib/trpc";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { toast } from "sonner";
 
-const LOGO_URL = "/manus-storage/pasted_file_nP22ud_logo3Mfull_b9e4b2c3.jpeg";
+const LOGO_URL = "/logo-3m.webp";
 
 export default function VerifyEmailLink() {
   const [location, navigate] = useLocation();

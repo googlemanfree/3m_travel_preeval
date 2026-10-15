@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import { Lock, LogIn, UserPlus, ArrowRight, Loader2, CircleHelp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const LOGO_URL = "/manus-storage/logo_3m_d0e23210.jpeg";
+const LOGO_URL = "/logo-3m.webp";
 
 interface AuthGuardProps {
   children: React.ReactNode;

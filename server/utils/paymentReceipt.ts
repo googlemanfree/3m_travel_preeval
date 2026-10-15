@@ -6,7 +6,7 @@ const AGENCY = {
   phone: "+237 698 104 832",
   email: "hello@3mtravelagency.com",
   registration: "RC/YAO/2019/A/2567 · NIU : M112417203369H",
-  logoUrl: "https://www.3mtravelagency.com/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg",
+  logoUrl: "https://www.3mtravelagency.com/logo-3m-travel-agency-hd.png",
 };
 
 export interface PaymentReceiptInput {
@@ -41,11 +41,24 @@ export function formatPaymentAmount(amount: number, currency: string) {
 
 async function loadLogoDataUri() {
   try {
+    const { readFileSync, existsSync } = await import("node:fs");
+    const { resolve } = await import("node:path");
+    const localCandidates = [
+      resolve(import.meta.dirname, "../../client/public/logo-3m-travel-agency-hd.png"),
+      resolve(process.cwd(), "client/public/logo-3m-travel-agency-hd.png"),
+    ];
+    for (const localPath of localCandidates) {
+      if (!existsSync(localPath)) continue;
+      const bytes = readFileSync(localPath);
+      return { dataUri: `data:image/png;base64,${bytes.toString("base64")}`, format: "PNG" as const };
+    }
+
     const response = await fetch(AGENCY.logoUrl, { signal: AbortSignal.timeout(7000) });
     if (!response.ok) return null;
-    const contentType = response.headers.get("content-type") || "image/jpeg";
+    const contentType = response.headers.get("content-type") || "image/png";
     const bytes = Buffer.from(await response.arrayBuffer());
-    return `data:${contentType};base64,${bytes.toString("base64")}`;
+    const format = contentType.includes("png") ? ("PNG" as const) : ("JPEG" as const);
+    return { dataUri: `data:${contentType};base64,${bytes.toString("base64")}`, format };
   } catch (error) {
     console.warn("[Payment Receipt] Logo unavailable; generating text-branded receipt.", error);
     return null;
@@ -54,7 +67,7 @@ async function loadLogoDataUri() {
 
 export async function buildPaymentReceiptPdf(input: PaymentReceiptInput) {
   const pdf = new jsPDF({ unit: "mm", format: "a4" });
-  const logoDataUri = await loadLogoDataUri();
+  const logo = await loadLogoDataUri();
   const margin = 18;
   const width = 210;
   const contentWidth = width - margin * 2;
@@ -63,9 +76,9 @@ export async function buildPaymentReceiptPdf(input: PaymentReceiptInput) {
 
   pdf.setFillColor(7, 27, 61);
   pdf.rect(0, 0, width, 38, "F");
-  if (logoDataUri) {
+  if (logo) {
     try {
-      pdf.addImage(logoDataUri, "JPEG", margin, 7, 24, 24, undefined, "FAST");
+      pdf.addImage(logo.dataUri, logo.format, margin, 7, 24, 24, undefined, "FAST");
     } catch (error) {
       console.warn("[Payment Receipt] Logo could not be embedded.", error);
     }
