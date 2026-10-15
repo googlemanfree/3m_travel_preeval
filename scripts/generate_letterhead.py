@@ -33,6 +33,10 @@ PAPER_WARM = (252, 253, 255)
 FONT_REG = "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf"
 FONT_BOLD = "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf"
 FONT_DISP = "/usr/share/fonts/truetype/noto/NotoSansDisplay-Bold.ttf"
+FONT_ITALIC = "/usr/share/fonts/truetype/noto/NotoSansDisplay-Italic.ttf"
+
+# Devise de marque (alignée sur INTERNATIONAL_BRAND.slogan)
+BRAND_MOTTO = "L’Afrique vers le monde."
 
 # Contact block (GROUP letterhead — parent entity)
 LINES_RIGHT = [
@@ -99,12 +103,35 @@ def load_fonts(scale: float):
     return {
         "contact": f(FONT_REG, 9.5),
         "contact_sm": f(FONT_REG, 8.2),
+        "motto": f(FONT_ITALIC, 11.5),
         "footer": f(FONT_REG, 7.4),
         "footer_bold": f(FONT_BOLD, 7.4),
         "tag": f(FONT_BOLD, 7.0),
         "sample": f(FONT_REG, 11),
         "sample_title": f(FONT_DISP, 13),
     }
+
+
+def draw_spaced_text(
+    draw: ImageDraw.ImageDraw,
+    text: str,
+    xy: tuple[float, float],
+    font: ImageFont.FreeTypeFont,
+    fill,
+    tracking: float = 1.35,
+) -> float:
+    """Draw centered text with letter-spacing; returns rendered width."""
+    chars = list(text)
+    widths = [draw.textlength(ch, font=font) for ch in chars]
+    gaps = tracking * font.size * 0.08
+    total = sum(widths) + gaps * max(len(chars) - 1, 0)
+    x0 = xy[0] - total / 2
+    y = xy[1]
+    x = x0
+    for ch, cw in zip(chars, widths):
+        draw.text((x, y), ch, font=font, fill=fill)
+        x += cw + gaps
+    return total
 
 
 def paper_background(w: int, h: int) -> Image.Image:
@@ -198,7 +225,19 @@ def render_letterhead_png(
     logo_x = margin + (content_w - logo_w) // 2
     img.paste(logo, (logo_x, logo_y), logo)
 
-    # Contact meta strip under the extended logo
+    # Devise de marque — sous le lockup, au-dessus des contacts
+    motto_y = logo_y + logo_h + int(2.4 / 25.4 * dpi)
+    draw_spaced_text(
+        draw,
+        BRAND_MOTTO.upper(),
+        (w / 2, motto_y),
+        fonts["motto"],
+        NAVY,
+        tracking=1.6,
+    )
+    motto_bottom = motto_y + fonts["motto"].size
+
+    # Contact meta strip under the motto
     meta = "  ·  ".join(
         [
             "hello@3mtravelagency.com",
@@ -207,7 +246,7 @@ def render_letterhead_png(
             "www.3mtravelagency.com",
         ]
     )
-    meta_y = logo_y + logo_h + int(3.2 / 25.4 * dpi)
+    meta_y = motto_bottom + int(2.8 / 25.4 * dpi)
     tw = draw.textlength(meta, font=fonts["contact_sm"])
     # If too wide, split into two centered lines
     if tw > content_w:
@@ -303,9 +342,11 @@ def write_svg(out_path: Path) -> None:
         logo_h = max_h
         logo_w = round(logo_h * aspect, 2)
     logo_x = round((210 - logo_w) / 2, 2)
-    meta_y = 10 + logo_h + 4
+    motto_y = 10 + logo_h + 5
+    meta_y = motto_y + 5
     rule_y = meta_y + 5
     hair_y = rule_y + 2.2
+    motto_svg = BRAND_MOTTO.upper()
     svg = f'''<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
      width="210mm" height="297mm" viewBox="0 0 210 297">
@@ -332,7 +373,13 @@ def write_svg(out_path: Path) -> None:
   <image x="{logo_x}" y="10" width="{logo_w}" height="{logo_h}" preserveAspectRatio="xMidYMid meet"
          xlink:href="{uri}"/>
 
-  <!-- Contact meta under logo -->
+  <!-- Devise de marque -->
+  <g font-family="Noto Sans Display, Noto Sans, Helvetica, Arial, sans-serif" text-anchor="middle">
+    <text x="105" y="{motto_y}" font-size="3.6" font-style="italic" fill="#0B2A52"
+          letter-spacing="1.4">{motto_svg}</text>
+  </g>
+
+  <!-- Contact meta under motto -->
   <g font-family="Noto Sans, Helvetica, Arial, sans-serif" text-anchor="middle">
     <text x="105" y="{meta_y}" font-size="2.9" fill="#5A6C82">hello@3mtravelagency.com  ·  +237 620 996 045  ·  WhatsApp +237 698 104 832  ·  www.3mtravelagency.com</text>
   </g>
@@ -357,6 +404,7 @@ def write_pdf(out_path: Path, preview_png: Path) -> None:
     """Vector-ish PDF: logo spans header width."""
     pdfmetrics.registerFont(TTFont("Noto", FONT_REG))
     pdfmetrics.registerFont(TTFont("NotoBold", FONT_BOLD))
+    pdfmetrics.registerFont(TTFont("NotoItalic", FONT_ITALIC))
 
     c = canvas.Canvas(str(out_path), pagesize=A4)
     page_w, page_h = A4
@@ -390,11 +438,24 @@ def write_pdf(out_path: Path, preview_png: Path) -> None:
         anchor="sw",
     )
 
-    # Contact meta under logo
+    # Devise de marque (letter-spaced manually)
+    c.setFillColorRGB(*[x / 255 for x in NAVY])
+    c.setFont("NotoItalic", 10)
+    motto_y = logo_y - 4.2 * mm
+    motto = BRAND_MOTTO.upper()
+    gap = 1.2
+    widths = [c.stringWidth(ch, "NotoItalic", 10) for ch in motto]
+    total = sum(widths) + gap * max(len(motto) - 1, 0)
+    x = (page_w - total) / 2
+    for ch, cw in zip(motto, widths):
+        c.drawString(x, motto_y, ch)
+        x += cw + gap
+
+    # Contact meta under motto
     c.setFillColorRGB(*[x / 255 for x in MUTED])
     c.setFont("Noto", 7.5)
     meta = "  ·  ".join(LINES_RIGHT)
-    meta_y = logo_y - 4.5 * mm
+    meta_y = motto_y - 5 * mm
     c.drawCentredString(page_w / 2, meta_y, meta)
 
     # Gradient rule
