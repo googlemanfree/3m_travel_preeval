@@ -1517,7 +1517,8 @@ export const candidateRouter = router({
       }
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      const rows = await db.select().from(candidates).where(eq(candidates.email, input.email)).limit(1);
+      // Réponse identique pour un compte inconnu ou archivé : on ne révèle rien et aucun lien n'est émis.
+      const rows = await db.select().from(candidates).where(and(eq(candidates.email, input.email), isNull(candidates.deletedAt))).limit(1);
       if (!rows.length) return { success: true, message: "Si cet email existe, un lien a été envoyé." };
       const candidate = rows[0];
       const { rawToken, tokenHash } = issuePasswordResetToken();
