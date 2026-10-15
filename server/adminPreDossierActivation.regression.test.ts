@@ -15,6 +15,15 @@ describe("activation et rattachement pré-dossier", () => {
     expect(dashboard).toContain("onOpenChange={(open) => { if (!open) onClose(); }}");
   });
 
+  it("sépare Voir la fiche / Activer et propose d’ouvrir le dossier 3M-… après activation", () => {
+    const panel = read("client/src/components/AdminPreDossierAccountsPanel.tsx");
+    expect(panel).toContain("Voir la fiche");
+    expect(panel).toContain("predossier-voir-fiche-");
+    expect(panel).toContain("open-activated-dossier");
+    expect(panel).toContain("`agency_${agencyDossierId}`");
+    expect(panel).toContain("Ouvrir {activationSuccess.dossierReference}");
+  });
+
   it("conserve la validation humaine de l’évaluation avant l’activation", () => {
     const panel = read("client/src/components/AdminPreDossierAccountsPanel.tsx");
     expect(panel).toContain("Valider l’évaluation avant activation");

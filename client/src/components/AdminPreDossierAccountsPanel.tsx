@@ -127,6 +127,8 @@ export default function AdminPreDossierAccountsPanel({
   const [activationSuccess, setActivationSuccess] = useState<{
     previousAccountReference: string;
     dossierReference: string;
+    agencyDossierId?: number;
+    additionalAgencyDossierId?: number | null;
     linkedExistingDossier?: boolean;
     additionalDossierReference?: string | null;
     simultaneousProcedures?: boolean;
@@ -134,6 +136,7 @@ export default function AdminPreDossierAccountsPanel({
       destination: string;
       visaType: string;
       dossierReference: string;
+      agencyDossierId?: number | null;
     } | null;
   } | null>(null);
   const [copiedDossierReference, setCopiedDossierReference] = useState(false);
@@ -333,6 +336,20 @@ export default function AdminPreDossierAccountsPanel({
           variant: "destructive",
         }),
     });
+  const closeActivationDialog = () => {
+    if (activationSuccessTimer.current !== null) {
+      window.clearTimeout(activationSuccessTimer.current);
+      activationSuccessTimer.current = null;
+    }
+    setActivationSuccess(null);
+    setSelected(null);
+  };
+
+  const openActivatedDossier = (agencyDossierId: number) => {
+    closeActivationDialog();
+    onOpenCandidate?.(`agency_${agencyDossierId}`);
+  };
+
   const activateMutation =
     trpc.adminCandidateManagement.activatePreDossierAccount.useMutation({
       onSuccess: result => {
@@ -350,10 +367,16 @@ export default function AdminPreDossierAccountsPanel({
         setAdminNotes("");
         void utils.adminCandidateManagement.listPreDossierAccounts.invalidate();
         void utils.adminCandidateManagement.list.invalidate();
-        activationSuccessTimer.current = window.setTimeout(() => {
-          setActivationSuccess(null);
-          setSelected(null);
-        }, 2200);
+        // Avec CTA « Ouvrir le dossier », on laisse le dialogue ouvert pour cliquer.
+        // Sans onOpenCandidate (tests / usage isolé), fermeture courte comme avant.
+        if (activationSuccessTimer.current !== null)
+          window.clearTimeout(activationSuccessTimer.current);
+        if (!onOpenCandidate) {
+          activationSuccessTimer.current = window.setTimeout(() => {
+            setActivationSuccess(null);
+            setSelected(null);
+          }, 2200);
+        }
       },
       onError: error =>
         toast({
@@ -473,8 +496,8 @@ export default function AdminPreDossierAccountsPanel({
               en dossier
             </h3>
             <p className="mt-1 text-sm text-slate-500">
-              Chaque compte créé sans dossier est visible ici. Activez le
-              dossier après réception des pièces en agence.
+              Cliquez une ligne pour ouvrir la fiche 360°. Utilisez
+              « Activer » seulement pour rattacher ou ouvrir le dossier officiel.
             </p>
           </div>
           <div className="flex flex-col items-end gap-1">
@@ -693,24 +716,40 @@ export default function AdminPreDossierAccountsPanel({
                         {formatDate(account.createdAt)}
                       </td>
                       <td className="px-4 py-3 text-right" onClick={event => event.stopPropagation()}>
-                        <Button
-                          size="sm"
-                          className={
-                            validationRequired
-                              ? "bg-violet-700 text-white hover:bg-violet-800"
-                              : "bg-blue-700 text-white hover:bg-blue-800"
-                          }
-                          onClick={() =>
-                            openActivation(account as PreDossierAccount)
-                          }
-                        >
-                          <FolderPlus className="mr-1.5 h-4 w-4" />{" "}
-                          {validationRequired
-                            ? "Valider l’évaluation"
-                            : account.pendingEvaluationReference
-                              ? "Rattacher et activer"
-                              : "Activer le dossier"}
-                        </Button>
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                          {onOpenCandidate ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              data-testid={`predossier-voir-fiche-${account.id}`}
+                              aria-label={`Voir la fiche de ${account.fullName}`}
+                              onClick={openFiche}
+                            >
+                              <Eye className="mr-1.5 h-4 w-4" />
+                              Voir la fiche
+                            </Button>
+                          ) : null}
+                          <Button
+                            size="sm"
+                            data-testid={`predossier-activer-${account.id}`}
+                            className={
+                              validationRequired
+                                ? "bg-violet-700 text-white hover:bg-violet-800"
+                                : "bg-blue-700 text-white hover:bg-blue-800"
+                            }
+                            onClick={() =>
+                              openActivation(account as PreDossierAccount)
+                            }
+                          >
+                            <FolderPlus className="mr-1.5 h-4 w-4" />{" "}
+                            {validationRequired
+                              ? "Valider l’évaluation"
+                              : account.pendingEvaluationReference
+                                ? "Rattacher et activer"
+                                : "Activer"}
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -853,6 +892,33 @@ export default function AdminPreDossierAccountsPanel({
                   ? `La référence ${activationSuccess.dossierReference} a été copiée dans le presse-papiers.`
                   : ""}
               </p>
+              {onOpenCandidate && activationSuccess.agencyDossierId ? (
+                <div className="mt-5 flex flex-col items-center gap-2 sm:flex-row sm:justify-center" data-testid="activation-open-dossier-actions">
+                  <Button
+                    type="button"
+                    data-testid="open-activated-dossier"
+                    className="bg-emerald-700 text-white hover:bg-emerald-800"
+                    onClick={() => openActivatedDossier(activationSuccess.agencyDossierId!)}
+                  >
+                    <Eye className="mr-1.5 h-4 w-4" />
+                    Ouvrir {activationSuccess.dossierReference}
+                  </Button>
+                  {activationSuccess.additionalAgencyDossierId ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      data-testid="open-additional-activated-dossier"
+                      onClick={() => openActivatedDossier(activationSuccess.additionalAgencyDossierId!)}
+                    >
+                      <Eye className="mr-1.5 h-4 w-4" />
+                      Ouvrir {activationSuccess.additionalDossierReference}
+                    </Button>
+                  ) : null}
+                  <Button type="button" variant="ghost" onClick={closeActivationDialog}>
+                    Fermer
+                  </Button>
+                </div>
+              ) : null}
             </div>
           ) : (
             <div className="space-y-4">
@@ -1261,10 +1327,10 @@ export default function AdminPreDossierAccountsPanel({
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setSelected(null)}
-              disabled={busy || Boolean(activationSuccess)}
+              onClick={closeActivationDialog}
+              disabled={busy}
             >
-              Annuler
+              {activationSuccess ? "Fermer" : "Annuler"}
             </Button>
             {!activationSuccess && (
               <Tooltip>

@@ -45,10 +45,12 @@ const readiness = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
+const activateButtonName = /^(Activer|Valider l’évaluation|Rattacher et activer)$/;
+
 const open = () => {
   render(<AdminPreDossierAccountsPanel sessionToken="jeton" />);
   // Le libellé du bouton du tableau dépend de l'état de l'évaluation : on ouvre la ligne, quel que soit ce libellé.
-  fireEvent.click(screen.getByRole("button", { name: /Activer le dossier|Valider l’évaluation|Rattacher et activer/ }));
+  fireEvent.click(screen.getByRole("button", { name: activateButtonName }));
 };
 
 describe("clic sur une ligne pré-dossier", () => {
@@ -60,12 +62,32 @@ describe("clic sur une ligne pré-dossier", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("conserve le bouton Activer pour le dialogue d’activation (stopPropagation)", () => {
+  it("sépare Voir la fiche et Activer : Activer n’ouvre pas la 360°", () => {
     const onOpenCandidate = vi.fn();
     render(<AdminPreDossierAccountsPanel sessionToken="jeton" onOpenCandidate={onOpenCandidate} />);
-    fireEvent.click(screen.getByRole("button", { name: /Activer le dossier|Valider l’évaluation|Rattacher et activer/ }));
+    expect(screen.getByTestId("predossier-voir-fiche-42").textContent).toContain("Voir la fiche");
+    fireEvent.click(screen.getByRole("button", { name: activateButtonName }));
     expect(onOpenCandidate).not.toHaveBeenCalled();
     expect(screen.getByRole("dialog").textContent).toContain("Activer le dossier client");
+  });
+
+  it("après activation : CTA Ouvrir le dossier 3M-… ouvre agency_N", async () => {
+    const onOpenCandidate = vi.fn();
+    h.readiness = { data: readiness({ evaluationValidated: true, paymentValidated: true, canActivate: true, blockers: [] }), isLoading: false };
+    render(<AdminPreDossierAccountsPanel sessionToken="jeton" onOpenCandidate={onOpenCandidate} />);
+    fireEvent.click(screen.getByRole("button", { name: activateButtonName }));
+    h.activateOptions.onSuccess({
+      linkedExistingDossier: false,
+      emailSent: true,
+      previousAccountReference: "COMPTE-00042",
+      dossierReference: "3M-AGN-0034",
+      agencyDossierId: 34,
+    });
+    const openBtn = await screen.findByTestId("open-activated-dossier");
+    expect(openBtn.textContent).toContain("Ouvrir 3M-AGN-0034");
+    fireEvent.click(openBtn);
+    expect(onOpenCandidate).toHaveBeenCalledWith("agency_34");
+    expect(screen.queryByTestId("activation-success")).toBeNull();
   });
 });
 const confirmButton = () => screen.getByRole("button", { name: /Confirmer et activer|Activation…/ }) as HTMLButtonElement;
