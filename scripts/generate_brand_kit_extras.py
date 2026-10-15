@@ -331,6 +331,106 @@ def render_email_signature(out_png: Path, out_html: Path) -> Image.Image:
     return img
 
 
+def render_envelope(out: Path, width_mm: float, height_mm: float, dpi: int = 300) -> Image.Image:
+    """Envelope face — return address top-left + circular seal; destination zone empty."""
+    w = int(width_mm / 25.4 * dpi)
+    h = int(height_mm / 25.4 * dpi)
+    margin = int(12 / 25.4 * dpi)
+    img = Image.new("RGB", (w, h), (255, 253, 250))
+    # Soft paper wash
+    draw = ImageDraw.Draw(img)
+    for y in range(h):
+        t = y / max(h - 1, 1)
+        r = int(255 - t * 4)
+        g = int(253 - t * 3)
+        b = int(250 + t * 2)
+        draw.line([(0, y), (w, y)], fill=(r, g, b))
+
+    # Thin navy top edge accent
+    draw.rectangle([0, 0, w, max(2, int(0.6 / 25.4 * dpi))], fill=NAVY)
+    draw.rectangle([0, max(2, int(0.6 / 25.4 * dpi)), w, max(4, int(1.1 / 25.4 * dpi))], fill=CYAN)
+
+    scale = dpi / 72.0
+    f_name = font(FONT_BOLD, 8.5 * scale)
+    f_body = font(FONT_REG, 6.8 * scale)
+    f_motto = font(FONT_ITALIC, 6.2 * scale)
+    f_tiny = font(FONT_BOLD, 5.5 * scale)
+
+    # Circular seal top-left
+    seal_src = CIRCULAR if CIRCULAR.exists() else CIRCULAR_MARK
+    seal_d = int(min(28, height_mm * 0.22) / 25.4 * dpi)
+    x = margin
+    y = margin + int(2 / 25.4 * dpi)
+    if seal_src.exists():
+        seal = knock_white(Image.open(seal_src))
+        seal = seal.resize((seal_d, seal_d), Image.Resampling.LANCZOS)
+        img_rgba = img.convert("RGBA")
+        img_rgba.paste(seal, (x, y), seal)
+        img = img_rgba.convert("RGB")
+        draw = ImageDraw.Draw(img)
+
+    # Return address to the right of seal
+    tx = x + seal_d + int(3 / 25.4 * dpi)
+    ty = y + int(2 / 25.4 * dpi)
+    draw.text((tx, ty), "3M GROUP SARL", font=f_name, fill=NAVY)
+    ty += int(f_name.size * 1.35)
+    draw.text((tx, ty), MOTTO, font=f_motto, fill=ROYAL)
+    ty += int(f_motto.size * 1.55)
+    for line in [
+        "Biyem-Assi, Montée Chapelle Obili",
+        "Yaoundé, Cameroun",
+        "contact@3mtravelagency.com",
+        "+237 620 996 045",
+        "www.3mtravelagency.com",
+    ]:
+        draw.text((tx, ty), line, font=f_body, fill=MUTED)
+        ty += int(f_body.size * 1.4)
+
+    # Destination guide (subtle dashed box, center-right) — print aid only
+    box_w = int(w * 0.42)
+    box_h = int(h * 0.28)
+    bx = w - margin - box_w
+    by = int(h * 0.38)
+    # Hairline dashed rectangle
+    dash = max(4, int(1.5 / 25.4 * dpi))
+    gap = max(3, int(1.2 / 25.4 * dpi))
+    # top
+    x0 = bx
+    while x0 < bx + box_w:
+        x1 = min(x0 + dash, bx + box_w)
+        draw.line([(x0, by), (x1, by)], fill=RULE, width=1)
+        x0 += dash + gap
+    # bottom
+    x0 = bx
+    while x0 < bx + box_w:
+        x1 = min(x0 + dash, bx + box_w)
+        draw.line([(x0, by + box_h), (x1, by + box_h)], fill=RULE, width=1)
+        x0 += dash + gap
+    # left / right
+    y0 = by
+    while y0 < by + box_h:
+        y1 = min(y0 + dash, by + box_h)
+        draw.line([(bx, y0), (bx, y1)], fill=RULE, width=1)
+        draw.line([(bx + box_w, y0), (bx + box_w, y1)], fill=RULE, width=1)
+        y0 += dash + gap
+    hint = font(FONT_REG, 5.2 * scale)
+    ht = "Destinataire"
+    tw = draw.textlength(ht, font=hint)
+    draw.text((bx + (box_w - tw) / 2, by + box_h + int(1.5 / 25.4 * dpi)), ht, font=hint, fill=RULE)
+
+    # Bottom strip
+    strip_h = int(8 / 25.4 * dpi)
+    draw.rectangle([0, h - strip_h, w, h], fill=NAVY)
+    svc = "Informatique · Prestations de services · Mobilité · Sécurité"
+    tw = draw.textlength(svc, font=f_tiny)
+    # Use lighter text on navy
+    draw.text(((w - tw) / 2, h - strip_h + (strip_h - f_tiny.size) // 2), svc, font=f_tiny, fill=(200, 220, 240))
+
+    out.parent.mkdir(parents=True, exist_ok=True)
+    img.save(out, "PNG", dpi=(dpi, dpi), optimize=True)
+    return img
+
+
 def main():
     ARTIFACTS.mkdir(parents=True, exist_ok=True)
 
@@ -338,6 +438,8 @@ def main():
     card = BRAND / "3m-group-business-card.png"
     sig_png = BRAND / "3m-group-email-signature.png"
     sig_html = BRAND / "3m-group-email-signature.html"
+    env_c5 = BRAND / "3m-group-envelope-c5.png"
+    env_c6 = BRAND / "3m-group-envelope-c6.png"
 
     print("Compact letterhead…")
     render_compact_letterhead(compact)
@@ -345,17 +447,29 @@ def main():
     render_business_card(card)
     print("Email signature…")
     render_email_signature(sig_png, sig_html)
+    print("Envelope C5 (162×229 mm)…")
+    render_envelope(env_c5, 229, 162)  # landscape face common for C5
+    print("Envelope C6 (114×162 mm)…")
+    render_envelope(env_c6, 162, 114)
 
     # Artifacts
     Image.open(compact).save(ARTIFACTS / "letterhead-3m-group-compact.png", "PNG", optimize=True)
     c = Image.open(card)
-    # Upscale preview for readability in chat
     prev = c.copy()
     prev = prev.resize((prev.width * 2, prev.height * 2), Image.Resampling.LANCZOS)
     prev.save(ARTIFACTS / "business-card-3m-group.png", "PNG", optimize=True)
     Image.open(sig_png).save(ARTIFACTS / "email-signature-3m-group.png", "PNG", optimize=True)
+    for src, name in [
+        (env_c5, "envelope-3m-group-c5.png"),
+        (env_c6, "envelope-3m-group-c6.png"),
+    ]:
+        im = Image.open(src)
+        # Preview at readable size
+        p = im.copy()
+        p.thumbnail((1400, 1000), Image.Resampling.LANCZOS)
+        p.save(ARTIFACTS / name, "PNG", optimize=True)
 
-    for p in (compact, card, sig_png, sig_html):
+    for p in (compact, card, sig_png, sig_html, env_c5, env_c6):
         print(f"  {p.name} ({p.stat().st_size} bytes)")
 
 
