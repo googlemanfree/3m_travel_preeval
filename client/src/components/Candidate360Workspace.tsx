@@ -282,15 +282,27 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
       notifications: data.communications?.notifications ?? [],
       clarifications: data.communications?.documentClarifications ?? [],
       emails: candidate.emailHistory ?? [],
-      operational: (data.timeline ?? []).map((entry: { id: string; kind?: string; label?: string; comment?: string; actor?: string; status?: string; createdAt: Date | string }) => ({
-        id: entry.id,
-        kind: entry.kind,
-        label: entry.label,
-        comment: entry.comment,
-        actor: entry.actor,
-        status: entry.status,
-        createdAt: entry.createdAt,
-      })),
+      operational: (data.timeline ?? []).reduce<Array<{
+        id: string;
+        kind?: string | null;
+        label?: string | null;
+        comment?: string | null;
+        actor?: string | null;
+        status?: string | null;
+        createdAt: Date | string;
+      }>>((entries, entry) => {
+        if (!entry.id || !entry.createdAt) return entries;
+        entries.push({
+          id: entry.id,
+          kind: entry.kind,
+          label: entry.label,
+          comment: entry.comment,
+          actor: entry.actor,
+          status: entry.status,
+          createdAt: entry.createdAt,
+        });
+        return entries;
+      }, []),
       limit: 100,
     });
   }, [data, candidate.emailHistory]);
