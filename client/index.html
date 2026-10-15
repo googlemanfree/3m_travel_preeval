@@ -78,6 +78,19 @@
       /* Masquer le pré-rendu seulement après le premier rendu React (app-ready). */
       html.app-ready .seo-prerender { display: none !important; }
       html.app-boot-slow:not(.app-ready) .seo-prerender { display: block !important; }
+      /* Pendant le démarrage (JS actif, React pas encore monté, bundle pas encore lent), le pré-rendu SEO n'est pas
+         stylé : on le retire de l'écran sans le retirer du DOM et on montre un indicateur de chargement. Sans JS ou
+         après app-boot-slow, il redevient visible : jamais de page blanche. */
+      html.js-enabled:not(.app-ready):not(.app-boot-slow) .seo-prerender { visibility: hidden; height: 0; overflow: hidden; }
+      html.js-enabled:not(.app-ready):not(.app-boot-slow) #root::before {
+        content: ""; position: fixed; top: 50%; left: 50%; width: 40px; height: 40px; margin: -20px 0 0 -20px;
+        border: 3px solid #dbeafe; border-top-color: #1e3a8a; border-radius: 50%;
+        animation: boot-spin 0.9s linear infinite;
+      }
+      @keyframes boot-spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) {
+        html.js-enabled:not(.app-ready):not(.app-boot-slow) #root::before { animation: none; border-top-color: #1e3a8a; }
+      }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
