@@ -87,6 +87,7 @@ export default function Navbar() {
   const { totalItems } = useMultiServiceCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [logoLoaded, setLogoLoaded] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const profileTriggerRef = useRef<HTMLButtonElement>(null);
 
@@ -148,12 +149,14 @@ export default function Navbar() {
             onMouseEnter={() => handleNavigationIntent("/")}
             onFocus={() => handleNavigationIntent("/")}
             onClick={handleNavigationClick}
-            className="order-1 flex w-16 shrink-0 items-center justify-start gap-2 group hover:opacity-80 transition-opacity sm:w-16 sm:gap-3 lg:w-20"
+            className="group order-1 flex w-16 shrink-0 items-center justify-start gap-2 rounded-xl transition-opacity duration-200 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 sm:w-16 sm:gap-3 lg:w-20"
           >
             <img
               src="/logo-3m.webp"
               alt="Logo 3M TRAVEL AGENCY"
-              className="h-10 w-auto max-w-full object-contain sm:h-12"
+              onLoad={() => setLogoLoaded(true)}
+              onError={() => setLogoLoaded(true)}
+              className={`h-10 w-auto max-w-full origin-center object-contain transition-[opacity,transform,filter] duration-300 ease-out motion-reduce:transition-none sm:h-12 ${logoLoaded ? "opacity-100 blur-0" : "opacity-0 blur-[3px]"} group-hover:scale-105 group-focus-visible:scale-105 motion-reduce:group-hover:scale-100 motion-reduce:group-focus-visible:scale-100`}
             />
           </a>
 

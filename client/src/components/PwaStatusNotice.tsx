@@ -3,21 +3,40 @@ import { CloudOff, Download, RefreshCw, Wifi, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { activatePwaUpdate, isPwaPreviewHost } from "@/lib/pwaClient";
 
+type InstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+};
+
 export default function PwaStatusNotice() {
   const [online, setOnline] = useState(() => typeof navigator === "undefined" || navigator.onLine);
   const [updateRegistration, setUpdateRegistration] = useState<ServiceWorkerRegistration | null>(null);
   const [updateDismissed, setUpdateDismissed] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
+  const [installed, setInstalled] = useState(false);
 
   useEffect(() => {
     const goOnline = () => setOnline(true);
     const goOffline = () => setOnline(false);
+    const captureInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as InstallPromptEvent);
+    };
+    const handleInstalled = () => {
+      setInstalled(true);
+      setInstallPrompt(null);
+    };
     window.addEventListener("online", goOnline);
     window.addEventListener("offline", goOffline);
+    window.addEventListener("beforeinstallprompt", captureInstallPrompt);
+    window.addEventListener("appinstalled", handleInstalled);
 
     if (!("serviceWorker" in navigator) || isPwaPreviewHost()) {
       return () => {
         window.removeEventListener("online", goOnline);
         window.removeEventListener("offline", goOffline);
+        window.removeEventListener("beforeinstallprompt", captureInstallPrompt);
+        window.removeEventListener("appinstalled", handleInstalled);
       };
     }
 
@@ -46,8 +65,18 @@ export default function PwaStatusNotice() {
       activeRegistration = null;
       window.removeEventListener("online", goOnline);
       window.removeEventListener("offline", goOffline);
+      window.removeEventListener("beforeinstallprompt", captureInstallPrompt);
+      window.removeEventListener("appinstalled", handleInstalled);
     };
   }, []);
+
+  const installApp = async () => {
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    const choice = await installPrompt.userChoice;
+    if (choice.outcome === "accepted") setInstalled(true);
+    setInstallPrompt(null);
+  };
 
   return (
     <>
@@ -70,6 +99,18 @@ export default function PwaStatusNotice() {
           <button type="button" onClick={() => setUpdateDismissed(true)} className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700" aria-label="Masquer la notification de mise à jour">
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
+        </div>
+      )}
+      {installPrompt && !installed && (
+        <div className="fixed bottom-24 left-4 z-[90] flex w-[min(22rem,calc(100%-2rem))] items-center gap-3 rounded-xl border border-amber-200/90 bg-white/95 px-3 py-2.5 shadow-lg shadow-slate-900/10 backdrop-blur sm:bottom-4" role="status" aria-live="polite">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700"><Download className="h-4 w-4" aria-hidden="true" /></span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-bold text-slate-900">Installer 3M TRAVEL AGENCY</p>
+            <p className="mt-0.5 text-[11px] text-slate-500">Accédez plus vite à vos procédures et à votre espace.</p>
+          </div>
+          <Button type="button" size="sm" onClick={() => void installApp()} className="h-8 shrink-0 rounded-lg bg-amber-700 px-2.5 text-xs font-bold text-white hover:bg-amber-800">
+            Installer
+          </Button>
         </div>
       )}
       {online && !updateRegistration && <span className="sr-only"><Wifi /> Connexion active</span>}
