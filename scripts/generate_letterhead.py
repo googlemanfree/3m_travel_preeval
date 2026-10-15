@@ -42,7 +42,8 @@ BRAND_MOTTO = "L’Afrique vers le monde."
 LINES_RIGHT = [
     "hello@3mtravelagency.com",
     "+237 620 996 045",
-    "WhatsApp +237 698 104 832",
+    "WhatsApp Yaoundé +237 698 104 832",
+    "WhatsApp Ottawa +1 672 897 2999",
     "www.3mtravelagency.com",
 ]
 FOOTER_L1 = "Biyem-Assi, Montée Chapelle Obili · Yaoundé, Cameroun  ·  Ottawa, Ontario, Canada"
@@ -238,32 +239,21 @@ def render_letterhead_png(
     motto_bottom = motto_y + fonts["motto"].size
 
     # Contact meta strip under the motto
-    meta = "  ·  ".join(
-        [
-            "hello@3mtravelagency.com",
-            "+237 620 996 045",
-            "WhatsApp +237 698 104 832",
-            "www.3mtravelagency.com",
-        ]
-    )
+    meta_lines = [
+        "hello@3mtravelagency.com  ·  +237 620 996 045  ·  www.3mtravelagency.com",
+        "WhatsApp Yaoundé +237 698 104 832  ·  WhatsApp Ottawa +1 672 897 2999",
+    ]
     meta_y = motto_bottom + int(2.8 / 25.4 * dpi)
-    tw = draw.textlength(meta, font=fonts["contact_sm"])
-    # If too wide, split into two centered lines
-    if tw > content_w:
-        line1 = "hello@3mtravelagency.com  ·  +237 620 996 045"
-        line2 = "WhatsApp +237 698 104 832  ·  www.3mtravelagency.com"
-        for i, line in enumerate((line1, line2)):
-            tw = draw.textlength(line, font=fonts["contact_sm"])
-            draw.text(
-                ((w - tw) / 2, meta_y + i * int(fonts["contact_sm"].size * 1.55)),
-                line,
-                font=fonts["contact_sm"],
-                fill=MUTED,
-            )
-        meta_bottom = meta_y + int(fonts["contact_sm"].size * 1.55) + fonts["contact_sm"].size
-    else:
-        draw.text(((w - tw) / 2, meta_y), meta, font=fonts["contact_sm"], fill=MUTED)
-        meta_bottom = meta_y + fonts["contact_sm"].size
+    line_step = int(fonts["contact_sm"].size * 1.55)
+    for i, line in enumerate(meta_lines):
+        tw = draw.textlength(line, font=fonts["contact_sm"])
+        draw.text(
+            ((w - tw) / 2, meta_y + i * line_step),
+            line,
+            font=fonts["contact_sm"],
+            fill=MUTED,
+        )
+    meta_bottom = meta_y + (len(meta_lines) - 1) * line_step + fonts["contact_sm"].size
 
     # Header rule under logo/contact
     rule_y = meta_bottom + int(3.5 / 25.4 * dpi)
@@ -343,8 +333,9 @@ def write_svg(out_path: Path) -> None:
         logo_w = round(logo_h * aspect, 2)
     logo_x = round((210 - logo_w) / 2, 2)
     motto_y = 10 + logo_h + 5
-    meta_y = motto_y + 5
-    rule_y = meta_y + 5
+    meta_y1 = motto_y + 5
+    meta_y2 = meta_y1 + 4.2
+    rule_y = meta_y2 + 4.5
     hair_y = rule_y + 2.2
     motto_svg = BRAND_MOTTO.upper()
     svg = f'''<?xml version="1.0" encoding="UTF-8"?>
@@ -379,9 +370,10 @@ def write_svg(out_path: Path) -> None:
           letter-spacing="1.4">{motto_svg}</text>
   </g>
 
-  <!-- Contact meta under motto -->
+  <!-- Contact meta under motto (Yaoundé + Ottawa) -->
   <g font-family="Noto Sans, Helvetica, Arial, sans-serif" text-anchor="middle">
-    <text x="105" y="{meta_y}" font-size="2.9" fill="#5A6C82">hello@3mtravelagency.com  ·  +237 620 996 045  ·  WhatsApp +237 698 104 832  ·  www.3mtravelagency.com</text>
+    <text x="105" y="{meta_y1}" font-size="2.85" fill="#5A6C82">hello@3mtravelagency.com  ·  +237 620 996 045  ·  www.3mtravelagency.com</text>
+    <text x="105" y="{meta_y2}" font-size="2.85" fill="#5A6C82">WhatsApp Yaoundé +237 698 104 832  ·  WhatsApp Ottawa +1 672 897 2999</text>
   </g>
 
   <!-- Rules -->
@@ -451,15 +443,24 @@ def write_pdf(out_path: Path, preview_png: Path) -> None:
         c.drawString(x, motto_y, ch)
         x += cw + gap
 
-    # Contact meta under motto
+    # Contact meta under motto (Yaoundé + Ottawa)
     c.setFillColorRGB(*[x / 255 for x in MUTED])
-    c.setFont("Noto", 7.5)
-    meta = "  ·  ".join(LINES_RIGHT)
-    meta_y = motto_y - 5 * mm
-    c.drawCentredString(page_w / 2, meta_y, meta)
+    c.setFont("Noto", 7.2)
+    meta_y1 = motto_y - 4.8 * mm
+    meta_y2 = meta_y1 - 4.0 * mm
+    c.drawCentredString(
+        page_w / 2,
+        meta_y1,
+        "hello@3mtravelagency.com  ·  +237 620 996 045  ·  www.3mtravelagency.com",
+    )
+    c.drawCentredString(
+        page_w / 2,
+        meta_y2,
+        "WhatsApp Yaoundé +237 698 104 832  ·  WhatsApp Ottawa +1 672 897 2999",
+    )
 
     # Gradient rule
-    rule_y = meta_y - 4 * mm
+    rule_y = meta_y2 - 4 * mm
     x0, x1 = margin, page_w - margin
     steps = 80
     for i in range(steps):

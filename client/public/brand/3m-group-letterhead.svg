@@ -30,14 +30,15 @@
           letter-spacing="1.4">L’AFRIQUE VERS LE MONDE.</text>
   </g>
 
-  <!-- Contact meta under motto -->
+  <!-- Contact meta under motto (Yaoundé + Ottawa) -->
   <g font-family="Noto Sans, Helvetica, Arial, sans-serif" text-anchor="middle">
-    <text x="105" y="86.0" font-size="2.9" fill="#5A6C82">hello@3mtravelagency.com  ·  +237 620 996 045  ·  WhatsApp +237 698 104 832  ·  www.3mtravelagency.com</text>
+    <text x="105" y="86.0" font-size="2.85" fill="#5A6C82">hello@3mtravelagency.com  ·  +237 620 996 045  ·  www.3mtravelagency.com</text>
+    <text x="105" y="90.2" font-size="2.85" fill="#5A6C82">WhatsApp Yaoundé +237 698 104 832  ·  WhatsApp Ottawa +1 672 897 2999</text>
   </g>
 
   <!-- Rules -->
-  <rect x="16" y="91.0" width="178" height="0.55" fill="url(#rule)"/>
-  <line x1="16" y1="93.2" x2="194" y2="93.2" stroke="#B4C6DC" stroke-width="0.2"/>
+  <rect x="16" y="94.7" width="178" height="0.55" fill="url(#rule)"/>
+  <line x1="16" y1="96.9" x2="194" y2="96.9" stroke="#B4C6DC" stroke-width="0.2"/>
 
   <!-- Footer -->
   <line x1="16" y1="272" x2="194" y2="272" stroke="#B4C6DC" stroke-width="0.25"/>
