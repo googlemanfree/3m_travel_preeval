@@ -12,6 +12,7 @@ import { paymentAuditLogsToCsv } from "@shared/paymentAuditCsv";
 import AdminPaymentProofBadge from "@/components/AdminPaymentProofBadge";
 import AdminOpeningFeeDialog from "@/components/AdminOpeningFeeDialog";
 import { INITIAL_AGREEMENT_PROTOCOL } from "@shared/agreementProtocolContent";
+import { isProofFor } from "@shared/paymentProof";
 
 interface Payment {
   id: number;
@@ -44,14 +45,16 @@ interface Payment {
 interface AdminPaymentManagementProps {
   sessionToken: string;
   onPaymentUpdated?: () => void;
+  /** Ouvre la fiche 360° du dossier lié (online_N). */
+  onOpenCandidate?: (openId: string) => void;
 }
 
-export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: AdminPaymentManagementProps) {
+export function AdminPaymentManagement({ sessionToken, onPaymentUpdated, onOpenCandidate }: AdminPaymentManagementProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "PENDING" | "SUCCESS" | "FAILED">("all");
   const [filterMethod, setFilterMethod] = useState<"all" | "mobile_money" | "agency">("all");
   const [filterAgreement, setFilterAgreement] = useState<"all" | "pending" | "signed">("all");
-  const [filterReconciliation, setFilterReconciliation] = useState<"all" | "reference_pending" | "amount_gap">("all");
+  const [filterReconciliation, setFilterReconciliation] = useState<"all" | "reference_pending" | "amount_gap" | "proof_pending">("all");
   const [summaryStartDate, setSummaryStartDate] = useState("");
   const [summaryEndDate, setSummaryEndDate] = useState("");
   
@@ -85,6 +88,10 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
     offset: 0,
   });
   const { data: auditLogs = [], isLoading: auditLoading, refetch: refetchAuditLogs } = trpc.clientDocuments.getPaymentAuditLogs.useQuery({ limit: 200 });
+  const proofsQuery = trpc.paymentProofs.listForAdmin.useQuery(
+    { sessionToken },
+    { enabled: Boolean(sessionToken), staleTime: 60_000, retry: 1 },
+  );
   const updatePaymentMutation = trpc.application.adminUpdatePaymentStatus.useMutation();
   const correctPaymentMutation = trpc.application.adminCorrectPaymentDetails.useMutation();
   const utils = trpc.useUtils();
@@ -171,6 +178,12 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
   }));
 
   const pendingReferenceCount = payments.filter((payment) => payment.paymentStatus === "PENDING" && Boolean(payment.transactionId)).length;
+  const proofItems = proofsQuery.data?.items ?? [];
+  const paymentHasProof = (payment: Payment) =>
+    proofItems.some((item) => isProofFor(item.fileName, payment.dossierNumber));
+  const proofPendingCount = payments.filter(
+    (payment) => payment.paymentStatus === "PENDING" && paymentHasProof(payment),
+  ).length;
 
   // Filtrage local complémentaire pour le rapprochement Mobile Money / Agence.
   const [filterReceiptDelivery, setFilterReceiptDelivery] = useState<"all" | "sent" | "failed" | "not_sent">("all");
@@ -181,6 +194,7 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
     if (filterReceiptDelivery !== "all" && receiptStatus !== filterReceiptDelivery) return false;
     if (filterReconciliation === "reference_pending" && !(payment.paymentStatus === "PENDING" && Boolean(payment.transactionId))) return false;
     if (filterReconciliation === "amount_gap" && (payment.confirmedAmount == null || payment.confirmedAmount === payment.expectedAmount)) return false;
+    if (filterReconciliation === "proof_pending" && !(payment.paymentStatus === "PENDING" && paymentHasProof(payment))) return false;
     if (filterMethod === "all") return true;
     const method = String(payment.paymentMethod || "").toLowerCase();
     if (filterMethod === "mobile_money") {
@@ -648,12 +662,14 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
             </select>
             <select
               value={filterReconciliation}
-              onChange={(e) => setFilterReconciliation(e.target.value as "all" | "reference_pending" | "amount_gap")}
+              onChange={(e) => setFilterReconciliation(e.target.value as "all" | "reference_pending" | "amount_gap" | "proof_pending")}
               aria-label="Filtrer les rapprochements de paiement"
+              data-testid="payment-reconciliation-filter"
               className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">Tous les rapprochements</option>
-              <option value="reference_pending">Référence à vérifier</option>
+              <option value="proof_pending">Preuve reçue · à confirmer ({proofPendingCount})</option>
+              <option value="reference_pending">Référence à vérifier ({pendingReferenceCount})</option>
               <option value="amount_gap">Écart de montant</option>
             </select>
             <select
@@ -776,6 +792,19 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated }: Admin
                       </td>
                       <td className="py-3 px-4 text-center">
                         <div className="flex items-center justify-center gap-1">
+                          {onOpenCandidate ? (
+                            <Button
+                              type="button"
+                              onClick={() => onOpenCandidate(`online_${payment.id}`)}
+                              variant="ghost"
+                              size="sm"
+                              data-testid={`payment-open-dossier-${payment.id}`}
+                              title={`Ouvrir le dossier ${payment.dossierNumber}`}
+                              className="text-slate-700 hover:bg-slate-100"
+                            >
+                              <Eye className="w-4 h-4" /><span className="hidden lg:inline">Dossier</span>
+                            </Button>
+                          ) : null}
                           {payment.receiptUrl && <Button onClick={() => setReceiptPreview(payment)} variant="ghost" size="sm" title="Prévisualiser le justificatif de paiement" className="text-blue-700 hover:bg-blue-50"><Eye className="w-4 h-4" /><span className="hidden lg:inline">Aperçu</span></Button>}
                           {payment.paymentStatus === "PENDING" && (
                             <>
