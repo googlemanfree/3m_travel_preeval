@@ -5,6 +5,16 @@ import { resolve } from "node:path";
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
 describe("activation et rattachement pré-dossier", () => {
+  it("ouvre la fiche 360° au clic sur la ligne (account_N), comme les autres listes admin", () => {
+    const panel = read("client/src/components/AdminPreDossierAccountsPanel.tsx");
+    const dashboard = read("client/src/pages/AdminDashboard.tsx");
+    expect(panel).toContain("onOpenCandidate");
+    expect(panel).toContain("predossier-row-");
+    expect(panel).toContain("`account_${account.id}`");
+    expect(dashboard).toContain("onOpenCandidate={(openId) => setSelectedCandidateId(openId)}");
+    expect(dashboard).toContain("onOpenChange={(open) => { if (!open) onClose(); }}");
+  });
+
   it("conserve la validation humaine de l’évaluation avant l’activation", () => {
     const panel = read("client/src/components/AdminPreDossierAccountsPanel.tsx");
     expect(panel).toContain("Valider l’évaluation avant activation");

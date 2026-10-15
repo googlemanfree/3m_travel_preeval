@@ -50,6 +50,24 @@ const open = () => {
   // Le libellé du bouton du tableau dépend de l'état de l'évaluation : on ouvre la ligne, quel que soit ce libellé.
   fireEvent.click(screen.getByRole("button", { name: /Activer le dossier|Valider l’évaluation|Rattacher et activer/ }));
 };
+
+describe("clic sur une ligne pré-dossier", () => {
+  it("ouvre la fiche 360° via onOpenCandidate (account_N), sans ouvrir le dialogue d’activation", () => {
+    const onOpenCandidate = vi.fn();
+    render(<AdminPreDossierAccountsPanel sessionToken="jeton" onOpenCandidate={onOpenCandidate} />);
+    fireEvent.click(screen.getByTestId("predossier-row-42"));
+    expect(onOpenCandidate).toHaveBeenCalledWith("account_42");
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("conserve le bouton Activer pour le dialogue d’activation (stopPropagation)", () => {
+    const onOpenCandidate = vi.fn();
+    render(<AdminPreDossierAccountsPanel sessionToken="jeton" onOpenCandidate={onOpenCandidate} />);
+    fireEvent.click(screen.getByRole("button", { name: /Activer le dossier|Valider l’évaluation|Rattacher et activer/ }));
+    expect(onOpenCandidate).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog").textContent).toContain("Activer le dossier client");
+  });
+});
 const confirmButton = () => screen.getByRole("button", { name: /Confirmer et activer|Activation…/ }) as HTMLButtonElement;
 
 beforeEach(() => {

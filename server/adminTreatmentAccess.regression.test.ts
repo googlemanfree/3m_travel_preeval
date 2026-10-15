@@ -36,7 +36,8 @@ describe("accès aux actions de traitement administrateur", () => {
     ]);
 
     expect(dashboard).toContain('TabsTrigger value="pre-dossiers"');
-    expect(dashboard).toContain("AdminPreDossierAccountsPanel sessionToken={sessionToken}");
+    expect(dashboard).toContain("AdminPreDossierAccountsPanel");
+    expect(dashboard).toContain("onOpenCandidate={(openId) => setSelectedCandidateId(openId)}");
     expect(dashboard).toContain("Ouvrir le dossier et activer le suivi");
     expect(dashboard).toContain("activatePreDossierAccount.useMutation");
     expect(digital).toContain("Traitement direct");
