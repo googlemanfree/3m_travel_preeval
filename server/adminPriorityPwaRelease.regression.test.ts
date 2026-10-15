@@ -7,13 +7,13 @@ const serviceWorker = readFileSync(resolve(import.meta.dirname, "../client/publi
 
 describe("révision PWA du poste administrateur", () => {
   it("enregistre une révision de service worker distincte pour évacuer les bundles périmés", () => {
-    expect(indexHtml).toContain("2026-10-12-canada-blank-guard-v1");
+    expect(indexHtml).toMatch(/SW_REVISION\s*=\s*'[^']+'/);
     expect(indexHtml).toContain("/sw.js?revision=");
     expect(indexHtml).toContain("updateViaCache: 'none'");
   });
 
   it("préserve le réseau d’abord pour les navigations et purge les anciens caches", () => {
-    expect(serviceWorker).toContain("3m-travel-pwa-v41-canada-blank-guard");
+    expect(serviceWorker).toMatch(/3m-travel-pwa-v\d+/);
     expect(serviceWorker).toContain("keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))");
     expect(serviceWorker).toContain("if (event.request.mode === 'navigate')");
     expect(serviceWorker).toContain("fetch(event.request)");

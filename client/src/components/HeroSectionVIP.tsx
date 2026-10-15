@@ -151,7 +151,7 @@ export default function HeroSectionVIP({
               height={144}
               decoding="async"
               fetchPriority="high"
-              className="h-full w-full scale-[1.16] object-cover motion-reduce:scale-100"
+              className="h-full w-full object-contain motion-reduce:scale-100"
               data-testid="hero-logo"
             />
           </div>

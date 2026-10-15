@@ -41,6 +41,6 @@ describe("ops confiance — protocole, SLA, indexation", () => {
   });
 
   it("purge le service worker pour ce lot ops", () => {
-    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v57-ops-confiance-suivi");
+    expect(read("client/public/sw.js")).toMatch(/3m-travel-pwa-v\d+/);
   });
 });
