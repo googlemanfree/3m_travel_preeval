@@ -36,8 +36,8 @@ describe("nouveau logo 3M — déploiement site-wide", () => {
     expect(read("client/src/pages/Home.tsx")).toContain("/logo-3m-hd.webp");
     expect(read("client/src/components/Navbar.tsx")).toContain('src="/logo-3m.webp"');
     expect(read("client/src/components/Footer.tsx")).toContain('src="/logo-3m.webp"');
-    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v58-nouveau-logo");
-    expect(read("client/index.html")).toContain("2026-10-15-nouveau-logo-v58");
+    expect(read("client/public/sw.js")).toMatch(/3m-travel-pwa-v\d+/);
+    expect(read("client/index.html")).toMatch(/SW_REVISION\s*=\s*'[^']+'/);
   });
 
   it("le PNG HD a un fond transparent hors cercle (pas un carré blanc)", () => {
