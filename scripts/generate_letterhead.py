@@ -47,6 +47,7 @@ GROUP_SERVICES = (
 # Contact block (GROUP letterhead — parent entity)
 LINES_RIGHT = [
     "hello@3mtravelagency.com",
+    "contact@3mtravelagency.com",
     "+237 620 996 045",
     "WhatsApp Yaoundé +237 698 104 832",
     "WhatsApp Ottawa +1 672 897 2999",
@@ -268,8 +269,8 @@ def render_letterhead_png(
 
     # Contact meta strip under the services
     meta_lines = [
-        "hello@3mtravelagency.com  ·  +237 620 996 045  ·  www.3mtravelagency.com",
-        "WhatsApp Yaoundé +237 698 104 832  ·  WhatsApp Ottawa +1 672 897 2999",
+        "hello@3mtravelagency.com  ·  contact@3mtravelagency.com  ·  www.3mtravelagency.com",
+        "+237 620 996 045  ·  WhatsApp Yaoundé +237 698 104 832  ·  WhatsApp Ottawa +1 672 897 2999",
     ]
     meta_y = services_bottom + int(2.6 / 25.4 * dpi)
     line_step = int(fonts["contact_sm"].size * 1.55)
@@ -406,8 +407,8 @@ def write_svg(out_path: Path) -> None:
 
   <!-- Contact meta under services (Yaoundé + Ottawa) -->
   <g font-family="Noto Sans, Helvetica, Arial, sans-serif" text-anchor="middle">
-    <text x="105" y="{meta_y1}" font-size="2.85" fill="#5A6C82">hello@3mtravelagency.com  ·  +237 620 996 045  ·  www.3mtravelagency.com</text>
-    <text x="105" y="{meta_y2}" font-size="2.85" fill="#5A6C82">WhatsApp Yaoundé +237 698 104 832  ·  WhatsApp Ottawa +1 672 897 2999</text>
+    <text x="105" y="{meta_y1}" font-size="2.85" fill="#5A6C82">hello@3mtravelagency.com  ·  contact@3mtravelagency.com  ·  www.3mtravelagency.com</text>
+    <text x="105" y="{meta_y2}" font-size="2.85" fill="#5A6C82">+237 620 996 045  ·  WhatsApp Yaoundé +237 698 104 832  ·  WhatsApp Ottawa +1 672 897 2999</text>
   </g>
 
   <!-- Rules -->
@@ -491,12 +492,12 @@ def write_pdf(out_path: Path, preview_png: Path) -> None:
     c.drawCentredString(
         page_w / 2,
         meta_y1,
-        "hello@3mtravelagency.com  ·  +237 620 996 045  ·  www.3mtravelagency.com",
+        "hello@3mtravelagency.com  ·  contact@3mtravelagency.com  ·  www.3mtravelagency.com",
     )
     c.drawCentredString(
         page_w / 2,
         meta_y2,
-        "WhatsApp Yaoundé +237 698 104 832  ·  WhatsApp Ottawa +1 672 897 2999",
+        "+237 620 996 045  ·  WhatsApp Yaoundé +237 698 104 832  ·  WhatsApp Ottawa +1 672 897 2999",
     )
 
     # Gradient rule
