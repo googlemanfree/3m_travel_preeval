@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, Gauge, RefreshCw } from "lucide-react";
+import { AlertTriangle, Gauge, Mail, RefreshCw } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatAdminSyncTime } from "@shared/adminSync";
+import { buildMailtoRelance } from "@shared/adminOpsToolkit";
 
 type Category =
   | "email_unverified"
@@ -13,6 +14,15 @@ type Category =
   | "ready_to_activate"
   | "protocol_pending"
   | "documents_pending";
+
+const CATEGORY_TO_STAGE: Record<Category, string> = {
+  email_unverified: "email_unverified",
+  no_evaluation: "evaluation_missing",
+  payment_pending: "payment_pending",
+  ready_to_activate: "ready_to_activate",
+  protocol_pending: "protocol_pending",
+  documents_pending: "documents_pending",
+};
 
 const CATEGORY_ORDER: Category[] = [
   "email_unverified",
@@ -114,24 +124,46 @@ export default function AdminCockpitControlBoard({
               <ul className="space-y-2">
                 {items.slice(0, visible).map((item) => (
                   <li key={item.id}>
-                    <button
-                      type="button"
-                      onClick={() => onOpen(item.openId)}
-                      className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left transition hover:border-cyan-400 hover:shadow-sm ${URGENCY_STYLE[item.urgency]}`}
+                    <div
+                      className={`flex w-full items-start gap-3 rounded-xl border p-3 transition hover:border-cyan-400 hover:shadow-sm ${URGENCY_STYLE[item.urgency]}`}
                     >
-                      <AlertTriangle className={`mt-0.5 h-4 w-4 shrink-0 ${item.urgency === "high" ? "text-rose-600" : "text-amber-600"}`} aria-hidden="true" />
-                      <span className="min-w-0 flex-1">
-                        <span className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-bold text-slate-900">{item.fullName}</span>
-                          <span className="font-mono text-[11px] text-slate-500">{item.reference}</span>
-                          <Badge variant="outline" className="border-cyan-200 bg-white text-cyan-900">{item.categoryLabel}</Badge>
-                          <Badge variant="outline" className="border-slate-200 bg-white text-slate-700">{item.progressPercent}%</Badge>
+                      <button
+                        type="button"
+                        onClick={() => onOpen(item.openId)}
+                        className="flex min-w-0 flex-1 items-start gap-3 text-left"
+                        data-testid="cockpit-open-row"
+                      >
+                        <AlertTriangle className={`mt-0.5 h-4 w-4 shrink-0 ${item.urgency === "high" ? "text-rose-600" : "text-amber-600"}`} aria-hidden="true" />
+                        <span className="min-w-0 flex-1">
+                          <span className="flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-bold text-slate-900">{item.fullName}</span>
+                            <span className="font-mono text-[11px] text-slate-500">{item.reference}</span>
+                            <Badge variant="outline" className="border-cyan-200 bg-white text-cyan-900">{item.categoryLabel}</Badge>
+                            <Badge variant="outline" className="border-slate-200 bg-white text-slate-700">{item.progressPercent}%</Badge>
+                          </span>
+                          <span className="mt-1 block text-sm font-semibold text-slate-800">{item.nextActionLabel}</span>
+                          <span className="mt-0.5 block text-xs text-slate-600">{item.stageLabel}</span>
+                          {item.blockers[0] ? <span className="mt-1 block text-xs text-slate-500">{item.blockers[0]}</span> : null}
                         </span>
-                        <span className="mt-1 block text-sm font-semibold text-slate-800">{item.nextActionLabel}</span>
-                        <span className="mt-0.5 block text-xs text-slate-600">{item.stageLabel}</span>
-                        {item.blockers[0] ? <span className="mt-1 block text-xs text-slate-500">{item.blockers[0]}</span> : null}
-                      </span>
-                    </button>
+                      </button>
+                      {item.email ? (
+                        <a
+                          href={buildMailtoRelance({
+                            email: item.email,
+                            name: item.fullName,
+                            reference: item.reference,
+                            stage: CATEGORY_TO_STAGE[item.category as Category] ?? "generic",
+                          })}
+                          onClick={(event) => event.stopPropagation()}
+                          data-testid="cockpit-relance-mail"
+                          className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-800 hover:border-blue-300 hover:bg-blue-50"
+                          title={`Relancer ${item.fullName} par e-mail`}
+                        >
+                          <Mail className="h-3.5 w-3.5" aria-hidden="true" />
+                          Relancer
+                        </a>
+                      ) : null}
+                    </div>
                   </li>
                 ))}
               </ul>

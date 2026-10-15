@@ -24,6 +24,8 @@ describe("tableau admin Aujourd’hui", () => {
     const refresh = vi.fn();
     const open = vi.fn();
     render(<AdminTodayDashboard candidates={candidates} isRefreshing={false} lastUpdatedAt={new Date("2026-10-09T12:00:00Z")} onRefresh={refresh} onOpen={open} />);
+    expect(screen.getByText(/File du jour/)).toBeTruthy();
+    expect(screen.getByTestId("today-export-csv")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Actualiser" }));
     fireEvent.click(screen.getAllByTestId("today-priority-item")[0]);
     expect(refresh).toHaveBeenCalledTimes(1);

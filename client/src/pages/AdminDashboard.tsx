@@ -108,6 +108,7 @@ import {
   resolveGuidedNextAdminAction,
   type GuidedNextAction,
 } from "@shared/adminStageCatalog";
+import { preDossierReadinessBadge } from "@shared/adminOpsToolkit";
 import AdminPilotageQueue from "@/components/AdminPilotageQueue";
 import AdminDelayStats from "@/components/AdminDelayStats";
 import { AdminTourismRequests } from "@/components/AdminTourismRequests";
@@ -1773,6 +1774,21 @@ export default function AdminDashboard() {
   });
   const { data: currentAdminData } = trpc.adminAuth.me.useQuery({ sessionToken }, { enabled: !!sessionToken });
   const currentAdminEmail = currentAdminData?.authenticated ? currentAdminData.admin.email : null;
+  const currentAdminRoleLabel = currentAdminData?.authenticated
+    ? (
+        ({
+          evaluation: "Conseiller évaluation",
+          accompagnement: "Conseiller accompagnement",
+          procedures: "Conseiller procédures",
+        } as Record<string, string>)[String((currentAdminData.admin as { adminType?: string }).adminType ?? "")]
+        || ((currentAdminData.admin as { role?: string }).role === "super_admin" ? "Super-admin" : "Administrateur")
+      )
+    : "Administrateur";
+  const currentAdminType = currentAdminData?.authenticated
+    ? String((currentAdminData.admin as { adminType?: string }).adminType ?? "")
+    : "";
+  /** Les taux et le planificateur restent hors périmètre « évaluation seule ». */
+  const canManageSensitiveOps = currentAdminType !== "evaluation";
   const { data: advisorDeadlineGroups = [], isLoading: isLoadingAdvisorDeadlines, refetch: refetchAdvisorDeadlines } = trpc.admin.listAdvisorTreatmentDeadlines.useQuery(
     { sessionToken },
     { enabled: !!sessionToken },
@@ -2049,7 +2065,7 @@ export default function AdminDashboard() {
   ] as const;
 
   return (
-    <main className="premium-page-shell min-h-screen text-slate-900 transition-colors duration-300 dark:bg-[#071426] dark:text-slate-100">
+    <main data-admin-ops-mobile className="premium-page-shell min-h-screen text-slate-900 transition-colors duration-300 dark:bg-[#071426] dark:text-slate-100">
       {/* En-tête fixe */}
       <div className="glass-admin-header sticky top-0 z-50 bg-gradient-to-r from-[#071b3d]/96 via-[#0b2f6f]/96 to-[#123c86]/96 text-white shadow-lg backdrop-blur-xl transition-colors duration-300">
         <div className="mx-auto w-full max-w-[1920px] space-y-3 px-4 py-4 sm:px-6 xl:px-8 2xl:px-10">
@@ -2173,13 +2189,13 @@ export default function AdminDashboard() {
             <AdminNotificationBell />
             
             {/* Profil Admin */}
-            <div className="flex items-center gap-2 pl-3 border-l border-white/20">
+            <div className="flex items-center gap-2 pl-3 border-l border-white/20" data-testid="admin-role-badge">
               <div className="w-10 h-10 bg-gradient-to-br from-[#f4b942] to-[#d99b22] text-[#071b3d] font-bold rounded-full flex items-center justify-center shadow-md shadow-black/20 text-sm">
                 {getInitials(adminName)}
               </div>
               <div className="hidden sm:flex flex-col">
                 <p className="text-sm font-semibold text-white leading-tight">{adminName}</p>
-                <p className="text-xs text-blue-200">Admin</p>
+                <p className="text-xs text-blue-200">{currentAdminRoleLabel}</p>
               </div>
             </div>
             
@@ -2452,9 +2468,9 @@ export default function AdminDashboard() {
           <div className="mb-6 grid gap-3 lg:grid-cols-2 2xl:grid-cols-5">
             <AdminNavGroup title="Pilotage des dossiers"><TabsTrigger value="pilotage" onClick={() => setActiveAdminTab("pilotage")} className="font-bold text-cyan-700">Pilotage synchronisé</TabsTrigger><TabsTrigger value="candidates" onClick={() => setActiveAdminTab("candidates")}>Dossiers</TabsTrigger><TabsTrigger value="pre-dossiers" onClick={() => setActiveAdminTab("pre-dossiers")} className="font-bold text-blue-700">Pré-dossiers</TabsTrigger><TabsTrigger value="inbox" onClick={() => setActiveAdminTab("inbox")}>Demandes unifiées</TabsTrigger><TabsTrigger value="evaluation-review" onClick={() => setActiveAdminTab("evaluation-review")} className="font-bold text-amber-700">Bilans à valider</TabsTrigger><TabsTrigger value="evaluation-reminders" onClick={() => setActiveAdminTab("evaluation-reminders")} className="font-bold text-violet-700">Bilans à relancer</TabsTrigger><TabsTrigger value="documents" onClick={() => setActiveAdminTab("documents")}>Documents</TabsTrigger><TabsTrigger value="activations" onClick={() => setActiveAdminTab("activations")}>Activations</TabsTrigger></AdminNavGroup>
             <AdminNavGroup title="Services & catalogue"><TabsTrigger value="tourism" onClick={() => setActiveAdminTab("tourism")}>Tourisme & Devis</TabsTrigger><TabsTrigger value="consular" onClick={() => setActiveAdminTab("consular")} className="font-bold text-blue-600">Consulats & Liens</TabsTrigger><TabsTrigger value="destination-analytics" onClick={() => setActiveAdminTab("destination-analytics")} className="font-bold text-indigo-700">Destinations</TabsTrigger><TabsTrigger value="evisa-catalogue" onClick={() => setActiveAdminTab("evisa-catalogue")} className="font-bold text-cyan-700">Catalogue e‑Visa</TabsTrigger></AdminNavGroup>
-            <AdminNavGroup title="Réservations & finance"><TabsTrigger value="calendar" onClick={() => setActiveAdminTab("calendar")}>Calendrier</TabsTrigger><TabsTrigger value="payments" onClick={() => setActiveAdminTab("payments")}>Paiements {pendingPaymentApplications.length > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-700 px-1.5 text-[10px] text-white">{pendingPaymentApplications.length}</Badge>}</TabsTrigger><TabsTrigger value="flights" onClick={() => setActiveAdminTab("flights")} className="font-bold text-sky-700"><Plane className="h-4 w-4" /> Réservations vols {(flightQueueSummary?.pending_review ?? 0) > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-700 px-1.5 text-[10px] text-white">{flightQueueSummary?.pending_review}</Badge>}</TabsTrigger><TabsTrigger value="rates" onClick={() => setActiveAdminTab("rates")} className="font-bold text-emerald-600">Taux de change</TabsTrigger></AdminNavGroup>
+            <AdminNavGroup title="Réservations & finance"><TabsTrigger value="calendar" onClick={() => setActiveAdminTab("calendar")}>Calendrier</TabsTrigger><TabsTrigger value="payments" onClick={() => setActiveAdminTab("payments")}>Paiements {pendingPaymentApplications.length > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-700 px-1.5 text-[10px] text-white">{pendingPaymentApplications.length}</Badge>}</TabsTrigger><TabsTrigger value="flights" onClick={() => setActiveAdminTab("flights")} className="font-bold text-sky-700"><Plane className="h-4 w-4" /> Réservations vols {(flightQueueSummary?.pending_review ?? 0) > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-700 px-1.5 text-[10px] text-white">{flightQueueSummary?.pending_review}</Badge>}</TabsTrigger>{canManageSensitiveOps ? <TabsTrigger value="rates" onClick={() => setActiveAdminTab("rates")} className="font-bold text-emerald-600" data-testid="admin-tab-rates">Taux de change</TabsTrigger> : null}</AdminNavGroup>
             <AdminNavGroup title="Communication & qualité"><TabsTrigger value="emails" onClick={() => setActiveAdminTab("emails")}>E-mails</TabsTrigger><TabsTrigger value="faq" onClick={() => setActiveAdminTab("faq")}>Satisfaction FAQ</TabsTrigger><TabsTrigger value="rag" onClick={() => setActiveAdminTab("rag")}>Guides & RAG</TabsTrigger><TabsTrigger value="passport-history" onClick={() => setActiveAdminTab("passport-history")}>Passeports</TabsTrigger></AdminNavGroup>
-            <AdminNavGroup title="Supervision"><TabsTrigger value="route-health" onClick={() => setActiveAdminTab("route-health")} className="font-bold text-rose-700">404 & Liens</TabsTrigger><TabsTrigger value="simulator-health" onClick={() => setActiveAdminTab("simulator-health")} className="font-bold text-amber-700">Santé simulateurs</TabsTrigger><TabsTrigger value="footer-engagement" onClick={() => setActiveAdminTab("footer-engagement")} className="font-bold text-blue-700">Engagement footer</TabsTrigger><TabsTrigger value="system-status" onClick={() => setActiveAdminTab("system-status")} className="font-bold text-emerald-700">État système</TabsTrigger><TabsTrigger value="scheduler" onClick={() => setActiveAdminTab("scheduler")} className="font-bold text-amber-700">Planificateur</TabsTrigger><TabsTrigger value="audit" onClick={() => setActiveAdminTab("audit")}>Journal d’audit</TabsTrigger></AdminNavGroup>
+            <AdminNavGroup title="Supervision"><TabsTrigger value="route-health" onClick={() => setActiveAdminTab("route-health")} className="font-bold text-rose-700">404 & Liens</TabsTrigger><TabsTrigger value="simulator-health" onClick={() => setActiveAdminTab("simulator-health")} className="font-bold text-amber-700">Santé simulateurs</TabsTrigger><TabsTrigger value="footer-engagement" onClick={() => setActiveAdminTab("footer-engagement")} className="font-bold text-blue-700">Engagement footer</TabsTrigger><TabsTrigger value="system-status" onClick={() => setActiveAdminTab("system-status")} className="font-bold text-emerald-700">État système</TabsTrigger>{canManageSensitiveOps ? <TabsTrigger value="scheduler" onClick={() => setActiveAdminTab("scheduler")} className="font-bold text-amber-700" data-testid="admin-tab-scheduler">Planificateur</TabsTrigger> : null}<TabsTrigger value="audit" onClick={() => setActiveAdminTab("audit")}>Journal d’audit</TabsTrigger></AdminNavGroup>
           </div>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white/70 px-3 py-2 text-xs text-slate-600"><span>Section active : <strong className="text-slate-950">{activeAdminTab === "candidates" ? "Dossiers" : activeAdminTab === "pre-dossiers" ? "Pré-dossiers" : activeAdminTab === "flights" ? "Réservations vols" : activeAdminTab}</strong></span><div className="flex items-center gap-2"><SchedulerModeBadge compact /><span className="hidden sm:inline">Les changements sensibles nécessitent une validation humaine.</span></div></div>
 
@@ -3154,6 +3170,25 @@ export default function AdminDashboard() {
                               Dossier actif
                             </span>
                           )}
+                          {(() => {
+                            const readiness = preDossierReadinessBadge({
+                              source: candidate.source,
+                              evaluationDeclarationStatus: candidate.evaluationDeclarationStatus,
+                              paymentStatus: pendingInlineChanges[candidate.id]?.paymentStatus ?? candidate.paymentStatus,
+                            });
+                            if (!readiness) return null;
+                            const toneClass =
+                              readiness.tone === "emerald"
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                                : readiness.tone === "rose"
+                                  ? "border-rose-200 bg-rose-50 text-rose-800"
+                                  : "border-amber-200 bg-amber-50 text-amber-900";
+                            return (
+                              <span data-testid="admin-predossier-readiness-badge" className={`inline-flex w-fit items-center rounded-full border px-2 py-0.5 text-[10px] font-bold ${toneClass}`}>
+                                {readiness.label}
+                              </span>
+                            );
+                          })()}
                           <span className="text-[10px] font-semibold text-slate-700">
                             {procedureLabelForDossier({ visaType: candidate.projectType, destination: candidate.destinationCountry, dossierNumber: candidate.folderCode })}
                           </span>

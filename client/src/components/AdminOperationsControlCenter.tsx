@@ -73,7 +73,9 @@ export function AdminOperationsControlCenter({ sessionToken, totalCandidates, pe
         <Metric label="Alertes e-mail" value={smtpFailures} icon={MailWarning} tone="text-rose-300" />
       </div>
 
-      <div className="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-4" aria-label="À faire aujourd'hui, tous domaines confondus" data-testid="today-signals">
+      <div className="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-5" aria-label="À faire aujourd'hui, tous domaines confondus" data-testid="today-signals">
+        <TodaySignal label="File du jour (SLA, reçus, protocoles)" count={openDeadlines + pendingPayments + pendingEvaluations} icon={Clock3} onClick={() => onNavigate("pilotage")} />
+        <TodaySignal label="Pré-dossiers / activations" count={pendingEvaluations} icon={UserRoundCheck} onClick={() => onNavigate("pre-dossiers")} />
         <TodaySignal label="Vols à traiter (options, modifications)" count={flightsCount} icon={Plane} onClick={() => onNavigate("flights")} />
         <TodaySignal label="Candidats à relancer (documents)" count={documentsToRemind.data?.count} icon={UserRoundCheck} onClick={() => onNavigate("documents")} />
         <TodaySignal label="Avis clients à inviter" count={reviewsToInvite.data?.count} icon={Star} href="/admin/customer-reviews" />

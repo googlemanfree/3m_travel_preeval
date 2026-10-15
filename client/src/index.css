@@ -1227,4 +1227,25 @@ html.high-contrast .btn-submit { color: #ffffff !important; background: #082b5c 
   textarea {
     font-size: 16px;
   }
+
+  /* Admin ops : tables densifiées → cartes empilées, CTAs plus grands au doigt */
+  [data-admin-ops-mobile] table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  [data-admin-ops-mobile] table th {
+    white-space: nowrap;
+  }
+  [data-admin-ops-mobile] [data-testid="today-priority-item"],
+  [data-admin-ops-mobile] [data-testid="cockpit-open-row"],
+  [data-admin-ops-mobile] [data-testid^="predossier-row-"] {
+    min-height: 3rem;
+  }
+  [data-admin-ops-mobile] .admin-ops-cta,
+  [data-admin-ops-mobile] button[data-testid^="predossier-activer-"],
+  [data-admin-ops-mobile] button[data-testid^="predossier-voir-fiche-"] {
+    min-height: 2.75rem;
+  }
 }

@@ -265,6 +265,14 @@ describe("dialogue « Activer le dossier client »", () => {
     expect(screen.getByText("DJAMBONG TESSA")).toBeTruthy();
   });
 
+  it("affiche le bandeau sticky quand au moins un compte est prêt à activer", () => {
+    h.account = account({ evaluationValidated: true, paymentValidated: true });
+    render(<AdminPreDossierAccountsPanel sessionToken="jeton" />);
+    expect(screen.getByTestId("predossier-ready-sticky").textContent).toContain("prêt");
+    fireEvent.click(screen.getByTestId("predossier-ready-sticky"));
+    expect(screen.getByTestId("predossier-filter-ready").getAttribute("aria-pressed")).toBe("true");
+  });
+
   it("ouvre le dialogue d’activation depuis activateAccountId (fiche 360°)", () => {
     render(
       <AdminPreDossierAccountsPanel

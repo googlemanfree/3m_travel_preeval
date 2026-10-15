@@ -33,6 +33,7 @@ import { buildEvisaMessageSnapshot, buildEvisaMessageTemplate, type EvisaMessage
 import { mergeEvisaCatalogue } from "@/lib/evisaCatalogueMerge";
 import { buildAgreementProtocolText, buildSecondAgreementProtocolText, AGREEMENT_PROTOCOL_VERSION } from "@shared/agreementProtocolContent";
 import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from "@shared/adminSync";
+import { ADMIN_MESSAGE_TEMPLATES, fillAdminTemplate, formatActivationTransition } from "@shared/adminOpsToolkit";
 import {
   LUXEMBOURG_JOB_PLATFORMS,
   isLuxembourgDestination,
@@ -820,6 +821,25 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
         </DialogContent>
       </Dialog>
 
+      {formatActivationTransition({
+        formerAccountReference: candidate.formerAccountReference,
+        folderCode: (data as any)?.canonicalFolderCode || candidate.folderCode,
+      }) ? (
+        <div
+          className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950"
+          data-testid="candidate360-activation-history"
+          role="status"
+        >
+          <p className="text-xs font-bold uppercase tracking-wide text-emerald-800">Activation dossier</p>
+          <p className="mt-1 font-mono text-sm font-semibold">
+            {formatActivationTransition({
+              formerAccountReference: candidate.formerAccountReference,
+              folderCode: (data as any)?.canonicalFolderCode || candidate.folderCode,
+            })}
+          </p>
+          <p className="mt-1 text-xs text-emerald-800">Transition COMPTE-… → 3M-… conservée pour le suivi ops.</p>
+        </div>
+      ) : null}
       <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600" aria-live="polite" data-testid="candidate360-sync">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="font-mono text-[11px] font-semibold text-blue-800">
@@ -1798,11 +1818,46 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
         </TabsContent>
 
         <TabsContent value="messages" className="grid gap-3 pt-4 sm:grid-cols-2">
-          <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 sm:col-span-2">
+          <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 sm:col-span-2" data-testid="candidate360-message-templates">
             <h4 className="flex items-center gap-2 font-semibold text-slate-900"><Send className="h-4 w-4 text-blue-700" />Envoyer une communication au candidat</h4>
-            <p className="mt-1 text-sm text-slate-600">Le message est journalisé, visible dans l’espace client et envoyé par e-mail lorsqu’il est disponible.</p>
+            <p className="mt-1 text-sm text-slate-600">Modèles par étape, puis envoi journalisé (espace client + e-mail si disponible).</p>
+            <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Modèles de message">
+              {ADMIN_MESSAGE_TEMPLATES.map((template) => (
+                <button
+                  key={template.id}
+                  type="button"
+                  data-testid={`message-template-${template.id}`}
+                  onClick={() => {
+                    const filled = fillAdminTemplate(template, {
+                      name: candidate.fullName,
+                      reference: candidate.folderCode,
+                    });
+                    setOutboundMessage(filled.body);
+                  }}
+                  className="rounded-full border border-blue-200 bg-white px-3 py-1 text-xs font-bold text-blue-900 hover:border-blue-400"
+                >
+                  {template.label}
+                </button>
+              ))}
+            </div>
             <Textarea className="mt-3 bg-white" value={outboundMessage} onChange={(event) => setOutboundMessage(event.target.value)} placeholder="Rédigez une instruction, une décision ou une demande de précision…" maxLength={2000} />
-            <div className="mt-2 flex items-center justify-between gap-3"><span className="text-xs text-slate-500">{outboundMessage.length}/2000 caractères</span><Button size="sm" disabled={outboundMessage.trim().length < 3 || sendMessageMutation.isPending} onClick={() => sendMessageMutation.mutate({ sessionToken, candidateId: candidate.id, content: outboundMessage.trim() })}><Send className="mr-2 h-4 w-4" />{sendMessageMutation.isPending ? "Envoi…" : "Envoyer au candidat"}</Button></div>
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+              <span className="text-xs text-slate-500">{outboundMessage.length}/2000 caractères</span>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="gap-1"
+                  disabled={!sessionToken || resendAccessMutation.isPending || actionLocks.resendAccess || !/^(account|online|agency)_\d+$/.test(candidate.id)}
+                  onClick={() => { lockAction("resendAccess"); resendAccessMutation.mutate({ sessionToken, candidateId: candidate.id }); }}
+                  data-testid="resend-client-access-link-messages"
+                >
+                  <KeyRound className="h-3.5 w-3.5" />Renvoyer l’accès
+                </Button>
+                <Button size="sm" disabled={outboundMessage.trim().length < 3 || sendMessageMutation.isPending} onClick={() => sendMessageMutation.mutate({ sessionToken, candidateId: candidate.id, content: outboundMessage.trim() })}><Send className="mr-2 h-4 w-4" />{sendMessageMutation.isPending ? "Envoi…" : "Envoyer au candidat"}</Button>
+              </div>
+            </div>
           </div>
           <div className="rounded-xl border p-4"><h4 className="flex items-center gap-2 font-semibold"><Bell className="h-4 w-4 text-blue-700" />Notifications client</h4><div className="mt-3 space-y-2">{data.communications.notifications.length ? data.communications.notifications.map((notification: any) => <div key={notification.id} className="rounded-lg bg-slate-50 p-3"><p className="text-sm font-medium">{notification.title}</p><p className="mt-1 text-xs text-slate-600">{notification.body}</p><p className="mt-1 text-xs text-slate-400">{formatDate(notification.createdAt)}</p></div>) : <p className="text-sm text-slate-500">Aucune notification enregistrée.</p>}</div></div>
           <div className="rounded-xl border p-4"><div className="flex flex-wrap items-center justify-between gap-2"><h4 className="flex items-center gap-2 font-semibold"><MessageSquare className="h-4 w-4 text-blue-700" />Échanges</h4><CommunicationHistoryPdfButton sessionToken={sessionToken} candidateId={candidate.id} candidateName={candidate.fullName} folderCode={candidate.folderCode} messages={data.communications.messages} notifications={data.communications.notifications} /></div><div className="mt-3 space-y-2">{data.communications.messages.length ? data.communications.messages.map((message: any) => { const snapshot = message.evisaSnapshotJson ? (() => { try { return JSON.parse(message.evisaSnapshotJson); } catch { return null; } })() : null; return <div key={message.id} className="rounded-lg bg-slate-50 p-3"><p className="text-sm font-medium">{message.senderRole === "candidate" ? "Candidat" : "Administration"}</p><p className="mt-1 text-xs text-slate-600 line-clamp-3">{message.content}</p>{snapshot?.items?.length ? <div className="mt-2 rounded border border-cyan-200 bg-cyan-50 p-2 text-xs text-cyan-950"><p className="font-semibold">Instantané e‑Visa partagé</p>{snapshot.items.map((item: any) => <p key={item.destinationId}>{item.country} · vérifié le {item.officialVerifiedAt} · <a className="underline" href={item.officialPortalUrl} target="_blank" rel="noreferrer">portail officiel</a></p>)}</div> : null}<p className="mt-1 text-xs text-slate-400">{formatDate(message.createdAt)}</p></div>; }) : <p className="text-sm text-slate-500">Aucun message dans ce fil.</p>}</div></div>

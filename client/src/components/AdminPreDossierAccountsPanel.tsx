@@ -604,6 +604,17 @@ export default function AdminPreDossierAccountsPanel({
             </p>
           </div>
         </div>
+        {filterCounts.ready > 0 ? (
+          <button
+            type="button"
+            data-testid="predossier-ready-sticky"
+            onClick={() => setListFilter("ready")}
+            className="sticky top-2 z-10 flex w-full items-center justify-between gap-3 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-left text-sm font-bold text-emerald-950 shadow-sm transition hover:bg-emerald-100"
+          >
+            <span>{filterCounts.ready} pré-dossier{filterCounts.ready > 1 ? "s" : ""} prêt{filterCounts.ready > 1 ? "s" : ""} à activer</span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-emerald-800">Afficher</span>
+          </button>
+        ) : null}
         <div className="space-y-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />

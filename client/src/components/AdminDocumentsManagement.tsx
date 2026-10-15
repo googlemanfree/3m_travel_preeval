@@ -329,6 +329,24 @@ export function AdminDocumentsManagement() {
     }
   };
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!selectedDocuments.length || isLoading) return;
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
+      if (event.key === "a" || event.key === "A") {
+        event.preventDefault();
+        void handleBulkStatus("approved");
+      }
+      if (event.key === "p" || event.key === "P") {
+        event.preventDefault();
+        void handleBulkStatus("pending");
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedDocuments, isLoading]);
+
   const acceptDroppedFiles = (incoming: FileList | File[]) => {
     const supportedTypes = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]);
     const valid = Array.from(incoming).filter((file) => supportedTypes.has(file.type) && file.size <= 10 * 1024 * 1024);
@@ -854,7 +872,7 @@ export function AdminDocumentsManagement() {
                 <button key={mode} type="button" onClick={() => setViewMode(mode)} aria-pressed={viewMode === mode} className={`rounded-md px-3 py-1.5 ${viewMode === mode ? "bg-white text-blue-800 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}>{label}</button>
               ))}
             </div>
-            {viewMode === "list" && selectedDocuments.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 p-3"><div className="flex items-center gap-2 text-sm text-blue-950"><ShieldCheck className="h-4 w-4" /><strong>{selectedDocuments.length}</strong> document(s) sélectionné(s)</div><div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => setSelectedDocumentKeys([])}>Désélectionner</Button><Button type="button" size="sm" onClick={() => handleBulkStatus("pending")} disabled={isLoading} className="gap-1 bg-amber-600 hover:bg-amber-700"><RotateCcw className="h-3.5 w-3.5" />En attente</Button><Button type="button" size="sm" onClick={() => handleBulkStatus("approved")} disabled={isLoading} className="gap-1 bg-emerald-700 hover:bg-emerald-800"><CheckCircle2 className="h-3.5 w-3.5" />Tout valider</Button></div></div>}
+            {viewMode === "list" && selectedDocuments.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 p-3" data-testid="documents-bulk-bar"><div className="flex flex-col gap-0.5 text-sm text-blue-950"><span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" /><strong>{selectedDocuments.length}</strong> document(s) sélectionné(s)</span><span className="text-[11px] font-medium text-blue-800">Raccourcis : A = valider · P = en attente</span></div><div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => setSelectedDocumentKeys([])}>Désélectionner</Button><Button type="button" size="sm" onClick={() => handleBulkStatus("pending")} disabled={isLoading} className="gap-1 bg-amber-600 hover:bg-amber-700"><RotateCcw className="h-3.5 w-3.5" />En attente</Button><Button type="button" size="sm" onClick={() => handleBulkStatus("approved")} disabled={isLoading} className="gap-1 bg-emerald-700 hover:bg-emerald-800"><CheckCircle2 className="h-3.5 w-3.5" />Tout valider</Button></div></div>}
 
             {/* Tableau */}
             {isLoadingDocs ? (
