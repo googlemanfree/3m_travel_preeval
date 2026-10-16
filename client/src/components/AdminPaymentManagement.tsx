@@ -34,6 +34,8 @@ interface Payment {
   receiptUrl?: string;
   receiptMimeType?: string;
   receiptFileName?: string;
+  destination?: string | null;
+  visaType?: string | null;
   agreementSigned?: boolean;
   paymentSecretCodeSubmittedAt?: Date | string | null;
   paymentReceiptDelivery?: {
@@ -175,6 +177,8 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated, onOpenC
     receiptUrl: app.paymentReceipt?.fileUrl,
     receiptMimeType: app.paymentReceipt?.mimeType,
     receiptFileName: app.paymentReceipt?.fileName,
+    destination: app.destination,
+    visaType: app.visaType,
     agreementSigned: Boolean(app.agreementSigned),
     paymentSecretCodeSubmittedAt: app.paymentSecretCodeSubmittedAt,
     paymentReceiptDelivery: app.paymentReceiptDelivery,
@@ -278,6 +282,15 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated, onOpenC
     if (method.includes("orange")) return "Orange Money à distance";
     if (method.includes("mobile") || method.includes("mtn")) return "Mobile Money à distance";
     return payment.paymentMethod || "Mode à préciser";
+  };
+
+  const getVisaBadge = (visaType?: string | null) => {
+    const value = String(visaType ?? "").toLowerCase();
+    if (/famille|family|regroup/.test(value)) return { label: "Regroupement familial", className: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-800" };
+    if (/étud|etud|study|student|academic/.test(value)) return { label: "Études", className: "border-violet-200 bg-violet-50 text-violet-800" };
+    if (/visit|visiteur|touris|tourism|schengen_tour/.test(value)) return { label: "Visiteurs", className: "border-sky-200 bg-sky-50 text-sky-800" };
+    if (/travail|work|emploi|job|permit|schengen_travail/.test(value)) return { label: "Travail", className: "border-amber-200 bg-amber-50 text-amber-900" };
+    return { label: visaType?.trim() || "Type à préciser", className: "border-slate-200 bg-slate-50 text-slate-700" };
   };
 
   const handleSendReceipt = (payment: Payment, action: "initial" | "resend") => {
@@ -734,7 +747,15 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated, onOpenC
                 <tbody>
                   {filteredPayments.map((payment) => (
                     <tr key={payment.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                      <td className="py-3 px-4 font-mono text-blue-600">{payment.dossierNumber}<AdminPaymentProofBadge sessionToken={sessionToken} reference={payment.dossierNumber} /></td>
+                      <td className="py-3 px-4 font-mono text-blue-600">
+                        <div className="flex flex-col items-start gap-1">
+                          <span>{payment.dossierNumber}</span>
+                          <Badge variant="outline" className={`font-sans text-[11px] font-bold ${getVisaBadge(payment.visaType).className}`} data-testid="payment-visa-badge" title={payment.destination ? `Destination : ${payment.destination}` : undefined}>
+                            {getVisaBadge(payment.visaType).label}
+                          </Badge>
+                          <AdminPaymentProofBadge sessionToken={sessionToken} reference={payment.dossierNumber} />
+                        </div>
+                      </td>
                       <td className="py-3 px-4 font-medium text-gray-900">{payment.fullName}</td>
                       <td className="py-3 px-4 text-gray-600">{payment.email}</td>
                       <td className="py-3 px-4 text-xs text-gray-600">

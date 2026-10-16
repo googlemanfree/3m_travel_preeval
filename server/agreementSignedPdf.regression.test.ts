@@ -51,4 +51,17 @@ describe("protocole d’accord — signature espace client → PDF mail", () => 
     expect(admin).toContain("Protocole validé");
     expect(admin).toContain("preview-agreement-protocol");
   });
+
+  it("sépare visuellement les visas et protège les exports officiels", () => {
+    const admin = read("client/src/components/AdminPaymentManagement.tsx");
+    const cockpit = read("client/src/components/Candidate360Workspace.tsx");
+    const page = read("client/src/pages/EvaluationSpace.tsx");
+    expect(admin).toContain("payment-visa-badge");
+    expect(admin).toContain("getVisaBadge");
+    expect(cockpit).toContain("candidate360-preview-agreement");
+    expect(cockpit).toContain("candidate360-agreement-preview");
+    expect(page).toContain("client-official-documents");
+    expect(page).toContain("officiallyValidated");
+    expect(page).toContain("receiptApprovedAt");
+  });
 });

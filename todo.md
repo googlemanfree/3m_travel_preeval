@@ -1,8 +1,9 @@
 
 
-## PR145 — stabilité des contrats après réalignement sur main
-- [x] Corriger uniquement les assertions obsolètes liées aux pages lazy, logo/SW, contenus légaux, SEO, parcours, visuels, contact, hubs et ordre des sections.
-- [x] Aligner les tests pré-dossier sur la règle actuelle : activation conservée, aucune corbeille automatique des dossiers frères/doublons.
-- [x] `pnpm run check` vert et lots ciblés : 15 suites / 126 tests verts après corrections.
-- [x] `git diff --check` vert.
-- [x] La suite complète n’est pas relancée après correction : le test pré-dossier déclenche actuellement des e-mails SMTP réels; aucune nouvelle exécution n’a été faite pour éviter un nouvel envoi.
+## Reçus, protocoles et espace candidat
+- [x] Badges de type de visa accessibles sur la page des reçus (Travail / Études / Visiteurs / famille).
+- [x] Aperçu admin en lecture seule avant envoi du protocole, sans envoi automatique (bureau reçus et cockpit 360°).
+- [x] Export/téléchargement des protocoles signés et reçus validés personnalisés dans l’espace candidat.
+- [x] Propagation explicite de `destination` et `visaType` vers le bureau des reçus.
+- [x] Régressions ciblées protocoles + PDF : 11/11 vertes ; `git diff --check` vert.
+- [ ] `pnpm run check` global : 4 erreurs TypeScript préexistantes hors périmètre (`CountryDetailPage.tsx`, `ProceduresAdvanced.tsx`, `server/routers/admin.ts`).

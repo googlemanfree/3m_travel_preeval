@@ -761,6 +761,8 @@ export const applicationRouter = router({
       const openingFeeSetIds = new Set(feeSetRows.map((row) => row.paymentId));
       return filtered.map((application) => ({
         ...application,
+        destination: application.destination,
+        visaType: application.visaType,
         openingFeeConfirmed: openingFeeSetIds.has(application.id),
         paymentReceipt: application.candidateId ? receiptByCandidateId.get(application.candidateId) ?? null : null,
         paymentReceiptDelivery: receiptDeliveryByApplicationId.get(application.id) ?? {

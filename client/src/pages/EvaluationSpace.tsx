@@ -427,6 +427,14 @@ export default function EvaluationSpace() {
     || (activeAgencyDossier?.signedProtocolPdfUrl
       ? { documentUrl: activeAgencyDossier.signedProtocolPdfUrl, documentName: `Protocole-accord-01-signe-${activeAgencyDossier.dossierNumber}.pdf` }
       : null);
+  const officialClientDocuments = (agencyDocuments as any[]).filter((document) => {
+    const label = `${document.documentName ?? ""} ${document.documentType ?? ""} ${document.uploadedByAdmin ?? ""} ${document.uploadedBy ?? ""}`;
+    const reviewStatus = String(document.reviewStatus ?? document.verificationStatus ?? "").toLowerCase();
+    const officiallyValidated = /approved|valid|sign|approuv|validé/.test(reviewStatus) || Boolean(document.receiptApprovedAt || document.signatureLabel || document.signatureHash);
+    const isSignedProtocol = /protocole|accord/i.test(label) && /sign|valid|approuv/i.test(label);
+    const isSignedReceipt = /reçu|receipt|justificatif_paiement/i.test(label) && officiallyValidated;
+    return Boolean(document.documentUrl ?? document.url) && officiallyValidated && (isSignedProtocol || isSignedReceipt);
+  });
   const dossierSwitcherLabel = (dossier: { visaType?: string | null; destination?: string | null; dossierNumber?: string | null; projectType?: string | null }) =>
     procedureLabelForDossier(dossier);
   const cProfile = {
@@ -1365,6 +1373,25 @@ export default function EvaluationSpace() {
                 </CardContent>
               </Card>
 
+              {officialClientDocuments.length > 0 && (
+                <Card className="border-indigo-200 bg-indigo-50/40 shadow-sm" data-testid="client-official-documents">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-indigo-950"><Download className="h-5 w-5 text-indigo-700" />Protocoles et reçus personnalisés</CardTitle>
+                    <p className="text-sm leading-6 text-indigo-900">Les documents validés par l’agence restent disponibles ici en téléchargement. Un reçu n’apparaît qu’après validation et signature administrative.</p>
+                  </CardHeader>
+                  <CardContent className="grid gap-3 sm:grid-cols-2">
+                    {officialClientDocuments.map((document: any) => {
+                      const documentUrl = document.documentUrl ?? document.url;
+                      const label = `${document.documentName ?? document.fileName ?? "Document officiel"}`;
+                      const isReceipt = /reçu|receipt|justificatif_paiement/i.test(`${label} ${document.documentType ?? ""}`);
+                      return <div key={document.id ?? documentUrl} className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-white p-3">
+                        <div className="min-w-0"><p className="truncate text-sm font-bold text-slate-900">{isReceipt ? "Reçu de paiement" : "Protocole d’accord"}</p><p className="truncate text-xs text-slate-500">{label}</p></div>
+                        <Button asChild type="button" size="sm" className="shrink-0 bg-indigo-700 text-white hover:bg-indigo-800"><a href={documentUrl} target="_blank" rel="noopener noreferrer" download aria-label={`Télécharger ${label}`}><Download className="mr-1.5 h-4 w-4" />PDF</a></Button>
+                      </div>;
+                    })}
+                  </CardContent>
+                </Card>
+              )}
               {Boolean(workflow?.showSecondAgreement) && (
                 <Card className="border-emerald-200 bg-white shadow-sm" aria-labelledby="client-protocol-two-title" data-testid="client-protocol-two">
                   <CardHeader>
