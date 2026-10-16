@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { DOCUMENT_REJECTION_REASONS, composeRejectionComment, type DocumentRejectionCode } from "@shared/documentRejectionReasons";
 import { summarizeWaiting, waitingInfo } from "@shared/documentWaiting";
+import { AdminDocumentInsightsCard } from "@/components/AdminDocumentInsights";
 
 interface Document {
   id: number;
@@ -821,6 +822,7 @@ export function AdminDocumentsManagement() {
 
           <CardContent className="space-y-4">
             {/* Filtres et tri */}
+            <AdminDocumentInsightsCard sessionToken={sessionToken} />
             {waitingSummary.pending > 0 && (
               <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs" data-testid="documents-waiting-queue">
                 <span className="font-semibold text-slate-800">File de vérification :</span>
