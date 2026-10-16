@@ -1035,15 +1035,6 @@ export const candidateRouter = router({
         }
       }
 
-      let extractionJson: string | null = null;
-      try {
-        const { extractDocumentInformation } = await import("../services/documentExtractorService");
-        const extraction = await extractDocumentInformation(input.fileType, input.fileName);
-        extractionJson = JSON.stringify(extraction);
-      } catch (err) {
-        console.error("Extraction error:", err);
-      }
-
       const insertResult = await db.insert(candidateFiles).values({
         candidateId: ctx.candidate.id,
         fileType: input.fileType,
@@ -1055,7 +1046,6 @@ export const candidateRouter = router({
         status: "uploaded",
         correctionComment: input.correctionComment ?? null,
         replacesFileId: input.replacesFileId ?? null,
-        extractedData: extractionJson,
       });
 
       const documentId = Number((insertResult as any)[0]?.insertId || 0);
