@@ -24,7 +24,8 @@ function sourceContract() {
   return projectFile("client/src/components/Candidate360Workspace.tsx");
 }
 
-it("rattache la sélection du CV aux documents du dossier avant le fallback", () => {
+it("rattache la sélection du CV aux documents du dossier avant le fallback évaluation", () => {
   expect(sourceContract()).toContain("documents.find((document: any)");
   expect(sourceContract()).toContain("data?.cvDocument");
+  expect(sourceContract()).toContain("evaluationContext?.cvFileUrl");
 });

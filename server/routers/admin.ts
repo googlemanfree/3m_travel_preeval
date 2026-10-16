@@ -4701,6 +4701,15 @@ export const adminRouter = router({
           uploadedByRole: "candidate",
           reviewStatus: "pending",
           source: "online",
+        } : latestEvaluation?.cvFileUrl ? {
+          id: `evaluation-cv-${latestEvaluation.id}`,
+          documentType: "cv",
+          fileName: latestEvaluation.cvFileName || "CV soumis à l’évaluation",
+          documentUrl: latestEvaluation.cvFileUrl,
+          uploadedAt: latestEvaluation.createdAt,
+          uploadedByRole: "candidate",
+          reviewStatus: "pending",
+          source: "evaluation",
         } : null,
         payments: paymentSnapshot ? [paymentSnapshot] : [],
         agreement: reference.source === "online"
@@ -4745,6 +4754,8 @@ export const adminRouter = router({
           procedureLabel,
           submittedAt: latestEvaluation.createdAt,
           details: projectDetails,
+          cvFileUrl: latestEvaluation.cvFileUrl ?? null,
+          cvFileName: latestEvaluation.cvFileName ?? null,
         } : null,
         countryProcedureChecklist,
         journeySla: {

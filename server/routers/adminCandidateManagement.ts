@@ -562,23 +562,48 @@ export const adminCandidateManagementRouter = router({
       // il n'est ni supprimé ni modifié, seulement retiré de cette liste (le nombre masqué est annoncé à l'administrateur).
       const [allAccounts, files, evaluationRows, activeEmails] = await Promise.all([
         db.select().from(candidates).where(and(eq(candidates.dossierStatus, "nouveau"), isNull(candidates.deletedAt))).orderBy(desc(candidates.createdAt)).limit(500),
-        db.select({ candidateId: candidateFiles.candidateId, fileType: candidateFiles.fileType }).from(candidateFiles).limit(5000),
-        db.select({ email: evaluations.email, cvFileUrl: evaluations.cvFileUrl }).from(evaluations).limit(10000),
+        db.select({
+          candidateId: candidateFiles.candidateId,
+          fileType: candidateFiles.fileType,
+          fileUrl: candidateFiles.fileUrl,
+          fileName: candidateFiles.fileName,
+        }).from(candidateFiles).limit(5000),
+        db.select({
+          email: evaluations.email,
+          cvFileUrl: evaluations.cvFileUrl,
+          cvFileName: evaluations.cvFileName,
+          createdAt: evaluations.createdAt,
+        }).from(evaluations).limit(10000),
         loadEmailsWithActiveDossier(db),
       ]);
       const accounts = allAccounts.filter((account) => !activeEmails.has(account.email.trim().toLowerCase()));
       const coveredByActiveDossier = allAccounts.length - accounts.length;
       const documentsByCandidate = new Map<number, number>();
       const cvByCandidate = new Set<number>();
+      const cvFileByCandidate = new Map<number, { url: string; fileName: string }>();
       files.forEach((file) => {
         documentsByCandidate.set(file.candidateId, (documentsByCandidate.get(file.candidateId) ?? 0) + 1);
-        if (file.fileType === "cv") cvByCandidate.add(file.candidateId);
+        if (file.fileType === "cv") {
+          cvByCandidate.add(file.candidateId);
+          if (file.fileUrl?.trim() && !cvFileByCandidate.has(file.candidateId)) {
+            cvFileByCandidate.set(file.candidateId, { url: file.fileUrl, fileName: file.fileName || "CV" });
+          }
+        }
       });
-      const cvByEmail = new Set(
-        evaluationRows
-          .filter((row) => Boolean(row.cvFileUrl?.trim()))
-          .map((row) => row.email.trim().toLowerCase()),
-      );
+      const cvByEmail = new Map<string, { url: string; fileName: string; createdAtMs: number }>();
+      for (const row of evaluationRows) {
+        if (!row.cvFileUrl?.trim()) continue;
+        const key = row.email.trim().toLowerCase();
+        const createdAtMs = new Date(row.createdAt).getTime();
+        const existing = cvByEmail.get(key);
+        if (!existing || createdAtMs > existing.createdAtMs) {
+          cvByEmail.set(key, {
+            url: row.cvFileUrl,
+            fileName: row.cvFileName || "CV soumis à l’évaluation",
+            createdAtMs,
+          });
+        }
+      }
       const query = input.search.toLowerCase();
       const filtered = accounts.filter((account) => !query || [account.fullName, account.email, account.phone ?? "", account.destination ?? ""].some((value) => value.toLowerCase().includes(query)));
       const openingPaymentByCandidate = new Map<number, OpeningPaymentRecord | null>();
@@ -590,7 +615,9 @@ export const adminCandidateManagementRouter = router({
         coveredByActiveDossier,
         accounts: filtered.map((account) => {
           const emailKey = account.email.trim().toLowerCase();
-          const hasCv = cvByCandidate.has(account.id) || cvByEmail.has(emailKey);
+          const evalCv = cvByEmail.get(emailKey);
+          const fileCv = cvFileByCandidate.get(account.id);
+          const hasCv = Boolean(fileCv || evalCv);
           const evaluationValidated = account.evaluationDeclarationStatus === "validated";
           const evaluationPending = account.evaluationDeclarationStatus === "pending_validation";
           return {
@@ -605,6 +632,8 @@ export const adminCandidateManagementRouter = router({
             lastLoginAt: account.lastLoginAt,
             documentsCount: documentsByCandidate.get(account.id) ?? 0,
             hasCv,
+            cvFileUrl: fileCv?.url ?? evalCv?.url ?? null,
+            cvFileName: fileCv?.fileName ?? evalCv?.fileName ?? null,
             /** Déclaration / validation hors ligne sans CV en fichier — dossier à ouvrir ensuite selon pays + visa. */
             evaluationWithoutCv: (evaluationValidated || evaluationPending) && !hasCv,
             pendingEvaluationReference: evaluationPending ? (hasCv ? "Évaluation externe à valider" : "Évaluation sans CV à valider") : null,

@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Copy,
   Eye,
+  ExternalLink,
   FileText,
   FileCheck2,
   FolderPlus,
@@ -14,6 +15,7 @@ import {
   UserRound,
   X,
 } from "lucide-react";
+import { isOpenableStoredUrl } from "@shared/storedFileUrl";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,6 +61,8 @@ type PreDossierAccount = {
   lastLoginAt: string | Date | null;
   documentsCount: number;
   hasCv?: boolean;
+  cvFileUrl?: string | null;
+  cvFileName?: string | null;
   evaluationWithoutCv?: boolean;
   pendingEvaluationReference?: string | null;
   evaluationValidated?: boolean;
@@ -754,6 +758,23 @@ export default function AdminPreDossierAccountsPanel({
                           >
                             Sans CV
                           </Badge>
+                        ) : isOpenableStoredUrl(account.cvFileUrl) ? (
+                          <a
+                            href={account.cvFileUrl!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(event) => event.stopPropagation()}
+                            className="ml-1 mt-1 inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800 transition hover:bg-emerald-100"
+                            data-testid={`predossier-cv-open-${account.id}`}
+                            title={account.cvFileName || "Ouvrir le CV"}
+                          >
+                            <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                            Ouvrir le CV
+                          </a>
+                        ) : account.hasCv ? (
+                          <Badge variant="outline" className="ml-1 mt-1 border-emerald-200 bg-emerald-50 text-emerald-800">
+                            CV présent
+                          </Badge>
                         ) : null}
                         {account.paymentValidated && (
                           <button
@@ -1277,6 +1298,20 @@ export default function AdminPreDossierAccountsPanel({
                 <p className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs leading-5 text-rose-900">
                   Évaluation sans CV : le parcours et la checklist du dossier seront créés à partir du <strong>pays</strong> et du <strong>type de visa</strong> choisis ci-dessous (pas d’un modèle générique).
                 </p>
+              ) : isOpenableStoredUrl(selected?.cvFileUrl) ? (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3" data-testid="predossier-selected-cv">
+                  <p className="text-xs font-semibold text-emerald-950">CV disponible pour ce pré-dossier</p>
+                  <p className="mt-1 truncate text-xs text-emerald-900">{selected?.cvFileName || "CV candidat"}</p>
+                  <a
+                    href={selected!.cvFileUrl!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-900 underline-offset-2 hover:underline"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                    Ouvrir le CV
+                  </a>
+                </div>
               ) : null}
               <div>
                 <Label htmlFor="predossier-destination">Pays de destination confirmé</Label>
