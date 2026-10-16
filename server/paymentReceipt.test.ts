@@ -25,10 +25,28 @@ describe("Payment receipt professional delivery", () => {
     expect(html).toContain("agences de placement partenaires");
     expect(html).toContain("recherche d’un contrat de travail");
     expect(html).toContain("non remboursables");
-    expect(html).toContain("protocole d’accord distinct");
+    expect(html).toContain("protocole d’accord");
     expect(html).toContain("ne constitue pas une garantie d’emploi");
     expect(html).toContain("mon-espace?section=dossier");
     expect(html).not.toContain("IA");
+  });
+
+  it("adapte le reçu études (sans placement / contrat de travail)", () => {
+    const html = buildPaymentReceiptEmailHtml({
+      dossierNumber: "3M-AGN-270003",
+      fullName: "Étudiant Test",
+      email: "etudes@example.com",
+      amount: 65000,
+      currency: "XAF",
+      paymentDate: new Date("2026-09-08T10:52:19Z"),
+      paymentMethod: "Agence",
+      validatedBy: "conseiller@3mtravelagency.com",
+      destination: "Canada",
+      visaType: "Études",
+    });
+    expect(html).toMatch(/études|diplômes|relevés/i);
+    expect(html.toLowerCase()).not.toContain("contrat de travail");
+    expect(html.toLowerCase()).not.toContain("agences de placement");
   });
 
   it("normalizes French grouping spaces for PDF-safe monetary display", () => {

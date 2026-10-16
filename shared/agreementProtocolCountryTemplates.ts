@@ -1,11 +1,8 @@
 // Modeles "riches" (en-tete societe, articles numerotes, bloc de signature) pour les
-// Protocoles d'Accord N01 et N02, parametres par pays de destination. Le modele complet
-// et les montants reels ne sont aujourd'hui disponibles que pour le Luxembourg (procedure
-// de placement salarie via agences partenaires) : c'est la seule destination du site ou
-// 3M TRAVEL AGENCY facture un second protocole avec un bareme de paiement chiffre (voir
-// client/src/data/countryProcedures/luxembourg.ts, memes montants). Pour toute autre
-// destination, tant qu'aucun bareme reel n'a ete communique par l'agence, le modele par
-// defaut reste volontairement generique et n'invente aucun chiffre.
+// Protocoles d'Accord N01 et N02, parametres par pays de destination ET par type de visa
+// (travail, etudes, visiteurs, regroupement familial). Le bareme chiffre du Protocole N02
+// n'est aujourd'hui renseigne que pour le Luxembourg (placement salarie) ; pour les autres
+// destinations, le texte s'adapte au visa sans inventer de montants.
 
 export interface CountryProtocolFormula {
   label: string;
@@ -248,10 +245,25 @@ function foldProtocolKey(value: string | null | undefined): string {
     .toLowerCase();
 }
 
-/** Variantes Canada selon le type de visa / programme sélectionné dès le départ. */
-function canadaProtocolForVisa(base: CountryProtocolProfile, visaType?: string | null): CountryProtocolProfile {
+/** Kind de procédure pour protocoles N°01 / N°02 (tous pays). */
+export type ProtocolVisaKind = "travail" | "etudes" | "visiteurs" | "famille" | "residence" | "autre";
+
+export function detectProtocolVisaKind(visaType?: string | null): ProtocolVisaKind {
   const visa = foldProtocolKey(visaType);
-  if (/etud|study|student|academ/.test(visa)) {
+  if (!visa) return "autre";
+  if (/etud|study|student|academ|formation|ausbildung|apprentissage/.test(visa)) return "etudes";
+  if (/famill|family|regroupement|conjoint|spouse|parrainage familial/.test(visa)) return "famille";
+  if (/express|pnp|arrima|resident permanent|residence permanente|installation/.test(visa)) return "residence";
+  if (/travail|work|emploi|worker|lmia|eimt|permis de travail|travailleur|salarie|qualified|qualifie/.test(visa)) return "travail";
+  if (/visiteur|visitor|touris|ave|eta|court sejour|loisirs|visite/.test(visa)) return "visiteurs";
+  if (/\bschengen\b/.test(visa) && !/travail|etud|work|study/.test(visa)) return "visiteurs";
+  return "autre";
+}
+
+/** Variantes Canada (IRCC / DLI / EIMT) selon le type de visa. */
+function canadaProtocolForVisa(base: CountryProtocolProfile, visaType?: string | null): CountryProtocolProfile {
+  const kind = detectProtocolVisaKind(visaType);
+  if (kind === "etudes") {
     return {
       ...base,
       procedureProgramLabel: "Permis d’études — Canada",
@@ -261,7 +273,7 @@ function canadaProtocolForVisa(base: CountryProtocolProfile, visaType?: string |
       reorientationAlternatives: "une autre destination d’études internationale adaptée au profil du candidat",
     };
   }
-  if (/visiteur|visitor|touris|ave|eta/.test(visa)) {
+  if (kind === "visiteurs") {
     return {
       ...base,
       procedureProgramLabel: "Visa visiteur / séjour temporaire — Canada",
@@ -271,7 +283,17 @@ function canadaProtocolForVisa(base: CountryProtocolProfile, visaType?: string |
       reorientationAlternatives: "une autre destination de séjour temporaire adaptée au profil du candidat",
     };
   }
-  if (/express|pnp|arrima|quebec|resident/.test(visa)) {
+  if (kind === "famille") {
+    return {
+      ...base,
+      procedureProgramLabel: "Regroupement familial / parrainage — Canada",
+      employmentAuthority: "non applicable — procédure de parrainage familial",
+      immigrationAuthority: "Immigration, Réfugiés et Citoyenneté Canada (IRCC) — parrainage / regroupement",
+      procedureObjectClause: "la préparation du dossier de parrainage ou de regroupement familial et la soumission auprès d’IRCC, sans garantie d’approbation ni de délai",
+      reorientationAlternatives: "une autre procédure familiale ou destination adaptée au profil du candidat",
+    };
+  }
+  if (kind === "residence") {
     return {
       ...base,
       procedureProgramLabel: "Sélection permanente / Entrée Express / PNP — Canada",
@@ -287,24 +309,195 @@ function canadaProtocolForVisa(base: CountryProtocolProfile, visaType?: string |
   };
 }
 
+/**
+ * Adapte le profil protocole au type de visa pour TOUS les pays
+ * (travail, études, visiteurs, regroupement familial) — pas seulement le Canada.
+ */
+export function protocolProfileForVisa(
+  countrySlug: string,
+  base: CountryProtocolProfile,
+  visaType?: string | null,
+): CountryProtocolProfile {
+  if (countrySlug === "canada") return canadaProtocolForVisa(base, visaType);
+
+  const kind = detectProtocolVisaKind(visaType);
+  const label = base.destinationLabel;
+
+  if (kind === "etudes") {
+    return {
+      ...base,
+      procedureProgramLabel: `Visa études — ${label}`,
+      employmentAuthority: `l’établissement d’enseignement et les services d’admission compétents pour ${label}`,
+      procedureObjectClause: `la préparation du dossier d’études (parcours scolaire, diplômes, relevés, cycle visé, admission ou candidature, financement) et la soumission auprès des autorités compétentes pour ${label}, sans garantie d’admission ni de visa`,
+      reorientationAlternatives: base.reorientationAlternatives.includes("études")
+        ? base.reorientationAlternatives
+        : `une autre destination d’études internationale adaptée au profil du candidat`,
+    };
+  }
+
+  if (kind === "visiteurs") {
+    return {
+      ...base,
+      procedureProgramLabel: `Visa visiteurs / séjour temporaire — ${label}`,
+      employmentAuthority: "non applicable pour un séjour temporaire sans autorisation de travail",
+      procedureObjectClause: `la préparation du dossier de séjour temporaire (statut déclaré — chef d’entreprise, employé ou particulier —, motif, itinéraire, attaches et justificatifs de retour) et le dépôt auprès des autorités compétentes pour ${label}, sans promesse d’emploi ni de permis de travail`,
+      reorientationAlternatives: `une autre destination de séjour temporaire adaptée au profil du candidat`,
+    };
+  }
+
+  if (kind === "famille") {
+    return {
+      ...base,
+      procedureProgramLabel: `Regroupement familial — ${label}`,
+      employmentAuthority: "non applicable — procédure de regroupement / parrainage familial",
+      procedureObjectClause: `la préparation du dossier de regroupement familial (lien de parenté, pièces d’état civil, garanties du membre de famille) et la soumission auprès des autorités compétentes pour ${label}, sans garantie d’approbation`,
+      reorientationAlternatives: `une autre procédure familiale ou destination adaptée au profil du candidat`,
+    };
+  }
+
+  if (kind === "residence") {
+    return {
+      ...base,
+      procedureProgramLabel: `Résidence / installation — ${label}`,
+      procedureObjectClause: `la préparation du dossier d’installation ou de sélection permanente pour ${label}, selon le programme retenu, sans garantie d’invitation ni de résidence`,
+    };
+  }
+
+  // Travail (défaut explicite) — vacance de poste = poste ouvert côté employeur, pas « vacances ».
+  return {
+    ...base,
+    procedureProgramLabel: base.procedureProgramLabel ?? `Visa travail — ${label}`,
+    procedureObjectClause:
+      base.procedureObjectClause
+      ?? `la préparation et la soumission du profil professionnel auprès des partenaires compétents pour ${label} (dont, le cas échéant, la déclaration de poste ouvert / vacance de poste auprès de ${base.employmentAuthority}), selon le projet et l’éligibilité constatée du candidat`,
+  };
+}
+
 export function getCountryProtocolProfile(
   destinationSlugOrLabel?: string | null,
   visaType?: string | null,
 ): CountryProtocolProfile {
-  if (!destinationSlugOrLabel) return GENERIC_PROFILE;
+  if (!destinationSlugOrLabel) {
+    return protocolProfileForVisa("generic", GENERIC_PROFILE, visaType);
+  }
   const key = foldProtocolKey(destinationSlugOrLabel);
   const match = Object.entries(COUNTRY_PROTOCOL_PROFILES).find(
     ([slug, profile]) => key.includes(slug) || key.includes(foldProtocolKey(profile.destinationLabel)),
   );
-  if (!match) return GENERIC_PROFILE;
-  const [, profile] = match;
-  if (match[0] === "canada") return canadaProtocolForVisa(profile, visaType);
+  if (!match) {
+    return protocolProfileForVisa(
+      "generic",
+      {
+        ...GENERIC_PROFILE,
+        destinationLabel: destinationSlugOrLabel.trim() || GENERIC_PROFILE.destinationLabel,
+      },
+      visaType,
+    );
+  }
+  const [slug, profile] = match;
+  return protocolProfileForVisa(slug, profile, visaType);
+}
+
+/** Clauses articles 4 / 6 / 7 du protocole N°01 selon le type de visa. */
+export function protocolOneKindClauses(kind: ProtocolVisaKind, profile: CountryProtocolProfile): {
+  noGuarantee: string;
+  transparency: string;
+  transition: string;
+  titleSuffix: string;
+} {
+  if (kind === "etudes") {
+    return {
+      titleSuffix: "MANDAT D'OUVERTURE DE DOSSIER ÉTUDES ET TRAITEMENT ADMINISTRATIF",
+      noGuarantee:
+        "Ce document et le présent protocole ne garantissent ni admission scolaire, ni place en établissement, ni visa études, ni résultat absolu. L'AGENCE est tenue à une stricte obligation de moyens professionnels dans la préparation du dossier académique. Les décisions des établissements et des autorités d'immigration restent totalement et souverainement indépendantes de 3M Travel Agency SARL.",
+      transparency: `L'AGENCE réitère que les frais d'inscription, de scolarité et les formalités propres à ${profile.employmentAuthority} incombent à l'établissement ou au candidat selon les règles publiées : aucun frais « caché » d'admission ne peut être inventé par L'AGENCE. Tout engagement officiel avec l'établissement sera conclu par LE CANDIDAT, jamais par L'AGENCE à sa place.`,
+      transition:
+        "Après obtention effective d'une proposition concrète (lettre d'admission, confirmation d'inscription ou équivalent) et validation du projet par LE CLIENT, un protocole d'accord distinct (Protocole N° 02) devra être signé pour lancer la procédure complète d'accompagnement visa études. Toute prestation ou frais d'honoraires ultérieurs feront l'objet de cet accord distinct.",
+    };
+  }
+  if (kind === "visiteurs") {
+    return {
+      titleSuffix: "MANDAT D'OUVERTURE DE DOSSIER VISITEURS / SÉJOUR TEMPORAIRE",
+      noGuarantee:
+        "Ce document et le présent protocole ne garantissent ni visa, ni entrée sur le territoire, ni durée de séjour, ni résultat absolu. L'AGENCE est tenue à une stricte obligation de moyens professionnels dans la préparation du dossier de séjour temporaire. Les décisions des autorités consulaires et d'immigration restent totalement et souverainement indépendantes de 3M Travel Agency SARL.",
+      transparency: `L'AGENCE réitère qu'aucun frais d'employeur ni de « placement » ne s'applique à une procédure visiteurs. Les justificatifs (statut, motif, hébergement, attaches, retour) incombent au CANDIDAT ; les formalités officielles relèvent de ${profile.immigrationAuthority}. Aucune promesse d'emploi n'est associée à ce mandat.`,
+      transition:
+        "Après validation du projet de séjour et, le cas échéant, obtention des justificatifs complémentaires demandés, un protocole d'accord distinct (Protocole N° 02) pourra être signé si un accompagnement consulaire étendu est requis. Toute prestation ou frais d'honoraires ultérieurs feront l'objet de cet accord distinct.",
+    };
+  }
+  if (kind === "famille") {
+    return {
+      titleSuffix: "MANDAT D'OUVERTURE DE DOSSIER REGROUPEMENT FAMILIAL",
+      noGuarantee:
+        "Ce document et le présent protocole ne garantissent ni approbation du regroupement, ni visa, ni délai d'instruction, ni résultat absolu. L'AGENCE est tenue à une stricte obligation de moyens professionnels dans la préparation du dossier familial. Les décisions des autorités d'immigration restent totalement et souverainement indépendantes de 3M Travel Agency SARL.",
+      transparency: `L'AGENCE réitère que les pièces d'état civil, preuves de lien et garanties du membre de famille incombent aux parties concernées. Les formalités auprès de ${profile.immigrationAuthority} ne peuvent donner lieu à des frais inventés par L'AGENCE.`,
+      transition:
+        "Après constitution du dossier familial et validation du projet par LE CLIENT, un protocole d'accord distinct (Protocole N° 02) pourra être signé pour l'accompagnement jusqu'au dépôt consulaire. Toute prestation ou frais d'honoraires ultérieurs feront l'objet de cet accord distinct.",
+    };
+  }
   return {
-    ...profile,
-    procedureProgramLabel: profile.procedureProgramLabel ?? `Procédure ${profile.destinationLabel}`,
-    procedureObjectClause:
-      profile.procedureObjectClause
-      ?? `la préparation et la soumission du profil auprès des partenaires compétents pour ${profile.destinationLabel}, selon le projet et l’éligibilité constatée du candidat`,
+    titleSuffix: "MANDAT D'OUVERTURE DE DOSSIER, DE TRAITEMENT ADMINISTRATIF ET DE SOUMISSION PARTENAIRES",
+    noGuarantee:
+      "Ce document et le présent protocole ne garantissent ni emploi, ni contrat de travail, ni visa, ni résultat absolu. L'AGENCE est tenue à une stricte obligation de moyens professionnels dans la prospection et la transmission du profil. Les décisions des employeurs, partenaires et autorités publiques d'immigration restent totalement et souverainement indépendantes de 3M Travel Agency SARL.",
+    transparency: `L'AGENCE réitère que les formalités relatives à la déclaration de poste ouvert (vacance de poste) et aux certificats délivrés par ${profile.employmentAuthority} incombent exclusivement à l'employeur ou à l'établissement recruteur : aucun frais à ce titre ne peut être facturé au CANDIDAT. Le contrat ou l'engagement final sera obligatoirement conclu et signé en personne par LE CANDIDAT, jamais par L'AGENCE à sa place.`,
+    transition:
+      "Après obtention effective d'une proposition concrète (contrat de travail, promesse d'embauche ou équivalent selon la procédure) et validation du projet par LE CLIENT, un protocole d'accord distinct (Protocole N° 02) devra être signé pour lancer la procédure complète d'accompagnement. Toute prestation ou frais d'honoraires ultérieurs feront l'objet de cet accord distinct, qui précisera le barème de règlement financier applicable à cette destination.",
+  };
+}
+
+/** Textes du reçu de paiement alignés sur le type de visa (tous pays). */
+export function paymentReceiptCopyForVisa(visaType?: string | null): {
+  objectText: string;
+  importantText: string;
+  emailFeesLine: string;
+  emailImportant: string;
+} {
+  const kind = detectProtocolVisaKind(visaType);
+  if (kind === "etudes") {
+    return {
+      objectText:
+        "Les frais confirmés couvrent l’ouverture du dossier, le traitement administratif et la préparation du dossier d’études (parcours scolaire, diplômes, relevés, cycle visé, admission ou candidature) selon le projet et l’éligibilité du candidat. Ces frais sont non remboursables une fois le traitement administratif engagé, car ils rémunèrent les diligences déjà réalisées.",
+      importantText:
+        "Ce reçu ne garantit ni admission scolaire, ni place en établissement, ni visa études, ni résultat. Après obtention d’une lettre d’admission ou équivalent et validation du projet, un protocole d’accord distinct pourra être signé pour lancer la procédure complète. Toute prestation ou tout frais supplémentaire fera l’objet d’un accord distinct.",
+      emailFeesLine:
+        "Ouverture du dossier, traitement administratif et préparation de votre dossier d’études (diplômes, relevés, cycle, admission).",
+      emailImportant:
+        "ce reçu ne constitue pas une garantie d’admission, de place en établissement, de visa études ou de résultat. Toute prestation ou tout frais supplémentaire doit faire l’objet d’un accord distinct et explicite.",
+    };
+  }
+  if (kind === "visiteurs") {
+    return {
+      objectText:
+        "Les frais confirmés couvrent l’ouverture du dossier, le traitement administratif et la préparation du dossier de séjour temporaire (statut, motif, attaches, justificatifs de retour) selon le projet et l’éligibilité du candidat. Ces frais sont non remboursables une fois le traitement administratif engagé.",
+      importantText:
+        "Ce reçu ne garantit ni visa, ni entrée sur le territoire, ni durée de séjour, ni résultat. Aucune promesse d’emploi n’est associée à une procédure visiteurs. Un protocole d’accord distinct pourra être signé si un accompagnement consulaire étendu est requis.",
+      emailFeesLine:
+        "Ouverture du dossier, traitement administratif et préparation de votre dossier visiteurs / séjour temporaire (statut, motif, attaches).",
+      emailImportant:
+        "ce reçu ne constitue pas une garantie de visa, d’entrée ou de résultat, et ne comporte aucune promesse d’emploi. Toute prestation ou tout frais supplémentaire doit faire l’objet d’un accord distinct et explicite.",
+    };
+  }
+  if (kind === "famille") {
+    return {
+      objectText:
+        "Les frais confirmés couvrent l’ouverture du dossier, le traitement administratif et la préparation du dossier de regroupement familial selon le projet et l’éligibilité du candidat. Ces frais sont non remboursables une fois le traitement administratif engagé.",
+      importantText:
+        "Ce reçu ne garantit ni approbation du regroupement, ni visa, ni délai, ni résultat. Un protocole d’accord distinct pourra être signé pour l’accompagnement jusqu’au dépôt consulaire.",
+      emailFeesLine:
+        "Ouverture du dossier, traitement administratif et préparation de votre dossier de regroupement familial.",
+      emailImportant:
+        "ce reçu ne constitue pas une garantie d’approbation, de visa ou de résultat. Toute prestation ou tout frais supplémentaire doit faire l’objet d’un accord distinct et explicite.",
+    };
+  }
+  return {
+    objectText:
+      "Les frais confirmés couvrent l’ouverture du dossier, le traitement administratif et la préparation/soumission du profil auprès d’agences de placement partenaires pour la recherche d’un contrat de travail, selon le projet et l’éligibilité du candidat. Ces frais sont non remboursables une fois le traitement administratif engagé, car ils rémunèrent les diligences déjà réalisées avant la soumission.",
+    importantText:
+      "La recherche peut aboutir ou non. Les frais d’ouverture et de traitement sont non remboursables après le début des diligences, sauf disposition impérative contraire applicable au dossier. Ce reçu ne garantit ni emploi, ni contrat de travail, ni visa, ni résultat. Après obtention d’un contrat de travail ou d’une lettre d’invitation et validation du projet, un protocole d’accord distinct devra être signé pour lancer la procédure complète de visa. Toute prestation ou tout frais supplémentaire fera l’objet d’un accord distinct.",
+    emailFeesLine:
+      "Ouverture du dossier, traitement administratif et préparation/soumission de votre profil auprès d’agences de placement partenaires pour la recherche d’un contrat de travail.",
+    emailImportant:
+      "ce reçu ne constitue pas une garantie d’emploi, de contrat de travail, de visa ou de résultat. Toute prestation ou tout frais supplémentaire doit faire l’objet d’un accord distinct et explicite.",
   };
 }
 
@@ -352,13 +545,23 @@ export function buildProtocolOneRichText(
   visaType?: string | null,
 ): string {
   const profile = getCountryProtocolProfile(destinationSlugOrLabel || vars.destinationProjet, visaType);
+  const kind = detectProtocolVisaKind(visaType);
+  const clauses = protocolOneKindClauses(kind, profile);
   const program = profile.procedureProgramLabel ?? `Procédure ${profile.destinationLabel}`;
   const objectClause = profile.procedureObjectClause
     ?? `la préparation et la soumission du profil auprès des partenaires compétents pour ${profile.destinationLabel}, selon le projet et l'éligibilité constatée du candidat`;
+  const article3Tail =
+    kind === "travail" || kind === "autre"
+      ? "La recherche auprès des partenaires peut aboutir ou non ; les frais d'ouverture et de traitement demeurent acquis à L'AGENCE dès le début des diligences, sauf disposition impérative contraire expressément actée."
+      : "Les diligences de préparation du dossier peuvent aboutir ou non auprès des autorités ; les frais d'ouverture et de traitement demeurent acquis à L'AGENCE dès le début des diligences, sauf disposition impérative contraire expressément actée.";
+  const article5Lead =
+    kind === "etudes" || kind === "visiteurs" || kind === "famille"
+      ? `Si le projet ${profile.destinationLabel} (${program}) ne peut aboutir dans un délai indicatif de ${profile.reorientationDelayDays} jours ouvrés`
+      : `Si la prospection menée pour ${profile.destinationLabel} n'aboutit pas à une sélection dans un délai indicatif de ${profile.reorientationDelayDays} jours ouvrés`;
   return `${LETTERHEAD}
 
 PROTOCOLE D'ACCORD CONTRACTUEL N° 01
-MANDAT D'OUVERTURE DE DOSSIER, DE TRAITEMENT ADMINISTRATIF ET DE SOUMISSION PARTENAIRES
+${clauses.titleSuffix}
 (Destination : ${profile.destinationLabel} — Programme : ${program})
 
 IDENTIFICATION DES PARTIES
@@ -375,19 +578,19 @@ Article 2 — Modalités de règlement, traçabilité et reçu officiel
 Le paiement fait l'objet d'un enregistrement automatique sous les références suivantes : Montant validé : 65 000 XAF. Mode de validation : ${vars.modePaiement}. Date et heure de validation : ${vars.dateHeurePaiement}. Conseiller validateur habilité : ${vars.conseillerEmail}. Empreinte cryptographique de sécurité : ${vars.empreinteSha}. Le Reçu de Confirmation de Paiement demeure archivé en permanence dans l'Espace Client du CANDIDAT comme justificatif comptable et juridique.
 
 Article 3 — Caractère strictement non remboursable des frais
-Conformément au Reçu de paiement, ces frais sont strictement non remboursables une fois le traitement administratif engagé, car ils rémunèrent les diligences, vérifications et démarches déjà réalisées avant et pendant la soumission. La recherche auprès des partenaires peut aboutir ou non ; les frais d'ouverture et de traitement demeurent acquis à L'AGENCE dès le début des diligences, sauf disposition impérative contraire expressément actée.
+Conformément au Reçu de paiement, ces frais sont strictement non remboursables une fois le traitement administratif engagé, car ils rémunèrent les diligences, vérifications et démarches déjà réalisées avant et pendant le traitement. ${article3Tail}
 
 Article 4 — Obligation de moyens et absence de garantie de résultat
-Ce document et le présent protocole ne garantissent ni emploi, ni contrat de travail, ni visa, ni résultat absolu. L'AGENCE est tenue à une stricte obligation de moyens professionnels dans la prospection et la transmission du profil. Les décisions des employeurs, partenaires et autorités publiques d'immigration restent totalement et souverainement indépendantes de 3M Travel Agency SARL.
+${clauses.noGuarantee}
 
 Article 5 — Clause de réorientation sans frais complémentaires
-Si la prospection menée pour ${profile.destinationLabel} n'aboutit pas à une sélection dans un délai indicatif de ${profile.reorientationDelayDays} jours ouvrés, L'AGENCE s'engage à faire bénéficier LE CLIENT d'une réorientation sans aucun frais d'ouverture supplémentaire vers ${profile.reorientationAlternatives}.
+${article5Lead}, L'AGENCE s'engage à faire bénéficier LE CLIENT d'une réorientation sans aucun frais d'ouverture supplémentaire vers ${profile.reorientationAlternatives}.
 
 Article 6 — Clause de transparence et protection contre la fraude
-L'AGENCE réitère que les formalités relatives à la déclaration de vacance de poste et aux certificats délivrés par ${profile.employmentAuthority} incombent exclusivement à l'employeur ou à l'établissement recruteur : aucun frais à ce titre ne peut être facturé au CANDIDAT. Le contrat ou l'engagement final sera obligatoirement conclu et signé en personne par LE CANDIDAT, jamais par L'AGENCE à sa place.
+${clauses.transparency}
 
 Article 7 — Condition de transition vers le Protocole d'Accord N° 02
-Après obtention effective d'une proposition concrète (contrat de travail, lettre d'admission, promesse d'embauche ou équivalent selon la procédure) et validation du projet par LE CLIENT, un protocole d'accord distinct (Protocole N° 02) devra être signé pour lancer la procédure complète d'accompagnement. Toute prestation ou frais d'honoraires ultérieurs feront l'objet de cet accord distinct, qui précisera le barème de règlement financier applicable à cette destination.
+${clauses.transition}
 
 Article 8 — Valeur probante de la signature électronique
 L'acceptation numérique du présent protocole dans l'Espace Client, combinée aux données du Reçu de Confirmation de Paiement horodaté, constitue un contrat bilatéral parfait et juridiquement opposable.
@@ -402,7 +605,10 @@ export function buildProtocolTwoRichText(
   destinationSlugOrLabel?: string | null,
   visaType?: string | null,
 ): string {
-  const profile = getCountryProtocolProfile(destinationSlugOrLabel, visaType ?? vars.posteRetenu);
+  // Ne pas utiliser posteRetenu pour détecter le visa (sinon un intitulé de poste « études » pollue le kind).
+  const profile = getCountryProtocolProfile(destinationSlugOrLabel, visaType);
+  const kind = detectProtocolVisaKind(visaType);
+  const program = profile.procedureProgramLabel ?? `Procédure ${profile.destinationLabel}`;
   const formulas = profile.secondProtocolFormulas;
   const formulasBlock = formulas
     ? formulas.map((formula, index) => {
@@ -411,24 +617,50 @@ export function buildProtocolTwoRichText(
       }).join("\n\n")
     : "Le barème de règlement financier de cette destination n'a pas encore été communiqué par l'agence : il sera précisé et injecté ici avant toute proposition de signature au candidat.";
 
+  const partnerLabel =
+    kind === "etudes" ? "Établissement / partenaire d'accueil"
+      : kind === "visiteurs" || kind === "famille" ? "Partenaire / hébergeur / membre de famille"
+        : "Employeur/Partenaire d'accueil";
+  const projectLabel =
+    kind === "etudes" ? "Programme / cycle retenu"
+      : kind === "visiteurs" ? "Motif / projet de séjour"
+        : kind === "famille" ? "Lien familial / projet"
+          : "Poste/Projet retenu";
+
+  const mission =
+    kind === "etudes"
+      ? `L'AGENCE reçoit mandat d'assister, coordonner et représenter LE CANDIDAT dans : (1) l'examen de la lettre d'admission ou de l'offre de formation ; (2) le suivi auprès de ${profile.employmentAuthority} lorsque applicable ; (3) l'instruction du permis d'études / séjour auprès de ${profile.immigrationAuthority} ; (4) la constitution de la requête consulaire et la prise de rendez-vous auprès de ${profile.consulate} ; (5) la préparation à l'installation étudiante.`
+      : kind === "visiteurs"
+        ? `L'AGENCE reçoit mandat d'assister LE CANDIDAT dans : (1) la finalisation du dossier de séjour temporaire ; (2) la vérification des justificatifs (statut, motif, attaches) ; (3) l'instruction auprès de ${profile.immigrationAuthority} ; (4) la constitution de la requête consulaire et la prise de rendez-vous auprès de ${profile.consulate} ; (5) le suivi jusqu'à la décision.`
+        : kind === "famille"
+          ? `L'AGENCE reçoit mandat d'assister LE CANDIDAT dans : (1) la constitution du dossier de regroupement ; (2) le suivi auprès de ${profile.immigrationAuthority} ; (3) la constitution de la requête consulaire et la prise de rendez-vous auprès de ${profile.consulate} ; (4) le suivi jusqu'à la décision.`
+          : `L'AGENCE reçoit mandat d'assister, coordonner et représenter LE CANDIDAT dans : (1) l'examen du contrat ou de l'offre proposée ; (2) le suivi des démarches auprès de ${profile.employmentAuthority} lorsque applicable ; (3) l'instruction du permis de travail ou de séjour auprès de ${profile.immigrationAuthority} ; (4) la constitution de la requête consulaire et la prise de rendez-vous auprès de ${profile.consulate} ; (5) la préparation à l'installation (démarches locales à l'arrivée).`;
+
+  const article2 =
+    kind === "travail" || kind === "autre"
+      ? `Les frais relatifs à l'autorisation de recrutement et aux démarches légales incombant à l'employeur ou à l'établissement d'accueil (y compris la déclaration de poste ouvert / vacance de poste auprès de ${profile.employmentAuthority} lorsque applicable) sont supportés en totalité par celui-ci. LE CANDIDAT signe lui-même son contrat ou engagement officiel ; L'AGENCE n'est en aucun cas habilitée à signer à sa place.`
+      : kind === "etudes"
+        ? `Les frais d'inscription, de scolarité et les formalités propres à l'établissement incombent à l'établissement ou au candidat selon les règles publiées. LE CANDIDAT signe lui-même son engagement officiel ; L'AGENCE n'est en aucun cas habilitée à signer à sa place.`
+        : `Aucun frais d'employeur ni de placement ne s'applique à cette procédure. LE CANDIDAT reste responsable de ses justificatifs personnels ; L'AGENCE n'est en aucun cas habilitée à signer à sa place auprès des autorités.`;
+
   return `${LETTERHEAD}
 
 PROTOCOLE D'ACCORD CONTRACTUEL N° 02
 MANDAT D'ACCOMPAGNEMENT CONTRACTUEL ET PROCÉDURE DE VISA
-(Procédure Post-Sélection — Destination : ${profile.destinationLabel})
+(Procédure Post-Sélection — Destination : ${profile.destinationLabel} — Programme : ${program})
 
 IDENTIFICATION DES PARTIES
 D'une part, L'AGENCE : 3M Travel Agency SARL, RC/YAO/2019/A/2567, NIU M112417203369H, ci-après « L'AGENCE ».
-D'autre part, LE REQUÉRANT SÉLECTIONNÉ : ${vars.clientNomComplet}, Passeport : ${vars.clientNumeroPasseport ?? "à compléter"}, Téléphone/WhatsApp : ${vars.clientTelephoneWhatsapp ?? "à compléter"}, Email : ${vars.clientEmail ?? "à compléter"}, Identifiant Espace Client : ${vars.clientEspaceId ?? "à compléter"}, Dossier : ${vars.dossierRef}, Employeur/Partenaire d'accueil : ${vars.employeurNom}, Poste/Projet retenu : ${vars.posteRetenu}, ci-après « LE CANDIDAT ».
+D'autre part, LE REQUÉRANT SÉLECTIONNÉ : ${vars.clientNomComplet}, Passeport : ${vars.clientNumeroPasseport ?? "à compléter"}, Téléphone/WhatsApp : ${vars.clientTelephoneWhatsapp ?? "à compléter"}, Email : ${vars.clientEmail ?? "à compléter"}, Identifiant Espace Client : ${vars.clientEspaceId ?? "à compléter"}, Dossier : ${vars.dossierRef}, ${partnerLabel} : ${vars.employeurNom}, ${projectLabel} : ${vars.posteRetenu}, ci-après « LE CANDIDAT ».
 
 PRÉAMBULE
-LE CANDIDAT a régulièrement souscrit au Protocole d'Accord N° 01, ayant permis l'audit de son profil et sa transmission officielle aux partenaires compétents pour ${profile.destinationLabel}. Par notification archivée dans son Espace Client, LE CANDIDAT a été formellement retenu. Les parties conviennent de formaliser les modalités juridiques, financières et opérationnelles destinées à sécuriser la suite de la procédure jusqu'à l'obtention du visa ou permis concerné.
+LE CANDIDAT a régulièrement souscrit au Protocole d'Accord N° 01 pour le programme ${program} à destination de ${profile.destinationLabel}. Par notification archivée dans son Espace Client, LE CANDIDAT a été formellement retenu ou validé pour la suite. Les parties conviennent de formaliser les modalités juridiques, financières et opérationnelles destinées à sécuriser la suite de la procédure jusqu'à l'obtention du visa ou permis concerné.
 
 Article 1 — Mission d'assistance et portée de l'accompagnement
-L'AGENCE reçoit mandat d'assister, coordonner et représenter LE CANDIDAT dans : (1) l'examen du contrat ou de l'offre proposée ; (2) le suivi des démarches auprès de ${profile.employmentAuthority} lorsque applicable ; (3) l'instruction du permis de travail ou de séjour auprès de ${profile.immigrationAuthority} ; (4) la constitution de la requête consulaire et la prise de rendez-vous auprès de ${profile.consulate} ; (5) la préparation à l'installation (démarches locales à l'arrivée).
+${mission}
 
-Article 2 — Réglementation de l'autorité de l'emploi et interdiction de frais employeur
-Les frais relatifs à l'autorisation de recrutement et aux démarches légales incombant à l'employeur ou à l'établissement d'accueil sont supportés en totalité par celui-ci. LE CANDIDAT signe lui-même son contrat ou engagement officiel ; L'AGENCE n'est en aucun cas habilitée à signer à sa place.
+Article 2 — Transparence des frais tiers et interdiction de frais induits
+${article2}
 
 Article 3 — Choix de la formule tarifaire
 LE CANDIDAT déclare opter pour l'une des modalités financières suivantes, validée au moment de la signature électronique du présent acte :
