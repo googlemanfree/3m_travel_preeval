@@ -27,6 +27,8 @@ type Props = {
   cvDocument?: CvDocument;
   hasCv?: boolean;
   infoRequestAlreadySent?: boolean;
+  /** Documents justificatifs : uniquement après évaluation / bilan. */
+  evaluationCompleted?: boolean;
   onRequestInfo?: (payload: { destination: string; visaType: string }) => void;
   isRequestingInfo?: boolean;
 };
@@ -39,6 +41,7 @@ export default function AdminRegistrationProfile({
   cvDocument,
   hasCv = false,
   infoRequestAlreadySent = false,
+  evaluationCompleted = false,
   onRequestInfo,
   isRequestingInfo = false,
 }: Props) {
@@ -215,22 +218,24 @@ export default function AdminRegistrationProfile({
           )}
         </div>
 
-        <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-3">
+        <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-3" data-testid="registration-justificatifs-panel">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <p className="text-sm font-semibold text-indigo-950">Demande d’informations — {infoRequest.destination} · {infoRequest.visaType}</p>
               <p className="mt-1 text-xs leading-5 text-indigo-900">
-                {infoRequestAlreadySent
-                  ? "Une demande standard a déjà été envoyée (e-mail + espace client). Vous pouvez la renvoyer si besoin."
-                  : "Envoi automatique possible : e-mail + notification dans l’espace candidat, selon le pays et le type de visa."}
+                {!evaluationCompleted
+                  ? "Documents justificatifs : disponibles après l’évaluation (bilan validé ou envoyé). Avant cela, utilisez les relances CV / évaluation."
+                  : infoRequestAlreadySent
+                    ? "Une demande de justificatifs a déjà été envoyée (e-mail brandé + espace client avec entête 3M). Vous pouvez la renvoyer si besoin."
+                    : "Envoi professionnel en un clic : e-mail brandé + notification dans l’espace candidat (entête complète), selon le pays et le type de visa."}
               </p>
             </div>
-            <Button type="button" size="sm" variant="outline" className="border-indigo-200 bg-white" onClick={() => setPreviewOpen((open) => !open)}>
+            <Button type="button" size="sm" variant="outline" className="border-indigo-200 bg-white" onClick={() => setPreviewOpen((open) => !open)} data-testid="registration-justificatifs-preview">
               {previewOpen ? "Masquer la liste" : `Voir ${infoRequest.items.length} élément(s)`}
             </Button>
           </div>
           {previewOpen && (
-            <ul className="mt-3 space-y-2 text-xs text-indigo-950">
+            <ul className="mt-3 space-y-2 text-xs text-indigo-950" data-testid="registration-justificatifs-list">
               {infoRequest.items.map((item) => (
                 <li key={item.label} className="rounded-lg border border-indigo-100 bg-white px-3 py-2">
                   <strong>{item.label}</strong>
@@ -244,13 +249,19 @@ export default function AdminRegistrationProfile({
             <Button
               type="button"
               className="mt-3 w-full bg-indigo-700 hover:bg-indigo-800"
-              disabled={isRequestingInfo || !primaryDestination || !visaType}
+              disabled={isRequestingInfo || !primaryDestination || !visaType || !evaluationCompleted}
               onClick={() => onRequestInfo({ destination: primaryDestination, visaType })}
               data-testid="registration-request-info"
+              title={!evaluationCompleted ? "Finalizez d’abord l’évaluation avant de demander les justificatifs." : "Envoyer e-mail + dépôt espace client"}
             >
               {isRequestingInfo ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Envoi…</> : <><Send className="mr-2 h-4 w-4" /><Mail className="mr-2 h-4 w-4" />{infoRequestAlreadySent ? "Renvoyer la demande (mail + espace)" : "Envoyer la demande (mail + espace)"}</>}
             </Button>
           )}
+          {!evaluationCompleted && primaryDestination && visaType ? (
+            <p className="mt-2 text-xs font-medium text-amber-900" data-testid="registration-justificatifs-gate">
+              En attente de l’évaluation — le bouton s’activera dès que le bilan est validé ou envoyé.
+            </p>
+          ) : null}
           {(!primaryDestination || !visaType) && (
             <p className="mt-2 text-xs text-amber-800">Renseignez une destination et un type de projet pour activer l’envoi.</p>
           )}
