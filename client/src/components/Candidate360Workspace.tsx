@@ -1790,7 +1790,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             onChanged={() => { void refresh(); }}
             onRemind={() => { lockAction("documentReminder"); documentReminderMutation.mutate({ sessionToken, candidateId: candidate.id }); }}
             reminding={documentReminderMutation.isPending || actionLocks.documentReminder}
-            bilanContext={{ candidateName: candidate.fullName, reference: candidate.folderCode || candidate.id, destination: candidate.destinationCountry }}
+            bilanContext={{ candidateName: candidate.fullName, reference: candidate.folderCode || candidate.id, destination: candidate.destinationCountry, exportCandidateId: summaryCandidateId > 0 ? summaryCandidateId : undefined }}
           />
           <details className="rounded-xl border bg-white" data-testid="dossier-tools">
             <summary className="cursor-pointer select-none p-4 text-sm font-semibold text-slate-800">Outils avancés : checklist pays, CV, extraction</summary>
