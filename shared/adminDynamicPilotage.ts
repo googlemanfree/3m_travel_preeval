@@ -62,9 +62,11 @@ export function detectAdminProcedureKind(
   const blob = fold([visaType, procedureLabel].filter(Boolean).join(" "));
   if (!blob) return "other";
   if (/(e[\s-]?visa|electronique|electronic|eta\b|nzefta|esta)/.test(blob)) return "evisa";
-  if (/(travail|work|emploi|worker|permis de travail|autorisation de travail)/.test(blob)) return "work";
+  // Études avant travail (ex. « permis de travail étudiant ») ; travail avant schengen générique.
   if (/(etude|study|academ|formation|ausbildung|student)/.test(blob)) return "study";
-  if (/(visiteur|visitor|touris|schengen|court sejour)/.test(blob)) return "visitor";
+  if (/(travail|work|emploi|worker|permis de travail|autorisation de travail|travailleur)/.test(blob)) return "work";
+  if (/(visiteur|visitor|touris|court sejour|loisirs)/.test(blob)) return "visitor";
+  if (/\bschengen\b/.test(blob) && !/travail|etud|work|study/.test(blob)) return "visitor";
   if (/(famille|family|regroupement)/.test(blob)) return "family";
   if (/(permanent|residence|installation|pr\b)/.test(blob)) return "residence";
   const checklistKey = resolveProcedureChecklistKey(procedureLabel || visaType);

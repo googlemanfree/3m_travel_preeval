@@ -22,6 +22,7 @@ import { buildDocumentClarificationAnsweredNotification, buildDocumentClarificat
 import { passportPhotoAdminStatus } from "../../shared/passportPhotoRequirement";
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
+import { pickVisaContextForJourney } from "../../shared/evaluationVisaCv";
 import { ADMIN_STAGE_TO_AGENCY_STATUS, ADMIN_STAGE_TO_ONLINE_STATUS, describeDossierProgress } from "../../shared/dossierProgress";
 import { buildProcedureUpdateEmail } from "../services/procedureProgressEmail";
 import { destinationLabelForStaff, parsePreferredDestinations } from "../../shared/candidateDestinationOptions";
@@ -4422,13 +4423,14 @@ export const adminRouter = router({
       const procedureLabel = [projectDetails.procedureName, projectDetails.procedureLabel, projectDetails.selectedProcedureLabel, projectDetails.procedure]
         .find((value): value is string => typeof value === "string" && value.trim().length > 0) ?? latestEvaluation?.visaType ?? latestEvaluation?.projectType ?? null;
       const destination = (sourceRecord as any).destination ?? latestEvaluation?.destinationCountry ?? projectDetails.destination ?? null;
-      // Priorité : visa dossier → projet d’évaluation (études/travail/tourisme) → visa évaluation → libellé procédure.
-      // Sinon un projet « études » héritait d’un parcours / bilan travail faute de visaType renseigné.
-      const visaTypeForJourney = (sourceRecord as any).visaType
-        || latestEvaluation?.projectType
-        || latestEvaluation?.visaType
-        || procedureLabel
-        || null;
+      // Priorité : projet d’évaluation (études/tourisme/travail) → visa évaluation → visa dossier → procédure.
+      // Un visaType dossier périmé « travail » ne doit plus écraser une évaluation études / visiteurs.
+      const visaTypeForJourney = pickVisaContextForJourney(
+        latestEvaluation?.projectType,
+        latestEvaluation?.visaType,
+        (sourceRecord as any).visaType,
+        procedureLabel,
+      );
       const candidateJourney = getEnrichedCandidateJourney(destination, visaTypeForJourney, procedureLabel);
       const currentJourneyStep = journeyStepIndex(candidateJourney, operationalCase.currentStatus, latestEvaluation?.status ?? null, {
         evaluationClientConfirmed: Boolean((sourceRecord as any).evaluationClientConfirmedAt),

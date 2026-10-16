@@ -5,7 +5,7 @@
 
 export type EvaluationFormProjectType = "travail" | "etudes" | "tourisme";
 
-/** Alias publics (fiches pays, ressources) → type de formulaire d’évaluation. */
+/** Alias publics (fiches pays, ressources, codes canada_ / schengen_) → type de formulaire. */
 export function normalizePublicEvaluationProject(
   value: string | null | undefined,
 ): EvaluationFormProjectType | null {
@@ -15,17 +15,12 @@ export function normalizePublicEvaluationProject(
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "");
   if (!folded) return null;
-  if (folded === "travail" || folded === "work") return "travail";
-  if (folded === "etudes" || folded === "etude" || folded === "study" || folded === "studies") return "etudes";
-  if (
-    folded === "tourisme"
-    || folded === "visiteur"
-    || folded === "visitor"
-    || folded === "visite"
-    || folded === "court_sejour"
-  ) {
-    return "tourisme";
-  }
+  // Études avant travail (ex. « permis de travail étudiant »).
+  if (/(etude|study|scolaire|academ|student|formation|ausbildung)/.test(folded)) return "etudes";
+  if (/(travail|work|emploi|job|qualified|qualifie|professionnel|travailleur)/.test(folded)) return "travail";
+  if (/(touris|visitor|visiteur|visite|court[_\s-]?sejour|loisirs)/.test(folded)) return "tourisme";
+  if (folded === "work") return "travail";
+  if (folded === "studies" || folded === "study") return "etudes";
   return null;
 }
 

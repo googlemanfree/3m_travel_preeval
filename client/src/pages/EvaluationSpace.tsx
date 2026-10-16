@@ -30,6 +30,7 @@ import {
 import ClientAdvisorWhatsApp, { clientAdvisorWhatsAppHref } from "@/components/ClientAdvisorWhatsApp";
 import { COMPANY_CONTACTS } from "@/lib/companyContacts";
 import { INITIAL_AGREEMENT_PROTOCOL } from "@shared/agreementProtocolContent";
+import { normalizePublicEvaluationProject } from "@shared/evaluationFormRequirements";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import ClientSpaceNavigation from "@/components/ClientSpaceNavigation";
 import ClientMessagesPanel from "@/components/ClientMessagesPanel";
@@ -557,9 +558,32 @@ export default function EvaluationSpace() {
   const reviewDueLabel = reviewDueAt ? new Date(reviewDueAt).toLocaleDateString("fr-FR", { dateStyle: "long" }) : null;
   const evaluationRequired = !latestEvaluation && cProfile.evaluationDeclarationStatus !== "validated" && (Boolean(workflow?.evaluationRequired) || cProfile.evaluationDeclarationStatus === "not_declared" || cProfile.evaluationDeclarationStatus === "refused");
   const agreementAfterPaymentRequired = Boolean(workflow?.showAgreementAfterPayment);
-  const journeyVisaType = String((cProfile as any).visaType ?? latestEvaluation?.visaType ?? "");
-  const journeyProcedureLabel = String(latestEvaluation?.projectDetails?.procedureLabel ?? latestEvaluation?.projectDetails?.procedureName ?? latestEvaluation?.visaType ?? "");
-  const openEvaluation = () => setLocation(`/evaluation?source=client-space&destination=${encodeURIComponent(primaryDestination || "general")}`);
+  // Projet d’évaluation d’abord — évite un parcours travail quand le candidat a choisi études / visiteurs.
+  const journeyVisaType = String(
+    latestEvaluation?.projectType
+      ?? (cProfile as any).visaType
+      ?? latestEvaluation?.visaType
+      ?? "",
+  );
+  const journeyProcedureLabel = String(
+    latestEvaluation?.projectDetails?.procedureLabel
+      ?? latestEvaluation?.projectDetails?.procedureName
+      ?? latestEvaluation?.projectType
+      ?? latestEvaluation?.visaType
+      ?? "",
+  );
+  const openEvaluation = () => {
+    const project =
+      normalizePublicEvaluationProject(
+        latestEvaluation?.projectType
+          ?? (cProfile as any).visaType
+          ?? latestEvaluation?.visaType
+          ?? journeyProcedureLabel,
+      ) ?? "";
+    const params = new URLSearchParams({ source: "client-space", destination: primaryDestination || "general" });
+    if (project) params.set("project", project);
+    setLocation(`/evaluation?${params.toString()}`);
+  };
   // Les onglets Documents/Dossier n'ont de sens qu'une fois l'évaluation soumise : avant cela, le
   // candidat n'a ni pays précis validé ni base pour une checklist ou un suivi réels. On bloque
   // réellement l'accès (pas une simple incitation) plutôt que d'afficher un espace vide ou générique.

@@ -36,6 +36,7 @@ import { mergeEvisaCatalogue } from "@/lib/evisaCatalogueMerge";
 import { buildAgreementProtocolText, buildSecondAgreementProtocolText, AGREEMENT_PROTOCOL_VERSION } from "@shared/agreementProtocolContent";
 import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from "@shared/adminSync";
 import { ADMIN_MESSAGE_TEMPLATES, fillAdminTemplate, formatActivationTransition, templateForStage } from "@shared/adminOpsToolkit";
+import { resolveEvaluationProjectKind } from "@shared/evaluationVisaCv";
 import {
   buildUnifiedCommunicationsTimeline,
   candidateIdFromActiveReference,
@@ -113,11 +114,14 @@ function procedureFromEvaluationContext(context?: { projectType?: string | null;
     .join(" ")
     .toLowerCase();
   if (value.includes("e-visa") || value.includes("evisa") || value.includes("électron")) return "evisa";
-  if (value.includes("étude") || value.includes("study") || value.includes("academ")) return "study_permit";
-  if (value.includes("travail") || value.includes("work") || value.includes("emploi")) return "work_permit";
-  if (value.includes("touris") || value.includes("visiteur") || value.includes("visitor")) return "visitor_visa";
+  const kind = resolveEvaluationProjectKind(context?.projectType, context?.procedureLabel, context?.procedureCode);
+  if (kind === "etudes") return "study_permit";
+  if (kind === "travail") return "work_permit";
+  if (kind === "tourisme") return "visitor_visa";
   if (value.includes("famill") || value.includes("regroupement")) return "family_reunification";
-  return "permanent_residence";
+  if (value.includes("permanent") || value.includes("residence") || value.includes("installation")) return "permanent_residence";
+  // Inconnu : ne pas forcer résidence permanente / travail.
+  return "visitor_visa";
 }
 
 function formatDate(value?: Date | string | null) {

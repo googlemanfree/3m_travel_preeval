@@ -2,7 +2,6 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { INTERNATIONAL_BRAND } from "@/data/internationalBrand";
 
@@ -221,9 +220,10 @@ export default function HeroSectionVIP({
           data-testid="hero-cta-group"
         >
           <div className="flex w-full max-w-xl flex-col items-center gap-1.5">
-            <PublicEvaluationCTA
-              project="travail"
+            <a
+              href="/#evaluation-multi"
               aria-label={t("Évaluer mon projet gratuitement", "Evaluate my project for free")}
+              data-testid="hero-eval-cta"
               className={`group/cta relative ${heroButtonSize} flex w-full items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 px-6 py-4 text-center font-bold uppercase tracking-wide text-white shadow-lg shadow-orange-950/20 transition-[transform,box-shadow,background-color] duration-200 ease-out hover:-translate-y-0.5 hover:scale-[1.03] hover:from-orange-300 hover:via-orange-500 hover:to-amber-400 hover:shadow-[0_14px_32px_-10px_rgba(249,115,22,0.5)] hover:ring-2 hover:ring-orange-200/70 focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 active:scale-[0.98] motion-reduce:transition-none sm:w-auto`}
             >
               <span
@@ -233,9 +233,11 @@ export default function HeroSectionVIP({
               <span className="relative z-10 text-sm sm:text-base">
                 {t(INTERNATIONAL_BRAND.cta.evaluate.fr, INTERNATIONAL_BRAND.cta.evaluate.en)}
               </span>
-            </PublicEvaluationCTA>
+            </a>
             <p className="max-w-md text-center text-xs leading-5 text-white/90 drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] sm:text-sm" data-testid="hero-eval-hint">
               {t(INTERNATIONAL_BRAND.cta.evaluateHint.fr, INTERNATIONAL_BRAND.cta.evaluateHint.en)}
+              {" "}
+              {t("Choisissez ensuite visa travail, études ou visiteurs.", "Then choose work, study, or visitor visa.")}
             </p>
           </div>
           <Button

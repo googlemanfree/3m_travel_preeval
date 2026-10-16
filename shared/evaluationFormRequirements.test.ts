@@ -5,12 +5,14 @@ import {
 } from "./evaluationFormRequirements";
 
 describe("normalizePublicEvaluationProject", () => {
-  it("mappe les alias publics vers travail / études / tourisme", () => {
+  it("mappe les alias publics et codes canada_/schengen_ vers travail / études / tourisme", () => {
     expect(normalizePublicEvaluationProject("travail")).toBe("travail");
     expect(normalizePublicEvaluationProject("work")).toBe("travail");
     expect(normalizePublicEvaluationProject("etudes")).toBe("etudes");
     expect(normalizePublicEvaluationProject("études")).toBe("etudes");
     expect(normalizePublicEvaluationProject("study")).toBe("etudes");
+    expect(normalizePublicEvaluationProject("canada_etude")).toBe("etudes");
+    expect(normalizePublicEvaluationProject("schengen_travail")).toBe("travail");
     expect(normalizePublicEvaluationProject("tourisme")).toBe("tourisme");
     expect(normalizePublicEvaluationProject("visiteur")).toBe("tourisme");
     expect(normalizePublicEvaluationProject("visitor")).toBe("tourisme");

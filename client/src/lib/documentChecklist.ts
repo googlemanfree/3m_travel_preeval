@@ -1,6 +1,7 @@
 import { getCountryById, procedures107Complete, type CountryProcedureComplete } from "../data/procedures107Complete";
 import { getEvaluationDocumentRequirements, type EvaluationProjectType } from "../data/evaluationDocumentCatalogue";
 import { MAX_CHECKLIST_DOCUMENTS, capDocumentList } from "@shared/documentLimits";
+import { normalizePublicEvaluationProject } from "@shared/evaluationFormRequirements";
 
 /**
  * Logique pure de la checklist documentaire (pièces attendues selon le pays et le type de visa, état de chaque pièce) :
@@ -59,15 +60,20 @@ export function projectTypeToVisaType(projectType: EvaluationProjectType): Count
 export function resolveProcedure(destination?: string | null, projectType?: string | null) {
   if (!destination) return undefined;
   const key = normalize(destination);
-  if (isProjectType(projectType)) {
-    const visaType = projectTypeToVisaType(projectType);
+  const resolvedType = isProjectType(projectType) ? projectType : normalizePublicEvaluationProject(projectType);
+  if (resolvedType) {
+    const visaType = projectTypeToVisaType(resolvedType);
     const exactMatch = procedures107Complete.find((country) => normalize(country.id) === `${key}-${visaType}` || (normalize(country.name) === key && country.visaType === visaType));
     if (exactMatch) return exactMatch;
   }
-  return getCountryById(destination) ?? procedures107Complete.find((country) => {
+  // Sans type de projet : ne pas prendre le premier *-travail du catalogue (ambigu).
+  const matches = procedures107Complete.filter((country) => {
     const countryKey = normalize(country.id);
     return countryKey.startsWith(`${key}-`) || normalize(country.name) === key;
   });
+  if (matches.length === 1) return matches[0];
+  if (!resolvedType && matches.length > 1) return undefined;
+  return getCountryById(destination) ?? matches[0];
 }
 
 export function isProjectType(value?: string | null): value is EvaluationProjectType {

@@ -548,7 +548,10 @@ export default function AdminAIEvaluationDashboard() {
     setEditingId(item.id);
     setReviewDraft(initialReviewDraft(item));
     setReviewReason("");
-    setSelectedTemplateKey(item.projectType === "travail" || item.projectType === "etudes" || item.projectType === "tourisme" ? item.projectType : "");
+    {
+      const kind = resolveEvaluationProjectKind(item.projectType, item.visaType);
+      setSelectedTemplateKey(kind === "travail" || kind === "etudes" || kind === "tourisme" ? kind : "");
+    }
     setPreparationNotice(null);
     setDeliveryNotice(null);
     setDocumentRequirementEvaluationId(evaluationNumericId(item));
@@ -623,7 +626,8 @@ export default function AdminAIEvaluationDashboard() {
 
   const loadProjectTemplate = (item: DashboardItem) => {
     const evaluationId = evaluationNumericId(item);
-    const templateKey = item.projectType === "travail" || item.projectType === "etudes" || item.projectType === "tourisme" ? item.projectType : null;
+    const kind = resolveEvaluationProjectKind(item.projectType, item.visaType);
+    const templateKey = kind === "travail" || kind === "etudes" || kind === "tourisme" ? kind : null;
     if (!Number.isInteger(evaluationId) || !templateKey || !window.confirm("Charger le modèle correspondant au projet ? Il restera entièrement modifiable avant enregistrement.")) return;
     applyResponseTemplate.mutate({ sessionToken, evaluationId, templateKey }, { onSuccess: (result) => { setEditingId(item.id); setReviewDraft(result.draft); setReviewReason(""); setSelectedTemplateKey(templateKey); setDeliveryNotice("Modèle chargé. Relisez-le, adaptez-le puis enregistrez avec un motif."); }, onError: (error) => setDeliveryNotice(error.message) });
   };

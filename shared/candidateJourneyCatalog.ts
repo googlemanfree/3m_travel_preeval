@@ -1,6 +1,10 @@
 import { PUBLIC_DESTINATION_DETAILS } from "../client/src/lib/publicDestinationCatalog";
 import { OFFICIAL_SOURCE_CATALOG } from "./officialSourceCatalog";
 import {
+  resolveEvaluationProjectKind,
+  type EvaluationProjectKind,
+} from "./evaluationVisaCv";
+import {
   publishedProcedureKindLabel,
   resolvePublishedProcedureTreatment,
   type PublishedProcedureTreatment,
@@ -62,23 +66,68 @@ const USA = "https://travel.state.gov/content/travel/en/us-visas.html";
 
 const step = (id: string, label: string, description: string, requiredInputs: string[], sourceUrl: string): JourneyStep => ({ id, label, description, requiredInputs, documents: requiredInputs.map((input, index) => ({ id: `${id}-document-${index + 1}`, label: input, kind: "to_prepare", sourceUrl })), sourceUrl });
 
-const coreStages = (sourceUrl: string): JourneyStep[] => [
-  step("cv_submission", "Soumission du CV", "Le candidat dépose un CV exploitable et lisible pour ouvrir l’analyse du projet.", ["CV exploitable"], ""),
-  step("cv_review", "Traitement du CV", "Un conseiller vérifie la lisibilité, la cohérence et les éléments utiles du CV.", ["CV contrôlé"], ""),
-  step("profile_treatment", "Traitement du profil", "Le profil est rapproché du projet, du pays et du type de procédure choisi.", ["Profil candidat", "Projet et destination"], ""),
-  step("evaluation_delivery", "Bilan d’évaluation", "Le bilan est préparé, relu et envoyé par l’administration dans l’espace candidat et par e-mail.", ["Bilan d’évaluation"], ""),
-  step("candidate_confirmation", "Confirmation du bilan par le candidat", "Le candidat confirme qu’il a reçu et compris le bilan avant toute demande d’activation.", ["Confirmation du bilan"], ""),
-  step("opening_payment", "Paiement des frais d’ouverture", "Après confirmation du bilan, les frais d’ouverture et de traitement sont demandés et validés par l’administration.", ["Preuve ou référence de paiement"], ""),
-  step("supporting_documents", "Pièces justificatives de la procédure", "Le candidat dépose uniquement les documents listés pour le pays et la procédure sélectionnés.", ["Pièces justificatives listées"], sourceUrl),
-  step("profile_processing", "Traitement du profil après pièces", "Le conseiller contrôle la complétude et prépare le profil selon les exigences documentées.", ["Profil complété", "Documents contrôlés"], ""),
-  step("partner_submission", "Soumission aux partenaires ou agences", "Lorsque le mandat le prévoit, le profil est soumis aux partenaires autorisés avec traçabilité de l’action.", ["Dossier de soumission"], ""),
-  step("contract_wait", "Attente d’une réponse employeur ou partenaire", "Une offre, une lettre de travail ou une décision partenaire n’est jamais garantie et doit être enregistrée lorsqu’elle existe.", ["Contrat ou lettre de travail si disponible"], ""),
-  step("admin_processing", "Traitement administratif", "Les documents reçus sont contrôlés avant toute démarche auprès de l’autorité compétente.", ["Documents contractuels", "Pièces administratives"], ""),
-  step("consular_submission", "Soumission consulaire", "La demande est préparée et soumise selon le portail et les instructions officielles de la destination.", ["Formulaires consulaires", "Rendez-vous ou preuve de soumission"], sourceUrl),
-  step("decision", "Suivi de la décision", "Le candidat suit les notifications officielles et transmet toute demande complémentaire à l’administration.", ["Référence de demande", "Notification officielle"], sourceUrl),
-];
+/** 13 étapes internes — mêmes IDs pour journeyStepIndex, libellés adaptés au type de visa. */
+const coreStages = (sourceUrl: string, kind: EvaluationProjectKind = "travail"): JourneyStep[] => {
+  const opening =
+    kind === "etudes"
+      ? [
+          step("cv_submission", "Soumission du parcours scolaire", "Le candidat dépose diplômes, relevés de notes et précise le cycle d’études visé pour ouvrir l’analyse.", ["Diplômes", "Relevés de notes", "Cycle d’études visé"], ""),
+          step("cv_review", "Traitement du dossier scolaire", "Un conseiller vérifie la cohérence du parcours, des diplômes et du cycle visé.", ["Dossier scolaire contrôlé"], ""),
+        ]
+      : kind === "tourisme"
+        ? [
+            step("cv_submission", "Déclaration du statut et du motif", "Le candidat indique son statut (chef d’entreprise, employé ou particulier) et le motif du séjour.", ["Statut déclaré", "Motif du séjour"], ""),
+            step("cv_review", "Traitement du profil visiteurs", "Un conseiller vérifie le statut, le motif et la cohérence du séjour temporaire.", ["Profil visiteurs contrôlé"], ""),
+          ]
+        : [
+            step("cv_submission", "Soumission du CV", "Le candidat dépose un CV exploitable et lisible pour ouvrir l’analyse du projet.", ["CV exploitable"], ""),
+            step("cv_review", "Traitement du CV", "Un conseiller vérifie la lisibilité, la cohérence et les éléments utiles du CV.", ["CV contrôlé"], ""),
+          ];
 
-const common = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => ({ country, visaType, title: `${country} · ${visaType}`, disclaimer: sourceUrl ? "Les étapes sont un guide de préparation fondé sur une source institutionnelle à vérifier avant dépôt. L’autorité compétente, l’employeur ou l’établissement décide de l’issue ; aucune obtention n’est garantie par 3M TRAVEL AGENCY." : "Aucune source institutionnelle fiable n’est encore enregistrée pour cette destination et cette procédure. Vérifiez le portail officiel avant toute démarche ; 3M TRAVEL AGENCY ne présente pas ces étapes comme une règle consulaire établie.", steps: [...coreStages(sourceUrl), ...steps], officialSources: sourceUrl ? [sourceUrl] : [] });
+  const partnerSteps =
+    kind === "etudes"
+      ? [
+          step("partner_submission", "Soumission aux établissements / partenaires", "Lorsque le mandat le prévoit, le dossier est transmis aux établissements ou partenaires éducatifs avec traçabilité.", ["Dossier de candidature"], ""),
+          step("contract_wait", "Attente d’admission ou de réponse", "Une admission ou une lettre d’acceptation n’est jamais garantie et doit être enregistrée lorsqu’elle existe.", ["Admission ou lettre si disponible"], ""),
+        ]
+      : kind === "tourisme"
+        ? [
+            step("partner_submission", "Préparation du dossier de séjour", "Le dossier visiteurs est structuré selon le statut déclaré et les exigences du pays.", ["Dossier de séjour"], ""),
+            step("contract_wait", "Attente des justificatifs complémentaires", "Tout justificatif d’hébergement, d’invitation ou de ressources demandé est enregistré dès réception.", ["Justificatifs complémentaires si demandés"], ""),
+          ]
+        : [
+            step("partner_submission", "Soumission aux partenaires ou agences", "Lorsque le mandat le prévoit, le profil est soumis aux partenaires autorisés avec traçabilité de l’action.", ["Dossier de soumission"], ""),
+            step("contract_wait", "Attente d’une réponse employeur ou partenaire", "Une offre, une lettre de travail ou une décision partenaire n’est jamais garantie et doit être enregistrée lorsqu’elle existe.", ["Contrat ou lettre de travail si disponible"], ""),
+          ];
+
+  return [
+    ...opening,
+    step("profile_treatment", "Traitement du profil", "Le profil est rapproché du projet, du pays et du type de procédure choisi.", ["Profil candidat", "Projet et destination"], ""),
+    step("evaluation_delivery", "Bilan d’évaluation", "Le bilan est préparé, relu et envoyé par l’administration dans l’espace candidat et par e-mail.", ["Bilan d’évaluation"], ""),
+    step("candidate_confirmation", "Confirmation du bilan par le candidat", "Le candidat confirme qu’il a reçu et compris le bilan avant toute demande d’activation.", ["Confirmation du bilan"], ""),
+    step("opening_payment", "Paiement des frais d’ouverture", "Après confirmation du bilan, les frais d’ouverture et de traitement sont demandés et validés par l’administration.", ["Preuve ou référence de paiement"], ""),
+    step("supporting_documents", "Pièces justificatives de la procédure", "Le candidat dépose uniquement les documents listés pour le pays et la procédure sélectionnés.", ["Pièces justificatives listées"], sourceUrl),
+    step("profile_processing", "Traitement du profil après pièces", "Le conseiller contrôle la complétude et prépare le profil selon les exigences documentées.", ["Profil complété", "Documents contrôlés"], ""),
+    ...partnerSteps,
+    step("admin_processing", "Traitement administratif", "Les documents reçus sont contrôlés avant toute démarche auprès de l’autorité compétente.", ["Pièces administratives"], ""),
+    step("consular_submission", "Soumission consulaire", "La demande est préparée et soumise selon le portail et les instructions officielles de la destination.", ["Formulaires consulaires", "Rendez-vous ou preuve de soumission"], sourceUrl),
+    step("decision", "Suivi de la décision", "Le candidat suit les notifications officielles et transmet toute demande complémentaire à l’administration.", ["Référence de demande", "Notification officielle"], sourceUrl),
+  ];
+};
+
+const common = (country: string, visaType: string, sourceUrl: string, steps: JourneyStep[]): CandidateJourney => {
+  const kind = resolveEvaluationProjectKind(visaType);
+  return {
+    country,
+    visaType,
+    title: `${country} · ${visaType}`,
+    disclaimer: sourceUrl
+      ? "Les étapes sont un guide de préparation fondé sur une source institutionnelle à vérifier avant dépôt. L’autorité compétente, l’employeur ou l’établissement décide de l’issue ; aucune obtention n’est garantie par 3M TRAVEL AGENCY."
+      : "Aucune source institutionnelle fiable n’est encore enregistrée pour cette destination et cette procédure. Vérifiez le portail officiel avant toute démarche ; 3M TRAVEL AGENCY ne présente pas ces étapes comme une règle consulaire établie.",
+    steps: [...coreStages(sourceUrl, kind), ...steps],
+    officialSources: sourceUrl ? [sourceUrl] : [],
+  };
+};
 
 const GERMANY_FORMATION_JOURNEY = common("Allemagne", "Formation professionnelle / Ausbildung", GERMANY, [
   step("training_path", "Choisir la formation et le métier", "Vérifier le métier visé, le niveau de langue et les conditions publiées pour la formation professionnelle choisie.", ["Métier visé", "Niveau de langue", "Parcours"], GERMANY),
@@ -1131,14 +1180,16 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     if (is(visa, "arrima", "quebec", "selection provinciale", "peq")) return CANDIDATE_JOURNEYS[4];
     if (is(visa, "etude", "etudes", "study")) return CANDIDATE_JOURNEYS[1];
     if (is(visa, "visiteur", "visitor", "tourisme")) return CANDIDATE_JOURNEYS[0];
+    if (is(visa, "express", "pnp", "residence permanente", "permanent residence", "entree express")) return CANDIDATE_JOURNEYS[3];
     if (is(visa, "travail", "worker", "travailleur", "emploi", "permis de travail")) return CANDIDATE_JOURNEYS[2];
-    return CANDIDATE_JOURNEYS[3];
+    // Visa inconnu : ne pas forcer Entrée Express / travail — parcours générique plus bas.
   }
   if (is(country, "luxembourg")) {
     // Ordre dans CANDIDATE_JOURNEYS : [5] Visiteur, [6] Travailleur, [7] Études
     if (is(visa, "etude", "etudes", "study")) return CANDIDATE_JOURNEYS[7];
     if (is(visa, "visiteur", "visitor", "tourisme")) return CANDIDATE_JOURNEYS[5];
-    return CANDIDATE_JOURNEYS[6];
+    if (is(visa, "travail", "worker", "travailleur", "emploi", "salarie")) return CANDIDATE_JOURNEYS[6];
+    // Visa inconnu : ne pas forcer Travailleur.
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
   const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "bresil", "brazil", "emirats arabes unis", "uae", "united arab emirates", "mexique", "mexico", "argentine", "argentina", "chili", "chile", "colombie", "colombia", "perou", "peru", "nigeria", "ghana", "kenya", "tanzanie", "tanzania", "maroc", "morocco", "rwanda", "rouanda", "ethiopie", "ethiopia", "maurice", "mauritius", "algerie", "algeria", "tunisie", "tunisia", "ouganda", "uganda", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
@@ -1233,7 +1284,11 @@ export function getEnrichedCandidateJourney(destination?: string | null, visaTyp
   // Repli catalogue public (fiches 107) si aucun PDF / traitement publié n’est résolu.
   const destinationKey = destinationCatalogKey(destination);
   const visaKey = destinationCatalogKey(`${visaType || ""} ${procedureLabel || ""}`);
-  const procedureKind = visaKey.includes("travail") || visaKey.includes("worker") || visaKey.includes("emploi") ? "travail" : visaKey.includes("etud") || visaKey.includes("study") || visaKey.includes("formation") || visaKey.includes("ausbildung") || visaKey.includes("apprentissage") ? "etudes" : "visiteur";
+  const resolvedKind = resolveEvaluationProjectKind(visaType, procedureLabel);
+  const procedureKind =
+    resolvedKind === "etudes" ? "etudes"
+      : resolvedKind === "travail" ? "travail"
+        : "visiteur";
   const catalogueProcedure = PUBLIC_DESTINATION_DETAILS.find(
     (detail) => destinationCatalogKey(detail.procedure.name) === destinationKey && detail.procedure.visaType === procedureKind,
   )?.procedure;

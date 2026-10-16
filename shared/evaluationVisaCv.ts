@@ -76,6 +76,25 @@ const GENERIC_EVAL_REMINDER_SUBJECT_FR =
 const GENERIC_EVAL_REMINDER_BODY_FR =
   "Bonjour,\n\nMerci de finaliser votre évaluation en ligne (critères et pièces demandés selon votre type de visa) depuis votre espace candidat 3M TRAVEL AGENCY.\n\nCordialement,\nL’équipe 3M TRAVEL AGENCY";
 
+/**
+ * Choisit le libellé visa/projet le plus fiable pour parcours et pilotage.
+ * Priorité aux valeurs qui se résolvent en études / tourisme / travail (évite un
+ * visaType dossier « travail » périmé quand l’évaluation dit « études »).
+ */
+export function pickVisaContextForJourney(
+  ...values: Array<string | null | undefined>
+): string | null {
+  let fallback: string | null = null;
+  for (const value of values) {
+    const trimmed = String(value ?? "").trim();
+    if (!trimmed) continue;
+    const kind = resolveEvaluationProjectKind(trimmed);
+    if (kind !== "autre") return trimmed;
+    if (!fallback) fallback = trimmed;
+  }
+  return fallback;
+}
+
 /** Relance pièces / critères manquants selon le type de visa (travail, études, visiteurs). */
 export function evaluationGapReminder(
   visaOrProject: string | null | undefined,

@@ -19,7 +19,9 @@ import {
   countryResourceLead,
   getCountryResourcePage,
   listCountryResourcePages,
+  primaryEvalProjectForPage,
 } from "@shared/countryResourceCatalog";
+import { normalizePublicEvaluationProject } from "@shared/evaluationFormRequirements";
 
 const LOCAL_BUSINESS_STRUCTURED_DATA = {
   "@type": "LocalBusiness",
@@ -400,7 +402,8 @@ const routeSpecificPrerender = (path: string) => {
         const docs = page.resources
           .map((resource) => `<li><a href="${esc(resource.url)}">${esc(resource.title)}</a></li>`)
           .join("");
-        return `<section aria-label="Guides ${esc(page.country)}"><h2>Guides ${esc(page.country)}</h2><p>${esc(lead)}</p><ul>${docs}</ul><p><a href="/ressources">Retour à la bibliothèque</a> · <a href="/?project=travail&amp;destination=${esc(page.slug)}#evaluation-multi">Évaluer mon profil</a>${page.officialSources[0] ? ` · <a href="${esc(page.officialSources[0].url)}" rel="noreferrer">Source officielle</a>` : ""}</p></section>`;
+        const evalProject = normalizePublicEvaluationProject(primaryEvalProjectForPage(page)) ?? "travail";
+        return `<section aria-label="Guides ${esc(page.country)}"><h2>Guides ${esc(page.country)}</h2><p>${esc(lead)}</p><ul>${docs}</ul><p><a href="/ressources">Retour à la bibliothèque</a> · <a href="/?project=${esc(evalProject)}&amp;destination=${esc(page.slug)}#evaluation-multi">Évaluer mon profil</a>${page.officialSources[0] ? ` · <a href="${esc(page.officialSources[0].url)}" rel="noreferrer">Source officielle</a>` : ""}</p></section>`;
       }
     }
   }
