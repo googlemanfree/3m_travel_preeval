@@ -138,7 +138,7 @@ describe("branchements WhatsApp admin", () => {
     expect(management).toContain("agreement_signature_reminder_whatsapp");
     expect(management).toContain("whatsappSent");
 
-    expect(read("client/src/components/AgencyDossierDocumentCenter.tsx")).toContain("WhatsApp envoyé au client");
+    expect(read("client/src/components/AgencyDossierDocumentCenter.tsx")).toContain("publish-agency-docs-to-client");
     expect(read("client/src/pages/AdminDashboard.tsx")).toContain("WhatsApp envoyé");
     expect(read("client/src/components/AdminContractsReceiptsDesk.tsx")).toContain("WhatsApp envoyé au client");
     expect(read("client/src/components/AdminContractsReceiptsDesk.tsx")).toContain("resendAgreementSignatureReminder");
