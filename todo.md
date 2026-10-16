@@ -1,5 +1,5 @@
 
-## Hero — logo légèrement agrandi
-- [x] Logo agrandi de façon mesurée sur mobile, tablette et desktop, sans changer le cadrage photo.
-- [x] Image conservée en `object-contain` avec échelle interne `1.08` pour éviter la découpe.
-- [x] Régression hero : 5/5 tests verts; diff propre; le typecheck global conserve l’erreur indépendante `shared/countryEvaluationForms.ts:104` issue de PR143.
+
+## Vérification CV admin — couverture complémentaire
+- [x] Étendre la régression pour verrouiller explicitement les liens CV sur dashboard, pré-dossiers et Candidate360; 29/29 tests ciblés verts.
+- [ ] Contrôle visuel authentifié admin à effectuer lorsqu’une session administrateur autorisée est disponible; aucun compte admin n’a été utilisé ici.

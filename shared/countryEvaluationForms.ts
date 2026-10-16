@@ -101,7 +101,7 @@ export function resolveDestinationCountryCode(destination: string | null | undef
   const exact = NAME_TO_CODE.get(folded);
   if (exact) return exact;
   // Préfixe : « France - Visa Études », « Allemagne travail »
-  for (const [name, code] of NAME_TO_CODE.entries()) {
+  for (const [name, code] of Array.from(NAME_TO_CODE.entries())) {
     if (folded.startsWith(`${name} `) || folded.includes(` ${name} `)) return code;
   }
   return null;
