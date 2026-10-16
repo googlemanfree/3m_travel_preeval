@@ -597,10 +597,21 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
     onError: (mutationError) => toast.error("Extraction IA indisponible", { description: mutationError.message }),
   });
   const candidateCv: any = useMemo(() => {
+    if (data?.cvDocument?.documentUrl) return data.cvDocument;
     const documents = data?.documents ?? [];
-    const fromDocs = documents.find((document: any) => String(document.documentType ?? "").toLowerCase() === "cv" || String(document.fileName ?? "").toLowerCase().includes("cv"));
-    if (fromDocs) return fromDocs;
-    if (data?.cvDocument) return data.cvDocument;
+    const fromDocs = documents.find((document: any) => {
+      const type = String(document.documentType ?? document.fileType ?? "").toLowerCase();
+      const name = String(document.fileName ?? "").toLowerCase();
+      return type === "cv" || name.includes("cv");
+    });
+    if (fromDocs) {
+      return {
+        ...fromDocs,
+        documentUrl: fromDocs.documentUrl || fromDocs.fileUrl || null,
+        fileName: fromDocs.fileName || "CV du candidat",
+        documentType: fromDocs.documentType || fromDocs.fileType || "cv",
+      };
+    }
     const evalCvUrl = data?.evaluationContext?.cvFileUrl;
     if (evalCvUrl) {
       return {
@@ -1858,14 +1869,16 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
           <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4" data-testid="candidate360-evaluation-cv"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><h4 className="flex items-center gap-2 font-semibold text-indigo-950"><FileText className="h-4 w-4 text-indigo-700" />CV utilisé pour l’évaluation</h4><p className="mt-1 text-sm text-indigo-900">Le conseiller peut vérifier le contenu du CV dans la fiche avant de préparer le bilan.</p></div>{candidateCv?.documentUrl ? <div className="flex flex-wrap gap-2"><Button type="button" size="sm" className="bg-indigo-700 hover:bg-indigo-800" onClick={() => setPreviewDocument({ documentTitle: candidateCv.fileName || "CV du candidat", documentUrl: candidateCv.documentUrl, fileType: candidateCv.mimeType })} data-testid="candidate360-cv-preview"><FileText className="mr-2 h-4 w-4" />Aperçu lisible</Button><a href={candidateCv.documentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-9 items-center rounded-md border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-800 hover:bg-indigo-50" data-testid="candidate360-cv-open">Ouvrir</a><a href={candidateCv.documentUrl} download className="inline-flex h-9 items-center rounded-md border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-800 hover:bg-indigo-50">Télécharger</a><Button type="button" size="sm" variant="outline" onClick={extractCandidateCv} disabled={cvExtractionMutation.isPending || isFetchingCv} className="border-indigo-300 text-indigo-800 hover:bg-indigo-100"><Sparkles className="mr-2 h-4 w-4" />{isFetchingCv ? "Lecture du CV…" : cvExtractionMutation.isPending ? "Extraction…" : "Extraire les informations"}</Button></div> : <Badge className="border-amber-200 bg-amber-50 text-amber-900">CV non disponible</Badge>}</div>{candidateCv?.documentUrl ? <div className="mt-4 grid gap-3 sm:grid-cols-3"><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Fichier</p><p className="mt-1 truncate text-sm font-semibold text-slate-900">{candidateCv.fileName}</p></div><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Origine</p><p className="mt-1 text-sm font-semibold text-slate-900">{candidateCv.source === "evaluation" ? "Soumis à l’évaluation" : candidateCv.source === "online" ? "Envoyé par le candidat" : "Déposé en agence"}</p></div><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">État</p><p className="mt-1 text-sm font-semibold text-slate-900">{candidateCv.reviewStatus === "approved" ? "Vérifié" : "À vérifier"}</p></div></div> : <p className="mt-3 text-sm text-amber-900">Le dossier ne contient pas encore de CV exploitable. Demandez au candidat de le déposer avant l’évaluation.</p>}</div>
           {cvAiFields && <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4" aria-live="polite"><div className="flex flex-wrap items-start justify-between gap-3"><div><h4 className="flex items-center gap-2 font-semibold text-emerald-950"><Sparkles className="h-4 w-4 text-emerald-700" />Préremplissage IA proposé</h4><p className="mt-1 text-sm text-emerald-900">Ces informations sont des suggestions extraites du CV. Le conseiller doit les vérifier avant toute décision ou enregistrement.</p></div><Badge className="bg-white text-emerald-800">Validation humaine requise</Badge></div><div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{Object.entries(cvAiFields).filter(([, value]) => value).map(([key, value]) => <div key={key} className="rounded-lg border border-emerald-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{key}</p><p className="mt-1 text-sm font-semibold text-slate-900">{value}</p></div>)}</div></div>}
           <div className="rounded-xl border p-4"><h4 className="font-semibold text-slate-900">Documents centralisés</h4><div className="mt-3 space-y-2">{data.documents.length ? data.documents.map((document: any) => {
+            const documentUrl = document.documentUrl || document.fileUrl || null;
+            const documentType = document.documentType || document.fileType || "autre";
             const isPending = String(document.reviewStatus ?? "").toLowerCase() === "pending" || String(document.reviewStatus ?? "").toLowerCase() === "received";
             const canValidate = Boolean(document.documentSource && document.rawId);
             const isValidatingThis = validatingDocumentId === document.id && updateDocumentStatusMutation.isPending;
             return <div key={document.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 p-3">
-              <div className="min-w-0"><p className="text-sm font-medium">{document.documentType} · {document.fileName}</p><p className="text-xs text-slate-500">Déposé le {formatDate(document.uploadedAt)} · {document.uploadedByRole}</p></div>
+              <div className="min-w-0"><p className="text-sm font-medium">{documentType} · {document.fileName}</p><p className="text-xs text-slate-500">Déposé le {formatDate(document.uploadedAt)} · {document.uploadedByRole}</p></div>
               <div className="flex flex-wrap items-center gap-2">
                 <StateBadge status={document.reviewStatus} />
-                {document.documentUrl && <a href={document.documentUrl} download className="inline-flex h-8 items-center rounded-md border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">Télécharger</a>}
+                {documentUrl && <a href={documentUrl} download className="inline-flex h-8 items-center rounded-md border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">Télécharger</a>}
                 {isPending && (
                   <Tooltip>
                     <TooltipTrigger asChild>

@@ -42,10 +42,31 @@ describe("admin cockpit dossiers", () => {
       receiptApproved: true,
       protocolSigned: true,
       pendingDocuments: 0,
+      hasAnyDocuments: true,
     });
     expect(cockpit.progressPercent).toBe(100);
     expect(cockpit.blockers).toHaveLength(0);
     expect(cockpit.stage).toBe("in_progress");
+  });
+
+  it("ne coche pas protocole / reçu tant que le paiement n’est pas validé", () => {
+    const cockpit = buildCandidateCockpit({
+      emailVerified: true,
+      evaluationStatus: "validated",
+      paymentConfirmed: false,
+      protocolSigned: false,
+      receiptApproved: false,
+      dossierActivated: false,
+      pendingDocuments: 0,
+    });
+    expect(cockpit.checklist.find((item) => item.key === "protocol")).toMatchObject({
+      done: false,
+      lockedUntilPayment: true,
+    });
+    expect(cockpit.checklist.find((item) => item.key === "receipt")).toMatchObject({
+      done: false,
+      lockedUntilPayment: true,
+    });
   });
 
   it("branche le cockpit dans 360°, pré-dossiers, API files et dashboard", () => {

@@ -110,7 +110,13 @@ import {
   resolveGuidedNextAdminAction,
   type GuidedNextAction,
 } from "@shared/adminStageCatalog";
-import { preDossierReadinessBadge } from "@shared/adminOpsToolkit";
+import {
+  buildMailtoRelance,
+  buildWhatsAppRelance,
+  preDossierReadinessBadge,
+  type AdminRelanceStage,
+} from "@shared/adminOpsToolkit";
+import { isOpenableStoredUrl } from "@shared/storedFileUrl";
 import AdminPilotageQueue from "@/components/AdminPilotageQueue";
 import AdminDelayStats from "@/components/AdminDelayStats";
 import { AdminTourismRequests } from "@/components/AdminTourismRequests";
@@ -454,6 +460,37 @@ export function CandidateDetailModal({
     && candidate?.evaluationDeclarationStatus !== "not_declared"
     && candidate?.evaluationDeclarationStatus !== "validated";
   const evaluationEditorSourceType = candidate?.source === "ACCOUNT_ONLY" ? "candidate" : candidate?.folderCode?.startsWith("EVAL-AG-") || candidate?.source === "AGENCY_PHYSICAL" ? "agency" : "application";
+  const preDossierCvUrl = (() => {
+    const fromDoc = (data as { cvDocument?: { documentUrl?: string | null } } | undefined)?.cvDocument?.documentUrl;
+    const fromEval = (data as { evaluationContext?: { cvFileUrl?: string | null } } | undefined)?.evaluationContext?.cvFileUrl;
+    const url = fromDoc || fromEval || null;
+    return isOpenableStoredUrl(url) ? url : null;
+  })();
+  const preDossierCvName = (data as { cvDocument?: { fileName?: string | null } } | undefined)?.cvDocument?.fileName
+    || (data as { evaluationContext?: { cvFileName?: string | null } } | undefined)?.evaluationContext?.cvFileName
+    || "CV préévaluation";
+  const openPreDossierRelance = (stage: AdminRelanceStage, channel: "email" | "whatsapp") => {
+    if (!candidate) return;
+    const vars = {
+      email: candidate.email,
+      phone: candidate.whatsapp || "",
+      name: candidate.fullName,
+      reference: candidate.folderCode,
+      stage,
+      visaType: candidate.projectType,
+      projectType: candidate.projectType,
+    };
+    if (channel === "email") {
+      window.location.href = buildMailtoRelance(vars);
+      return;
+    }
+    const wa = buildWhatsAppRelance(vars);
+    if (!wa) {
+      toast({ title: "WhatsApp indisponible", description: "Numéro de téléphone manquant ou invalide.", variant: "destructive" });
+      return;
+    }
+    window.open(wa, "_blank", "noopener,noreferrer");
+  };
   const archivePreDossierMutation = trpc.admin.archiveDuplicateRecord.useMutation({
     onError: (error) => toast({ title: "Nettoyage du pré-dossier impossible", description: `Le dossier lié reste consultable, mais l’ancien pré-dossier n’a pas pu être archivé : ${error.message}`, variant: "destructive" }),
   });
@@ -729,7 +766,7 @@ export function CandidateDetailModal({
                     {candidate.avatarUrl && (
                       <>
                         <Button type="button" size="sm" variant="outline" className="h-7 border-blue-200 bg-white px-2 text-xs" onClick={() => setPortraitPreviewOpen(true)} data-testid="candidate-portrait-view">
-                          <Eye className="mr-1 h-3.5 w-3.5" />Voir
+                          <Eye className="mr-1 h-3.5 w-3.5" />Voir photo
                         </Button>
                         <a
                           href={candidate.avatarUrl}
@@ -739,9 +776,37 @@ export function CandidateDetailModal({
                           className="inline-flex h-7 items-center gap-1 rounded-md border border-blue-200 bg-white px-2 text-xs font-medium text-slate-800 hover:bg-blue-50"
                           data-testid="candidate-portrait-download"
                         >
-                          <Download className="h-3.5 w-3.5" />Télécharger
+                          <Download className="h-3.5 w-3.5" />Photo
                         </a>
                       </>
+                    )}
+                    {preDossierCvUrl ? (
+                      <>
+                        <a
+                          href={preDossierCvUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-7 items-center gap-1 rounded-md border border-indigo-300 bg-indigo-50 px-2 text-xs font-semibold text-indigo-950 hover:bg-indigo-100"
+                          data-testid="candidate-cv-open"
+                          title={preDossierCvName}
+                        >
+                          <FileText className="h-3.5 w-3.5" />Voir CV
+                        </a>
+                        <a
+                          href={preDossierCvUrl}
+                          download={preDossierCvName.replace(/[^\w.-]+/g, "_")}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-7 items-center gap-1 rounded-md border border-indigo-300 bg-white px-2 text-xs font-semibold text-indigo-900 hover:bg-indigo-50"
+                          data-testid="candidate-cv-download"
+                        >
+                          <Download className="h-3.5 w-3.5" />Télécharger CV
+                        </a>
+                      </>
+                    ) : (
+                      <Badge className="border-amber-300 bg-amber-50 text-amber-950" data-testid="candidate-cv-missing">
+                        CV non reçu
+                      </Badge>
                     )}
                     <Button
                       type="button"
@@ -763,7 +828,9 @@ export function CandidateDetailModal({
                     </Button>
                   </div>
                   <p className="mt-1.5 max-w-xl text-[11px] leading-4 text-slate-600">
-                    Après activation visa travail : photo type passeport obligatoire (remplace le profil) pour employeurs et agences de placement.
+                    {preDossierCvUrl
+                      ? `CV préévaluation : ${preDossierCvName}. Après activation visa travail : photo type passeport obligatoire pour employeurs.`
+                      : "Aucun CV rattaché à ce précompte — relancez le candidat avant le bilan. Après activation visa travail : photo type passeport obligatoire pour employeurs."}
                   </p>
                 </div>
               </div>
@@ -860,6 +927,84 @@ export function CandidateDetailModal({
                     }}
                   />
                 ) : null}
+                <section
+                  id="predossier-pilotage-panel"
+                  className="scroll-mt-24 rounded-xl border border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-slate-50 p-5 shadow-sm"
+                  data-testid="predossier-pilotage-panel"
+                  aria-label="Pilotage et relances du précompte"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">Pilotage précompte</p>
+                      <h4 className="mt-1 text-lg font-bold text-slate-950">Relancer et convaincre d’ouvrir le dossier</h4>
+                      <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
+                        Le CV et le type de visa pilotent l’évaluation. Utilisez les relances pour confirmer l’e-mail, obtenir le CV, valider le paiement d’ouverture, puis activer le dossier 3M.
+                      </p>
+                    </div>
+                    <Badge className={preDossierCvUrl ? "bg-emerald-100 text-emerald-900" : "bg-amber-100 text-amber-950"}>
+                      {preDossierCvUrl ? "CV reçu" : "CV manquant"}
+                    </Badge>
+                  </div>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {([
+                      { stage: "email_unverified" as const, label: "Confirmer l’e-mail", hint: "Lien de confirmation" },
+                      { stage: "cv_missing" as const, label: "Demander le CV", hint: "Obligatoire pour un bilan complet" },
+                      { stage: "evaluation_missing" as const, label: "Finaliser l’évaluation", hint: "Formulaire + contexte visa" },
+                      { stage: "payment_pending" as const, label: "Frais d’ouverture", hint: "Avant protocole N°01" },
+                      { stage: "conversion_open_dossier" as const, label: "Convaincre d’ouvrir", hint: "Passage COMPTE → 3M" },
+                      { stage: "generic" as const, label: "Relance générale", hint: "Message libre adapté" },
+                    ]).map((item) => (
+                      <div key={item.stage} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                        <p className="text-sm font-semibold text-slate-900">{item.label}</p>
+                        <p className="mt-0.5 text-[11px] text-slate-500">{item.hint}</p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-8 border-emerald-300 bg-emerald-50 text-xs text-emerald-950"
+                            onClick={() => openPreDossierRelance(item.stage, "whatsapp")}
+                            data-testid={`predossier-relance-wa-${item.stage}`}
+                          >
+                            <MessageSquare className="mr-1 h-3.5 w-3.5" />WhatsApp
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-8 border-blue-300 bg-blue-50 text-xs text-blue-950"
+                            onClick={() => openPreDossierRelance(item.stage, "email")}
+                            data-testid={`predossier-relance-mail-${item.stage}`}
+                          >
+                            <Mail className="mr-1 h-3.5 w-3.5" />E-mail
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="bg-indigo-700 hover:bg-indigo-800"
+                      onClick={() => setEvaluationEditorOpen(true)}
+                      data-testid="predossier-open-eval-editor"
+                    >
+                      <FileText className="mr-1.5 h-3.5 w-3.5" />Préparer / envoyer le bilan
+                    </Button>
+                    {preDossierCvUrl ? (
+                      <a
+                        href={preDossierCvUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex h-9 items-center gap-1.5 rounded-md border border-indigo-300 bg-white px-3 text-sm font-semibold text-indigo-950 hover:bg-indigo-50"
+                        data-testid="predossier-pilotage-cv-open"
+                      >
+                        <Eye className="h-3.5 w-3.5" />Ouvrir le CV
+                      </a>
+                    ) : null}
+                  </div>
+                </section>
                 <div id="predossier-evaluation-panel" className="scroll-mt-24">
                 <AdminPreDossierEvaluationPanel
                   status={candidate.evaluationDeclarationStatus}
