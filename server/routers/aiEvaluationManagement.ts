@@ -28,6 +28,7 @@ import { generateGeminiEvaluationDraft, type GeminiEvaluationDraftInput } from "
 import { getValidationStore, isMissingTableError } from "../services/evaluationValidationStore";
 import { caseActivityLogs, cases, documentRequirements } from "../../drizzle/caseTrackingSchema";
 import { parseApplicationPack } from "../../shared/applicationPack";
+import { evaluationRequiresCv } from "../../shared/evaluationVisaCv";
 
 /**
  * Une évaluation ouverte dans la validation structurée (brouillon IA, checklist, publication) ne passe plus
@@ -110,6 +111,10 @@ interface UnifiedItem {
   /** CV déposé à l’évaluation — admin uniquement, pour ouverture directe depuis la liste. */
   cvFileUrl?: string | null;
   cvFileName?: string | null;
+  phone?: string | null;
+  visaType?: string | null;
+  /** Indique si le type de projet/visa exige un CV (visa travail). */
+  requiresCv?: boolean;
 }
 
 function preparationTextList(value: unknown, maximum: number): string[] {
@@ -447,7 +452,7 @@ export const aiEvaluationManagementRouter = router({
         items.push({
           id: `evaluation-${e.id}`, type: "evaluation", typeLabel: "Pré-évaluation", fullName: e.fullName, email: e.email,
           createdAt: e.createdAt, score: null, hasConverted, priority, suggestedAction,
-          destinationCategory: e.destinationCategory, destinationCountry: e.destinationCountry, projectType: e.projectType, nationality: e.nationality,
+          destinationCategory: e.destinationCategory, destinationCountry: e.destinationCountry, projectType: e.projectType, visaType: e.visaType, nationality: e.nationality,
           educationLevel: e.educationLevel, employmentStatus: e.employmentStatus, maritalStatus: e.maritalStatus,
           status: e.status, priorVisaRefusal: e.priorVisaRefusal, criminalRecord: e.criminalRecord, familyAbroad: e.familyAbroad,
           acquisitionSource: e.acquisitionSource, acquisitionCampaign: e.acquisitionCampaign,
@@ -458,6 +463,8 @@ export const aiEvaluationManagementRouter = router({
           applicationPackSummary,
           cvFileUrl: e.cvFileUrl ?? null,
           cvFileName: e.cvFileName ?? null,
+          phone: e.phone ?? null,
+          requiresCv: evaluationRequiresCv(e.visaType, e.projectType),
         });
       }
 
@@ -481,6 +488,8 @@ export const aiEvaluationManagementRouter = router({
           id: `consultation-${c.id}`, type: "consultation", typeLabel: "Consultation + CV", fullName: c.fullName, email: c.email, createdAt: c.createdAt, score: null, hasConverted, priority, suggestedAction, destinationCountry: c.targetCountry, status: c.status,
           cvFileUrl: c.cvFileUrl ?? null,
           cvFileName: c.cvFileName ?? null,
+          phone: c.phone ?? null,
+          requiresCv: true,
         });
       }
 

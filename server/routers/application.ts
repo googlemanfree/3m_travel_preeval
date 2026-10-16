@@ -224,6 +224,22 @@ export const applicationRouter = router({
         if (ambassadorMatch[0]) verifiedReferredByCode = input.referredByCode;
       }
 
+      // Si le formulaire n’a pas joint de CV, reprendre celui de la dernière évaluation.
+      let resolvedCvUrl = input.cvUrl ?? null;
+      if (!resolvedCvUrl) {
+        try {
+          const [evalCv] = await db
+            .select({ cvFileUrl: evaluations.cvFileUrl })
+            .from(evaluations)
+            .where(sql`LOWER(${evaluations.email}) = LOWER(${input.email.trim()})`)
+            .orderBy(desc(evaluations.createdAt))
+            .limit(1);
+          if (evalCv?.cvFileUrl?.trim()) resolvedCvUrl = evalCv.cvFileUrl.trim();
+        } catch (err) {
+          console.error("[createApplication] Lecture CV évaluation ignorée:", err);
+        }
+      }
+
       const [insertResult] = await db.insert(applications).values({
         dossierNumber,
         candidateId: ctx.candidate.id,
@@ -246,7 +262,7 @@ export const applicationRouter = router({
         dossierStatus: "nouveau",
         // Documents uploadés
         passportUrl: input.passportUrl ?? null,
-        cvUrl: input.cvUrl ?? null,
+        cvUrl: resolvedCvUrl,
         diplomaUrl: input.diplomaUrl ?? null,
         // Scoring
         scoringTotal: input.scoringTotal ?? null,
@@ -365,6 +381,24 @@ export const applicationRouter = router({
         .update(candidates)
         .set({ activeDossierNumber: dossierNumber, activeDossierSetAt: new Date() })
         .where(eq(candidates.id, ctx.candidate.id));
+
+      // CV d’évaluation → documents compte / dossier agence (si absent).
+      try {
+        const { syncEvaluationCvToCandidate } = await import("../services/syncEvaluationCvToCandidate");
+        const [linkedAgency] = await db
+          .select({ id: agencyDossiers.id })
+          .from(agencyDossiers)
+          .where(ilike(agencyDossiers.email, input.email.trim()))
+          .orderBy(desc(agencyDossiers.createdAt))
+          .limit(1);
+        await syncEvaluationCvToCandidate(db, {
+          email: input.email,
+          candidateId: ctx.candidate.id,
+          agencyDossierId: linkedAgency?.id ?? null,
+        });
+      } catch (err) {
+        console.error("[createApplication] Sync CV évaluation non effectué:", err);
+      }
 
       return {
         applicationId: newApp?.id ?? 0,
