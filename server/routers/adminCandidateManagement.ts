@@ -368,6 +368,7 @@ export const adminCandidateManagementRouter = router({
           id: candidates.id,
           fullName: candidates.fullName,
           email: candidates.email,
+          phone: candidates.phone,
           emailVerified: candidates.emailVerified,
           evaluationDeclarationStatus: candidates.evaluationDeclarationStatus,
           destination: candidates.destination,
@@ -383,6 +384,7 @@ export const adminCandidateManagementRouter = router({
           dossierNumber: applications.dossierNumber,
           fullName: applications.fullName,
           email: applications.email,
+          whatsappNumber: applications.whatsappNumber,
           destination: applications.destination,
           visaType: applications.visaType,
           agreementSigned: applications.agreementSigned,
@@ -429,6 +431,8 @@ export const adminCandidateManagementRouter = router({
         reference: string;
         fullName: string;
         email: string;
+        phone: string | null;
+        candidateId: number | null;
         category: CockpitQueueCategory;
         categoryLabel: string;
         stageLabel: string;
@@ -462,6 +466,8 @@ export const adminCandidateManagementRouter = router({
           reference: accountReference(account.id),
           fullName: account.fullName,
           email: account.email,
+          phone: account.phone?.trim() || null,
+          candidateId: account.id,
           category,
           categoryLabel: COCKPIT_QUEUE_LABELS[category],
           stageLabel: cockpit.stageLabel,
@@ -496,6 +502,8 @@ export const adminCandidateManagementRouter = router({
           reference: app.dossierNumber,
           fullName: app.fullName,
           email: app.email,
+          phone: app.whatsappNumber?.trim() || null,
+          candidateId: app.candidateId ?? null,
           category,
           categoryLabel: COCKPIT_QUEUE_LABELS[category],
           stageLabel: cockpit.stageLabel,

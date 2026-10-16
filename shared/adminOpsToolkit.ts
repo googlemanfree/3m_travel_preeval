@@ -36,8 +36,8 @@ export const ADMIN_MESSAGE_TEMPLATES: AdminMessageTemplate[] = [
   {
     id: "payment_pending",
     label: "Paiement des frais d’ouverture",
-    subject: "3M Travel — frais d’ouverture en attente",
-    body: "Bonjour {name},\n\nPour activer le suivi de votre dossier {reference}, merci de régulariser les frais d’ouverture et de nous transmettre la preuve de paiement.\n\nCordialement,\nL’équipe 3M Travel Agency",
+    subject: "3M Travel — frais d’ouverture en attente ({reference})",
+    body: "Bonjour {name},\n\nPour activer le suivi de votre dossier {reference}, merci de régulariser les frais d’ouverture puis de déposer la preuve de paiement dans votre espace client :\nhttps://www.3mtravelagency.com/mon-espace\n\nDès réception et validation, nous poursuivons le traitement.\n\nCordialement,\nL’équipe 3M Travel Agency\nhttps://www.3mtravelagency.com",
   },
   {
     id: "documents_pending",
@@ -54,8 +54,8 @@ export const ADMIN_MESSAGE_TEMPLATES: AdminMessageTemplate[] = [
   {
     id: "email_unverified",
     label: "E-mail à confirmer",
-    subject: "3M Travel — confirmez votre adresse e-mail",
-    body: "Bonjour {name},\n\nMerci de confirmer votre adresse e-mail pour sécuriser l’accès à votre dossier {reference}. Un lien de confirmation vous a été envoyé.\n\nCordialement,\nL’équipe 3M Travel Agency",
+    subject: "3M Travel — confirmez votre adresse e-mail ({reference})",
+    body: "Bonjour {name},\n\nVotre compte 3M Travel (dossier {reference}) n’est pas encore confirmé.\n\n1) Vérifiez d’abord vos spams / courriers indésirables : cherchez un message de hello@3mtravelagency.com ou « 3M Travel ».\n2) Ouvrez le lien de confirmation dans cet e-mail.\n3) Ou connectez-vous ici : https://www.3mtravelagency.com/login\n\nSi vous ne trouvez toujours pas le message, répondez à ce mail ou écrivez-nous sur WhatsApp — nous pourrons vous renvoyer un nouveau lien.\n\nCordialement,\nL’équipe 3M Travel Agency\nhttps://www.3mtravelagency.com",
   },
   {
     id: "ready_to_activate",

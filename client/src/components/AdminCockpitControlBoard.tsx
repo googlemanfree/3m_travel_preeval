@@ -1,11 +1,15 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, Gauge, Mail, RefreshCw } from "lucide-react";
+import { AlertTriangle, Gauge, Mail, MessageCircle, RefreshCw, Send, ShieldCheck } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
 import { formatAdminSyncTime } from "@shared/adminSync";
-import { buildMailtoRelance } from "@shared/adminOpsToolkit";
+import { buildMailtoRelance, buildWhatsAppRelance } from "@shared/adminOpsToolkit";
 
 type Category =
   | "email_unverified"
@@ -39,6 +43,13 @@ const URGENCY_STYLE = {
   low: "border-slate-200 bg-white",
 } as const;
 
+type ForceConfirmTarget = {
+  candidateId: number;
+  fullName: string;
+  email: string;
+  reference: string;
+};
+
 export default function AdminCockpitControlBoard({
   sessionToken,
   onOpen,
@@ -46,12 +57,45 @@ export default function AdminCockpitControlBoard({
   sessionToken: string;
   onOpen: (openId: string) => void;
 }) {
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
   const query = trpc.adminCandidateManagement.listCockpitControlBoard.useQuery(
     { sessionToken },
     { enabled: Boolean(sessionToken), refetchInterval: 60_000 },
   );
   const [filter, setFilter] = useState<Category | "all">("all");
   const [visible, setVisible] = useState(16);
+  const [forceConfirm, setForceConfirm] = useState<ForceConfirmTarget | null>(null);
+  const [forceConfirmReason, setForceConfirmReason] = useState("");
+
+  const resendMutation = trpc.adminActivation.resend.useMutation({
+    onSuccess: () => {
+      toast({
+        title: "Lien de confirmation renvoyé",
+        description: "Le candidat reçoit un nouvel e-mail. Prévenez-le aussi de vérifier ses spams.",
+      });
+      void query.refetch();
+    },
+    onError: (error) => {
+      toast({ title: "Renvoi impossible", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const forceConfirmMutation = trpc.adminActivation.forceConfirmEmail.useMutation({
+    onSuccess: (result) => {
+      toast({
+        title: "E-mail confirmé manuellement",
+        description: `${result.email} est maintenant vérifié (${result.confirmedBy}).`,
+      });
+      setForceConfirm(null);
+      setForceConfirmReason("");
+      void query.refetch();
+      void utils.adminCandidateManagement.listCockpitControlBoard.invalidate();
+    },
+    onError: (error) => {
+      toast({ title: "Confirmation impossible", description: error.message, variant: "destructive" });
+    },
+  });
 
   const items = useMemo(() => {
     const rows = query.data?.items ?? [];
@@ -71,7 +115,7 @@ export default function AdminCockpitControlBoard({
               Contrôle total — files actionnables
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              Chaque ligne attend une action admin précise. Cliquez pour ouvrir le dossier / pré-dossier.
+              Relance client prête (e-mail / WhatsApp). Pour les e-mails bloqués en spam : renvoyer le lien ou confirmer manuellement.
             </p>
             <p className="mt-1 text-xs text-slate-500" aria-live="polite">
               {query.isFetching
@@ -122,50 +166,131 @@ export default function AdminCockpitControlBoard({
               <p className="rounded-lg bg-emerald-50 p-4 text-sm text-emerald-900">Aucune file actionnable pour ce filtre.</p>
             ) : (
               <ul className="space-y-2">
-                {items.slice(0, visible).map((item) => (
-                  <li key={item.id}>
-                    <div
-                      className={`flex w-full items-start gap-3 rounded-xl border p-3 transition hover:border-cyan-400 hover:shadow-sm ${URGENCY_STYLE[item.urgency]}`}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => onOpen(item.openId)}
-                        className="flex min-w-0 flex-1 items-start gap-3 text-left"
-                        data-testid="cockpit-open-row"
+                {items.slice(0, visible).map((item) => {
+                  const stage = CATEGORY_TO_STAGE[item.category as Category] ?? "generic";
+                  const mailtoHref = item.email
+                    ? buildMailtoRelance({
+                        email: item.email,
+                        name: item.fullName,
+                        reference: item.reference,
+                        stage,
+                      })
+                    : null;
+                  const whatsappHref = item.phone
+                    ? buildWhatsAppRelance({
+                        phone: item.phone,
+                        name: item.fullName,
+                        reference: item.reference,
+                        stage,
+                      })
+                    : null;
+                  const canForceConfirm = item.category === "email_unverified" && typeof item.candidateId === "number";
+                  const canResendLink = canForceConfirm;
+
+                  return (
+                    <li key={item.id}>
+                      <div
+                        className={`flex w-full flex-col gap-3 rounded-xl border p-3 transition hover:border-cyan-400 hover:shadow-sm sm:flex-row sm:items-start ${URGENCY_STYLE[item.urgency]}`}
                       >
-                        <AlertTriangle className={`mt-0.5 h-4 w-4 shrink-0 ${item.urgency === "high" ? "text-rose-600" : "text-amber-600"}`} aria-hidden="true" />
-                        <span className="min-w-0 flex-1">
-                          <span className="flex flex-wrap items-center gap-2">
-                            <span className="text-sm font-bold text-slate-900">{item.fullName}</span>
-                            <span className="font-mono text-[11px] text-slate-500">{item.reference}</span>
-                            <Badge variant="outline" className="border-cyan-200 bg-white text-cyan-900">{item.categoryLabel}</Badge>
-                            <Badge variant="outline" className="border-slate-200 bg-white text-slate-700">{item.progressPercent}%</Badge>
-                          </span>
-                          <span className="mt-1 block text-sm font-semibold text-slate-800">{item.nextActionLabel}</span>
-                          <span className="mt-0.5 block text-xs text-slate-600">{item.stageLabel}</span>
-                          {item.blockers[0] ? <span className="mt-1 block text-xs text-slate-500">{item.blockers[0]}</span> : null}
-                        </span>
-                      </button>
-                      {item.email ? (
-                        <a
-                          href={buildMailtoRelance({
-                            email: item.email,
-                            name: item.fullName,
-                            reference: item.reference,
-                            stage: CATEGORY_TO_STAGE[item.category as Category] ?? "generic",
-                          })}
-                          onClick={(event) => event.stopPropagation()}
-                          data-testid="cockpit-relance-mail"
-                          className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-800 hover:border-blue-300 hover:bg-blue-50"
-                          title={`Relancer ${item.fullName} par e-mail`}
+                        <button
+                          type="button"
+                          onClick={() => onOpen(item.openId)}
+                          className="flex min-w-0 flex-1 items-start gap-3 text-left"
+                          data-testid="cockpit-open-row"
                         >
-                          <Mail className="h-3.5 w-3.5" aria-hidden="true" />
-                          Relancer
-                        </a>
-                      ) : null}
-                    </div>
-                  </li>
-                ))}
+                          <AlertTriangle className={`mt-0.5 h-4 w-4 shrink-0 ${item.urgency === "high" ? "text-rose-600" : "text-amber-600"}`} aria-hidden="true" />
+                          <span className="min-w-0 flex-1">
+                            <span className="flex flex-wrap items-center gap-2">
+                              <span className="text-sm font-bold text-slate-900">{item.fullName}</span>
+                              <span className="font-mono text-[11px] text-slate-500">{item.reference}</span>
+                              <Badge variant="outline" className="border-cyan-200 bg-white text-cyan-900">{item.categoryLabel}</Badge>
+                              <Badge variant="outline" className="border-slate-200 bg-white text-slate-700">{item.progressPercent}%</Badge>
+                            </span>
+                            <span className="mt-1 block text-sm font-semibold text-slate-800">{item.nextActionLabel}</span>
+                            <span className="mt-0.5 block text-xs text-slate-600">{item.stageLabel}</span>
+                            {item.blockers[0] ? <span className="mt-1 block text-xs text-slate-500">{item.blockers[0]}</span> : null}
+                          </span>
+                        </button>
+                        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5" data-testid="cockpit-relance-actions">
+                          {mailtoHref ? (
+                            <a
+                              href={mailtoHref}
+                              onClick={(event) => event.stopPropagation()}
+                              data-testid="cockpit-relance-mail"
+                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-800 hover:border-blue-300 hover:bg-blue-50"
+                              title={`Relancer ${item.fullName} par e-mail (message prêt)`}
+                            >
+                              <Mail className="h-3.5 w-3.5" aria-hidden="true" />
+                              E-mail
+                            </a>
+                          ) : null}
+                          {whatsappHref ? (
+                            <a
+                              href={whatsappHref}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(event) => event.stopPropagation()}
+                              data-testid="cockpit-relance-whatsapp"
+                              className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-bold text-emerald-900 hover:bg-emerald-100"
+                              title={`Relancer ${item.fullName} sur WhatsApp (message prêt)`}
+                            >
+                              <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                              WhatsApp
+                            </a>
+                          ) : item.email && item.category !== "ready_to_activate" ? (
+                            <span className="text-[11px] text-slate-500" data-testid="cockpit-relance-whatsapp-missing">
+                              WhatsApp : tél. manquant
+                            </span>
+                          ) : null}
+                          {canResendLink ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="h-8 gap-1 border-indigo-200 px-2.5 text-xs font-bold text-indigo-900 hover:bg-indigo-50"
+                              data-testid="cockpit-resend-confirm-link"
+                              disabled={resendMutation.isPending}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                if (typeof item.candidateId !== "number") return;
+                                resendMutation.mutate({ sessionToken, candidateId: item.candidateId });
+                              }}
+                              title="Renvoyer le lien de confirmation (si bloqué en spam)"
+                            >
+                              <Send className="h-3.5 w-3.5" aria-hidden="true" />
+                              Renvoyer lien
+                            </Button>
+                          ) : null}
+                          {canForceConfirm ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="h-8 gap-1 border-emerald-300 bg-white px-2.5 text-xs font-bold text-emerald-900 hover:bg-emerald-50"
+                              data-testid="cockpit-force-confirm-email"
+                              disabled={forceConfirmMutation.isPending}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                if (typeof item.candidateId !== "number") return;
+                                setForceConfirm({
+                                  candidateId: item.candidateId,
+                                  fullName: item.fullName,
+                                  email: item.email,
+                                  reference: item.reference,
+                                });
+                                setForceConfirmReason("");
+                              }}
+                              title="Confirmer l’e-mail côté admin (spam / boîte inaccessible)"
+                            >
+                              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                              Confirmer e-mail
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             )}
 
@@ -176,6 +301,77 @@ export default function AdminCockpitControlBoard({
             ) : null}
           </>
         )}
+
+        <Dialog
+          open={Boolean(forceConfirm)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setForceConfirm(null);
+              setForceConfirmReason("");
+            }
+          }}
+        >
+          <DialogContent data-testid="cockpit-force-confirm-dialog">
+            <DialogHeader>
+              <DialogTitle>Confirmer l’e-mail manuellement</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 text-sm">
+              <p className="text-slate-600">
+                Compte : <strong>{forceConfirm?.fullName}</strong> · {forceConfirm?.email}
+                {forceConfirm?.reference ? (
+                  <>
+                    {" "}
+                    · <span className="font-mono text-xs">{forceConfirm.reference}</span>
+                  </>
+                ) : null}
+              </p>
+              <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950">
+                À utiliser si le lien est bloqué en spam, la boîte inaccessible, ou l’OTP impossible. Vérifiez l’identité (appel / WhatsApp) avant de confirmer. L’action est journalisée.
+              </p>
+              <div>
+                <Label htmlFor="cockpit-force-confirm-reason">Motif (obligatoire)</Label>
+                <Textarea
+                  id="cockpit-force-confirm-reason"
+                  value={forceConfirmReason}
+                  onChange={(event) => setForceConfirmReason(event.target.value)}
+                  placeholder="Ex. : identité vérifiée par WhatsApp ; e-mail bloqué en spam Yahoo."
+                  rows={4}
+                  maxLength={500}
+                  data-testid="cockpit-force-confirm-reason"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setForceConfirm(null);
+                  setForceConfirmReason("");
+                }}
+              >
+                Annuler
+              </Button>
+              <Button
+                type="button"
+                className="bg-emerald-700 hover:bg-emerald-800"
+                data-testid="cockpit-force-confirm-submit"
+                disabled={forceConfirmMutation.isPending || forceConfirmReason.trim().length < 8 || !forceConfirm}
+                onClick={() => {
+                  if (!forceConfirm) return;
+                  forceConfirmMutation.mutate({
+                    sessionToken,
+                    candidateId: forceConfirm.candidateId,
+                    reason: forceConfirmReason.trim(),
+                    confirmed: true,
+                  });
+                }}
+              >
+                {forceConfirmMutation.isPending ? "Confirmation…" : "Confirmer l’e-mail"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
