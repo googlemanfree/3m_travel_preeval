@@ -3255,8 +3255,13 @@ export const adminRouter = router({
             && !mappedDocuments.some((doc) => doc.documentUrl === cvDocument.documentUrl)
             ? [cvDocument, ...mappedDocuments]
             : mappedDocuments;
+          const [infoRequestNotif] = await db.select({ createdAt: clientNotifications.createdAt }).from(clientNotifications)
+            .where(and(eq(clientNotifications.candidateId, account.id), eq(clientNotifications.type, "registration_info_request")))
+            .orderBy(desc(clientNotifications.createdAt))
+            .limit(1);
           return serializeAdminCandidateDetails({
             success: true,
+            registrationInfoRequestSentAt: infoRequestNotif?.createdAt ?? null,
             candidate: {
               id: `account_${account.id}`,
               internalId: account.id,
@@ -3296,6 +3301,7 @@ export const adminRouter = router({
               evaluationReviewNote: account.evaluationReviewNote,
               evaluationValidatedAt: account.evaluationReviewedAt,
               evaluationValidatedBy: account.evaluationReviewedBy,
+              registrationInfoRequestSentAt: infoRequestNotif?.createdAt ?? null,
               createdAt: account.createdAt,
               updatedAt: account.updatedAt,
             },
@@ -3390,9 +3396,18 @@ export const adminRouter = router({
             validatedBy: (app as any).paymentValidatedBy ?? null,
           };
 
+          const [onlineInfoRequest] = candRec?.id
+            ? await db.select({ createdAt: clientNotifications.createdAt }).from(clientNotifications)
+              .where(and(eq(clientNotifications.candidateId, candRec.id), eq(clientNotifications.type, "registration_info_request")))
+              .orderBy(desc(clientNotifications.createdAt))
+              .limit(1)
+            : [undefined];
           return serializeAdminCandidateDetails({
             success: true,
             redirectToCanonicalAgencyId,
+            registrationInfoRequestSentAt: onlineInfoRequest?.createdAt ?? null,
+            evaluationClientConfirmed: Boolean(app.evaluationClientConfirmedAt),
+            evaluationClientConfirmedAt: app.evaluationClientConfirmedAt ?? null,
             candidate: {
               id: `online_${app.id}`,
               internalId: app.id,
@@ -3413,6 +3428,7 @@ export const adminRouter = router({
               scoringData,
               avatarUrl,
               paymentStatus: app.paymentStatus,
+              evaluationDeliveryStatus: app.evaluationDeliveryStatus ?? null,
               evaluationDeclarationStatus: candRec?.evaluationDeclarationStatus ?? "not_declared",
               evaluationDeclaredAt: candRec?.evaluationDeclaredAt ?? null,
               evaluationReviewedAt: candRec?.evaluationReviewedAt ?? null,
@@ -3420,6 +3436,24 @@ export const adminRouter = router({
               evaluationReviewNote: candRec?.evaluationReviewNote ?? null,
               evaluationValidatedAt: candRec?.evaluationReviewedAt ?? null,
               evaluationValidatedBy: candRec?.evaluationReviewedBy ?? null,
+              registrationInfoRequestSentAt: onlineInfoRequest?.createdAt ?? null,
+              registrationProfile: candRec
+                ? {
+                    preferredDestinations: parsePreferredDestinations(candRec.preferredDestinations),
+                    visaType: app.visaType || candRec.visaType || null,
+                    educationLevel: candRec.educationLevel || null,
+                    employmentStatus: candRec.employmentStatus || null,
+                    languageLevel: candRec.languageLevel || null,
+                    nationality: candRec.nationality || null,
+                  }
+                : {
+                    preferredDestinations: app.destination ? [app.destination] : [],
+                    visaType: app.visaType || null,
+                    educationLevel: null,
+                    employmentStatus: null,
+                    languageLevel: null,
+                    nationality: null,
+                  },
               createdAt: app.createdAt,
               updatedAt: app.updatedAt,
             },
@@ -3432,7 +3466,14 @@ export const adminRouter = router({
 
           let avatarUrl = null as string | null;
           let candRec: {
+            id: number;
             avatarUrl?: string | null;
+            preferredDestinations?: string | null;
+            visaType?: string | null;
+            educationLevel?: string | null;
+            employmentStatus?: string | null;
+            languageLevel?: string | null;
+            nationality?: string | null;
             evaluationDeclarationStatus?: string | null;
             evaluationDeclaredAt?: Date | null;
             evaluationReviewedAt?: Date | null;
@@ -3476,9 +3517,17 @@ export const adminRouter = router({
             .orderBy(desc(agencyDossierDocuments.createdAt))
             .limit(100);
 
+          const [agencyInfoRequest] = candRec?.id
+            ? await db.select({ createdAt: clientNotifications.createdAt }).from(clientNotifications)
+              .where(and(eq(clientNotifications.candidateId, candRec.id), eq(clientNotifications.type, "registration_info_request")))
+              .orderBy(desc(clientNotifications.createdAt))
+              .limit(1)
+            : [undefined];
+
           return serializeAdminCandidateDetails({
             success: true,
             redirectToCanonicalAgencyId: null,
+            registrationInfoRequestSentAt: agencyInfoRequest?.createdAt ?? null,
             candidate: {
               id: `agency_${dossier.id}`,
               internalId: dossier.id,
@@ -3506,6 +3555,17 @@ export const adminRouter = router({
               evaluationReviewNote: null,
               evaluationValidatedAt: dossier.evaluationValidatedAt ?? null,
               evaluationValidatedBy: dossier.evaluationValidatedBy ?? null,
+              registrationInfoRequestSentAt: agencyInfoRequest?.createdAt ?? null,
+              registrationProfile: {
+                preferredDestinations: dossier.destination
+                  ? [dossier.destination]
+                  : parsePreferredDestinations(candRec?.preferredDestinations),
+                visaType: dossier.visaType || candRec?.visaType || null,
+                educationLevel: candRec?.educationLevel || null,
+                employmentStatus: candRec?.employmentStatus || null,
+                languageLevel: candRec?.languageLevel || null,
+                nationality: candRec?.nationality || null,
+              },
               createdAt: dossier.createdAt,
               updatedAt: dossier.updatedAt,
             },
