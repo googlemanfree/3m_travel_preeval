@@ -34,6 +34,7 @@ import { buildCandidateSpaceAccessUrl } from "../services/candidateAccessLink";
 import { normalizeAdminMessage, richTextToPlainText, sanitizeRichTextHtml } from "../services/richText";
 import { appendEvaluationOpenTrackingPixel, buildAdvisorSignatureHtml, escapeHtmlText } from "../services/evaluationEmailCommunication";
 import { buildEvaluationReminderEmailHtml, buildEvaluationReminderEmailSubject, type EvaluationReminderLanguage } from "../services/evaluationReminderCommunication";
+import { resolveEvaluationProjectKind } from "../../shared/evaluationVisaCv";
 
 const sourceTypes = ["application", "evaluation", "consultation", "flight", "insurance", "translation", "contact", "agency_dossier", "tourism", "digital"] as const;
 const workflowStatuses = ["new", "qualifying", "waiting_customer", "documents_review", "payment_review", "processing", "submitted", "completed", "closed", "rejected"] as const;
@@ -81,6 +82,7 @@ function serializeEvaluationDeliveryApplication(application: {
   email: string;
   whatsappNumber?: string | null;
   destination?: string | null;
+  visaType?: string | null;
   scoringTotal?: number | null;
   evaluationScheduledAt?: Date | string | null;
   evaluationDeliveryStatus?: string | null;
@@ -97,6 +99,7 @@ function serializeEvaluationDeliveryApplication(application: {
     email: application.email,
     whatsappNumber: application.whatsappNumber ?? null,
     destination: application.destination ?? null,
+    visaType: application.visaType ?? null,
     scoringTotal: application.scoringTotal ?? 0,
     evaluationScheduledAt: toIsoDate(application.evaluationScheduledAt),
     evaluationDeliveryStatus: application.evaluationDeliveryStatus ?? "draft",
@@ -716,6 +719,16 @@ initializeEvaluationDelivery: publicProcedure
         };
       }));
       const advisorValidatedAt = toIsoDate(adminDraft.advisorValidatedAt ?? null);
+      const scoringProjectType =
+        typeof details.projectType === "string" ? details.projectType
+          : typeof adminDraft.projectType === "string" ? adminDraft.projectType
+            : null;
+      const projectKind = resolveEvaluationProjectKind(
+        scoringProjectType,
+        application.visaType,
+        typeof details.sourceFormSnapshot?.visaType === "string" ? details.sourceFormSnapshot.visaType : null,
+        typeof details.sourceFormSnapshot?.projectType === "string" ? details.sourceFormSnapshot.projectType : null,
+      );
       return {
         application: serializeEvaluationDeliveryApplication(application),
         versions,
@@ -726,6 +739,8 @@ initializeEvaluationDelivery: publicProcedure
           destination: adminDraft.destination ?? application.destination ?? "europe",
           modelLabel: adminDraft.modelLabel ?? null,
           criteria: adminDraft.criteria ?? null,
+          projectKind,
+          projectType: scoringProjectType,
           finalScore: Number.isFinite(Number(adminDraft.finalScore)) ? Number(adminDraft.finalScore) : (application.scoringTotal ?? 0),
           verdict: String(adminDraft.verdict ?? ""),
           profileSummary: String(adminDraft.profileSummary ?? ""),
