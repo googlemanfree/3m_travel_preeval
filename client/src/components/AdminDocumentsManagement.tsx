@@ -12,6 +12,9 @@ import { AdminCandidatesToRemind } from "./AdminCandidatesToRemind";
 import { groupDocumentsByCandidate, type CandidateDocumentGroup } from "@/lib/documentGroups";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { DOCUMENT_REJECTION_REASONS, composeRejectionComment, type DocumentRejectionCode } from "@shared/documentRejectionReasons";
+import { summarizeWaiting, waitingInfo } from "@shared/documentWaiting";
+import { AdminDocumentInsightsCard } from "@/components/AdminDocumentInsights";
 
 interface Document {
   id: number;
@@ -51,6 +54,7 @@ export function AdminDocumentsManagement() {
   const [rejectingDocId, setRejectingDocId] = useState<number | null>(null);
   const [rejectingDocSource, setRejectingDocSource] = useState<"client" | "candidate" | "agency">("client");
   const [rejectionReason, setRejectionReason] = useState("");
+  const [rejectionCode, setRejectionCode] = useState<DocumentRejectionCode | null>(null);
   const [previewingDoc, setPreviewingDoc] = useState<Document | null>(null);
   const [previewAcknowledged, setPreviewAcknowledged] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -167,6 +171,18 @@ export function AdminDocumentsManagement() {
     setRejectingDocId(doc.id);
     setRejectingDocSource(doc.source);
     setRejectionReason("");
+    setRejectionCode(null);
+  };
+
+  // Choisir un motif standard remplit le commentaire (modifiable) ; un second clic sur le même motif le retire.
+  const pickRejectionReason = (code: DocumentRejectionCode) => {
+    if (rejectionCode === code) {
+      setRejectionCode(null);
+      setRejectionReason("");
+      return;
+    }
+    setRejectionCode(code);
+    setRejectionReason(composeRejectionComment(code));
   };
 
   const submitRejection = async () => {
@@ -193,6 +209,7 @@ export function AdminDocumentsManagement() {
       });
       setRejectingDocId(null);
       setRejectionReason("");
+      setRejectionCode(null);
       await new Promise(resolve => setTimeout(resolve, 500));
       refetch();
     } catch (error) {
@@ -271,6 +288,7 @@ export function AdminDocumentsManagement() {
     return matchesSearch && matchesStatus && matchesClassification && matchesSource && matchesType && matchesDossier;
   });
 
+  const waitingSummary = summarizeWaiting(documents);
   const documentTypes = Array.from(new Set(documents.map((document) => document.documentType).filter(Boolean))).sort((a, b) => a.localeCompare(b, "fr"));
   const uploadTargets = [
     ...(candidateDirectory?.candidates ?? []).filter((candidate: any) => candidate.source !== "AGENCY_PHYSICAL").map((candidate: any) => ({ value: `candidate:${candidate.internalId}`, label: `${candidate.fullName} · ${candidate.folderCode}` })),
@@ -804,6 +822,18 @@ export function AdminDocumentsManagement() {
 
           <CardContent className="space-y-4">
             {/* Filtres et tri */}
+            <AdminDocumentInsightsCard sessionToken={sessionToken} />
+            {waitingSummary.pending > 0 && (
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs" data-testid="documents-waiting-queue">
+                <span className="font-semibold text-slate-800">File de vérification :</span>
+                <span data-testid="waiting-pending">{waitingSummary.pending} en attente</span>
+                <span className={waitingSummary.late > 0 ? "font-semibold text-amber-700" : "text-slate-500"} data-testid="waiting-late">{waitingSummary.late} depuis plus de 48 h</span>
+                <span className={waitingSummary.overdue > 0 ? "font-semibold text-rose-700" : "text-slate-500"} data-testid="waiting-overdue">{waitingSummary.overdue} depuis plus de 7 jours</span>
+                <Button type="button" size="sm" variant="outline" className="ml-auto h-7" data-testid="waiting-oldest-first" onClick={() => { setFilterStatus("pending"); setSortBy("uploadedAt"); setSortDirection("asc"); }}>
+                  Traiter les plus anciennes d’abord
+                </Button>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
               <Input
                 placeholder="Chercher par dossier, candidat, document ou IA..."
@@ -955,6 +985,12 @@ export function AdminDocumentsManagement() {
                               {doc.verificationStatus === "pending" && "En attente"}
                               {doc.verificationStatus === "rejected" && "Rejeté"}
                             </Badge>
+                            {doc.verificationStatus === "pending" && (() => {
+                              const waiting = waitingInfo(doc.submittedAt);
+                              if (!waiting) return null;
+                              const tone = waiting.level === "overdue" ? "text-rose-700" : waiting.level === "late" ? "text-amber-700" : "text-slate-500";
+                              return <span className={`text-[10px] font-semibold ${tone}`} data-testid={`doc-waiting-${doc.id}`}>{waiting.label}</span>;
+                            })()}
                             {doc.humanVerified ? (
                               <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700" title={`Vérifié par ${doc.verifiedByAdmin || "un administrateur"}`}>
                                 <CheckCircle2 className="w-3 h-3" /> Vérification humaine
@@ -1227,8 +1263,22 @@ export function AdminDocumentsManagement() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
+              <div role="group" aria-label="Motifs standard" className="flex flex-wrap gap-2" data-testid="rejection-reason-presets">
+                {DOCUMENT_REJECTION_REASONS.map((reason) => (
+                  <button
+                    key={reason.code}
+                    type="button"
+                    aria-pressed={rejectionCode === reason.code}
+                    data-testid={`rejection-reason-${reason.code}`}
+                    onClick={() => pickRejectionReason(reason.code)}
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold ${rejectionCode === reason.code ? "border-red-600 bg-red-600 text-white" : "border-slate-300 bg-white text-slate-700 hover:border-red-400"}`}
+                  >
+                    {reason.label}
+                  </button>
+                ))}
+              </div>
               <Textarea
-                placeholder="Raison du rejet (ex: Document illisible, informations manquantes, etc.)"
+                placeholder="Raison du rejet : choisissez un motif ci-dessus ou précisez ici ce que le candidat doit corriger"
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 maxLength={2000}

@@ -20,6 +20,8 @@ const EvaluationDeliveryEditor = lazy(() => import("@/components/EvaluationDeliv
 import { CommunicationHistoryPdfButton } from "@/components/CommunicationHistoryPdfButton";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import CandidateDocumentsCrm from "@/components/CandidateDocumentsCrm";
+import AdminPassportIdentityCard from "@/components/AdminPassportIdentityCard";
+import { AdminDuplicateFilesNotice } from "@/components/AdminDocumentInsights";
 import AdminCandidateSummaryCard from "@/components/AdminCandidateSummaryCard";
 import AdminCandidateCockpitStrip, { type CockpitTreatTarget } from "@/components/AdminCandidateCockpitStrip";
 import AdminClientSpacePreview from "@/components/AdminClientSpacePreview";
@@ -1778,6 +1780,8 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             </section>
           )}
           {data.communications.documentClarifications?.filter((item: any) => item.status === "pending").length > 0 && <div className="rounded-xl border border-violet-200 bg-violet-50 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h4 className="font-semibold text-violet-950">Clarifications en attente</h4><p className="mt-1 text-sm text-violet-900">Répondez depuis ce dossier : le candidat recevra une notification dans son espace.</p></div><Badge className="border-violet-200 bg-white text-violet-900">{data.communications.documentClarifications.filter((item: any) => item.status === "pending").length} en attente</Badge></div><div className="mt-3 space-y-2">{data.communications.documentClarifications.filter((item: any) => item.status === "pending").map((item: any) => <div key={item.id} className="flex flex-col gap-2 rounded-lg border border-violet-100 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold text-slate-900">{item.documentLabel}</p><p className="mt-1 text-xs text-slate-600">{item.requestMessage || "Le candidat demande une précision."}</p></div><Button size="sm" className="bg-violet-700 hover:bg-violet-800" onClick={() => { setSelectedClarification({ id: item.id, documentLabel: item.documentLabel, requestMessage: item.requestMessage || "" }); setQuickMessageText(`Bonjour,\n\nMerci pour votre demande concernant « ${item.documentLabel} ».\n\n`); setQuickMessageOpen(true); }}><MessageSquare className="mr-1 h-4 w-4" />Répondre avec un modèle</Button></div>)}</div></div>}
+          <AdminPassportIdentityCard sessionToken={sessionToken} candidateId={summaryCandidateId} />
+          <AdminDuplicateFilesNotice sessionToken={sessionToken} candidateId={summaryCandidateId} />
           <CandidateDocumentsCrm
             sessionToken={sessionToken}
             candidateId={candidate.id}
@@ -1786,6 +1790,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             onChanged={() => { void refresh(); }}
             onRemind={() => { lockAction("documentReminder"); documentReminderMutation.mutate({ sessionToken, candidateId: candidate.id }); }}
             reminding={documentReminderMutation.isPending || actionLocks.documentReminder}
+            bilanContext={{ candidateName: candidate.fullName, reference: candidate.folderCode || candidate.id, destination: candidate.destinationCountry }}
           />
           <details className="rounded-xl border bg-white" data-testid="dossier-tools">
             <summary className="cursor-pointer select-none p-4 text-sm font-semibold text-slate-800">Outils avancés : checklist pays, CV, extraction</summary>

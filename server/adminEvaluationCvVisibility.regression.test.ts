@@ -17,6 +17,9 @@ describe("admin — CV d’évaluation visible sans creuser la validation", () =
     const dashboard = read("client/src/pages/AdminAIEvaluationDashboard.tsx");
     expect(dashboard).toContain("isOpenableStoredUrl");
     expect(dashboard).toContain("evaluation-cv-open-link");
+    expect(dashboard).toContain("href={item.cvFileUrl!}");
+    expect(dashboard).toContain('target="_blank"');
+    expect(dashboard).toContain('rel="noopener noreferrer"');
     expect(dashboard).toContain("Ouvrir le CV");
     expect(dashboard).toContain("evaluation-cv-missing-badge");
   });
@@ -29,6 +32,8 @@ describe("admin — CV d’évaluation visible sans creuser la validation", () =
     const workspace = read("client/src/components/Candidate360Workspace.tsx");
     expect(workspace).toContain("evaluationContext?.cvFileUrl");
     expect(workspace).toContain("candidate360-cv-open");
+    expect(workspace).toContain('target="_blank"');
+    expect(workspace).toContain('rel="noopener noreferrer"');
     expect(workspace).toContain("Soumis à l’évaluation");
 
     const predossierRouter = read("server/routers/adminCandidateManagement.ts");
@@ -37,6 +42,8 @@ describe("admin — CV d’évaluation visible sans creuser la validation", () =
 
     const predossierUi = read("client/src/components/AdminPreDossierAccountsPanel.tsx");
     expect(predossierUi).toContain("predossier-cv-open-");
+    expect(predossierUi).toContain('target="_blank"');
+    expect(predossierUi).toContain('rel="noopener noreferrer"');
     expect(predossierUi).toContain("Ouvrir le CV");
   });
 });

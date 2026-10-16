@@ -91,6 +91,8 @@ import { dossierVerificationRouter } from "./routers/dossierVerification";
 import { newsletterRouter } from "./routers/newsletter";
 import { ambassadorRouter } from "./routers/ambassador";
 import { schedulerAdminRouter } from "./routers/schedulerAdmin";
+import { adminPassportIdentityRouter } from "./routers/adminPassportIdentity";
+import { adminDocumentInsightsRouter } from "./routers/adminDocumentInsights";
 
 // evaluationRouterNew (routers/evaluationRouter.ts, ex-`evaluationV2`) a été RETIRÉ : `create` était public,
 // sans authentification ni consentement, et insérait dans la même table `evaluations` que le vrai parcours
@@ -162,6 +164,8 @@ export const appRouter = router({
   contact: contactRouter,
   admin: adminRouter,
   schedulerAdmin: schedulerAdminRouter,
+  adminPassportIdentity: adminPassportIdentityRouter,
+  adminDocumentInsights: adminDocumentInsightsRouter,
   adminCandidateManagement: adminCandidateManagementRouter,
   adminSavedViews: adminSavedViewsRouter,
   insuranceRequests: insuranceRequestsRouter,

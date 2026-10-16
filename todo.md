@@ -1,8 +1,5 @@
 
 
-## PWA — invite et hors connexion
-- [x] Ajout de « Plus tard » (session) et « Ne plus proposer » (stockage permanent) pour l’invite d’installation.
-- [x] Ajout d’une pulsation limitée à trois cycles, désactivée avec `prefers-reduced-motion`.
-- [x] Nouvelle page `/offline.html` avec logo circulaire, état hors connexion et bouton Réessayer.
-- [x] Service Worker v59 : cache de la page hors ligne et du logo, fallback navigation vers `/offline.html`.
-- [x] Validation : `pnpm run check`, 1 suite / 2 tests ciblés et build production verts; page hors ligne vérifiée visuellement.
+## Vérification CV admin — couverture complémentaire
+- [x] Étendre la régression pour verrouiller explicitement les liens CV sur dashboard, pré-dossiers et Candidate360; 29/29 tests ciblés verts.
+- [ ] Contrôle visuel authentifié admin à effectuer lorsqu’une session administrateur autorisée est disponible; aucun compte admin n’a été utilisé ici.
