@@ -350,8 +350,16 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
     setAdvisorId(data.operationalCase.assignedAdminId ? String(data.operationalCase.assignedAdminId) : "unassigned");
     setLabels((data.operationalCase.labels ?? []).join(", "));
     setDueAt(data.operationalCase.dueAt ? new Date(data.operationalCase.dueAt).toISOString().slice(0, 16) : "");
-    setDestinationDraft(data.operationalCase.countryTarget || candidate.destinationCountry || "");
-  }, [data]);
+    setDestinationDraft(data.operationalCase.countryTarget || data.evaluationContext?.destinationCountry || candidate.destinationCountry || "");
+    const syncedVisa =
+      (data as { dynamicPilotage?: { visaType?: string } } | undefined)?.dynamicPilotage?.visaType
+      || data.evaluationContext?.projectType
+      || data.evaluationContext?.visaType
+      || data.evaluationContext?.procedureLabel
+      || candidate.projectType
+      || "";
+    setVisaTypeDraft(syncedVisa);
+  }, [data, candidate.destinationCountry, candidate.projectType]);
 
   useEffect(() => {
     const context = data?.evaluationContext;
@@ -708,16 +716,62 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
     }
   };
 
-  const saveOperationalState = () => updateMutation.mutate({
-    sessionToken,
-    candidateId: candidate.id,
-    workflowStatus: workflowStatus as any,
-    priority: priority as any,
-    assignedAdminId: advisorId === "unassigned" ? null : Number(advisorId),
-    dueAt: dueAt ? new Date(dueAt) : null,
-    labels: labelsList,
-    comment: comment.trim() || undefined,
-  });
+  const saveOperationalState = () => {
+    if (!/^(online|agency)_\d+$/.test(String(candidate.id))) {
+      toast.error("Mise à jour impossible", {
+        description: "Le pilotage synchronisé s’applique aux dossiers online_… ou agency_…. Activez d’abord le pré-compte en dossier.",
+      });
+      unlockAction("workflow");
+      return;
+    }
+    const oversizedLabel = labelsList.find((label) => label.length > 32);
+    if (oversizedLabel) {
+      toast.error("Mise à jour impossible", {
+        description: `Étiquette trop longue (32 caractères max) : « ${oversizedLabel.slice(0, 40)}… ». Séparez-les par des virgules.`,
+      });
+      unlockAction("workflow");
+      return;
+    }
+    if (labelsList.length > 12) {
+      toast.error("Mise à jour impossible", { description: "12 étiquettes maximum." });
+      unlockAction("workflow");
+      return;
+    }
+    const parsedDue = dueAt ? new Date(dueAt) : null;
+    if (parsedDue && Number.isNaN(parsedDue.getTime())) {
+      toast.error("Mise à jour impossible", { description: "Échéance métier invalide. Corrigez la date ou laissez le champ vide." });
+      unlockAction("workflow");
+      return;
+    }
+    const assignedAdminId = advisorId === "unassigned" ? null : Number(advisorId);
+    if (assignedAdminId !== null && (!Number.isFinite(assignedAdminId) || assignedAdminId <= 0)) {
+      toast.error("Mise à jour impossible", { description: "Conseiller attribué invalide." });
+      unlockAction("workflow");
+      return;
+    }
+    // Synchronise aussi destination / type de visa si l’admin les a corrigés avant d’enregistrer.
+    const destinationTrimmed = destinationDraft.trim();
+    const visaTrimmed = visaTypeDraft.trim();
+    if (destinationTrimmed.length >= 2) {
+      destinationMutation.mutate({
+        sessionToken,
+        candidateId: candidate.id,
+        destination: destinationTrimmed,
+        visaType: visaTrimmed.length >= 2 ? visaTrimmed : undefined,
+        comment: comment.trim() || undefined,
+      });
+    }
+    updateMutation.mutate({
+      sessionToken,
+      candidateId: candidate.id,
+      workflowStatus: workflowStatus as any,
+      priority: priority as any,
+      assignedAdminId,
+      dueAt: parsedDue,
+      labels: labelsList,
+      comment: comment.trim() || undefined,
+    });
+  };
 
   const setDueShortcut = (hours: number) => {
     const target = new Date(Date.now() + hours * 60 * 60 * 1000);

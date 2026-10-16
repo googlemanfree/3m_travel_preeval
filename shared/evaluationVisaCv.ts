@@ -4,6 +4,8 @@
  * Autres visas (études, tourisme, famille…) → évaluation possible sans CV.
  */
 
+export type EvaluationProjectKind = "travail" | "etudes" | "tourisme" | "autre";
+
 function foldVisaLabel(value: string | null | undefined): string {
   return String(value ?? "")
     .trim()
@@ -25,6 +27,20 @@ export function isWorkEvaluationVisa(visaOrProject: string | null | undefined): 
   if (!value) return false;
   if (isNonWorkEvaluationVisa(value)) return false;
   return /(travail|work|emploi|job|qualified|qualifie|professionnel)/.test(value);
+}
+
+/** Normalise le type de projet pour bilans, parcours et checklists. */
+export function resolveEvaluationProjectKind(
+  ...values: Array<string | null | undefined>
+): EvaluationProjectKind {
+  for (const value of values) {
+    const folded = foldVisaLabel(value);
+    if (!folded) continue;
+    if (/(etude|study|scolaire|academ|formation|student)/.test(folded)) return "etudes";
+    if (/(touris|visitor|visiteur|sejour|schengen|court)/.test(folded)) return "tourisme";
+    if (/(travail|work|emploi|job|qualified|qualifie|professionnel)/.test(folded)) return "travail";
+  }
+  return "autre";
 }
 
 /**

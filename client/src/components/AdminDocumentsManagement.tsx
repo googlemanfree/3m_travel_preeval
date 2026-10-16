@@ -66,7 +66,7 @@ export function AdminDocumentsManagement() {
   const [uploadCandidateId, setUploadCandidateId] = useState("");
   const [uploadTargetSearch, setUploadTargetSearch] = useState("");
   const [uploadConfirmationOpen, setUploadConfirmationOpen] = useState(false);
-  const [uploadDocumentType, setUploadDocumentType] = useState("autre");
+  const [uploadDocumentType, setUploadDocumentType] = useState("");
   const [viewMode, setViewMode] = useState<"candidates" | "list">("candidates");
   const [comparisonDocuments, setComparisonDocuments] = useState<{ previous: Document; current: Document } | null>(null);
   useEffect(() => {
@@ -443,6 +443,10 @@ export function AdminDocumentsManagement() {
       toast.error("Sélectionnez un dossier et au moins un fichier.");
       return;
     }
+    if (!uploadDocumentType.trim()) {
+      toast.error("Précisez le type de document", { description: "CV, passeport, diplôme… — obligatoire avant le dépôt." });
+      return;
+    }
     if (!confirmed) {
       setUploadConfirmationOpen(true);
       return;
@@ -750,13 +754,13 @@ export function AdminDocumentsManagement() {
                 <p className="mt-2 text-sm font-semibold text-slate-900">Déposez vos fichiers ici</p><p className="text-xs text-slate-500">PDF, images ou Word · 10 Mo maximum par fichier</p>
                 <label className="mt-3 inline-flex cursor-pointer items-center rounded-md border border-blue-200 bg-white px-3 py-2 text-sm font-medium text-blue-800 hover:bg-blue-50">Sélectionner des fichiers<input type="file" multiple className="sr-only" accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx" onChange={(event) => event.currentTarget.files && acceptDroppedFiles(event.currentTarget.files)} /></label>
               </div>
-              <div className="grid gap-2 sm:grid-cols-2"><div className="space-y-2"><Input value={uploadTargetSearch} onChange={(event) => setUploadTargetSearch(event.target.value)} placeholder="Rechercher un nom ou numéro…" aria-label="Rechercher un dossier destinataire" maxLength={200} /><select value={uploadCandidateId} onChange={(event) => setUploadCandidateId(event.target.value)} aria-label="Dossier destinataire du document" className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"><option value="">Choisir le dossier destinataire</option>{visibleUploadTargets.map((target) => <option key={target.value} value={target.value}>{target.label}</option>)}{visibleUploadTargets.length === 0 && <option value="" disabled>Aucun dossier trouvé</option>}</select></div><select value={uploadDocumentType} onChange={(event) => setUploadDocumentType(event.target.value)} className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"><option value="autre">Autre document</option><option value="cv">CV</option><option value="passeport">Passeport</option><option value="diplome">Diplôme</option><option value="justificatif_domicile">Justificatif de domicile</option><option value="justificatif_paiement">Justificatif de paiement</option><option value="document_remis_main_propre">Document remis en main propre</option></select></div>
+              <div className="grid gap-2 sm:grid-cols-2"><div className="space-y-2"><Input value={uploadTargetSearch} onChange={(event) => setUploadTargetSearch(event.target.value)} placeholder="Rechercher un nom ou numéro…" aria-label="Rechercher un dossier destinataire" maxLength={200} /><select value={uploadCandidateId} onChange={(event) => setUploadCandidateId(event.target.value)} aria-label="Dossier destinataire du document" className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"><option value="">Choisir le dossier destinataire</option>{visibleUploadTargets.map((target) => <option key={target.value} value={target.value}>{target.label}</option>)}{visibleUploadTargets.length === 0 && <option value="" disabled>Aucun dossier trouvé</option>}</select></div><select value={uploadDocumentType} onChange={(event) => setUploadDocumentType(event.target.value)} aria-label="Type de document à téléverser" data-testid="admin-upload-document-type" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" required><option value="">Choisir le type de document…</option><option value="cv">CV</option><option value="passeport">Passeport</option><option value="diplome">Diplôme</option><option value="releve_notes">Relevé de notes</option><option value="photo">Photo d’identité</option><option value="justificatif_domicile">Justificatif de domicile</option><option value="justificatif_paiement">Justificatif de paiement</option><option value="extrait_naissance">Acte de naissance</option><option value="casier_judiciaire">Casier judiciaire</option><option value="document_remis_main_propre">Document remis en main propre</option><option value="autre">Autre document</option></select></div>
               <div role="status" aria-live="polite" className={`rounded-lg border p-3 ${selectedUploadTarget ? (selectedUploadTarget.value.startsWith("agency:") ? "border-amber-300 bg-amber-50 text-amber-950" : "border-blue-200 bg-blue-50 text-blue-950") : "border-red-200 bg-red-50 text-red-900"}`}>
                 <p className="text-xs font-semibold uppercase tracking-wide">Dossier source du dépôt</p>
                 {selectedUploadTarget ? <><p className="mt-1 font-semibold">{selectedUploadTarget.label}</p><p className="mt-1 text-xs">{selectedUploadTarget.value.startsWith("agency:") ? "Pré-dossier ouvert en agence : les pièces seront conservées uniquement dans ce dossier." : "Compte candidat en ligne : les pièces seront conservées uniquement dans ce dossier."}</p></> : <p className="mt-1 text-sm font-medium">Sélectionnez un candidat ou un pré-dossier avant de déposer un fichier.</p>}
               </div>
               {droppedFiles.length > 0 && <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-2">{droppedFiles.map((file, index) => { const recognition = recognitionByFile[`${file.name}-${file.size}`]; return <div key={`${file.name}-${index}`} className="flex items-start justify-between gap-2 text-xs"><div className="min-w-0"><p className="truncate font-medium">{file.name} · {(file.size / 1024 / 1024).toFixed(2)} Mo</p>{recognition ? <p className="mt-0.5 text-violet-700">IA : {recognition.documentType} · {recognition.confidence}% — {recognition.suggestedFolder}. À confirmer avant dépôt.</p> : <p className="mt-0.5 text-slate-500">{isRecognizing ? "Analyse IA en cours…" : "Analyse IA en attente"}</p>}</div><button type="button" onClick={() => { setDroppedFiles((current) => current.filter((_, currentIndex) => currentIndex !== index)); setRecognitionByFile((current) => { const next = { ...current }; delete next[`${file.name}-${file.size}`]; return next; }); }} aria-label={`Retirer ${file.name}`} className="text-slate-500 hover:text-red-600"><X className="h-3.5 w-3.5" /></button></div>; })}</div>}
-              <Button type="button" onClick={() => void handleAdminDropUpload()} disabled={isLoading || !selectedUploadTarget || !droppedFiles.length} className="w-full gap-2"><Upload className="h-4 w-4" />Déposer dans le dossier sélectionné</Button>
+              <Button type="button" onClick={() => void handleAdminDropUpload()} disabled={isLoading || !selectedUploadTarget || !droppedFiles.length || !uploadDocumentType} className="w-full gap-2" data-testid="admin-upload-submit"><Upload className="h-4 w-4" />Déposer dans le dossier sélectionné</Button>
             </CardContent>
           </Card>
           <Card className="border-violet-100 bg-violet-50/30">
@@ -1088,7 +1092,7 @@ export function AdminDocumentsManagement() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setUploadConfirmationOpen(false)}>Annuler</Button>
-              <Button type="button" disabled={!selectedUploadTarget || !droppedFiles.length || isLoading} onClick={() => void handleAdminDropUpload(true)}><Upload className="mr-2 h-4 w-4" />Confirmer et déposer</Button>
+              <Button type="button" disabled={!selectedUploadTarget || !droppedFiles.length || !uploadDocumentType || isLoading} onClick={() => void handleAdminDropUpload(true)}><Upload className="mr-2 h-4 w-4" />Confirmer et déposer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

@@ -162,6 +162,7 @@ export default function CandidateDocumentsCrm({ sessionToken, candidateId, requi
           {summary.awaitingCandidate > 0 && (
             <Button type="button" variant="outline" size="sm" onClick={onRemind} disabled={reminding}><Send className="mr-1.5 h-4 w-4" aria-hidden="true" />{reminding ? "Envoi…" : `Relancer (${summary.awaitingCandidate})`}</Button>
           )}
+          <Button type="button" variant="outline" size="sm" onClick={() => setDialog({ kind: "deposit" })} data-testid="crm-deposit-free"><FileUp className="mr-1.5 h-4 w-4" aria-hidden="true" />Déposer un document</Button>
           <Button type="button" variant="outline" size="sm" onClick={() => setDialog({ kind: "request" })}><MessageSquarePlus className="mr-1.5 h-4 w-4" aria-hidden="true" />Demander une pièce</Button>
           <Button type="button" size="sm" onClick={() => setDialog({ kind: "add" })}><Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />Ajouter une pièce</Button>
         </div>
@@ -250,26 +251,94 @@ export default function CandidateDocumentsCrm({ sessionToken, candidateId, requi
   );
 }
 
+const DEPOSIT_DOCUMENT_TYPES = [
+  "CV",
+  "Passeport",
+  "Photo d’identité",
+  "Diplôme",
+  "Relevé de notes",
+  "Lettre d’admission",
+  "Justificatif de domicile",
+  "Justificatif de ressources",
+  "Itinéraire de voyage",
+  "Preuves d’attaches",
+  "Justificatif de paiement",
+  "Casier judiciaire",
+  "Acte de naissance",
+  "Autre document",
+] as const;
+
 function DepositDialog({ open, requirement, busy, onClose, onSubmit }: { open: boolean; requirement?: CrmRequirement; busy: boolean; onClose: () => void; onSubmit: (values: { file: File; receivedAt: string; note: string; validate: boolean; documentType: string }) => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [receivedAt, setReceivedAt] = useState(today());
   const [note, setNote] = useState("");
   const [validate, setValidate] = useState(false);
+  const [documentType, setDocumentType] = useState(requirement?.documentType ?? "");
+  const [customType, setCustomType] = useState("");
   const [error, setError] = useState<string | null>(null);
+  React.useEffect(() => {
+    if (!open) return;
+    setDocumentType(requirement?.documentType ?? "");
+    setCustomType("");
+    setFile(null);
+    setNote("");
+    setValidate(false);
+    setError(null);
+    setReceivedAt(today());
+  }, [open, requirement?.id, requirement?.documentType]);
+  const lockedType = Boolean(requirement?.documentType);
+  const resolvedType = lockedType ? (requirement?.documentType ?? "") : documentType === "Autre document" ? customType.trim() : documentType.trim();
   const submit = () => {
     if (!file) return setError("Choisissez le fichier scanné ou photographié.");
     if (file.size > MAX_FILE_BYTES) return setError("Le fichier ne doit pas dépasser 8 Mo.");
+    if (resolvedType.trim().length < 2) return setError("Indiquez précisément quel document vous déposez (ex. CV, passeport, lettre d’admission).");
     setError(null);
-    onSubmit({ file, receivedAt, note, validate, documentType: requirement?.documentType ?? "" });
+    onSubmit({ file, receivedAt, note, validate, documentType: resolvedType.trim() });
   };
   return (
-    <Dialog open={open} onOpenChange={(next) => { if (!next) { setFile(null); setNote(""); setValidate(false); setError(null); onClose(); } }}>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) { setFile(null); setNote(""); setValidate(false); setDocumentType(requirement?.documentType ?? ""); setCustomType(""); setError(null); onClose(); } }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Déposer un document reçu en agence</DialogTitle>
-          <DialogDescription>{requirement ? `Pièce : ${requirement.documentType}. ` : ""}Le fichier sera visible dans l’espace du candidat, qui en est averti.</DialogDescription>
+          <DialogDescription>
+            {lockedType
+              ? `Pièce concernée : ${requirement!.documentType}. Le fichier sera visible dans l’espace du candidat.`
+              : "Choisissez d’abord le type de pièce, puis le fichier. Le candidat en est averti."}
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
+          {lockedType ? (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-950" data-testid="deposit-document-type-locked">
+              Document à téléverser : {requirement!.documentType}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="deposit-type">Quel document déposez-vous ?</Label>
+              <select
+                id="deposit-type"
+                value={documentType}
+                onChange={(event) => setDocumentType(event.target.value)}
+                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                data-testid="deposit-document-type"
+                aria-required="true"
+              >
+                <option value="">Choisir le type de document…</option>
+                {DEPOSIT_DOCUMENT_TYPES.map((type) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+              {documentType === "Autre document" ? (
+                <Input
+                  value={customType}
+                  onChange={(event) => setCustomType(event.target.value)}
+                  placeholder="Précisez le document (ex. Attestation d’hébergement)"
+                  maxLength={100}
+                  className="mt-1"
+                  data-testid="deposit-document-type-custom"
+                />
+              ) : null}
+            </div>
+          )}
           <div><Label htmlFor="deposit-file">Fichier (PDF, JPG ou PNG, 8 Mo maximum)</Label><Input id="deposit-file" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" onChange={(event) => setFile(event.target.files?.[0] ?? null)} className="mt-1" /></div>
           <div><Label htmlFor="deposit-date">Date de remise en agence</Label><Input id="deposit-date" type="date" max={today()} value={receivedAt} onChange={(event) => setReceivedAt(event.target.value)} className="mt-1" /></div>
           <div><Label htmlFor="deposit-note">Note (facultatif, visible par le candidat)</Label><Textarea id="deposit-note" value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} rows={2} className="mt-1" /></div>

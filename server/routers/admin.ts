@@ -4420,9 +4420,15 @@ export const adminRouter = router({
       const latestEvaluation = latestEvaluations[0];
       const projectDetails = parseEvaluationProjectDetails(latestEvaluation?.projectDetailsJson);
       const procedureLabel = [projectDetails.procedureName, projectDetails.procedureLabel, projectDetails.selectedProcedureLabel, projectDetails.procedure]
-        .find((value): value is string => typeof value === "string" && value.trim().length > 0) ?? latestEvaluation?.visaType ?? null;
-      const destination = (sourceRecord as any).destination ?? projectDetails.destination ?? null;
-      const visaTypeForJourney = (sourceRecord as any).visaType ?? latestEvaluation?.visaType ?? null;
+        .find((value): value is string => typeof value === "string" && value.trim().length > 0) ?? latestEvaluation?.visaType ?? latestEvaluation?.projectType ?? null;
+      const destination = (sourceRecord as any).destination ?? latestEvaluation?.destinationCountry ?? projectDetails.destination ?? null;
+      // Priorité : visa dossier → projet d’évaluation (études/travail/tourisme) → visa évaluation → libellé procédure.
+      // Sinon un projet « études » héritait d’un parcours / bilan travail faute de visaType renseigné.
+      const visaTypeForJourney = (sourceRecord as any).visaType
+        || latestEvaluation?.projectType
+        || latestEvaluation?.visaType
+        || procedureLabel
+        || null;
       const candidateJourney = getEnrichedCandidateJourney(destination, visaTypeForJourney, procedureLabel);
       const currentJourneyStep = journeyStepIndex(candidateJourney, operationalCase.currentStatus, latestEvaluation?.status ?? null, {
         evaluationClientConfirmed: Boolean((sourceRecord as any).evaluationClientConfirmedAt),
@@ -5139,7 +5145,13 @@ export const adminRouter = router({
         : (await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, source.email)).limit(1))[0]?.id ?? null;
       if (!candidateId) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable pour cette étape." });
       const destination = source.destination || "autre";
-      const visaType = source.visaType || "Visiteur";
+      const [linkedEvaluation] = await db
+        .select({ projectType: evaluations.projectType, visaType: evaluations.visaType })
+        .from(evaluations)
+        .where(sql`LOWER(${evaluations.email}) = LOWER(${source.email})`)
+        .orderBy(desc(evaluations.createdAt))
+        .limit(1);
+      const visaType = source.visaType || linkedEvaluation?.projectType || linkedEvaluation?.visaType || "Visiteur";
       const journey = getEnrichedCandidateJourney(destination, visaType, visaType);
       const indexMatch = /^checklist-(\d+)$/.exec(input.stepId);
       const stepIndex = indexMatch ? Number(indexMatch[1]) : journey.steps.findIndex((step) => step.id === input.stepId);
@@ -5533,11 +5545,21 @@ export const adminRouter = router({
     .input(z.object({
       sessionToken: z.string().min(1).max(512),
       candidateId: z.string().min(1),
-      workflowStatus: z.enum(candidate360WorkflowStatuses),
-      priority: z.enum(["low", "normal", "high", "urgent"]),
+      workflowStatus: z.enum(candidate360WorkflowStatuses, {
+        errorMap: () => ({ message: "Étape de traitement invalide. Choisissez une étape dans la liste." }),
+      }),
+      priority: z.enum(["low", "normal", "high", "urgent"], {
+        errorMap: () => ({ message: "Priorité invalide." }),
+      }),
       assignedAdminId: z.number().int().positive().nullable(),
-      dueAt: z.date().nullable(),
-      labels: z.array(z.string().trim().min(1).max(32)).max(12),
+      dueAt: z.date().nullable().optional().transform((value) => {
+        if (value == null) return null;
+        if (Number.isNaN(value.getTime())) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Échéance métier invalide. Corrigez la date ou laissez le champ vide." });
+        }
+        return value;
+      }),
+      labels: z.array(z.string().trim().min(1).max(32, "Chaque étiquette doit faire 32 caractères maximum.")).max(12, "12 étiquettes maximum."),
       comment: z.string().trim().max(1000).optional(),
     }))
     .mutation(async ({ input }) => {
@@ -5545,7 +5567,12 @@ export const adminRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
       const reference = parseAdminCandidateReference(input.candidateId);
-      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      if (!reference) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Référence candidat invalide pour le pilotage. Ouvrez un dossier online_… ou agency_… (pas un simple compte COMPTE-).",
+        });
+      }
       const operationalCase = await ensureOperationalCase(db, reference);
       const sourceRecord = reference.source === "online"
         ? (await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1))[0]
