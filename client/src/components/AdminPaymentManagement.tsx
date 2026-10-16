@@ -22,6 +22,8 @@ interface Payment {
   amount: number;
   expectedAmount: number;
   confirmedAmount?: number | null;
+  /** Un administrateur a fixé ce montant d'ouverture (sinon : valeur par défaut, à confirmer au candidat). */
+  openingFeeConfirmed?: boolean;
   currency: string;
   paymentStatus: "PENDING" | "SUCCESS" | "FAILED" | "CANCELLED";
   paymentMethod?: string;
@@ -162,6 +164,7 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated, onOpenC
     amount: app.paymentAmount || app.paymentExpectedAmount || 65000,
     expectedAmount: app.paymentExpectedAmount || app.paymentAmount || 65000,
     confirmedAmount: app.paymentConfirmedAmount,
+    openingFeeConfirmed: Boolean(app.openingFeeConfirmed),
     currency: app.paymentCurrency || "XAF",
     paymentStatus: app.paymentStatus || "PENDING",
     paymentMethod: app.paymentMethod,
@@ -740,6 +743,9 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated, onOpenC
                       </td>
                       <td className="py-3 px-4 text-right text-xs text-gray-700">
                         <p><span className="text-gray-500">Attendu :</span> <strong>{payment.expectedAmount.toLocaleString("fr-FR")} {payment.currency}</strong></p>
+                        {payment.paymentStatus !== "SUCCESS" && !payment.openingFeeConfirmed && (
+                          <p className="mt-0.5 text-[11px] font-semibold text-amber-700" data-testid="opening-fee-default-warning">Montant par défaut : à confirmer par écrit au candidat</p>
+                        )}
                         {payment.paymentStatus !== "SUCCESS" && (
                           <button type="button" className="mt-0.5 text-[11px] font-semibold text-blue-700 underline underline-offset-2" data-testid="edit-opening-fee" onClick={() => setFeePayment(payment)}>
                             Modifier le montant

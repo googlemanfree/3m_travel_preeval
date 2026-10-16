@@ -37,7 +37,8 @@ describe("frais d'ouverture : le montant dépend du profil", () => {
 
   it("les consignes données aux IA interdisent d'annoncer un montant précis", () => {
     expect(read("server/aiEvaluationService.ts")).toContain("n'annonce jamais de montant précis");
-    expect(read("server/routers/aiCopilot.ts")).toContain("n'annonce jamais de montant précis");
+    // Le prompt d'Aureol est construit dans shared/aureolSiteKnowledge.ts (buildAureolSystemPrompt).
+    expect(read("shared/aureolSiteKnowledge.ts")).toContain("N'annonce jamais de montant d'honoraires précis");
   });
 
   it("les textes publics disent que le montant est confirmé par écrit avant tout paiement", () => {

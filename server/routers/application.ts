@@ -718,8 +718,16 @@ export const applicationRouter = router({
         if (!existing.lastFailureAt && log.action === "receipt_failed") existing.lastFailureAt = log.createdAt;
         receiptDeliveryByApplicationId.set(log.paymentId, existing);
       }
+      // Le montant par défaut (65 000 XAF) n'est qu'une proposition : un dossier n'a un montant confirmé que si un
+      // administrateur l'a fixé (action « opening_fee_set » dans le journal), exactement et sans limite de récence.
+      const feeSetRows = applicationIds.length
+        ? await db.select({ paymentId: paymentAuditLogs.paymentId }).from(paymentAuditLogs)
+          .where(and(inArray(paymentAuditLogs.paymentId, applicationIds), eq(paymentAuditLogs.action, "opening_fee_set")))
+        : [];
+      const openingFeeSetIds = new Set(feeSetRows.map((row) => row.paymentId));
       return filtered.map((application) => ({
         ...application,
+        openingFeeConfirmed: openingFeeSetIds.has(application.id),
         paymentReceipt: application.candidateId ? receiptByCandidateId.get(application.candidateId) ?? null : null,
         paymentReceiptDelivery: receiptDeliveryByApplicationId.get(application.id) ?? {
           status: "not_sent" as const,
