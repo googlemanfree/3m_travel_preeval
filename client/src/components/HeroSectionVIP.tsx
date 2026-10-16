@@ -141,17 +141,17 @@ export default function HeroSectionVIP({
           custom={0}
           className="mb-5 flex justify-center sm:mb-6"
         >
-          <div className="h-24 w-24 overflow-hidden rounded-full border-[3px] border-amber-200/80 bg-white shadow-[0_16px_48px_rgba(0,0,0,0.5)] ring-2 ring-white/40 transition-transform duration-200 ease-out group-hover:scale-[1.04] group-hover:rotate-1 motion-reduce:transition-none sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-36 lg:w-36">
+          <div className="h-[6.5rem] w-[6.5rem] overflow-hidden rounded-full border-[3px] border-amber-200/80 bg-white shadow-[0_16px_48px_rgba(0,0,0,0.5)] ring-2 ring-white/40 transition-transform duration-200 ease-out group-hover:scale-[1.04] group-hover:rotate-1 motion-reduce:transition-none sm:h-[7.5rem] sm:w-[7.5rem] md:h-[8.5rem] md:w-[8.5rem] lg:h-[9.5rem] lg:w-[9.5rem]">
             <img
               src={logoUrl}
               srcSet="/logo-3m.webp 480w, /logo-3m-hd.webp 1024w"
-              sizes="(min-width: 1024px) 144px, (min-width: 768px) 128px, 96px"
+              sizes="(min-width: 1024px) 152px, (min-width: 768px) 136px, 104px"
               alt="3M TRAVEL AGENCY"
-              width={144}
-              height={144}
+              width={152}
+              height={152}
               decoding="async"
               fetchPriority="high"
-              className="h-full w-full object-contain motion-reduce:scale-100"
+              className="h-full w-full scale-[1.08] object-contain motion-reduce:scale-100"
               data-testid="hero-logo"
             />
           </div>
