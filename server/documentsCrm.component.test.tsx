@@ -23,6 +23,7 @@ vi.mock("@/lib/trpc", () => ({
 
 import CandidateDocumentsCrm from "@/components/CandidateDocumentsCrm";
 import CaseDocumentsPanel, { agencyDepositedDocuments } from "@/components/CaseDocumentsPanel";
+import { DOCUMENT_VAULT_POLICY } from "@shared/documentVaultPolicy";
 import { dueLabel, filterOf, filterRequirements, latestFileFor, normalizeStatus, rowActions, summarizeRequirements, type CrmRequirement } from "@/lib/requirementsCrm";
 
 const NOW = new Date("2026-09-25T10:00:00Z").getTime();
@@ -244,7 +245,7 @@ describe("espace client : documents enregistrés par l'agence", () => {
   it("montre l'état en français, la note de correction, et déclenche le téléchargement", () => {
     const onDownload = vi.fn();
     render(<CaseDocumentsPanel documents={agencyDepositedDocuments(cases)} onDownload={onDownload} />);
-    expect(screen.getByText("Documents synchronisés du dossier")).toBeTruthy();
+    expect(screen.getByText(DOCUMENT_VAULT_POLICY.title)).toBeTruthy();
     expect(screen.getByText("Reçu — en cours de vérification")).toBeTruthy();
     expect(screen.getByText("À corriger")).toBeTruthy();
     expect(screen.getByText("Scan illisible")).toBeTruthy();
@@ -255,7 +256,7 @@ describe("espace client : documents enregistrés par l'agence", () => {
 
   it("ne s'affiche pas sans document d'agence", () => {
     const { container } = render(<CaseDocumentsPanel documents={[]} onDownload={vi.fn()} />);
-    expect(screen.getByText("Aucune pièce synchronisée pour le moment")).toBeTruthy();
+    expect(screen.getByText("Aucune pièce dans le coffre pour le moment")).toBeTruthy();
     expect(screen.getByText(/publication agence vers l’espace client/i)).toBeTruthy();
   });
 });

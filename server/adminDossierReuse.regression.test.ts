@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
-const read = (file: string) => readFileSync(resolve(root, file), "utf8");
+// Fins de ligne normalisées : le test passe aussi bien sur un poste Windows (CRLF) que sur Linux (LF).
+const read = (file: string) => readFileSync(resolve(root, file), "utf8").replace(/\r\n/g, "\n");
 
 describe("réutilisation des applications lors de la création manuelle", () => {
   it("réutilise l’application active du candidat avant toute insertion", () => {

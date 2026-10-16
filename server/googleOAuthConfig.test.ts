@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 describe("Configuration OAuth Google", () => {
-  it("accepte les identifiants configurés auprès du point de jeton Google sans les exposer", async () => {
+  it.skipIf(!process.env.VITE_GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET)("accepte les identifiants configurés auprès du point de jeton Google sans les exposer", async () => {
     const clientId = process.env.VITE_GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
 

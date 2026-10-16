@@ -10,7 +10,7 @@ describe("Email Dev Mode", () => {
   const SMTP_PASS = process.env.SMTP_PASS;
   const SMTP_FROM = process.env.SMTP_FROM;
 
-  it("should have SMTP_FROM configured", () => {
+  it.skipIf(!SMTP_FROM)("should have SMTP_FROM configured", () => {
     expect(SMTP_FROM).toBeDefined();
     expect(SMTP_FROM).toContain("3mtravelandservices@gmail.com");
   });

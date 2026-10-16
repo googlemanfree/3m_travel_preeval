@@ -37,7 +37,7 @@ function createPublicContext(): TrpcContext {
   return ctx;
 }
 
-describe("evaluation.submitEvaluation", () => {
+describe.skipIf(!process.env.DATABASE_URL)("evaluation.submitEvaluation", () => {
   it("devrait soumettre une évaluation multi-projets pour un projet travail", async () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);

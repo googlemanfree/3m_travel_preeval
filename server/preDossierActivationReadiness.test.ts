@@ -29,6 +29,7 @@ vi.mock("./emailService", () => ({
   sendDossierConfirmationEmail: async (...args: any[]) => { state.emails.push(args); return true; },
 }));
 vi.mock("./storage", () => ({ storagePut: async () => ({ url: "/manus-storage/x", key: "x" }) }));
+vi.mock("./_core/email", () => ({ sendEmail: async () => undefined }));
 vi.mock("./services/seedCountryProcedureCase", () => ({
   seedCountryProcedureChecklist: async () => ({ added: 0, label: "Checklist QA" }),
 }));

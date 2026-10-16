@@ -4,7 +4,8 @@ import { resolve } from "node:path";
 import { buildEvaluationResponseTemplate, getEvaluationResponseTemplates } from "./services/evaluationResponseTemplates";
 
 const root = resolve(import.meta.dirname, "..");
-const read = (path: string) => readFileSync(resolve(root, path), "utf8");
+// Fins de ligne normalisées : le test passe aussi bien sur un poste Windows (CRLF) que sur Linux (LF).
+const read = (path: string) => readFileSync(resolve(root, path), "utf8").replace(/\r\n/g, "\n");
 
 describe("pilotage administratif des évaluations 2026", () => {
   it("propose des modèles neutres par projet, toujours destinés à la relecture", () => {

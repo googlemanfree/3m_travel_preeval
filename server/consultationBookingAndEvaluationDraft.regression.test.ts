@@ -120,7 +120,7 @@ describe("formulaire d'évaluation — progression et brouillon", () => {
   });
 
   it("laisse un projet choisi dans l'URL primer sur un ancien brouillon", () => {
-    expect(form).toContain("isEvaluationProjectType(projectFromUrl) && saved.form.projectType !== projectFromUrl");
+    expect(form).toContain("normalizedProjectFromUrl && saved.form.projectType !== normalizedProjectFromUrl");
   });
 
   it("ne sérialise jamais le fichier CV dans le brouillon", () => {

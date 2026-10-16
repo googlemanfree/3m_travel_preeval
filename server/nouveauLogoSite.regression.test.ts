@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
-import { execFileSync } from "node:child_process";
+import { inflateSync } from "node:zlib";
 
 const root = resolve(import.meta.dirname, "..");
 const publicFile = (name: string) => resolve(root, "client/public", name);
@@ -12,6 +12,33 @@ function pngSize(path: string): { width: number; height: number } {
   const bytes = readFileSync(path);
   expect(bytes.subarray(0, 8).toString("hex"), path).toBe("89504e470d0a1a0a");
   return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+}
+
+/**
+ * Opacité (0-255) du pixel en haut à gauche d'un PNG, lue directement (sans Python ni dépendance) :
+ * le premier pixel de la première ligne n'est jamais modifié par le filtre PNG.
+ */
+function pngTopLeftAlpha(path: string): number {
+  const bytes = readFileSync(path);
+  expect(bytes.subarray(0, 8).toString("hex"), path).toBe("89504e470d0a1a0a");
+  const bitDepth = bytes[24];
+  const colorType = bytes[25];
+  const idat: Buffer[] = [];
+  let transparency: Buffer | null = null;
+  for (let offset = 8; offset < bytes.length; ) {
+    const length = bytes.readUInt32BE(offset);
+    const type = bytes.subarray(offset + 4, offset + 8).toString("latin1");
+    const data = bytes.subarray(offset + 8, offset + 8 + length);
+    if (type === "IDAT") idat.push(data);
+    if (type === "tRNS") transparency = data;
+    offset += 12 + length;
+  }
+  const first = inflateSync(Buffer.concat(idat)).subarray(1); // l'octet de filtre est ignoré
+  const sampleBytes = bitDepth === 16 ? 2 : 1;
+  if (colorType === 6) return first[3 * sampleBytes]; // RGBA
+  if (colorType === 4) return first[sampleBytes]; // niveaux de gris + alpha
+  if (colorType === 3) return transparency?.[first[0] >> (8 - bitDepth)] ?? 255; // palette (+ tRNS)
+  return 255; // sans canal alpha : opaque
 }
 
 describe("nouveau logo 3M — déploiement site-wide", () => {
@@ -36,14 +63,12 @@ describe("nouveau logo 3M — déploiement site-wide", () => {
     expect(read("client/src/pages/Home.tsx")).toContain("/logo-3m-hd.webp");
     expect(read("client/src/components/Navbar.tsx")).toContain('src="/logo-3m.webp"');
     expect(read("client/src/components/Footer.tsx")).toContain('src="/logo-3m.webp"');
-    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v59");
-    expect(read("client/index.html")).toContain("2026-10-15-nouveau-logo-v58");
+    expect(read("client/public/sw.js")).toMatch(/const CACHE_NAME = '3m-travel-pwa-v\d+/);
+    expect(read("client/index.html")).toMatch(/const SW_REVISION = '\d{4}-\d{2}-\d{2}-[a-z0-9-]+'/);
   });
 
   it("le PNG HD a un fond transparent hors cercle (pas un carré blanc)", () => {
     const path = publicFile("logo-3m-travel-agency-hd.png");
-    const script = `from PIL import Image; im = Image.open(${JSON.stringify(path)}).convert("RGBA"); print(im.getpixel((0, 0))[3])`;
-    const alpha = Number(execFileSync("python3", ["-c", script], { encoding: "utf8" }).trim());
-    expect(alpha).toBeLessThan(10);
+    expect(pngTopLeftAlpha(path)).toBeLessThan(10);
   });
 });

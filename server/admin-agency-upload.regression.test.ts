@@ -55,7 +55,8 @@ describe("admin agency document upload", () => {
     expect(adminSource).toContain("Ouvrir l’espace client");
     expect(adminSource).toContain("Compte candidat rattaché");
     expect(clientSource).toContain("Statut actuel du dossier");
-    expect(clientSource).toContain("Synchronisation agence");
+    expect(clientSource).toContain("Synchronisation");
+    expect(clientSource).toContain("Par l’agence");
     expect(clientSource).toContain("agencyDocumentCount");
   });
 

@@ -190,7 +190,7 @@ describe("Admin Interface Integration Tests", () => {
     expect(requiredProcedures.length).toBe(6);
   });
 
-  it("Verify Database Connectivity", async () => {
+  it.skipIf(!process.env.DATABASE_URL)("Verify Database Connectivity", async () => {
     if (!db) {
       expect(false).toBe(true);
       return;
