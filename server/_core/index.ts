@@ -12,7 +12,6 @@ import { registerCandidateUploadRoute, registerPublicUploadRoute } from "../rout
 import { registerAgencyDossierUploadRoute } from "../routers/agencyDossierUpload";
 import { registerOpeningPaymentProofUploadRoute } from "../routers/openingPaymentProofUpload";
 import { registerCinetPayWebhook } from "../routers/cinetpayWebhook";
-import { setupDocumentsRoutes } from "../documentsRoutes";
 import { handleEvaluationJob } from "../scheduled/evaluationJob";
 import { handleEvaluationBilanJob } from "../scheduled/evaluationBilanJob";
 import { handleComplianceMonthlyReportJob } from "../scheduled/complianceMonthlyReportJob";
@@ -66,7 +65,10 @@ async function startServer() {
   registerAgencyDossierUploadRoute(app);
   registerOpeningPaymentProofUploadRoute(app);
   registerCinetPayWebhook(app);
-  setupDocumentsRoutes(app);
+  // Les anciennes routes /api/documents/{upload,download,list,delete} (documentsRoutes.ts) ne sont PLUS montées : elles
+  // n'exigeaient aucune authentification (lecture, liste et suppression de pièces par simple code de dossier, dépôt
+  // de fichiers par n'importe qui) et aucun écran ne les utilise. Les dépôts passent par les routes authentifiées
+  // ci-dessus (candidat, agence, justificatif de paiement).
   // Scheduled jobs
   app.post("/api/scheduled/evaluation-job", (req, res) => {
     if (!requireCronSecret(req, res)) return;
