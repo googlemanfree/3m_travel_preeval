@@ -107,6 +107,9 @@ interface UnifiedItem {
     language: string | null;
     savedAt: string | null;
   } | null;
+  /** CV déposé à l’évaluation — admin uniquement, pour ouverture directe depuis la liste. */
+  cvFileUrl?: string | null;
+  cvFileName?: string | null;
 }
 
 function preparationTextList(value: unknown, maximum: number): string[] {
@@ -453,6 +456,8 @@ export const aiEvaluationManagementRouter = router({
           preparationDraft,
           luxembourgReview,
           applicationPackSummary,
+          cvFileUrl: e.cvFileUrl ?? null,
+          cvFileName: e.cvFileName ?? null,
         });
       }
 
@@ -472,7 +477,11 @@ export const aiEvaluationManagementRouter = router({
         const hasConverted = convertedEmails.has(c.email.toLowerCase());
         const needsAdminAction = c.status === "pending_review";
         const { priority, suggestedAction } = computePriority({ score: null, hasConverted, ageHours: ageHours(c.createdAt), needsAdminAction });
-        items.push({ id: `consultation-${c.id}`, type: "consultation", typeLabel: "Consultation + CV", fullName: c.fullName, email: c.email, createdAt: c.createdAt, score: null, hasConverted, priority, suggestedAction, destinationCountry: c.targetCountry, status: c.status });
+        items.push({
+          id: `consultation-${c.id}`, type: "consultation", typeLabel: "Consultation + CV", fullName: c.fullName, email: c.email, createdAt: c.createdAt, score: null, hasConverted, priority, suggestedAction, destinationCountry: c.targetCountry, status: c.status,
+          cvFileUrl: c.cvFileUrl ?? null,
+          cvFileName: c.cvFileName ?? null,
+        });
       }
 
       const priorityOrder: Record<Priority, number> = { haute: 0, moyenne: 1, basse: 2 };

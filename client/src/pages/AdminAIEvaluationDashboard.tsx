@@ -32,6 +32,7 @@ import {
   X,
 } from "lucide-react";
 import jsPDF from "jspdf";
+import { isOpenableStoredUrl } from "@shared/storedFileUrl";
 
 const TYPE_LABELS: Record<string, string> = {
   evaluation: "Pré-évaluation",
@@ -108,6 +109,8 @@ type DashboardItem = {
     language: string | null;
     savedAt: string | null;
   } | null;
+  cvFileUrl?: string | null;
+  cvFileName?: string | null;
 };
 
 type ReviewEvent = { id: number; adminEmail: string; action: string; note?: string | null; createdAt: Date | string };
@@ -713,6 +716,28 @@ export default function AdminAIEvaluationDashboard() {
               {item.referenceCode && <p className="mt-1 text-xs font-semibold text-slate-700">Référence : {item.referenceCode}</p>}
               <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600"><span className="rounded bg-slate-100 px-2 py-1">Pays : {displayValue(item.destinationCountry)}</span><span className="rounded bg-slate-100 px-2 py-1">Études : {displayValue(item.educationLevel)}</span><span className="rounded bg-slate-100 px-2 py-1">Emploi : {displayValue(item.employmentStatus)}</span><span className="rounded bg-slate-100 px-2 py-1">Statut : {displayValue(item.status)}</span><span className="rounded bg-indigo-50 px-2 py-1 font-semibold text-indigo-800">Source : {ACQUISITION_LABELS[item.acquisitionSource ?? "direct"] ?? "Accès direct"}</span>{item.acquisitionCampaign && <span className="rounded bg-cyan-50 px-2 py-1 text-cyan-800">Campagne : {item.acquisitionCampaign}</span>}</div>
               <p className="mt-2 flex items-center gap-1 text-sm text-gray-700"><TrendingUp className="h-3 w-3 flex-shrink-0 text-blue-500" /> {item.suggestedAction}</p>
+              {(item.type === "evaluation" || item.type === "consultation") && (
+                <div className="mt-2 flex flex-wrap items-center gap-2" data-testid={`evaluation-cv-row-${item.id}`}>
+                  {isOpenableStoredUrl(item.cvFileUrl) ? (
+                    <>
+                      <Badge className="bg-emerald-100 text-emerald-900" data-testid="evaluation-cv-present-badge">CV déposé</Badge>
+                      <a
+                        href={item.cvFileUrl!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-3 text-xs font-bold text-emerald-900 hover:bg-emerald-100"
+                        data-testid="evaluation-cv-open-link"
+                        title={item.cvFileName || "Ouvrir le CV soumis à l’évaluation"}
+                      >
+                        <FileText className="h-3.5 w-3.5" aria-hidden="true" />
+                        Ouvrir le CV{item.cvFileName ? ` · ${item.cvFileName}` : ""}
+                      </a>
+                    </>
+                  ) : item.type === "evaluation" ? (
+                    <Badge className="bg-amber-100 text-amber-900" data-testid="evaluation-cv-missing-badge">CV non déposé</Badge>
+                  ) : null}
+                </div>
+              )}
               {item.type === "evaluation" && (
                 <div className="mt-3">
                   <div className="flex flex-wrap items-center gap-2">
