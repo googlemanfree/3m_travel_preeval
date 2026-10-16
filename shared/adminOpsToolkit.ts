@@ -16,6 +16,8 @@ export type AdminRelanceStage =
   | "protocol_pending"
   | "email_unverified"
   | "ready_to_activate"
+  | "cv_missing"
+  | "conversion_open_dossier"
   | "generic";
 
 export type AdminMessageTemplate = {
@@ -67,6 +69,18 @@ export const ADMIN_MESSAGE_TEMPLATES: AdminMessageTemplate[] = [
     label: "Prêt à activer (interne)",
     subject: "3M Travel — dossier prêt",
     body: "Bonjour {name},\n\nVotre dossier {reference} est prêt côté pièces et paiement. Notre équipe finalise l’activation du suivi.\n\nCordialement,\nL’équipe 3M Travel Agency",
+  },
+  {
+    id: "cv_missing",
+    label: "CV manquant (préévaluation)",
+    subject: "3M Travel — CV requis pour votre évaluation ({reference})",
+    body: "Bonjour {name},\n\nPour finaliser l’évaluation de votre profil ({reference}), merci de déposer votre CV à jour dans votre espace client :\nhttps://www.3mtravelagency.com/mon-espace\n\nSans CV, nous ne pouvons pas préparer un bilan complet ni ouvrir le traitement de votre dossier.\n\nCordialement,\nL’équipe 3M Travel Agency\nhttps://www.3mtravelagency.com",
+  },
+  {
+    id: "conversion_open_dossier",
+    label: "Convaincre d’ouvrir le dossier",
+    subject: "3M Travel — activez le suivi de votre dossier ({reference})",
+    body: "Bonjour {name},\n\nVotre pré-inscription {reference} est enregistrée. Pour lancer le traitement de votre profil (bilan, protocole, suivi conseiller), merci de régulariser les frais d’ouverture depuis votre espace client :\nhttps://www.3mtravelagency.com/mon-espace\n\nDès validation du paiement, nous activons votre dossier officiel et vous guideons étape par étape.\n\nCordialement,\nL’équipe 3M Travel Agency\nhttps://www.3mtravelagency.com",
   },
   {
     id: "generic",

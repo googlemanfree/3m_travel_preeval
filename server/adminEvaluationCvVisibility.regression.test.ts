@@ -28,6 +28,8 @@ describe("admin — CV d’évaluation visible sans creuser la validation", () =
     const admin = read("server/routers/admin.ts");
     expect(admin).toContain("evaluation-cv-${latestEvaluation.id}");
     expect(admin).toContain("cvFileUrl: latestEvaluation.cvFileUrl ?? null");
+    expect(admin).toContain("cvFileUrl: evaluations.cvFileUrl");
+    expect(admin).toContain("cvDocument");
 
     const workspace = read("client/src/components/Candidate360Workspace.tsx");
     expect(workspace).toContain("evaluationContext?.cvFileUrl");
@@ -45,5 +47,10 @@ describe("admin — CV d’évaluation visible sans creuser la validation", () =
     expect(predossierUi).toContain('target="_blank"');
     expect(predossierUi).toContain('rel="noopener noreferrer"');
     expect(predossierUi).toContain("Ouvrir le CV");
+
+    const dashboard = read("client/src/pages/AdminDashboard.tsx");
+    expect(dashboard).toContain("candidate-cv-open");
+    expect(dashboard).toContain("candidate-cv-download");
   });
 });
+

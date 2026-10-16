@@ -3163,15 +3163,69 @@ export const adminRouter = router({
               ? { id: linkedAgencyDossierId, status: linkedAgencyDossierStatus }
               : null,
           });
-          const [evaluationRow] = await db.select({ id: evaluations.id, projectType: evaluations.projectType, destinationCountry: evaluations.destinationCountry }).from(evaluations)
+          const [evaluationRow] = await db.select({
+            id: evaluations.id,
+            projectType: evaluations.projectType,
+            destinationCountry: evaluations.destinationCountry,
+            visaType: evaluations.visaType,
+            cvFileUrl: evaluations.cvFileUrl,
+            cvFileName: evaluations.cvFileName,
+            createdAt: evaluations.createdAt,
+            status: evaluations.status,
+          }).from(evaluations)
             .where(sql`LOWER(TRIM(${evaluations.email})) = LOWER(TRIM(${account.email}))`)
+            .orderBy(desc(evaluations.createdAt))
             .limit(1);
           const [openingPaymentRow] = await db.select({ id: agencySettings.id }).from(agencySettings)
             .where(eq(agencySettings.settingKey, `opening_payment:${account.id}`))
             .limit(1);
           const pendingDocuments = docs.filter((doc) => doc.status === "uploaded").length;
           const dossierActivated = account.dossierStatus !== "nouveau" || Boolean(linkedAgencyDossierId);
-          const paymentConfirmed = dossierActivated || Boolean(openingPaymentRow);
+          // Paiement d’ouverture uniquement — l’activation ne doit pas faux-valider le protocole.
+          const paymentConfirmed = Boolean(openingPaymentRow);
+          const mappedDocuments = docs.map((doc) => ({
+            id: `candidate-file-${doc.id}`,
+            documentType: doc.fileType,
+            fileName: doc.fileName,
+            documentUrl: doc.fileUrl,
+            uploadedAt: doc.uploadedAt,
+            uploadedByRole: "candidate" as const,
+            reviewStatus: doc.status,
+            reviewNote: doc.rejectionReason ?? null,
+            source: "candidate_files" as const,
+            mimeType: null as string | null,
+            rawId: doc.id,
+          }));
+          const fileCv = mappedDocuments.find((doc) => String(doc.documentType).toLowerCase() === "cv")
+            ?? mappedDocuments.find((doc) => String(doc.fileName).toLowerCase().includes("cv"));
+          const cvDocument = fileCv
+            ? {
+                id: fileCv.id,
+                documentType: "cv",
+                fileName: fileCv.fileName || "CV du candidat",
+                documentUrl: fileCv.documentUrl,
+                uploadedAt: fileCv.uploadedAt,
+                uploadedByRole: "candidate" as const,
+                reviewStatus: fileCv.reviewStatus,
+                source: "candidate_files" as const,
+              }
+            : evaluationRow?.cvFileUrl
+              ? {
+                  id: `evaluation-cv-${evaluationRow.id}`,
+                  documentType: "cv",
+                  fileName: evaluationRow.cvFileName || "CV soumis à l’évaluation",
+                  documentUrl: evaluationRow.cvFileUrl,
+                  uploadedAt: evaluationRow.createdAt,
+                  uploadedByRole: "candidate" as const,
+                  reviewStatus: "pending" as const,
+                  source: "evaluation" as const,
+                }
+              : null;
+          // Si le CV n’est que sur l’évaluation, l’injecter aussi dans documents pour la fiche admin.
+          const documentsWithCv = cvDocument
+            && !mappedDocuments.some((doc) => doc.documentUrl === cvDocument.documentUrl)
+            ? [cvDocument, ...mappedDocuments]
+            : mappedDocuments;
           return serializeAdminCandidateDetails({
             success: true,
             candidate: {
@@ -3216,7 +3270,18 @@ export const adminRouter = router({
               createdAt: account.createdAt,
               updatedAt: account.updatedAt,
             },
-            documents: docs,
+            documents: documentsWithCv,
+            cvDocument,
+            evaluationContext: evaluationRow ? {
+              projectType: evaluationRow.projectType ?? null,
+              destinationCountry: evaluationRow.destinationCountry ?? null,
+              visaType: evaluationRow.visaType ?? account.visaType ?? null,
+              procedureLabel: evaluationRow.projectType || account.visaType || null,
+              submittedAt: evaluationRow.createdAt,
+              details: null,
+              cvFileUrl: evaluationRow.cvFileUrl ?? null,
+              cvFileName: evaluationRow.cvFileName ?? null,
+            } : null,
             cockpit: buildCandidateCockpit({
               emailVerified: account.emailVerified,
               evaluationStatus: account.evaluationDeclarationStatus,
@@ -3226,6 +3291,7 @@ export const adminRouter = router({
               protocolSigned: false,
               dossierActivated,
               pendingDocuments,
+              hasAnyDocuments: documentsWithCv.length > 0,
               workflowStatus: account.dossierStatus,
               destination: account.destination,
               visaType: account.visaType,
@@ -4623,6 +4689,7 @@ export const adminRouter = router({
           protocolSigned: protocolOneSigned,
           dossierActivated: true,
           pendingDocuments,
+          hasAnyDocuments: (operationalDocuments.length + legacyDocuments.length + agencyDocuments.length) > 0 || Boolean(latestEvaluation?.cvFileUrl),
           pendingClarifications: documentClarifications.filter((item) => item.status === "pending").length,
           clarificationOverdue: documentClarifications.some((item) => item.status === "pending" && classifyDocumentClarificationDeadline(item.dueAt).key === "overdue"),
           workflowStatus: operationalCase.currentStatus,

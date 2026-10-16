@@ -45,6 +45,11 @@ export type CockpitChecklistItem = {
   key: string;
   label: string;
   done: boolean;
+  /**
+   * Étape post-paiement (reçu / protocole) : ne doit jamais apparaître
+   * comme validée tant que le paiement d’ouverture n’est pas confirmé.
+   */
+  lockedUntilPayment?: boolean;
 };
 
 export type CandidateCockpitView = {
@@ -66,6 +71,8 @@ export type CandidateCockpitInput = {
   protocolSigned?: boolean | null;
   dossierActivated?: boolean | null;
   pendingDocuments?: number | null;
+  /** Au moins une pièce déjà déposée (évite « Documents à jour » vert sur précompte vide). */
+  hasAnyDocuments?: boolean | null;
   /** Clarifications documentaires en attente de réponse admin. */
   pendingClarifications?: number | null;
   clarificationOverdue?: boolean | null;
@@ -190,17 +197,38 @@ export function buildCandidateCockpit(input: CandidateCockpitInput): CandidateCo
   else if (/(rejected|refuse|refused)/.test(workflow)) stage = "blocked";
   else stage = "in_progress";
 
+  const hasAnyDocuments = Boolean(input.hasAnyDocuments) || pendingDocuments > 0;
+  // Reçu / protocole N°01 : uniquement après paiement d’ouverture réel.
+  // Jamais de faux vert sur précompte (même si un signal parasite arrive trop tôt).
   const checklist: CockpitChecklistItem[] = [
     { key: "email", label: "E-mail confirmé", done: emailVerified },
     { key: "evaluation", label: "Évaluation validée", done: evaluationValidated },
     { key: "payment", label: "Paiement validé", done: paymentConfirmed },
     { key: "activation", label: "Dossier activé (3M-)", done: dossierActivated },
-    { key: "receipt", label: "Reçu approuvé", done: receiptApproved || !paymentConfirmed },
-    { key: "protocol", label: "Protocole signé", done: protocolSigned || !paymentConfirmed },
-    { key: "documents", label: "Documents à jour", done: pendingDocuments === 0 },
+    {
+      key: "receipt",
+      label: "Reçu approuvé",
+      done: paymentConfirmed && receiptApproved,
+      lockedUntilPayment: !paymentConfirmed,
+    },
+    {
+      key: "protocol",
+      label: "Protocole signé",
+      done: paymentConfirmed && protocolSigned,
+      lockedUntilPayment: !paymentConfirmed,
+    },
+    {
+      key: "documents",
+      label: "Documents à jour",
+      // Précompte sans pièce : pas « à jour ». Après activation, 0 pièce en attente = OK.
+      done: pendingDocuments === 0 && (dossierActivated || hasAnyDocuments),
+    },
   ];
-  const doneCount = checklist.filter((item) => item.done).length;
-  const progressPercent = Math.round((doneCount / checklist.length) * 100);
+  const applicableChecklist = checklist.filter((item) => !item.lockedUntilPayment);
+  const doneCount = applicableChecklist.filter((item) => item.done).length;
+  const progressPercent = applicableChecklist.length
+    ? Math.round((doneCount / applicableChecklist.length) * 100)
+    : 0;
 
   let nextAction = resolveNextAction(stage, blockers, place);
   // Une fois le dossier en traitement / documents, une clarification en attente prime sur « poursuivre ».

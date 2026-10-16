@@ -191,9 +191,27 @@ export default function AdminRegistrationProfile({
                 : "L’évaluation peut se faire intelligemment à partir du formulaire et des pièces demandées pour ce visa."}
           </p>
           {cvDocument?.documentUrl && (
-            <a href={cvDocument.documentUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-blue-800 underline">
-              <FileText className="h-3.5 w-3.5" />{cvDocument.fileName || "Ouvrir le CV"}
-            </a>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <a
+                href={cvDocument.documentUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded-md border border-emerald-300 bg-white px-2.5 py-1 text-xs font-semibold text-emerald-950 hover:bg-emerald-100"
+                data-testid="registration-cv-open"
+              >
+                <FileText className="h-3.5 w-3.5" />Voir {cvDocument.fileName || "le CV"}
+              </a>
+              <a
+                href={cvDocument.documentUrl}
+                download={(cvDocument.fileName || "CV").replace(/[^\w.-]+/g, "_")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded-md border border-emerald-300 bg-emerald-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-800"
+                data-testid="registration-cv-download"
+              >
+                <Download className="h-3.5 w-3.5" />Télécharger
+              </a>
+            </div>
           )}
         </div>
 
