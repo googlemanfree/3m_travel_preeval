@@ -35,7 +35,7 @@ import { buildEvisaMessageSnapshot, buildEvisaMessageTemplate, type EvisaMessage
 import { mergeEvisaCatalogue } from "@/lib/evisaCatalogueMerge";
 import { buildAgreementProtocolText, buildSecondAgreementProtocolText, AGREEMENT_PROTOCOL_VERSION } from "@shared/agreementProtocolContent";
 import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from "@shared/adminSync";
-import { ADMIN_MESSAGE_TEMPLATES, fillAdminTemplate, formatActivationTransition } from "@shared/adminOpsToolkit";
+import { ADMIN_MESSAGE_TEMPLATES, fillAdminTemplate, formatActivationTransition, templateForStage } from "@shared/adminOpsToolkit";
 import {
   buildUnifiedCommunicationsTimeline,
   candidateIdFromActiveReference,
@@ -2102,23 +2102,30 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             <h4 className="flex items-center gap-2 font-semibold text-slate-900"><Send className="h-4 w-4 text-blue-700" />Envoyer une communication au candidat</h4>
             <p className="mt-1 text-sm text-slate-600">Modèles par étape, puis envoi journalisé (espace client + e-mail si disponible).</p>
             <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Modèles de message">
-              {ADMIN_MESSAGE_TEMPLATES.map((template) => (
+              {ADMIN_MESSAGE_TEMPLATES.map((template) => {
+                const visaAware = templateForStage(
+                  template.id,
+                  visaTypeDraft || data?.evaluationContext?.projectType || candidate.projectType,
+                );
+                return (
                 <button
                   key={template.id}
                   type="button"
                   data-testid={`message-template-${template.id}`}
                   onClick={() => {
-                    const filled = fillAdminTemplate(template, {
+                    const filled = fillAdminTemplate(visaAware, {
                       name: candidate.fullName,
                       reference: candidate.folderCode,
                     });
                     setOutboundMessage(filled.body);
                   }}
                   className="rounded-full border border-blue-200 bg-white px-3 py-1 text-xs font-bold text-blue-900 hover:border-blue-400"
+                  title={visaAware.label !== template.label ? visaAware.label : undefined}
                 >
-                  {template.label}
+                  {visaAware.label}
                 </button>
-              ))}
+                );
+              })}
             </div>
             <Textarea className="mt-3 bg-white" value={outboundMessage} onChange={(event) => setOutboundMessage(event.target.value)} placeholder="Rédigez une instruction, une décision ou une demande de précision…" maxLength={2000} />
             <div className="mt-2 flex flex-wrap items-center justify-between gap-3">

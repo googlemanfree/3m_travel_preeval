@@ -174,6 +174,7 @@ export default function AdminCockpitControlBoard({
                         name: item.fullName,
                         reference: item.reference,
                         stage,
+                        visaType: item.visaType,
                       })
                     : null;
                   const whatsappHref = item.phone
@@ -182,6 +183,7 @@ export default function AdminCockpitControlBoard({
                         name: item.fullName,
                         reference: item.reference,
                         stage,
+                        visaType: item.visaType,
                       })
                     : null;
                   const canForceConfirm = item.category === "email_unverified" && typeof item.candidateId === "number";

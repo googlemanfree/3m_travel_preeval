@@ -35,6 +35,8 @@ describe("evaluationVisaCv", () => {
     expect(resolveEvaluationProjectKind(null, "Visa études")).toBe("etudes");
     expect(resolveEvaluationProjectKind("tourisme")).toBe("tourisme");
     expect(resolveEvaluationProjectKind("travail")).toBe("travail");
+    expect(resolveEvaluationProjectKind("schengen_travail")).toBe("travail");
+    expect(resolveEvaluationProjectKind("schengen_tourisme")).toBe("tourisme");
     expect(resolveEvaluationProjectKind("")).toBe("autre");
   });
 });

@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import jsPDF from "jspdf";
 import { isOpenableStoredUrl } from "@shared/storedFileUrl";
-import { CV_REMINDER_BODY_FR, CV_REMINDER_SUBJECT_FR, evaluationRequiresCv } from "@shared/evaluationVisaCv";
+import { evaluationGapReminder, evaluationRequiresCv, resolveEvaluationProjectKind } from "@shared/evaluationVisaCv";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 
 const TYPE_LABELS: Record<string, string> = {
@@ -133,20 +133,28 @@ function itemMissingRequiredCv(item: DashboardItem): boolean {
   return (item.type === "evaluation" || item.type === "consultation") && itemRequiresCv(item) && !itemHasOpenableCv(item);
 }
 
-function buildCvMailtoReminder(item: DashboardItem): string {
+function buildGapMailtoReminder(item: DashboardItem): string {
+  const reminder = evaluationGapReminder(item.projectType ?? item.visaType, item.fullName);
   const params = new URLSearchParams({
-    subject: CV_REMINDER_SUBJECT_FR,
-    body: CV_REMINDER_BODY_FR.replace("Bonjour,", `Bonjour ${item.fullName},`),
+    subject: reminder.subject,
+    body: reminder.body,
   });
   return `mailto:${encodeURIComponent(item.email)}?${params.toString()}`;
 }
 
-function buildCvWhatsAppReminder(item: DashboardItem): string | null {
+function buildGapWhatsAppReminder(item: DashboardItem): string | null {
   const digits = String(item.phone ?? "").replace(/\D/g, "");
   if (digits.length < 8) return null;
   const e164 = digits.startsWith("237") || digits.length > 9 ? digits : `237${digits}`;
-  const body = CV_REMINDER_BODY_FR.replace("Bonjour,", `Bonjour ${item.fullName},`);
-  return `https://wa.me/${e164}?text=${encodeURIComponent(body)}`;
+  const reminder = evaluationGapReminder(item.projectType ?? item.visaType, item.fullName);
+  return `https://wa.me/${e164}?text=${encodeURIComponent(reminder.body)}`;
+}
+
+function gapReminderLabel(item: DashboardItem): string {
+  const kind = resolveEvaluationProjectKind(item.projectType, item.visaType);
+  if (kind === "etudes") return "Relancer diplômes / cycle";
+  if (kind === "tourisme") return "Relancer statut visiteurs";
+  return "Relancer CV";
 }
 
 type ReviewEvent = { id: number; adminEmail: string; action: string; note?: string | null; createdAt: Date | string };
@@ -797,16 +805,16 @@ export default function AdminAIEvaluationDashboard() {
                     <>
                       <Badge className="bg-rose-100 text-rose-900" data-testid="evaluation-cv-missing-badge">CV manquant (visa travail)</Badge>
                       <a
-                        href={buildCvMailtoReminder(item)}
+                        href={buildGapMailtoReminder(item)}
                         className="inline-flex h-8 items-center gap-1.5 rounded-md border border-rose-300 bg-rose-50 px-3 text-xs font-bold text-rose-900 hover:bg-rose-100"
                         data-testid="evaluation-cv-remind-email"
                       >
                         <Mail className="h-3.5 w-3.5" aria-hidden="true" />
                         Relancer par e-mail
                       </a>
-                      {buildCvWhatsAppReminder(item) ? (
+                      {buildGapWhatsAppReminder(item) ? (
                         <a
-                          href={buildCvWhatsAppReminder(item)!}
+                          href={buildGapWhatsAppReminder(item)!}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex h-8 items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-3 text-xs font-bold text-emerald-900 hover:bg-emerald-100"
@@ -820,7 +828,30 @@ export default function AdminAIEvaluationDashboard() {
                       )}
                     </>
                   ) : item.type === "evaluation" ? (
-                    <Badge className="bg-slate-100 text-slate-700" data-testid="evaluation-cv-optional-badge">CV non exigé pour ce projet</Badge>
+                    <>
+                      <Badge className="bg-slate-100 text-slate-700" data-testid="evaluation-cv-optional-badge">CV non exigé pour ce projet</Badge>
+                      <a
+                        href={buildGapMailtoReminder(item)}
+                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-3 text-xs font-bold text-amber-950 hover:bg-amber-100"
+                        data-testid="evaluation-gap-remind-email"
+                        title={evaluationGapReminder(item.projectType ?? item.visaType, item.fullName).subject}
+                      >
+                        <Mail className="h-3.5 w-3.5" aria-hidden="true" />
+                        {gapReminderLabel(item)}
+                      </a>
+                      {buildGapWhatsAppReminder(item) ? (
+                        <a
+                          href={buildGapWhatsAppReminder(item)!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-8 items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-3 text-xs font-bold text-emerald-900 hover:bg-emerald-100"
+                          data-testid="evaluation-gap-remind-whatsapp"
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                          WhatsApp
+                        </a>
+                      ) : null}
+                    </>
                   ) : null}
                 </div>
               )}

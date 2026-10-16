@@ -16,7 +16,8 @@ describe("admin — file Sans CV, aperçu, sync, export, relance", () => {
     expect(dashboard).toContain("DocumentPreviewModal");
     expect(dashboard).toContain("evaluation-cv-remind-email");
     expect(dashboard).toContain("evaluation-cv-remind-whatsapp");
-    expect(dashboard).toContain("CV_REMINDER_SUBJECT_FR");
+    expect(dashboard).toContain("evaluationGapReminder");
+    expect(dashboard).toContain("evaluation-gap-remind-email");
     expect(dashboard).toContain('"CV requis"');
     expect(dashboard).toContain('"CV présent"');
     expect(dashboard).toContain('"Nom fichier CV"');

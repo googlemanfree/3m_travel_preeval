@@ -433,6 +433,7 @@ export const adminCandidateManagementRouter = router({
         email: string;
         phone: string | null;
         candidateId: number | null;
+        visaType: string | null;
         category: CockpitQueueCategory;
         categoryLabel: string;
         stageLabel: string;
@@ -468,6 +469,7 @@ export const adminCandidateManagementRouter = router({
           email: account.email,
           phone: account.phone?.trim() || null,
           candidateId: account.id,
+          visaType: account.visaType?.trim() || null,
           category,
           categoryLabel: COCKPIT_QUEUE_LABELS[category],
           stageLabel: cockpit.stageLabel,
@@ -504,6 +506,7 @@ export const adminCandidateManagementRouter = router({
           email: app.email,
           phone: app.whatsappNumber?.trim() || null,
           candidateId: app.candidateId ?? null,
+          visaType: app.visaType?.trim() || null,
           category,
           categoryLabel: COCKPIT_QUEUE_LABELS[category],
           stageLabel: cockpit.stageLabel,

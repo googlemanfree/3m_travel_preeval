@@ -54,6 +54,7 @@ describe("cockpit — relances client e-mail / WhatsApp + confirmation admin", (
     const cockpit = read("client/src/components/AdminCockpitControlBoard.tsx");
     expect(cockpit).toContain("buildMailtoRelance");
     expect(cockpit).toContain("buildWhatsAppRelance");
+    expect(cockpit).toContain("visaType: item.visaType");
     expect(cockpit).toContain("cockpit-relance-mail");
     expect(cockpit).toContain("cockpit-relance-whatsapp");
     expect(cockpit).toContain("cockpit-force-confirm-email");

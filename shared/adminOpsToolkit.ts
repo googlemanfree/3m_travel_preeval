@@ -3,6 +3,11 @@
  * libellés de préparation à l’activation.
  */
 
+import {
+  resolveEvaluationProjectKind,
+  type EvaluationProjectKind,
+} from "./evaluationVisaCv";
+
 export type AdminRelanceStage =
   | "evaluation_missing"
   | "evaluation_pending"
@@ -71,6 +76,46 @@ export const ADMIN_MESSAGE_TEMPLATES: AdminMessageTemplate[] = [
   },
 ];
 
+/** Variantes évaluation / documents selon le type de visa (travail · études · visiteurs). */
+const VISA_AWARE_STAGE_COPY: Partial<
+  Record<AdminRelanceStage, Partial<Record<EvaluationProjectKind, { subject: string; body: string; label?: string }>>>
+> = {
+  evaluation_missing: {
+    travail: {
+      label: "Évaluation manquante (visa travail)",
+      subject: "3M Travel — évaluation visa travail + CV ({reference})",
+      body: "Bonjour {name},\n\nVotre dossier {reference} (visa travail) est ouvert. Merci de finaliser l’évaluation en ligne avec votre profil professionnel et un CV actualisé.\n\nSans CV, nous ne pourrons pas valider le bilan de mobilité.\n\nCordialement,\nL’équipe 3M Travel Agency",
+    },
+    etudes: {
+      label: "Évaluation manquante (visa études)",
+      subject: "3M Travel — évaluation visa études ({reference})",
+      body: "Bonjour {name},\n\nVotre dossier {reference} (visa études) est ouvert. Merci de finaliser l’évaluation : historique scolaire, cycle d’études visé, diplômes et relevés de notes.\n\nCes éléments sont indispensables pour un bilan études adapté.\n\nCordialement,\nL’équipe 3M Travel Agency",
+    },
+    tourisme: {
+      label: "Évaluation manquante (visa visiteurs)",
+      subject: "3M Travel — évaluation visa visiteurs ({reference})",
+      body: "Bonjour {name},\n\nVotre dossier {reference} (visa visiteurs) est ouvert. Merci de remplir le formulaire simple : statut (chef d’entreprise, employé ou particulier) et motif du séjour.\n\nCordialement,\nL’équipe 3M Travel Agency",
+    },
+  },
+  documents_pending: {
+    travail: {
+      label: "Pièces manquantes (visa travail)",
+      subject: "3M Travel — CV / pièces pro à déposer ({reference})",
+      body: "Bonjour {name},\n\nDes pièces sont encore attendues pour votre dossier {reference} (visa travail). Priorité : CV à jour et justificatifs professionnels dans votre espace client.\n\nCordialement,\nL’équipe 3M Travel Agency",
+    },
+    etudes: {
+      label: "Pièces manquantes (visa études)",
+      subject: "3M Travel — diplômes et relevés à déposer ({reference})",
+      body: "Bonjour {name},\n\nDes pièces sont encore attendues pour votre dossier {reference} (visa études). Priorité : diplômes obtenus et relevés de notes — connectez-vous à votre espace client pour les déposer.\n\nCordialement,\nL’équipe 3M Travel Agency",
+    },
+    tourisme: {
+      label: "Pièces manquantes (visa visiteurs)",
+      subject: "3M Travel — justificatifs visiteurs ({reference})",
+      body: "Bonjour {name},\n\nDes pièces sont encore attendues pour votre dossier {reference} (visa visiteurs). Selon votre statut (chef d’entreprise, employé ou particulier), déposez les justificatifs demandés dans votre espace client.\n\nCordialement,\nL’équipe 3M Travel Agency",
+    },
+  },
+};
+
 export function fillAdminTemplate(
   template: AdminMessageTemplate,
   vars: { name: string; reference: string },
@@ -82,9 +127,22 @@ export function fillAdminTemplate(
   return { subject: replace(template.subject), body: replace(template.body) };
 }
 
-export function templateForStage(stage: string | null | undefined): AdminMessageTemplate {
+export function templateForStage(
+  stage: string | null | undefined,
+  visaOrProject?: string | null,
+): AdminMessageTemplate {
   const id = (stage || "generic") as AdminRelanceStage;
-  return ADMIN_MESSAGE_TEMPLATES.find((row) => row.id === id) ?? ADMIN_MESSAGE_TEMPLATES[ADMIN_MESSAGE_TEMPLATES.length - 1]!;
+  const base = ADMIN_MESSAGE_TEMPLATES.find((row) => row.id === id)
+    ?? ADMIN_MESSAGE_TEMPLATES[ADMIN_MESSAGE_TEMPLATES.length - 1]!;
+  const kind = resolveEvaluationProjectKind(visaOrProject);
+  const variant = VISA_AWARE_STAGE_COPY[id]?.[kind];
+  if (!variant) return base;
+  return {
+    id: base.id,
+    label: variant.label ?? base.label,
+    subject: variant.subject,
+    body: variant.body,
+  };
 }
 
 export function buildMailtoRelance(input: {
@@ -92,11 +150,17 @@ export function buildMailtoRelance(input: {
   name: string;
   reference: string;
   stage?: string | null;
+  /** Type de visa / projet pour adapter le texte (travail, études, visiteurs). */
+  visaType?: string | null;
+  projectType?: string | null;
 }): string {
-  const filled = fillAdminTemplate(templateForStage(input.stage), {
-    name: input.name,
-    reference: input.reference,
-  });
+  const filled = fillAdminTemplate(
+    templateForStage(input.stage, input.projectType ?? input.visaType),
+    {
+      name: input.name,
+      reference: input.reference,
+    },
+  );
   const params = new URLSearchParams({
     subject: filled.subject,
     body: filled.body,
@@ -109,14 +173,19 @@ export function buildWhatsAppRelance(input: {
   name: string;
   reference: string;
   stage?: string | null;
+  visaType?: string | null;
+  projectType?: string | null;
 }): string | null {
   const digits = input.phone.replace(/\D/g, "");
   if (digits.length < 8) return null;
   const e164 = digits.startsWith("237") || digits.length > 9 ? digits : `237${digits}`;
-  const filled = fillAdminTemplate(templateForStage(input.stage), {
-    name: input.name,
-    reference: input.reference,
-  });
+  const filled = fillAdminTemplate(
+    templateForStage(input.stage, input.projectType ?? input.visaType),
+    {
+      name: input.name,
+      reference: input.reference,
+    },
+  );
   return `https://wa.me/${e164}?text=${encodeURIComponent(filled.body)}`;
 }
 
