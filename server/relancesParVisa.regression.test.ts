@@ -55,13 +55,18 @@ describe("relances admin différenciées par type de visa", () => {
     expect(resolveEvaluationProjectKind("schengen_tourisme")).toBe("tourisme");
   });
 
-  it("passe le visaType du cockpit aux builders de relance", () => {
+  it("passe le visaType au composeur serveur (relance dynamique) et aux modèles 360", () => {
     const router = read("server/routers/adminCandidateManagement.ts");
     expect(router).toContain("visaType: account.visaType");
     expect(router).toContain("visaType: app.visaType");
+    expect(router).toContain("sendDynamicRelance");
+    expect(router).toContain("composeDynamicRelance");
+    expect(router).toContain("visaType");
+    expect(router).toContain("projectType: visaType");
 
     const cockpit = read("client/src/components/AdminCockpitControlBoard.tsx");
-    expect(cockpit).toContain("visaType: item.visaType");
+    expect(cockpit).toContain("sendDynamicRelance");
+    expect(cockpit).toContain("Envoyer e-mail");
 
     const workspace = read("client/src/components/Candidate360Workspace.tsx");
     expect(workspace).toContain("templateForStage");
