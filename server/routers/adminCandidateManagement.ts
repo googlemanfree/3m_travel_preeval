@@ -1451,6 +1451,32 @@ export const adminCandidateManagementRouter = router({
       } catch (err) {
         console.error("[activatePreDossierAccount] Seed checklist pays/procédure non effectué:", err);
       }
+      // CV d’évaluation → documents compte / dossier (si absent).
+      try {
+        const { syncEvaluationCvToCandidate } = await import("../services/syncEvaluationCvToCandidate");
+        const { publishCandidateFilesToCase } = await import("../services/publishCandidateFilesToCase");
+        const synced = await syncEvaluationCvToCandidate(db, {
+          email: candidate.email,
+          candidateId: candidate.id,
+          agencyDossierId,
+        });
+        if (synced.candidateFileInserted) {
+          await publishCandidateFilesToCase(db, {
+            candidateId: candidate.id,
+            actorAdminId: admin.id ?? null,
+            actorRole: "admin",
+          });
+        }
+        if (additionalAgencyDossierId) {
+          await syncEvaluationCvToCandidate(db, {
+            email: candidate.email,
+            candidateId: candidate.id,
+            agencyDossierId: additionalAgencyDossierId,
+          });
+        }
+      } catch (err) {
+        console.error("[activatePreDossierAccount] Sync CV évaluation non effectué:", err);
+      }
       try {
         const { deliverCountryEvaluationForm } = await import("../services/deliverCountryEvaluationForm");
         await deliverCountryEvaluationForm(db, {
