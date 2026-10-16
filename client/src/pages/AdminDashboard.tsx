@@ -72,6 +72,7 @@ import {
   Trash2,
   UserCheck,
   Hand,
+  Loader2,
 } from "lucide-react";
 import {
   BarChart,
@@ -111,8 +112,6 @@ import {
   type GuidedNextAction,
 } from "@shared/adminStageCatalog";
 import {
-  buildMailtoRelance,
-  buildWhatsAppRelance,
   preDossierReadinessBadge,
   type AdminRelanceStage,
 } from "@shared/adminOpsToolkit";
@@ -469,27 +468,39 @@ export function CandidateDetailModal({
   const preDossierCvName = (data as { cvDocument?: { fileName?: string | null } } | undefined)?.cvDocument?.fileName
     || (data as { evaluationContext?: { cvFileName?: string | null } } | undefined)?.evaluationContext?.cvFileName
     || "CV préévaluation";
+  const [relancePendingKey, setRelancePendingKey] = useState<string | null>(null);
+  const sendDynamicRelanceMutation = trpc.adminCandidateManagement.sendDynamicRelance.useMutation({
+    onSuccess: (result, variables) => {
+      setRelancePendingKey(null);
+      toast({
+        title: "Relance envoyée",
+        description: result.message,
+      });
+      if (variables.channel === "whatsapp" || variables.channel === "both") {
+        if (result.whatsappUrl) {
+          window.open(result.whatsappUrl, "_blank", "noopener,noreferrer");
+        } else if (variables.channel === "whatsapp") {
+          toast({ title: "WhatsApp", description: "Message déposé dans l’espace client ; téléphone manquant pour ouvrir WhatsApp.", variant: "destructive" });
+        }
+      }
+      void refetch();
+      onStatusUpdated();
+    },
+    onError: (err) => {
+      setRelancePendingKey(null);
+      toast({ title: "Relance impossible", description: err.message, variant: "destructive" });
+    },
+  });
   const openPreDossierRelance = (stage: AdminRelanceStage, channel: "email" | "whatsapp") => {
     if (!candidate) return;
-    const vars = {
-      email: candidate.email,
-      phone: candidate.whatsapp || "",
-      name: candidate.fullName,
-      reference: candidate.folderCode,
+    setRelancePendingKey(`${stage}:${channel}`);
+    sendDynamicRelanceMutation.mutate({
+      sessionToken,
+      candidateId: candidate.id,
       stage,
-      visaType: candidate.projectType,
-      projectType: candidate.projectType,
-    };
-    if (channel === "email") {
-      window.location.href = buildMailtoRelance(vars);
-      return;
-    }
-    const wa = buildWhatsAppRelance(vars);
-    if (!wa) {
-      toast({ title: "WhatsApp indisponible", description: "Numéro de téléphone manquant ou invalide.", variant: "destructive" });
-      return;
-    }
-    window.open(wa, "_blank", "noopener,noreferrer");
+      channel,
+      useAi: true,
+    });
   };
   const archivePreDossierMutation = trpc.admin.archiveDuplicateRecord.useMutation({
     onError: (error) => toast({ title: "Nettoyage du pré-dossier impossible", description: `Le dossier lié reste consultable, mais l’ancien pré-dossier n’a pas pu être archivé : ${error.message}`, variant: "destructive" }),
@@ -938,7 +949,7 @@ export function CandidateDetailModal({
                       <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">Pilotage précompte</p>
                       <h4 className="mt-1 text-lg font-bold text-slate-950">Relancer et convaincre d’ouvrir le dossier</h4>
                       <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
-                        Le CV et le type de visa pilotent l’évaluation. Utilisez les relances pour confirmer l’e-mail, obtenir le CV, valider le paiement d’ouverture, puis activer le dossier 3M.
+                        Un clic envoie immédiatement un message professionnel (IA) dans l’espace client (entête 3M) et la boîte mail. WhatsApp ouvre le même texte prérempli après dépôt dans l’espace.
                       </p>
                     </div>
                     <Badge className={preDossierCvUrl ? "bg-emerald-100 text-emerald-900" : "bg-amber-100 text-amber-950"}>
@@ -963,20 +974,23 @@ export function CandidateDetailModal({
                             size="sm"
                             variant="outline"
                             className="h-8 border-emerald-300 bg-emerald-50 text-xs text-emerald-950"
+                            disabled={sendDynamicRelanceMutation.isPending}
                             onClick={() => openPreDossierRelance(item.stage, "whatsapp")}
                             data-testid={`predossier-relance-wa-${item.stage}`}
                           >
-                            <MessageSquare className="mr-1 h-3.5 w-3.5" />WhatsApp
+                            {relancePendingKey === `${item.stage}:whatsapp` ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <MessageSquare className="mr-1 h-3.5 w-3.5" />}
+                            WhatsApp
                           </Button>
                           <Button
                             type="button"
                             size="sm"
-                            variant="outline"
-                            className="h-8 border-blue-300 bg-blue-50 text-xs text-blue-950"
+                            className="h-8 bg-blue-700 text-xs text-white hover:bg-blue-800"
+                            disabled={sendDynamicRelanceMutation.isPending}
                             onClick={() => openPreDossierRelance(item.stage, "email")}
                             data-testid={`predossier-relance-mail-${item.stage}`}
                           >
-                            <Mail className="mr-1 h-3.5 w-3.5" />E-mail
+                            {relancePendingKey === `${item.stage}:email` ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <Mail className="mr-1 h-3.5 w-3.5" />}
+                            Envoyer e-mail
                           </Button>
                         </div>
                       </div>

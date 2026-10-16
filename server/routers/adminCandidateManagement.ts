@@ -810,6 +810,157 @@ export const adminCandidateManagementRouter = router({
       return { success: true, emailSent, sentBy: admin.email, accountReference: accountReference(candidate.id) };
     }),
 
+  /**
+   * Relance dynamique : compose un message professionnel (modèle + IA),
+   * le dépose dans l’espace client (entête) et l’envoie par e-mail brandé.
+   * WhatsApp : retourne l’URL préremplie (même texte).
+   */
+  sendDynamicRelance: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      /** `account_123`, `online_123`, `agency_123` ou id numérique de compte. */
+      candidateId: z.union([z.string().min(1).max(50), z.number().int().positive()]),
+      stage: z.string().trim().min(2).max(64),
+      channel: z.enum(["email", "whatsapp", "both"]).default("email"),
+      useAi: z.boolean().optional().default(true),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+
+      const rawId = typeof input.candidateId === "number" ? `account_${input.candidateId}` : input.candidateId.trim();
+      const accountMatch = /^account_(\d+)$/.exec(rawId);
+      const onlineMatch = /^online_(\d+)$/.exec(rawId);
+      const agencyMatch = /^agency_(\d+)$/.exec(rawId);
+      const numericOnly = /^\d+$/.exec(rawId);
+
+      let candidateRow: typeof candidates.$inferSelect | null = null;
+      let reference = "";
+      let destination: string | null = null;
+      let visaType: string | null = null;
+      let phone: string | null = null;
+
+      if (accountMatch || numericOnly) {
+        const id = Number((accountMatch ?? numericOnly)![1]);
+        const [row] = await db.select().from(candidates).where(and(eq(candidates.id, id), isNull(candidates.deletedAt))).limit(1);
+        if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
+        candidateRow = row;
+        reference = accountReference(row.id);
+        destination = row.destination || null;
+        visaType = row.visaType || null;
+        phone = row.phone || null;
+      } else if (onlineMatch) {
+        const id = Number(onlineMatch[1]);
+        const [app] = await db.select().from(applications).where(eq(applications.id, id)).limit(1);
+        if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        const [row] = await db.select().from(candidates).where(eq(candidates.email, app.email)).limit(1);
+        if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Compte lié au dossier introuvable." });
+        candidateRow = row;
+        reference = app.dossierNumber || accountReference(row.id);
+        destination = app.destination || row.destination || null;
+        visaType = app.visaType || row.visaType || null;
+        phone = app.whatsappNumber || row.phone || null;
+      } else if (agencyMatch) {
+        const id = Number(agencyMatch[1]);
+        const [dossier] = await db.select().from(agencyDossiers).where(and(eq(agencyDossiers.id, id), isNull(agencyDossiers.deletedAt))).limit(1);
+        if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+        const [row] = await db.select().from(candidates).where(eq(candidates.email, dossier.email)).limit(1);
+        if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Compte lié au dossier agence introuvable." });
+        candidateRow = row;
+        reference = agencyDossierReference(dossier.id);
+        destination = dossier.destination || row.destination || null;
+        visaType = dossier.visaType || row.visaType || null;
+        phone = dossier.whatsappNumber || row.phone || null;
+      } else {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide pour la relance." });
+      }
+
+      const { composeDynamicRelance, buildWhatsAppUrlFromBody } = await import("../services/dynamicRelance");
+      const composed = await composeDynamicRelance({
+        stage: input.stage,
+        name: candidateRow.fullName,
+        reference,
+        email: candidateRow.email,
+        phone,
+        visaType,
+        projectType: visaType,
+        destination,
+        useAi: input.useAi !== false,
+      });
+
+      const notificationResult = await db.insert(clientNotifications).values({
+        candidateId: candidateRow.id,
+        type: "admin_relance",
+        title: composed.subject,
+        body: composed.body,
+        actionUrl: "/mon-espace",
+        isRead: false,
+      });
+      const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
+      await db.insert(candidateMessages).values({
+        candidateId: candidateRow.id,
+        notificationId: notificationId || null,
+        senderRole: "advisor",
+        content: composed.clientSpaceContent,
+        isRead: false,
+      });
+
+      let emailSent = false;
+      if (input.channel === "email" || input.channel === "both") {
+        emailSent = await sendClientNotificationEmail({
+          to: candidateRow.email,
+          fullName: candidateRow.fullName,
+          title: composed.subject,
+          body: composed.body,
+          actionUrl: "/mon-espace",
+          sourceLabel: "3M TRAVEL AGENCY",
+        });
+        if (emailSent && notificationId > 0) {
+          await db.update(clientNotifications).set({ emailSentAt: new Date() }).where(eq(clientNotifications.id, notificationId));
+        }
+      }
+
+      const whatsappUrl = (input.channel === "whatsapp" || input.channel === "both")
+        ? buildWhatsAppUrlFromBody(phone, composed.body)
+        : null;
+
+      await db.insert(paymentAuditLogs).values({
+        adminName: admin.email || "Administrateur",
+        adminEmail: admin.email || "",
+        action: "dynamic_relance_sent",
+        paymentId: candidateRow.id,
+        candidateEmail: candidateRow.email,
+        amount: "0",
+        details: JSON.stringify({
+          stage: composed.stage,
+          channel: input.channel,
+          aiEnhanced: composed.aiEnhanced,
+          emailSent,
+          whatsappPrepared: Boolean(whatsappUrl),
+          subject: composed.subject,
+          sentBy: admin.email,
+        }),
+      });
+
+      return {
+        success: true,
+        emailSent,
+        deliveredToClientSpace: true,
+        aiEnhanced: composed.aiEnhanced,
+        subject: composed.subject,
+        body: composed.body,
+        label: composed.label,
+        whatsappUrl,
+        reference,
+        message: emailSent
+          ? `Relance « ${composed.label} » envoyée (espace client + e-mail)${composed.aiEnhanced ? " — message IA" : ""}.`
+          : input.channel === "whatsapp"
+            ? `Relance « ${composed.label} » déposée dans l’espace client${whatsappUrl ? " — WhatsApp prêt" : " (téléphone manquant)"}.`
+            : `Relance « ${composed.label} » déposée dans l’espace client (e-mail non délivré — à relancer).`,
+      };
+    }),
+
   /** Tableau de bord reçus + protocoles pour un pilotage transparent. */
   contractsReceiptsDesk: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1) }))
