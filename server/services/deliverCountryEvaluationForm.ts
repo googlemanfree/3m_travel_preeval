@@ -61,20 +61,18 @@ function escapeHtml(value: string): string {
 }
 
 async function loadFormPdfBytes(template: CountryEvaluationFormTemplate): Promise<Buffer> {
-  if (template.kind === "static_fillable" && template.publicPath) {
+  if (template.publicPath) {
     const relative = template.publicPath.replace(/^\//, "");
-    const absolute = path.join(process.cwd(), "client/public", relative.replace(/^forms\//, "forms/"));
-    // publicPath is /forms/... → client/public/forms/...
     const publicFile = path.join(process.cwd(), "client/public", relative);
     try {
       return await readFile(publicFile);
     } catch {
-      // Fallback si le cwd n’est pas la racine du monorepo.
       try {
         return await readFile(path.join(process.cwd(), relative));
       } catch {
-        console.warn("[deliverCountryEvaluationForm] PDF statique introuvable, génération de secours:", absolute);
-        return generateCountryEvaluationFormPdf(template);
+        if (template.kind === "static_fillable") {
+          console.warn("[deliverCountryEvaluationForm] PDF AcroForm introuvable, génération de secours:", publicFile);
+        }
       }
     }
   }

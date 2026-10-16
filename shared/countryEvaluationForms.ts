@@ -1,9 +1,16 @@
 /**
  * Formulaires d’évaluation préliminaire par pays — livrés dans l’espace client et par e-mail
- * dès qu’un candidat choisit une destination (Canada = PDF AcroForm 3M ; autres pays guides = PDF structuré).
+ * dès qu’un candidat choisit une destination.
+ *
+ * Canada = PDF AcroForm 3M statique ; toutes les autres destinations du catalogue mondial =
+ * PDF structuré 5 pages (même rubriques que le formulaire Canada), adapté au profil pays.
  */
 
-import { GUIDE_COUNTRY_CODES, WORLD_COUNTRY_ROWS } from "./worldCountries";
+import { WORLD_COUNTRY_ROWS } from "./worldCountries";
+import {
+  resolveCountryFormProfile,
+  type CountryEvaluationFormProfile,
+} from "./countryEvaluationFormProfiles";
 
 export const COUNTRY_EVAL_FORM_DOCUMENT_TYPE = "Formulaire d’évaluation préliminaire";
 
@@ -21,12 +28,11 @@ export type CountryEvaluationFormTemplate = {
   emailIntro: string;
   notificationTitle: string;
   notificationBody: string;
+  /** Profil pays (langues, reconnaissance, voies) — absent seulement pour le PDF Canada statique optionnel. */
+  profile?: CountryEvaluationFormProfile;
 };
 
-const GUIDE_NAME_BY_CODE = new Map(
-  WORLD_COUNTRY_ROWS.filter(([code]) => GUIDE_COUNTRY_CODES.includes(code)).map(([code, name]) => [code, name]),
-);
-
+const CODE_TO_ROW = new Map(WORLD_COUNTRY_ROWS.map((row) => [row[0], row]));
 const NAME_TO_CODE = new Map(WORLD_COUNTRY_ROWS.map(([code, name]) => [foldCountry(name), code]));
 
 function foldCountry(value: string): string {
@@ -73,6 +79,10 @@ const DESTINATION_ALIASES: Record<string, string> = {
   dubai: "AE",
   "emirats arabes unis": "AE",
   uae: "AE",
+  australie: "AU",
+  "nouvelle zelande": "NZ",
+  japon: "JP",
+  qatar: "QA",
 };
 
 export function resolveDestinationCountryCode(destination: string | null | undefined): string | null {
@@ -80,31 +90,48 @@ export function resolveDestinationCountryCode(destination: string | null | undef
   if (!raw) return null;
   if (/^[A-Za-z]{2}$/.test(raw)) {
     const code = raw.toUpperCase();
-    return GUIDE_NAME_BY_CODE.has(code) || NAME_TO_CODE.size ? code : code;
+    return CODE_TO_ROW.has(code) ? code : code;
   }
   const folded = foldCountry(raw);
   if (DESTINATION_ALIASES[folded]) return DESTINATION_ALIASES[folded];
-  // « Canada - Visa Étude », « Canada travail », etc.
   for (const [alias, code] of Object.entries(DESTINATION_ALIASES)) {
     if (folded === alias || folded.startsWith(`${alias} `) || folded.includes(` ${alias} `)) return code;
   }
-  return NAME_TO_CODE.get(folded) ?? null;
+  // Correspondance exacte sur le nom catalogue
+  const exact = NAME_TO_CODE.get(folded);
+  if (exact) return exact;
+  // Préfixe : « France - Visa Études », « Allemagne travail »
+  for (const [name, code] of NAME_TO_CODE.entries()) {
+    if (folded.startsWith(`${name} `) || folded.includes(` ${name} `)) return code;
+  }
+  return null;
 }
 
-function buildCopy(countryLabel: string): Pick<
+function slugFor(label: string, code: string): string {
+  const slug = foldCountry(label).replace(/\s+/g, "_");
+  return slug || code.toLowerCase();
+}
+
+function buildCopy(
+  countryLabel: string,
+  profile: CountryEvaluationFormProfile,
+): Pick<
   CountryEvaluationFormTemplate,
   "purpose" | "instructions" | "emailSubject" | "emailIntro" | "notificationTitle" | "notificationBody"
 > {
   const purpose =
     `Ce PDF est le formulaire d’évaluation préliminaire 3M TRAVEL AGENCY pour votre projet ${countryLabel}. `
-    + `Il permet à votre conseiller de comprendre votre profil (identité, études, expérience, langues, budget et objectif) `
-    + `avant d’établir un avis d’orientation. Ce n’est ni une demande de visa, ni une garantie d’admission, d’emploi ou d’invitation.`;
+    + `Il reprend les mêmes rubriques que notre modèle Canada (identité, famille, études, emplois, langues, liens locaux, budget, objectif) `
+    + `adaptées à ${countryLabel} (${profile.authorityHint}). `
+    + `Il permet à votre conseiller de comprendre votre profil avant un avis d’orientation. `
+    + `Ce n’est ni une demande de visa, ni une garantie d’admission, d’emploi ou d’invitation.`;
 
   const instructions = [
     "Téléchargez le PDF depuis cet e-mail ou depuis votre espace client (section Documents / coffre).",
-    "Remplissez tous les champs demandés avec des informations exactes. Pour le Canada, utilisez un lecteur PDF qui accepte les formulaires (Adobe Reader, Preview, Edge…). Ne joignez pas de numéro de passeport ni de données bancaires dans ce formulaire.",
+    `Remplissez toutes les sections. Langues attendues : ${profile.languageFocus}. Tests typiques : ${profile.languageTestsHint}. Ne joignez pas de numéro de passeport ni de données bancaires.`,
+    `Pour les diplômes, précisez toute reconnaissance déjà obtenue (${profile.diplomaRecognitionHint}).`,
     "Enregistrez le fichier sous votre nom (ex. Formulaire-evaluation-Prenom-Nom.pdf).",
-    "Déposez le PDF rempli dans votre espace client (coffre documentaire), ou renvoyez-le par e-mail / WhatsApp à l’agence si un conseiller vous le demande.",
+    "Déposez le PDF rempli dans votre espace client (coffre), ou renvoyez-le à l’agence si un conseiller vous le demande.",
     "Un conseiller 3M relira ensuite votre formulaire pour préparer l’accompagnement et la checklist de pièces.",
   ];
 
@@ -114,7 +141,8 @@ function buildCopy(countryLabel: string): Pick<
     emailSubject: `Votre formulaire d’évaluation ${countryLabel} — à remplir`,
     emailIntro:
       `Bonjour,\n\nVous avez choisi ${countryLabel} comme destination. `
-      + `Voici votre formulaire d’évaluation préliminaire remplissable, avec les instructions pour le compléter.`,
+      + `Voici votre formulaire d’évaluation préliminaire 3M (modèle aligné sur notre formulaire Canada, adapté à ${countryLabel}), `
+      + `avec les instructions pour le compléter.`,
     notificationTitle: `Formulaire d’évaluation ${countryLabel}`,
     notificationBody:
       `Votre formulaire d’évaluation préliminaire pour ${countryLabel} est disponible dans votre coffre. `
@@ -123,13 +151,38 @@ function buildCopy(countryLabel: string): Pick<
   };
 }
 
+function buildGeneratedTemplate(code: string, label: string, region: string): CountryEvaluationFormTemplate {
+  const profile = resolveCountryFormProfile(code, region);
+  const copy = buildCopy(label, profile);
+  const slug = slugFor(label, code);
+  const fileName = `Formulaire_evaluation_${slug}_3M.pdf`;
+  // Les pays du guide sont pré-générés sous client/public/forms/ (voir scripts/generate-country-evaluation-forms.mts).
+  const publicPath = `/forms/${fileName}`;
+  return {
+    countryKey: code,
+    countryLabel: label,
+    formTitle: `Formulaire d’évaluation préliminaire — ${label}`,
+    fileName,
+    publicPath,
+    kind: "generated",
+    profile,
+    ...copy,
+  };
+}
+
 export function resolveCountryEvaluationForm(destination: string | null | undefined): CountryEvaluationFormTemplate | null {
   const code = resolveDestinationCountryCode(destination);
-  if (!code) return null;
+  if (!code) {
+    // Libellé libre hors catalogue : formulaire générique nommé d’après le texte saisi.
+    const rawLabel = String(destination || "").split(/[-–—|/]/)[0]?.trim();
+    if (!rawLabel || rawLabel.length < 2) return null;
+    return buildGeneratedTemplate("XX", rawLabel, "Europe");
+  }
 
-  // Canada : PDF AcroForm officiel 3M (Formulaire_evaluation_Canada_3M).
+  // Canada : PDF AcroForm officiel 3M (inchangé), profil joint pour messages.
   if (code === "CA") {
-    const copy = buildCopy("Canada");
+    const profile = resolveCountryFormProfile("CA", "Amérique du Nord");
+    const copy = buildCopy("Canada", profile);
     return {
       countryKey: "CA",
       countryLabel: "Canada",
@@ -137,46 +190,39 @@ export function resolveCountryEvaluationForm(destination: string | null | undefi
       fileName: "Formulaire_evaluation_Canada_3M.pdf",
       publicPath: "/forms/Formulaire_evaluation_Canada_3M.pdf",
       kind: "static_fillable",
+      profile,
       ...copy,
       emailSubject: "Votre formulaire d’évaluation Canada (remplissable) — instructions 3M",
       emailIntro:
         "Bonjour,\n\nVous avez choisi le Canada. "
-        + "Nous vous adressons le formulaire d’évaluation préliminaire 3M (PDF remplissable), "
+        + "Nous vous adressons le formulaire d’évaluation préliminaire 3M (PDF remplissable AcroForm), "
         + "le même modèle utilisé par nos conseillers pour préparer votre orientation Entrée express / travail / études.",
+      instructions: [
+        "Téléchargez le PDF depuis cet e-mail ou depuis votre espace client (section Documents / coffre).",
+        "Ouvrez-le dans un lecteur compatible formulaires (Adobe Reader, Preview, Edge…) et remplissez les 5 sections. Ne joignez pas de numéro de passeport ni de données bancaires.",
+        "Précisez l’EDE (WES, IQAS…) et les tests TEF/TCF ou IELTS/CELPIP dès qu’ils sont disponibles.",
+        "Enregistrez le fichier sous votre nom, puis redéposez-le dans votre coffre.",
+        "Un conseiller 3M relira le formulaire pour l’orientation et la checklist de pièces.",
+      ],
     };
   }
 
-  // Autres pays du guide (et alias) : PDF structuré généré, même logique d’instructions.
-  const label = GUIDE_NAME_BY_CODE.get(code);
-  if (!label) {
-    // Pays hors guide : on livre quand même un formulaire générique si un libellé pays est fourni.
-    const rawLabel = String(destination || "").split(/[-–—|/]/)[0]?.trim() || code;
-    if (rawLabel.length < 2) return null;
-    const copy = buildCopy(rawLabel);
-    const slug = foldCountry(rawLabel).replace(/\s+/g, "_") || code.toLowerCase();
-    return {
-      countryKey: code,
-      countryLabel: rawLabel,
-      formTitle: `Formulaire d’évaluation préliminaire — ${rawLabel}`,
-      fileName: `Formulaire_evaluation_${slug}_3M.pdf`,
-      kind: "generated",
-      ...copy,
-    };
+  const row = CODE_TO_ROW.get(code);
+  if (row) {
+    return buildGeneratedTemplate(code, row[1], row[2]);
   }
 
-  const copy = buildCopy(label);
-  const slug = foldCountry(label).replace(/\s+/g, "_");
-  return {
-    countryKey: code,
-    countryLabel: label,
-    formTitle: `Formulaire d’évaluation préliminaire — ${label}`,
-    fileName: `Formulaire_evaluation_${slug}_3M.pdf`,
-    kind: "generated",
-    ...copy,
-  };
+  // Code ISO inconnu du catalogue : libellé brut.
+  const rawLabel = String(destination || code).split(/[-–—|/]/)[0]?.trim() || code;
+  return buildGeneratedTemplate(code, rawLabel, "Europe");
 }
 
-/** Destinations pour lesquelles un formulaire est toujours prévu (guides + Canada). */
+/** Toutes les destinations du catalogue mondial pour lesquelles un formulaire est généré. */
 export function listsCountryEvaluationFormSupport(): string[] {
-  return Array.from(GUIDE_NAME_BY_CODE.values()).sort((a, b) => a.localeCompare(b, "fr"));
+  return WORLD_COUNTRY_ROWS.map(([, name]) => name).sort((a, b) => a.localeCompare(b, "fr"));
+}
+
+/** Nombre de destinations couvertes (catalogue mondial). */
+export function countCountryEvaluationForms(): number {
+  return WORLD_COUNTRY_ROWS.length;
 }
