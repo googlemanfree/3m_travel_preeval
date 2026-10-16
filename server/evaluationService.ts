@@ -6,6 +6,7 @@
 import { Application } from "../drizzle/schema";
 import { sanitizeClientCommunicationText } from "./clientCommunication";
 import { resolveEvaluationProjectKind, type EvaluationProjectKind } from "../shared/evaluationVisaCv";
+import { STUDY_CYCLE_LABELS, VISITOR_STATUS_LABELS, type StudyCycle, type VisitorStatus } from "../shared/evaluationFormRequirements";
 
 // Destinations disponibles pour l'évaluation
 const DESTINATIONS = {
@@ -253,8 +254,10 @@ export function generatePersonalizedRecommendations(criteria: ScoringCriteria, a
       recommendations.push("Niveau linguistique favorable pour suivre une formation dans la langue d’enseignement déclarée.");
     }
     recommendations.push("Financement : préparez un plan de ressources (relevés, prise en charge, bourse) cohérent avec les frais de scolarité et de séjour.");
+    recommendations.push("Cycle visé : alignez diplômes, relevés et lettre de motivation sur le type de cycle demandé (licence, master, formation pro…).");
     recommendations.push("Projet d’études : rédigez une lettre de motivation claire (choix de la formation, lien avec votre parcours, intention de retour ou de suite de carrière).");
   } else if (kind === "tourisme") {
+    recommendations.push("Statut déclaré : adaptez les justificatifs selon que vous êtes chef d’entreprise, employé ou particulier (activité, salaires, ou situation personnelle).");
     recommendations.push("Itinéraire : précisez dates, hébergement et programme de séjour de façon cohérente et vérifiable.");
     recommendations.push("Attaches au pays de résidence : documents d’emploi, activité, famille ou biens démontrant l’intention de retour.");
     if (criteria.language < 10) {
@@ -382,13 +385,33 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
   const selectedDestination = adminDraft.modelLabel || app.destination || "Évaluation préliminaire";
   const selectedScore = adminDraft.finalScore ?? app.scoringTotal ?? 0;
   const renderedCriteria = criteriaRowsForKind(projectKind, criteria, adminDraft, hasDestinationModel);
+  const projectDetails = (() => {
+    try {
+      const anyApp = app as { projectDetailsJson?: string | null };
+      return JSON.parse(anyApp.projectDetailsJson || "{}") as Record<string, unknown>;
+    } catch {
+      return {} as Record<string, unknown>;
+    }
+  })();
+  const studyCycleLabel = typeof projectDetails.studyCycle === "string" && projectDetails.studyCycle in STUDY_CYCLE_LABELS
+    ? STUDY_CYCLE_LABELS[projectDetails.studyCycle as StudyCycle]
+    : null;
+  const visitorStatusLabel = typeof projectDetails.visitorStatus === "string" && projectDetails.visitorStatus in VISITOR_STATUS_LABELS
+    ? VISITOR_STATUS_LABELS[projectDetails.visitorStatus as VisitorStatus]
+    : null;
+  const evaluationFrame =
+    projectKind === "etudes"
+      ? `Cadre études : historique scolaire, diplômes et relevés${studyCycleLabel ? ` · cycle visé : ${studyCycleLabel}` : ""}${typeof projectDetails.sector === "string" && projectDetails.sector.trim() ? ` · filière : ${String(projectDetails.sector).trim()}` : ""}.`
+      : projectKind === "tourisme"
+        ? `Cadre visiteurs : formulaire simplifié${visitorStatusLabel ? ` · statut : ${visitorStatusLabel}` : ""}${typeof projectDetails.visitReason === "string" && projectDetails.visitReason.trim() ? ` · motif : ${String(projectDetails.visitReason).trim()}` : ""}.`
+        : `Cadre travail : profil professionnel et CV actualisé${typeof projectDetails.sector === "string" && projectDetails.sector.trim() ? ` · métier : ${String(projectDetails.sector).trim()}` : ""}.`;
   const strategicOrientation =
     projectKind === "etudes"
-      ? "Cette orientation études est préliminaire : elle nécessite la vérification de l’admission, du financement et des pièces académiques."
+      ? "Cette orientation études est préliminaire : elle nécessite la vérification du cycle visé, de l’admission, du financement et des pièces académiques (diplômes et relevés)."
       : projectKind === "tourisme"
-        ? "Cette orientation visite/tourisme est préliminaire : elle nécessite un itinéraire cohérent, des preuves d’attaches et de ressources."
+        ? "Cette orientation visiteurs est préliminaire : elle s’appuie sur le statut déclaré (chef d’entreprise, employé ou particulier), l’itinéraire et les preuves d’attaches / de ressources."
         : hasDestinationModel
-          ? "Cette orientation est préliminaire et nécessite la vérification des pièces, des conditions de programme et, le cas échéant, d’une offre d’employeur."
+          ? "Cette orientation travail est préliminaire et nécessite la vérification du CV, des pièces, des conditions de programme et, le cas échéant, d’une offre d’employeur."
           : topScore.description;
   const legalFrame =
     projectKind === "etudes"
@@ -456,6 +479,7 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
     <div class="body">
       <p>Bonjour <strong>${escapeReportHtml(app.fullName)}</strong>,</p>
       <p>Nous vous transmettons les conclusions de notre analyse préliminaire pour votre projet <strong>${escapeReportHtml(projectKindLabel)}</strong>${app.destination ? ` vers <strong>${escapeReportHtml(String(app.destination))}</strong>` : ""}.</p>
+      <div class="recommendation"><p><strong>Type d’évaluation :</strong> ${escapeReportHtml(evaluationFrame)}</p></div>
       ${customIntro ? `<div class="recommendation"><p>${escapeReportHtml(clientText(customIntro)).replace(/\n/g, "<br/>")}</p></div>` : ""}
       
       <div class="section">

@@ -5,6 +5,7 @@ import { getDb } from "../db";
 import { clientDocuments, evaluations } from "../../drizzle/schema";
 import { storagePut } from "../storage";
 import { CV_MAX_BASE64_LENGTH } from "../../shared/evaluationCv";
+import { multiProjectEvaluationGap } from "../../shared/evaluationFormRequirements";
 import { EVALUATION_SUBMISSION_LIMITS, createSubmissionGuard } from "../_core/publicRateLimit";
 import { notifyOwner } from "../_core/notification";
 import { generateDossierCode } from "../utils/generateDossierCode";
@@ -152,25 +153,30 @@ const multiProjectEvaluationInput = z.object({
 
   // Étape 2 : Champs conditionnels
   // TRAVAIL
-  sector: z.string().max(100).optional(),
+  sector: z.string().max(150).optional(),
   yearsOfExperience: z.number().int().min(0).max(60).optional(),
   educationLevel: z.string().max(100).optional(),
-  languages: z.string().max(100).optional(),
+  languages: z.string().max(255).optional(),
   cvAvailable: z.boolean().optional(),
+  hasCvDocument: z.boolean().optional(),
+  hasDiplomaDocument: z.boolean().optional(),
+  hasTranscriptDocument: z.boolean().optional(),
 
   // ÉTUDES
+  studyCycle: z.enum(["bac", "bts_dut", "licence", "master", "doctorat", "formation_pro", "autre"]).optional(),
   diplomaLevel: z.string().max(100).optional(),
   averageGrade: z.string().max(10).optional(),
   admissionLetter: z.boolean().optional(),
-  financialGuarantee: z.string().max(50).optional(),
+  financialGuarantee: z.string().max(255).optional(),
   transcriptAvailable: z.boolean().optional(),
 
-  // TOURISME
+  // TOURISME / VISITEURS
+  visitorStatus: z.enum(["chef_entreprise", "employe", "particulier"]).optional(),
   visitReason: z.string().max(1000).optional(),
   travelHistory: z.string().max(1000).optional(),
   previousRefusal: z.boolean().optional(),
   socialTies: z.string().max(1000).optional(),
-  cvLink: z.string().url("Lien CV invalide").optional(),
+  cvLink: z.string().url("Lien CV invalide").or(z.literal("")).optional(),
   canadaLanguageTest: z.string().max(500).optional(),
   canadaStudyPlan: z.string().max(1000).optional(),
   luxEmployerStatus: z.enum(["aucun", "candidatures", "contact", "offre"]).optional(),
@@ -184,6 +190,28 @@ const multiProjectEvaluationInput = z.object({
     question: z.string().trim().min(3).max(260),
     answer: z.string().trim().min(1).max(1000),
   })).max(5).default([]),
+}).superRefine((value, ctx) => {
+  const gap = multiProjectEvaluationGap({
+    projectType: value.projectType,
+    sector: value.sector,
+    yearsOfExperience: value.yearsOfExperience,
+    languages: value.languages,
+    educationLevel: value.educationLevel,
+    studyCycle: value.studyCycle,
+    diplomaLevel: value.diplomaLevel,
+    financialGuarantee: value.financialGuarantee,
+    visitReason: value.visitReason,
+    visitorStatus: value.visitorStatus,
+    cvAvailable: value.cvAvailable,
+    cvLink: value.cvLink,
+    hasCvDocument: value.hasCvDocument,
+    hasDiplomaDocument: value.hasDiplomaDocument,
+    hasTranscriptDocument: value.hasTranscriptDocument,
+    transcriptAvailable: value.transcriptAvailable,
+  });
+  if (gap) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: gap });
+  }
 });
 
 export const evaluationRouter = router({
@@ -223,13 +251,19 @@ export const evaluationRouter = router({
           currentCity: input.currentCity,
           sector: input.sector,
           yearsOfExperience: input.yearsOfExperience,
+          educationLevel: input.educationLevel,
           languages: input.languages,
           cvAvailable: input.cvAvailable,
+          hasCvDocument: input.hasCvDocument,
+          hasDiplomaDocument: input.hasDiplomaDocument,
+          hasTranscriptDocument: input.hasTranscriptDocument,
+          studyCycle: input.studyCycle,
           diplomaLevel: input.diplomaLevel,
           averageGrade: input.averageGrade,
           admissionLetter: input.admissionLetter,
           financialGuarantee: input.financialGuarantee,
           transcriptAvailable: input.transcriptAvailable,
+          visitorStatus: input.visitorStatus,
           visitReason: input.visitReason,
           travelHistory: input.travelHistory,
           previousRefusal: input.previousRefusal,

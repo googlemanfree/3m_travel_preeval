@@ -15,8 +15,15 @@ describe("catalogue documentaire d’évaluation", () => {
     const canadaStudy = getEvaluationDocumentRequirements("Canada", "etudes").map((item) => item.label);
     const luxStudy = getEvaluationDocumentRequirements("Luxembourg", "etudes").map((item) => item.label);
 
+    expect(canadaStudy).toContain("Diplômes obtenus");
+    expect(canadaStudy).toContain("Relevés de notes");
     expect(canadaStudy).toContain("Lettre d’acceptation de l’établissement");
     expect(luxStudy).toContain("Admission et parcours académique");
+  });
+
+  it("oriente le catalogue visiteurs sur le statut déclaré", () => {
+    const tourisme = getEvaluationDocumentRequirements("France", "tourisme").map((item) => item.label);
+    expect(tourisme.some((label) => /chef d’entreprise|employé|particulier/i.test(label))).toBe(true);
   });
 
   it("conserve une liste utile pour les pays non catalogués", () => {

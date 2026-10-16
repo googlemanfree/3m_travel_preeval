@@ -42,7 +42,7 @@ describe("pilotage — cohérence visas + sync + dépôt documenté", () => {
       { education: 10, experience: 10, language: 8, sector: 10, ageAdjustment: 5 },
       { ...base, visaType: "tourisme" },
     );
-    expect(tourisme.some((line) => /itinéraire|attaches|retour/i.test(line))).toBe(true);
+    expect(tourisme.some((line) => /itinéraire|attaches|retour|statut/i.test(line))).toBe(true);
   });
 
   it("câble le pilotage sur le projectType d’évaluation et sécurise l’enregistrement", () => {
