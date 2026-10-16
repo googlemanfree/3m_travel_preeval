@@ -12,6 +12,8 @@ import { PremiumCoverImage } from '@/components/PremiumCoverImage';
 import Cropper, { type Area } from 'react-easy-crop';
 import { createCroppedCvFile, type CropPixels } from '@/lib/cvImageCrop';
 import { AI_ANALYSIS_CONSENT_DETAIL, AI_ANALYSIS_CONSENT_LABEL, CV_ANALYSIS_CONSENT_DETAIL, CV_ANALYSIS_CONSENT_LABEL, CV_NOT_STORED_MESSAGE, CV_REQUIRED_MESSAGE } from '@shared/evaluationCv';
+import { evaluationRequiresCv } from '@shared/evaluationVisaCv';
+import { normalizePublicEvaluationProject } from '@shared/evaluationFormRequirements';
 import { isEvaluationProjectType, PROJECT_EVALUATION_CONFIG, type EvaluationProjectType } from '@/lib/projectEvaluationConfig';
 import { getCountriesForProject, getAllDestinationOptionsForProject, getCountryProcedureFields, getProcedureById, getProceduresForCountry, getSuggestedDestinationCategory, type ProcedureGuide } from '@/lib/destinationProcedureCatalog';
 import { getServiceVisual } from '@/data/premiumVisuals';
@@ -79,7 +81,8 @@ export default function Evaluation() {
   const heroVisual = getServiceVisual('dossier');
   const projectFromUrl = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('project');
   const onboardingFromRegistration = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('onboarding') === 'registration';
-  const initialProject = isEvaluationProjectType(projectFromUrl) ? projectFromUrl : initialForm.projectType;
+  const normalizedProjectFromUrl = normalizePublicEvaluationProject(projectFromUrl) ?? (isEvaluationProjectType(projectFromUrl) ? projectFromUrl : null);
+  const initialProject = normalizedProjectFromUrl ?? initialForm.projectType;
 
   useEffect(() => {
     setPageSeo({
@@ -143,7 +146,7 @@ export default function Evaluation() {
       const expired = typeof saved.savedAt !== 'number' || Date.now() - saved.savedAt > DRAFT_MAX_AGE_MS;
       if (!saved.form || expired || saved.owner !== draftOwner) { clearDraft(); return; }
       // Un projet choisi explicitement dans l'URL prime sur un ancien brouillon.
-      if (isEvaluationProjectType(projectFromUrl) && saved.form.projectType !== projectFromUrl) return;
+      if (normalizedProjectFromUrl && saved.form.projectType !== normalizedProjectFromUrl) return;
       const restored = { ...initialProjectForm, ...saved.form };
       formRef.current = restored;
       setForm(restored);
@@ -425,8 +428,9 @@ export default function Evaluation() {
     const missingProjectFields = requiredProjectFields.filter((field) => field.required && !form.projectDetails[field.key]?.trim());
     if (missingProjectFields.length) return setFormError(`Merci de compléter les informations requises pour votre projet : ${missingProjectFields.map((field) => field.label).join(', ')}.`);
 
-    // Le CV est l'élément clé de la finalisation : sans lui, l'évaluation ne peut pas être validée.
-    if (!cvFile) {
+    // CV obligatoire uniquement pour le visa travail (études / visiteurs : formulaires distincts).
+    const cvMandatory = evaluationRequiresCv(form.visaType, form.projectType);
+    if (cvMandatory && !cvFile) {
       setCvAnalysisNotice(CV_REQUIRED_MESSAGE);
       document.getElementById('cv-upload')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return setFormError(CV_REQUIRED_MESSAGE);
@@ -766,10 +770,14 @@ export default function Evaluation() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <Label htmlFor="cv-upload" className="text-sm font-semibold text-blue-950">
-                    CV (obligatoire — PDF, JPG ou PNG)
+                    {evaluationRequiresCv(form.visaType, form.projectType)
+                      ? 'CV (obligatoire — PDF, JPG ou PNG)'
+                      : 'CV (facultatif — PDF, JPG ou PNG)'}
                   </Label>
                   <p className="mt-1 text-xs text-blue-800/75">
-                    Votre CV est l’élément clé pour finaliser votre évaluation : elle ne peut pas être validée sans lui. PDF, JPG ou PNG, 5 Mo maximum. Les images sont lues par OCR sécurisé.
+                    {evaluationRequiresCv(form.visaType, form.projectType)
+                      ? 'Pour un visa travail, un CV actualisé est obligatoire pour finaliser l’évaluation. PDF, JPG ou PNG, 5 Mo maximum.'
+                      : 'Le CV n’est pas exigé pour ce type de visa (études / visiteurs). Vous pouvez en joindre un si utile. PDF, JPG ou PNG, 5 Mo maximum.'}
                   </p>
                   <input
                     id="cv-upload"

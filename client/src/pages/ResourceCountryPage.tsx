@@ -20,6 +20,7 @@ import {
   getCountryResourcePage,
   primaryEvalProjectForPage,
 } from "@shared/countryResourceCatalog";
+import { normalizePublicEvaluationProject } from "@shared/evaluationFormRequirements";
 import { getLocalizedPdfUrl } from "@shared/pdfResources";
 import { summarizePdfResource } from "@shared/publishedGuideSummaries";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -68,7 +69,7 @@ export default function ResourceCountryPage() {
   if (!page) return <NotFound />;
 
   const displayCountry = language === "en" && page.countryEn ? page.countryEn : page.country;
-  const evalProject = primaryEvalProjectForPage(page);
+  const evalProject = normalizePublicEvaluationProject(primaryEvalProjectForPage(page)) ?? "travail";
   const projectLabels = availableProjectLabels(page, language === "en" ? "en" : "fr");
   const byCategory = page.categories.map((category) => ({
     category,

@@ -165,7 +165,11 @@ export default function CountryDetailPage() {
   const sourceVerifiedAt = institutionalSource
     ? new Date(`${institutionalSource.consultedOn}T00:00:00Z`).toLocaleDateString("fr-FR", { timeZone: "UTC" })
     : null;
-  const evaluationUrl = `/?project=${encodeURIComponent(country.visaType)}&destination=${encodeURIComponent(country.id)}#evaluation-multi`;
+  const evaluationProject =
+    country.visaType === "etudes" ? "etudes"
+      : country.visaType === "visiteur" || country.visaType === "tourisme" ? "tourisme"
+        : "travail"; // visiteur → tourisme (formulaire visiteurs distinct)
+  const evaluationUrl = `/?project=${encodeURIComponent(evaluationProject)}&destination=${encodeURIComponent(country.id)}#evaluation-multi`;
   const pageUpdatedAt = publicPortal?.updatedAt
     ? new Date(publicPortal.updatedAt).toLocaleDateString("fr-FR")
     : destinationDetail?.lastUpdatedAt;

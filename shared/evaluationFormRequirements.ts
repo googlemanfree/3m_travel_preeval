@@ -5,6 +5,30 @@
 
 export type EvaluationFormProjectType = "travail" | "etudes" | "tourisme";
 
+/** Alias publics (fiches pays, ressources) → type de formulaire d’évaluation. */
+export function normalizePublicEvaluationProject(
+  value: string | null | undefined,
+): EvaluationFormProjectType | null {
+  const folded = String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "");
+  if (!folded) return null;
+  if (folded === "travail" || folded === "work") return "travail";
+  if (folded === "etudes" || folded === "etude" || folded === "study" || folded === "studies") return "etudes";
+  if (
+    folded === "tourisme"
+    || folded === "visiteur"
+    || folded === "visitor"
+    || folded === "visite"
+    || folded === "court_sejour"
+  ) {
+    return "tourisme";
+  }
+  return null;
+}
+
 export type StudyCycle =
   | "bac"
   | "bts_dut"

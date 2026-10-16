@@ -229,8 +229,13 @@ export default function ProceduresAdvanced() {
     return costNum + totalCostNum + servicesFee;
   };
 
-  const getEvaluationHref = (country: typeof PUBLIC_PROCEDURES[0]) =>
-    `/?project=${encodeURIComponent(country.visaType)}&destination=${encodeURIComponent(country.id)}#evaluation-multi`;
+  const getEvaluationHref = (country: typeof PUBLIC_PROCEDURES[0]) => {
+    const project =
+      country.visaType === "etudes" ? "etudes"
+        : country.visaType === "visiteur" || country.visaType === "tourisme" ? "tourisme"
+          : "travail";
+    return `/?project=${encodeURIComponent(project)}&destination=${encodeURIComponent(country.id)}#evaluation-multi`;
+  };
 
   const activeQuickHub = searchQuery.trim().toLowerCase() === 'canada'
     ? 'canada'

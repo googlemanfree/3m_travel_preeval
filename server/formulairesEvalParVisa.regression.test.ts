@@ -11,6 +11,7 @@ describe("formulaires d’évaluation distincts par type de visa", () => {
   it("branche le formulaire public sur studyCycle, visitorStatus et contrôles par phase", () => {
     const form = read("client/src/components/SimpleMultiProjectForm.tsx");
     expect(form).toContain("multiProjectEvaluationGap");
+    expect(form).toContain("normalizePublicEvaluationProject");
     expect(form).toContain("STUDY_CYCLE_OPTIONS");
     expect(form).toContain("VISITOR_STATUS_OPTIONS");
     expect(form).toContain('data-testid="eval-hint-travail"');
@@ -23,6 +24,22 @@ describe("formulaires d’évaluation distincts par type de visa", () => {
     expect(form).toContain("hasTranscriptDocument");
     expect(form).toContain('"criteria"');
     expect(form).toContain('"documents"');
+  });
+
+  it("n’impose le CV sur /evaluation que pour le visa travail", () => {
+    const page = read("client/src/pages/Evaluation.tsx");
+    expect(page).toContain("evaluationRequiresCv");
+    expect(page).toContain("normalizePublicEvaluationProject");
+    expect(page).toMatch(/CV \(facultatif/);
+  });
+
+  it("redirige les fiches pays visiteur vers le formulaire tourisme", () => {
+    const country = read("client/src/pages/CountryDetailPage.tsx");
+    const procedures = read("client/src/pages/ProceduresAdvanced.tsx");
+    expect(country).toContain('country.visaType === "visiteur"');
+    expect(country).toContain('"tourisme"');
+    expect(procedures).toContain('"tourisme"');
+    expect(procedures).toContain("visiteur");
   });
 
   it("persiste studyCycle et visitorStatus côté serveur", () => {

@@ -1,5 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { multiProjectEvaluationGap } from "./evaluationFormRequirements";
+import {
+  multiProjectEvaluationGap,
+  normalizePublicEvaluationProject,
+} from "./evaluationFormRequirements";
+
+describe("normalizePublicEvaluationProject", () => {
+  it("mappe les alias publics vers travail / études / tourisme", () => {
+    expect(normalizePublicEvaluationProject("travail")).toBe("travail");
+    expect(normalizePublicEvaluationProject("work")).toBe("travail");
+    expect(normalizePublicEvaluationProject("etudes")).toBe("etudes");
+    expect(normalizePublicEvaluationProject("études")).toBe("etudes");
+    expect(normalizePublicEvaluationProject("study")).toBe("etudes");
+    expect(normalizePublicEvaluationProject("tourisme")).toBe("tourisme");
+    expect(normalizePublicEvaluationProject("visiteur")).toBe("tourisme");
+    expect(normalizePublicEvaluationProject("visitor")).toBe("tourisme");
+    expect(normalizePublicEvaluationProject("court_sejour")).toBe("tourisme");
+    expect(normalizePublicEvaluationProject("inconnu")).toBeNull();
+  });
+});
 
 describe("multiProjectEvaluationGap — formulaires distincts par visa", () => {
   it("exige CV + profil pour visa travail", () => {

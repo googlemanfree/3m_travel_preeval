@@ -22,6 +22,7 @@ import {
   VISITOR_STATUS_LABELS,
   VISITOR_STATUS_OPTIONS,
   multiProjectEvaluationGap,
+  normalizePublicEvaluationProject,
   type StudyCycle,
   type VisitorStatus,
 } from "@shared/evaluationFormRequirements";
@@ -151,11 +152,12 @@ export function SimpleMultiProjectForm() {
   const [location, setLocation] = useLocation();
   const { isAuthenticated, candidate } = useCandidateAuth();
   const searchParams = new URLSearchParams(location.split("?")[1] || "");
-  const projectParam = searchParams.get("project") as ProjectType | null;
+  const rawProjectParam = searchParams.get("project");
+  const projectParam = normalizePublicEvaluationProject(rawProjectParam);
   const destinationParam = searchParams.get("destination") || "";
   const canonicalDestinationParam = destinationParam ? (getCandidateDestinationOption(destinationParam)?.name ?? destinationParam) : "";
   const isPostRegistrationOnboarding = searchParams.get("onboarding") === "evaluation";
-  const initialProject = projectParam && ["travail", "etudes", "tourisme"].includes(projectParam) ? projectParam : "travail";
+  const initialProject = projectParam ?? "travail";
   const [currentStep, setCurrentStep] = React.useState(0);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isSuccessVisible, setIsSuccessVisible] = React.useState(false);
@@ -190,7 +192,7 @@ export function SimpleMultiProjectForm() {
   }, [formData.destinationCountry, formData.projectType, hasTrackedStart]);
 
   React.useEffect(() => {
-    if (projectParam && ["travail", "etudes", "tourisme"].includes(projectParam)) setFormData((prev) => ({ ...prev, projectType: projectParam }));
+    if (projectParam) setFormData((prev) => ({ ...prev, projectType: projectParam }));
     if (canonicalDestinationParam) setFormData((prev) => ({ ...prev, destinationCountry: canonicalDestinationParam }));
   }, [canonicalDestinationParam, projectParam]);
 
