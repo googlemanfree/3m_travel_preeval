@@ -111,9 +111,11 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "procedureId": "autriche-visiteur",
     "officialUrl": "https://www.bmeia.gv.at/fr/ambassade-dautriche-a-paris/voyages-en-autriche/entree-et-sejour/visa",
     "sourceTitle": "Visa – Ministère fédéral des Affaires étrangères d'Autriche",
-    "consultedOn": "2026-10-14",
+    "consultedOn": "2026-10-16",
     "preparationPoints": [
-      "Justificatifs de ressources financières suffisantes ou déclaration de prise en charge électronique"
+      "Vérifier si un visa Schengen (type C) est requis selon votre nationalité auprès de la représentation autrichienne compétente",
+      "Justificatifs de ressources financières suffisantes ou déclaration de prise en charge électronique",
+      "Passeport valide, assurance voyage Schengen et preuves de l’objet / hébergement du séjour"
     ],
     "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
@@ -144,8 +146,13 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "procedureId": "belgique-visiteur",
     "officialUrl": "https://dofi.ibz.be/fr/themes/third-country-nationals/court-sejour",
     "sourceTitle": "Court séjour - Office des Étrangers",
-    "consultedOn": "2026-10-14",
-    "preparationPoints": [],
+    "consultedOn": "2026-10-16",
+    "preparationPoints": [
+      "Court séjour Schengen : maximum 90 jours sur toute période de 180 jours (code frontières Schengen, art. 6)",
+      "Déposer la demande de visa C auprès du consulat de l’État Schengen de destination principale — documents sur l’objet du voyage, l’hébergement, les moyens et le retour",
+      "Assurance médicale de voyage Schengen (couverture minimale 30 000 €) et, le cas échéant, engagement de prise en charge (annexe 3bis)",
+      "À l’arrivée en Belgique hors hébergement contrôlé : déclaration d’arrivée à la commune dans les 3 jours ouvrables (sauf dispense)"
+    ],
     "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
@@ -164,9 +171,11 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "procedureId": "cambodge-evisa",
     "officialUrl": "https://www.evisa.gov.kh/",
     "sourceTitle": "eVisa Kingdom of Cambodia (Official Government Website)",
-    "consultedOn": "2026-10-14",
+    "consultedOn": "2026-10-16",
     "preparationPoints": [
-      "Remplissage du formulaire de demande en ligne avec les détails du passeport"
+      "Remplir le formulaire uniquement sur evisa.gov.kh avec les données exactes du passeport",
+      "Joindre une photo récente et le scan couleur de la page d’identité du passeport",
+      "Choisir la durée / type d’e-Visa adapté puis imprimer l’autorisation délivrée avant le voyage"
     ],
     "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
@@ -235,9 +244,11 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "procedureId": "croatie-visiteur",
     "officialUrl": "https://mvep.gov.hr/services-for-citizens/consular-information-22802/visas-22807/issuance-procedure/enclosed-documents/22821",
     "sourceTitle": "Documents justificatifs pour visa Schengen",
-    "consultedOn": "2026-10-14",
+    "consultedOn": "2026-10-16",
     "preparationPoints": [
-      "Formulaire de demande complété et signé avec photo aux normes ICAO"
+      "Formulaire de demande complété et signé avec photo aux normes ICAO",
+      "Passeport valide, assurance voyage Schengen et preuves de l’objet / durée du séjour",
+      "Justificatifs d’hébergement, de moyens de subsistance et de retour selon la checklist MVEP"
     ],
     "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
@@ -304,8 +315,12 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "procedureId": "egypte-evisa",
     "officialUrl": "https://visa2egypt.gov.eg/",
     "sourceTitle": "Egypt e-Visa Portal",
-    "consultedOn": "2026-10-14",
-    "preparationPoints": [],
+    "consultedOn": "2026-10-16",
+    "preparationPoints": [
+      "Créer une demande uniquement sur le portail officiel visa2egypt.gov.eg (éviter les intermédiaires non officiels)",
+      "Passeport valide et scan couleur de la page d’identité ; photo récente aux normes du formulaire",
+      "Choisir le type d’e-Visa (entrée unique / multiple) selon le projet et régler les frais en ligne avant impression de l’autorisation"
+    ],
     "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
@@ -380,9 +395,11 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "procedureId": "ethiopie-evisa",
     "officialUrl": "https://www.evisa.gov.et/",
     "sourceTitle": "Tourist Visa-VT - Ethiopia eVisa",
-    "consultedOn": "2026-10-14",
+    "consultedOn": "2026-10-16",
     "preparationPoints": [
-      "Photo récente format passeport"
+      "Déposer la demande sur le portail officiel evisa.gov.et (photo récente format passeport)",
+      "Scan du passeport valide et informations de voyage exactes",
+      "Conserver l’e-Visa approuvé (PDF) pour présentation à l’arrivée"
     ],
     "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
@@ -390,9 +407,11 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "procedureId": "finlande-etudes",
     "officialUrl": "https://migri.fi/en/studying-in-finland",
     "sourceTitle": "Studying in Finland - Finnish Immigration Service",
-    "consultedOn": "2026-10-14",
+    "consultedOn": "2026-10-16",
     "preparationPoints": [
-      "Acceptation préalable dans un établissement d'enseignement supérieur ou professionnel finlandais"
+      "Acceptation préalable dans un établissement d'enseignement supérieur ou professionnel finlandais",
+      "Demander le titre de séjour pour études via Enter Finland / Migri selon le parcours",
+      "Justifier des moyens de subsistance, d’une assurance et d’un logement conformes aux consignes Migri"
     ],
     "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
@@ -411,8 +430,12 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "procedureId": "finlande-visiteur",
     "officialUrl": "https://um.fi/visa-to-visit-finland",
     "sourceTitle": "A visa to visit Finland - Ministry for Foreign Affairs",
-    "consultedOn": "2026-10-14",
-    "preparationPoints": [],
+    "consultedOn": "2026-10-16",
+    "preparationPoints": [
+      "Vérifier l’obligation de visa et les documents de voyage acceptés par la Finlande avant toute demande",
+      "Déposer en personne (biométrie) au centre / mission indiqué — formulaire finlandvisa.fi, photo, passeport valide ≥ 3 mois après le séjour et émis depuis moins de 10 ans",
+      "Assurance voyage Schengen (couverture minimale 30 000 €) + pièces sur l’objet du séjour (billets, hébergement, invitation) et moyens (≥ 50 €/jour en Finlande selon la consigne officielle)"
+    ],
     "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
   {
@@ -551,9 +574,11 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "procedureId": "islande-travail",
     "officialUrl": "https://island.is/en/permit-based-on-work",
     "sourceTitle": "Residence permit based on work | Ísland.is",
-    "consultedOn": "2026-10-14",
+    "consultedOn": "2026-10-16",
     "preparationPoints": [
-      "Contrat de travail et preuve de qualification"
+      "Contrat de travail et preuve de qualification adaptés au permis demandé",
+      "Dépôt de la demande de permis de séjour pour travail via les canaux indiqués sur island.is",
+      "Vérifier les conditions de salaire / secteur et les pièces d’identité / passeport exigées"
     ],
     "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
@@ -561,9 +586,11 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "procedureId": "islande-visiteur",
     "officialUrl": "https://island.is/en/get-a-visa/supporting-documents",
     "sourceTitle": "Documents justificatifs pour un visa pour l'Islande",
-    "consultedOn": "2026-10-14",
+    "consultedOn": "2026-10-16",
     "preparationPoints": [
-      "Justificatifs de moyens financiers suffisants ou garantie de l'hôte"
+      "Justificatifs de moyens financiers suffisants ou garantie de l'hôte",
+      "Passeport, assurance voyage Schengen et preuves de l’itinéraire / hébergement",
+      "Suivre la liste des pièces à l’appui publiée sur island.is pour le motif de visite"
     ],
     "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
@@ -571,9 +598,11 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "procedureId": "italie-etudes",
     "officialUrl": "https://www.universitaly.it/",
     "sourceTitle": "Universitaly - Portail officiel du Ministère de l'Université et de la Recherche",
-    "consultedOn": "2026-10-14",
+    "consultedOn": "2026-10-16",
     "preparationPoints": [
-      "Demande de visa d'études national (type D) auprès de la représentation diplomatique italienne"
+      "Préinscription / dossier étudiant international via Universitaly (MUR) pour l’établissement et le programme choisis",
+      "Obtenir l’admission / lettre d’acceptation puis demander le visa d’études national (type D) au consulat italien compétent",
+      "À l’arrivée : demander le permesso di soggiorno pour études dans les 8 jours ouvrables auprès de la questure"
     ],
     "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
@@ -581,9 +610,11 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "procedureId": "italie-travail",
     "officialUrl": "https://www.interno.gov.it/it/temi/immigrazione-e-asilo/modalita-dingresso/visto-e-permesso-soggiorno",
     "sourceTitle": "Visto e permesso di soggiorno - Ministero dell'Interno",
-    "consultedOn": "2026-10-14",
+    "consultedOn": "2026-10-16",
     "preparationPoints": [
-      "Obtention préalable d'un \"nulla osta\" au travail par l'employeur auprès du Sportello Unico per l'Immigrazione"
+      "L’employeur dépose une demande nominative de nulla osta al lavoro auprès du Sportello Unico per l’Immigrazione (SUI) de la province du poste",
+      "Après nulla osta : visa de travail (subordonné / saisonnier selon le cas) délivré par l’ambassade ou le consulat italien du pays de résidence",
+      "En Italie : permesso di soggiorno dans les 8 jours ouvrables ; durée liée au contrat / decreto flussi — à confirmer sur le portail du Ministero dell’Interno"
     ],
     "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
@@ -627,9 +658,11 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "procedureId": "lettonie-visiteur",
     "officialUrl": "https://www.mfa.gov.lv/en/documents-required-apply-visa",
     "sourceTitle": "Documents required to apply for a visa",
-    "consultedOn": "2026-10-14",
+    "consultedOn": "2026-10-16",
     "preparationPoints": [
-      "Assurance médicale de voyage couvrant toute la zone Schengen"
+      "Assurance médicale de voyage couvrant toute la zone Schengen",
+      "Formulaire Schengen, photo et passeport conformes aux exigences MFA Lettonie",
+      "Preuves de l’objet du séjour, de l’hébergement et des moyens financiers"
     ],
     "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
@@ -672,9 +705,11 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "procedureId": "lituanie-visiteur",
     "officialUrl": "https://in.mfa.lt/en/coming-to-lithuania/visas/documents-to-be-submitted-by-all-applicants-for-short-stay-visa-c-schengen-visa/116",
     "sourceTitle": "Documents to be submitted by all applicants for short-stay visa (C) (Schengen visa)",
-    "consultedOn": "2026-10-14",
+    "consultedOn": "2026-10-16",
     "preparationPoints": [
-      "Preuves de moyens financiers (relevés bancaires récents) et justificatifs d'hébergement ou lettre d'invitation"
+      "Preuves de moyens financiers (relevés bancaires récents) et justificatifs d'hébergement ou lettre d'invitation",
+      "Formulaire de visa C, photo et passeport selon la checklist MFA Lituanie",
+      "Assurance voyage Schengen valide pour toute la durée du séjour prévu"
     ],
     "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
@@ -842,9 +877,11 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "procedureId": "pays-bas-visiteur",
     "officialUrl": "https://www.netherlandsworldwide.nl/visa-the-netherlands/checklist-schengen-visa-tourism/fr",
     "sourceTitle": "Liste de contrôle - Demande de visa Schengen de tourisme",
-    "consultedOn": "2026-10-14",
+    "consultedOn": "2026-10-16",
     "preparationPoints": [
-      "Justificatifs de moyens financiers suffisants"
+      "Suivre la checklist officielle Netherlands Worldwide pour le visa Schengen tourisme",
+      "Justificatifs de moyens financiers suffisants, d’hébergement et d’itinéraire / billet retour",
+      "Assurance voyage Schengen et passeport conformes avant le rendez-vous biométrique"
     ],
     "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
@@ -876,9 +913,11 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "procedureId": "pologne-visiteur",
     "officialUrl": "https://www.gov.pl/web/diplomacy/visas",
     "sourceTitle": "VISAS - Ministry of Foreign Affairs Republic of Poland",
-    "consultedOn": "2026-10-14",
+    "consultedOn": "2026-10-16",
     "preparationPoints": [
-      "Justificatifs de l'objet du voyage, de l'hébergement et des ressources financières"
+      "Justificatifs de l'objet du voyage, de l'hébergement et des ressources financières",
+      "Vérifier sur gov.pl/diplomacy si un visa Schengen ou national est requis pour votre nationalité",
+      "Prendre rendez-vous / déposer au consulat polonais compétent avec le dossier complet"
     ],
     "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
@@ -981,9 +1020,11 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "procedureId": "roumanie-visiteur",
     "officialUrl": "https://eviza.mae.ro/SupportingDocuments",
     "sourceTitle": "Documents justificatifs pour le visa - Ministère des Affaires Étrangères de Roumanie",
-    "consultedOn": "2026-10-14",
+    "consultedOn": "2026-10-16",
     "preparationPoints": [
-      "Justificatif de moyens de subsistance financiers pour le séjour"
+      "Justificatif de moyens de subsistance financiers pour le séjour",
+      "Consulter la liste des pièces eViza MAE selon le motif (tourisme, visite familiale, affaires)",
+      "Passeport, assurance et preuves d’hébergement / invitation avant le dépôt"
     ],
     "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
@@ -1026,9 +1067,11 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "procedureId": "rwanda-evisa",
     "officialUrl": "https://www.migration.gov.rw/visa/visitors-visa",
     "sourceTitle": "Visitors Visa - Rwanda Directorate General of Immigration and Emigration",
-    "consultedOn": "2026-10-14",
+    "consultedOn": "2026-10-16",
     "preparationPoints": [
-      "Demande possible en ligne via le portail Irembo ou à l'arrivée"
+      "Demande possible en ligne via le portail Irembo ou selon les modalités indiquées par la DGIE",
+      "Passeport valide et informations de voyage exactes pour le Visitors Visa",
+      "Conserver la confirmation / autorisation pour présentation aux contrôles d’entrée"
     ],
     "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },
@@ -1151,9 +1194,11 @@ export const INSTITUTIONAL_PROCEDURE_SOURCES: InstitutionalProcedureSource[] = [
     "procedureId": "suede-visiteur",
     "officialUrl": "https://www.migrationsverket.se/en/you-want-to-apply/visiting-sweden/visiting-sweden-for-up-to-90-days-entry-visa.html",
     "sourceTitle": "Visa Schengen (court séjour) - Agence suédoise des migrations",
-    "consultedOn": "2026-10-14",
+    "consultedOn": "2026-10-16",
     "preparationPoints": [
-      "Présenter un passeport valide au moins trois mois après l'expiration du visa"
+      "Présenter un passeport valide au moins trois mois après l'expiration du visa",
+      "Vérifier l'obligation de visa et déposer via le canal indiqué par Migrationsverket / ambassade",
+      "Joindre assurance Schengen, moyens financiers et preuves de l’objet du séjour (≤ 90 jours)"
     ],
     "caveat": "Les exigences (pièces, délais, frais, besoin de visa) dépendent du type de séjour, de la nationalité et de la situation du demandeur. Confirmez toujours sur la source officielle exacte avant toute démarche."
   },

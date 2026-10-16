@@ -1,8 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChecklistSection, FaqSection } from "@/components/PageEnrichment";
 import { DESTINATIONS_CRITERIA, DESTINATIONS_FAQ } from "@/data/pageEnrichment";
 import { Link } from "wouter";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import { DESTINATIONS_20, REGION_ORDER, type Destination20 } from "@/data/destinations20";
 import { getDestinationVisual, getServiceVisual } from "@/data/premiumVisuals";
 import { PremiumCoverImage } from "@/components/PremiumCoverImage";
@@ -11,6 +11,12 @@ import { IllustrativeDestinationStrip } from "@/components/IllustrativeDestinati
 import { setPageSeo } from "@/lib/pageSeo";
 import { INTERNATIONAL_BRAND } from "@/data/internationalBrand";
 import { buildFreeEvaluationHref } from "@/components/PublicEvaluationCTA";
+import {
+  WORLD_DESTINATION_COUNT,
+  WORLD_DESTINATION_DIRECTORY,
+  WORLD_DESTINATION_REGION_ORDER,
+  worldDestinationsByRegion,
+} from "@/data/worldDestinationDirectory";
 
 const FEATURED = [
   { slug: "allemagne-formation", name: "Allemagne", flag: "🇩🇪", label: "Cours de langue & Ausbildung", visualSlug: "allemagne" },
@@ -61,12 +67,24 @@ function DestinationVisualCard({
 
 export default function DestinationsHub() {
   const heroVisual = getServiceVisual("mobilite");
+  const [worldQuery, setWorldQuery] = useState("");
+  const normalizedWorldQuery = worldQuery.trim().toLocaleLowerCase("fr");
+  const filteredWorld = useMemo(() => {
+    if (!normalizedWorldQuery) return WORLD_DESTINATION_DIRECTORY;
+    return WORLD_DESTINATION_DIRECTORY.filter((entry) => {
+      const hay = `${entry.name} ${entry.region} ${entry.code}`.toLocaleLowerCase("fr");
+      return hay.includes(normalizedWorldQuery);
+    });
+  }, [normalizedWorldQuery]);
+  const worldRegions = normalizedWorldQuery
+    ? WORLD_DESTINATION_REGION_ORDER.filter((region) => filteredWorld.some((entry) => entry.region === region))
+    : WORLD_DESTINATION_REGION_ORDER;
 
   useEffect(() => {
     setPageSeo({
       title: "Destinations d’accompagnement | 3M TRAVEL AGENCY",
       description:
-        "Corridors internationaux 3M TRAVEL AGENCY : formation, emploi et mobilité — Allemagne, Autriche, Suisse, Canada et destinations ciblées, avec suivi traçable depuis Yaoundé et Ottawa.",
+        `Corridors internationaux 3M TRAVEL AGENCY : ${WORLD_DESTINATION_COUNT} pays listés, fiches procédures sourcées et suivi traçable depuis Yaoundé et Ottawa.`,
       image: heroVisual.desktop,
       imageAlt: heroVisual.alt,
     });
@@ -91,7 +109,7 @@ export default function DestinationsHub() {
           <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-blue-100/90">{INTERNATIONAL_BRAND.corridor}</p>
           <h1 className="mt-5 max-w-3xl text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">Destinations d’accompagnement, un suivi traçable</h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-blue-50">
-            Allemagne, Autriche, Suisse, Canada et d’autres corridors de formation et d’emploi : chaque profil est différent. 3M prépare et suit le dossier ; la destination se choisit selon votre secteur, votre langue et votre budget — pas selon un compteur de pays.
+            {WORLD_DESTINATION_COUNT} pays listés, corridors photo pour les destinations accompagnées, et chaque procédure détaillée avec le lien exact de la source officielle consultée. 3M prépare et suit le dossier — sans promesse d’admission ni de visa.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Link href={buildFreeEvaluationHref("etudes")} className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-black text-blue-950 hover:bg-blue-50">
@@ -148,6 +166,60 @@ export default function DestinationsHub() {
             </section>
           );
         })}
+
+        <section className="mt-12 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8" data-testid="destinations-hub-world-directory">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-xl font-black text-slate-950">Annuaire mondial — {WORLD_DESTINATION_COUNT} pays</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                Tous les pays sont listés. Quand une fiche procédure existe, vous ouvrez directement le guide sourcé ; sinon, démarrez une évaluation gratuite pour orientation.
+              </p>
+            </div>
+            <label className="relative block w-full sm:max-w-xs">
+              <span className="sr-only">Rechercher un pays</span>
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+              <input
+                type="search"
+                value={worldQuery}
+                onChange={(event) => setWorldQuery(event.target.value)}
+                placeholder="Rechercher un pays…"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-sm font-medium text-slate-900 outline-none ring-blue-600 focus:bg-white focus:ring-2"
+                data-testid="destinations-hub-world-search"
+              />
+            </label>
+          </div>
+          <div className="mt-6 space-y-6">
+            {worldRegions.map((region) => {
+              const items = normalizedWorldQuery
+                ? filteredWorld.filter((entry) => entry.region === region)
+                : worldDestinationsByRegion(region);
+              if (items.length === 0) return null;
+              return (
+                <div key={region}>
+                  <h3 className="mb-3 text-xs font-black uppercase tracking-wide text-slate-500">
+                    {region} · {items.length}
+                  </h3>
+                  <ul className="flex flex-wrap gap-2">
+                    {items.map((entry) => (
+                      <li key={entry.code}>
+                        <Link
+                          href={entry.href}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-800 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-900"
+                        >
+                          <span aria-hidden="true">{entry.flag}</span>
+                          {entry.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+            {filteredWorld.length === 0 ? (
+              <p className="text-sm font-medium text-slate-600">Aucun pays ne correspond à « {worldQuery} ».</p>
+            ) : null}
+          </div>
+        </section>
 
         <section className="mt-12 overflow-hidden rounded-3xl border border-blue-900/20 bg-gradient-to-br from-[#061a36] via-[#0a3264] to-[#165dff] p-6 text-center text-white shadow-xl sm:p-10">
           <h2 className="text-2xl font-black">Vous ne savez pas quelle destination choisir ?</h2>

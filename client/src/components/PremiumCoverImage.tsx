@@ -12,9 +12,13 @@ type PremiumCoverImageProps = {
 const FAILED_GRADIENT =
   "bg-[radial-gradient(ellipse_at_30%_20%,rgba(14,91,159,0.55),transparent_50%),radial-gradient(ellipse_at_80%_70%,rgba(245,158,11,0.22),transparent_45%),linear-gradient(145deg,#041428_0%,#0a3264_48%,#0e5b9f_100%)]";
 
+const isHostedLocalPhoto = (path: string | undefined) =>
+  Boolean(path && /^\/(photos-pays|photos-canada)\//.test(path));
+
 /**
- * Affiche d’abord le fallback local (fiable hors manus-storage),
- * puis bascule vers le visuel manus s’il charge correctement.
+ * Affiche d’abord le fallback local (fiable hors manus-storage).
+ * Ne bascule vers manus que si aucune photo locale fiable n’est disponible —
+ * certains endpoints manus renvoient un placeholder bleu en HTTP 200.
  */
 export function PremiumCoverImage({
   visual,
@@ -33,6 +37,8 @@ export function PremiumCoverImage({
     setSrc(nextReliable);
 
     if (!visual.desktop || visual.desktop === nextReliable) return;
+    // Ne jamais remplacer une photo Wikimedia locale par manus-storage.
+    if (isHostedLocalPhoto(nextReliable) && !isHostedLocalPhoto(visual.desktop)) return;
 
     let cancelled = false;
     const probe = new Image();

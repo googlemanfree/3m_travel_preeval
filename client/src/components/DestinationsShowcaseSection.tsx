@@ -1,6 +1,14 @@
-import { ArrowRight, Globe2 } from "lucide-react";
+import { ArrowRight, Globe2, Search } from "lucide-react";
+import { useMemo, useState } from "react";
 import { getDestinationVisual } from "@/data/premiumVisuals";
 import { PremiumCoverImage } from "@/components/PremiumCoverImage";
+import {
+  WORLD_DESTINATION_COUNT,
+  WORLD_DESTINATION_DIRECTORY,
+  WORLD_DESTINATION_REGION_ORDER,
+  worldDestinationsByRegion,
+} from "@/data/worldDestinationDirectory";
+import { buildFreeEvaluationHref } from "@/components/PublicEvaluationCTA";
 
 interface DestinationCard {
   href: string;
@@ -15,6 +23,7 @@ interface DestinationGroup {
   items: DestinationCard[];
 }
 
+/** Corridors accompagnés — fiches photo premium (local Wikimedia prioritaire). */
 const DESTINATION_GROUPS: DestinationGroup[] = [
   {
     title: "Europe francophone & germanophone",
@@ -68,7 +77,7 @@ function DestinationCardTile({ item }: { item: DestinationCard }) {
       href={item.href}
       className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md"
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-blue-800 to-blue-950">
+      <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-slate-800 to-slate-950">
         {visual ? (
           <PremiumCoverImage
             visual={visual}
@@ -91,16 +100,31 @@ function DestinationCardTile({ item }: { item: DestinationCard }) {
 }
 
 export default function DestinationsShowcaseSection() {
+  const [query, setQuery] = useState("");
+  const normalizedQuery = query.trim().toLocaleLowerCase("fr");
+
+  const filteredWorld = useMemo(() => {
+    if (!normalizedQuery) return WORLD_DESTINATION_DIRECTORY;
+    return WORLD_DESTINATION_DIRECTORY.filter((entry) => {
+      const hay = `${entry.name} ${entry.region} ${entry.code}`.toLocaleLowerCase("fr");
+      return hay.includes(normalizedQuery);
+    });
+  }, [normalizedQuery]);
+
+  const regionsToShow = normalizedQuery
+    ? WORLD_DESTINATION_REGION_ORDER.filter((region) => filteredWorld.some((entry) => entry.region === region))
+    : WORLD_DESTINATION_REGION_ORDER;
+
   return (
     <section aria-labelledby="destinations-showcase-title" className="bg-slate-50 px-4 py-14">
       <div className="mx-auto max-w-6xl">
         <div className="mb-8 text-center">
           <p className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-black uppercase tracking-wider text-blue-700">
-            <Globe2 className="h-4 w-4" aria-hidden="true" /> Un accompagnement, des destinations ciblées
+            <Globe2 className="h-4 w-4" aria-hidden="true" /> Un accompagnement, {WORLD_DESTINATION_COUNT} pays listés
           </p>
           <h2 id="destinations-showcase-title" className="mt-4 text-2xl font-black text-slate-950 md:text-3xl">Destinations d’accompagnement</h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-600">
-            Formation et emploi qualifié : nous préparons votre dossier et vous orientons vers la destination la plus réaliste — la qualité se mesure au suivi traçable, pas au nombre de pays affichés.
+            Corridors photo ci-dessous, puis l’annuaire complet des pays du monde. Chaque fiche procédure cite la source officielle consultée — la qualité se mesure au suivi traçable, pas à une promesse de visa.
           </p>
         </div>
 
@@ -115,10 +139,66 @@ export default function DestinationsShowcaseSection() {
           </div>
         ))}
 
-        <div className="mt-4 text-center">
+        <div className="mt-12 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7" data-testid="world-destinations-directory">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h3 className="text-lg font-black text-slate-950">Tous les pays du monde ({WORLD_DESTINATION_COUNT})</h3>
+              <p className="mt-1 max-w-2xl text-sm text-slate-600">
+                Guide officiel disponible ou évaluation gratuite selon le pays — sélectionnez pour ouvrir la fiche ou démarrer votre dossier.
+              </p>
+            </div>
+            <label className="relative block w-full sm:max-w-xs">
+              <span className="sr-only">Rechercher un pays</span>
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Rechercher un pays…"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-sm font-medium text-slate-900 outline-none ring-blue-600 focus:bg-white focus:ring-2"
+                data-testid="world-destinations-search"
+              />
+            </label>
+          </div>
+
+          <div className="mt-6 space-y-6">
+            {regionsToShow.map((region) => {
+              const items = normalizedQuery
+                ? filteredWorld.filter((entry) => entry.region === region)
+                : worldDestinationsByRegion(region);
+              if (items.length === 0) return null;
+              return (
+                <div key={region}>
+                  <h4 className="mb-3 text-xs font-black uppercase tracking-wide text-slate-500">
+                    {region} · {items.length}
+                  </h4>
+                  <ul className="flex flex-wrap gap-2">
+                    {items.map((entry) => (
+                      <li key={entry.code}>
+                        <a
+                          href={entry.href}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-800 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-900"
+                          title={entry.hasProcedurePage ? "Fiche procédure avec source officielle" : "Évaluation / orientation"}
+                        >
+                          <span aria-hidden="true">{entry.flag}</span>
+                          {entry.name}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+            {filteredWorld.length === 0 ? (
+              <p className="text-sm font-medium text-slate-600">Aucun pays ne correspond à « {query} ».</p>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="mt-8 text-center">
           <p className="mb-4 text-base font-bold text-slate-800">Vous ne savez pas quelle destination choisir ?</p>
           <a
-            href="/evaluation?project=etudes"
+            href={buildFreeEvaluationHref("etudes")}
             className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-blue-700 px-6 py-3 text-sm font-black text-white hover:bg-blue-800"
           >
             Démarrez votre évaluation gratuite <ArrowRight className="h-4 w-4" aria-hidden="true" />

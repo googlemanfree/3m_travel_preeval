@@ -524,6 +524,41 @@ export default function CountryDetailPage() {
                   </>
                 )}
               </p>
+              {institutionalSource && locale === 'fr' && institutionalSource.preparationPoints.length > 0 ? (
+                <div
+                  className="rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 to-white p-5 space-y-3"
+                  data-testid="procedure-official-prep-main"
+                >
+                  <div className="flex items-start gap-2">
+                    <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-sky-700" aria-hidden="true" />
+                    <div>
+                      <h3 className="font-bold text-slate-900">{L.institutionalGuidance}</h3>
+                      <p className="mt-1 text-sm text-slate-600">
+                        D’après « {institutionalSource.sourceTitle} » — à confirmer sur la source exacte avant toute démarche.
+                      </p>
+                    </div>
+                  </div>
+                  <ul className="space-y-2" aria-label="Points de préparation issus de la source officielle">
+                    {institutionalSource.preparationPoints.map((point) => (
+                      <li key={point} className="flex gap-2 text-sm leading-relaxed text-slate-800">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-sky-700" aria-hidden="true" />
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <a
+                    href={institutionalSource.officialUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-800 underline-offset-2 hover:underline"
+                    data-testid="procedure-official-source-link-main"
+                  >
+                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                    {L.consultSource} {institutionalSource.sourceTitle}
+                  </a>
+                  <p className="break-all text-xs font-medium text-sky-900">{institutionalSource.officialUrl}</p>
+                </div>
+              ) : null}
               <div className="space-y-4">
                 {country.steps.map((step, idx) => (
                   <div key={idx} className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">

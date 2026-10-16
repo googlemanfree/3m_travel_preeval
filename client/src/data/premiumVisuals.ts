@@ -1,6 +1,6 @@
 /**
  * Index visuel unique : destinations, services et thèmes.
- * Cascade : manus-storage (prod) → photos locales Wikimedia → fallback thématique.
+ * Cascade : photos locales Wikimedia (fiables) → manus-storage si aucun local.
  * Ne pas inventer d’URLs Unsplash ici — réutiliser les assets déjà hébergés.
  */
 import { getCountryPhotos } from "@/data/countryPhotos";
@@ -8,20 +8,10 @@ import { getCountryPhotos } from "@/data/countryPhotos";
 export type VisualSources = {
   desktop: string;
   mobile: string;
-  /** Fallback local (photos-pays / photos-canada) si manus-storage est indisponible. */
+  /** Fallback local (photos-pays / photos-canada) — toujours préféré à manus-storage. */
   localFallback?: string;
   alt: string;
 };
-
-/** Fallbacks thématiques (mêmes URLs que procedureVisuals — évite un import circulaire). */
-const THEME_ASSETS = {
-  home: "/manus-storage/3m-home-mobility-hero_f9957244.webp",
-  homeMobile: "/manus-storage/3m-home-mobility-hero-mobile_70899b52.webp",
-  canada: "/manus-storage/3m-procedure-canada_c60631c6.webp",
-  canadaMobile: "/manus-storage/3m-procedure-canada-mobile_83efff00.webp",
-  schengen: "/manus-storage/3m-procedure-schengen_c2a9a8b4.webp",
-  schengenMobile: "/manus-storage/3m-procedure-schengen-mobile_eb73c9f2.webp",
-} as const;
 
 /** Destinations premium déjà présentes dans /manus-storage (showcase + lot 1). */
 const DESTINATION_MANUS: Record<string, string> = {
@@ -186,16 +176,16 @@ export function getDestinationVisual(slugOrId: string): VisualSources | null {
   const regionalSlug = REGIONAL_LOCAL_FALLBACK[slug];
   const regionalLocal = regionalSlug ? getCountryPhotos(regionalSlug)[0]?.src : undefined;
   const safeManus = isVisualAssetPathAllowed(manus) ? manus : undefined;
-  const desktop = safeManus ?? local ?? regionalLocal;
+  // Priorité aux photos locales Wikimedia : /manus-storage est souvent absent en preview
+  // et peut renvoyer un placeholder bleu (HTTP 200) qui masque le vrai visuel.
+  const reliableLocal = local ?? regionalLocal;
+  const desktop = reliableLocal ?? safeManus;
   if (!desktop) return null;
-
-  const localFallback = (local && local !== desktop ? local : undefined)
-    ?? (regionalLocal && regionalLocal !== desktop ? regionalLocal : undefined);
 
   return {
     desktop,
-    mobile: safeManus ?? local ?? regionalLocal ?? desktop,
-    localFallback,
+    mobile: desktop,
+    localFallback: reliableLocal,
     alt: DESTINATION_ALT[slug] ?? `Destination ${slug}`,
   };
 }
@@ -240,20 +230,20 @@ const LOCAL_THEME_PHOTOS = {
 
 const THEME_FALLBACKS: Record<string, VisualSources> = {
   __mobility__: {
-    desktop: THEME_ASSETS.home,
-    mobile: THEME_ASSETS.homeMobile,
+    desktop: LOCAL_THEME_PHOTOS.canada,
+    mobile: LOCAL_THEME_PHOTOS.canada,
     localFallback: LOCAL_THEME_PHOTOS.canada,
     alt: "Mobilité internationale avec 3M TRAVEL AGENCY",
   },
   __schengen__: {
-    desktop: THEME_ASSETS.schengen,
-    mobile: THEME_ASSETS.schengenMobile,
+    desktop: LOCAL_THEME_PHOTOS.france,
+    mobile: LOCAL_THEME_PHOTOS.france,
     localFallback: LOCAL_THEME_PHOTOS.france,
     alt: "Espace Schengen — visas et mobilité européenne",
   },
   __canada__: {
-    desktop: THEME_ASSETS.canada,
-    mobile: THEME_ASSETS.canadaMobile,
+    desktop: LOCAL_THEME_PHOTOS.canada,
+    mobile: LOCAL_THEME_PHOTOS.canada,
     localFallback: LOCAL_THEME_PHOTOS.canada,
     alt: "Canada — immigration et études",
   },
