@@ -171,8 +171,10 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   const [destinationDraft, setDestinationDraft] = useState(candidate.destinationCountry || "");
   const [visaTypeDraft, setVisaTypeDraft] = useState(candidate.projectType || "");
   const [isFetchingCv, setIsFetchingCv] = useState(false);
-  const [forceStepDialog, setForceStepDialog] = useState<{ stepIndex: number; checked: boolean; label: string } | null>(null);
+  const [forceStepDialog, setForceStepDialog] = useState<{ stepIndex: number; checked: boolean; label: string; confirmOnBehalf?: boolean } | null>(null);
   const [forceStepReason, setForceStepReason] = useState("");
+  const [bilanConfirmDialogOpen, setBilanConfirmDialogOpen] = useState(false);
+  const [bilanConfirmReason, setBilanConfirmReason] = useState("");
   const [cancelPaymentDialogOpen, setCancelPaymentDialogOpen] = useState(false);
   const [cancelPaymentReason, setCancelPaymentReason] = useState("");
   const [correctPaymentOpen, setCorrectPaymentOpen] = useState(false);
@@ -419,7 +421,38 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   });
   const journeyStepMutation = trpc.admin.updateCandidateJourneyStep.useMutation({
     onSuccess: async (result) => { unlockAction("journeyStep"); toast.success(result.message, { description: "La progression est synchronisée avec l’espace candidat." }); await refresh(); },
-    onError: (mutationError) => { unlockAction("journeyStep"); toast.error("Validation de l’étape impossible", { description: mutationError.message }); },
+    onError: (mutationError) => {
+      unlockAction("journeyStep");
+      const message = mutationError.message || "";
+      if (/confirmation du bilan|Valider à la place du candidat/i.test(message)) {
+        const confirmationStep = (data?.candidateJourney?.steps ?? []).find((step: any) => step.id === "candidate_confirmation");
+        setForceStepReason("Confirmation reçue hors ligne (téléphone / WhatsApp / agence) — validation admin à la place du candidat.");
+        setForceStepDialog({
+          stepIndex: confirmationStep?.index ?? 4,
+          checked: true,
+          label: confirmationStep?.label || "Confirmation du bilan par le candidat",
+          confirmOnBehalf: true,
+        });
+        toast.message("Confirmation du bilan requise", {
+          description: "Indiquez le motif puis validez à la place du candidat pour débloquer la procédure.",
+        });
+        return;
+      }
+      toast.error("Validation de l’étape impossible", { description: message });
+    },
+  });
+  const confirmBilanOnBehalfMutation = trpc.admin.confirmBilanOnBehalfOfCandidate.useMutation({
+    onSuccess: async (result) => {
+      unlockAction("journeyStep");
+      setBilanConfirmDialogOpen(false);
+      setBilanConfirmReason("");
+      toast.success(result.message);
+      await refresh();
+    },
+    onError: (mutationError) => {
+      unlockAction("journeyStep");
+      toast.error("Confirmation impossible", { description: mutationError.message });
+    },
   });
   const updateDeadlineMutation = trpc.admin.updateCandidate360Deadline.useMutation({
     onSuccess: async () => {
@@ -1544,20 +1577,63 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             </section>
           )}
           {data.candidateJourney?.steps?.length > 0 && (
-            <ProcedureStepper
-              title={data.candidateJourney.title}
-              steps={data.candidateJourney.steps}
-              currentStepIndex={data.candidateJourney.currentStepIndex}
-              internalCount={13}
-              officialSources={data.candidateJourney.officialSources}
-              country={data.candidateJourney.country || candidate.destinationCountry}
-              visaType={data.candidateJourney.visaType || candidate.projectType}
-              publishedGuide={(data.candidateJourney as { publishedGuide?: { title?: string; pdfUrl?: string; programLabel?: string; summaryHeadline?: string; summaryOverview?: string; summaryStepHighlights?: string[]; officialPortalUrl?: string; officialPortalLabel?: string } | null }).publishedGuide}
-              busy={journeyStepMutation.isPending || actionLocks.journeyStep}
-              onValidate={(step) => { lockAction("journeyStep"); journeyStepMutation.mutate({ sessionToken, candidateId: candidate.id, stepId: `checklist-${step.index}`, checked: true }); }}
-              onUnlock={(step) => { setForceStepReason(""); setForceStepDialog({ stepIndex: step.index, checked: true, label: step.label }); }}
-              onUndo={(step) => { setForceStepReason(""); setForceStepDialog({ stepIndex: step.index, checked: false, label: step.label }); }}
-            />
+            <>
+              {!(data as any).evaluationClientConfirmed && /^(online)_\d+$/.test(candidate.id) ? (
+                <div
+                  className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+                  role="status"
+                  data-testid="candidate360-bilan-confirm-banner"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold">Confirmation du bilan en attente</p>
+                      <p className="mt-1 text-xs leading-5 text-amber-900">
+                        Le candidat n’a pas encore confirmé la réception du bilan. Vous pouvez valider à sa place (échange hors ligne) pour débloquer le paiement et les étapes suivantes.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="bg-emerald-700 hover:bg-emerald-800"
+                      disabled={confirmBilanOnBehalfMutation.isPending || actionLocks.journeyStep}
+                      onClick={() => {
+                        setBilanConfirmReason("Confirmation reçue hors ligne — validation admin à la place du candidat.");
+                        setBilanConfirmDialogOpen(true);
+                      }}
+                      data-testid="candidate360-confirm-bilan-on-behalf"
+                    >
+                      Valider à la place du candidat
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+              <ProcedureStepper
+                title={data.candidateJourney.title}
+                steps={data.candidateJourney.steps}
+                currentStepIndex={data.candidateJourney.currentStepIndex}
+                internalCount={13}
+                officialSources={data.candidateJourney.officialSources}
+                country={data.candidateJourney.country || candidate.destinationCountry}
+                visaType={data.candidateJourney.visaType || candidate.projectType}
+                publishedGuide={(data.candidateJourney as { publishedGuide?: { title?: string; pdfUrl?: string; programLabel?: string; summaryHeadline?: string; summaryOverview?: string; summaryStepHighlights?: string[]; officialPortalUrl?: string; officialPortalLabel?: string } | null }).publishedGuide}
+                busy={journeyStepMutation.isPending || confirmBilanOnBehalfMutation.isPending || actionLocks.journeyStep}
+                onValidate={(step) => {
+                  if (step.id === "candidate_confirmation") {
+                    setForceStepReason("Confirmation reçue hors ligne — validation admin à la place du candidat.");
+                    setForceStepDialog({ stepIndex: step.index, checked: true, label: step.label, confirmOnBehalf: true });
+                    return;
+                  }
+                  lockAction("journeyStep");
+                  journeyStepMutation.mutate({ sessionToken, candidateId: candidate.id, stepId: `checklist-${step.index}`, checked: true });
+                }}
+                onUnlock={(step) => {
+                  const onBehalf = step.id === "candidate_confirmation" || step.index === 4;
+                  setForceStepReason(onBehalf ? "Confirmation reçue hors ligne — validation admin à la place du candidat." : "");
+                  setForceStepDialog({ stepIndex: step.index, checked: true, label: step.label, confirmOnBehalf: onBehalf });
+                }}
+                onUndo={(step) => { setForceStepReason(""); setForceStepDialog({ stepIndex: step.index, checked: false, label: step.label }); }}
+              />
+            </>
           )}
           <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:p-6">
             <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 xl:flex-row xl:items-start xl:justify-between">
@@ -1926,33 +2002,99 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
         <Dialog open={Boolean(forceStepDialog)} onOpenChange={(open) => { if (!open) setForceStepDialog(null); }}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{forceStepDialog?.checked ? "Déverrouiller manuellement" : "Annuler cette validation"} — étape {forceStepDialog ? forceStepDialog.stepIndex + 1 : ""}</DialogTitle>
+              <DialogTitle>
+                {forceStepDialog?.confirmOnBehalf
+                  ? "Valider le bilan à la place du candidat"
+                  : forceStepDialog?.checked
+                    ? "Déverrouiller manuellement"
+                    : "Annuler cette validation"}
+                {" — étape "}{forceStepDialog ? forceStepDialog.stepIndex + 1 : ""}
+              </DialogTitle>
               <DialogDescription>
-                {forceStepDialog?.checked
-                  ? `« ${forceStepDialog?.label} » sera marquée comme faite hors de l’ordre normal. Cette action est journalisée et synchronisée avec l’espace candidat.`
-                  : `« ${forceStepDialog?.label} » redeviendra une étape à faire. Cette action est journalisée et synchronisée avec l’espace candidat.`}
+                {forceStepDialog?.confirmOnBehalf
+                  ? `Enregistre la confirmation du bilan pour « ${forceStepDialog?.label} » à la place du client (téléphone, WhatsApp, agence). Le parcours (paiement, pièces) est débloqué et synchronisé.`
+                  : forceStepDialog?.checked
+                    ? `« ${forceStepDialog?.label} » sera marquée comme faite hors de l’ordre normal. Cette action est journalisée et synchronisée avec l’espace candidat.`
+                    : `« ${forceStepDialog?.label} » redeviendra une étape à faire. Cette action est journalisée et synchronisée avec l’espace candidat.`}
               </DialogDescription>
             </DialogHeader>
             <div>
               <Label htmlFor="force-step-reason">Motif (obligatoire, au moins 8 caractères)</Label>
-              <Textarea id="force-step-reason" value={forceStepReason} onChange={(event) => setForceStepReason(event.target.value)} className="mt-2" placeholder="Ex. Étape déjà réalisée hors ligne, confirmée par le candidat par téléphone…" maxLength={2000} />
+              <Textarea id="force-step-reason" value={forceStepReason} onChange={(event) => setForceStepReason(event.target.value)} className="mt-2" placeholder="Ex. Confirmé par téléphone le … / échange WhatsApp / passage en agence…" maxLength={2000} />
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setForceStepDialog(null)} disabled={journeyStepMutation.isPending}>Annuler</Button>
               <Button
                 type="button"
-                className={forceStepDialog?.checked ? "bg-amber-700 hover:bg-amber-800" : "bg-rose-700 hover:bg-rose-800"}
+                className={forceStepDialog?.confirmOnBehalf ? "bg-emerald-700 hover:bg-emerald-800" : forceStepDialog?.checked ? "bg-amber-700 hover:bg-amber-800" : "bg-rose-700 hover:bg-rose-800"}
                 disabled={journeyStepMutation.isPending || forceStepReason.trim().length < 8}
+                data-testid="force-step-confirm"
                 onClick={() => {
                   if (!forceStepDialog) return;
                   lockAction("journeyStep");
                   journeyStepMutation.mutate(
-                    { sessionToken, candidateId: candidate.id, stepId: `checklist-${forceStepDialog.stepIndex}`, checked: forceStepDialog.checked, forceUnlock: true, comment: forceStepReason.trim() },
+                    {
+                      sessionToken,
+                      candidateId: candidate.id,
+                      stepId: `checklist-${forceStepDialog.stepIndex}`,
+                      checked: forceStepDialog.checked,
+                      forceUnlock: !forceStepDialog.confirmOnBehalf,
+                      confirmOnBehalf: Boolean(forceStepDialog.confirmOnBehalf),
+                      comment: forceStepReason.trim(),
+                    },
                     { onSuccess: () => setForceStepDialog(null) },
                   );
                 }}
               >
-                {journeyStepMutation.isPending ? "Traitement…" : forceStepDialog?.checked ? "Confirmer le déverrouillage" : "Confirmer l’annulation"}
+                {journeyStepMutation.isPending
+                  ? "Traitement…"
+                  : forceStepDialog?.confirmOnBehalf
+                    ? "Confirmer à la place du candidat"
+                    : forceStepDialog?.checked
+                      ? "Confirmer le déverrouillage"
+                      : "Confirmer l’annulation"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={bilanConfirmDialogOpen} onOpenChange={setBilanConfirmDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Valider le bilan à la place du candidat</DialogTitle>
+              <DialogDescription>
+                Enregistre la confirmation de réception du bilan (hors ligne). Le client est notifié dans son espace et les étapes suivantes sont débloquées.
+              </DialogDescription>
+            </DialogHeader>
+            <div>
+              <Label htmlFor="bilan-confirm-reason">Motif (obligatoire, au moins 8 caractères)</Label>
+              <Textarea
+                id="bilan-confirm-reason"
+                value={bilanConfirmReason}
+                onChange={(event) => setBilanConfirmReason(event.target.value)}
+                className="mt-2"
+                placeholder="Ex. Confirmé par téléphone le … / WhatsApp / passage en agence…"
+                maxLength={1000}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setBilanConfirmDialogOpen(false)} disabled={confirmBilanOnBehalfMutation.isPending}>Annuler</Button>
+              <Button
+                type="button"
+                className="bg-emerald-700 hover:bg-emerald-800"
+                disabled={confirmBilanOnBehalfMutation.isPending || bilanConfirmReason.trim().length < 8}
+                data-testid="bilan-confirm-on-behalf-submit"
+                onClick={() => {
+                  lockAction("journeyStep");
+                  confirmBilanOnBehalfMutation.mutate({
+                    sessionToken,
+                    candidateId: candidate.id,
+                    comment: bilanConfirmReason.trim(),
+                    notifyClient: true,
+                  });
+                }}
+              >
+                {confirmBilanOnBehalfMutation.isPending ? "Enregistrement…" : "Confirmer à la place du candidat"}
               </Button>
             </DialogFooter>
           </DialogContent>

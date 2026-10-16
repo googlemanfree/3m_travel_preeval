@@ -44,8 +44,8 @@ describe("agreement and payment gating contracts", () => {
     expect(gate).toContain("evaluationDeliveryStatus?: string | null");
     expect(gate).toContain('nextStatus === "bilan_envoye"');
     expect(gate).toContain("Aucun dossier ne peut être traité avant l’évaluation validée");
-    expect(gate).toContain("Le candidat doit confirmer la réception et la compréhension du bilan avant de demander le paiement d’ouverture.");
-    expect(gate).toContain("La confirmation du bilan par le candidat est obligatoire avant le traitement du dossier.");
+    expect(gate).toContain("Le candidat doit confirmer la réception du bilan, ou un administrateur doit la valider à sa place, avant le paiement d’ouverture.");
+    expect(gate).toContain("La confirmation du bilan (candidat ou validation admin à sa place) est obligatoire avant le traitement du dossier.");
     expect(gate).toContain('nextStatus === "en_evaluation"');
     expect(gate).toContain("Un CV exploitable doit être détecté avant de démarrer l’évaluation pour un visa travail.");
     expect(read("server/routers/evaluationAdmin.ts")).toContain("cvUrl: applications.cvUrl");
@@ -83,7 +83,9 @@ describe("agreement and payment gating contracts", () => {
   it("enforces sequential manual status validation and records the admin action", () => {
     const adminRouter = read("server/routers/admin.ts");
     expect(adminRouter).toContain("targetIndex !== currentIndex + 1");
-    expect(adminRouter).toContain("assertApplicationCanEnterStatus(app, internalStatusMap[input.newStatus])");
+    expect(adminRouter).toContain("assertApplicationCanEnterStatus({");
+    expect(adminRouter).toContain("internalStatusMap[input.newStatus]");
+    expect(adminRouter).toContain("confirmBilanOnBehalf");
     expect(adminRouter).toContain('evaluationType: "candidate_workflow"');
     expect(adminRouter).toContain("manualValidation: true");
   });

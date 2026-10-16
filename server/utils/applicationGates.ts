@@ -22,11 +22,18 @@ type ApplicationGateRecord = {
   projectType?: string | null;
   evaluationDeliveryStatus?: string | null;
   evaluationClientConfirmed?: boolean;
+  /** Horodatage DB — accepté comme confirmation (candidat ou admin à sa place). */
+  evaluationClientConfirmedAt?: Date | string | null;
 };
+
+function isBilanConfirmed(application: ApplicationGateRecord): boolean {
+  return Boolean(application.evaluationClientConfirmed) || Boolean(application.evaluationClientConfirmedAt);
+}
 
 export function assertApplicationCanEnterStatus(application: ApplicationGateRecord, nextStatus: string): void {
   const cvDetected = application.hasCv ?? Boolean(application.cvUrl?.trim());
   const cvMandatory = evaluationRequiresCv(application.visaType, application.projectType);
+  const bilanConfirmed = isBilanConfirmed(application);
   if (nextStatus === "en_evaluation" && cvMandatory && !cvDetected) {
     throw new TRPCError({
       code: "PRECONDITION_FAILED",
@@ -39,10 +46,10 @@ export function assertApplicationCanEnterStatus(application: ApplicationGateReco
       message: "L’évaluation doit être validée et remise au candidat avant de passer à l’étape suivante.",
     });
   }
-  if (nextStatus === "en_attente_paiement" && !application.evaluationClientConfirmed) {
+  if (nextStatus === "en_attente_paiement" && !bilanConfirmed) {
     throw new TRPCError({
       code: "PRECONDITION_FAILED",
-      message: "Le candidat doit confirmer la réception et la compréhension du bilan avant de demander le paiement d’ouverture.",
+      message: "Le candidat doit confirmer la réception du bilan, ou un administrateur doit la valider à sa place, avant le paiement d’ouverture.",
     });
   }
   if (!APPLICATION_PROCESSING_STATUSES.has(nextStatus)) return;
@@ -52,10 +59,10 @@ export function assertApplicationCanEnterStatus(application: ApplicationGateReco
       message: "Aucun dossier ne peut être traité avant l’évaluation validée et remise au candidat.",
     });
   }
-  if (!application.evaluationClientConfirmed) {
+  if (!bilanConfirmed) {
     throw new TRPCError({
       code: "PRECONDITION_FAILED",
-      message: "La confirmation du bilan par le candidat est obligatoire avant le traitement du dossier.",
+      message: "La confirmation du bilan (candidat ou validation admin à sa place) est obligatoire avant le traitement du dossier.",
     });
   }
   if (!application.agreementSigned) {

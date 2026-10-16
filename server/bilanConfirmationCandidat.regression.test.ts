@@ -8,18 +8,20 @@ const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 describe("confirmation du bilan par le candidat", () => {
   it("n’exige pas la confirmation pour valider l’étape 4 elle-même (message clair)", () => {
     const admin = read("server/routers/admin.ts");
-    expect(admin).toContain("stepIndex === 4 && !source.evaluationClientConfirmedAt");
-    expect(admin).toContain("stepIndex > 4 && !source.evaluationClientConfirmedAt");
+    expect(admin).toContain("stepIndex === 4 && !bilanConfirmed");
+    expect(admin).toContain("stepIndex > 4 && !bilanConfirmed");
     expect(admin).toContain("stepIndex > 5 && !(source.paymentStatus");
-    expect(admin).toContain("Cette étape est confirmée par le candidat dans son espace");
+    expect(admin).toContain("Valider à la place du candidat");
     expect(admin).not.toContain("if (stepIndex >= 4 && !source.evaluationClientConfirmedAt)");
     expect(admin).not.toContain("if (stepIndex >= 5 && !(source.paymentStatus");
   });
 
-  it("enregistre la confirmation hors ligne admin sur déverrouillage de l’étape 4", () => {
+  it("enregistre la confirmation admin à la place du client (mutation + déverrouillage)", () => {
     const admin = read("server/routers/admin.ts");
-    expect(admin).toContain("input.forceUnlock && stepIndex === 4");
+    expect(admin).toContain("confirmBilanOnBehalfOfCandidate");
+    expect(admin).toContain("confirmOnBehalf");
     expect(admin).toContain("evaluationClientConfirmedAt: new Date()");
+    expect(admin).toContain("bilan_confirmed_on_behalf");
   });
 
   it("expose le bouton candidat confirmEvaluationReceipt dans le parcours", () => {
@@ -30,10 +32,10 @@ describe("confirmation du bilan par le candidat", () => {
     expect(journey).toContain("Je confirme avoir reçu et compris le bilan");
   });
 
-  it("guide l’admin : pas de « Marquer comme faite » sur candidate_confirmation", () => {
+  it("guide l’admin : validation à la place du candidat sur candidate_confirmation", () => {
     const stepper = read("client/src/components/ProcedureStepper.tsx");
     expect(stepper).toContain('view.current.id === "candidate_confirmation"');
-    expect(stepper).toContain("Déverrouiller (confirmation hors ligne)");
+    expect(stepper).toContain("Valider à la place du candidat");
     expect(stepper).toContain('data-testid="force-candidate-confirmation"');
   });
 

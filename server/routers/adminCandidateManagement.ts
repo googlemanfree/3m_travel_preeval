@@ -34,7 +34,13 @@ import { storageKeyFromStoredUrl } from "../../shared/storedFileUrl";
 import { SECOND_AGREEMENT_PROTOCOL_VERSION, dualOpportunityHandoffMessage } from "../../shared/secondAgreementProtocol";
 import { ensureAgencyActiveReference } from "../services/canonicalizeActiveDossier";
 import { hasPassportPhotoDeposited, isPassportPhotoRequestReason, isWorkVisaForPassportPhoto } from "../../shared/passportPhotoRequirement";
-import { buildRegistrationInfoRequest, registrationInfoRequestEmailHtml } from "../../shared/registrationInfoRequest";
+import {
+  buildRegistrationInfoClientSpaceContent,
+  buildRegistrationInfoRequest,
+  isEvaluationCompleteForJustificatifs,
+  registrationInfoRequestEmailHtml,
+  registrationInfoRequestPlainBody,
+} from "../../shared/registrationInfoRequest";
 import { evaluationRequiresCv } from "../../shared/evaluationVisaCv";
 import { flagPassportPhotoRequirement } from "../passportPhotoRequirementService";
 import {
@@ -3003,6 +3009,8 @@ export const adminCandidateManagementRouter = router({
       let destination = input.destination?.trim() || "";
       let visaType = input.visaType?.trim() || "";
       let hasCv = false;
+      let referenceLabel = "";
+      let evaluationComplete = false;
 
       if (accountMatch) {
         const id = Number(accountMatch[1]);
@@ -3011,6 +3019,11 @@ export const adminCandidateManagementRouter = router({
         candidateId = account.id;
         fullName = account.fullName;
         email = account.email;
+        referenceLabel = accountReference(account.id);
+        evaluationComplete = isEvaluationCompleteForJustificatifs({
+          evaluationDeclarationStatus: account.evaluationDeclarationStatus,
+          evaluationReviewedAt: account.evaluationReviewedAt,
+        });
         if (!destination) {
           try {
             const parsed = JSON.parse(account.preferredDestinations || "[]");
@@ -3039,8 +3052,15 @@ export const adminCandidateManagementRouter = router({
           destination = destination || app.destination || "";
           visaType = visaType || app.visaType || "";
           hasCv = Boolean(app.cvUrl?.trim());
-          const [linked] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, app.email)).limit(1);
+          referenceLabel = app.dossierNumber || `online_${app.id}`;
+          const [linked] = await db.select().from(candidates).where(eq(candidates.email, app.email)).limit(1);
           candidateId = linked?.id ?? null;
+          evaluationComplete = isEvaluationCompleteForJustificatifs({
+            evaluationDeclarationStatus: linked?.evaluationDeclarationStatus,
+            evaluationReviewedAt: linked?.evaluationReviewedAt,
+            evaluationDeliveryStatus: app.evaluationDeliveryStatus,
+            evaluationClientConfirmedAt: app.evaluationClientConfirmedAt,
+          });
         } else {
           const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
           if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
@@ -3049,8 +3069,14 @@ export const adminCandidateManagementRouter = router({
           destination = destination || dossier.destination || "";
           visaType = visaType || dossier.visaType || "";
           hasCv = Boolean(dossier.cvFileUrl?.trim() || dossier.cvFileName?.trim());
-          const [linked] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, dossier.email)).limit(1);
+          referenceLabel = agencyDossierReference(dossier.id);
+          const [linked] = await db.select().from(candidates).where(eq(candidates.email, dossier.email)).limit(1);
           candidateId = linked?.id ?? null;
+          evaluationComplete = isEvaluationCompleteForJustificatifs({
+            evaluationDeclarationStatus: linked?.evaluationDeclarationStatus,
+            evaluationReviewedAt: linked?.evaluationReviewedAt,
+            evaluationValidatedAt: dossier.evaluationValidatedAt,
+          });
         }
       }
 
@@ -3059,8 +3085,15 @@ export const adminCandidateManagementRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Destination et type de visa sont requis pour générer la demande d’informations." });
       }
 
+      if (!evaluationComplete) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Les documents justificatifs se demandent après l’évaluation (bilan validé ou envoyé). Finalisez d’abord l’évaluation, puis renvoyez cette demande.",
+        });
+      }
+
       if (candidateId && !input.forceResend) {
-        const [existing] = await db.select({ id: clientNotifications.id }).from(clientNotifications)
+        const [existing] = await db.select({ id: clientNotifications.id, createdAt: clientNotifications.createdAt }).from(clientNotifications)
           .where(and(eq(clientNotifications.candidateId, candidateId), eq(clientNotifications.type, "registration_info_request")))
           .orderBy(desc(clientNotifications.createdAt))
           .limit(1);
@@ -3070,51 +3103,90 @@ export const adminCandidateManagementRouter = router({
             alreadySent: true,
             emailSent: false,
             itemCount: 0,
-            message: "Une demande d’informations a déjà été envoyée pour ce compte. Utilisez « Renvoyer » pour forcer un nouvel envoi.",
+            registrationInfoRequestSentAt: existing.createdAt,
+            message: "Une demande de documents justificatifs a déjà été envoyée. Utilisez « Renvoyer » pour forcer un nouvel envoi.",
           };
         }
       }
 
       const request = buildRegistrationInfoRequest({ destination, visaType, hasCv });
       const portalUrl = "/mon-espace?section=documents";
+      const plainBody = registrationInfoRequestPlainBody({
+        fullName,
+        destination: request.destination,
+        visaType: request.visaType,
+        items: request.items,
+        reference: referenceLabel,
+      });
+      const clientSpaceContent = buildRegistrationInfoClientSpaceContent({
+        destination: request.destination,
+        visaType: request.visaType,
+        reference: referenceLabel,
+        body: plainBody,
+      });
       const html = registrationInfoRequestEmailHtml({
         fullName,
         destination: request.destination,
         visaType: request.visaType,
         items: request.items,
         portalUrl,
+        reference: referenceLabel,
       });
+
       let emailSent = false;
       try {
         await sendGenericEmail({ to: email, subject: request.subject, html });
         emailSent = true;
       } catch (error) {
-        console.error("[registrationInfoRequest] email failed", error);
+        console.error("[registrationInfoRequest] email HTML failed — fallback brandé", error);
+        emailSent = await sendClientNotificationEmail({
+          to: email,
+          fullName,
+          title: request.subject.replace(/\s*—\s*3M TRAVEL AGENCY$/i, "").trim() || "Documents justificatifs",
+          body: plainBody,
+          actionUrl: portalUrl,
+          sourceLabel: "3M TRAVEL AGENCY",
+        });
       }
 
-      const bodyLines = request.items
-        .map((item) => `• ${item.label}${item.priority === "required" ? " (prioritaire)" : ""} — ${item.detail}`)
-        .join("\n");
-      const messageBody = `Pour votre projet ${request.destination} · ${request.visaType}, merci de compléter :\n\n${bodyLines}\n\nDéposez les pièces depuis votre espace candidat (Documents).`;
-
+      let notificationId = 0;
       if (candidateId) {
         const notificationResult = await db.insert(clientNotifications).values({
           candidateId,
           type: "registration_info_request",
-          title: `Informations à compléter — ${request.destination}`,
-          body: `${request.items.length} élément(s) demandé(s) selon votre pays et votre type de visa. Consultez votre espace.`,
+          title: `Documents justificatifs — ${request.destination} · ${request.visaType}`,
+          body: `${request.items.length} pièce(s) demandée(s) après évaluation. Consultez Documents dans votre espace.`,
           actionUrl: portalUrl,
           isRead: false,
+          emailSentAt: emailSent ? new Date() : null,
         });
-        const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
+        notificationId = Number((notificationResult as any)[0]?.insertId || 0);
         await db.insert(candidateMessages).values({
           candidateId,
           notificationId: notificationId || null,
           senderRole: "advisor",
-          content: messageBody,
+          content: clientSpaceContent,
           isRead: false,
         });
       }
+
+      await db.insert(paymentAuditLogs).values({
+        adminName: admin.email || "Administrateur",
+        adminEmail: admin.email || "",
+        action: "justificatifs_info_request_sent",
+        paymentId: candidateId || 0,
+        candidateEmail: email,
+        amount: "0",
+        details: JSON.stringify({
+          destination: request.destination,
+          visaType: request.visaType,
+          itemCount: request.items.length,
+          emailSent,
+          forceResend: Boolean(input.forceResend),
+          reference: referenceLabel,
+          sentBy: admin.email,
+        }),
+      });
 
       return {
         success: true,
@@ -3122,9 +3194,13 @@ export const adminCandidateManagementRouter = router({
         emailSent,
         itemCount: request.items.length,
         requiresCv: evaluationRequiresCv(visaType),
+        deliveredToClientSpace: Boolean(candidateId),
+        registrationInfoRequestSentAt: new Date(),
         message: emailSent
-          ? `Demande envoyée par e-mail et publiée dans l’espace client (${request.items.length} élément(s)).`
-          : `Demande publiée dans l’espace client (${request.items.length} élément(s)), mais l’e-mail n’a pas pu partir.`,
+          ? `Demande professionnelle envoyée (e-mail + espace client, ${request.items.length} pièce(s)).`
+          : candidateId
+            ? `Demande publiée dans l’espace client (${request.items.length} pièce(s)), mais l’e-mail n’a pas pu partir.`
+            : `E-mail ${emailSent ? "envoyé" : "en échec"} — aucun compte lié pour l’espace client.`,
       };
     }),
 

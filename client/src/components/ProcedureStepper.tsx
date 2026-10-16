@@ -180,9 +180,19 @@ export default function ProcedureStepper({
           {view.current.id === "candidate_confirmation" ? (
             <div className="mt-3 space-y-3" data-testid="stepper-candidate-confirmation">
               <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-6 text-amber-950">
-                Cette étape est confirmée <strong>par le candidat</strong> dans son espace (réception et compréhension du bilan). L’administration n’a pas à la marquer manuellement, sauf confirmation reçue hors ligne.
+                En principe, le candidat confirme la réception du bilan dans son espace. Si l’échange a eu lieu hors ligne (téléphone, WhatsApp, agence), l’administrateur peut <strong>valider à sa place</strong> pour faire avancer la procédure.
               </p>
               <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="bg-emerald-700 text-white hover:bg-emerald-800"
+                  disabled={busy}
+                  onClick={() => onUnlock(view.current as ProcedureStep)}
+                  data-testid="force-candidate-confirmation"
+                >
+                  Valider à la place du candidat
+                </Button>
                 <Button
                   type="button"
                   size="sm"
@@ -190,9 +200,9 @@ export default function ProcedureStepper({
                   className="border-amber-300 text-amber-900 hover:bg-amber-50"
                   disabled={busy}
                   onClick={() => onUnlock(view.current as ProcedureStep)}
-                  data-testid="force-candidate-confirmation"
+                  data-testid="force-candidate-confirmation-alt"
                 >
-                  Déverrouiller (confirmation hors ligne)
+                  Confirmation hors ligne
                 </Button>
                 {view.done > 0 && (
                   <Button

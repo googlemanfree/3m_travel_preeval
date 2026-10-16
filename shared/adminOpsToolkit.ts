@@ -18,6 +18,7 @@ export type AdminRelanceStage =
   | "ready_to_activate"
   | "cv_missing"
   | "conversion_open_dossier"
+  | "bilan_confirmation_pending"
   | "generic";
 
 export type AdminMessageTemplate = {
@@ -81,6 +82,12 @@ export const ADMIN_MESSAGE_TEMPLATES: AdminMessageTemplate[] = [
     label: "Convaincre d’ouvrir le dossier",
     subject: "3M Travel — activez le suivi de votre dossier ({reference})",
     body: "Bonjour {name},\n\nVotre pré-inscription {reference} ({visaType} — {destination}) est enregistrée. Pour lancer le traitement de votre profil (bilan, protocole, suivi conseiller), merci de régulariser les frais d’ouverture depuis votre espace client :\nhttps://www.3mtravelagency.com/mon-espace\n\nDès validation du paiement, nous activons votre dossier officiel 3M et vous accompagnons étape par étape.\n\nCordialement,\nL’équipe 3M Travel Agency\nhttps://www.3mtravelagency.com",
+  },
+  {
+    id: "bilan_confirmation_pending",
+    label: "Confirmer la réception du bilan",
+    subject: "3M Travel — confirmez la réception de votre bilan ({reference})",
+    body: "Bonjour {name},\n\nVotre bilan d’évaluation pour le dossier {reference} est disponible dans votre espace client.\n\nMerci de confirmer que vous l’avez bien reçu et compris (bouton de confirmation dans Mon espace). Cette étape débloque ensuite le paiement d’ouverture et la suite du parcours.\n\nEspace client : https://www.3mtravelagency.com/mon-espace\n\nCordialement,\nL’équipe 3M Travel Agency\nhttps://www.3mtravelagency.com",
   },
   {
     id: "generic",

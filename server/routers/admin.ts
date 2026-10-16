@@ -2177,6 +2177,12 @@ export const adminRouter = router({
       candidateId: z.string().min(1).max(50), // Format: "online_123" ou "agency_456"
       newStatus: z.enum(["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"]),
       notifyClient: z.boolean().default(true),
+      /** Enregistre la confirmation du bilan à la place du client avant d’avancer le statut. */
+      confirmBilanOnBehalf: z.boolean().optional(),
+      confirmBilanComment: z.string().trim().min(8).max(1000).optional(),
+    }).refine((value) => !value.confirmBilanOnBehalf || Boolean(value.confirmBilanComment?.trim()), {
+      message: "Un motif (8 caractères min.) est requis pour confirmer le bilan à la place du candidat.",
+      path: ["confirmBilanComment"],
     }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
@@ -2213,8 +2219,28 @@ export const adminRouter = router({
             "APPROVED": "visa_approuve",
           };
 
-          const [app] = await db.select().from(applications).where(eq(applications.id, id)).limit(1);
+          let [app] = await db.select().from(applications).where(eq(applications.id, id)).limit(1);
           if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+
+          if (input.confirmBilanOnBehalf && !app.evaluationClientConfirmedAt) {
+            await db.update(applications).set({ evaluationClientConfirmedAt: new Date() }).where(eq(applications.id, id));
+            [app] = await db.select().from(applications).where(eq(applications.id, id)).limit(1);
+            if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+            try {
+              const operationalCase = await ensureOperationalCase(db, reference);
+              await db.insert(caseActivityLogs).values({
+                caseId: operationalCase.id,
+                actorRole: "admin",
+                actorId: admin.id,
+                actionType: "bilan_confirmed_on_behalf",
+                entityType: "evaluation",
+                entityId: String(id),
+                description: `Bilan confirmé à la place du candidat avant avancement de statut. Motif : ${input.confirmBilanComment}`,
+              });
+            } catch (logError) {
+              console.warn("[updateCandidateStatus] bilan on-behalf log skipped", logError);
+            }
+          }
 
           const statusSequence = ["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"] as const;
           const currentStatus: (typeof statusSequence)[number] = ["bilan_envoye", "en_attente_paiement"].includes(app.dossierStatus)
@@ -2229,7 +2255,10 @@ export const adminRouter = router({
           if (targetIndex !== currentIndex + 1) {
             throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Validez d’abord l’étape suivante : ${statusLabels[statusSequence[currentIndex + 1]] || "parcours terminé"}.` });
           }
-          assertApplicationCanEnterStatus(app, internalStatusMap[input.newStatus]);
+          assertApplicationCanEnterStatus({
+            ...app,
+            hasCv: Boolean(app.cvUrl?.trim()),
+          }, internalStatusMap[input.newStatus]);
 
           const checklistSnapshot = summarizeCountryProcedureChecklist({
             destination: app.destination,
@@ -3226,8 +3255,13 @@ export const adminRouter = router({
             && !mappedDocuments.some((doc) => doc.documentUrl === cvDocument.documentUrl)
             ? [cvDocument, ...mappedDocuments]
             : mappedDocuments;
+          const [infoRequestNotif] = await db.select({ createdAt: clientNotifications.createdAt }).from(clientNotifications)
+            .where(and(eq(clientNotifications.candidateId, account.id), eq(clientNotifications.type, "registration_info_request")))
+            .orderBy(desc(clientNotifications.createdAt))
+            .limit(1);
           return serializeAdminCandidateDetails({
             success: true,
+            registrationInfoRequestSentAt: infoRequestNotif?.createdAt ?? null,
             candidate: {
               id: `account_${account.id}`,
               internalId: account.id,
@@ -3267,6 +3301,7 @@ export const adminRouter = router({
               evaluationReviewNote: account.evaluationReviewNote,
               evaluationValidatedAt: account.evaluationReviewedAt,
               evaluationValidatedBy: account.evaluationReviewedBy,
+              registrationInfoRequestSentAt: infoRequestNotif?.createdAt ?? null,
               createdAt: account.createdAt,
               updatedAt: account.updatedAt,
             },
@@ -3361,9 +3396,18 @@ export const adminRouter = router({
             validatedBy: (app as any).paymentValidatedBy ?? null,
           };
 
+          const [onlineInfoRequest] = candRec?.id
+            ? await db.select({ createdAt: clientNotifications.createdAt }).from(clientNotifications)
+              .where(and(eq(clientNotifications.candidateId, candRec.id), eq(clientNotifications.type, "registration_info_request")))
+              .orderBy(desc(clientNotifications.createdAt))
+              .limit(1)
+            : [undefined];
           return serializeAdminCandidateDetails({
             success: true,
             redirectToCanonicalAgencyId,
+            registrationInfoRequestSentAt: onlineInfoRequest?.createdAt ?? null,
+            evaluationClientConfirmed: Boolean(app.evaluationClientConfirmedAt),
+            evaluationClientConfirmedAt: app.evaluationClientConfirmedAt ?? null,
             candidate: {
               id: `online_${app.id}`,
               internalId: app.id,
@@ -3384,6 +3428,7 @@ export const adminRouter = router({
               scoringData,
               avatarUrl,
               paymentStatus: app.paymentStatus,
+              evaluationDeliveryStatus: app.evaluationDeliveryStatus ?? null,
               evaluationDeclarationStatus: candRec?.evaluationDeclarationStatus ?? "not_declared",
               evaluationDeclaredAt: candRec?.evaluationDeclaredAt ?? null,
               evaluationReviewedAt: candRec?.evaluationReviewedAt ?? null,
@@ -3391,6 +3436,24 @@ export const adminRouter = router({
               evaluationReviewNote: candRec?.evaluationReviewNote ?? null,
               evaluationValidatedAt: candRec?.evaluationReviewedAt ?? null,
               evaluationValidatedBy: candRec?.evaluationReviewedBy ?? null,
+              registrationInfoRequestSentAt: onlineInfoRequest?.createdAt ?? null,
+              registrationProfile: candRec
+                ? {
+                    preferredDestinations: parsePreferredDestinations(candRec.preferredDestinations),
+                    visaType: app.visaType || candRec.visaType || null,
+                    educationLevel: candRec.educationLevel || null,
+                    employmentStatus: candRec.employmentStatus || null,
+                    languageLevel: candRec.languageLevel || null,
+                    nationality: candRec.nationality || null,
+                  }
+                : {
+                    preferredDestinations: app.destination ? [app.destination] : [],
+                    visaType: app.visaType || null,
+                    educationLevel: null,
+                    employmentStatus: null,
+                    languageLevel: null,
+                    nationality: null,
+                  },
               createdAt: app.createdAt,
               updatedAt: app.updatedAt,
             },
@@ -3403,7 +3466,14 @@ export const adminRouter = router({
 
           let avatarUrl = null as string | null;
           let candRec: {
+            id: number;
             avatarUrl?: string | null;
+            preferredDestinations?: string | null;
+            visaType?: string | null;
+            educationLevel?: string | null;
+            employmentStatus?: string | null;
+            languageLevel?: string | null;
+            nationality?: string | null;
             evaluationDeclarationStatus?: string | null;
             evaluationDeclaredAt?: Date | null;
             evaluationReviewedAt?: Date | null;
@@ -3447,9 +3517,17 @@ export const adminRouter = router({
             .orderBy(desc(agencyDossierDocuments.createdAt))
             .limit(100);
 
+          const [agencyInfoRequest] = candRec?.id
+            ? await db.select({ createdAt: clientNotifications.createdAt }).from(clientNotifications)
+              .where(and(eq(clientNotifications.candidateId, candRec.id), eq(clientNotifications.type, "registration_info_request")))
+              .orderBy(desc(clientNotifications.createdAt))
+              .limit(1)
+            : [undefined];
+
           return serializeAdminCandidateDetails({
             success: true,
             redirectToCanonicalAgencyId: null,
+            registrationInfoRequestSentAt: agencyInfoRequest?.createdAt ?? null,
             candidate: {
               id: `agency_${dossier.id}`,
               internalId: dossier.id,
@@ -3477,6 +3555,17 @@ export const adminRouter = router({
               evaluationReviewNote: null,
               evaluationValidatedAt: dossier.evaluationValidatedAt ?? null,
               evaluationValidatedBy: dossier.evaluationValidatedBy ?? null,
+              registrationInfoRequestSentAt: agencyInfoRequest?.createdAt ?? null,
+              registrationProfile: {
+                preferredDestinations: dossier.destination
+                  ? [dossier.destination]
+                  : parsePreferredDestinations(candRec?.preferredDestinations),
+                visaType: dossier.visaType || candRec?.visaType || null,
+                educationLevel: candRec?.educationLevel || null,
+                employmentStatus: candRec?.employmentStatus || null,
+                languageLevel: candRec?.languageLevel || null,
+                nationality: candRec?.nationality || null,
+              },
               createdAt: dossier.createdAt,
               updatedAt: dossier.updatedAt,
             },
@@ -4787,6 +4876,8 @@ export const adminRouter = router({
           source: "evaluation",
         } : null,
         payments: paymentSnapshot ? [paymentSnapshot] : [],
+        evaluationClientConfirmed: Boolean((sourceRecord as any).evaluationClientConfirmedAt),
+        evaluationClientConfirmedAt: (sourceRecord as any).evaluationClientConfirmedAt ?? null,
         agreement: reference.source === "online"
           ? {
               signed: Boolean((sourceRecord as typeof applications.$inferSelect).agreementSigned),
@@ -5185,6 +5276,106 @@ export const adminRouter = router({
       return { success: true, destination: input.destination.trim(), visaType: input.visaType?.trim() ?? previousVisaType, previousDestination, previousVisaType, changed: true };
     }),
 
+  /**
+   * Confirmation du bilan à la place du candidat (téléphone, agence, WhatsApp…).
+   * Débloque le parcours (paiement / étapes suivantes) et journalise l’action.
+   */
+  confirmBilanOnBehalfOfCandidate: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.string().min(1),
+      comment: z.string().trim().min(8).max(1000),
+      notifyClient: z.boolean().optional().default(true),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const operationalCase = await ensureOperationalCase(db, reference);
+      if (reference.source !== "online") {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "La confirmation du bilan à la place du client s’applique aux dossiers en ligne (3M-…). Pour un dossier agence, validez l’évaluation puis poursuivez le parcours.",
+        });
+      }
+      const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable." });
+      const candidateId = application.candidateId
+        ?? (await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, application.email)).limit(1))[0]?.id
+        ?? null;
+      if (!candidateId) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
+
+      let alreadyConfirmed = Boolean(application.evaluationClientConfirmedAt);
+      if (!alreadyConfirmed) {
+        await db.update(applications).set({ evaluationClientConfirmedAt: new Date() }).where(eq(applications.id, reference.id));
+      }
+
+      const checklistKeys = checklistProgressKeysForDossier({
+        caseNumber: operationalCase.caseNumber,
+        source: "online",
+        sourceId: reference.id,
+        onlineDossierNumber: application.dossierNumber,
+      });
+      const existingRows = checklistKeys.length
+        ? await db.select().from(procedureChecklistProgress).where(and(
+          inArray(procedureChecklistProgress.dossierKey, checklistKeys),
+          eq(procedureChecklistProgress.candidateId, candidateId),
+        )).limit(10)
+        : [];
+      const completed = new Set<string>();
+      for (const row of existingRows) {
+        for (const stepId of parseAdminChecklistStepIds(row.completedStepIds)) completed.add(stepId);
+      }
+      completed.add("checklist-4");
+      const completedStepIds = JSON.stringify(Array.from(completed).sort((left, right) => Number(left.replace("checklist-", "")) - Number(right.replace("checklist-", ""))));
+      const destination = application.destination || "autre";
+      const visaType = application.visaType || "Visiteur";
+      for (const dossierKey of checklistKeys.length ? checklistKeys : [operationalCase.caseNumber]) {
+        const existing = existingRows.find((row) => row.dossierKey === dossierKey);
+        if (existing) {
+          await db.update(procedureChecklistProgress).set({ completedStepIds, destination, visaType, updatedByRole: "admin", updatedById: admin.id }).where(eq(procedureChecklistProgress.id, existing.id));
+        } else {
+          await db.insert(procedureChecklistProgress).values({ dossierKey, candidateId, destination, visaType, completedStepIds, updatedByRole: "admin", updatedById: admin.id });
+        }
+      }
+
+      await db.insert(caseActivityLogs).values({
+        caseId: operationalCase.id,
+        actorRole: "admin",
+        actorId: admin.id,
+        actionType: "bilan_confirmed_on_behalf",
+        entityType: "evaluation",
+        entityId: String(reference.id),
+        description: alreadyConfirmed
+          ? `Confirmation du bilan déjà enregistrée. Motif admin : ${input.comment}`
+          : `Bilan confirmé par l’administration à la place du candidat. Motif : ${input.comment}`,
+      });
+
+      if (input.notifyClient && !alreadyConfirmed) {
+        try {
+          await db.insert(clientNotifications).values({
+            candidateId,
+            type: "evaluation",
+            title: "Bilan confirmé par votre conseiller",
+            body: "Votre conseiller a enregistré la confirmation de réception du bilan (échange hors ligne). Vous pouvez poursuivre vers le paiement d’ouverture dans votre espace.",
+            isRead: false,
+          });
+        } catch (notifyError) {
+          console.warn("[confirmBilanOnBehalf] notification client skipped", notifyError);
+        }
+      }
+
+      return {
+        success: true,
+        alreadyConfirmed,
+        message: alreadyConfirmed
+          ? "Le bilan était déjà confirmé — le parcours peut avancer."
+          : "Bilan confirmé à la place du candidat. Les étapes suivantes (paiement, pièces) sont débloquées.",
+      };
+    }),
+
   updateCandidateJourneyStep: publicProcedure
     .input(z.object({
       sessionToken: z.string().min(1).max(512),
@@ -5192,9 +5383,14 @@ export const adminRouter = router({
       stepId: z.string().trim().min(1).max(160),
       checked: z.boolean(),
       forceUnlock: z.boolean().optional(),
+      /** Validation admin de l’étape 4 = confirmation du bilan à la place du client. */
+      confirmOnBehalf: z.boolean().optional(),
       comment: z.string().trim().max(1000).optional(),
     }).refine((value) => !value.forceUnlock || (value.comment && value.comment.trim().length >= 8), {
       message: "Un motif d’au moins 8 caractères est obligatoire pour un déverrouillage manuel.",
+      path: ["comment"],
+    }).refine((value) => !value.confirmOnBehalf || (value.comment && value.comment.trim().length >= 8), {
+      message: "Un motif d’au moins 8 caractères est obligatoire pour confirmer le bilan à la place du candidat.",
       path: ["comment"],
     }))
     .mutation(async ({ input }) => {
@@ -5242,27 +5438,39 @@ export const adminRouter = router({
       for (const row of existingRows) {
         for (const stepId of parseAdminChecklistStepIds(row.completedStepIds)) completed.add(stepId);
       }
+      const bilanConfirmed = Boolean(source.evaluationClientConfirmedAt);
       const baseIndex = journeyStepIndex(journey, source.dossierStatus || source.status || "nouveau", null, {
-        evaluationClientConfirmed: Boolean(source.evaluationClientConfirmedAt),
+        evaluationClientConfirmed: bilanConfirmed,
         activationRequested: Boolean(source.activationRequestedAt),
         paymentConfirmed: source.paymentStatus === "SUCCESS" || source.initialPaymentStatus === "paid",
       });
       for (let index = 0; index < baseIndex; index += 1) completed.add(`checklist-${index}`);
       const contiguousCount = (() => { let index = 0; while (completed.has(`checklist-${index}`)) index += 1; return index; })();
+      const shouldConfirmOnBehalf = Boolean(
+        input.checked
+        && reference.source === "online"
+        && !bilanConfirmed
+        && (
+          input.confirmOnBehalf
+          || (input.forceUnlock && stepIndex >= 4)
+        ),
+      );
       if (input.checked) {
         const nextAllowedIndex = Math.max(baseIndex, contiguousCount);
-        if (!input.forceUnlock) {
+        if (!input.forceUnlock && !input.confirmOnBehalf) {
           if (stepIndex > nextAllowedIndex) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Validez d’abord les étapes précédentes dans l’ordre." });
-          // Étape 4 = confirmation par le candidat : elle ne peut pas exiger d’être déjà confirmée.
-          // Les étapes suivantes (paiement, pièces…) exigent la confirmation.
-          if (stepIndex === 4 && !source.evaluationClientConfirmedAt) {
+          // Étape 4 : l’admin doit passer par « Valider à la place du candidat » (confirmOnBehalf).
+          if (stepIndex === 4 && !bilanConfirmed) {
             throw new TRPCError({
               code: "PRECONDITION_FAILED",
-              message: "Cette étape est confirmée par le candidat dans son espace. Attendez sa confirmation, ou utilisez « Déverrouiller » si elle a été reçue hors ligne (téléphone, agence).",
+              message: "Utilisez « Valider à la place du candidat » pour enregistrer la confirmation du bilan (téléphone, agence, WhatsApp), ou attendez la confirmation dans l’espace client.",
             });
           }
-          if (stepIndex > 4 && !source.evaluationClientConfirmedAt) {
-            throw new TRPCError({ code: "PRECONDITION_FAILED", message: "La confirmation du bilan par le candidat est requise avant cette étape." });
+          if (stepIndex > 4 && !bilanConfirmed) {
+            throw new TRPCError({
+              code: "PRECONDITION_FAILED",
+              message: "La confirmation du bilan est requise avant cette étape. Cliquez sur « Valider à la place du candidat » (étape confirmation) pour débloquer le parcours.",
+            });
           }
           // Étape 5 = paiement : le prérequis paiement s’applique aux étapes après le paiement.
           if (stepIndex > 5 && !(source.paymentStatus === "SUCCESS" || source.initialPaymentStatus === "paid")) {
@@ -5270,9 +5478,10 @@ export const adminRouter = router({
           }
         }
         completed.add(`checklist-${stepIndex}`);
-        // Déverrouillage admin de la confirmation = enregistrement d’une confirmation hors ligne.
-        if (input.forceUnlock && stepIndex === 4 && reference.source === "online" && !source.evaluationClientConfirmedAt) {
+        // Confirmation admin à la place du client (étape 4 ou déverrouillage ≥ 4).
+        if (shouldConfirmOnBehalf) {
           await db.update(applications).set({ evaluationClientConfirmedAt: new Date() }).where(eq(applications.id, reference.id));
+          completed.add("checklist-4");
         }
       } else {
         if (!input.forceUnlock) {
@@ -5292,10 +5501,29 @@ export const adminRouter = router({
           await db.insert(procedureChecklistProgress).values({ dossierKey, candidateId, destination, visaType, completedStepIds, updatedByRole: "admin", updatedById: admin.id });
         }
       }
-      const actionType = input.forceUnlock ? (input.checked ? "journey_step_force_completed" : "journey_step_force_reopened") : (input.checked ? "journey_step_completed" : "journey_step_reopened");
-      const actionLabel = input.forceUnlock ? (input.checked ? "Étape déverrouillée et validée manuellement" : "Étape annulée manuellement") : (input.checked ? "Étape validée" : "Étape rouverte");
+      const onBehalf = shouldConfirmOnBehalf || (input.forceUnlock && stepIndex >= 4 && !bilanConfirmed);
+      const actionType = onBehalf
+        ? "bilan_confirmed_on_behalf"
+        : input.forceUnlock
+          ? (input.checked ? "journey_step_force_completed" : "journey_step_force_reopened")
+          : (input.checked ? "journey_step_completed" : "journey_step_reopened");
+      const actionLabel = onBehalf
+        ? "Bilan confirmé à la place du candidat"
+        : input.forceUnlock
+          ? (input.checked ? "Étape déverrouillée et validée manuellement" : "Étape annulée manuellement")
+          : (input.checked ? "Étape validée" : "Étape rouverte");
       await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType, entityType: "procedure_checklist", entityId: `checklist-${stepIndex}`, description: `${actionLabel} : ${journey.steps[stepIndex]?.label ?? input.stepId}.${input.comment ? ` Motif : ${input.comment}` : ""}` });
-      return { success: true, completedStepIds: Array.from(completed), stepIndex, message: input.checked ? (input.forceUnlock ? "Étape déverrouillée et validée manuellement." : "Étape validée et prochaine étape débloquée.") : "Étape annulée." };
+      return {
+        success: true,
+        completedStepIds: Array.from(completed),
+        stepIndex,
+        bilanConfirmedOnBehalf: onBehalf,
+        message: onBehalf
+          ? "Bilan confirmé à la place du candidat — parcours débloqué."
+          : input.checked
+            ? (input.forceUnlock ? "Étape déverrouillée et validée manuellement." : "Étape validée et prochaine étape débloquée.")
+            : "Étape annulée.",
+      };
     }),
 
   /**
