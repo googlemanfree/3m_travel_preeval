@@ -15,7 +15,8 @@ describe("bilan d’évaluation dynamique + envoi unique", () => {
     expect(router).toContain("projectKind");
     expect(router).toContain("resolveEvaluationProjectKind");
     expect(router).toContain("visaType: application.visaType ?? null");
-    expect(router).toContain("Bilan validé et envoyé immédiatement dans l’espace client et par e-mail.");
+    expect(router).toContain("validé et envoyé immédiatement dans l’espace client et par e-mail.");
+    expect(router).toContain("Type de visa utilisé");
   });
 
   it("adapte l’éditeur admin au kind et propose un bouton unique espace + e-mail", () => {

@@ -3136,7 +3136,7 @@ export const adminRouter = router({
           const [account] = await db.select(candidateDetailsSelect).from(candidates).where(eq(candidates.id, candidateId)).limit(1);
           if (!account) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable" });
           const docs = await db.select().from(candidateFiles).where(eq(candidateFiles.candidateId, account.id)).limit(50);
-          const emailHistory = await db.select({ id: evaluationEmails.id, emailType: evaluationEmails.emailType, language: evaluationEmails.language, status: evaluationEmails.status, sentAt: evaluationEmails.sentAt, openedAt: evaluationEmails.openedAt, clickedAt: evaluationEmails.clickedAt, failureReason: evaluationEmails.failureReason, sentVia: evaluationEmails.sentVia, createdAt: evaluationEmails.createdAt }).from(evaluationEmails).where(eq(evaluationEmails.candidateEmail, account.email)).orderBy(desc(evaluationEmails.createdAt)).limit(50);
+          const emailHistory = await db.select({ id: evaluationEmails.id, emailType: evaluationEmails.emailType, language: evaluationEmails.language, status: evaluationEmails.status, sentAt: evaluationEmails.sentAt, openedAt: evaluationEmails.openedAt, clickedAt: evaluationEmails.clickedAt, failureReason: evaluationEmails.failureReason, sentVia: evaluationEmails.sentVia, visaType: evaluationEmails.visaType, createdAt: evaluationEmails.createdAt }).from(evaluationEmails).where(eq(evaluationEmails.candidateEmail, account.email)).orderBy(desc(evaluationEmails.createdAt)).limit(50);
           // Un compte déjà activé (dossierStatus != "nouveau") reste accessible via son ancienne
           // référence COMPTE-, mais son dossier réel vit désormais dans agencyDossiers : on résout
           // cette référence pour éviter de réafficher l'action Ouvrir et activer comme si elle
@@ -3246,7 +3246,7 @@ export const adminRouter = router({
           const docs = await db.select().from(clientDocuments)
             .where(eq(clientDocuments.candidateEmail, app.email))
             .limit(50);
-          const emailHistory = await db.select({ id: evaluationEmails.id, emailType: evaluationEmails.emailType, language: evaluationEmails.language, status: evaluationEmails.status, sentAt: evaluationEmails.sentAt, openedAt: evaluationEmails.openedAt, clickedAt: evaluationEmails.clickedAt, failureReason: evaluationEmails.failureReason, sentVia: evaluationEmails.sentVia, createdAt: evaluationEmails.createdAt }).from(evaluationEmails).where(eq(evaluationEmails.evaluationId, app.id)).orderBy(desc(evaluationEmails.createdAt)).limit(50);
+          const emailHistory = await db.select({ id: evaluationEmails.id, emailType: evaluationEmails.emailType, language: evaluationEmails.language, status: evaluationEmails.status, sentAt: evaluationEmails.sentAt, openedAt: evaluationEmails.openedAt, clickedAt: evaluationEmails.clickedAt, failureReason: evaluationEmails.failureReason, sentVia: evaluationEmails.sentVia, visaType: evaluationEmails.visaType, createdAt: evaluationEmails.createdAt }).from(evaluationEmails).where(eq(evaluationEmails.evaluationId, app.id)).orderBy(desc(evaluationEmails.createdAt)).limit(50);
 
           const mapStatus = (status: string): string => {
             const mapping: Record<string, string> = {

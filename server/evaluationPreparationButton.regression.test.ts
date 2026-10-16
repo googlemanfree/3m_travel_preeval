@@ -19,7 +19,8 @@ describe("préparation manuelle du bilan", () => {
     expect(editor).toContain("Validation obligatoire du conseiller");
     expect(editor).toContain("onClick={async () => { if (await ensureDraft()) validateDraft.mutate");
     expect(router).toContain("Le brouillon doit être validé par un conseiller avant envoi");
-    expect(router).toContain("Bilan validé et envoyé immédiatement dans l’espace client et par e-mail.");
+    expect(router).toContain("validé et envoyé immédiatement dans l’espace client et par e-mail.");
+    expect(router).toContain("previewConfirmed: z.literal(true)");
   });
 
   it("bloque proprement la prévisualisation et l’enregistrement d’un brouillon sans recommandations", () => {
