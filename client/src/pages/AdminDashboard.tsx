@@ -532,7 +532,25 @@ export function CandidateDetailModal({
       onClose();
     },
     onError: (err) => {
-      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      const message = err.message || "";
+      if (/confirmation du bilan/i.test(message) && selectedStatus) {
+        const motif = window.prompt(
+          "Confirmation du bilan requise. Motif pour valider à la place du candidat (min. 8 caractères) :",
+          "Confirmation reçue hors ligne — validation admin à la place du candidat.",
+        );
+        if (motif && motif.trim().length >= 8) {
+          updateStatusMutation.mutate({
+            sessionToken,
+            candidateId,
+            newStatus: selectedStatus as AdminStatus,
+            notifyClient,
+            confirmBilanOnBehalf: true,
+            confirmBilanComment: motif.trim(),
+          });
+          return;
+        }
+      }
+      toast({ title: "Erreur", description: message, variant: "destructive" });
     },
   });
 
