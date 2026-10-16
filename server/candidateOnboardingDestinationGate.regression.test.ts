@@ -51,6 +51,6 @@ describe("blocage réel de l'espace candidat tant que l'évaluation n'est pas so
     expect(source).toContain("destination={primaryDestination}");
     // le parcours par pays et le lien d'évaluation reçoivent aussi le pays précis (jamais « europe » ou « autre »)
     expect(source).not.toContain("<CandidateCountryJourney destination={cProfile.destination}");
-    expect(source).toContain("encodeURIComponent(primaryDestination || \"general\")");
+    expect(source).toContain('destination: primaryDestination || "general"');
   });
 });

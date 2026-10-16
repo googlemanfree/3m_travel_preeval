@@ -9,7 +9,8 @@ describe("evaluation required flow", () => {
     const page = read("client/src/pages/EvaluationSpace.tsx");
     expect(page).toContain("evaluationRequired");
     expect(page).toContain("Évaluation rapide à compléter");
-    expect(page).toContain("/evaluation?source=client-space");
+    expect(page).toContain('source: "client-space"');
+    expect(page).toContain("setLocation(`/evaluation?${params.toString()}`)");
     expect(page).toContain("Cette étape doit être terminée avant l’examen des documents");
   });
 

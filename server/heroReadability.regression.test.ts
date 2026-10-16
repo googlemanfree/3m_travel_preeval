@@ -39,7 +39,7 @@ describe("hero : lisibilité et hiérarchie", () => {
   });
 
   it("le bouton principal d'évaluation gratuite reste le premier appel à l'action, en orange contrasté", () => {
-    const cta = hero.indexOf("<PublicEvaluationCTA");
+    const cta = hero.indexOf('href="/#evaluation-multi"');
     expect(cta).toBeGreaterThan(hero.indexOf('data-testid="hero-tagline"'));
     expect(cta).toBeLessThan(hero.indexOf("cta.advisor"));
     expect(hero.slice(cta, cta + 900)).toContain("from-orange-400");
