@@ -49,7 +49,7 @@ type Props = {
   onRemind: () => void;
   reminding?: boolean;
   /** Identité du dossier pour le bilan PDF ; sans elle, le bouton n'apparaît pas. */
-  bilanContext?: { candidateName: string; reference: string; destination?: string | null };
+  bilanContext?: { candidateName: string; reference: string; destination?: string | null; /** Identifiant numérique du compte candidat : active l'export ZIP. */ exportCandidateId?: number };
 };
 
 type Dialogs = { kind: "deposit" | "reject" | "add" | "request" | null; requirement?: CrmRequirement };
@@ -58,6 +58,39 @@ type Dialogs = { kind: "deposit" | "reject" | "add" | "request" | null; requirem
 export default function CandidateDocumentsCrm({ sessionToken, candidateId, requirements, documents, onChanged, onRemind, reminding, bilanContext }: Props) {
   const [filter, setFilter] = useState<CrmFilter>("all");
   const [bilanBusy, setBilanBusy] = useState(false);
+  const [exportBusy, setExportBusy] = useState(false);
+  const exportZip = async () => {
+    const exportId = bilanContext?.exportCandidateId;
+    if (!exportId || exportId <= 0) return;
+    setExportBusy(true);
+    try {
+      const response = await fetch("/api/admin/dossier-export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionToken}` },
+        body: JSON.stringify({ candidateId: exportId }),
+      });
+      if (!response.ok) {
+        const problem = await response.json().catch(() => null);
+        throw new Error(problem?.error || "Export impossible.");
+      }
+      const skipped = Number(response.headers.get("X-Export-Skipped") || 0);
+      const disposition = response.headers.get("Content-Disposition") || "";
+      const name = /filename="([^"]+)"/.exec(disposition)?.[1] || "Dossier_pieces.zip";
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      toast.success(skipped > 0 ? `Export créé : ${skipped} pièce(s) non incluse(s), détail dans LISEZ-MOI.txt.` : "Export des pièces créé.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Export impossible.");
+    } finally {
+      setExportBusy(false);
+    }
+  };
   const downloadBilan = async () => {
     if (!bilanContext) return;
     setBilanBusy(true);
@@ -121,6 +154,11 @@ export default function CandidateDocumentsCrm({ sessionToken, candidateId, requi
               <Download className="mr-1.5 h-4 w-4" aria-hidden="true" />{bilanBusy ? "Création…" : "Bilan PDF"}
             </Button>
           )}
+          {bilanContext?.exportCandidateId ? (
+            <Button type="button" variant="outline" size="sm" onClick={() => void exportZip()} disabled={exportBusy} data-testid="documents-export-zip">
+              <Download className="mr-1.5 h-4 w-4" aria-hidden="true" />{exportBusy ? "Export…" : "Exporter (ZIP)"}
+            </Button>
+          ) : null}
           {summary.awaitingCandidate > 0 && (
             <Button type="button" variant="outline" size="sm" onClick={onRemind} disabled={reminding}><Send className="mr-1.5 h-4 w-4" aria-hidden="true" />{reminding ? "Envoi…" : `Relancer (${summary.awaitingCandidate})`}</Button>
           )}
