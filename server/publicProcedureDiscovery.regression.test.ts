@@ -37,7 +37,7 @@ describe("découverte publique des procédures et contact", () => {
 
   it("expose un itinéraire Google Maps pour le bureau principal et des titres de carte accessibles", () => {
     const contact = fs.readFileSync(path.resolve(process.cwd(), "client/src/pages/Contact.tsx"), "utf8");
-    expect(officeMapsUrl(OFFICE_CONTACTS.cameroon)).toContain("Avenue%20March%C3%A9%20Biyem-Assi%2C%20Yaound%C3%A9%2C%20Cameroun");
+    expect(officeMapsUrl(OFFICE_CONTACTS.cameroon)).toContain("Biyem-Assi%2C%20Mont%C3%A9e%20Chapelle%20Obili%2C%20Yaound%C3%A9");
     expect(contact).toContain("Carte interactive — {cameroon.shortLabel}");
     expect(contact).toContain("Ouvrir l’itinéraire vers Yaoundé");
     expect(contact).toContain("Carte interactive du ${cameroon.label}");

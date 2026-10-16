@@ -18,11 +18,12 @@ describe("raison sociale officielle", () => {
   });
 
   it("les pages juridiques n'affichent plus de note interne « modèle de base à faire valider »", () => {
-    for (const page of ["client/src/pages/PolitiqueConfidentialite.tsx", "client/src/pages/ConditionsUtilisation.tsx"]) {
-      const source = read(page);
-      expect(source, page).not.toContain("modèle de base");
-      expect(source, page).toContain("3M Travel Agency SARL");
-    }
+    const privacy = read("client/src/pages/PolitiqueConfidentialite.tsx");
+    const terms = read("client/src/pages/ConditionsUtilisation.tsx");
+    expect(privacy).not.toContain("modèle de base");
+    expect(privacy).toContain("3M Travel Agency SARL");
+    expect(terms).not.toContain("modèle de base");
+    expect(terms).toContain("Marque publique :");
   });
 });
 

@@ -325,7 +325,7 @@ describe("liste « Comptes à ouvrir » : ni corbeille, ni personne qui a déjà
   });
 });
 
-describe("activation : les doublons certains du même dossier partent à la corbeille tout seuls", () => {
+describe("activation : les doublons et dossiers frères restent conservés", () => {
   // Six lectures de loadRedundantPreAccounts : comptes, pré-dossiers agence, dossiers agence actifs, dossiers en ligne actifs, e-mails agence, e-mails en ligne.
   const duplicateWorld = () => [
     [],
@@ -336,15 +336,12 @@ describe("activation : les doublons certains du même dossier partent à la corb
     [],
   ];
 
-  it("rattache le dossier 34 puis met le pré-dossier doublon 7 en corbeille (réversible, journalisé)", async () => {
+  it("rattache le dossier 34 sans supprimer automatiquement le pré-dossier 7", async () => {
     // lectures : compte, preuve de paiement du compte (aucune), paiement en ligne validé, pré-dossier agence existant (34) ; puis détection ; puis re-détection à l'archivage
     state.reads = [[candidate(validatedEvaluation)], [], [onlinePaymentValidated], [{ id: 34 }], ...duplicateWorld(), ...duplicateWorld()];
     const result = await caller().activatePreDossierAccount({ ...base, candidateId: 42, destination: "luxembourg", visaType: "Études" });
-    expect(result).toMatchObject({ dossierReference: "3M-AGN-0034", archivedDuplicates: ["3M-AGN-0007"] });
-    const trashed = state.updates.find((values) => values.deletedAt);
-    expect(trashed).toMatchObject({ deletedBy: "agent@3mtravelagency.com" });
-    expect(trashed.deletionReason).toContain("3M-AGN-0034");
-    expect(state.inserts.some((row) => String(row.evaluationType ?? "").startsWith("redundant_pre_account_archived"))).toBe(true);
+    expect(result).toMatchObject({ dossierReference: "3M-AGN-0034", archivedDuplicates: [] });
+    expect(state.updates.some((values) => values.deletedAt)).toBe(false);
   });
 
   it("jamais le dossier qu'on vient d'activer, jamais un compte de connexion, jamais un cas « probable »", async () => {
@@ -358,8 +355,7 @@ describe("activation : les doublons certains du même dossier partent à la corb
     state.reads = [[candidate(validatedEvaluation)], [], [onlinePaymentValidated], [{ id: 34 }], ...probableWorld(), ...probableWorld()];
     const result = await caller().activatePreDossierAccount({ ...base, candidateId: 42, destination: "luxembourg", visaType: "Études" });
     expect(result.archivedDuplicates).toEqual([]);
-    expect(state.updates.some((values) => values.deletedAt)).toBe(true);
-    expect(state.updates.filter((values) => values.deletedAt).every((values) => String(values.deletionReason ?? "").includes("Miroir EVAL-AG"))).toBe(true);
+    expect(state.updates.some((values) => values.deletedAt)).toBe(false);
   });
 
   it("un doublon lié à UN AUTRE dossier actif de la même personne n'est pas touché (on ne devine pas lequel garder)", async () => {
@@ -382,7 +378,7 @@ describe("activation : les doublons certains du même dossier partent à la corb
     const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const result = await caller().activatePreDossierAccount({ ...base, candidateId: 42, destination: "luxembourg", visaType: "Études" });
     expect(result).toMatchObject({ success: true, dossierReference: "3M-AGN-0034", archivedDuplicates: [] });
-    expect(spy).toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
     spy.mockRestore();
   });
 });

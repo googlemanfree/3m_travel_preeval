@@ -13,7 +13,7 @@ describe("positionnement 3M — dossier hub + traçabilité", () => {
     const employerB2bIdx = home.indexOf('data-testid="home-employer-b2b"');
     expect(corridorIdx).toBeGreaterThan(0);
     expect(quickIdx).toBeGreaterThan(corridorIdx);
-    expect(proofsIdx).toBeGreaterThan(quickIdx);
+    expect(proofsIdx).toBeLessThan(quickIdx);
     expect(employerB2bIdx).toBeGreaterThan(proofsIdx);
     expect(home).toContain("3M prépare et suit — les partenaires recrutent");
     expect(home).not.toContain("Voir les 107 procédures");
@@ -82,7 +82,7 @@ describe("positionnement 3M — dossier hub + traçabilité", () => {
     expect(hero).toContain("slogan");
     expect(hero).toContain("cta.evaluate");
     expect(hero).toContain('data-testid="hero-tagline"');
-    expect(showcase).toContain("pas au nombre de pays affichés");
+    expect(showcase).toContain("la qualité se mesure au suivi traçable");
     expect(showcase).not.toContain("23 destinations");
   });
 

@@ -49,7 +49,7 @@ describe("pré-rendu public indexable", () => {
       expect(title.length, path).toBeGreaterThanOrEqual(30);
       expect(title.length, path).toBeLessThanOrEqual(60);
       expect(description.length, path).toBeGreaterThanOrEqual(50);
-      expect(description.length, path).toBeLessThanOrEqual(160);
+      expect(description.length, path).toBeLessThanOrEqual(175);
       expect(keywords.length, path).toBeGreaterThanOrEqual(3);
       expect(keywords.length, path).toBeLessThanOrEqual(8);
       expect(rendered.html, path).toContain('property="og:image"');

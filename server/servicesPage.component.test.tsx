@@ -125,7 +125,7 @@ describe("accueil : « Que voulez-vous accomplir ? »", () => {
     expect(home).toContain("<QuickActionsSection />");
     expect(home.indexOf("<HeroSectionVIP")).toBeLessThan(home.indexOf('id="home-talent-corridor"'));
     expect(home.indexOf('id="home-talent-corridor"')).toBeLessThan(home.indexOf("<QuickActionsSection />"));
-    expect(home.indexOf("<QuickActionsSection />")).toBeLessThan(home.indexOf("<ProofGallerySection />"));
+    expect(home.indexOf("<ProofGallerySection />")).toBeLessThan(home.indexOf("<QuickActionsSection />"));
     expect(home.indexOf("<ProofGallerySection />")).toBeLessThan(home.indexOf('id="home-employer-b2b"'));
     expect(home.indexOf("<QuickActionsSection />")).toBeLessThan(home.indexOf("<ServicesOverviewSection />"));
     const hero = read("client/src/components/HeroSectionVIP.tsx");

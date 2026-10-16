@@ -27,7 +27,7 @@ describe("écrans du parcours 3M TRAVEL AGENCY", () => {
     expect(page).toContain('source === "whatsapp" || source === "wa"');
     expect(page).toContain('source === "facebook" || source === "fb"');
     expect(page).toContain('params.get("campaign") || params.get("campagne")');
-    expect(page).toContain("/evaluation?source=");
+    expect(page).toContain("/?project=travail&source=");
   });
 
   it("ne promet pas automatiquement une destination et propose un suivi sécurisé", () => {
@@ -39,4 +39,3 @@ describe("écrans du parcours 3M TRAVEL AGENCY", () => {
     expect(page).toContain("Données protégées");
   });
 });
-
