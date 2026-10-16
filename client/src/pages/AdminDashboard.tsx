@@ -469,13 +469,26 @@ export function CandidateDetailModal({
     || (data as { evaluationContext?: { cvFileName?: string | null } } | undefined)?.evaluationContext?.cvFileName
     || "CV préévaluation";
   const [relancePendingKey, setRelancePendingKey] = useState<string | null>(null);
+  const [relanceSentKeys, setRelanceSentKeys] = useState<Record<string, true>>({});
   const sendDynamicRelanceMutation = trpc.adminCandidateManagement.sendDynamicRelance.useMutation({
     onSuccess: (result, variables) => {
+      const key = `${variables.stage}:${variables.channel}`;
       setRelancePendingKey(null);
-      toast({
-        title: "Relance envoyée",
-        description: result.message,
-      });
+      setRelanceSentKeys((prev) => ({ ...prev, [key]: true }));
+      if (variables.channel === "email" || variables.channel === "both") {
+        toast({
+          title: result.emailSent ? "E-mail bien parti" : "E-mail non délivré",
+          description: result.emailSent
+            ? `${result.message} Le candidat le reçoit aussi dans son espace (entête 3M).`
+            : `${result.message} Vérifiez la configuration e-mail ou renvoyez plus tard.`,
+          variant: result.emailSent ? "default" : "destructive",
+        });
+      } else {
+        toast({
+          title: "Relance déposée",
+          description: result.message,
+        });
+      }
       if (variables.channel === "whatsapp" || variables.channel === "both") {
         if (result.whatsappUrl) {
           window.open(result.whatsappUrl, "_blank", "noopener,noreferrer");
@@ -493,7 +506,9 @@ export function CandidateDetailModal({
   });
   const openPreDossierRelance = (stage: AdminRelanceStage, channel: "email" | "whatsapp") => {
     if (!candidate) return;
-    setRelancePendingKey(`${stage}:${channel}`);
+    const key = `${stage}:${channel}`;
+    if (relanceSentKeys[key] || sendDynamicRelanceMutation.isPending) return;
+    setRelancePendingKey(key);
     sendDynamicRelanceMutation.mutate({
       sessionToken,
       candidateId: candidate.id,
@@ -520,6 +535,8 @@ export function CandidateDetailModal({
 
   useEffect(() => {
     setPortraitPreviewOpen(false);
+    setRelancePendingKey(null);
+    setRelanceSentKeys({});
   }, [candidateId]);
 
   // EVAL-AG-{id} = miroir du dossier actif 3M-AGN-{id} : ouvrir uniquement le 3M.
@@ -949,7 +966,7 @@ export function CandidateDetailModal({
                       <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">Pilotage précompte</p>
                       <h4 className="mt-1 text-lg font-bold text-slate-950">Relancer et convaincre d’ouvrir le dossier</h4>
                       <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
-                        Un clic envoie immédiatement un message professionnel (IA) dans l’espace client (entête 3M) et la boîte mail. WhatsApp ouvre le même texte prérempli après dépôt dans l’espace.
+                        Boutons bleus = prêts à envoyer. Au clic : toast de confirmation, puis le bouton passe à « Envoyé » (verrouillé) pour éviter les doublons. Message pro dans l’espace client (entête 3M) + boîte mail.
                       </p>
                     </div>
                     <Badge className={preDossierCvUrl ? "bg-emerald-100 text-emerald-900" : "bg-amber-100 text-amber-950"}>
@@ -964,8 +981,16 @@ export function CandidateDetailModal({
                       { stage: "payment_pending" as const, label: "Frais d’ouverture", hint: "Avant protocole N°01" },
                       { stage: "conversion_open_dossier" as const, label: "Convaincre d’ouvrir", hint: "Passage COMPTE → 3M" },
                       { stage: "generic" as const, label: "Relance générale", hint: "Message libre adapté" },
-                    ]).map((item) => (
-                      <div key={item.stage} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                    ]).map((item) => {
+                      const mailKey = `${item.stage}:email`;
+                      const waKey = `${item.stage}:whatsapp`;
+                      const mailSent = Boolean(relanceSentKeys[mailKey]);
+                      const waSent = Boolean(relanceSentKeys[waKey]);
+                      const mailPending = relancePendingKey === mailKey;
+                      const waPending = relancePendingKey === waKey;
+                      const busy = sendDynamicRelanceMutation.isPending;
+                      return (
+                      <div key={item.stage} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm" data-testid={`predossier-relance-card-${item.stage}`}>
                         <p className="text-sm font-semibold text-slate-900">{item.label}</p>
                         <p className="mt-0.5 text-[11px] text-slate-500">{item.hint}</p>
                         <div className="mt-3 flex flex-wrap gap-2">
@@ -973,28 +998,40 @@ export function CandidateDetailModal({
                             type="button"
                             size="sm"
                             variant="outline"
-                            className="h-8 border-emerald-300 bg-emerald-50 text-xs text-emerald-950"
-                            disabled={sendDynamicRelanceMutation.isPending}
+                            className={`h-8 text-xs ${waSent ? "border-emerald-400 bg-emerald-100 font-semibold text-emerald-900" : "border-emerald-300 bg-emerald-50 text-emerald-950 hover:bg-emerald-100"}`}
+                            disabled={busy || waSent || !candidate.whatsapp}
+                            aria-busy={waPending}
+                            aria-disabled={busy || waSent || !candidate.whatsapp}
+                            title={!candidate.whatsapp ? "Téléphone manquant — WhatsApp indisponible" : waSent ? "Déjà envoyé — verrouillé pour éviter un doublon" : waPending ? "Envoi en cours…" : "Accessible : dépose dans l’espace puis ouvre WhatsApp"}
                             onClick={() => openPreDossierRelance(item.stage, "whatsapp")}
                             data-testid={`predossier-relance-wa-${item.stage}`}
+                            data-relance-state={waSent ? "sent" : waPending ? "pending" : candidate.whatsapp ? "ready" : "unavailable"}
                           >
-                            {relancePendingKey === `${item.stage}:whatsapp` ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <MessageSquare className="mr-1 h-3.5 w-3.5" />}
-                            WhatsApp
+                            {waPending ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : waSent ? <CheckCircle className="mr-1 h-3.5 w-3.5" /> : <MessageSquare className="mr-1 h-3.5 w-3.5" />}
+                            {waSent ? "Envoyé" : waPending ? "Envoi…" : "WhatsApp"}
                           </Button>
                           <Button
                             type="button"
                             size="sm"
-                            className="h-8 bg-blue-700 text-xs text-white hover:bg-blue-800"
-                            disabled={sendDynamicRelanceMutation.isPending}
+                            className={`h-8 text-xs ${mailSent ? "bg-emerald-700 text-white hover:bg-emerald-700" : "bg-blue-700 text-white hover:bg-blue-800"}`}
+                            disabled={busy || mailSent || !candidate.email}
+                            aria-busy={mailPending}
+                            aria-disabled={busy || mailSent || !candidate.email}
+                            title={!candidate.email ? "E-mail candidat manquant" : mailSent ? "Déjà envoyé — verrouillé pour éviter un doublon" : mailPending ? "Envoi en cours…" : "Accessible : envoie e-mail + espace client"}
                             onClick={() => openPreDossierRelance(item.stage, "email")}
                             data-testid={`predossier-relance-mail-${item.stage}`}
+                            data-relance-state={mailSent ? "sent" : mailPending ? "pending" : candidate.email ? "ready" : "unavailable"}
                           >
-                            {relancePendingKey === `${item.stage}:email` ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <Mail className="mr-1 h-3.5 w-3.5" />}
-                            Envoyer e-mail
+                            {mailPending ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : mailSent ? <CheckCircle className="mr-1 h-3.5 w-3.5" /> : <Mail className="mr-1 h-3.5 w-3.5" />}
+                            {mailSent ? "E-mail envoyé" : mailPending ? "Envoi…" : "Envoyer e-mail"}
                           </Button>
                         </div>
+                        {!candidate.whatsapp ? (
+                          <p className="mt-2 text-[10px] text-slate-500">WhatsApp grisé : numéro manquant.</p>
+                        ) : null}
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Button

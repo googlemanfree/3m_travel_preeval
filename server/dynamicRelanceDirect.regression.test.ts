@@ -70,6 +70,20 @@ describe("relances dynamiques — envoi direct espace + e-mail", () => {
     expect(cockpit).not.toContain("buildMailtoRelance");
   });
 
+  it("feedback UX : toast confirmation + verrou anti-doublon après envoi", () => {
+    const dashboard = read("client/src/pages/AdminDashboard.tsx");
+    expect(dashboard).toContain("E-mail bien parti");
+    expect(dashboard).toContain("relanceSentKeys");
+    expect(dashboard).toContain("data-relance-state");
+    expect(dashboard).toContain("E-mail envoyé");
+    expect(dashboard).toContain("verrouillé pour éviter un doublon");
+
+    const cockpit = read("client/src/components/AdminCockpitControlBoard.tsx");
+    expect(cockpit).toContain("E-mail bien parti");
+    expect(cockpit).toContain("relanceSentKeys");
+    expect(cockpit).toContain('data-relance-state={mailSent ? "sent"');
+  });
+
   it("service dynamique présent", () => {
     const service = read("server/services/dynamicRelance.ts");
     expect(service).toContain("composeDynamicRelance");
