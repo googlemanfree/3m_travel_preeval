@@ -167,7 +167,7 @@ export default function CountryDetailPage() {
     : null;
   const evaluationProject =
     country.visaType === "etudes" ? "etudes"
-      : country.visaType === "visiteur" || country.visaType === "tourisme" ? "tourisme"
+      : country.visaType === "visiteur" || (country.visaType as string) === "tourisme" ? "tourisme"
         : "travail"; // visiteur → tourisme (formulaire visiteurs distinct)
   const evaluationUrl = `/?project=${encodeURIComponent(evaluationProject)}&destination=${encodeURIComponent(country.id)}#evaluation-multi`;
   const pageUpdatedAt = publicPortal?.updatedAt

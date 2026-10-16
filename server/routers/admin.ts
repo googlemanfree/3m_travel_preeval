@@ -5548,10 +5548,10 @@ export const adminRouter = router({
       sessionToken: z.string().min(1).max(512),
       candidateId: z.string().min(1),
       workflowStatus: z.enum(candidate360WorkflowStatuses, {
-        errorMap: () => ({ message: "Étape de traitement invalide. Choisissez une étape dans la liste." }),
+        message: "Étape de traitement invalide. Choisissez une étape dans la liste.",
       }),
       priority: z.enum(["low", "normal", "high", "urgent"], {
-        errorMap: () => ({ message: "Priorité invalide." }),
+        message: "Priorité invalide.",
       }),
       assignedAdminId: z.number().int().positive().nullable(),
       dueAt: z.date().nullable().optional().transform((value) => {

@@ -232,7 +232,7 @@ export default function ProceduresAdvanced() {
   const getEvaluationHref = (country: typeof PUBLIC_PROCEDURES[0]) => {
     const project =
       country.visaType === "etudes" ? "etudes"
-        : country.visaType === "visiteur" || country.visaType === "tourisme" ? "tourisme"
+        : country.visaType === "visiteur" || (country.visaType as string) === "tourisme" ? "tourisme"
           : "travail";
     return `/?project=${encodeURIComponent(project)}&destination=${encodeURIComponent(country.id)}#evaluation-multi`;
   };
