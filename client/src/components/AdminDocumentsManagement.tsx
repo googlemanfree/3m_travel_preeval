@@ -12,6 +12,7 @@ import { AdminCandidatesToRemind } from "./AdminCandidatesToRemind";
 import { groupDocumentsByCandidate, type CandidateDocumentGroup } from "@/lib/documentGroups";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { DOCUMENT_REJECTION_REASONS, composeRejectionComment, type DocumentRejectionCode } from "@shared/documentRejectionReasons";
 
 interface Document {
   id: number;
@@ -51,6 +52,7 @@ export function AdminDocumentsManagement() {
   const [rejectingDocId, setRejectingDocId] = useState<number | null>(null);
   const [rejectingDocSource, setRejectingDocSource] = useState<"client" | "candidate" | "agency">("client");
   const [rejectionReason, setRejectionReason] = useState("");
+  const [rejectionCode, setRejectionCode] = useState<DocumentRejectionCode | null>(null);
   const [previewingDoc, setPreviewingDoc] = useState<Document | null>(null);
   const [previewAcknowledged, setPreviewAcknowledged] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -167,6 +169,18 @@ export function AdminDocumentsManagement() {
     setRejectingDocId(doc.id);
     setRejectingDocSource(doc.source);
     setRejectionReason("");
+    setRejectionCode(null);
+  };
+
+  // Choisir un motif standard remplit le commentaire (modifiable) ; un second clic sur le même motif le retire.
+  const pickRejectionReason = (code: DocumentRejectionCode) => {
+    if (rejectionCode === code) {
+      setRejectionCode(null);
+      setRejectionReason("");
+      return;
+    }
+    setRejectionCode(code);
+    setRejectionReason(composeRejectionComment(code));
   };
 
   const submitRejection = async () => {
@@ -193,6 +207,7 @@ export function AdminDocumentsManagement() {
       });
       setRejectingDocId(null);
       setRejectionReason("");
+      setRejectionCode(null);
       await new Promise(resolve => setTimeout(resolve, 500));
       refetch();
     } catch (error) {
@@ -1227,8 +1242,22 @@ export function AdminDocumentsManagement() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
+              <div role="group" aria-label="Motifs standard" className="flex flex-wrap gap-2" data-testid="rejection-reason-presets">
+                {DOCUMENT_REJECTION_REASONS.map((reason) => (
+                  <button
+                    key={reason.code}
+                    type="button"
+                    aria-pressed={rejectionCode === reason.code}
+                    data-testid={`rejection-reason-${reason.code}`}
+                    onClick={() => pickRejectionReason(reason.code)}
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold ${rejectionCode === reason.code ? "border-red-600 bg-red-600 text-white" : "border-slate-300 bg-white text-slate-700 hover:border-red-400"}`}
+                  >
+                    {reason.label}
+                  </button>
+                ))}
+              </div>
               <Textarea
-                placeholder="Raison du rejet (ex: Document illisible, informations manquantes, etc.)"
+                placeholder="Raison du rejet : choisissez un motif ci-dessus ou précisez ici ce que le candidat doit corriger"
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 maxLength={2000}
