@@ -28,7 +28,7 @@ import { generateGeminiEvaluationDraft, type GeminiEvaluationDraftInput } from "
 import { getValidationStore, isMissingTableError } from "../services/evaluationValidationStore";
 import { caseActivityLogs, cases, documentRequirements } from "../../drizzle/caseTrackingSchema";
 import { parseApplicationPack } from "../../shared/applicationPack";
-import { evaluationRequiresCv } from "../../shared/evaluationVisaCv";
+import { evaluationRequiresCv, resolveEvaluationProjectKind } from "../../shared/evaluationVisaCv";
 
 /**
  * Une évaluation ouverte dans la validation structurée (brouillon IA, checklist, publication) ne passe plus
@@ -644,7 +644,9 @@ export const aiEvaluationManagementRouter = router({
         const [evaluation] = await db.select({ id: evaluations.id, fullName: evaluations.fullName, destinationCountry: evaluations.destinationCountry, projectType: evaluations.projectType, reviewedAt: evaluations.reviewedAt }).from(evaluations).where(eq(evaluations.id, input.evaluationId)).limit(1);
         if (!evaluation) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
         if (evaluation.reviewedAt) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette réponse est déjà validée et ne peut plus être remplacée." });
-        if (evaluation.projectType !== input.templateKey) throw new TRPCError({ code: "BAD_REQUEST", message: "Ce modèle ne correspond pas au type de projet de l’évaluation." });
+        if (resolveEvaluationProjectKind(evaluation.projectType) !== resolveEvaluationProjectKind(input.templateKey) && evaluation.projectType !== input.templateKey) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Ce modèle ne correspond pas au type de projet de l’évaluation." });
+        }
         const draft = buildEvaluationResponseTemplate(input.templateKey, evaluation);
         if (!draft) throw new TRPCError({ code: "BAD_REQUEST", message: "Modèle de réponse indisponible." });
         return { draft };

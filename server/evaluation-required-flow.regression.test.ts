@@ -10,14 +10,15 @@ describe("evaluation required flow", () => {
     expect(page).toContain("evaluationRequired");
     expect(page).toContain("Évaluation rapide à compléter");
     expect(page).toContain('source: "client-space"');
-    expect(page).toContain("setLocation(`/evaluation?${params.toString()}`)");
+    expect(page).toContain("`/evaluation?${params.toString()}`");
+    expect(page).toContain("openEvaluation");
     expect(page).toContain("Cette étape doit être terminée avant l’examen des documents");
   });
 
   it("keeps the admin editor manual and removes visible AI generation controls", () => {
     const editor = read("client/src/components/EvaluationDeliveryEditor.tsx");
-    expect(editor).toContain("Rédigez directement le bilan dans cet espace de travail");
-    expect(editor).toContain("Valider et envoyer");
+    expect(editor).toContain("Espace de saisie complet selon le type de visa du candidat");
+    expect(editor).toContain("Valider et envoyer (espace + e-mail)");
     expect(editor).toContain("Ouvrir WhatsApp avec le bilan");
     expect(editor).not.toContain("Générer un brouillon IA");
     expect(editor).not.toContain("Assistant IA — éléments à contrôler");

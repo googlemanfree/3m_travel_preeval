@@ -129,12 +129,12 @@ test("génère un bilan par destination et bloque l’envoi jusqu’à la valida
   const editor = page.getByRole("dialog", { name: "Préparer le bilan avant envoi" });
   await expect(editor).toBeVisible();
   await expect(editor.getByText("Validation obligatoire du conseiller : à effectuer")).toBeVisible();
-  await expect(editor.getByRole("button", { name: "Valider et envoyer maintenant" })).toBeDisabled();
+  await expect(editor.getByRole("button", { name: /Valider et envoyer/ })).toBeDisabled();
   await editor.getByRole("combobox", { name: "Modèle d’évaluation par destination" }).click();
   await page.getByRole("option", { name: "Canada" }).click();
   await expect(editor.getByRole("combobox", { name: "Modèle d’évaluation par destination" })).toHaveText("Canada");
   await expect(editor.getByRole("button", { name: "Générer un brouillon IA" })).toBeEnabled();
-  await expect(editor.getByRole("button", { name: "Valider et envoyer maintenant" })).toBeDisabled();
+  await expect(editor.getByRole("button", { name: /Valider et envoyer/ })).toBeDisabled();
 });
 
 test("affiche la file quotidienne de bilans à relire et renvoie vers le dossier", async ({ page }) => {
