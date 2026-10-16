@@ -3,6 +3,8 @@ import { CheckCircle2, Download, FileUp, MessageSquarePlus, Plus, RotateCcw, Sen
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
+import { buildDocumentBilan, documentBilanFileName } from "@/lib/documentBilan";
+import { downloadDocumentBilanPdf } from "@/lib/documentBilanPdf";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,13 +48,28 @@ type Props = {
   onChanged: () => void;
   onRemind: () => void;
   reminding?: boolean;
+  /** Identité du dossier pour le bilan PDF ; sans elle, le bouton n'apparaît pas. */
+  bilanContext?: { candidateName: string; reference: string; destination?: string | null };
 };
 
 type Dialogs = { kind: "deposit" | "reject" | "add" | "request" | null; requirement?: CrmRequirement };
 
 /** Pièces du dossier : une ligne par pièce, une action principale par état. */
-export default function CandidateDocumentsCrm({ sessionToken, candidateId, requirements, documents, onChanged, onRemind, reminding }: Props) {
+export default function CandidateDocumentsCrm({ sessionToken, candidateId, requirements, documents, onChanged, onRemind, reminding, bilanContext }: Props) {
   const [filter, setFilter] = useState<CrmFilter>("all");
+  const [bilanBusy, setBilanBusy] = useState(false);
+  const downloadBilan = async () => {
+    if (!bilanContext) return;
+    setBilanBusy(true);
+    try {
+      const bilan = buildDocumentBilan({ ...bilanContext, requirements, documents });
+      await downloadDocumentBilanPdf(bilan, documentBilanFileName(bilanContext.reference));
+    } catch {
+      toast.error("Le bilan PDF n'a pas pu être créé.");
+    } finally {
+      setBilanBusy(false);
+    }
+  };
   const [dialog, setDialog] = useState<Dialogs>({ kind: null });
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const summary = useMemo(() => summarizeRequirements(requirements), [requirements]);
@@ -99,6 +116,11 @@ export default function CandidateDocumentsCrm({ sessionToken, candidateId, requi
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          {bilanContext && (
+            <Button type="button" variant="outline" size="sm" onClick={() => void downloadBilan()} disabled={bilanBusy} data-testid="documents-bilan-pdf">
+              <Download className="mr-1.5 h-4 w-4" aria-hidden="true" />{bilanBusy ? "Création…" : "Bilan PDF"}
+            </Button>
+          )}
           {summary.awaitingCandidate > 0 && (
             <Button type="button" variant="outline" size="sm" onClick={onRemind} disabled={reminding}><Send className="mr-1.5 h-4 w-4" aria-hidden="true" />{reminding ? "Envoi…" : `Relancer (${summary.awaitingCandidate})`}</Button>
           )}
