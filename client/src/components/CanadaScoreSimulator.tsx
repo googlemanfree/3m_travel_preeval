@@ -19,6 +19,15 @@ import { computeCrsScore, CRS_SOURCE, type CanadianEducationLevel, type CrsProfi
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { useLocation } from "wouter";
 import { convertLanguageScores, isSupportedTestForLanguage, LANGUAGE_TEST_OPTIONS, LANGUAGE_TEST_SOURCE, type LanguageScores, type LanguageTestType } from "@shared/languageTests";
+import {
+  buildCanadaDocumentChecklist,
+  buildCanadaPreliminaryGaps,
+  CANADA_OBJECTIVE_OPTIONS,
+  EMPTY_CANADA_JOB,
+  estimateForeignExperienceYearsFromJobs,
+  type CanadaJobEntry,
+  type CanadaEvalObjective,
+} from "@shared/canadaPreliminaryEvaluation";
 
 const EDUCATION_OPTIONS: Array<{ value: EducationLevel; label: string }> = [
   { value: "less_than_secondary", label: "Aucun diplôme / inférieur au secondaire" },
@@ -166,7 +175,8 @@ export default function CanadaScoreSimulator() {
   const [isEmailingPdf, setIsEmailingPdf] = useState(false);
   const [emailSendSuccess, setEmailSendSuccess] = useState(false);
   const [isDraftLoaded, setIsDraftLoaded] = useState(false);
-  const draftStorageKey = "3m-crs-simulator-draft-v2";
+  const draftStorageKey = "3m-crs-simulator-draft-v4";
+  const legacyDraftStorageKey = "3m-crs-simulator-draft-v3";
   const [completedRecommendations, setCompletedRecommendations] = useState<Record<string, boolean>>(() => {
     try {
       return JSON.parse(localStorage.getItem("3m-crs-recommendation-checklist") ?? "{}");
@@ -174,6 +184,207 @@ export default function CanadaScoreSimulator() {
       return {};
     }
   });
+  /** Champs du formulaire PDF « Évaluation préliminaire — Canada » (complément au CRS). */
+  const [childrenCount, setChildrenCount] = useState(0);
+  const [childrenAges, setChildrenAges] = useState("");
+  const [dependentsWillAccompany, setDependentsWillAccompany] = useState("");
+  const [highestDiplomaDetail, setHighestDiplomaDetail] = useState("");
+  const [diplomaInstitution, setDiplomaInstitution] = useState("");
+  const [diplomaYear, setDiplomaYear] = useState("");
+  const [educationAssessmentBody, setEducationAssessmentBody] = useState("");
+  const [educationAssessmentResult, setEducationAssessmentResult] = useState("");
+  const [ecaForExpressEntryConfirmed, setEcaForExpressEntryConfirmed] = useState(false);
+  const [jobs, setJobs] = useState<CanadaJobEntry[]>([EMPTY_CANADA_JOB(), EMPTY_CANADA_JOB(), EMPTY_CANADA_JOB()]);
+  const [availableFunds, setAvailableFunds] = useState("");
+  const [fundsCurrency, setFundsCurrency] = useState("CAD");
+  const [fundsOrigin, setFundsOrigin] = useState("");
+  const [visaRefusals, setVisaRefusals] = useState("");
+  const [ongoingCanadianApplications, setOngoingCanadianApplications] = useState("");
+  const [familyInCanadaDetail, setFamilyInCanadaDetail] = useState("");
+  const [openToOtherProvinces, setOpenToOtherProvinces] = useState("");
+  const [canadaObjective, setCanadaObjective] = useState<CanadaEvalObjective | "">("");
+  const [otherOptionsAndTimeline, setOtherOptionsAndTimeline] = useState("");
+  const [clientDeclarationConfirmed, setClientDeclarationConfirmed] = useState(false);
+
+  type CanadaSimulatorDraft = Partial<{
+    age: number; education: EducationLevel; canadianExperienceYears: ExperienceYears; foreignExperienceYears: ExperienceYears;
+    frenchClb: number; englishClb: number; maritalStatus: MaritalStatus; spouseEducation: EducationLevel; spouseClb: number;
+    spouseExperienceYears: ExperienceYears; hasTradeCertificate: boolean; canadianEducation: CanadianEducationLevel;
+    hasSiblingInCanada: boolean; hasProvincialNomination: boolean; selectedCategory: string; wizardStep: number;
+    fullName: string; email: string; phone: string; residenceCountry: string; targetProvince: string; occupation: string;
+    hasJobOffer: boolean; languageTestDate: string; firstOfficialLanguage: "english" | "french"; firstLanguageTest: LanguageTestType; secondLanguageTest: LanguageTestType; firstRawScores: LanguageScores; secondRawScores: LanguageScores; firstLanguageAbilities: LanguageAbilities; secondLanguageAbilities: LanguageAbilities; selectedProgram: CanadaProgram; programStream: string; programDetails: string; languageScores: typeof languageScores;
+    childrenCount: number; childrenAges: string; dependentsWillAccompany: string; highestDiplomaDetail: string;
+    diplomaInstitution: string; diplomaYear: string; educationAssessmentBody: string; educationAssessmentResult: string;
+    ecaForExpressEntryConfirmed: boolean; jobs: CanadaJobEntry[]; availableFunds: string; fundsCurrency: string;
+    fundsOrigin: string; visaRefusals: string; ongoingCanadianApplications: string; familyInCanadaDetail: string;
+    openToOtherProvinces: string; canadaObjective: CanadaEvalObjective | ""; otherOptionsAndTimeline: string;
+    clientDeclarationConfirmed: boolean;
+  }>;
+
+  const applyPreliminaryDraft = (saved: CanadaSimulatorDraft) => {
+    if (typeof saved.childrenCount === "number") setChildrenCount(Math.max(0, saved.childrenCount));
+    if (typeof saved.childrenAges === "string") setChildrenAges(saved.childrenAges);
+    if (typeof saved.dependentsWillAccompany === "string") setDependentsWillAccompany(saved.dependentsWillAccompany);
+    if (typeof saved.highestDiplomaDetail === "string") setHighestDiplomaDetail(saved.highestDiplomaDetail);
+    if (typeof saved.diplomaInstitution === "string") setDiplomaInstitution(saved.diplomaInstitution);
+    if (typeof saved.diplomaYear === "string") setDiplomaYear(saved.diplomaYear);
+    if (typeof saved.educationAssessmentBody === "string") setEducationAssessmentBody(saved.educationAssessmentBody);
+    if (typeof saved.educationAssessmentResult === "string") setEducationAssessmentResult(saved.educationAssessmentResult);
+    if (typeof saved.ecaForExpressEntryConfirmed === "boolean") setEcaForExpressEntryConfirmed(saved.ecaForExpressEntryConfirmed);
+    if (Array.isArray(saved.jobs) && saved.jobs.length > 0) {
+      const normalized = [0, 1, 2].map((index) => {
+        const raw = saved.jobs?.[index];
+        return raw && typeof raw === "object" ? { ...EMPTY_CANADA_JOB(), ...raw } : EMPTY_CANADA_JOB();
+      });
+      setJobs(normalized);
+    }
+    if (typeof saved.availableFunds === "string") setAvailableFunds(saved.availableFunds);
+    if (typeof saved.fundsCurrency === "string") setFundsCurrency(saved.fundsCurrency);
+    if (typeof saved.fundsOrigin === "string") setFundsOrigin(saved.fundsOrigin);
+    if (typeof saved.visaRefusals === "string") setVisaRefusals(saved.visaRefusals);
+    if (typeof saved.ongoingCanadianApplications === "string") setOngoingCanadianApplications(saved.ongoingCanadianApplications);
+    if (typeof saved.familyInCanadaDetail === "string") setFamilyInCanadaDetail(saved.familyInCanadaDetail);
+    if (typeof saved.openToOtherProvinces === "string") setOpenToOtherProvinces(saved.openToOtherProvinces);
+    if (typeof saved.canadaObjective === "string") setCanadaObjective(saved.canadaObjective);
+    if (typeof saved.otherOptionsAndTimeline === "string") setOtherOptionsAndTimeline(saved.otherOptionsAndTimeline);
+    if (typeof saved.clientDeclarationConfirmed === "boolean") setClientDeclarationConfirmed(saved.clientDeclarationConfirmed);
+  };
+
+  const updateJob = (index: number, patch: Partial<CanadaJobEntry>) => {
+    setJobs((current) => current.map((job, i) => (i === index ? { ...job, ...patch } : job)));
+  };
+
+  const preliminaryGaps = buildCanadaPreliminaryGaps({
+    referenceOrInitials: "",
+    fullName,
+    dateOfBirth: "",
+    age,
+    nationalities: "",
+    residenceCountry,
+    email,
+    phone,
+    maritalStatusLabel: maritalStatus === "with_spouse" ? "marié(e) / conjoint(e)" : "célibataire / sans conjoint accompagnant",
+    childrenCount,
+    childrenAges,
+    dependentsWillAccompany,
+    highestDiploma: highestDiplomaDetail || occupation,
+    diplomaSpecialty: "",
+    diplomaCountry: residenceCountry,
+    diplomaInstitution,
+    diplomaYear,
+    diplomaDuration: "",
+    otherDiplomas: "",
+    educationAssessmentDone: Boolean(educationAssessmentBody || educationAssessmentResult || ecaForExpressEntryConfirmed),
+    educationAssessmentBody,
+    educationAssessmentDate: "",
+    educationAssessmentResult,
+    ecaForExpressEntryConfirmed: ecaForExpressEntryConfirmed ? true : null,
+    jobs,
+    frenchEstimatedLevel: "",
+    englishEstimatedLevel: "",
+    frenchTest: {
+      testName: firstOfficialLanguage === "french" ? firstLanguageTest : secondLanguageTest,
+      testDate: languageTestDate,
+      reportNumber: "",
+      listening: String(firstOfficialLanguage === "french" ? firstRawScores.listening : secondRawScores.listening),
+      reading: String(firstOfficialLanguage === "french" ? firstRawScores.reading : secondRawScores.reading),
+      speaking: String(firstOfficialLanguage === "french" ? firstRawScores.speaking : secondRawScores.speaking),
+      writing: String(firstOfficialLanguage === "french" ? firstRawScores.writing : secondRawScores.writing),
+    },
+    englishTest: {
+      testName: firstOfficialLanguage === "english" ? firstLanguageTest : secondLanguageTest,
+      testDate: languageTestDate,
+      reportNumber: "",
+      listening: String(firstOfficialLanguage === "english" ? firstRawScores.listening : secondRawScores.listening),
+      reading: String(firstOfficialLanguage === "english" ? firstRawScores.reading : secondRawScores.reading),
+      speaking: String(firstOfficialLanguage === "english" ? firstRawScores.speaking : secondRawScores.speaking),
+      writing: String(firstOfficialLanguage === "english" ? firstRawScores.writing : secondRawScores.writing),
+    },
+    canadaStudyOrWork: canadianEducation !== "none" ? "Études / expérience canadienne déclarée dans le CRS" : "",
+    familyInCanada: familyInCanadaDetail || (hasSiblingInCanada ? "Fratrie au Canada (case CRS)" : ""),
+    jobOfferDetail: hasJobOffer ? "Offre d’emploi canadienne déclarée" : "",
+    targetProvince,
+    openToOtherProvinces,
+    availableFunds,
+    fundsCurrency,
+    fundsOrigin,
+    visaRefusals,
+    ongoingCanadianApplications,
+    specialNotes: "",
+    spouseAgeNationalityProfession: "",
+    spouseDiplomas: "",
+    spouseExperience: "",
+    spouseLanguages: "",
+    spouseEducationAssessment: "",
+    objective: canadaObjective,
+    otherOptionsAndTimeline,
+    complementaryInfo: programDetails,
+    clientDeclarationConfirmed,
+    declarantName: fullName,
+    declarationDate: "",
+  });
+  const documentChecklist = buildCanadaDocumentChecklist({
+    referenceOrInitials: "",
+    fullName,
+    dateOfBirth: "",
+    age,
+    nationalities: "",
+    residenceCountry,
+    email,
+    phone,
+    maritalStatusLabel: maritalStatus === "with_spouse" ? "marié(e)" : "célibataire",
+    childrenCount,
+    childrenAges,
+    dependentsWillAccompany,
+    highestDiploma: highestDiplomaDetail,
+    diplomaSpecialty: "",
+    diplomaCountry: "",
+    diplomaInstitution,
+    diplomaYear,
+    diplomaDuration: "",
+    otherDiplomas: "",
+    educationAssessmentDone: ecaForExpressEntryConfirmed,
+    educationAssessmentBody,
+    educationAssessmentDate: "",
+    educationAssessmentResult,
+    ecaForExpressEntryConfirmed,
+    jobs,
+    frenchEstimatedLevel: "",
+    englishEstimatedLevel: "",
+    frenchTest: { testName: "", testDate: "", reportNumber: "", listening: "", reading: "", speaking: "", writing: "" },
+    englishTest: { testName: "", testDate: "", reportNumber: "", listening: "", reading: "", speaking: "", writing: "" },
+    canadaStudyOrWork: "",
+    familyInCanada: familyInCanadaDetail,
+    jobOfferDetail: "",
+    targetProvince,
+    openToOtherProvinces,
+    availableFunds,
+    fundsCurrency,
+    fundsOrigin,
+    visaRefusals,
+    ongoingCanadianApplications,
+    specialNotes: "",
+    spouseAgeNationalityProfession: "",
+    spouseDiplomas: "",
+    spouseExperience: "",
+    spouseLanguages: "",
+    spouseEducationAssessment: "",
+    objective: canadaObjective,
+    otherOptionsAndTimeline,
+    complementaryInfo: "",
+    clientDeclarationConfirmed,
+    declarantName: "",
+    declarationDate: "",
+  });
+
+  useEffect(() => {
+    const estimated = estimateForeignExperienceYearsFromJobs(jobs);
+    if (estimated > 0 && estimated !== foreignExperienceYears) {
+      setForeignExperienceYears(estimated as ExperienceYears);
+    }
+    // Intentionnel : ne réécrit pas si l’utilisateur a déjà forcé 0 alors qu’aucun emploi n’est saisi.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobs]);
 
   // Rondes d'invitation IRCC Express Entry réellement vérifiées sur la page officielle IRCC
   // (voir CRS_HISTORY_SOURCE / LATEST_ROUNDS_VERIFIED_AT dans data/crsHistoricalRounds.ts).
@@ -263,14 +474,8 @@ export default function CanadaScoreSimulator() {
 
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem(draftStorageKey) ?? "null") as Partial<{
-        age: number; education: EducationLevel; canadianExperienceYears: ExperienceYears; foreignExperienceYears: ExperienceYears;
-        frenchClb: number; englishClb: number; maritalStatus: MaritalStatus; spouseEducation: EducationLevel; spouseClb: number;
-        spouseExperienceYears: ExperienceYears; hasTradeCertificate: boolean; canadianEducation: CanadianEducationLevel;
-        hasSiblingInCanada: boolean; hasProvincialNomination: boolean; selectedCategory: string; wizardStep: number;
-        fullName: string; email: string; phone: string; residenceCountry: string; targetProvince: string; occupation: string;
-        hasJobOffer: boolean; languageTestDate: string; firstOfficialLanguage: "english" | "french"; firstLanguageTest: LanguageTestType; secondLanguageTest: LanguageTestType; firstRawScores: LanguageScores; secondRawScores: LanguageScores; firstLanguageAbilities: LanguageAbilities; secondLanguageAbilities: LanguageAbilities; selectedProgram: CanadaProgram; programStream: string; programDetails: string; languageScores: typeof languageScores;
-      }> | null;
+      const raw = localStorage.getItem(draftStorageKey) ?? localStorage.getItem(legacyDraftStorageKey);
+      const saved = JSON.parse(raw ?? "null") as CanadaSimulatorDraft | null;
       if (saved) {
         if (typeof saved.age === "number") setAge(saved.age);
         if (saved.education) setEducation(saved.education);
@@ -307,6 +512,7 @@ export default function CanadaScoreSimulator() {
         if (typeof saved.programStream === "string") setProgramStream(saved.programStream);
         if (typeof saved.programDetails === "string") setProgramDetails(saved.programDetails);
         if (saved.languageScores) setLanguageScores(saved.languageScores);
+        applyPreliminaryDraft(saved);
         toast.success("Votre dernière simulation a été restaurée.");
       }
     } catch {
@@ -323,8 +529,13 @@ export default function CanadaScoreSimulator() {
       spouseEducation, spouseClb, spouseExperienceYears, hasTradeCertificate, canadianEducation, hasSiblingInCanada,
       hasProvincialNomination, selectedCategory, wizardStep, fullName, email, phone, residenceCountry, targetProvince,
       occupation, hasJobOffer, languageTestDate, firstOfficialLanguage, firstLanguageTest, secondLanguageTest, firstRawScores, secondRawScores, firstLanguageAbilities, secondLanguageAbilities, selectedProgram, programStream, programDetails, languageScores,
+      childrenCount, childrenAges, dependentsWillAccompany, highestDiplomaDetail, diplomaInstitution, diplomaYear,
+      educationAssessmentBody, educationAssessmentResult, ecaForExpressEntryConfirmed, jobs, availableFunds, fundsCurrency,
+      fundsOrigin, visaRefusals, ongoingCanadianApplications, familyInCanadaDetail, openToOtherProvinces, canadaObjective,
+      otherOptionsAndTimeline, clientDeclarationConfirmed,
     }));
-  }, [isDraftLoaded, age, education, canadianExperienceYears, foreignExperienceYears, frenchClb, englishClb, maritalStatus, spouseEducation, spouseClb, spouseExperienceYears, hasTradeCertificate, canadianEducation, hasSiblingInCanada, hasProvincialNomination, selectedCategory, wizardStep, fullName, email, phone, residenceCountry, targetProvince, occupation, hasJobOffer, languageTestDate, firstOfficialLanguage, firstLanguageTest, secondLanguageTest, firstRawScores, secondRawScores, firstLanguageAbilities, secondLanguageAbilities, selectedProgram, programStream, programDetails, languageScores]);
+    localStorage.removeItem(legacyDraftStorageKey);
+  }, [isDraftLoaded, age, education, canadianExperienceYears, foreignExperienceYears, frenchClb, englishClb, maritalStatus, spouseEducation, spouseClb, spouseExperienceYears, hasTradeCertificate, canadianEducation, hasSiblingInCanada, hasProvincialNomination, selectedCategory, wizardStep, fullName, email, phone, residenceCountry, targetProvince, occupation, hasJobOffer, languageTestDate, firstOfficialLanguage, firstLanguageTest, secondLanguageTest, firstRawScores, secondRawScores, firstLanguageAbilities, secondLanguageAbilities, selectedProgram, programStream, programDetails, languageScores, childrenCount, childrenAges, dependentsWillAccompany, highestDiplomaDetail, diplomaInstitution, diplomaYear, educationAssessmentBody, educationAssessmentResult, ecaForExpressEntryConfirmed, jobs, availableFunds, fundsCurrency, fundsOrigin, visaRefusals, ongoingCanadianApplications, familyInCanadaDetail, openToOtherProvinces, canadaObjective, otherOptionsAndTimeline, clientDeclarationConfirmed]);
 
   const toggleRecommendation = (title: string) => {
     setCompletedRecommendations((current) => ({ ...current, [title]: !current[title] }));
@@ -547,6 +758,59 @@ export default function CanadaScoreSimulator() {
       doc.setFontSize(10);
       doc.textWithLink("Prendre rendez-vous en ligne avec 3M TRAVEL AGENCY", 21, afterRecommendations + 32, { url: appointmentUrl });
 
+      doc.addPage();
+      doc.setTextColor(15, 45, 91);
+      doc.setFontSize(14);
+      doc.text("Évaluation préliminaire Canada — dossier 3M", 15, 20);
+      doc.setFontSize(9);
+      doc.setTextColor(71, 85, 105);
+      doc.text("Structure alignée sur le formulaire PDF 3M (identité, études, emplois, budget, objectif). Indicatif, sans garantie.", 15, 27, { maxWidth: 180 });
+      autoTable(doc, {
+        startY: 34,
+        head: [["Rubrique", "Déclaration"]],
+        body: [
+          ["Candidat", fullName || "Non renseigné"],
+          ["Enfants", childrenCount > 0 ? `${childrenCount} — âges : ${childrenAges || "à préciser"} — accompagnement : ${dependentsWillAccompany || "à préciser"}` : "Aucun déclaré"],
+          ["Diplôme", [highestDiplomaDetail, diplomaInstitution, diplomaYear].filter(Boolean).join(" · ") || "Non renseigné"],
+          ["Évaluation diplômes (EDE)", [educationAssessmentBody, educationAssessmentResult, ecaForExpressEntryConfirmed ? "EDE Entrée express confirmée" : "EDE Entrée express non confirmée"].filter(Boolean).join(" · ")],
+          ["Province / autres", `${targetProvince || "non renseignée"} · ouverture : ${openToOtherProvinces || "à préciser"}`],
+          ["Famille au Canada", familyInCanadaDetail || (hasSiblingInCanada ? "Fratrie déclarée (CRS)" : "Non renseignée")],
+          ["Fonds", [availableFunds, fundsCurrency, fundsOrigin].filter(Boolean).join(" · ") || "Non renseignés"],
+          ["Refus / demandes", `Refus : ${visaRefusals || "non renseigné"} · En cours : ${ongoingCanadianApplications || "non renseigné"}`],
+          ["Objectif / délai", `${CANADA_OBJECTIVE_OPTIONS.find((o) => o.value === canadaObjective)?.label || "à préciser"} · ${otherOptionsAndTimeline || "délai non renseigné"}`],
+          ["Déclaration client", clientDeclarationConfirmed ? "Confirmée" : "Non validée — consentement à recueillir"],
+        ],
+        styles: { fontSize: 8, cellPadding: 2.5 },
+        headStyles: { fillColor: [30, 64, 175] },
+        columnStyles: { 0: { cellWidth: 48 }, 1: { cellWidth: 132 } },
+      });
+      const afterDossier = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 90;
+      autoTable(doc, {
+        startY: afterDossier + 8,
+        head: [["Emploi", "Poste / employeur", "Pays", "Période", "Heures", "Tâches"]],
+        body: jobs.filter((job) => job.title || job.employer).map((job, index) => [
+          String(index + 1),
+          `${job.title || "—"} / ${job.employer || "—"}`,
+          job.country || "—",
+          `${job.startDate || "?"} → ${job.endDate || "?"}`,
+          job.hoursPerWeek || "—",
+          (job.tasks || "—").slice(0, 120),
+        ]),
+        styles: { fontSize: 7, cellPadding: 2 },
+        headStyles: { fillColor: [15, 45, 91] },
+      });
+      const afterJobs = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? afterDossier + 40;
+      autoTable(doc, {
+        startY: afterJobs + 8,
+        head: [["Lacunes / pièces prioritaires"]],
+        body: [
+          ...preliminaryGaps.map((gap) => [`[${gap.priority === "high" ? "Prioritaire" : "À compléter"}] ${gap.label}`]),
+          ...documentChecklist.map((item) => [`Pièce : ${item}`]),
+        ],
+        styles: { fontSize: 8, cellPadding: 2.5 },
+        headStyles: { fillColor: [153, 27, 27] },
+      });
+
       return doc;
   };
 
@@ -653,6 +917,7 @@ export default function CanadaScoreSimulator() {
   const handleRestartSimulation = () => {
     trackEvent("crs_restart_simulation");
     localStorage.removeItem(draftStorageKey);
+    localStorage.removeItem(legacyDraftStorageKey);
     window.location.assign(window.location.pathname);
   };
 
@@ -808,6 +1073,63 @@ export default function CanadaScoreSimulator() {
               <div className="space-y-2"><Label htmlFor="crs-occupation">Profession / domaine</Label><input id="crs-occupation" value={occupation} onChange={(e) => setOccupation(e.target.value)} placeholder="Informatique, santé…" className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" /></div>
               <label className="flex items-center gap-2 text-sm text-slate-700 md:col-span-2"><Checkbox checked={hasJobOffer} onCheckedChange={(checked) => setHasJobOffer(checked === true)} /> J’ai déjà une offre d’emploi canadienne vérifiable</label>
               <div className="space-y-2"><div className="flex items-center gap-1"><Label htmlFor="crs-test-date">Date du dernier test de langue</Label><FieldHint label="Validité du test" text="IRCC exige généralement des résultats de moins de 2 ans au moment de la création du profil et de la demande de résidence permanente. Vérifiez la date sur votre relevé." /></div><input id="crs-test-date" type="date" value={languageTestDate} onChange={(e) => setLanguageTestDate(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" /></div>
+            </div>
+
+            <div className="rounded-2xl border border-blue-200 bg-blue-50/40 p-4 md:p-5 space-y-4" data-testid="canada-preliminary-dossier">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-800">Dossier préliminaire 3M — formulaire Canada</p>
+                <p className="mt-1 text-sm text-slate-600">Aligné sur le formulaire d’évaluation préliminaire Canada (identité, études, emplois, budget, objectif). Les champs ci-dessous enrichissent le rapport PDF et la checklist conseiller ; le barème CRS reste calculé à l’étape suivante.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2"><Label htmlFor="crs-children-count">Nombre d’enfants</Label><Input id="crs-children-count" type="number" min={0} max={12} value={childrenCount} onChange={(e) => setChildrenCount(Math.max(0, Number(e.target.value) || 0))} className="bg-white" /></div>
+                <div className="space-y-2"><Label htmlFor="crs-children-ages">Âges des enfants</Label><Input id="crs-children-ages" value={childrenAges} onChange={(e) => setChildrenAges(e.target.value)} placeholder="Ex. 8 et 5 ans" className="bg-white" /></div>
+                {childrenCount > 0 && (
+                  <div className="space-y-2 md:col-span-2"><Label htmlFor="crs-children-accompany">Les enfants accompagneront-ils le candidat ?</Label><Input id="crs-children-accompany" value={dependentsWillAccompany} onChange={(e) => setDependentsWillAccompany(e.target.value)} placeholder="Oui / non / à préciser" className="bg-white" /></div>
+                )}
+                <div className="space-y-2"><Label htmlFor="crs-diploma-detail">Diplôme le plus élevé et spécialité</Label><Input id="crs-diploma-detail" value={highestDiplomaDetail} onChange={(e) => setHighestDiplomaDetail(e.target.value)} placeholder="Ex. Diplôme d’aide-soignante" className="bg-white" /></div>
+                <div className="space-y-2"><Label htmlFor="crs-diploma-institution">Établissement / pays / année</Label><Input id="crs-diploma-institution" value={diplomaInstitution} onChange={(e) => setDiplomaInstitution(e.target.value)} placeholder="Centre…, Cameroun" className="bg-white" /></div>
+                <div className="space-y-2"><Label htmlFor="crs-diploma-year">Année d’obtention</Label><Input id="crs-diploma-year" value={diplomaYear} onChange={(e) => setDiplomaYear(e.target.value)} placeholder="2012" className="bg-white" /></div>
+                <div className="space-y-2"><Label htmlFor="crs-ede-body">Évaluation des diplômes — organisme</Label><Input id="crs-ede-body" value={educationAssessmentBody} onChange={(e) => setEducationAssessmentBody(e.target.value)} placeholder="WES, IQAS…" className="bg-white" /></div>
+                <div className="space-y-2 md:col-span-2"><Label htmlFor="crs-ede-result">Résultat exact de l’évaluation</Label><Input id="crs-ede-result" value={educationAssessmentResult} onChange={(e) => setEducationAssessmentResult(e.target.value)} placeholder="Équivalence déclarée ; à joindre" className="bg-white" /></div>
+                <label className="flex items-center gap-2 text-sm text-slate-700 md:col-span-2"><Checkbox checked={ecaForExpressEntryConfirmed} onCheckedChange={(checked) => setEcaForExpressEntryConfirmed(checked === true)} /> EDE confirmée pour Entrée express</label>
+              </div>
+
+              <div className="space-y-3" data-testid="canada-job-history">
+                <p className="text-sm font-bold text-slate-900">Expérience professionnelle (3 emplois max. — du plus récent)</p>
+                {jobs.map((job, index) => (
+                  <div key={`job-${index}`} className="rounded-xl border border-blue-100 bg-white p-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <p className="md:col-span-2 text-xs font-semibold uppercase tracking-wide text-blue-800">Emploi {index + 1}</p>
+                    <Input aria-label={`Emploi ${index + 1} intitulé`} value={job.title} onChange={(e) => updateJob(index, { title: e.target.value })} placeholder="Intitulé du poste" />
+                    <Input aria-label={`Emploi ${index + 1} employeur`} value={job.employer} onChange={(e) => updateJob(index, { employer: e.target.value })} placeholder="Employeur" />
+                    <Input aria-label={`Emploi ${index + 1} pays`} value={job.country} onChange={(e) => updateJob(index, { country: e.target.value })} placeholder="Pays" />
+                    <Input aria-label={`Emploi ${index + 1} heures`} value={job.hoursPerWeek} onChange={(e) => updateJob(index, { hoursPerWeek: e.target.value })} placeholder="Heures / semaine" />
+                    <Input aria-label={`Emploi ${index + 1} début`} value={job.startDate} onChange={(e) => updateJob(index, { startDate: e.target.value })} placeholder="Début (AAAA-MM ou JJ/MM/AAAA)" />
+                    <Input aria-label={`Emploi ${index + 1} fin`} value={job.endDate} onChange={(e) => updateJob(index, { endDate: e.target.value })} placeholder="Fin ou « présent »" />
+                    <textarea aria-label={`Emploi ${index + 1} tâches`} value={job.tasks} onChange={(e) => updateJob(index, { tasks: e.target.value })} rows={2} placeholder="Principales tâches réellement exercées" className="md:col-span-2 flex w-full rounded-md border border-input bg-white px-3 py-2 text-sm" />
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2"><Label htmlFor="crs-family-canada">Famille au Canada (lien, province, statut)</Label><Input id="crs-family-canada" value={familyInCanadaDetail} onChange={(e) => setFamilyInCanadaDetail(e.target.value)} placeholder="Ex. frère RP, Ontario…" className="bg-white" /></div>
+                <div className="space-y-2"><Label htmlFor="crs-other-provinces">Ouverture à d’autres provinces</Label><Input id="crs-other-provinces" value={openToOtherProvinces} onChange={(e) => setOpenToOtherProvinces(e.target.value)} placeholder="Oui / non, lesquelles" className="bg-white" /></div>
+                <div className="space-y-2"><Label htmlFor="crs-funds">Fonds disponibles</Label><Input id="crs-funds" value={availableFunds} onChange={(e) => setAvailableFunds(e.target.value)} placeholder="Montant" className="bg-white" /></div>
+                <div className="space-y-2"><Label htmlFor="crs-funds-currency">Devise</Label><Input id="crs-funds-currency" value={fundsCurrency} onChange={(e) => setFundsCurrency(e.target.value)} placeholder="CAD / XAF / EUR" className="bg-white" /></div>
+                <div className="space-y-2 md:col-span-2"><Label htmlFor="crs-funds-origin">Origine des fonds</Label><Input id="crs-funds-origin" value={fundsOrigin} onChange={(e) => setFundsOrigin(e.target.value)} placeholder="Épargne, famille…" className="bg-white" /></div>
+                <div className="space-y-2 md:col-span-2"><Label htmlFor="crs-refusals">Refus de visa (pays, date, motif) ou « aucun »</Label><Input id="crs-refusals" value={visaRefusals} onChange={(e) => setVisaRefusals(e.target.value)} placeholder="Aucun" className="bg-white" /></div>
+                <div className="space-y-2 md:col-span-2"><Label htmlFor="crs-ongoing">Demandes canadiennes en cours</Label><Input id="crs-ongoing" value={ongoingCanadianApplications} onChange={(e) => setOngoingCanadianApplications(e.target.value)} placeholder="Type, date, état — ou aucun" className="bg-white" /></div>
+                <div className="space-y-2"><Label htmlFor="crs-objective">Objectif</Label>
+                  <Select value={canadaObjective || "unset"} onValueChange={(value) => setCanadaObjective(value === "unset" ? "" : value as CanadaEvalObjective)}>
+                    <SelectTrigger id="crs-objective" className="bg-white"><SelectValue placeholder="Choisir…" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unset">À préciser</SelectItem>
+                      {CANADA_OBJECTIVE_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2"><Label htmlFor="crs-timeline">Autres options et délai souhaité</Label><Input id="crs-timeline" value={otherOptionsAndTimeline} onChange={(e) => setOtherOptionsAndTimeline(e.target.value)} placeholder="Ex. 6–12 mois" className="bg-white" /></div>
+                <label className="flex items-start gap-2 text-sm text-slate-700 md:col-span-2"><Checkbox checked={clientDeclarationConfirmed} onCheckedChange={(checked) => setClientDeclarationConfirmed(checked === true)} className="mt-0.5" /><span>Je confirme que les renseignements fournis sont exacts à ma connaissance et j’autorise 3M Travel Agency à les examiner pour cette évaluation préliminaire. Ne pas inscrire de numéro de passeport ni de données bancaires.</span></label>
+              </div>
             </div>
           </motion.div>
         )}
@@ -967,6 +1289,26 @@ export default function CanadaScoreSimulator() {
               <div className="rounded-xl bg-white border border-amber-100 p-3"><p className="font-semibold text-slate-900">Critères CRS</p><p className="text-slate-600">Études : {EDUCATION_OPTIONS.find((option) => option.value === education)?.label ?? education}</p><p className="text-slate-600">1re langue : {firstLanguageClb} · 2e langue : {secondLanguageClb} · Canada : {canadianExperienceYears} an(s)</p><p className="text-xs text-slate-500">Lecture, écriture, écoute et expression orale calculées séparément.</p><Button type="button" variant="link" className="px-0 h-auto text-blue-700" onClick={() => setWizardStep(2)}>Modifier les critères</Button></div>
             </div>
             <div className="rounded-xl bg-white border border-amber-100 p-3 text-sm"><span className="font-semibold">Résultat calculé :</span> {scores.total} points · écart de {scoreDiff >= 0 ? "+" : ""}{scoreDiff} points par rapport au dernier seuil comparé. {!isCrsProgram && <span className="text-slate-600"> Pour cette voie, le CRS est un repère complémentaire et ne remplace pas les critères du programme.</span>}</div>
+            {preliminaryGaps.length > 0 && (
+              <div className="rounded-xl border border-rose-200 bg-rose-50/70 p-4" data-testid="canada-preliminary-gaps">
+                <p className="font-bold text-rose-950">Données encore nécessaires ({preliminaryGaps.length})</p>
+                <p className="mt-1 text-xs text-rose-900/80">Comme sur le dossier préliminaire 3M : score et admissibilité restent conditionnels tant que ces éléments manquent.</p>
+                <ul className="mt-3 space-y-1.5">
+                  {preliminaryGaps.map((gap) => (
+                    <li key={gap.id} className="flex items-start gap-2 text-sm text-rose-950">
+                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-700" aria-hidden="true" />
+                      <span><span className="font-semibold uppercase text-[10px] tracking-wide text-rose-700">{gap.priority === "high" ? "Prioritaire" : "À compléter"} · </span>{gap.label}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <div className="rounded-xl border border-slate-200 bg-white p-4" data-testid="canada-document-checklist">
+              <p className="font-bold text-slate-950">Pièces prioritaires à transmettre</p>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                {documentChecklist.map((item) => <li key={item}>{item}</li>)}
+              </ul>
+            </div>
             <div className="rounded-xl bg-white border border-amber-100 p-3 text-sm"><p className="font-semibold text-slate-900">Détail des langues</p><p className="mt-1 text-xs text-slate-500">{LANGUAGE_TEST_OPTIONS.find((option) => option.value === firstLanguageTest)?.label} / {LANGUAGE_TEST_OPTIONS.find((option) => option.value === secondLanguageTest)?.label}</p><div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-600 sm:grid-cols-4">{LANGUAGE_ABILITIES.map(({ key, label }) => <span key={`first-${key}`}>1re {label.toLowerCase()} : <strong className="text-slate-900">{effectiveFirstLanguageAbilities[key]}</strong></span>)}{LANGUAGE_ABILITIES.map(({ key, label }) => <span key={`second-${key}`}>2e {label.toLowerCase()} : <strong className="text-slate-900">{effectiveSecondLanguageAbilities[key]}</strong></span>)}</div></div>
           </motion.div>
         )}
