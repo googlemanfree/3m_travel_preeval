@@ -17,10 +17,11 @@ import { runFlightPriceAlerts, type AlertRunSummary } from "./flightPriceAlerts"
 import { runReviewInviteEmails, type ReviewInviteOutcome } from "./reviewInviteEmails";
 import { fetchCheapestForAlert } from "../routers/flights";
 import { REMINDER_SUBJECT_PREFIX, buildDocumentReminderEmail, planReminder, reminderOptOutKey, signReminderStopToken, verifyReminderStopToken } from "../services/documentReminders";
+import { notifyDocumentReminderWhatsApp } from "../services/clientWhatsAppNotify";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
 
-export type ReminderOutcome = { email: string; stage: number; missing: number; replace: number; sent: boolean; error?: string };
+export type ReminderOutcome = { email: string; stage: number; missing: number; replace: number; sent: boolean; whatsappSent?: boolean; error?: string };
 
 const secret = () => process.env.JWT_SECRET || "";
 const siteUrl = () => (process.env.SITE_URL || COMPANY_PROFILE.website || "https://www.3mtravelagency.com").replace(/\/+$/, "");
@@ -102,15 +103,29 @@ export async function runDocumentReminders(db: Db, options: { now?: Date; dryRun
         stopUrl: `${siteUrl()}/api/reminders/stop?e=${encodeURIComponent(email)}&t=${signReminderStopToken(email, secret())}`,
       });
       if (options.dryRun) {
-        outcomes.push({ email, stage: decision.stage, missing: summary.missing, replace: summary.replace, sent: false });
+        outcomes.push({ email, stage: decision.stage, missing: summary.missing, replace: summary.replace, sent: false, whatsappSent: false });
         continue;
       }
       await sendEmail({ to: candidate.email, subject: message.subject, html: message.html });
       await db.insert(emailDeliveryLogs).values({ recipientEmail: email, subject: message.subject.slice(0, 255), status: "sent" });
-      outcomes.push({ email, stage: decision.stage, missing: summary.missing, replace: summary.replace, sent: true });
+      let whatsappSent = false;
+      try {
+        const wa = await notifyDocumentReminderWhatsApp({
+          phone: candidate.phone,
+          candidateName: candidate.fullName,
+          stage: decision.stage,
+          missing: summary.missing,
+          replace: summary.replace,
+          firstLabel: summary.firstReplaceLabel ?? summary.firstMissingLabel,
+        });
+        whatsappSent = wa.sent;
+      } catch (waError) {
+        console.warn("[DocumentReminders] WhatsApp skip", { candidateId: candidate.id, waError });
+      }
+      outcomes.push({ email, stage: decision.stage, missing: summary.missing, replace: summary.replace, sent: true, whatsappSent });
     } catch (error) {
       console.error("[DocumentReminders] candidate failed", { candidateId: candidate.id, error });
-      outcomes.push({ email, stage: 0, missing: 0, replace: 0, sent: false, error: "échec" });
+      outcomes.push({ email, stage: 0, missing: 0, replace: 0, sent: false, whatsappSent: false, error: "échec" });
     }
   }
   return outcomes;
@@ -146,7 +161,7 @@ export async function handleDocumentReminderJob(req: Request, res: Response): Pr
     } catch (error) {
       console.error("[ReviewInviteEmails] job failed", error);
     }
-    res.json({ alerts, reviewInvites: { sent: reviewInvites.filter((outcome) => outcome.sent).length, planned: dryRun ? reviewInvites.length : undefined, outcomes: reviewInvites.map((outcome) => ({ reason: outcome.reason, sent: outcome.sent })) }, flights: { sent: flights.filter((outcome) => outcome.sent).length, planned: dryRun ? flights.length : undefined, failed: flights.filter((outcome) => outcome.error).length, outcomes: flights.map((outcome) => ({ kind: outcome.kind, stage: outcome.stage, sent: outcome.sent })) }, dryRun, sent: outcomes.filter((outcome) => outcome.sent).length, planned: dryRun ? outcomes.length : undefined, failed: outcomes.filter((outcome) => outcome.error).length, outcomes: outcomes.map((outcome) => ({ stage: outcome.stage, missing: outcome.missing, replace: outcome.replace, sent: outcome.sent })) });
+    res.json({ alerts, reviewInvites: { sent: reviewInvites.filter((outcome) => outcome.sent).length, planned: dryRun ? reviewInvites.length : undefined, outcomes: reviewInvites.map((outcome) => ({ reason: outcome.reason, sent: outcome.sent })) }, flights: { sent: flights.filter((outcome) => outcome.sent).length, planned: dryRun ? flights.length : undefined, failed: flights.filter((outcome) => outcome.error).length, outcomes: flights.map((outcome) => ({ kind: outcome.kind, stage: outcome.stage, sent: outcome.sent })) }, dryRun, sent: outcomes.filter((outcome) => outcome.sent).length, whatsappSent: outcomes.filter((outcome) => outcome.whatsappSent).length, planned: dryRun ? outcomes.length : undefined, failed: outcomes.filter((outcome) => outcome.error).length, outcomes: outcomes.map((outcome) => ({ stage: outcome.stage, missing: outcome.missing, replace: outcome.replace, sent: outcome.sent, whatsappSent: Boolean(outcome.whatsappSent) })) });
   } catch (error) {
     console.error("[DocumentReminders] job failed", error);
     res.status(500).json({ error: "Reminder job failed" });

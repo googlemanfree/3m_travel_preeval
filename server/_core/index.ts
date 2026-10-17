@@ -20,6 +20,7 @@ import { handleComplianceMonthlyReportJob } from "../scheduled/complianceMonthly
 import { handlePassportPendingWeeklyAlertJob } from "../scheduled/passportPendingWeeklyAlertJob";
 import { handleExternalLinkCheckJob } from "../scheduled/externalLinkCheckJob";
 import { handleDocumentReminderJob, handleReminderStop } from "../scheduled/documentReminderJob";
+import { handleSignatureAndConfirmationRemindersJob } from "../scheduled/signatureAndConfirmationRemindersJob";
 import { handleAlertConfirm, handleAlertStop } from "../scheduled/flightPriceAlerts";
 import { handleEvaluationReviewDeadlineAlertJob } from "../scheduled/evaluationReviewDeadlineAlertJob";
 import { initEvaluationCron } from "../cron/evaluationCron";
@@ -90,6 +91,11 @@ async function startServer() {
   app.post("/api/scheduled/document-reminders", (req, res) => {
     if (!requireCronSecret(req, res)) return;
     void handleDocumentReminderJob(req, res);
+  });
+  // Rappels protocole N°01/N°02 + confirmation bilan (J+2, anti-doublon 3 j). Corps {"dryRun": true} : aperçu.
+  app.post("/api/scheduled/signature-confirmation-reminders", (req, res) => {
+    if (!requireCronSecret(req, res)) return;
+    void handleSignatureAndConfirmationRemindersJob(req, res);
   });
   // Désinscription des rappels (lien signé dans chaque e-mail de rappel).
   app.get("/api/reminders/stop", (req, res) => {
