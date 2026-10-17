@@ -158,5 +158,31 @@ export async function finalizeOnlineOpeningPaymentAfterCinetPay(
     { source: "online", id: applicationId },
     CINETPAY_VALIDATOR,
   );
+
+  // Vague 2 : si le compte lié est prêt (évaluation + paiement), activer COMPTE → 3M.
+  try {
+    const [app] = await db
+      .select({ candidateId: applications.candidateId, email: applications.email })
+      .from(applications)
+      .where(eq(applications.id, applicationId))
+      .limit(1);
+    if (app?.candidateId) {
+      const { activateReadyPreDossier } = await import("./autoActivatePreDossier");
+      await activateReadyPreDossier(db, app.candidateId, { actorEmail: CINETPAY_VALIDATOR });
+    } else if (app?.email) {
+      const [linked] = await db
+        .select({ id: candidates.id })
+        .from(candidates)
+        .where(and(eq(candidates.email, app.email), isNull(candidates.deletedAt)))
+        .limit(1);
+      if (linked) {
+        const { activateReadyPreDossier } = await import("./autoActivatePreDossier");
+        await activateReadyPreDossier(db, linked.id, { actorEmail: CINETPAY_VALIDATOR });
+      }
+    }
+  } catch (error) {
+    console.warn("[openingPaymentAutomation] auto-activate skip", error);
+  }
+
   return { ...automation, validated: true };
 }

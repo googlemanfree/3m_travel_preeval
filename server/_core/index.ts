@@ -21,6 +21,7 @@ import { handlePassportPendingWeeklyAlertJob } from "../scheduled/passportPendin
 import { handleExternalLinkCheckJob } from "../scheduled/externalLinkCheckJob";
 import { handleDocumentReminderJob, handleReminderStop } from "../scheduled/documentReminderJob";
 import { handleSignatureAndConfirmationRemindersJob } from "../scheduled/signatureAndConfirmationRemindersJob";
+import { handlePilotageAutomationJob } from "../scheduled/pilotageAutomationJob";
 import { handleAlertConfirm, handleAlertStop } from "../scheduled/flightPriceAlerts";
 import { handleEvaluationReviewDeadlineAlertJob } from "../scheduled/evaluationReviewDeadlineAlertJob";
 import { initEvaluationCron } from "../cron/evaluationCron";
@@ -96,6 +97,11 @@ async function startServer() {
   app.post("/api/scheduled/signature-confirmation-reminders", (req, res) => {
     if (!requireCronSecret(req, res)) return;
     void handleSignatureAndConfirmationRemindersJob(req, res);
+  });
+  // Vague 2–3 : activation COMPTE→3M, relances pilotage, avance Kanban sûre. Corps {"dryRun": true} : aperçu.
+  app.post("/api/scheduled/pilotage-automation", (req, res) => {
+    if (!requireCronSecret(req, res)) return;
+    void handlePilotageAutomationJob(req, res);
   });
   // Désinscription des rappels (lien signé dans chaque e-mail de rappel).
   app.get("/api/reminders/stop", (req, res) => {
