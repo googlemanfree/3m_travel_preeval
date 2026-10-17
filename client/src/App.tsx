@@ -386,8 +386,12 @@ function Router() {
       <Route path={"/admin/login"} component={AdminLogin} />
       <Route path={"/admin/change-password"}>
         {() => {
-          const sessionToken = typeof window !== 'undefined' ? sessionStorage.getItem('adminSessionToken') || '' : '';
-          const adminEmail = typeof window !== 'undefined' ? sessionStorage.getItem('adminEmail') || '' : '';
+          const sessionToken = typeof window !== "undefined"
+            ? (localStorage.getItem("adminSessionToken") || sessionStorage.getItem("adminSessionToken") || "")
+            : "";
+          const adminEmail = typeof window !== "undefined"
+            ? (sessionStorage.getItem("adminEmail") || localStorage.getItem("adminEmail") || "")
+            : "";
           return (
             <AdminChangePasswordRequired
               sessionToken={sessionToken}

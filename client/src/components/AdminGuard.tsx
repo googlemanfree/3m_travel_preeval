@@ -35,6 +35,7 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
     localStorage.setItem("adminSessionToken", restoredToken);
     sessionStorage.setItem("adminName", admin.fullName);
     sessionStorage.setItem("adminEmail", admin.email);
+    localStorage.setItem("adminEmail", admin.email);
     setSessionToken(restoredToken);
   }, [platformBootstrap.data]);
   useEffect(() => {
