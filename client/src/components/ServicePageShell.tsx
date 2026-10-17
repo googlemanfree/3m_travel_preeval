@@ -20,8 +20,15 @@ type ServicePageShellProps = {
   notice?: string;
   /** Image premium thématique (visa, destination, service). */
   heroVisual?: VisualSources | null;
+  /** Langue des libellés fixes de l'en-tête (français par défaut). */
+  lang?: "fr" | "en";
   children: ReactNode;
 };
+
+const SHELL_COPY = {
+  fr: { asideTitle: "Une orientation, pas une promesse", asideText: "Chaque projet est examiné au regard des informations disponibles et des exigences officielles. La décision finale appartient toujours aux autorités compétentes." },
+  en: { asideTitle: "Guidance, not a promise", asideText: "Each project is reviewed against the information available and official requirements. The final decision always belongs to the competent authorities." },
+} as const;
 
 export function ServicePageShell({
   eyebrow,
@@ -35,8 +42,10 @@ export function ServicePageShell({
   officialLabel = "Consulter la source officielle",
   notice,
   heroVisual,
+  lang = "fr",
   children,
 }: ServicePageShellProps) {
+  const shellCopy = SHELL_COPY[lang];
   return (
     <PremiumAtmosphere washVisual={heroVisual ?? null} washOpacity={12}>
       <main className="min-h-screen text-slate-900">
@@ -89,8 +98,8 @@ export function ServicePageShell({
             </div>
             <aside className="rounded-2xl border border-white/25 bg-slate-950/45 p-6 shadow-2xl backdrop-blur-sm sm:p-7">
               <ShieldCheck className="h-8 w-8 text-amber-200" aria-hidden="true" />
-              <h2 className="mt-4 text-lg font-black !text-white">Une orientation, pas une promesse</h2>
-              <p className="premium-copy-on-dark mt-2 rounded-xl bg-[#020C3B]/30 px-3 py-2 !text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)] text-base">Chaque projet est examiné au regard des informations disponibles et des exigences officielles. La décision finale appartient toujours aux autorités compétentes.</p>
+              <h2 className="mt-4 text-lg font-black !text-white">{shellCopy.asideTitle}</h2>
+              <p className="premium-copy-on-dark mt-2 rounded-xl bg-[#020C3B]/30 px-3 py-2 !text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)] text-base">{shellCopy.asideText}</p>
             </aside>
           </div>
         </section>
@@ -104,7 +113,7 @@ export function ServicePageShell({
         )}
         <div className="border-b border-slate-200/70 bg-white/70 px-4 py-4 backdrop-blur-sm sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
-            <SocialShareButtons title={title} />
+            <SocialShareButtons title={title} lang={lang} />
           </div>
         </div>
         {children}

@@ -7,6 +7,7 @@ import * as campaignPartners from "../client/src/data/contentCampaignPartners";
 import * as campaignEvisa from "../client/src/data/contentCampaignEvisa";
 import * as campaignTranslation from "../client/src/data/contentCampaignTranslation";
 import { GUIDES, getGuide } from "../client/src/data/guidesData";
+import * as campaignEn from "../client/src/data/contentCampaignEn";
 import { evisasDatabaseComplete } from "../client/src/data/evisasDatabaseComplete";
 import { composePublicPrerender, getIndexablePublicPaths, PUBLIC_PAGES } from "./publicPrerender";
 
@@ -91,7 +92,7 @@ describe("campagne de contenu : pages enregistrées partout où il faut", () => 
   });
 
   it("le HTML prérendu (lu sans JavaScript) contient les questions et les signaux d'alerte", () => {
-    const template = "<!doctype html><html><head><title>x</title></head><body><div id=\"root\"><!--prerender-app--></div></body></html>";
+    const template = "<!doctype html><html lang=\"fr\"><head><title>x</title></head><body><div id=\"root\"><!--prerender-app--></div></body></html>";
     const faqPage = composePublicPrerender(template, "/faq");
     expect(faqPage.status).toBe(200);
     const faq = faqPage.html;
@@ -246,7 +247,7 @@ describe("campagne de contenu, lot 5 : commande de traduction", () => {
 });
 
 describe("campagne de contenu, lot 6 : guides pratiques", () => {
-  const template = "<!doctype html><html><head><title>x</title></head><body><div id=\"root\"><!--prerender-app--></div></body></html>";
+  const template = "<!doctype html><html lang=\"fr\"><head><title>x</title></head><body><div id=\"root\"><!--prerender-app--></div></body></html>";
 
   it("six guides complets, sans doublon, avec FAQ et sections identifiées", () => {
     expect(GUIDES.map((guide) => guide.slug)).toEqual([
@@ -300,6 +301,85 @@ describe("campagne de contenu, lot 6 : guides pratiques", () => {
   it("le plan du site visiteur liste le hub et chaque guide", () => {
     expect(read("client/src/pages/Sitemap.tsx")).toContain('href: "/guides"');
     expect(read("client/src/pages/Sitemap.tsx")).toContain("GUIDES.map");
+  });
+});
+
+describe("campagne de contenu, lot 7 : version anglaise", () => {
+  const template = "<!doctype html><html lang=\"fr\"><head><title>x</title></head><body><div id=\"root\"><!--prerender-app--></div></body></html>";
+  const enTexts = (() => {
+    const texts: string[] = [];
+    const visit = (value: unknown) => {
+      if (typeof value === "string") texts.push(value);
+      else if (Array.isArray(value)) value.forEach(visit);
+      else if (value && typeof value === "object") Object.values(value as Record<string, unknown>).forEach(visit);
+    };
+    Object.values(campaignEn).forEach(visit);
+    return texts;
+  })();
+
+  it("la version anglaise a exactement la même structure que la version française", () => {
+    expect(campaignEn.EN_FAQ_GROUPS.map((group) => group.items.length)).toEqual(campaign.FAQ_GENERAL_GROUPS.map((group) => group.items.length));
+    expect(campaignEn.EN_FAQ_ITEMS).toHaveLength(campaign.FAQ_GENERAL_ITEMS.length);
+    expect(campaignEn.EN_AGENCY_RED_FLAGS).toHaveLength(campaign.AGENCY_RED_FLAGS.length);
+    expect(campaignEn.EN_AGENCY_CHECKS).toHaveLength(campaign.AGENCY_CHECKS.length);
+    expect(campaignEn.EN_AGENCY_3M_DOES).toHaveLength(campaign.AGENCY_3M_DOES.length);
+    expect(campaignEn.EN_AGENCY_IF_SCAMMED).toHaveLength(campaign.AGENCY_IF_SCAMMED.length);
+    expect(campaignEn.EN_AGENCY_CHECK_FAQ).toHaveLength(campaign.AGENCY_CHECK_FAQ.length);
+  });
+
+  it("mêmes garde-fous qu'en français : pas de chiffre assorti d'une unité, pas de garantie affirmée, pas de français résiduel", () => {
+    expect(enTexts.length).toBeGreaterThan(100);
+    const ENGLISH_NUMBERS = /\d+\s?(%|€|\$|FCFA|F CFA|hours?|days?|weeks?|months?)/i;
+    for (const text of enTexts) {
+      expect(text, text).not.toMatch(ENGLISH_NUMBERS);
+      expect(text, text).not.toMatch(/Prime Travel/i);
+      expect(text, text).not.toMatch(/\bassured to succeed\b|\bwithout risk\b|\b100\s?%/i);
+      for (const match of text.matchAll(/guarantee\w*/gi)) {
+        const before = text.slice(Math.max(0, match.index! - 30), match.index);
+        expect(before, text).toMatch(/\b(not|no|never|cannot|without)\b/i);
+      }
+      // Les seuls accents tolérés sont ceux de noms propres (Yaoundé, Montée) et des citations de pages françaises.
+      const stripped = text.replace(/Yaoundé|Montée/g, "");
+      expect(stripped, text).not.toMatch(/[àâçèéêëîïôùûœ]/i);
+    }
+  });
+
+  it("pages /en/faq et /en/verify-an-agency : prérendu en anglais, hreflang réciproque, titres et descriptions dans les limites", () => {
+    const pairs: Array<[string, string]> = [["/faq", "/en/faq"], ["/verifier-une-agence", "/en/verify-an-agency"]];
+    for (const [fr, en] of pairs) {
+      const meta = PUBLIC_PAGES[en];
+      expect(meta.title.length, en).toBeLessThanOrEqual(60);
+      expect(meta.description.length, en).toBeLessThanOrEqual(160);
+      expect(getIndexablePublicPaths()).toContain(en);
+      const rendered = composePublicPrerender(template, en);
+      expect(rendered.status, en).toBe(200);
+      expect(rendered.html, en).toContain('<html lang="en"');
+      expect(rendered.html, en).toContain(`hreflang="fr" href="https://www.3mtravelagency.com${fr}"`);
+      expect(rendered.html, en).toContain(`hreflang="en" href="https://www.3mtravelagency.com${en}"`);
+      const frRendered = composePublicPrerender(template, fr);
+      expect(frRendered.html, fr).toContain(`hreflang="en" href="https://www.3mtravelagency.com${en}"`);
+    }
+    expect(composePublicPrerender(template, "/en/faq").html).toContain("Do I need an account to get started?");
+    expect(composePublicPrerender(template, "/en/verify-an-agency").html).toContain("A visa, job or admission that is “assured”");
+  });
+
+  it("l'accueil anglais n'affiche plus de français résiduel ni l'adresse en double, et renvoie vers les pages anglaises", () => {
+    const home = read("client/src/pages/EnHome.tsx");
+    expect(home).toContain("INTERNATIONAL_BRAND.corridorEn");
+    expect(home).not.toContain("INTERNATIONAL_BRAND.corridor}");
+    expect(home).toContain("addressLinesEn.join");
+    expect(home).not.toContain(", Yaoundé, Cameroon</p>");
+    expect(home).toContain('href="/en/faq"');
+    expect(home).toContain('href="/en/verify-an-agency"');
+    expect(read("client/src/data/internationalBrand.ts")).toContain('corridorEn: "Africa');
+  });
+
+  it("les routes sont enregistrées et le composant partagé reste en français par défaut", () => {
+    const app = read("client/src/App.tsx");
+    expect(app).toContain('<Route path={"/en/faq"} component={EnFaq} />');
+    expect(app).toContain('<Route path={"/en/verify-an-agency"} component={EnVerifyAgency} />');
+    expect(read("client/src/components/ServicePageShell.tsx")).toContain('lang = "fr"');
+    expect(read("client/src/components/SocialShareButtons.tsx")).toContain('lang = "fr"');
   });
 });
 

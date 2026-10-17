@@ -43,7 +43,7 @@ export default function EnHome() {
             {INTERNATIONAL_BRAND.publicName}
           </p>
           <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.22em] text-blue-100/90">
-            {INTERNATIONAL_BRAND.corridor}
+            {INTERNATIONAL_BRAND.corridorEn}
           </p>
           <h1 className="mt-5 text-2xl font-semibold tracking-tight sm:text-3xl lg:text-4xl">
             {INTERNATIONAL_BRAND.promiseLine.en}
@@ -106,7 +106,7 @@ export default function EnHome() {
 
       <section aria-label="Contact" className="mx-auto max-w-4xl px-4 py-14 text-center sm:px-6 lg:px-8">
         <h2 className="text-2xl font-black text-slate-950">{INTERNATIONAL_BRAND.cta.advisor.en}</h2>
-        <p className="mt-3 text-slate-600">{COMPANY_PROFILE.offices.cameroon.addressLines.join(", ")}, Yaoundé, Cameroon</p>
+        <p className="mt-3 text-slate-600">{COMPANY_PROFILE.offices.cameroon.addressLinesEn.join(", ")}</p>
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer">
             <Button className="h-11 rounded-xl bg-emerald-700 px-6 font-bold text-white hover:bg-emerald-800">
@@ -119,6 +119,10 @@ export default function EnHome() {
             </Button>
           </a>
         </div>
+        <p className="mt-6 text-sm text-slate-600" data-testid="en-home-help-links">
+          <a href="/en/faq" className="font-bold text-blue-700 underline underline-offset-2 hover:text-blue-900">Frequently asked questions</a>{" · "}
+          <a href="/en/verify-an-agency" className="font-bold text-blue-700 underline underline-offset-2 hover:text-blue-900">Check an agency before paying</a>
+        </p>
         <p className="mx-auto mt-6 max-w-lg text-xs leading-5 text-slate-500">{INTERNATIONAL_BRAND.disclaimer.en}</p>
         <p className="mt-3 text-xs text-slate-400">{COMPANY_PROFILE.legalName} — {COMPANY_PROFILE.legalIdentifiers.registration} · NIU {COMPANY_PROFILE.legalIdentifiers.taxpayerId}</p>
       </section>

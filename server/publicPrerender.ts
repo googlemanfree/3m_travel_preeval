@@ -14,6 +14,7 @@ import { evisasDatabaseComplete } from "../client/src/data/evisasDatabaseComplet
 import { getStudyDestinationArticle, studyDestinationArticles } from "../client/src/data/studyDestinationArticles";
 import { AGENCY_CHECKS, AGENCY_RED_FLAGS, FAQ_GENERAL_GROUPS } from "../client/src/data/contentCampaign";
 import { GUIDES, getGuide } from "../client/src/data/guidesData";
+import { EN_AGENCY_CHECKS, EN_AGENCY_RED_FLAGS, EN_FAQ_GROUPS } from "../client/src/data/contentCampaignEn";
 import { getEnglishContentByEnSlug, getEnglishContentByFrId, type ProcedureEnglishContent } from "../client/src/data/procedures107English";
 import { getCataloguedDestinationImage } from "../client/src/data/premiumVisuals";
 import { getServiceVisual } from "../client/src/data/premiumVisuals";
@@ -201,6 +202,10 @@ const studyArticleForPath = (path: string) => {
 const HREFLANG_PAIRS: Record<string, string> = {
   "/": "/en",
   "/en": "/",
+  "/faq": "/en/faq",
+  "/en/faq": "/faq",
+  "/verifier-une-agence": "/en/verify-an-agency",
+  "/en/verify-an-agency": "/verifier-une-agence",
 };
 for (const detail of PUBLIC_DESTINATION_DETAILS) {
   const englishContent = getEnglishContentByFrId(detail.procedure.id);
@@ -223,6 +228,8 @@ const privateShell = (heading: string, description: string, lead = "Cette page e
 /** Guides pratiques : un hub et une page par guide, générés depuis client/src/data/guidesData.ts. */
 const GUIDE_PAGES: Record<string, PublicMeta> = {
   "/guides": { title: `Guides pratiques mobilité | ${SITE}`, description: "Documents, calendrier, financement, budget, premières démarches et vocabulaire : les guides pratiques pour préparer un projet de mobilité.", heading: "Guides pratiques", lead: "Des repères simples pour les points qui bloquent le plus souvent un dossier, sans promesse de résultat." },
+  "/en/faq": { title: `Frequently asked questions | ${SITE}`, description: "Free assessment, fees, documents, timelines, security, visas and e-Visa: answers to the questions most often asked before starting a mobility project.", heading: "Frequently asked questions", lead: "Clear answers before you start your international mobility project, with no promise of results: decisions belong to authorities, schools and employers." },
+  "/en/verify-an-agency": { title: `Check an agency before paying | ${SITE}`, description: "Signs of a fraudulent offer, checks to make before paying a visa, study or job agency, and what 3M TRAVEL AGENCY commits to doing and never doing.", heading: "Check an agency before paying", lead: "An “assured” visa, job or admission is the most common sign of a scam: here is how to check before you pay." },
   ...Object.fromEntries(GUIDES.map((guide): [string, PublicMeta] => [`/guides/${guide.slug}`, { title: `${guide.seoTitle} | ${SITE}`, description: guide.description, heading: guide.title, lead: guide.lead }])),
 };
 
@@ -389,6 +396,12 @@ const routeSpecificPrerender = (path: string) => {
       .map((entry) => `<li><a href="/en/procedures/${encodeURIComponent(entry.enSlug)}">${esc(entry.description)}</a></li>`)
       .join("");
     return `<section aria-label="Mobility services"><h2>Prepare your international mobility project</h2><p>Discover our most requested procedures, verified institutional sources, and a free initial evaluation before any step.</p><p><a href="/?project=travail&amp;destination=canada#evaluation-multi">Start the free evaluation</a> · <a href="/en">Explore priority procedures</a> · <a href="/sources-officielles">View official sources</a></p></section><section aria-label="Priority destinations"><h2>Most requested procedures from Yaoundé</h2><ul>${links}</ul></section>`;
+  }
+  if (path === "/en/faq") {
+    return EN_FAQ_GROUPS.map((group) => `<section aria-label="${esc(group.title)}"><h2>${esc(group.title)}</h2>${group.items.map((item) => `<h3>${esc(item.question)}</h3><p>${esc(item.answer)}</p>`).join("")}</section>`).join("");
+  }
+  if (path === "/en/verify-an-agency") {
+    return `<section aria-label="Warning signs"><h2>Warning signs</h2><ul>${EN_AGENCY_RED_FLAGS.map((flag) => `<li><strong>${esc(flag.title)}</strong> — ${esc(flag.text)}</li>`).join("")}</ul></section><section aria-label="Checks before paying"><h2>What to check before paying</h2><ol>${EN_AGENCY_CHECKS.map((step) => `<li><strong>${esc(step.title)}</strong> — ${esc(step.text)}</li>`).join("")}</ol></section>`;
   }
   if (path === "/guides") {
     return `<section aria-label="Tous les guides"><h2>Tous les guides</h2><ul>${GUIDES.map((guide) => `<li><a href="/guides/${esc(guide.slug)}">${esc(guide.title)}</a> — ${esc(guide.description)}</li>`).join("")}</ul></section>`;
@@ -841,5 +854,7 @@ export function composePublicPrerender(template: string, url: string) {
     .replace(/<meta\s+name="twitter:[^"]+"[^>]*>\s*/gi, "");
   html = html.replace("</head>", () => `${head}\n</head>`);
   html = html.replace("<!--prerender-app-->", () => body);
+  // Les pages anglaises déclarent leur langue dès le HTML serveur (lecteurs d'écran, moteurs de recherche sans JavaScript).
+  if (isEnPath) html = html.replace(/<html(\s+[^>]*?)?\slang="[^"]*"/i, (_match, before = "") => `<html${before} lang="en"`);
   return { html, status: unknown ? 404 : 200, noindex: Boolean(current.noindex) };
 }

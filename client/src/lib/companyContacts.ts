@@ -11,6 +11,8 @@ export type CompanyOffice = {
   timeZoneLabel: string;
   openingHours: readonly string[];
   addressLines: readonly string[];
+  /** Adresse en anglais (pages /en) : évite de mêler le français aux pages anglaises. */
+  addressLinesEn?: readonly string[];
   mapQuery: string;
 };
 
@@ -81,6 +83,7 @@ export const COMPANY_PROFILE = {
       timeZoneLabel: "Heure du Cameroun (WAT)",
       openingHours: ["Lun–ven : 08 h 00 – 20 h 00", "Sam–dim : 09 h 00 – 18 h 00"],
       addressLines: ["Biyem-Assi, Montée Chapelle Obili", "À 10 m de EHS, Yaoundé, Cameroun"],
+      addressLinesEn: ["Biyem-Assi, Montée Chapelle Obili", "10 m from EHS, Yaoundé, Cameroon"],
       mapQuery: "Biyem-Assi, Montée Chapelle Obili, Yaoundé, Cameroun",
     },
     ottawa: {

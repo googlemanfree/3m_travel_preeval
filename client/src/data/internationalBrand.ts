@@ -9,6 +9,7 @@ export const INTERNATIONAL_BRAND = {
   groupName: "3M Group SARL",
   /** Public cible — pas une ville seule. */
   corridor: "Afrique · destinations internationales · suivi à distance",
+  corridorEn: "Africa · international destinations · remote follow-up",
   officesLine: {
     fr: "Bureaux Yaoundé · Ottawa · partenaires internationaux",
     en: "Yaoundé · Ottawa offices · international partners",

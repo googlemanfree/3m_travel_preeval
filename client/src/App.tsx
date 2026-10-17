@@ -56,6 +56,8 @@ import CniPasseport from "./pages/CniPasseport";
 import Faq from "./pages/Faq";
 import VerifierAgence from "./pages/VerifierAgence";
 import GuidesHub from "./pages/GuidesHub";
+import EnFaq from "./pages/EnFaq";
+import EnVerifyAgency from "./pages/EnVerifyAgency";
 import GuidePage from "./pages/GuidePage";
 import Services from "./pages/Services";
 const Paiement = lazyWithTimeout(() => import("./pages/Paiement"));
@@ -158,6 +160,8 @@ function Router() {
       {/* Pages publiques (SANS authentification) */}
       <Route path={"/"} component={Home} />
       <Route path={"/en"} component={EnHome} />
+      <Route path={"/en/faq"} component={EnFaq} />
+      <Route path={"/en/verify-an-agency"} component={EnVerifyAgency} />
       <Route path={"/register"} component={Register} />
       <Route path={"/signup"} component={Register} />
       <Route path={"/confirm-email"} component={ConfirmEmail} />
