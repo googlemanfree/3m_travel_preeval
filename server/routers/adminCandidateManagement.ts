@@ -878,7 +878,7 @@ export const adminCandidateManagementRouter = router({
         reference = agencyDossierReference(dossier.id);
         destination = dossier.destination || row.destination || null;
         visaType = dossier.visaType || row.visaType || null;
-        phone = dossier.whatsappNumber || row.phone || null;
+        phone = dossier.phone || row.phone || null;
       } else {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide pour la relance." });
       }
