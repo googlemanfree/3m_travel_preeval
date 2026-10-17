@@ -3799,7 +3799,7 @@ function FlightCommissionSettings() {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    const sessionToken = localStorage.getItem("adminSessionToken");
+    const sessionToken = localStorage.getItem("adminSessionToken") || sessionStorage.getItem("adminSessionToken");
     if (!sessionToken) {
       toast({ title: "Session administrateur requise", description: "Reconnectez-vous avant de modifier la commission.", variant: "destructive" });
       return;
@@ -3808,7 +3808,7 @@ function FlightCommissionSettings() {
   };
 
   const confirmSave = () => {
-    const sessionToken = localStorage.getItem("adminSessionToken");
+    const sessionToken = localStorage.getItem("adminSessionToken") || sessionStorage.getItem("adminSessionToken");
     if (!sessionToken) {
       setIsConfirmationOpen(false);
       toast({ title: "Session administrateur requise", description: "Reconnectez-vous avant de modifier la commission.", variant: "destructive" });
@@ -3874,7 +3874,7 @@ function FlightCommissionSettings() {
 
 function SearchApiMonitoring() {
   const { toast } = useToast();
-  const sessionToken = localStorage.getItem("adminSessionToken");
+  const sessionToken = localStorage.getItem("adminSessionToken") || sessionStorage.getItem("adminSessionToken");
   const { data: status, isLoading, refetch } = trpc.flights.getSearchApiStatus.useQuery(
     { sessionToken: sessionToken || "missing" },
     { enabled: Boolean(sessionToken), refetchOnWindowFocus: false }

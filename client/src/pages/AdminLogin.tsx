@@ -32,6 +32,7 @@ export default function AdminLogin() {
       sessionStorage.setItem('adminType', data.adminType);
       sessionStorage.setItem('adminName', data.fullName);
       sessionStorage.setItem('adminEmail', data.email);
+      localStorage.setItem('adminEmail', data.email);
       toast.success(`Bienvenue, ${data.fullName} !`);
       
       // Vérifier si le changement de mot de passe est obligatoire
