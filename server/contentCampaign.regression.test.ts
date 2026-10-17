@@ -8,6 +8,7 @@ import * as campaignEvisa from "../client/src/data/contentCampaignEvisa";
 import * as campaignTranslation from "../client/src/data/contentCampaignTranslation";
 import { GUIDES, getGuide } from "../client/src/data/guidesData";
 import * as campaignEn from "../client/src/data/contentCampaignEn";
+import * as campaignPages from "../client/src/data/contentCampaignPages";
 import { evisasDatabaseComplete } from "../client/src/data/evisasDatabaseComplete";
 import { composePublicPrerender, getIndexablePublicPaths, PUBLIC_PAGES } from "./publicPrerender";
 
@@ -32,6 +33,7 @@ function collectTexts(): string[] {
   Object.values(campaignPartners).forEach(visit);
   [campaignEvisa.EVISA_COUNTRY_CHECKS, campaignEvisa.EVISA_COUNTRY_ERRORS, campaignEvisa.EVISA_COUNTRY_REFUSAL_STEPS].forEach(visit);
   Object.values(campaignTranslation).forEach(visit);
+  Object.values(campaignPages).forEach(visit);
   visit(GUIDES.map(({ slug: _slug, ...rest }) => rest));
   return texts;
 }
@@ -380,6 +382,27 @@ describe("campagne de contenu, lot 7 : version anglaise", () => {
     expect(app).toContain('<Route path={"/en/verify-an-agency"} component={EnVerifyAgency} />');
     expect(read("client/src/components/ServicePageShell.tsx")).toContain('lang = "fr"');
     expect(read("client/src/components/SocialShareButtons.tsx")).toContain('lang = "fr"');
+  });
+});
+
+describe("campagne de contenu, lot 8 : Schengen et à propos", () => {
+  it("contenus complets, questions distinctes, aucun chiffre de réussite", () => {
+    expect(campaignPages.SCHENGEN_COMMON_ERRORS.length).toBeGreaterThanOrEqual(7);
+    expect(campaignPages.SCHENGEN_FAQ.length).toBeGreaterThanOrEqual(7);
+    expect(campaignPages.ABOUT_FAQ.length).toBeGreaterThanOrEqual(6);
+    for (const item of [...campaignPages.SCHENGEN_FAQ, ...campaignPages.ABOUT_FAQ]) {
+      expect(item.question.trim().endsWith("?"), item.question).toBe(true);
+      expect(item.answer.length, item.question).toBeGreaterThan(90);
+    }
+    const aboutAnswers = campaignPages.ABOUT_FAQ.map((item) => item.answer).join("\n");
+    expect(aboutAnswers).toMatch(/Nous ne publions ni taux de réussite/);
+    expect(aboutAnswers).not.toMatch(/\d/);
+  });
+
+  it("les deux pages sont branchées sur les nouveaux contenus", () => {
+    expect(read("client/src/pages/Schengen.tsx")).toContain('testId="schengen-faq"');
+    expect(read("client/src/pages/Schengen.tsx")).toContain('testId="schengen-errors"');
+    expect(read("client/src/pages/About.tsx")).toContain('testId="about-faq"');
   });
 });
 
