@@ -46,7 +46,8 @@ describe("official dossier evaluation and payment gate", () => {
   it("protects the inherited admin status mutation for online and agency records", () => {
     const adminDossier = read("server/routers/adminDossier.ts");
     const admin = read("server/routers/admin.ts");
-    expect(admin).toContain("assertApplicationCanEnterStatus(app, internalStatusMap[input.newStatus])");
+    expect(admin).toContain("assertApplicationCanEnterStatus({");
+    expect(admin).toContain("}, internalStatusMap[input.newStatus]);");
     expect(adminDossier).toContain("agencyPaymentConfirmed");
     expect(adminDossier).toContain("const paymentConfirmed =");
     expect(adminDossier).toContain("Création bloquée");

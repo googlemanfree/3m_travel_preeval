@@ -11,11 +11,12 @@ describe("normalisation automatique des références après paiement", () => {
     const application = read("server/routers/application.ts");
     const cinetpay = read("server/routers/cinetpayPayment.ts");
 
-    expect(admin).toContain("normalizeAfterOpeningPayment(db");
+    // Validation admin et CinetPay passent par l'automatisation d'ouverture, qui absorbe EVAL-AG dans la référence 3M.
+    expect(admin).toContain("runOpeningPaymentAutomation(db");
+    expect(cinetpay).toContain("finalizeOnlineOpeningPaymentAfterCinetPay(db");
+    expect(read("server/services/openingPaymentAutomation.ts")).toContain("ensureAgencyActiveReference(db");
     expect(application).toContain('input.paymentStatus === "SUCCESS"');
     expect(application).toContain("normalizeAfterOpeningPayment(db");
-    expect(cinetpay).toContain("normalizeAfterOpeningPayment(db");
-    expect(admin).toContain("automatic reference normalization failed");
     expect(application).toContain("automatic reference normalization failed");
   });
 

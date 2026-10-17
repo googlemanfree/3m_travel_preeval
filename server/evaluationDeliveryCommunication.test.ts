@@ -16,15 +16,16 @@ describe("communication de bilan contrôlée", () => {
 
   it("propose des modèles de procédure et un aperçu e-mail dans l’éditeur", () => {
     const editorSource = readProjectFile("client/src/components/EvaluationDeliveryEditor.tsx");
-    expect(editorSource).toContain("Canada — bilan et prochaines étapes");
-    expect(editorSource).toContain("Luxembourg — bilan et pièces à préparer");
-    expect(editorSource).toContain("Europe — orientation et plan d’action");
+    const templatesSource = readProjectFile("shared/evaluationBilanTemplates.ts");
+    expect(templatesSource).toContain("Canada — bilan et prochaines étapes");
+    expect(templatesSource).toContain("Luxembourg — bilan et pièces à préparer");
+    expect(templatesSource).toContain("Europe — orientation et plan d’action");
     expect(editorSource).toContain("Aperçu exact de l’e-mail");
   });
 
   it("expose des modèles français et anglais et une impression sans envoi", () => {
     const editorSource = readProjectFile("client/src/components/EvaluationDeliveryEditor.tsx");
-    expect(editorSource).toContain("English — Standard assessment");
+    expect(readProjectFile("shared/evaluationBilanTemplates.ts")).toContain("English — Standard assessment");
     expect(editorSource).toContain("Langue du candidat");
     expect(editorSource).toContain("printEmailPreview");
     expect(editorSource).toContain("printWindow.print()");

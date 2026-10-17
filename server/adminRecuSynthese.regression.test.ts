@@ -99,7 +99,8 @@ describe("admin — impression reçu A5", () => {
     expect(workspace).toContain("createObjectURL");
     expect(workspace).not.toContain('noopener,noreferrer');
     expect(dashboard).toContain("createObjectURL");
-    expect(dashboard).not.toContain('noopener,noreferrer');
+    // Le lien WhatsApp des relances (URL https, pas un blob) s'ouvre avec noopener : seule l'ouverture des reçus compte ici.
+    expect(dashboard.replace(/window\.open\(result\.whatsappUrl[^\n]*\n/g, "")).not.toContain('noopener,noreferrer');
     expect(workspace).toContain('data-testid="candidate360-receipt-correct"');
   });
 

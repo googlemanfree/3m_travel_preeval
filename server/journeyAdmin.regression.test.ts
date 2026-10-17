@@ -14,7 +14,9 @@ describe("admin journey checklist contract", () => {
     expect(source).toContain("Seule la dernière étape ajoutée peut être annulée.");
     expect(source).toContain("Le paiement doit être validé par un administrateur avant cette étape.");
     expect(source).toContain('updatedByRole: "admin"');
-    expect(source).toContain("Cette étape est confirmée par le candidat dans son espace");
+    // L'étape de bilan est confirmée par le candidat ; l'administrateur ne peut la valider à sa place qu'avec un motif écrit.
+    expect(source).toContain("confirmOnBehalf");
+    expect(source).toContain("Un motif d’au moins 8 caractères est obligatoire pour confirmer le bilan à la place du candidat.");
   });
 
   it("renders an explicit admin action on the synchronized journey", () => {
@@ -25,6 +27,7 @@ describe("admin journey checklist contract", () => {
     expect(source).toContain("<ProcedureStepper");
     const stepper = read("client/src/components/ProcedureStepper.tsx");
     expect(stepper).toContain("Marquer l’étape comme faite");
-    expect(stepper).toContain("Déverrouiller (confirmation hors ligne)");
+    expect(stepper).toContain("Déverrouiller");
+    expect(stepper).toContain("Confirmation hors ligne");
   });
 });

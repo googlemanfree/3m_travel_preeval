@@ -1217,7 +1217,20 @@ export function CandidateDetailModal({
                 email={candidate.email}
                 cvDocument={(data as any)?.cvDocument ?? null}
                 hasCv={Boolean((candidate as any).hasCv || (data as any)?.cvDocument?.documentUrl)}
-                infoRequestAlreadySent={Boolean((candidate as any).registrationInfoRequestSentAt)}
+                evaluationCompleted={Boolean(
+                  candidate.evaluationDeclarationStatus === "validated"
+                  || candidate.evaluationReviewedAt
+                  || (candidate as any).evaluationValidatedAt
+                  || (data as any)?.evaluationClientConfirmed
+                  || (data as any)?.evaluationClientConfirmedAt
+                  || String((data as any)?.candidate?.evaluationDeliveryStatus || (candidate as any).evaluationDeliveryStatus || "").toLowerCase() === "sent"
+                  || String((candidate as any).internalStatus || "").toLowerCase() === "bilan_envoye"
+                )}
+                infoRequestAlreadySent={Boolean(
+                  (candidate as any).registrationInfoRequestSentAt
+                  || (data as any)?.registrationInfoRequestSentAt
+                  || ((data as any)?.communications?.notifications || []).some((row: { type?: string }) => row.type === "registration_info_request")
+                )}
                 isRequestingInfo={requestRegistrationInfoMutation.isPending}
                 onRequestInfo={({ destination, visaType }) =>
                   requestRegistrationInfoMutation.mutate({
@@ -1225,7 +1238,11 @@ export function CandidateDetailModal({
                     candidateId,
                     destination,
                     visaType,
-                    forceResend: Boolean((candidate as any).registrationInfoRequestSentAt),
+                    forceResend: Boolean(
+                      (candidate as any).registrationInfoRequestSentAt
+                      || (data as any)?.registrationInfoRequestSentAt
+                      || ((data as any)?.communications?.notifications || []).some((row: { type?: string }) => row.type === "registration_info_request")
+                    ),
                   })
                 }
               />

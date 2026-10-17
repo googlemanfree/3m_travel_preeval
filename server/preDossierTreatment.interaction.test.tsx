@@ -49,6 +49,7 @@ vi.mock("@/lib/trpc", () => ({
       deliverValidatedEvaluation: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
       reviewPortrait: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
       requestRegistrationSupplementaryInfo: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
+      sendDynamicRelance: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
     },
   },
 }));

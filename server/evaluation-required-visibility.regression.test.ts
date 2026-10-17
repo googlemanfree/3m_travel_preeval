@@ -13,7 +13,7 @@ describe("candidate evaluation visibility", () => {
     expect(source).toContain("Envoyer");
     expect(source).toContain("e-mail");
     expect(source).toContain('data-testid="candidate-bilan-editor"');
-    expect(source).toContain("Bilan à envoyer au candidat");
+    expect(source).toContain("Préparer le bilan avant envoi");
     expect(source).toContain("<RichTextEditor");
     expect(source).toContain("Enregistrer le brouillon");
     expect(source).toContain("Aperçu espace candidat");

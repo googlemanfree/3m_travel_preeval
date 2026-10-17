@@ -19,7 +19,7 @@ describe("rattachement bilan agence multi-cas", () => {
     expect(agencyRouter).toContain("validateEvaluation: protectedProcedure");
     expect(agencyRouter).toContain("evaluationValidatedAt");
     expect(agencyRouter).toContain("evaluation_validated");
-    expect(editor).toContain("Rédigez directement le bilan dans cet espace de travail");
+    expect(editor).toContain("Rédigez le bilan, prévisualisez-le, puis envoyez-le en un clic");
     expect(editor).toContain("Valider et envoyer");
   });
 
