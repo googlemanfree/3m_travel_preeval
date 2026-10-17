@@ -1,5 +1,6 @@
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
+import { getAdminSessionToken } from "@/lib/adminSession";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +15,7 @@ import Footer from "@/components/Footer";
 import { toast } from "sonner";
 
 export default function AdminEvaluations() {
-  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
+  const sessionToken = getAdminSessionToken();
   const [location, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");

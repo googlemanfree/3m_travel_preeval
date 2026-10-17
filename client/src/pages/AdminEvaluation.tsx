@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { getAdminSessionToken } from '@/lib/adminSession';
 import { trpc } from '@/lib/trpc';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,7 @@ export default function AdminEvaluation() {
 
   // Ces trois procédures exigent la session administrateur (`requireValidAdminSession`) : sans jeton, la page
   // restait vide car le serveur rejetait la requête.
-  const sessionToken = typeof window !== 'undefined' ? localStorage.getItem('adminSessionToken') || '' : '';
+  const sessionToken = getAdminSessionToken();
 
   // Récupérer les rapports en attente
   const { data: reportsData, isLoading: reportsLoading, refetch: refetchReports } = trpc.admin.getEvaluationPendingReports.useQuery(

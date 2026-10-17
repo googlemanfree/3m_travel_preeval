@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Loader, FileText, Send, XCircle, ExternalLink, Download, Search, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { getAdminSessionToken } from "@/lib/adminSession";
 import { exportConsultationSummaryPdf } from "@/lib/consultationPdf";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -23,7 +24,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function AdminConsultationRequests() {
-  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
+  const sessionToken = getAdminSessionToken();
   const [statusFilter, setStatusFilter] = useState<string>("pending_review");
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [editedReport, setEditedReport] = useState("");

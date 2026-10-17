@@ -11,6 +11,7 @@ import EvaluationWorkQueue from "@/components/EvaluationWorkQueue";
 import ApplicationPackWorkQueue from "@/components/ApplicationPackWorkQueue";
 import { computeWorkQueue, evaluationIdOf, type WorkQueueKey, type WorkQueueStatus } from "@/lib/adminWorkQueue";
 import { computePackWorkQueue, type PackQueueKey } from "@/lib/adminPackWorkQueue";
+import { getAdminSessionToken } from "@/lib/adminSession";
 import { VALIDATION_FILTERS, VALIDATION_FILTER_LABELS, countByValidationFilter, matchesValidationFilter, type ValidationFilter } from "@/lib/evaluationValidationForm";
 import {
   AlertTriangle,
@@ -330,7 +331,7 @@ function initialReviewDraft(item: DashboardItem) {
 
 export default function AdminAIEvaluationDashboard() {
   const { toast } = useToast();
-  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
+  const sessionToken = getAdminSessionToken();
   const [gapRelanceSent, setGapRelanceSent] = useState<Record<string, true>>({});
   const sendGapRelanceMutation = trpc.adminCandidateManagement.sendDynamicRelance.useMutation({
     onSuccess: (result, variables) => {

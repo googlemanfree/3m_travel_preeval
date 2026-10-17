@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { getAdminSessionToken } from "@/lib/adminSession";
 import { getEmailErrorGuidance, getEmailErrorTitle } from "@/lib/emailErrorGuidance";
 import { toast } from "sonner";
 import {
@@ -36,7 +37,7 @@ export default function AdminEmailDeliveryManagement() {
   const [editingEmail, setEditingEmail] = useState("");
   const [incidentComment, setIncidentComment] = useState("");
   const utils = trpc.useUtils();
-  const sessionToken = typeof window !== "undefined" ? sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || "" : "";
+  const sessionToken = getAdminSessionToken();
   const queryInput = useMemo(() => ({
     sessionToken,
     limit: 100,
