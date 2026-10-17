@@ -157,6 +157,16 @@ const partnerAccessRequestSchema = z.object({
   sectors: z.string().trim().max(255).optional(),
   targetMarkets: z.string().trim().max(255).optional(),
   message: z.string().trim().min(20).max(3000),
+  /** Charte partenaire : aucune facturation candidat + confidentialité. */
+  acknowledgeCharter: z.literal(true),
+}).superRefine((value, ctx) => {
+  if (value.organizationType === "placement_partner" && !(value.registrationNumber?.trim().length)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["registrationNumber"],
+      message: "Le numéro d’enregistrement ou de licence est obligatoire pour une agence de placement.",
+    });
+  }
 });
 const collaborationAuditActionSchema = z.enum([
   "favorite_shared",

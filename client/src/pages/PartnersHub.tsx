@@ -77,11 +77,11 @@ export default function PartnersHub() {
 
           <div className="rounded-2xl border border-white/20 bg-white/10 p-6 text-white transition-[transform,box-shadow,background-color] duration-200 ease-out hover:-translate-y-1 hover:bg-white/15 hover:shadow-2xl" data-testid="partners-hub-admin">
             <ShieldCheck className="h-8 w-8 text-amber-300" aria-hidden="true" />
-            <p className="mt-4 text-lg font-black">{en ? "2. 3M back-office" : "2. Back-office 3M"}</p>
+            <p className="mt-4 text-lg font-black">{en ? "2. 3M operations" : "2. Pilotage 3M"}</p>
             <p className="mt-2 text-sm leading-6 text-sky-100">
               {en
-                ? "Verify organisations, prepare anonymised profiles, confirm contracts & invitations, open Protocol No. 02, run the visa procedure."
-                : "Vérifier les organisations, préparer les profils anonymisés, confirmer contrats & invitations, ouvrir le Protocole N°02, piloter la procédure visa."}
+                ? "Our team verifies organisations, prepares anonymised profiles and follows the administrative procedure after a selection — internal tools only."
+                : "Notre équipe vérifie les organisations, prépare les profils anonymisés et suit la procédure administrative après une sélection — outils internes uniquement."}
             </p>
             <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-sky-200">
               {en ? "Internal access only" : "Accès interne uniquement"}
@@ -121,13 +121,18 @@ export default function PartnersHub() {
         </div>
 
         <div className="mt-8 rounded-2xl border border-white/20 bg-white/10 p-6 text-sky-50">
-          <p className="font-black text-white">{en ? "Credibility rules for international ads" : "Règles de crédibilité pour les pubs internationales"}</p>
+          <p className="font-black text-white">{en ? "Our sharing rules" : "Nos règles de partage"}</p>
           <ul className="mt-3 grid gap-2 text-sm leading-6 sm:grid-cols-2">
             <li>· {en ? "Organisation verification is mandatory" : "Vérification d’organisation obligatoire"}</li>
             <li>· {en ? "Candidate consent + anonymised profiles only" : "Consentement candidat + profils anonymisés uniquement"}</li>
             <li>· {en ? "No automatic access or hiring decision" : "Aucun accès automatique ni décision d’embauche"}</li>
             <li>· {en ? "Immigration outcome remains with authorities" : "La décision d’immigration reste aux autorités"}</li>
           </ul>
+          <p className="mt-4 text-sm font-semibold text-amber-100" data-testid="partners-access-terms">
+            {en
+              ? "Partner access: no registration fee · manual verification within a few business days (confirmed in writing)."
+              : "Accès partenaires : sans frais d’inscription · vérification manuelle sous quelques jours ouvrés (confirmée par écrit)."}
+          </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <Button asChild className="bg-white text-[#071b3d] hover:bg-sky-50">
               <a href="/?project=travail#evaluation-multi">{en ? "Candidate assessment" : "Évaluation candidat"}</a>
@@ -140,6 +145,36 @@ export default function PartnersHub() {
             </Button>
           </div>
         </div>
+
+        <aside className="mt-8 rounded-2xl border border-white/20 bg-white/95 p-6 text-slate-900" data-testid="anonymised-profile-sample" aria-labelledby="anonymised-sample-title">
+          <h2 id="anonymised-sample-title" className="text-lg font-black text-slate-950">
+            {en ? "Example of an anonymised profile" : "Exemple de fiche anonymisée"}
+          </h2>
+          <p className="mt-1 text-sm text-slate-600">
+            {en
+              ? "Fictitious data — what a verified agency or employer sees before any contact through 3M."
+              : "Données fictives — ce qu’une agence ou un employeur vérifié voit avant tout contact via 3M."}
+          </p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-[7rem_1fr]">
+            <div className="flex h-28 w-28 flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-slate-200 to-slate-300 text-center text-xs font-bold uppercase tracking-wide text-slate-600" aria-hidden="true">
+              <span>{en ? "Photo" : "Photo"}</span>
+              <span>{en ? "hidden" : "masquée"}</span>
+            </div>
+            <dl className="grid gap-2 text-sm sm:grid-cols-2">
+              <div><dt className="text-xs font-bold uppercase tracking-wide text-slate-500">{en ? "Code" : "Code"}</dt><dd className="font-semibold">PRF-3M-4821</dd></div>
+              <div><dt className="text-xs font-bold uppercase tracking-wide text-slate-500">{en ? "Sector" : "Secteur"}</dt><dd className="font-semibold">{en ? "Healthcare — nursing" : "Santé — soins infirmiers"}</dd></div>
+              <div><dt className="text-xs font-bold uppercase tracking-wide text-slate-500">{en ? "Experience" : "Expérience"}</dt><dd className="font-semibold">{en ? "4–6 years" : "4–6 ans"}</dd></div>
+              <div><dt className="text-xs font-bold uppercase tracking-wide text-slate-500">{en ? "Languages" : "Langues"}</dt><dd className="font-semibold">{en ? "French · English B1" : "Français · anglais B1"}</dd></div>
+              <div><dt className="text-xs font-bold uppercase tracking-wide text-slate-500">{en ? "Target region" : "Région cible"}</dt><dd className="font-semibold">{en ? "Europe" : "Europe"}</dd></div>
+              <div><dt className="text-xs font-bold uppercase tracking-wide text-slate-500">{en ? "Availability" : "Disponibilité"}</dt><dd className="font-semibold">{en ? "Within 3 months" : "Sous 3 mois"}</dd></div>
+            </dl>
+          </div>
+          <p className="mt-4 text-xs leading-5 text-slate-500">
+            {en
+              ? "Hidden by default: full name, phone, email, passport number, raw CV and address. Contact always goes through 3M after candidate consent."
+              : "Masqués par défaut : nom complet, téléphone, e-mail, n° de passeport, CV brut et adresse. Le contact passe toujours par 3M après consentement du candidat."}
+          </p>
+        </aside>
       </section>
       <FaqSection title={en ? "Frequently asked questions" : "Questions fréquentes"} introduction={en ? "How candidate profiles are shared, and who decides what." : "Comment les profils candidats sont partagés, et qui décide de quoi."} items={en ? PARTNERS_FAQ.en : PARTNERS_FAQ.fr} tone="slate" testId="partners-faq" />
     </main>

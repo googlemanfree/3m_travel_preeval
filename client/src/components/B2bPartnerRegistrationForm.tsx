@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Building2, CheckCircle2, IdCard, LockKeyhole, Send } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { CORRIDOR_ROUTES } from "@shared/talentCorridor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -35,6 +36,7 @@ const emptyForm = (organizationType: PartnerOrganizationType) => ({
   targetMarkets: "",
   message: "",
   acknowledgeReview: false,
+  acknowledgeCharter: false,
 });
 
 type FormState = ReturnType<typeof emptyForm>;
@@ -49,6 +51,7 @@ function readDraft(organizationType: PartnerOrganizationType): FormState {
       ...raw,
       organizationType: organizationType,
       acknowledgeReview: false,
+      acknowledgeCharter: false,
     };
   } catch {
     return base;
@@ -64,8 +67,18 @@ export function B2bPartnerRegistrationForm({
   const { t } = useLanguage();
   const [form, setForm] = useState(() => readDraft(defaultOrganizationType));
   const [submittedId, setSubmittedId] = useState<number | null>(null);
+  const requiresLicence = form.organizationType === "placement_partner";
   const filledCount = useMemo(
-    () => [form.legalName, form.country, form.contactFullName, form.contactEmail, form.contactPhone, form.contactRole, form.message].filter((value) => value.trim()).length,
+    () => [
+      form.legalName,
+      form.registrationNumber,
+      form.country,
+      form.contactFullName,
+      form.contactEmail,
+      form.contactPhone,
+      form.contactRole,
+      form.message,
+    ].filter((value) => value.trim()).length,
     [form],
   );
   const hasErrors = useMemo(() => (
@@ -76,10 +89,12 @@ export function B2bPartnerRegistrationForm({
     || form.contactPhone.trim().length < 6
     || form.contactRole.trim().length < 2
     || form.message.trim().length < 20
+    || (requiresLicence && form.registrationNumber.trim().length < 2)
     || !form.acknowledgeReview
-  ), [form]);
+    || !form.acknowledgeCharter
+  ), [form, requiresLicence]);
   useEffect(() => {
-    const { acknowledgeReview: _ack, ...draft } = form;
+    const { acknowledgeReview: _ack, acknowledgeCharter: _charter, ...draft } = form;
     localStorage.setItem(draftKey, JSON.stringify(draft));
   }, [form]);
   const requestAccess = trpc.placementPortal.requestPartnerAccess.useMutation({
@@ -98,16 +113,34 @@ export function B2bPartnerRegistrationForm({
 
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (requiresLicence && form.registrationNumber.trim().length < 2) {
+      toast.error(t("Licence requise", "Licence required"), {
+        description: t(
+          "Indiquez le numéro d’enregistrement ou de licence de placement pour permettre la vérification légale.",
+          "Provide the registration or placement-licence number so we can verify legal standing.",
+        ),
+      });
+      return;
+    }
     if (!form.acknowledgeReview) {
       toast.error(t("Confirmation requise", "Confirmation required"), {
         description: t("Confirmez que les informations d’identification sont exactes.", "Confirm that the identification details are accurate."),
       });
       return;
     }
+    if (!form.acknowledgeCharter) {
+      toast.error(t("Charte partenaire requise", "Partner charter required"), {
+        description: t(
+          "Acceptez la charte : aucune facturation au candidat et confidentialité des profils.",
+          "Accept the charter: no billing of candidates and confidentiality of profiles.",
+        ),
+      });
+      return;
+    }
     requestAccess.mutate({
       organizationType: form.organizationType,
       legalName: form.legalName,
-      registrationNumber: form.registrationNumber || undefined,
+      registrationNumber: form.registrationNumber.trim() || undefined,
       country: form.country,
       city: form.city || undefined,
       website: form.website || undefined,
@@ -118,6 +151,7 @@ export function B2bPartnerRegistrationForm({
       sectors: form.sectors || undefined,
       targetMarkets: form.targetMarkets || undefined,
       message: form.message,
+      acknowledgeCharter: true,
     });
   };
 
@@ -151,6 +185,10 @@ export function B2bPartnerRegistrationForm({
     );
   }
 
+  const organizationTypeLabel = form.organizationType === "placement_partner"
+    ? t("Agence de placement", "Placement agency")
+    : t("Employeur international", "International employer");
+
   return (
     <form onSubmit={submit} className="space-y-5" aria-labelledby="b2b-registration-title" data-testid="b2b-registration-form">
       <div>
@@ -164,15 +202,21 @@ export function B2bPartnerRegistrationForm({
             "Provide your organisation’s legal identity and the responsible contact. Portal access is created only after human verification.",
           )}
         </p>
+        <p className="mt-2 text-xs font-semibold text-indigo-900" data-testid="b2b-access-terms">
+          {t(
+            "Accès sans frais d’inscription · vérification manuelle sous quelques jours ouvrés (confirmée par écrit).",
+            "No registration fee · manual verification within a few business days (confirmed in writing).",
+          )}
+        </p>
       </div>
 
       <div className="rounded-xl border border-indigo-100 bg-indigo-50/70 p-3" aria-live="polite">
         <div className="flex items-center justify-between gap-3 text-xs font-bold text-indigo-950">
           <span>{t("Préparation de la demande", "Request preparation")}</span>
-          <span>{filledCount}/7 {t("champs renseignés", "fields completed")}</span>
+          <span>{filledCount}/8 {t("champs renseignés", "fields completed")}</span>
         </div>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-indigo-100">
-          <div className="h-full rounded-full bg-indigo-700 transition-[width] duration-200" style={{ width: `${(filledCount / 7) * 100}%` }} />
+          <div className="h-full rounded-full bg-indigo-700 transition-[width] duration-200" style={{ width: `${(filledCount / 8) * 100}%` }} />
         </div>
         <p className="mt-2 text-[11px] font-medium text-indigo-900/80">{t("Brouillon sauvegardé automatiquement sur cet appareil (sans mot de passe).", "Draft saved automatically on this device (no password).")}</p>
       </div>
@@ -183,27 +227,72 @@ export function B2bPartnerRegistrationForm({
           {t("Organisation", "Organisation")}
         </legend>
         <div className={`grid gap-3 ${compact ? "" : "md:grid-cols-2"}`}>
-          <label className="text-sm font-semibold text-slate-800">
-            {t("Type d’organisation", "Organisation type")}
-            <Select
-              value={form.organizationType}
-              onValueChange={(value) => update("organizationType", value as PartnerOrganizationType)}
-              disabled={lockOrganizationType}
-            >
-              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="placement_partner">{t("Agence de placement", "Placement agency")}</SelectItem>
-                <SelectItem value="employer">{t("Employeur international", "International employer")}</SelectItem>
-              </SelectContent>
-            </Select>
-          </label>
+          {lockOrganizationType ? (
+            <div className="text-sm font-semibold text-slate-800" data-testid="b2b-organization-type-locked">
+              {t("Type d’organisation", "Organisation type")}
+              <p className="mt-1 rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-900">
+                {organizationTypeLabel}
+              </p>
+              <p className="mt-1 text-xs font-medium text-slate-500">
+                {form.organizationType === "placement_partner"
+                  ? t(
+                      "Formulaire dédié aux agences. Les employeurs utilisent le portail employeurs.",
+                      "Form dedicated to agencies. Employers use the employer portal.",
+                    )
+                  : t(
+                      "Formulaire dédié aux employeurs. Les agences utilisent le portail agences de placement.",
+                      "Form dedicated to employers. Agencies use the placement-agency portal.",
+                    )}
+                {" "}
+                <a
+                  href={form.organizationType === "placement_partner" ? CORRIDOR_ROUTES.employersRegister : CORRIDOR_ROUTES.agenciesRegister}
+                  className="font-semibold text-indigo-700 underline-offset-2 hover:underline"
+                >
+                  {form.organizationType === "placement_partner"
+                    ? t("Aller au portail employeurs", "Go to employer portal")
+                    : t("Aller au portail agences", "Go to agency portal")}
+                </a>
+              </p>
+            </div>
+          ) : (
+            <label className="text-sm font-semibold text-slate-800">
+              {t("Type d’organisation", "Organisation type")}
+              <Select
+                value={form.organizationType}
+                onValueChange={(value) => update("organizationType", value as PartnerOrganizationType)}
+              >
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="placement_partner">{t("Agence de placement", "Placement agency")}</SelectItem>
+                  <SelectItem value="employer">{t("Employeur international", "International employer")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </label>
+          )}
           <label className="text-sm font-semibold text-slate-800">
             {t("Raison sociale", "Legal name")} *
             <Input required maxLength={255} value={form.legalName} onChange={(event) => update("legalName", event.target.value)} className="mt-1" autoComplete="organization" />
           </label>
           <label className="text-sm font-semibold text-slate-800">
-            {t("N° d’enregistrement / licence", "Registration / licence no.")}
-            <Input maxLength={120} value={form.registrationNumber} onChange={(event) => update("registrationNumber", event.target.value)} className="mt-1" placeholder="RCCM, licence…" />
+            {t("N° d’enregistrement / licence", "Registration / licence no.")}{requiresLicence ? " *" : ""}
+            <Input
+              required={requiresLicence}
+              maxLength={120}
+              value={form.registrationNumber}
+              onChange={(event) => update("registrationNumber", event.target.value)}
+              className="mt-1"
+              placeholder="RCCM, licence…"
+              aria-required={requiresLicence}
+              data-testid="b2b-registration-number"
+            />
+            {requiresLicence && (
+              <span className="mt-1 block text-xs font-medium text-slate-500">
+                {t(
+                  "Obligatoire pour vérifier l’existence légale et le droit d’exercer le placement.",
+                  "Required to verify legal existence and the right to operate as a placement agency.",
+                )}
+              </span>
+            )}
           </label>
           <label className="text-sm font-semibold text-slate-800">
             {t("Pays d’activité", "Country of activity")} *
@@ -282,6 +371,21 @@ export function B2bPartnerRegistrationForm({
           {t(
             "Je confirme que les informations d’identification sont exactes et j’accepte que l’accès soit créé uniquement après vérification manuelle par 3M TRAVEL AGENCY. Aucun mot de passe n’est choisi à cette étape.",
             "I confirm that the identification details are accurate and accept that access is created only after manual verification by 3M TRAVEL AGENCY. No password is chosen at this step.",
+          )}
+        </span>
+      </label>
+
+      <label className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-sm text-slate-800" data-testid="b2b-partner-charter">
+        <input
+          type="checkbox"
+          className="mt-1"
+          checked={form.acknowledgeCharter}
+          onChange={(event) => update("acknowledgeCharter", event.target.checked)}
+        />
+        <span>
+          {t(
+            "J’accepte la charte partenaire : aucune facturation au candidat pour l’accès au vivier 3M, confidentialité des profils anonymisés, et aucune promesse de visa ou d’emploi faite au nom de 3M TRAVEL AGENCY.",
+            "I accept the partner charter: no billing of candidates for access to the 3M pool, confidentiality of anonymised profiles, and no visa or job promise made in the name of 3M TRAVEL AGENCY.",
           )}
         </span>
       </label>

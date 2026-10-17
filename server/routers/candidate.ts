@@ -421,7 +421,7 @@ export const candidateRouter = router({
         fullName: z.string().min(2, "Nom requis").max(255),
         email: z.string().email("Email invalide").max(320),
         password: z.string().min(8, "Mot de passe : 8 caractères minimum").max(128),
-        phone: z.string().max(50).optional(),
+        phone: z.string().trim().min(8, "Téléphone / WhatsApp requis").max(50),
         // Jusqu'à 3 pays précis parmi tous les pays du monde (shared/worldCountries.ts) : le pays
         // principal pilote la checklist, le parcours et le score. Les questions de projet ci-dessous
         // sont facultatives ; le formulaire les propose selon le pays (getDestinationFormProfile).

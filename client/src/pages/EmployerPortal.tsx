@@ -298,6 +298,12 @@ export default function EmployerPortal() {
                     ? t("Connexion réservée aux agences déjà vérifiées. Les identifiants sont remis par 3M après examen de votre inscription.", "Sign-in is reserved for already verified agencies. Credentials are issued by 3M after your registration is reviewed.")
                     : t("Connexion réservée aux organisations déjà vérifiées. Les identifiants sont remis par 3M après examen de votre inscription.", "Sign-in is reserved for already verified organisations. Credentials are issued by 3M after your registration is reviewed.")}
                 </CardDescription>
+                <p className="mt-2 text-xs font-semibold text-indigo-900" data-testid="partner-access-terms">
+                  {t(
+                    "Accès sans frais d’inscription · vérification manuelle sous quelques jours ouvrés (confirmée par écrit).",
+                    "No registration fee · manual verification within a few business days (confirmed in writing).",
+                  )}
+                </p>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="relative">
@@ -341,12 +347,15 @@ export default function EmployerPortal() {
               <CardContent className="p-5 sm:p-6">
                 <B2bPartnerRegistrationForm
                   defaultOrganizationType={portalDefaults.organizationType}
+                  lockOrganizationType
                   onContinueToLogin={() => selectAuthTab("login")}
                 />
-                <p className="mt-4 text-center text-xs text-slate-500">
-                  {t("Agence de placement ?", "Placement agency?")}{" "}
-                  <a href="/agences-placement#inscription-agence" className="font-semibold text-indigo-700 underline-offset-2 hover:underline">{t("Formulaire dédié agences", "Dedicated agency form")}</a>
-                </p>
+                {!isAgencyPortal && (
+                  <p className="mt-4 text-center text-xs text-slate-500">
+                    {t("Agence de placement ?", "Placement agency?")}{" "}
+                    <a href="/agences-placement#inscription-agence" className="font-semibold text-indigo-700 underline-offset-2 hover:underline">{t("Formulaire dédié agences", "Dedicated agency form")}</a>
+                  </p>
+                )}
               </CardContent>
             </Card>
           )}
