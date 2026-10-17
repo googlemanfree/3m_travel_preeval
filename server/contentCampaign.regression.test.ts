@@ -6,6 +6,7 @@ import * as campaignDocs from "../client/src/data/contentCampaignDocs";
 import * as campaignPartners from "../client/src/data/contentCampaignPartners";
 import * as campaignEvisa from "../client/src/data/contentCampaignEvisa";
 import * as campaignTranslation from "../client/src/data/contentCampaignTranslation";
+import { GUIDES, getGuide } from "../client/src/data/guidesData";
 import { evisasDatabaseComplete } from "../client/src/data/evisasDatabaseComplete";
 import { composePublicPrerender, getIndexablePublicPaths, PUBLIC_PAGES } from "./publicPrerender";
 
@@ -30,6 +31,7 @@ function collectTexts(): string[] {
   Object.values(campaignPartners).forEach(visit);
   [campaignEvisa.EVISA_COUNTRY_CHECKS, campaignEvisa.EVISA_COUNTRY_ERRORS, campaignEvisa.EVISA_COUNTRY_REFUSAL_STEPS].forEach(visit);
   Object.values(campaignTranslation).forEach(visit);
+  visit(GUIDES.map(({ slug: _slug, ...rest }) => rest));
   return texts;
 }
 
@@ -240,6 +242,64 @@ describe("campagne de contenu, lot 5 : commande de traduction", () => {
     expect(page).toContain("setPageSeo");
     expect(page).toContain('testId="translation-faq"');
     expect(page).toContain("Math.max(1, parseInt(e.target.value) || 1)");
+  });
+});
+
+describe("campagne de contenu, lot 6 : guides pratiques", () => {
+  const template = "<!doctype html><html><head><title>x</title></head><body><div id=\"root\"><!--prerender-app--></div></body></html>";
+
+  it("six guides complets, sans doublon, avec FAQ et sections identifiées", () => {
+    expect(GUIDES.map((guide) => guide.slug)).toEqual([
+      "legalisation-apostille-traduction",
+      "calendrier-rentrees-et-retroplanning",
+      "financer-ses-etudes",
+      "budget-vie-a-letranger",
+      "apres-l-arrivee",
+      "glossaire-mobilite-internationale",
+    ]);
+    for (const guide of GUIDES) {
+      expect(guide.sections.length, guide.slug).toBeGreaterThanOrEqual(3);
+      expect(guide.faq.length, guide.slug).toBeGreaterThanOrEqual(3);
+      expect(new Set(guide.sections.map((section) => section.id)).size, guide.slug).toBe(guide.sections.length);
+      for (const section of guide.sections) expect((section.paragraphs?.length ?? 0) + (section.bullets?.length ?? 0), `${guide.slug}/${section.id}`).toBeGreaterThan(0);
+      for (const item of guide.faq) expect(item.question.trim().endsWith("?"), item.question).toBe(true);
+      for (const link of guide.related) expect(link.href.startsWith("/"), link.href).toBe(true);
+    }
+  });
+
+  it("toute source citée est datée et en https", () => {
+    const sources = GUIDES.flatMap((guide) => guide.sources ?? []);
+    expect(sources.length).toBeGreaterThanOrEqual(1);
+    for (const source of sources) {
+      expect(source.url).toMatch(/^https:\/\//);
+      expect(source.consultedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
+  });
+
+  it("routes, prérendu, titres et descriptions dans les limites, plan du site XML", () => {
+    const app = read("client/src/App.tsx");
+    expect(app).toContain('<Route path={"/guides"} component={GuidesHub} />');
+    expect(app).toContain('<Route path={"/guides/:slug"} component={GuidePage} />');
+    const indexable = getIndexablePublicPaths();
+    for (const path of ["/guides", ...GUIDES.map((guide) => `/guides/${guide.slug}`)]) {
+      expect(indexable, path).toContain(path);
+      const meta = PUBLIC_PAGES[path];
+      expect(meta.title.length, `${path} titre`).toBeLessThanOrEqual(60);
+      expect(meta.description.length, `${path} description`).toBeGreaterThanOrEqual(50);
+      expect(meta.description.length, `${path} description`).toBeLessThanOrEqual(160);
+      const rendered = composePublicPrerender(template, path);
+      expect(rendered.status, path).toBe(200);
+    }
+    const guide = getGuide("financer-ses-etudes")!;
+    const html = composePublicPrerender(template, "/guides/financer-ses-etudes").html;
+    expect(html).toContain(guide.faq[0].question);
+    expect(html).toContain(guide.sections[0].title);
+    expect(composePublicPrerender(template, "/guides/inconnu").status).toBe(404);
+  });
+
+  it("le plan du site visiteur liste le hub et chaque guide", () => {
+    expect(read("client/src/pages/Sitemap.tsx")).toContain('href: "/guides"');
+    expect(read("client/src/pages/Sitemap.tsx")).toContain("GUIDES.map");
   });
 });
 

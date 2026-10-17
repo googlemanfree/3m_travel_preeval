@@ -4,6 +4,7 @@ import { ArrowRight, BookOpen, Compass, FileText, Landmark, Search, ShieldCheck,
 import { listCountryResourcePages } from "@shared/countryResourceCatalog";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { GUIDES } from "@/data/guidesData";
 
 type Language = "fr" | "en";
 type Copy = Record<Language, string>;
@@ -36,6 +37,8 @@ const SITE_SECTIONS: SitemapSection[] = [
       { key: "contact", label: { fr: "Contact", en: "Contact" }, href: "/contact", description: { fr: "Contacter l’agence ou consulter les coordonnées des bureaux.", en: "Contact the agency or view office details." } },
       { key: "faq", label: { fr: "Questions fréquentes", en: "Frequently asked questions" }, href: "/faq", description: { fr: "Évaluation, frais, documents, délais, sécurité et visas : les réponses aux questions les plus posées.", en: "Assessment, fees, documents, timelines, security and visas: answers to the most common questions." } },
       { key: "verify_agency", label: { fr: "Vérifier une agence", en: "Check an agency" }, href: "/verifier-une-agence", description: { fr: "Signes d’une offre frauduleuse et vérifications à faire avant de payer.", en: "Warning signs of a fraudulent offer and checks to make before paying." } },
+      { key: "guides", label: { fr: "Guides pratiques", en: "Practical guides" }, href: "/guides", description: { fr: "Documents, calendrier, financement, budget, premières démarches et vocabulaire.", en: "Documents, timeline, funding, budget, first steps and vocabulary (guides in French)." } },
+      ...GUIDES.map((guide) => ({ key: `guide_${guide.slug}`, label: { fr: guide.seoTitle, en: guide.seoTitle }, href: `/guides/${guide.slug}`, description: { fr: guide.description, en: guide.description } })),
       { key: "reviews", label: { fr: "Avis", en: "Reviews" }, href: "/avis", description: { fr: "Consulter ou soumettre un avis selon le circuit de modération.", en: "Read or submit a review through the moderation process." } },
     ],
   },

@@ -13,6 +13,7 @@ import { OFFICIAL_CONSULAR_PORTALS } from "../client/src/data/officialConsularPo
 import { evisasDatabaseComplete } from "../client/src/data/evisasDatabaseComplete";
 import { getStudyDestinationArticle, studyDestinationArticles } from "../client/src/data/studyDestinationArticles";
 import { AGENCY_CHECKS, AGENCY_RED_FLAGS, FAQ_GENERAL_GROUPS } from "../client/src/data/contentCampaign";
+import { GUIDES, getGuide } from "../client/src/data/guidesData";
 import { getEnglishContentByEnSlug, getEnglishContentByFrId, type ProcedureEnglishContent } from "../client/src/data/procedures107English";
 import { getCataloguedDestinationImage } from "../client/src/data/premiumVisuals";
 import { getServiceVisual } from "../client/src/data/premiumVisuals";
@@ -219,7 +220,14 @@ const privateShell = (heading: string, description: string, lead = "Cette page e
   noindex: true,
 });
 
+/** Guides pratiques : un hub et une page par guide, générés depuis client/src/data/guidesData.ts. */
+const GUIDE_PAGES: Record<string, PublicMeta> = {
+  "/guides": { title: `Guides pratiques mobilité | ${SITE}`, description: "Documents, calendrier, financement, budget, premières démarches et vocabulaire : les guides pratiques pour préparer un projet de mobilité.", heading: "Guides pratiques", lead: "Des repères simples pour les points qui bloquent le plus souvent un dossier, sans promesse de résultat." },
+  ...Object.fromEntries(GUIDES.map((guide): [string, PublicMeta] => [`/guides/${guide.slug}`, { title: `${guide.seoTitle} | ${SITE}`, description: guide.description, heading: guide.title, lead: guide.lead }])),
+};
+
 export const PUBLIC_PAGES: Record<string, PublicMeta> = {
+  ...GUIDE_PAGES,
   "/en": {
     title: `3M TRAVEL AGENCY | International Mobility from Africa`,
     description: "3M TRAVEL AGENCY supports African candidates’ international mobility — visas, study abroad and travel — with remote follow-up and offices in Yaoundé and Ottawa.",
@@ -381,6 +389,15 @@ const routeSpecificPrerender = (path: string) => {
       .map((entry) => `<li><a href="/en/procedures/${encodeURIComponent(entry.enSlug)}">${esc(entry.description)}</a></li>`)
       .join("");
     return `<section aria-label="Mobility services"><h2>Prepare your international mobility project</h2><p>Discover our most requested procedures, verified institutional sources, and a free initial evaluation before any step.</p><p><a href="/?project=travail&amp;destination=canada#evaluation-multi">Start the free evaluation</a> · <a href="/en">Explore priority procedures</a> · <a href="/sources-officielles">View official sources</a></p></section><section aria-label="Priority destinations"><h2>Most requested procedures from Yaoundé</h2><ul>${links}</ul></section>`;
+  }
+  if (path === "/guides") {
+    return `<section aria-label="Tous les guides"><h2>Tous les guides</h2><ul>${GUIDES.map((guide) => `<li><a href="/guides/${esc(guide.slug)}">${esc(guide.title)}</a> — ${esc(guide.description)}</li>`).join("")}</ul></section>`;
+  }
+  const guideForPath = path.startsWith("/guides/") ? getGuide(path.slice("/guides/".length)) : undefined;
+  if (guideForPath) {
+    const sections = guideForPath.sections.map((section) => `<section aria-label="${esc(section.title)}"><h2>${esc(section.title)}</h2>${(section.paragraphs ?? []).map((paragraph) => `<p>${esc(paragraph)}</p>`).join("")}${section.bullets ? `<ul>${section.bullets.map((bullet) => `<li>${esc(bullet)}</li>`).join("")}</ul>` : ""}</section>`).join("");
+    const faq = `<section aria-label="Questions"><h2>Questions sur ce sujet</h2>${guideForPath.faq.map((item) => `<h3>${esc(item.question)}</h3><p>${esc(item.answer)}</p>`).join("")}</section>`;
+    return sections + faq;
   }
   if (path === "/faq") {
     return FAQ_GENERAL_GROUPS.map((group) => `<section aria-label="${esc(group.title)}"><h2>${esc(group.title)}</h2>${group.items.map((item) => `<h3>${esc(item.question)}</h3><p>${esc(item.answer)}</p>`).join("")}</section>`).join("");

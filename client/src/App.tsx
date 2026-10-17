@@ -55,6 +55,8 @@ import Formation from "./pages/Formation";
 import CniPasseport from "./pages/CniPasseport";
 import Faq from "./pages/Faq";
 import VerifierAgence from "./pages/VerifierAgence";
+import GuidesHub from "./pages/GuidesHub";
+import GuidePage from "./pages/GuidePage";
 import Services from "./pages/Services";
 const Paiement = lazyWithTimeout(() => import("./pages/Paiement"));
 const SuiviVol = lazyWithTimeout(() => import("./pages/SuiviVol"));
@@ -355,6 +357,8 @@ function Router() {
       <Route path={"/avis"} component={Avis} />
       <Route path={"/faq"} component={Faq} />
       <Route path={"/verifier-une-agence"} component={VerifierAgence} />
+      <Route path={"/guides"} component={GuidesHub} />
+      <Route path={"/guides/:slug"} component={GuidePage} />
       <Route path={"/blog"} component={Blog} />
       <Route path={"/blog/etudes/:slug"} component={StudyDestinationArticle} />
       <Route path={"/evisas"} component={EvisasAdvanced} />
