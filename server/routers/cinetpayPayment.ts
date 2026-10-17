@@ -4,7 +4,7 @@ import { getDb } from "../db";
 import { applications } from "../../drizzle/schema";
 import { and, count, desc, eq, sql } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
-import { normalizeAfterOpeningPayment } from "../services/normalizeAfterOpeningPayment";
+import { CINETPAY_VALIDATOR, finalizeOnlineOpeningPaymentAfterCinetPay } from "../services/openingPaymentAutomation";
 
 const DEFAULT_PAYMENT_AMOUNT = 65000;
 const PAYMENT_CURRENCY = "XAF";
@@ -118,21 +118,24 @@ export const cinetpayPaymentRouter = router({
       if (!verification.configured) return { success: false, error: "Vérification CinetPay non configurée" };
       const amountMatches = verification.amount === undefined || verification.amount === (application.paymentAmount ?? DEFAULT_PAYMENT_AMOUNT);
       if (verification.accepted && amountMatches) {
-        await db.update(applications).set({
+        const now = new Date();
+        const updated = await db.update(applications).set({
           paymentStatus: "SUCCESS",
-          paymentDate: new Date(),
+          paymentDate: now,
           paymentMethod: verification.paymentMethod || null,
+          paymentValidatedAt: application.paymentValidatedAt ?? now,
+          paymentValidatedBy: application.paymentValidatedBy?.trim() || CINETPAY_VALIDATOR,
+          paymentConfirmedAmount: application.paymentConfirmedAmount ?? application.paymentAmount ?? DEFAULT_PAYMENT_AMOUNT,
+          paymentExpectedAmount: application.paymentExpectedAmount ?? application.paymentAmount ?? DEFAULT_PAYMENT_AMOUNT,
           dossierStatus: application.agreementSigned && application.evaluationDeliveryStatus === "sent" && Boolean(application.evaluationClientConfirmedAt) ? "paye" : application.dossierStatus,
         }).where(and(eq(applications.id, application.id), eq(applications.paymentStatus, "PENDING")));
-        try {
-          await normalizeAfterOpeningPayment(db, {
-            source: "online",
-            dossierId: application.id,
-            candidateEmail: application.email,
-            adminEmail: "cinetpay",
-          });
-        } catch (normalizationError) {
-          console.error("[CinetPay] automatic reference normalization failed", { applicationId: application.id, normalizationError });
+        const transitioned = Number((updated as { affectedRows?: number }[] | undefined)?.[0]?.affectedRows ?? 0) > 0;
+        if (transitioned) {
+          try {
+            await finalizeOnlineOpeningPaymentAfterCinetPay(db, application.id);
+          } catch (error) {
+            console.warn("[CinetPay verifyPaymentStatus] Automatisation ouverture échouée:", error);
+          }
         }
         return { success: true, status: "SUCCESS" as const };
       }

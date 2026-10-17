@@ -36,6 +36,7 @@ import { appendEvaluationOpenTrackingPixel, buildAdvisorSignatureHtml, escapeHtm
 import { buildEvaluationReminderEmailHtml, buildEvaluationReminderEmailSubject, type EvaluationReminderLanguage } from "../services/evaluationReminderCommunication";
 import { resolveEvaluationProjectKind } from "../../shared/evaluationVisaCv";
 import { EVALUATION_KIND_LABELS } from "../../shared/evaluationBilanTemplates";
+import { maybeSendJustificatifsAfterBilan } from "../services/autoJustificatifsAfterBilan";
 
 function resolveDeliveryVisaJournal(application: { visaType?: string | null; scoringDetails?: string | null }) {
   let scoringProject: string | null = null;
@@ -1016,6 +1017,12 @@ initializeEvaluationDelivery: publicProcedure
       if (application.candidateId) {
         await db.insert(clientNotifications).values({ candidateId: application.candidateId, type: "evaluation_available", title: "Votre bilan d’évaluation est disponible", body: `Votre bilan finalisé pour le dossier ${application.dossierNumber} est prêt. Consultez-le et téléchargez votre PDF depuis votre espace client.`, actionUrl: "/mon-espace", isRead: false, emailSentAt: now });
       }
+      let justificatifsAuto: Awaited<ReturnType<typeof maybeSendJustificatifsAfterBilan>> | null = null;
+      try {
+        justificatifsAuto = await maybeSendJustificatifsAfterBilan(db, application.id, { actorEmail: admin.email || admin.fullName || null });
+      } catch (error) {
+        console.warn("[sendEvaluationNow] justificatifs auto après bilan:", error);
+      }
       const journalComment = `Bilan ${visaJournal.kindLabel} validé et envoyé (espace client + e-mail) après contrôle d’aperçu. Type de visa utilisé : ${visaJournal.journalVisaLabel}.`;
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
       if (source) {
@@ -1034,7 +1041,14 @@ initializeEvaluationDelivery: publicProcedure
           description: journalComment,
         });
       }
-      return { success: true, dossierNumber: application.dossierNumber, projectKind: visaJournal.projectKind, visaType: visaJournal.journalVisaLabel, message: `Bilan ${visaJournal.kindLabel} validé et envoyé immédiatement dans l’espace client et par e-mail.` };
+      return {
+        success: true,
+        dossierNumber: application.dossierNumber,
+        projectKind: visaJournal.projectKind,
+        visaType: visaJournal.journalVisaLabel,
+        justificatifsAuto,
+        message: `Bilan ${visaJournal.kindLabel} validé et envoyé immédiatement dans l’espace client et par e-mail.`,
+      };
     }),
   listEvaluationDeliveryHistory: publicProcedure
     .input(sessionInput.extend({ sourceRecordId: z.number().int().positive() }))
