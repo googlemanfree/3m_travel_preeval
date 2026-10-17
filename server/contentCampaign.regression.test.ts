@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 import * as campaign from "../client/src/data/contentCampaign";
 import * as campaignDocs from "../client/src/data/contentCampaignDocs";
 import * as campaignPartners from "../client/src/data/contentCampaignPartners";
+import * as campaignEvisa from "../client/src/data/contentCampaignEvisa";
+import { evisasDatabaseComplete } from "../client/src/data/evisasDatabaseComplete";
 import { composePublicPrerender, getIndexablePublicPaths, PUBLIC_PAGES } from "./publicPrerender";
 
 const root = resolve(import.meta.dirname, "..");
@@ -25,6 +27,7 @@ function collectTexts(): string[] {
   Object.values(campaign).forEach(visit);
   Object.values(campaignDocs).forEach(visit);
   Object.values(campaignPartners).forEach(visit);
+  [campaignEvisa.EVISA_COUNTRY_CHECKS, campaignEvisa.EVISA_COUNTRY_ERRORS, campaignEvisa.EVISA_COUNTRY_REFUSAL_STEPS].forEach(visit);
   return texts;
 }
 
@@ -167,6 +170,49 @@ describe("campagne de contenu, lot 3 : employeurs, agences de placement, ambassa
     expect(read("client/src/pages/EmployerPortal.tsx")).toContain('testId="employer-faq"');
     expect(read("client/src/pages/PlacementPartnerPortal.tsx")).toContain('testId="agency-faq"');
     expect(read("client/src/pages/AmbassadorProgram.tsx")).toContain('testId="ambassador-faq"');
+  });
+});
+
+describe("campagne de contenu, lot 4 : fiche e-Visa par pays", () => {
+  it("chaque pays reçoit six questions distinctes, sans promesse, et sans valeur « à confirmer » présentée comme un fait", () => {
+    expect(evisasDatabaseComplete.length).toBeGreaterThan(15);
+    for (const destination of evisasDatabaseComplete) {
+      const faq = campaignEvisa.buildEvisaCountryFaq(destination);
+      expect(faq, destination.id).toHaveLength(6);
+      expect(new Set(faq.map((item) => item.question)).size, destination.id).toBe(6);
+      for (const item of faq) {
+        expect(item.question, destination.id).toContain(destination.country);
+        expect(item.answer.length, item.question).toBeGreaterThan(90);
+        expect(item.answer, item.question).not.toMatch(PROMISES);
+        expect(item.answer, item.question).not.toMatch(/«\s*à confirmer/i);
+      }
+      const delayAnswer = faq[0].answer;
+      expect(delayAnswer, destination.id).toMatch(/indicatif|n’est pas publié/);
+    }
+  });
+
+  it("une valeur confirmée est citée comme indicative, une valeur absente n'est jamais inventée", () => {
+    const base = { country: "Pays-test", docs: "Passeport valide, photographie.", delay: "À confirmer par le portail officiel", fee: "À confirmer par le portail officiel", duration: "À confirmer" };
+    const unknown = campaignEvisa.buildEvisaCountryFaq(base);
+    expect(unknown[0].answer).toContain("n’est pas publié ici");
+    expect(unknown[1].answer).toContain("ne sont pas publiés ici");
+    expect(unknown[0].answer).toContain("n’a pas fait l’objet d’une vérification récente");
+    const known = campaignEvisa.buildEvisaCountryFaq({ ...base, delay: "3 jours", fee: "50 USD", duration: "30 jours", officialPortalLabel: "Portail test", officialVerifiedAt: "2026-09-01" });
+    expect(known[0].answer).toContain("« 3 jours »");
+    expect(known[0].answer).toContain("indicatif");
+    expect(known[0].answer).toContain("2026-09-01");
+    expect(known[1].answer).toContain("seul le montant affiché par le portail officiel");
+  });
+
+  it("la page de détail annonce un délai et des frais indicatifs et ne promet plus un format « 100 % »", () => {
+    const page = read("client/src/pages/EvisaDetailPage.tsx");
+    expect(page).toContain("Délai indicatif");
+    expect(page).toContain("Frais indicatifs");
+    expect(page).toContain('data-testid="evisa-indicative-note"');
+    expect(page).not.toContain("Frais officiels");
+    expect(page).not.toContain("100% Numérique");
+    expect(page).toContain("setPageSeo");
+    expect(page).toContain('testId="evisa-country-faq"');
   });
 });
 
