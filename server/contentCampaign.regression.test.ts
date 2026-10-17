@@ -5,6 +5,7 @@ import * as campaign from "../client/src/data/contentCampaign";
 import * as campaignDocs from "../client/src/data/contentCampaignDocs";
 import * as campaignPartners from "../client/src/data/contentCampaignPartners";
 import * as campaignEvisa from "../client/src/data/contentCampaignEvisa";
+import * as campaignTranslation from "../client/src/data/contentCampaignTranslation";
 import { evisasDatabaseComplete } from "../client/src/data/evisasDatabaseComplete";
 import { composePublicPrerender, getIndexablePublicPaths, PUBLIC_PAGES } from "./publicPrerender";
 
@@ -28,6 +29,7 @@ function collectTexts(): string[] {
   Object.values(campaignDocs).forEach(visit);
   Object.values(campaignPartners).forEach(visit);
   [campaignEvisa.EVISA_COUNTRY_CHECKS, campaignEvisa.EVISA_COUNTRY_ERRORS, campaignEvisa.EVISA_COUNTRY_REFUSAL_STEPS].forEach(visit);
+  Object.values(campaignTranslation).forEach(visit);
   return texts;
 }
 
@@ -213,6 +215,31 @@ describe("campagne de contenu, lot 4 : fiche e-Visa par pays", () => {
     expect(page).not.toContain("100% Numérique");
     expect(page).toContain("setPageSeo");
     expect(page).toContain('testId="evisa-country-faq"');
+  });
+});
+
+describe("campagne de contenu, lot 5 : commande de traduction", () => {
+  it("chaque type de document du formulaire a un libellé français, et la FAQ ne promet ni délai ni statut", () => {
+    const page = read("client/src/pages/TranslationOrder.tsx");
+    const typesBlock = page.slice(page.indexOf("const documentTypes = ["), page.indexOf("];", page.indexOf("const documentTypes = [")));
+    const types = Array.from(typesBlock.matchAll(/"([a-z_]+)"/g)).map((match) => match[1]);
+    expect(types.length).toBe(12);
+    for (const type of types) expect(campaignTranslation.TRANSLATION_DOCUMENT_LABELS[type], type).toBeTruthy();
+    expect(page).toContain("TRANSLATION_DOCUMENT_LABELS[type]");
+    expect(campaignTranslation.TRANSLATION_FAQ.length).toBeGreaterThanOrEqual(7);
+    const answers = campaignTranslation.TRANSLATION_FAQ.map((item) => item.answer).join("\n");
+    expect(answers).toMatch(/confirmé par écrit/);
+    expect(answers).toMatch(/Non\. Vous envoyez la demande/);
+    for (const item of campaignTranslation.TRANSLATION_FAQ) expect(item.question.trim().endsWith("?"), item.question).toBe(true);
+  });
+
+  it("la page n'affirme plus une certification qu'elle ne peut pas prouver et explique le paiement", () => {
+    const page = read("client/src/pages/TranslationOrder.tsx");
+    expect(page).not.toContain("Traduction Certifiée");
+    expect(page).toContain('data-testid="translation-price-note"');
+    expect(page).toContain("setPageSeo");
+    expect(page).toContain('testId="translation-faq"');
+    expect(page).toContain("Math.max(1, parseInt(e.target.value) || 1)");
   });
 });
 
