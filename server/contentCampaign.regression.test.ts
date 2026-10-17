@@ -1,0 +1,116 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
+import * as campaign from "../client/src/data/contentCampaign";
+import { composePublicPrerender, getIndexablePublicPaths, PUBLIC_PAGES } from "./publicPrerender";
+
+const root = resolve(import.meta.dirname, "..");
+const read = (path: string) => readFileSync(resolve(root, path), "utf8").replace(/\r\n/g, "\n");
+
+const NUMBERS = /\d+\s?(%|€|\$|FCFA|F CFA|h\b|heures?|jours?|semaines?|mois)/i;
+const PROMISES = /garanti(?!r)|100\s?%|sans risque|assur[ée]s? de réussir|à coup sûr/i;
+
+type Item = { question?: string; answer?: string; title?: string; text?: string };
+
+/** Tous les textes de la campagne (tout tableau exporté de chaînes ou d'objets {question,answer}/{title,text}). */
+function collectTexts(): string[] {
+  const texts: string[] = [];
+  const visit = (value: unknown) => {
+    if (typeof value === "string") texts.push(value);
+    else if (Array.isArray(value)) value.forEach(visit);
+    else if (value && typeof value === "object") Object.values(value as Record<string, unknown>).forEach(visit);
+  };
+  Object.values(campaign).forEach(visit);
+  return texts;
+}
+
+describe("campagne de contenu : soutenue mais honnête", () => {
+  it("aucun prix ni délai chiffré, aucune promesse de résultat, aucun ancien nom de marque", () => {
+    const texts = collectTexts();
+    expect(texts.length).toBeGreaterThan(100);
+    for (const text of texts) {
+      expect(text, text).not.toMatch(NUMBERS);
+      expect(text, text).not.toMatch(PROMISES);
+      expect(text, text).not.toMatch(/Prime Travel/i);
+    }
+  });
+
+  it("la FAQ générale couvre sept thèmes, avec de vraies réponses, toutes différentes", () => {
+    expect(campaign.FAQ_GENERAL_GROUPS.map((group) => group.id)).toEqual(["demarrer", "frais", "documents", "delais", "securite", "visas", "reclamations"]);
+    expect(campaign.FAQ_GENERAL_ITEMS.length).toBeGreaterThanOrEqual(30);
+    const questions = campaign.FAQ_GENERAL_ITEMS.map((item) => item.question);
+    expect(new Set(questions).size).toBe(questions.length);
+    for (const item of campaign.FAQ_GENERAL_ITEMS as Required<Pick<Item, "question" | "answer">>[]) {
+      expect(item.question.trim().endsWith("?"), item.question).toBe(true);
+      expect(item.answer.length, item.question).toBeGreaterThan(90);
+    }
+  });
+
+  it("les engagements sensibles sont tenus dans la FAQ : frais confirmés par écrit, aucune garantie de visa, aucun mot de passe demandé", () => {
+    const all = campaign.FAQ_GENERAL_ITEMS.map((item) => `${item.question} ${item.answer}`).join("\n");
+    expect(all).toContain("confirmé par écrit");
+    expect(all).toMatch(/décision appartient aux autorités/i);
+    expect(all).toMatch(/Jamais\. 3M TRAVEL AGENCY ne demande ni mot de passe/);
+    expect(all).not.toMatch(/65[\s .]?000/);
+  });
+
+  it("le guide « vérifier une agence » : signaux, vérifications, engagements, conduite à tenir", () => {
+    expect(campaign.AGENCY_RED_FLAGS.length).toBeGreaterThanOrEqual(8);
+    expect(campaign.AGENCY_CHECKS.length).toBe(6);
+    expect(campaign.AGENCY_3M_DOES.length).toBeGreaterThanOrEqual(6);
+    expect(campaign.AGENCY_IF_SCAMMED.length).toBeGreaterThanOrEqual(5);
+    expect(campaign.AGENCY_CHECK_FAQ.length).toBeGreaterThanOrEqual(4);
+    expect(campaign.AGENCY_RED_FLAGS.map((flag) => flag.title).join(" ")).toMatch(/assurés/);
+  });
+});
+
+describe("campagne de contenu : pages enregistrées partout où il faut", () => {
+  it("routes, prérendu serveur et plan du site", () => {
+    const app = read("client/src/App.tsx");
+    expect(app).toContain('<Route path={"/faq"} component={Faq} />');
+    expect(app).toContain('<Route path={"/verifier-une-agence"} component={VerifierAgence} />');
+    expect(PUBLIC_PAGES["/faq"]?.title).toContain("Questions fréquentes");
+    expect(PUBLIC_PAGES["/verifier-une-agence"]?.title).toContain("Vérifier une agence");
+    const indexable = getIndexablePublicPaths();
+    expect(indexable).toContain("/faq");
+    expect(indexable).toContain("/verifier-une-agence");
+    const sitemapPage = read("client/src/pages/Sitemap.tsx");
+    expect(sitemapPage).toContain('href: "/faq"');
+    expect(sitemapPage).toContain('href: "/verifier-une-agence"');
+  });
+
+  it("le HTML prérendu (lu sans JavaScript) contient les questions et les signaux d'alerte", () => {
+    const template = "<!doctype html><html><head><title>x</title></head><body><div id=\"root\"><!--prerender-app--></div></body></html>";
+    const faqPage = composePublicPrerender(template, "/faq");
+    expect(faqPage.status).toBe(200);
+    const faq = faqPage.html;
+    expect(faq).toContain("Faut-il créer un compte pour commencer ?");
+    expect(faq).toContain("Quels moyens de paiement sont acceptés ?");
+    expect(faq).toContain("<h1>Questions fréquentes</h1>");
+    const agencyPage = composePublicPrerender(template, "/verifier-une-agence");
+    expect(agencyPage.status).toBe(200);
+    const agency = agencyPage.html;
+    expect(agency).toContain("Les signaux d’alerte");
+    expect(agency).toContain("Un visa, un emploi ou une admission « assurés »");
+  });
+});
+
+describe("campagne de contenu : structure des pages d'annuaire", () => {
+  it("/evisas : titres de niveau 2, guide pas à pas, FAQ, et plus de mention « officiel » trompeuse", () => {
+    const page = read("client/src/pages/EvisasAdvanced.tsx");
+    expect(page).toContain('<h2 className="sr-only">Rechercher une destination e-Visa</h2>');
+    expect(page).toContain('data-testid="evisas-directory-title"');
+    expect(page).toContain("EVISA_HOW_STEPS");
+    expect(page).toContain("EVISA_BEFORE_YOU_APPLY");
+    expect(page).toContain('testId="evisas-faq"');
+    expect(page).not.toContain("Annuaire Officiel");
+    expect(campaign.EVISA_HOW_STEPS).toHaveLength(4);
+    expect(campaign.EVISA_HUB_FAQ.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("/fiches : titres de niveau 2 pour les filtres et les résultats", () => {
+    const page = read("client/src/pages/Fiches.tsx");
+    expect(page).toContain('<h2 className="sr-only">Rechercher et filtrer les fiches</h2>');
+    expect(page).toContain('data-testid="fiches-results-title"');
+  });
+});

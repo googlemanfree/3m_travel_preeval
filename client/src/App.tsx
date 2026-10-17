@@ -53,6 +53,8 @@ const CanadaCrsPage = lazyWithTimeout(() => import("./pages/CanadaCrsPage"));
 import Schengen from "./pages/Schengen";
 import Formation from "./pages/Formation";
 import CniPasseport from "./pages/CniPasseport";
+import Faq from "./pages/Faq";
+import VerifierAgence from "./pages/VerifierAgence";
 import Services from "./pages/Services";
 const Paiement = lazyWithTimeout(() => import("./pages/Paiement"));
 const SuiviVol = lazyWithTimeout(() => import("./pages/SuiviVol"));
@@ -351,6 +353,8 @@ function Router() {
       <Route path={"/tarifs"} component={Tarifs} />
       <Route path={"/sources-officielles"} component={OfficialSources} />
       <Route path={"/avis"} component={Avis} />
+      <Route path={"/faq"} component={Faq} />
+      <Route path={"/verifier-une-agence"} component={VerifierAgence} />
       <Route path={"/blog"} component={Blog} />
       <Route path={"/blog/etudes/:slug"} component={StudyDestinationArticle} />
       <Route path={"/evisas"} component={EvisasAdvanced} />

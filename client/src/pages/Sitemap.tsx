@@ -34,6 +34,8 @@ const SITE_SECTIONS: SitemapSection[] = [
       { key: "about", label: { fr: "À propos", en: "About us" }, href: "/about", description: { fr: "Découvrir le rôle de conseil et les engagements de transparence.", en: "Learn about our advisory role and transparency commitments." } },
       { key: "pricing", label: { fr: "Tarifs", en: "Pricing" }, href: "/tarifs", description: { fr: "Comprendre les honoraires, frais tiers et modalités.", en: "Understand agency fees, third-party costs and terms." } },
       { key: "contact", label: { fr: "Contact", en: "Contact" }, href: "/contact", description: { fr: "Contacter l’agence ou consulter les coordonnées des bureaux.", en: "Contact the agency or view office details." } },
+      { key: "faq", label: { fr: "Questions fréquentes", en: "Frequently asked questions" }, href: "/faq", description: { fr: "Évaluation, frais, documents, délais, sécurité et visas : les réponses aux questions les plus posées.", en: "Assessment, fees, documents, timelines, security and visas: answers to the most common questions." } },
+      { key: "verify_agency", label: { fr: "Vérifier une agence", en: "Check an agency" }, href: "/verifier-une-agence", description: { fr: "Signes d’une offre frauduleuse et vérifications à faire avant de payer.", en: "Warning signs of a fraudulent offer and checks to make before paying." } },
       { key: "reviews", label: { fr: "Avis", en: "Reviews" }, href: "/avis", description: { fr: "Consulter ou soumettre un avis selon le circuit de modération.", en: "Read or submit a review through the moderation process." } },
     ],
   },

@@ -12,6 +12,7 @@ import {
 import { OFFICIAL_CONSULAR_PORTALS } from "../client/src/data/officialConsularPortals";
 import { evisasDatabaseComplete } from "../client/src/data/evisasDatabaseComplete";
 import { getStudyDestinationArticle, studyDestinationArticles } from "../client/src/data/studyDestinationArticles";
+import { AGENCY_CHECKS, AGENCY_RED_FLAGS, FAQ_GENERAL_GROUPS } from "../client/src/data/contentCampaign";
 import { getEnglishContentByEnSlug, getEnglishContentByFrId, type ProcedureEnglishContent } from "../client/src/data/procedures107English";
 import { getCataloguedDestinationImage } from "../client/src/data/premiumVisuals";
 import { getServiceVisual } from "../client/src/data/premiumVisuals";
@@ -274,6 +275,8 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   },
   "/conditions-utilisation": { title: `Conditions d’utilisation | ${SITE}`, description: "Conditions d’utilisation des services et informations de responsabilité.", heading: "Conditions d’utilisation", lead: "Les services d’accompagnement ne remplacent ni les autorités compétentes ni les décisions de partenaires externes." },
   "/accessibilite": { title: `Accessibilité | ${SITE}`, description: "Engagements et informations d’accessibilité du site 3M TRAVEL AGENCY : ce qui est déjà en place et comment signaler une difficulté.", heading: "Accessibilité", lead: "Nous cherchons à rendre le site utilisable par le plus grand nombre ; signalez-nous toute difficulté rencontrée." },
+  "/faq": { title: `Questions fréquentes | ${SITE}`, description: "Évaluation gratuite, frais et paiement, documents, délais, sécurité, visas et e-Visa : les réponses de 3M TRAVEL AGENCY aux questions les plus posées.", heading: "Questions fréquentes", lead: "Des réponses claires avant de lancer votre projet de mobilité internationale, sans promesse de résultat : les décisions appartiennent aux autorités, écoles et employeurs." },
+  "/verifier-une-agence": { title: `Vérifier une agence avant de payer | ${SITE}`, description: "Signes d’une offre frauduleuse, vérifications à faire avant de payer une agence de visa, d’études ou d’emploi, et engagements de 3M TRAVEL AGENCY.", heading: "Vérifier une agence avant de payer", lead: "Une promesse de visa, d’emploi ou d’admission « assuré » est le signe le plus courant d’une escroquerie : voici comment vérifier avant de payer." },
   "/ressources": { title: `Bibliothèque de ressources | ${SITE}`, description: "Guides PDF par pays pour le travail, les études et la visite — pages destinations premium et fiches 3M TRAVEL AGENCY.", heading: "Guides par destination", lead: "Choisissez un pays pour consulter tous les guides PDF associés, avec images premium et renvoi vers les sources officielles." },
   "/guide-procedures": { title: `Guide des procédures | ${SITE}`, description: "Bibliothèque PDF des procédures 3M TRAVEL AGENCY : travail, études, visiteur, avec renvoi vers les portails officiels (IRCC, ADEM, France-Visas…).", heading: "Bibliothèque PDF des procédures de mobilité", lead: "Chaque guide publié est rattaché à sa fiche procédure et aux sources officielles à vérifier avant toute démarche." },
   "/3m-solutions": { title: "3M Solutions | 3M TRAVEL AGENCY", description: "Services numériques et accompagnement documentaire de 3M TRAVEL AGENCY : web, formation, réseaux et sécurité.", heading: "3M Solutions", lead: "Découvrez les services numériques et soumettez une demande détaillée à l’équipe." },
@@ -378,6 +381,12 @@ const routeSpecificPrerender = (path: string) => {
       .map((entry) => `<li><a href="/en/procedures/${encodeURIComponent(entry.enSlug)}">${esc(entry.description)}</a></li>`)
       .join("");
     return `<section aria-label="Mobility services"><h2>Prepare your international mobility project</h2><p>Discover our most requested procedures, verified institutional sources, and a free initial evaluation before any step.</p><p><a href="/?project=travail&amp;destination=canada#evaluation-multi">Start the free evaluation</a> · <a href="/en">Explore priority procedures</a> · <a href="/sources-officielles">View official sources</a></p></section><section aria-label="Priority destinations"><h2>Most requested procedures from Yaoundé</h2><ul>${links}</ul></section>`;
+  }
+  if (path === "/faq") {
+    return FAQ_GENERAL_GROUPS.map((group) => `<section aria-label="${esc(group.title)}"><h2>${esc(group.title)}</h2>${group.items.map((item) => `<h3>${esc(item.question)}</h3><p>${esc(item.answer)}</p>`).join("")}</section>`).join("");
+  }
+  if (path === "/verifier-une-agence") {
+    return `<section aria-label="Signaux d’alerte"><h2>Les signaux d’alerte</h2><ul>${AGENCY_RED_FLAGS.map((flag) => `<li><strong>${esc(flag.title)}</strong> — ${esc(flag.text)}</li>`).join("")}</ul></section><section aria-label="Vérifications avant paiement"><h2>Ce qu’il faut vérifier avant de payer</h2><ol>${AGENCY_CHECKS.map((step) => `<li><strong>${esc(step.title)}</strong> — ${esc(step.text)}</li>`).join("")}</ol></section>`;
   }
   if (path === "/canada/crs") {
     return `<section aria-label="Calculatrice CRS Canada"><h2>Simulateur du Système de classement global</h2><p>Le parcours dédié Canada permet d’examiner l’âge, les études, les langues officielles, l’expérience canadienne, le conjoint, la transférabilité et les points additionnels.</p><p>Les quatre compétences linguistiques — lecture, écriture, écoute et expression orale — doivent être saisies selon le test reconnu par IRCC.</p><p><a href="https://www.canada.ca/fr/immigration-refugies-citoyennete/services/immigrer-canada/entree-express/verifier-note.html#calculatrice" target="_blank" rel="noopener noreferrer">Comparer avec la calculatrice officielle IRCC</a> · <a href="/evaluation?destination=canada">Faire une évaluation complète du profil</a> · <a href="/canada">Retourner à la page Canada</a></p></section>`;
