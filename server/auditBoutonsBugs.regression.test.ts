@@ -18,6 +18,9 @@ describe("audit boutons / bugs session", () => {
     expect(read("client/src/components/AdminNotificationBell.tsx")).toContain("getAdminSessionToken");
     expect(read("client/src/components/DocumentVerificationModal.tsx")).toContain("getAdminSessionToken");
     expect(read("client/src/pages/AdminUserDetails.tsx")).toContain("getAdminSessionToken");
+    expect(read("client/src/pages/AdminEvaluations.tsx")).toContain("getAdminSessionToken");
+    expect(read("client/src/pages/AdminUsersManagement.tsx")).toContain("getAdminSessionToken");
+    expect(read("client/src/components/AdminEmailDeliveryManagement.tsx")).toContain("getAdminSessionToken");
     const changePassword = read("client/src/App.tsx");
     expect(changePassword).toContain('localStorage.getItem("adminSessionToken") || sessionStorage.getItem("adminSessionToken")');
   });
