@@ -640,9 +640,9 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
     if (fromDocs) {
       return {
         ...fromDocs,
-        documentUrl: fromDocs.documentUrl || fromDocs.fileUrl || null,
+        documentUrl: fromDocs.documentUrl || (fromDocs as any).fileUrl || null,
         fileName: fromDocs.fileName || "CV du candidat",
-        documentType: fromDocs.documentType || fromDocs.fileType || "cv",
+        documentType: fromDocs.documentType || (fromDocs as any).fileType || "cv",
       };
     }
     const evalCvUrl = data?.evaluationContext?.cvFileUrl;

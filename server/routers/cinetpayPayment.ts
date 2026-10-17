@@ -4,6 +4,7 @@ import { getDb } from "../db";
 import { applications } from "../../drizzle/schema";
 import { and, count, desc, eq, sql } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
+import { normalizeAfterOpeningPayment } from "../services/normalizeAfterOpeningPayment";
 
 const DEFAULT_PAYMENT_AMOUNT = 65000;
 const PAYMENT_CURRENCY = "XAF";
@@ -123,6 +124,16 @@ export const cinetpayPaymentRouter = router({
           paymentMethod: verification.paymentMethod || null,
           dossierStatus: application.agreementSigned && application.evaluationDeliveryStatus === "sent" && Boolean(application.evaluationClientConfirmedAt) ? "paye" : application.dossierStatus,
         }).where(and(eq(applications.id, application.id), eq(applications.paymentStatus, "PENDING")));
+        try {
+          await normalizeAfterOpeningPayment(db, {
+            source: "online",
+            dossierId: application.id,
+            candidateEmail: application.email,
+            adminEmail: "cinetpay",
+          });
+        } catch (normalizationError) {
+          console.error("[CinetPay] automatic reference normalization failed", { applicationId: application.id, normalizationError });
+        }
         return { success: true, status: "SUCCESS" as const };
       }
       return { success: true, status: "PENDING" as const };

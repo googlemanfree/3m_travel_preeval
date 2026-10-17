@@ -28,6 +28,7 @@ const otpResendClientLimiter = createFixedWindowLimiter({ limit: 10, windowMs: 6
 import { sanitizeClientCommunicationHtml } from "../clientCommunication";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
 import { sendReceiptAndProtocol } from "../services/paymentPackage";
+import { normalizeAfterOpeningPayment } from "../services/normalizeAfterOpeningPayment";
 import { MAX_CLIENT_DOSSIERS, MAX_CLIENT_DOSSIERS_MESSAGE } from "../../shared/clientDossierLimits";
 import { DEFAULT_OPENING_FEE_XAF, MAX_OPENING_FEE_XAF, MIN_OPENING_FEE_XAF, formatXaf } from "../../shared/openingFee";
 import { storedUploadUrlSchema } from "../../shared/storedFileUrl";
@@ -994,6 +995,19 @@ export const applicationRouter = router({
         } catch (error) {
           packageError = error instanceof TRPCError ? error.message : "Le reçu et le protocole n’ont pas pu être envoyés.";
           console.error("[Payment] receipt + protocol package failed", { applicationId: application.id, error });
+        }
+      }
+
+      if (input.paymentStatus === "SUCCESS" && application.paymentStatus !== "SUCCESS") {
+        try {
+          await normalizeAfterOpeningPayment(db, {
+            source: "online",
+            dossierId: application.id,
+            candidateEmail: application.email,
+            adminEmail: ctx.user.email || ctx.user.name,
+          });
+        } catch (normalizationError) {
+          console.error("[Payment] automatic reference normalization failed", { applicationId: application.id, normalizationError });
         }
       }
 
