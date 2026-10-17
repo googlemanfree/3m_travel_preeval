@@ -51,7 +51,7 @@ describe("shouldDispatchJob", () => {
 });
 
 describe("SCHEDULED_JOBS", () => {
-  it("couvre les 5 endpoints planifiables via CRON_SECRET, chacun avec une expression cron valide", () => {
+  it("couvre les endpoints planifiables via CRON_SECRET, chacun avec une expression cron valide", () => {
     const paths = SCHEDULED_JOBS.map((job) => job.path);
     expect(new Set(paths).size).toBe(paths.length);
     expect(paths.sort()).toEqual([
@@ -60,6 +60,7 @@ describe("SCHEDULED_JOBS", () => {
       "/api/scheduled/evaluation-bilan-job",
       "/api/scheduled/evaluation-job",
       "/api/scheduled/passport-pending-weekly-alert",
+      "/api/scheduled/pilotage-automation",
     ]);
     for (const job of SCHEDULED_JOBS) {
       // Construire une CronJob valide la syntaxe sans jamais la démarrer (4e argument = false).
@@ -74,17 +75,21 @@ describe("SCHEDULED_JOBS", () => {
     }
   });
 
-  it("marque document-reminders comme seule tâche avec un aperçu sans effet de bord", () => {
-    const supportingDryRun = SCHEDULED_JOBS.filter((job) => job.supportsDryRun).map((job) => job.path);
-    expect(supportingDryRun).toEqual(["/api/scheduled/document-reminders"]);
+  it("marque document-reminders et pilotage-automation comme tâches avec aperçu sans effet de bord", () => {
+    const supportingDryRun = SCHEDULED_JOBS.filter((job) => job.supportsDryRun).map((job) => job.path).sort();
+    expect(supportingDryRun).toEqual([
+      "/api/scheduled/document-reminders",
+      "/api/scheduled/pilotage-automation",
+    ]);
   });
 
-  it("marque evaluation-job et evaluation-bilan-job comme tâches à risque candidat (volume d'e-mails réels)", () => {
+  it("marque les tâches à risque candidat (volume d'e-mails réels)", () => {
     const candidateFacing = SCHEDULED_JOBS.filter((job) => job.candidateFacing).map((job) => job.path).sort();
     expect(candidateFacing).toEqual([
       "/api/scheduled/document-reminders",
       "/api/scheduled/evaluation-bilan-job",
       "/api/scheduled/evaluation-job",
+      "/api/scheduled/pilotage-automation",
     ]);
   });
 });
@@ -121,7 +126,7 @@ describe("initScheduledJobsCron", () => {
     }
   });
 
-  it("en dry-run, appelle uniquement document-reminders, avec {dryRun:true} et le secret attendu", async () => {
+  it("en dry-run, appelle uniquement les tâches supportsDryRun, avec {dryRun:true} et le secret attendu", async () => {
     process.env.SCHEDULED_JOBS_MODE = "dry-run";
     process.env.CRON_SECRET = "test-secret";
     const fetchSpy = vi.fn().mockResolvedValue({ status: 200, json: async () => ({ sent: 0 }) });
@@ -129,12 +134,18 @@ describe("initScheduledJobsCron", () => {
     const jobs = initScheduledJobsCron(4242);
     try {
       await Promise.all(jobs.map((job) => job.fireOnTick()));
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-      const [url, init] = fetchSpy.mock.calls[0];
-      expect(url).toBe("http://127.0.0.1:4242/api/scheduled/document-reminders");
-      expect(init.method).toBe("POST");
-      expect(init.headers.Authorization).toBe("Bearer test-secret");
-      expect(init.body).toBe(JSON.stringify({ dryRun: true }));
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
+      const urls = fetchSpy.mock.calls.map((call: unknown[]) => call[0]).sort();
+      expect(urls).toEqual([
+        "http://127.0.0.1:4242/api/scheduled/document-reminders",
+        "http://127.0.0.1:4242/api/scheduled/pilotage-automation",
+      ]);
+      for (const call of fetchSpy.mock.calls) {
+        const init = call[1] as { method: string; headers: { Authorization: string }; body: string };
+        expect(init.method).toBe("POST");
+        expect(init.headers.Authorization).toBe("Bearer test-secret");
+        expect(init.body).toBe(JSON.stringify({ dryRun: true }));
+      }
     } finally {
       await Promise.all(jobs.map((job) => job.stop()));
     }
