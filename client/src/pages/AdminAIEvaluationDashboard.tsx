@@ -335,6 +335,7 @@ export default function AdminAIEvaluationDashboard() {
   const [gapRelanceSent, setGapRelanceSent] = useState<Record<string, true>>({});
   const sendGapRelanceMutation = trpc.adminCandidateManagement.sendDynamicRelance.useMutation({
     onSuccess: (result, variables) => {
+      if (!variables) return;
       const key = `${variables?.candidateId}:${variables?.stage}`;
       setGapRelanceSent((prev) => ({ ...prev, [key]: true }));
       toast({
