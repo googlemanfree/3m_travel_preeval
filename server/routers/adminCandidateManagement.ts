@@ -841,6 +841,7 @@ export const adminCandidateManagementRouter = router({
       const onlineMatch = /^online_(\d+)$/.exec(rawId);
       const agencyMatch = /^agency_(\d+)$/.exec(rawId);
       const numericOnly = /^\d+$/.exec(rawId);
+      const emailLookup = rawId.includes("@") ? rawId.toLowerCase() : null;
 
       let candidateRow: typeof candidates.$inferSelect | null = null;
       let reference = "";
@@ -848,7 +849,15 @@ export const adminCandidateManagementRouter = router({
       let visaType: string | null = null;
       let phone: string | null = null;
 
-      if (accountMatch || numericOnly) {
+      if (emailLookup) {
+        const [row] = await db.select().from(candidates).where(and(sql`LOWER(TRIM(${candidates.email})) = ${emailLookup}`, isNull(candidates.deletedAt))).limit(1);
+        if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable pour cet e-mail." });
+        candidateRow = row;
+        reference = accountReference(row.id);
+        destination = row.destination || null;
+        visaType = row.visaType || null;
+        phone = row.phone || null;
+      } else if (accountMatch || numericOnly) {
         const id = Number((accountMatch ?? numericOnly)![1]);
         const [row] = await db.select().from(candidates).where(and(eq(candidates.id, id), isNull(candidates.deletedAt))).limit(1);
         if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });

@@ -786,12 +786,15 @@ export function CandidateDetailModal({
                         <MessageSquare className="h-3.5 w-3.5" /> WhatsApp
                       </a>
                     )}
-                    <a
-                      href={`mailto:${candidate.email}`}
-                      className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1 text-xs text-white transition hover:bg-blue-700"
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1 text-xs text-white transition hover:bg-blue-700 disabled:opacity-60"
+                      disabled={sendDynamicRelanceMutation.isPending || Boolean(relanceSentKeys["generic:email"])}
+                      onClick={() => openPreDossierRelance("generic", "email")}
+                      data-testid="candidate-header-email-relance"
                     >
-                      <Mail className="h-3.5 w-3.5" /> Email
-                    </a>
+                      <Mail className="h-3.5 w-3.5" /> {relanceSentKeys["generic:email"] ? "E-mail envoyé" : "E-mail"}
+                    </button>
                     {candidate.avatarUrl && (
                       <>
                         <Button type="button" size="sm" variant="outline" className="h-7 border-blue-200 bg-white px-2 text-xs" onClick={() => setPortraitPreviewOpen(true)} data-testid="candidate-portrait-view">
@@ -1208,7 +1211,7 @@ export function CandidateDetailModal({
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {candidate.whatsapp && <a href={`https://wa.me/${candidate.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-lg bg-emerald-700 px-3 text-sm font-semibold text-white hover:bg-emerald-800"><MessageSquare className="h-4 w-4" />WhatsApp</a>}
-                  <a href={`mailto:${candidate.email}`} className="inline-flex h-10 items-center gap-2 rounded-lg bg-blue-700 px-3 text-sm font-semibold text-white hover:bg-blue-800"><Mail className="h-4 w-4" />E-mail</a>
+                  <button type="button" className="inline-flex h-10 items-center gap-2 rounded-lg bg-blue-700 px-3 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-60" disabled={sendDynamicRelanceMutation.isPending || Boolean(relanceSentKeys["generic:email"])} onClick={() => openPreDossierRelance("generic", "email")} data-testid="candidate-aside-email-relance"><Mail className="h-4 w-4" />{relanceSentKeys["generic:email"] ? "E-mail envoyé" : "E-mail"}</button>
                 </div>
               </section>
               <AdminRegistrationProfile

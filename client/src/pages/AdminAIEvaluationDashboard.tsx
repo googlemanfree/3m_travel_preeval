@@ -133,13 +133,8 @@ function itemMissingRequiredCv(item: DashboardItem): boolean {
   return (item.type === "evaluation" || item.type === "consultation") && itemRequiresCv(item) && !itemHasOpenableCv(item);
 }
 
-function buildGapMailtoReminder(item: DashboardItem): string {
-  const reminder = evaluationGapReminder(item.projectType ?? item.visaType, item.fullName);
-  const params = new URLSearchParams({
-    subject: reminder.subject,
-    body: reminder.body,
-  });
-  return `mailto:${encodeURIComponent(item.email)}?${params.toString()}`;
+function gapRelanceStage(item: DashboardItem): "cv_missing" | "generic" {
+  return itemMissingRequiredCv(item) ? "cv_missing" : "generic";
 }
 
 function buildGapWhatsAppReminder(item: DashboardItem): string | null {
@@ -336,6 +331,31 @@ function initialReviewDraft(item: DashboardItem) {
 export default function AdminAIEvaluationDashboard() {
   const { toast } = useToast();
   const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
+  const [gapRelanceSent, setGapRelanceSent] = useState<Record<string, true>>({});
+  const sendGapRelanceMutation = trpc.adminCandidateManagement.sendDynamicRelance.useMutation({
+    onSuccess: (result, variables) => {
+      const key = `${variables?.candidateId}:${variables?.stage}`;
+      setGapRelanceSent((prev) => ({ ...prev, [key]: true }));
+      toast({
+        title: result.emailSent ? "Relance envoyée" : "Relance déposée",
+        description: result.message,
+        variant: result.emailSent ? "default" : "destructive",
+      });
+    },
+    onError: (error) => toast({ title: "Relance impossible", description: error.message, variant: "destructive" }),
+  });
+  const sendGapRelance = (item: DashboardItem) => {
+    if (!sessionToken || sendGapRelanceMutation.isPending) return;
+    const key = `${item.email}:${gapRelanceStage(item)}`;
+    if (gapRelanceSent[key]) return;
+    sendGapRelanceMutation.mutate({
+      sessionToken,
+      candidateId: item.email,
+      stage: gapRelanceStage(item),
+      channel: "email",
+      useAi: true,
+    });
+  };
   const { data, isLoading, refetch, isFetching } = trpc.aiEvaluationManagement.getUnifiedDashboard.useQuery(
     { sessionToken, limit: 500 },
     { enabled: !!sessionToken, refetchInterval: false },
@@ -808,14 +828,16 @@ export default function AdminAIEvaluationDashboard() {
                   ) : itemMissingRequiredCv(item) ? (
                     <>
                       <Badge className="bg-rose-100 text-rose-900" data-testid="evaluation-cv-missing-badge">CV manquant (visa travail)</Badge>
-                      <a
-                        href={buildGapMailtoReminder(item)}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-rose-300 bg-rose-50 px-3 text-xs font-bold text-rose-900 hover:bg-rose-100"
+                      <button
+                        type="button"
+                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-rose-300 bg-rose-50 px-3 text-xs font-bold text-rose-900 hover:bg-rose-100 disabled:opacity-60"
                         data-testid="evaluation-cv-remind-email"
+                        disabled={sendGapRelanceMutation.isPending || Boolean(gapRelanceSent[`${item.email}:cv_missing`])}
+                        onClick={() => sendGapRelance(item)}
                       >
                         <Mail className="h-3.5 w-3.5" aria-hidden="true" />
-                        Relancer par e-mail
-                      </a>
+                        {gapRelanceSent[`${item.email}:cv_missing`] ? "Relance envoyée" : "Relancer par e-mail"}
+                      </button>
                       {buildGapWhatsAppReminder(item) ? (
                         <a
                           href={buildGapWhatsAppReminder(item)!}
@@ -834,15 +856,17 @@ export default function AdminAIEvaluationDashboard() {
                   ) : item.type === "evaluation" ? (
                     <>
                       <Badge className="bg-slate-100 text-slate-700" data-testid="evaluation-cv-optional-badge">CV non exigé pour ce projet</Badge>
-                      <a
-                        href={buildGapMailtoReminder(item)}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-3 text-xs font-bold text-amber-950 hover:bg-amber-100"
+                      <button
+                        type="button"
+                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-3 text-xs font-bold text-amber-950 hover:bg-amber-100 disabled:opacity-60"
                         data-testid="evaluation-gap-remind-email"
                         title={evaluationGapReminder(item.projectType ?? item.visaType, item.fullName).subject}
+                        disabled={sendGapRelanceMutation.isPending || Boolean(gapRelanceSent[`${item.email}:generic`])}
+                        onClick={() => sendGapRelance(item)}
                       >
                         <Mail className="h-3.5 w-3.5" aria-hidden="true" />
-                        {gapReminderLabel(item)}
-                      </a>
+                        {gapRelanceSent[`${item.email}:generic`] ? "Relance envoyée" : gapReminderLabel(item)}
+                      </button>
                       {buildGapWhatsAppReminder(item) ? (
                         <a
                           href={buildGapWhatsAppReminder(item)!}
