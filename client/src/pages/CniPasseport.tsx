@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from "react";
-import { FaqSection } from "@/components/PageEnrichment";
+import { ChecklistSection, FaqSection, StepsSection } from "@/components/PageEnrichment";
+import { CNI_BEFORE_CHECKLIST, CNI_COMMON_ERRORS, CNI_LOST_STEPS } from "@/data/contentCampaignDocs";
 import { CNI_FAQ } from "@/data/pageEnrichment";
 
 import { CheckCircle2, ClipboardCheck, FileCheck2, MessageCircle, Send, UserCheck } from "lucide-react";
@@ -164,6 +165,9 @@ export default function CniPasseport() {
         </ul>
       </ServiceSection>
 
+      <ChecklistSection title="Avant de déposer votre demande" introduction="Cinq vérifications qui évitent un aller-retour inutile." items={CNI_BEFORE_CHECKLIST} tone="white" testId="cni-before" />
+      <StepsSection title="En cas de perte ou de vol" introduction="Trois réflexes, dans l’ordre." steps={CNI_LOST_STEPS} tone="slate" testId="cni-lost" />
+      <ChecklistSection title="Les pièges à éviter" items={CNI_COMMON_ERRORS} tone="blue" testId="cni-errors" />
       <FaqSection introduction="Les points que l’on nous demande le plus souvent avant un dépôt de CNI ou de passeport." items={CNI_FAQ} testId="cni-faq" />
 
       <section id="demande" className="scroll-mt-24 bg-white px-4 py-14 sm:px-6 lg:px-8" aria-labelledby="cni-request-title">

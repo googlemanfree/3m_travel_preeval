@@ -2,6 +2,8 @@ import { ServicePageShell, ServiceSection } from "@/components/ServicePageShell"
 import PaymentMethodsPanel from "@/components/PaymentMethodsPanel";
 import PaymentFallbackPanel from "@/components/PaymentFallbackPanel";
 import PaymentProofUpload from "@/components/PaymentProofUpload";
+import { ChecklistSection, FaqSection, StepsSection } from "@/components/PageEnrichment";
+import { PAY_AFTER, PAY_FAQ, PAY_STEPS } from "@/data/contentCampaignDocs";
 
 const GUARANTEES = [
   "Le paiement n’est pris en compte qu’après confirmation de réception par l’agence, avec reçu.",
@@ -43,6 +45,10 @@ export default function Paiement() {
           ))}
         </ul>
       </ServiceSection>
+
+      <StepsSection title="Comment payer, étape par étape" introduction="Le même déroulement, quel que soit le moyen choisi." steps={PAY_STEPS} tone="slate" testId="pay-steps" />
+      <ChecklistSection title="Après votre paiement" items={PAY_AFTER} tone="white" testId="pay-after" />
+      <FaqSection title="Questions sur le paiement" items={PAY_FAQ} tone="slate" testId="pay-faq" />
     </ServicePageShell>
   );
 }

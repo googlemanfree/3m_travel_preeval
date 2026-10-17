@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import * as campaign from "../client/src/data/contentCampaign";
+import * as campaignDocs from "../client/src/data/contentCampaignDocs";
 import { composePublicPrerender, getIndexablePublicPaths, PUBLIC_PAGES } from "./publicPrerender";
 
 const root = resolve(import.meta.dirname, "..");
@@ -21,6 +22,7 @@ function collectTexts(): string[] {
     else if (value && typeof value === "object") Object.values(value as Record<string, unknown>).forEach(visit);
   };
   Object.values(campaign).forEach(visit);
+  Object.values(campaignDocs).forEach(visit);
   return texts;
 }
 
@@ -92,6 +94,41 @@ describe("campagne de contenu : pages enregistrées partout où il faut", () => 
     const agency = agencyPage.html;
     expect(agency).toContain("Les signaux d’alerte");
     expect(agency).toContain("Un visa, un emploi ou une admission « assurés »");
+  });
+});
+
+describe("campagne de contenu, lot 2 : documents, paiement, CNI, accessibilité, état du service", () => {
+  it("les contenus du lot sont complets et bilingues là où il le faut", () => {
+    expect(campaignDocs.DOC_FAMILIES.length).toBe(6);
+    expect(campaignDocs.DOC_FORMAT_RULES.length).toBeGreaterThanOrEqual(5);
+    expect(campaignDocs.DOC_FORMALITIES.length).toBe(3);
+    expect(campaignDocs.DOC_FAQ.length).toBeGreaterThanOrEqual(4);
+    expect(campaignDocs.PAY_STEPS.length).toBeGreaterThanOrEqual(4);
+    expect(campaignDocs.PAY_FAQ.length).toBeGreaterThanOrEqual(4);
+    expect(campaignDocs.CNI_BEFORE_CHECKLIST.length).toBe(5);
+    expect(campaignDocs.CNI_LOST_STEPS.length).toBe(3);
+    expect(campaignDocs.ACCESSIBILITY_STATEMENT.length).toBeGreaterThanOrEqual(5);
+    for (const block of campaignDocs.ACCESSIBILITY_STATEMENT) {
+      for (const lang of ["fr", "en"] as const) {
+        expect(block.title[lang].length).toBeGreaterThan(3);
+        expect(block.text[lang].length).toBeGreaterThan(40);
+      }
+    }
+  });
+
+  it("la déclaration d'accessibilité ne prétend pas à une conformité non auditée", () => {
+    const text = campaignDocs.ACCESSIBILITY_STATEMENT.flatMap((block) => [block.text.fr, block.text.en]).join("\n");
+    expect(text).not.toMatch(/entièrement conforme|fully compliant|site (est )?certifié|is certified/i);
+    expect(text).toMatch(/pas fait l’objet d’une certification externe/);
+    expect(text).toMatch(/not undergone external certification/);
+  });
+
+  it("les pages sont branchées sur les nouveaux contenus", () => {
+    expect(read("client/src/pages/DocumentCompliancePage.tsx")).toContain('testId="compliance-faq"');
+    expect(read("client/src/pages/Paiement.tsx")).toContain('testId="pay-steps"');
+    expect(read("client/src/pages/CniPasseport.tsx")).toContain('testId="cni-lost"');
+    expect(read("client/src/pages/Accessibility.tsx")).toContain("ACCESSIBILITY_STATEMENT");
+    expect(read("server/_core/index.ts")).toContain("registerPublicHealthRoute(app);");
   });
 });
 

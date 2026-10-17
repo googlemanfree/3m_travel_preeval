@@ -5,6 +5,7 @@ import { useFloatingWidgetsPreferences } from "@/contexts/FloatingWidgetsPrefere
 import { useHighContrast } from "@/contexts/HighContrastContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
+import { ACCESSIBILITY_STATEMENT } from "@/data/contentCampaignDocs";
 
 export default function Accessibility() {
   const { preference, setPreference } = useAnimationPreferences();
@@ -91,6 +92,19 @@ export default function Accessibility() {
           <p className="leading-relaxed text-gray-700">{t("Nous privilégions des contrastes lisibles, une navigation au clavier, des libellés explicites, des états de focus visibles et des interfaces adaptées aux écrans mobiles.", "We prioritise readable contrast, keyboard navigation, explicit labels, visible focus states and interfaces adapted to mobile screens.")}</p>
           <h2 className="text-2xl font-bold text-gray-900">{t("Besoin d’aide ?", "Need help?")}</h2>
           <p className="leading-relaxed text-gray-700">{t("Si vous rencontrez une difficulté pour accéder à une information ou effectuer une démarche, écrivez à", "If you have difficulty accessing information or completing a request, write to")} <a className="font-semibold text-blue-700 underline" href="mailto:hello@3mtravelagency.com">hello@3mtravelagency.com</a>.</p>
+        </div>
+
+        <div className="space-y-6 rounded-2xl bg-white p-8 shadow-sm" data-testid="accessibility-statement">
+          <h2 className="text-2xl font-bold text-gray-900">{t("Déclaration d’accessibilité", "Accessibility statement")}</h2>
+          <dl className="space-y-5">
+            {ACCESSIBILITY_STATEMENT.map((block) => (
+              <div key={block.title.fr}>
+                <dt className="text-lg font-semibold text-gray-900">{t(block.title.fr, block.title.en)}</dt>
+                <dd className="mt-1 leading-relaxed text-gray-700">{t(block.text.fr, block.text.en)}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="text-sm text-gray-600">{t("Pour signaler un obstacle :", "To report a barrier:")} <a href="/contact" className="font-semibold text-blue-700 underline underline-offset-2">{t("page Contact", "Contact page")}</a></p>
         </div>
       </section>
     </main>
