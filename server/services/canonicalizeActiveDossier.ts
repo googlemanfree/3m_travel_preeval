@@ -107,15 +107,21 @@ export async function purgeAllOrphanEvalAgencyShells(
 
   let purged = 0;
   const canonicals: string[] = [];
+  let skippedUnpaid = 0;
   for (const shell of shells) {
     const agencyId = parseEvalAgencyShellId(shell.dossierNumber);
     if (agencyId == null) continue;
     const [agency] = await db
-      .select({ id: agencyDossiers.id })
+      .select({ id: agencyDossiers.id, initialPaymentStatus: agencyDossiers.initialPaymentStatus })
       .from(agencyDossiers)
       .where(and(eq(agencyDossiers.id, agencyId), isNull(agencyDossiers.deletedAt)))
       .limit(1);
     if (!agency) continue;
+    // Pas de passage COMPTE → 3M sans frais d’ouverture validés.
+    if (agency.initialPaymentStatus !== "paid") {
+      skippedUnpaid += 1;
+      continue;
+    }
     const result = await purgeEvalAgencyShell(db, {
       agencyDossierId: agencyId,
       adminEmail: input?.adminEmail,
@@ -124,7 +130,7 @@ export async function purgeAllOrphanEvalAgencyShells(
     purged += result.purgedApplicationIds.length;
     canonicals.push(result.canonical);
   }
-  return { processed: shells.length, purged, canonicals: Array.from(new Set(canonicals)) };
+  return { processed: shells.length, purged, skippedUnpaid, canonicals: Array.from(new Set(canonicals)) };
 }
 
 /**

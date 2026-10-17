@@ -1132,21 +1132,47 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
           </Button>
         </div>
         <div className="flex flex-wrap gap-2" data-testid="candidate360-reference-actions">
-          <Button
-            type="button"
-            size="sm"
-            className="h-8 bg-emerald-700 text-xs hover:bg-emerald-800"
-            disabled={canonicalizeDossierMutation.isPending}
-            onClick={() => canonicalizeDossierMutation.mutate({ sessionToken, candidateId: candidate.id })}
-            data-testid="canonicalize-active-dossier"
-          >
-            {canonicalizeDossierMutation.isPending ? "Normalisation…" : "Normaliser en 3M-AGN (supprimer EVAL)"}
-          </Button>
+          {(() => {
+            const evalShell = String((data as any)?.evalShellFolderCode || "").trim();
+            const hasEvalShell = /^EVAL-AG-\d+$/i.test(evalShell) || /^EVAL-AG-\d+$/i.test(String(candidate.folderCode || ""));
+            const canNormalize = paymentConfirmed && hasEvalShell;
+            if (!paymentConfirmed) {
+              return (
+                <p className="w-full rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] leading-5 text-amber-950" data-testid="reference-compte-until-payment">
+                  Référence de travail : <strong>COMPTE-…</strong> tant que les frais d’ouverture ne sont pas validés.
+                  Le passage en <strong>3M-…</strong> (normalisation) n’est possible qu’après paiement.
+                  {hasEvalShell ? " Un code EVAL-AG détecté sera absorbé automatiquement à l’activation post-paiement." : ""}
+                </p>
+              );
+            }
+            if (!hasEvalShell) {
+              return (
+                <p className="w-full rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-[11px] leading-5 text-emerald-950" data-testid="reference-already-3m">
+                  Paiement confirmé — référence active <strong>3M-…</strong>. Aucun miroir EVAL-AG à normaliser sur cette fiche.
+                </p>
+              );
+            }
+            return (
+              <Button
+                type="button"
+                size="sm"
+                className="h-8 bg-emerald-700 text-xs hover:bg-emerald-800"
+                disabled={canonicalizeDossierMutation.isPending || !canNormalize}
+                title="Accessible uniquement après paiement des frais d’ouverture"
+                onClick={() => canonicalizeDossierMutation.mutate({ sessionToken, candidateId: candidate.id })}
+                data-testid="canonicalize-active-dossier"
+              >
+                {canonicalizeDossierMutation.isPending ? "Normalisation…" : "Normaliser en 3M-AGN (supprimer EVAL)"}
+              </Button>
+            );
+          })()}
           <Button
             type="button"
             size="sm"
             variant="outline"
             className="h-8 text-xs"
+            disabled={!paymentConfirmed}
+            title={paymentConfirmed ? "Corriger la référence 3M- active" : "Disponible uniquement après paiement des frais d’ouverture"}
             onClick={() => setReferenceEditorOpen((open) => !open)}
             data-testid="toggle-reference-editor"
           >
@@ -1197,7 +1223,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
                 maxLength={80}
                 placeholder="3M-AGN-240001"
               />
-              <p className="mt-1 text-[11px] text-slate-500">Les dossiers activés utilisent exclusivement un numéro 3M-AGN. Les codes EVAL-AG sont des miroirs et sont supprimés.</p>
+              <p className="mt-1 text-[11px] text-slate-500">Deux références seulement : COMPTE-… (précompte, avant paiement) et 3M-… (dossier actif, après frais d’ouverture). Les codes EVAL-AG sont des miroirs techniques à supprimer.</p>
             </div>
             <Button
               type="button"

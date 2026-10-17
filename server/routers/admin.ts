@@ -5030,7 +5030,8 @@ export const adminRouter = router({
 
   /**
    * Normalise un dossier : référence active 3M-AGN + suppression du miroir EVAL-AG.
-   * Applicable à agency_N ou online_* (si EVAL-AG-{id}).
+   * UNIQUEMENT si les frais d’ouverture sont payés/validés.
+   * Avant paiement, la référence de travail reste COMPTE-… (pas d’activation 3M).
    */
   canonicalizeActiveDossier: publicProcedure
     .input(z.object({
@@ -5045,31 +5046,54 @@ export const adminRouter = router({
       const onlineMatch = /^online_(\d+)$/i.exec(input.candidateId.trim());
       let agencyDossierId: number | null = agencyMatch ? Number(agencyMatch[1]) : null;
       let email: string | null = null;
+      let onlinePaymentConfirmed = false;
       if (onlineMatch) {
         const [app] = await db
-          .select({ dossierNumber: applications.dossierNumber, email: applications.email })
+          .select({
+            dossierNumber: applications.dossierNumber,
+            email: applications.email,
+            paymentStatus: applications.paymentStatus,
+            paymentValidatedAt: applications.paymentValidatedAt,
+          })
           .from(applications)
           .where(and(eq(applications.id, Number(onlineMatch[1])), isNull(applications.deletedAt)))
           .limit(1);
         if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
         agencyDossierId = parseEvalAgencyShellId(app.dossierNumber);
         email = app.email;
+        onlinePaymentConfirmed = app.paymentStatus === "SUCCESS" && Boolean(app.paymentValidatedAt);
         if (agencyDossierId == null) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: "Ce dossier en ligne n’est pas un miroir EVAL-AG. Utilisez « Modifier la référence » pour un numéro 3M-…",
+            message: "Ce dossier n’est pas un miroir EVAL-AG. Deux références seulement : COMPTE-… (avant paiement) et 3M-… (après frais d’ouverture). Utilisez « Activer le dossier » après paiement, ou « Modifier la référence » uniquement sur un dossier déjà payé.",
           });
         }
       }
       if (agencyDossierId == null) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Ouvrez un dossier agence 3M-AGN ou un miroir EVAL-AG." });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Normaliser ne s’applique qu’à un miroir EVAL-AG ou un dossier agence 3M-AGN. Avant paiement, gardez la référence COMPTE-…",
+        });
       }
       const [agency] = await db
-        .select({ id: agencyDossiers.id, email: agencyDossiers.email })
+        .select({
+          id: agencyDossiers.id,
+          email: agencyDossiers.email,
+          initialPaymentStatus: agencyDossiers.initialPaymentStatus,
+          status: agencyDossiers.status,
+        })
         .from(agencyDossiers)
         .where(and(eq(agencyDossiers.id, agencyDossierId), isNull(agencyDossiers.deletedAt)))
         .limit(1);
       if (!agency) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence 3M introuvable." });
+      const agencyPaymentConfirmed = agency.initialPaymentStatus === "paid";
+      const openingPaymentConfirmed = agencyPaymentConfirmed || onlinePaymentConfirmed;
+      if (!openingPaymentConfirmed) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Normalisation interdite : les frais d’ouverture ne sont pas encore validés. La référence reste COMPTE-… jusqu’au paiement. Validez d’abord le paiement, puis normalisez (COMPTE → 3M).",
+        });
+      }
       const result = await purgeEvalAgencyShell(db, {
         agencyDossierId: agency.id,
         candidateEmail: email || agency.email,
@@ -5079,10 +5103,11 @@ export const adminRouter = router({
         success: true,
         canonical: result.canonical,
         purgedCount: result.purgedApplicationIds.length,
+        openingPaymentConfirmed: true,
         redirectToCandidateId: canonicalAgencyCandidateId(agency.id),
         message: result.purgedApplicationIds.length
-          ? `Référence active ${result.canonical}. ${result.purgedApplicationIds.length} miroir(s) EVAL-AG placé(s) en corbeille.`
-          : `Référence active confirmée : ${result.canonical}.`,
+          ? `Référence active ${result.canonical} (paiement confirmé). ${result.purgedApplicationIds.length} miroir(s) EVAL-AG placé(s) en corbeille.`
+          : `Référence active confirmée : ${result.canonical} (paiement confirmé).`,
       };
     }),
 
@@ -5100,11 +5125,11 @@ export const adminRouter = router({
       return {
         success: true,
         ...result,
-        message: `${result.purged} miroir(s) EVAL-AG normalisé(s) vers des dossiers 3M-AGN (${result.processed} examinés).`,
+        message: `${result.purged} miroir(s) EVAL-AG normalisé(s) vers 3M-AGN (${result.processed} examinés${result.skippedUnpaid ? `, ${result.skippedUnpaid} ignoré(s) sans paiement` : ""}).`,
       };
     }),
 
-  /** L’admin corrige manuellement la référence active (doit rester un numéro 3M-…). */
+  /** L’admin corrige manuellement la référence active (3M-… uniquement, après paiement). */
   updateActiveDossierReference: publicProcedure
     .input(z.object({
       sessionToken: z.string().min(1).max(512),
@@ -5124,25 +5149,43 @@ export const adminRouter = router({
       let renameOnlineApplicationId: number | null = null;
       if (source === "online") {
         const [app] = await db
-          .select({ id: applications.id, email: applications.email, dossierNumber: applications.dossierNumber })
+          .select({
+            id: applications.id,
+            email: applications.email,
+            dossierNumber: applications.dossierNumber,
+            paymentStatus: applications.paymentStatus,
+            paymentValidatedAt: applications.paymentValidatedAt,
+          })
           .from(applications)
           .where(and(eq(applications.id, id), isNull(applications.deletedAt)))
           .limit(1);
         if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        if (!(app.paymentStatus === "SUCCESS" && app.paymentValidatedAt)) {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: "Impossible de poser une référence 3M-… : frais d’ouverture non validés. Le dossier reste en COMPTE-…",
+          });
+        }
         email = app.email;
         if (input.renameOnlineApplication) renameOnlineApplicationId = app.id;
-        // Si c’est encore un EVAL-AG, purger d’abord vers le 3M lié.
+        // Si c’est encore un EVAL-AG, purger d’abord vers le 3M lié (paiement déjà confirmé).
         const shellId = parseEvalAgencyShellId(app.dossierNumber);
         if (shellId != null) {
           await purgeEvalAgencyShell(db, { agencyDossierId: shellId, candidateEmail: email, adminEmail: admin.email });
         }
       } else {
         const [agency] = await db
-          .select({ id: agencyDossiers.id, email: agencyDossiers.email })
+          .select({ id: agencyDossiers.id, email: agencyDossiers.email, initialPaymentStatus: agencyDossiers.initialPaymentStatus })
           .from(agencyDossiers)
           .where(and(eq(agencyDossiers.id, id), isNull(agencyDossiers.deletedAt)))
           .limit(1);
         if (!agency) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+        if (agency.initialPaymentStatus !== "paid") {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: "Impossible de poser une référence 3M-… : frais d’ouverture non validés. Le dossier reste en COMPTE-…",
+          });
+        }
         email = agency.email;
         await purgeEvalAgencyShell(db, { agencyDossierId: agency.id, candidateEmail: email, adminEmail: admin.email });
       }
