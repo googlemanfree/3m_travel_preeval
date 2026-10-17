@@ -27,11 +27,11 @@ import {
 import { normalizePublicEvaluationProject } from "@shared/evaluationFormRequirements";
 
 const LOCAL_BUSINESS_STRUCTURED_DATA = {
-  "@type": "LocalBusiness",
+  "@type": "TravelAgency",
   "@id": `${OFFICIAL_SITE_ORIGIN}/#localbusiness`,
-  name: COMPANY_PROFILE.legalName,
-  legalName: GROUP_LEGAL_NAME,
-  alternateName: [BRAND_PUBLIC_NAME, GROUP_LEGAL_NAME],
+  name: BRAND_PUBLIC_NAME,
+  legalName: COMPANY_PROFILE.legalName,
+  alternateName: [COMPANY_PROFILE.legalDisplayName, GROUP_LEGAL_NAME],
   url: COMPANY_PROFILE.website,
   email: COMPANY_PROFILE.publicEmail,
   founder: {
@@ -40,10 +40,22 @@ const LOCAL_BUSINESS_STRUCTURED_DATA = {
     name: COMPANY_FOUNDER.name,
     jobTitle: `${COMPANY_FOUNDER.jobTitle} — ${GROUP_LEGAL_NAME}`,
   },
+  parentOrganization: {
+    "@type": "Organization",
+    name: GROUP_LEGAL_NAME,
+  },
   telephone: [
     COMPANY_PROFILE.offices.cameroon.phoneDisplay,
     COMPANY_PROFILE.offices.cameroon.whatsappDisplay,
     COMPANY_PROFILE.offices.ottawa.whatsappDisplay,
+  ],
+  openingHoursSpecification: [
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+      opens: "08:00",
+      closes: "18:00",
+    },
   ],
   contactPoint: [
     {
@@ -51,6 +63,7 @@ const LOCAL_BUSINESS_STRUCTURED_DATA = {
       telephone: COMPANY_PROFILE.offices.cameroon.phoneDisplay,
       contactType: "customer service",
       areaServed: "CM",
+      hoursAvailable: "Mo-Sa 08:00-18:00",
     },
     {
       "@type": "ContactPoint",
@@ -288,6 +301,12 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
     heading: "Confidentialité et données",
     lead: "Politique complète : vos documents ne sont pas publics — consultation limitée à votre compte (Mon espace) et à l’équipe 3M affectée ; conservation pendant le traitement puis archivage jusqu’à 5 ans après clôture ; données d’identité, coordonnées et pièces d’immigration utilisées uniquement pour l’évaluation et le suivi ; droits d’accès, rectification et suppression via hello@3mtravelagency.com. Le détail des sections suit ci-dessous.",
   },
+  "/mentions-legales": {
+    title: `Mentions légales | ${SITE}`,
+    description: "Mentions légales 3M TRAVEL AGENCY : éditeur, RC et NIU, directeur de publication, hébergeur et contact.",
+    heading: "Mentions légales",
+    lead: "Éditeur 3M Travel Agency SARL (enseigne 3M TRAVEL AGENCY), société mère 3M Group SARL, RC/YAO/2019/A/2567, NIU M112417203369H.",
+  },
   "/conditions-utilisation": { title: `Conditions d’utilisation | ${SITE}`, description: "Conditions d’utilisation des services et informations de responsabilité.", heading: "Conditions d’utilisation", lead: "Les services d’accompagnement ne remplacent ni les autorités compétentes ni les décisions de partenaires externes." },
   "/accessibilite": { title: `Accessibilité | ${SITE}`, description: "Engagements et informations d’accessibilité du site 3M TRAVEL AGENCY : ce qui est déjà en place et comment signaler une difficulté.", heading: "Accessibilité", lead: "Nous cherchons à rendre le site utilisable par le plus grand nombre ; signalez-nous toute difficulté rencontrée." },
   "/faq": { title: `Questions fréquentes | ${SITE}`, description: "Évaluation gratuite, frais et paiement, documents, délais, sécurité, visas et e-Visa : les réponses de 3M TRAVEL AGENCY aux questions les plus posées.", heading: "Questions fréquentes", lead: "Des réponses claires avant de lancer votre projet de mobilité internationale, sans promesse de résultat : les décisions appartiennent aux autorités, écoles et employeurs." },
@@ -384,7 +403,7 @@ const routeSpecificPrerender = (path: string) => {
     return [
       `<section aria-label="Accueil 3M TRAVEL AGENCY"><h2>${esc(BRAND_PUBLIC_NAME)} — de l’Afrique vers le monde</h2><p>Voyages, visas, études et mobilité internationale : évaluation gratuite sans compte pour démarrer, accompagnement documenté, bureaux à Yaoundé et Ottawa. Aucune décision de visa ou d’emploi n’est garantie.</p></section>`,
       `<section aria-label="Preuve d’enregistrement vérifiable"><h2>Identité légale</h2><p><strong>${esc(COMPANY_PROFILE.legalName)}</strong> — ${esc(ids.country)}. Registre : ${esc(ids.registryAuthority)}. N° RC : ${esc(ids.registration)}. NIU : ${esc(ids.taxpayerId)}.</p><p><a href="${esc(ids.registryPortalUrl)}" rel="noopener noreferrer">Portail RCCM Cameroun (OHADA)</a> · <a href="${esc(ids.registrySearchUrl)}" rel="noopener noreferrer">Recherche au registre</a> · <a href="/about">À propos</a></p></section>`,
-      `<section aria-label="Services principaux"><h2>Services</h2><ul><li><a href="/?project=travail#evaluation-multi">Évaluation gratuite (sans compte pour démarrer)</a></li><li><a href="/procedures">Procédures et destinations</a></li><li><a href="/travail">Visa travail</a></li><li><a href="/etudes">Visa études</a></li><li><a href="/flights">Vols et réservation</a></li><li><a href="/tarifs">Tarifs et honoraires</a></li><li><a href="/sources-officielles">Sources officielles</a></li><li><a href="/contact">Contact</a></li><li><a href="/about">À propos</a></li><li><a href="/conditions-utilisation">Conditions d’utilisation</a></li><li><a href="/politique-confidentialite">Politique de confidentialité</a></li></ul></section>`,
+      `<section aria-label="Services principaux"><h2>Services</h2><ul><li><a href="/?project=travail#evaluation-multi">Évaluation gratuite (sans compte pour démarrer)</a></li><li><a href="/procedures">Procédures et destinations</a></li><li><a href="/travail">Visa travail</a></li><li><a href="/etudes">Visa études</a></li><li><a href="/flights">Vols et réservation</a></li><li><a href="/tarifs">Tarifs et honoraires</a></li><li><a href="/sources-officielles">Sources officielles</a></li><li><a href="/contact">Contact</a></li><li><a href="/about">À propos</a></li><li><a href="/mentions-legales">Mentions légales</a></li><li><a href="/conditions-utilisation">Conditions d’utilisation</a></li><li><a href="/politique-confidentialite">Politique de confidentialité</a></li></ul></section>`,
       `<section aria-label="Destinations prioritaires"><h2>Corridors les plus demandés</h2><ul><li><a href="/canada">Canada</a></li><li><a href="/procedures/france-visiteur">France — visiteur</a></li><li><a href="/procedures/france-etudes">France — études</a></li><li><a href="/procedures/france-travail">France — travail</a></li><li><a href="/procedures/allemagne-travail">Allemagne — travail</a></li><li><a href="/schengen">Espace Schengen</a></li></ul></section>`,
       `<section aria-label="Bureaux"><h2>Bureaux et canaux</h2><p><strong>${esc(yaounde.label)}</strong> — ${yaounde.addressLines.map(esc).join(", ")}. ${esc(COMPANY_PROFILE.contactRoles.yaoundeWhatsapp)} : ${esc(yaounde.whatsappDisplay)}${yaounde.phoneDisplay ? ` · ${esc(COMPANY_PROFILE.contactRoles.yaoundePhone)} : ${esc(yaounde.phoneDisplay)}` : ""}. ${esc(yaounde.openingHours.join(" · "))}</p><p><strong>${esc(ottawa.label)}</strong> — ${ottawa.addressLines.map(esc).join(", ")}. ${esc(COMPANY_PROFILE.contactRoles.ottawaWhatsapp)} : ${esc(ottawa.whatsappDisplay)}. ${esc(ottawa.openingHours.join(" · "))}</p><p>Délai de réponse indicatif : ${esc(COMPANY_PROFILE.responseSla.label)}. ${esc(COMPANY_PROFILE.responseSla.definition)}</p><p><a href="mailto:${esc(COMPANY_PROFILE.publicEmail)}">${esc(COMPANY_PROFILE.publicEmail)}</a> · <a href="/contact">Page contact</a> · <a href="/tarifs">Tarifs</a></p></section>`,
     ].join("");
@@ -453,6 +472,10 @@ const routeSpecificPrerender = (path: string) => {
     const yaounde = COMPANY_PROFILE.offices.cameroon;
     const ottawa = COMPANY_PROFILE.offices.ottawa;
     return `<section aria-label="Coordonnées de 3M TRAVEL AGENCY"><h2>Coordonnées et bureaux</h2><p><strong>Numéros Yaoundé — même logique que l’accueil :</strong> WhatsApp ${esc(yaounde.whatsappDisplay)} = canal principal (messages, dossiers, urgences) ; fixe ${esc(yaounde.phoneDisplay || "")} = appels vocaux uniquement (pas WhatsApp). Ottawa ${esc(ottawa.whatsappDisplay)} = WhatsApp secondaire, coordination Canada sur rendez-vous.</p><article><h3>${esc(yaounde.label)}</h3><p>${yaounde.addressLines.map(esc).join("<br />")}</p><p>${esc(COMPANY_PROFILE.contactRoles.yaoundeWhatsapp)} : <a href="https://wa.me/${esc(yaounde.whatsappNumber)}">${esc(yaounde.whatsappDisplay)}</a>${yaounde.phoneDisplay ? ` · ${esc(COMPANY_PROFILE.contactRoles.yaoundePhone)} : <a href="tel:${esc(yaounde.phoneDisplay.replace(/\s/g, ""))}">${esc(yaounde.phoneDisplay)}</a>` : ""}</p><p>${esc(yaounde.openingHours.join(" · "))}</p></article><article><h3>${esc(ottawa.label)}</h3><p>${ottawa.addressLines.map(esc).join("<br />")}</p><p>${esc(COMPANY_PROFILE.contactRoles.ottawaWhatsapp)} : <a href="https://wa.me/${esc(ottawa.whatsappNumber)}">${esc(ottawa.whatsappDisplay)}</a></p><p>${esc(ottawa.openingHours.join(" · "))}</p></article><p>Délai indicatif : ${esc(COMPANY_PROFILE.responseSla.label)}. ${esc(COMPANY_PROFILE.responseSla.definition)}</p><p><a href="mailto:${esc(COMPANY_PROFILE.publicEmail)}">${esc(COMPANY_PROFILE.publicEmail)}</a> · <a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(yaounde.mapQuery)}">Ouvrir la carte de Yaoundé</a></p></section>`;
+  }
+  if (path === "/mentions-legales") {
+    const yaounde = COMPANY_PROFILE.offices.cameroon;
+    return `<section aria-label="Mentions légales"><h2>Mentions légales</h2><p>Éditeur : ${esc(COMPANY_PROFILE.legalDisplayName)}. Société mère : ${esc(GROUP_LEGAL_NAME)}. RC ${esc(COMPANY_PROFILE.legalIdentifiers.registration)}, NIU ${esc(COMPANY_PROFILE.legalIdentifiers.taxpayerId)}. Siège : ${yaounde.addressLines.map(esc).join(", ")}.</p><p>Directeur de la publication : ${esc(COMPANY_FOUNDER.name)}. Hébergeur : ${esc(COMPANY_PROFILE.hosting.providerName)}. Contact : <a href="mailto:${esc(COMPANY_PROFILE.publicEmail)}">${esc(COMPANY_PROFILE.publicEmail)}</a>.</p><p>${esc(COMPANY_PROFILE.groupRole)}</p><p>Le domaine officiel est www.3mtravelagency.com ; 3mtravelagency.click doit renvoyer en 301 vers le .com.</p><p><a href="/conditions-utilisation">Conditions d’utilisation</a> · <a href="/politique-confidentialite">Politique de confidentialité</a></p></section>`;
   }
   if (path === "/politique-confidentialite") {
     const yaounde = COMPANY_PROFILE.offices.cameroon;

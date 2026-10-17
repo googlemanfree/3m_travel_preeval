@@ -121,6 +121,6 @@ describe("QA contrôle — procédures, évaluation, vols, marque", () => {
     expect(company).toContain("+1 672 897 2999");
     expect(company).toContain("hello@3mtravelagency.com");
     expect(company).toContain("Biyem-Assi, Montée Chapelle Obili");
-    expect(company).toContain("Lun–ven : 08 h 00 – 20 h 00");
+    expect(company).toContain("Lun–sam : 08 h 00 – 18 h 00");
   });
 });

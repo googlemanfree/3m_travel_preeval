@@ -58,6 +58,18 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
   app.use(securityHeadersMiddleware);
+  // .click → .com (301) : évite le doublon SEO et les aperçus WhatsApp/Facebook obsolètes.
+  app.use((req, res, next) => {
+    const host = String(req.hostname || req.headers.host || "")
+      .split(":")[0]
+      .toLowerCase();
+    if (host === "3mtravelagency.click" || host === "www.3mtravelagency.click") {
+      const target = `https://www.3mtravelagency.com${req.originalUrl || "/"}`;
+      res.set({ "Cache-Control": "public, max-age=86400" });
+      return res.redirect(301, target);
+    }
+    return next();
+  });
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));

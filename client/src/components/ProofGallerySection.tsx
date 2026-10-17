@@ -250,15 +250,15 @@ export default function ProofGallerySection({
           <p className="premium-section-lead mx-auto text-center">
             {t(
               leadFr ??
-                "Extraits de dossiers traités par 3M TRAVEL AGENCY et illustrations de parcours, classés par procédure. Les documents sont masqués et les illustrations ne constituent pas une promesse de placement.",
+                "Extraits de dossiers traités par 3M TRAVEL AGENCY, classés par procédure. Noms, numéros, lignes MRZ, QR codes et photos sont masqués avant publication. Chaque publication repose sur un consentement écrit du client.",
               leadEn ??
-                "Excerpts from files handled by 3M TRAVEL AGENCY and journey illustrations, sorted by procedure. Documents are redacted; illustrations are not a promise of placement.",
+                "Excerpts from files handled by 3M TRAVEL AGENCY, sorted by procedure. Names, numbers, MRZ lines, QR codes and photos are redacted before publication. Each publication rests on the client’s written consent.",
             )}
           </p>
           <p className="mx-auto mt-2 max-w-2xl text-center text-xs font-semibold text-slate-500" data-testid="proof-brand-note">
             {t(
-              "Marque publique : 3M TRAVEL AGENCY (tout filigrane « Travel & Services » sur d’anciens extraits désigne la même agence).",
-              "Public brand: 3M TRAVEL AGENCY (any legacy “Travel & Services” watermark on excerpts refers to the same agency).",
+              "Marque publique : 3M TRAVEL AGENCY — raison sociale 3M Travel Agency SARL (tout filigrane « Travel & Services » sur d’anciens extraits désigne la même agence).",
+              "Public brand: 3M TRAVEL AGENCY — legal name 3M Travel Agency SARL (any legacy “Travel & Services” watermark refers to the same agency).",
             )}
           </p>
           {!lockFilter && (

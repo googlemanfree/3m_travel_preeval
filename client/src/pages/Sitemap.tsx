@@ -95,7 +95,9 @@ const SITE_SECTIONS: SitemapSection[] = [
       { key: "login", label: { fr: "Connexion candidat", en: "Candidate sign-in" }, href: "/login", description: { fr: "Accéder à un compte existant.", en: "Access an existing account." } },
       { key: "candidate_space", label: { fr: "Espace candidat", en: "Candidate space" }, href: "/mon-espace", description: { fr: "Suivre vos dossiers et documents une fois connecté.", en: "Track your cases and documents once signed in." } },
       { key: "privacy", label: { fr: "Politique de confidentialité", en: "Privacy policy" }, href: "/politique-confidentialite", description: { fr: "Comprendre le traitement des informations personnelles.", en: "Understand how personal information is handled." } },
+      { key: "legal", label: { fr: "Mentions légales", en: "Legal notice" }, href: "/mentions-legales", description: { fr: "Éditeur, RC, NIU, directeur de publication et hébergeur.", en: "Publisher, registry IDs, publication director and host." } },
       { key: "terms", label: { fr: "Conditions d’utilisation", en: "Terms of use" }, href: "/conditions-utilisation", description: { fr: "Consulter le cadre d’utilisation du site et des services.", en: "Read the framework governing use of the site and services." } },
+      { key: "verify", label: { fr: "Comment nous vérifions", en: "How we verify" }, href: "/verifier-une-agence", description: { fr: "Critères anti-fraude et vérifications avant paiement.", en: "Anti-fraud checks before you pay." } },
     ],
   },
 ];

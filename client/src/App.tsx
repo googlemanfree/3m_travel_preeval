@@ -82,6 +82,7 @@ import Contact from "./pages/Contact";
 const PolitiqueConfidentialite = lazyWithTimeout(() => import("./pages/PolitiqueConfidentialite"));
 const DossierConfirmation = lazyWithTimeout(() => import("./pages/DossierConfirmation"));
 const ConditionsUtilisation = lazyWithTimeout(() => import("./pages/ConditionsUtilisation"));
+const MentionsLegales = lazyWithTimeout(() => import("./pages/MentionsLegales"));
 const Accessibility = lazyWithTimeout(() => import("./pages/Accessibility"));
 const Sitemap = lazyWithTimeout(() => import("./pages/Sitemap"));
 const ServiceStatus = lazyWithTimeout(() => import("./pages/ServiceStatus"));
@@ -205,11 +206,13 @@ function Router() {
       <Route path={"/assurance"} component={AssuranceInscription} />
       <Route path={"/assurance-inscription"} component={AssuranceInscription} />
       <Route path={"/insurance"}>{() => <Redirect to="/assurance" />}</Route>
+      {/* /evisa (annuaire historique) reste accessible ; /evisas est la surface principale. */}
       <Route path={"/evisa"} component={Evisa} />
-        <Route path={"/evisa-demande"}>{() => <Redirect to="/evisas/request" />}</Route>
+      <Route path={"/evisa-demande"}>{() => <Redirect to="/evisas/request" />}</Route>
       <Route path={"/about"} component={About} />
       <Route path={"/contact"} component={Contact} />
       <Route path={"/politique-confidentialite"} component={PolitiqueConfidentialite} />
+      <Route path={"/mentions-legales"} component={MentionsLegales} />
       <Route path={"/conditions-utilisation"} component={ConditionsUtilisation} />
       <Route path={"/accessibilite"} component={Accessibility} />
       <Route path={"/plan-du-site"} component={Sitemap} />

@@ -8,9 +8,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { COMPANY_PROFILE } from "@/lib/companyContacts";
 import {
   BookOpen,
-  Building2,
   ChevronDown,
-  FileText,
   FolderKanban,
   Globe2,
   Home,
@@ -24,7 +22,6 @@ import {
   ShoppingBag,
   Smartphone,
   Star,
-  UsersRound,
   UserRound,
   X,
   Zap,
@@ -34,18 +31,15 @@ import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
 
 type NavCopy = { fr: string; en: string };
 
+/** Menu candidat allégé : parcours utiles d’abord ; B2B et guides restent dans le pied de page. */
 const menuItems: { href: string; label: NavCopy; icon: LucideIcon; highlight?: boolean }[] = [
   { href: "/", label: { fr: "Accueil", en: "Home" }, icon: Home },
   { href: "/flights", label: { fr: "3M Booking", en: "3M Booking" }, icon: Plane },
   { href: "/procedures", label: { fr: "Procédures", en: "Procedures" }, icon: BookOpen },
   { href: "/destinations", label: { fr: "Destinations", en: "Destinations" }, icon: MapPin },
-  { href: "/ressources", label: { fr: "Ressources", en: "Resources" }, icon: Globe2 },
-  { href: "/guide-procedures", label: { fr: "Guide PDF", en: "PDF guide" }, icon: FileText },
-  { href: "/?project=travail#evaluation-multi", label: { fr: "Évaluation rapide", en: "Quick assessment" }, icon: Zap },
+  { href: "/?project=travail#evaluation-multi", label: { fr: "Évaluation", en: "Assessment" }, icon: Zap },
   { href: "/evisas", label: { fr: "E-Visa", en: "e-Visa" }, icon: Smartphone, highlight: true },
-  { href: "/3m-solutions", label: { fr: "3M Solutions", en: "3M Solutions" }, icon: UsersRound },
-  // Un seul lien B2B dans la barre : le hub évite 3 préchargements + un menu trop dense.
-  { href: "/partenaires", label: { fr: "Partenaires B2B", en: "B2B partners" }, icon: Building2 },
+  { href: "/ressources", label: { fr: "Ressources", en: "Resources" }, icon: Globe2 },
 ];
 
 const NAV_COPY = {

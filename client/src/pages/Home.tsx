@@ -154,50 +154,6 @@ export default function Home() {
         </a>
       </nav>
 
-      {/* Corridor léger — détails B2B plus bas, après preuves/avis. */}
-      <section
-        id="home-talent-corridor"
-        aria-labelledby="home-b2b-title"
-        className="border-y border-indigo-100 bg-gradient-to-br from-[#071b3d] via-[#0b2f6f] to-[#1463ff] py-10 md:py-12"
-        data-testid="home-talent-corridor"
-      >
-        <div className="mx-auto max-w-6xl px-4">
-          <p className="font-[Georgia,Cambria,'Times_New_Roman',serif] text-2xl font-normal tracking-tight text-amber-200 sm:text-3xl">
-            {INTERNATIONAL_BRAND.publicName}
-          </p>
-          <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-sky-200">{INTERNATIONAL_BRAND.corridor}</p>
-          <h2 id="home-b2b-title" className="mt-3 text-2xl font-black text-white md:text-3xl">{t("3M prépare et suit — les partenaires recrutent", "3M prepares and follows — partners recruit")}</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-sky-100">
-            {t(
-              "Dossiers préparés et suivis par 3M. Agences et employeurs vérifiés : canaux de recrutement autorisés — sans promesse d’emploi ni de visa.",
-              "Files prepared and followed by 3M. Verified agencies and employers: authorised recruitment channels — without promising a job or visa.",
-            )}
-          </p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <a href={CORRIDOR_ROUTES.partnersHub} className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
-              <p className="text-base font-black text-slate-950">{t("Hub partenaires", "Partners hub")}</p>
-              <p className="mt-1 text-sm text-slate-600">{t("Candidat, admin 3M, agences et employeurs — un corridor traçable.", "Candidate, 3M admin, agencies and employers — one traceable corridor.")}</p>
-              <span className="mt-3 inline-flex items-center text-sm font-bold text-indigo-700">{t("Voir le corridor →", "View the corridor →")}</span>
-            </a>
-            <a href={CORRIDOR_ROUTES.agencies} className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
-              <p className="text-base font-black text-slate-950">{t("Agences de placement", "Placement agencies")}</p>
-              <p className="mt-1 text-sm text-slate-600">{t("Canal autorisé : recevoir des profils consentants et documentés.", "Authorised channel: receive consenting, documented profiles.")}</p>
-              <span className="mt-3 inline-flex items-center text-sm font-bold text-indigo-700">{t("Portail agence →", "Agency portal →")}</span>
-            </a>
-            <a href={CORRIDOR_ROUTES.employers} className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
-              <p className="text-base font-black text-slate-950">{t("Employeurs internationaux", "International employers")}</p>
-              <p className="mt-1 text-sm text-slate-600">{t("Sélectionner, décider, renvoyer le retour dans le bon dossier 3M.", "Select, decide, return feedback into the correct 3M file.")}</p>
-              <span className="mt-3 inline-flex items-center text-sm font-bold text-amber-700">{t("Portail employeur →", "Employer portal →")}</span>
-            </a>
-          </div>
-          <p className="mt-5 text-center sm:text-left">
-            <a href="#home-employer-b2b" className="inline-flex items-center gap-1.5 text-sm font-bold text-amber-200 underline-offset-4 hover:text-white hover:underline">
-              {t("Ce que les employeurs reçoivent →", "What employers receive →")}
-            </a>
-          </p>
-        </div>
-      </section>
-
       {/* Trois parcours prioritaires — orientation rapide avant le reste. */}
       <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
         <HomePrimaryPathsSection />
@@ -218,6 +174,55 @@ export default function Home() {
       <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
         <QuickActionsSection />
       </motion.div>
+
+      {/* Corridor B2B — après réassurance candidat, pas dans le premier viewport. */}
+      <section
+        id="home-talent-corridor"
+        aria-labelledby="home-b2b-title"
+        className="border-y border-indigo-100 bg-gradient-to-br from-[#071b3d] via-[#0b2f6f] to-[#1463ff] py-10 md:py-12"
+        data-testid="home-talent-corridor"
+      >
+        <div className="mx-auto max-w-6xl px-4">
+          <p className="font-[Georgia,Cambria,'Times_New_Roman',serif] text-2xl font-normal tracking-tight text-amber-200 sm:text-3xl">
+            {INTERNATIONAL_BRAND.publicName}
+          </p>
+          <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.2em] text-sky-200">{INTERNATIONAL_BRAND.corridor}</p>
+          <h2 id="home-b2b-title" className="mt-3 text-2xl font-black text-white md:text-3xl">{t("3M prépare et suit — les partenaires recrutent", "3M prepares and follows — partners recruit")}</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-sky-100">
+            {t(
+              "Dossiers préparés et suivis par 3M. Agences et employeurs passés au contrôle d’identité 3M avant accès — sans promesse d’emploi ni de visa.",
+              "Files prepared and followed by 3M. Agencies and employers pass a 3M identity check before access — without promising a job or visa.",
+            )}
+          </p>
+          <p className="mt-2 text-xs text-sky-200/90">
+            <a href="/verifier-une-agence" className="font-bold underline-offset-2 hover:underline">
+              {t("Comment nous vérifions une agence ou un employeur →", "How we verify an agency or employer →")}
+            </a>
+          </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <a href={CORRIDOR_ROUTES.partnersHub} className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
+              <p className="text-base font-black text-slate-950">{t("Hub partenaires", "Partners hub")}</p>
+              <p className="mt-1 text-sm text-slate-600">{t("Candidat, admin 3M, agences et employeurs — un corridor traçable.", "Candidate, 3M admin, agencies and employers — one traceable corridor.")}</p>
+              <span className="mt-3 inline-flex items-center text-sm font-bold text-indigo-700">{t("Voir le corridor →", "View the corridor →")}</span>
+            </a>
+            <a href={CORRIDOR_ROUTES.agencies} className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
+              <p className="text-base font-black text-slate-950">{t("Agences de placement", "Placement agencies")}</p>
+              <p className="mt-1 text-sm text-slate-600">{t("Canal documenté : recevoir des profils consentants après contrôle 3M.", "Documented channel: receive consenting profiles after a 3M check.")}</p>
+              <span className="mt-3 inline-flex items-center text-sm font-bold text-indigo-700">{t("Portail agence →", "Agency portal →")}</span>
+            </a>
+            <a href={CORRIDOR_ROUTES.employers} className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
+              <p className="text-base font-black text-slate-950">{t("Employeurs internationaux", "International employers")}</p>
+              <p className="mt-1 text-sm text-slate-600">{t("Sélectionner, décider, renvoyer le retour dans le bon dossier 3M.", "Select, decide, return feedback into the correct 3M file.")}</p>
+              <span className="mt-3 inline-flex items-center text-sm font-bold text-amber-700">{t("Portail employeur →", "Employer portal →")}</span>
+            </a>
+          </div>
+          <p className="mt-5 text-center sm:text-left">
+            <a href="#home-employer-b2b" className="inline-flex items-center gap-1.5 text-sm font-bold text-amber-200 underline-offset-4 hover:text-white hover:underline">
+              {t("Ce que les employeurs reçoivent →", "What employers receive →")}
+            </a>
+          </p>
+        </div>
+      </section>
 
       {/* B2B détaillé — après réassurance, sans saturer le premier écran. */}
       <section

@@ -27,7 +27,7 @@ export default function ConditionsUtilisation() {
           <div>
             <h2 className="mb-4 text-2xl font-bold text-gray-900">1. Entité éditrice</h2>
             <p className="leading-relaxed text-gray-700">
-              Le site est édité par <strong>{COMPANY_PROFILE.legalName}</strong> (exploitation commerciale de{" "}
+              Le site est édité par <strong>{COMPANY_PROFILE.legalDisplayName}</strong> (exploitation commerciale de{" "}
               <strong>{GROUP_LEGAL_NAME}</strong>), agence enregistrée sous le numéro {COMPANY_PROFILE.legalIdentifiers.registration}
               {COMPANY_PROFILE.legalIdentifiers.taxpayerId ? ` (NIU : ${COMPANY_PROFILE.legalIdentifiers.taxpayerId})` : ""}, spécialisée dans
               l’accompagnement à la mobilité internationale.
@@ -44,7 +44,14 @@ export default function ConditionsUtilisation() {
               .
             </p>
             <p className="mt-3 text-sm text-gray-600">
-              Marque publique : <strong>3M TRAVEL AGENCY</strong>. Le nom légal figure sur les contrats, reçus et documents juridiques.
+              Marque publique : <strong>3M TRAVEL AGENCY</strong>. {COMPANY_PROFILE.groupRole}
+            </p>
+            <p className="mt-3 text-sm text-gray-600">
+              Mentions légales complètes :{" "}
+              <a href="/mentions-legales" className="font-semibold text-blue-700 hover:underline">
+                /mentions-legales
+              </a>
+              .
             </p>
           </div>
 

@@ -19,11 +19,12 @@ describe("données de la galerie", () => {
     const counts = proofFilterCounts(PROOF_PHOTOS, "fr");
     expect(counts[0]).toEqual({ filter: "all", label: "Tous", count: PROOF_PHOTOS.length });
     expect(counts.slice(1).reduce((total, entry) => total + entry.count, 0)).toBe(PROOF_PHOTOS.length);
-    expect(counts.map((entry) => entry.label)).toEqual(["Tous", "Visas", "Études", "Immigration", "Placements"]);
+    expect(counts.map((entry) => entry.label)).toEqual(["Tous", "Visas", "Études", "Immigration"]);
     expect(filterProofPhotos(PROOF_PHOTOS, "visas").length).toBeGreaterThan(0);
     expect(filterProofPhotos(PROOF_PHOTOS, "immigration").length).toBeGreaterThan(0);
-    expect(filterProofPhotos(PROOF_PHOTOS, "immigration").every((photo) => photo.category === "immigration" || photo.category === "placements")).toBe(true);
-    expect(filterProofPhotos(PROOF_PHOTOS, "immigration").every((photo) => /IRCC|immigration Canada|résidence permanente|Entrée express|parcours professionnel international/i.test(photo.alt))).toBe(true);
+    expect(filterProofPhotos(PROOF_PHOTOS, "immigration").every((photo) => photo.category === "immigration")).toBe(true);
+    expect(filterProofPhotos(PROOF_PHOTOS, "immigration").every((photo) => /IRCC|immigration Canada|résidence permanente|Entrée express/i.test(photo.alt))).toBe(true);
+    expect(filterProofPhotos(PROOF_PHOTOS, "placements")).toHaveLength(0);
   });
 
   it("chaque image utilise un asset local ou Manus Storage et se déclare protégée", () => {
