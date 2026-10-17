@@ -10,6 +10,7 @@ import { requireAdminSessionFromCookie, requireValidAdminSession } from "./admin
 import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../emailService";
 import { describeDossierProgress, progressText } from "../../shared/dossierProgress";
 import { sendReceiptAndProtocol } from "../services/paymentPackage";
+import { runOpeningPaymentAutomation } from "../services/openingPaymentAutomation";
 import { generateReceiptA5HTML } from "../receiptA5Service";
 import { archiveRedundantPreAccounts, loadEmailsWithActiveDossier, loadRedundantPreAccounts } from "../services/redundantPreAccountsStore";
 import { loadPilotageQueue } from "../services/pilotageQueueStore";
@@ -2204,12 +2205,16 @@ export const adminCandidateManagementRouter = router({
         details: `Dossier ${dossierNumber} · ${referenceLabel} · validation en un clic depuis la fiche candidat.`,
       });
 
-      // Dès que le paiement est confirmé, le reçu et le Protocole d'accord N°01 partent ENSEMBLE, dans un seul e-mail.
+      // Dès que le paiement est confirmé : pack reçu+protocole + purge miroir EVAL (Vague 1).
       // Un échec d'envoi n'annule pas la confirmation : le bouton « Envoyer reçu + protocole » permet de relancer.
       let packageSent = false;
       let packageError: string | null = null;
+      let evalPurged = 0;
       try {
-        packageSent = (await sendReceiptAndProtocol(db, reference, { email: admin.email || "Administrateur" })).sent;
+        const automation = await runOpeningPaymentAutomation(db, reference, admin.email || "Administrateur");
+        packageSent = automation.packageSent;
+        packageError = automation.packageError;
+        evalPurged = automation.evalPurged;
       } catch (error) {
         packageError = error instanceof TRPCError ? error.message : "Le reçu et le protocole n’ont pas pu être envoyés.";
         console.error("[Payment] receipt + protocol package failed", { dossierNumber, error });
@@ -2225,6 +2230,7 @@ export const adminCandidateManagementRouter = router({
         validatedAt,
         packageSent,
         packageError,
+        evalPurged,
         receiptA5Ready: true,
         amount,
         currency: "XAF",

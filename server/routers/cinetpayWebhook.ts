@@ -11,6 +11,7 @@ import { applications } from "../../drizzle/schema";
 import { clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { and, eq } from "drizzle-orm";
 import { sendPaymentConfirmationEmail } from "../emailService";
+import { CINETPAY_VALIDATOR, finalizeOnlineOpeningPaymentAfterCinetPay } from "../services/openingPaymentAutomation";
 import { confirmFlightOnlinePaymentByTransactionId } from "./cinetpayFlightPayment";
 
 interface CinetPayWebhookBody {
@@ -164,16 +165,31 @@ export function registerCinetPayWebhook(app: Express): void {
       }
 
       const isFirstSuccessfulTransition = paymentStatus === "SUCCESS" && application.paymentStatus === "PENDING";
+      const validatedAt = paymentStatus === "SUCCESS" ? (application.paymentValidatedAt ?? new Date()) : application.paymentValidatedAt;
+      const validatedBy =
+        paymentStatus === "SUCCESS"
+          ? (application.paymentValidatedBy?.trim() || CINETPAY_VALIDATOR)
+          : application.paymentValidatedBy;
       await db.update(applications)
         .set({
           paymentStatus,
           dossierStatus: paymentStatus === "SUCCESS" && application.agreementSigned && application.evaluationDeliveryStatus === "sent" && Boolean(application.evaluationClientConfirmedAt) ? "paye" : application.dossierStatus,
           paymentMethod: paymentMethod || null,
           paymentDate: paymentStatus === "SUCCESS" ? new Date() : application.paymentDate,
+          paymentValidatedAt: validatedAt,
+          paymentValidatedBy: validatedBy,
+          paymentConfirmedAmount:
+            paymentStatus === "SUCCESS"
+              ? (application.paymentConfirmedAmount ?? application.paymentAmount ?? 65000)
+              : application.paymentConfirmedAmount,
+          paymentExpectedAmount:
+            paymentStatus === "SUCCESS"
+              ? (application.paymentExpectedAmount ?? application.paymentAmount ?? 65000)
+              : application.paymentExpectedAmount,
         })
         .where(and(eq(applications.id, application.id), eq(applications.paymentTransactionId, transactionId)));
 
-      // Un email et une notification in-app sont envoyés uniquement à la première transition PENDING → SUCCESS.
+      // Un email, le pack reçu+protocole et la purge EVAL partent à la première transition PENDING → SUCCESS.
       if (isFirstSuccessfulTransition) {
         try {
           await sendPaymentConfirmationEmail(
@@ -198,6 +214,14 @@ export function registerCinetPayWebhook(app: Express): void {
           } catch (notifErr) {
             console.warn("[CinetPay Webhook] Notification insert failed:", notifErr);
           }
+        }
+        try {
+          const automation = await finalizeOnlineOpeningPaymentAfterCinetPay(db, application.id);
+          if (automation.packageError) {
+            console.warn("[CinetPay Webhook] Pack reçu+protocole:", automation.packageError);
+          }
+        } catch (packErr) {
+          console.warn("[CinetPay Webhook] Automatisation ouverture échouée:", packErr);
         }
       }
 
