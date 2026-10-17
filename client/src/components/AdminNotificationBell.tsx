@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Bell, X, FileText, Mail, CheckCircle2, AlertTriangle } from "lucide-react";
+import { getAdminSessionToken } from "@/lib/adminSession";
 import { trpc } from "@/lib/trpc";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ function timeAgo(date: string | Date): string {
 
 export default function AdminNotificationBell() {
   const [open, setOpen] = useState(false);
-  const sessionToken = typeof window !== "undefined" ? sessionStorage.getItem("adminSessionToken") || "" : "";
+  const sessionToken = getAdminSessionToken();
 
   const { data, refetch } = trpc.adminNotifications.list.useQuery(
     { sessionToken, limit: 20 },
