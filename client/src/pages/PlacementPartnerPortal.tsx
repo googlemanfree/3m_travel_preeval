@@ -3,6 +3,8 @@ import { B2bPartnerRegistrationForm } from "@/components/B2bPartnerRegistrationF
 import { useLanguage } from "@/contexts/LanguageContext";
 import { CORRIDOR_ROUTES } from "@shared/talentCorridor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChecklistSection, FaqSection, StepsSection } from "@/components/PageEnrichment";
+import { AGENCY_PARTNER_CRITERIA, AGENCY_PARTNER_FAQ, AGENCY_PARTNER_STEPS } from "@/data/contentCampaignPartners";
 
 export default function PlacementPartnerPortal() {
   const { t } = useLanguage();
@@ -110,6 +112,12 @@ export default function PlacementPartnerPortal() {
             </div>
           </div>
         </section>
+      </div>
+
+      <div className="-mx-4 mt-12" data-testid="agency-guide">
+        <StepsSection title="Devenir agence partenaire" introduction="Quatre étapes, du formulaire à l’espace agence." steps={AGENCY_PARTNER_STEPS} tone="white" testId="agency-steps" />
+        <ChecklistSection title="Ce que nous attendons d’une agence" items={AGENCY_PARTNER_CRITERIA} tone="slate" testId="agency-criteria" />
+        <FaqSection title="Questions des agences" items={AGENCY_PARTNER_FAQ} tone="white" testId="agency-faq" />
       </div>
     </main>
   );

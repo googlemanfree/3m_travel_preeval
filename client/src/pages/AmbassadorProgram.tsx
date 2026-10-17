@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import { INTERNATIONAL_BRAND } from '@/data/internationalBrand';
 import { PremiumCoverImage } from '@/components/PremiumCoverImage';
 import { getServiceVisual } from '@/data/premiumVisuals';
+import { ChecklistSection, FaqSection, StepsSection } from '@/components/PageEnrichment';
+import { AMBASSADOR_FAQ, AMBASSADOR_HOW_STEPS, AMBASSADOR_NEVER_SAY, AMBASSADOR_YOU_CAN_SAY } from '@/data/contentCampaignPartners';
 
 const REFERRAL_CODE_STORAGE_KEY = '3m-travel:ambassador-referral-code';
 
@@ -348,6 +350,13 @@ export default function AmbassadorProgram() {
         )}
 
         <p className="mx-auto mt-10 max-w-2xl text-center text-xs leading-5 text-slate-500">{INTERNATIONAL_BRAND.disclaimer.fr}</p>
+      </div>
+
+      <div data-testid="ambassador-guide">
+        <StepsSection title="Comment fonctionne le programme" introduction="De l’inscription au suivi de vos parrainages." steps={AMBASSADOR_HOW_STEPS} tone="white" testId="ambassador-steps" />
+        <ChecklistSection title="Ce que vous pouvez dire" items={AMBASSADOR_YOU_CAN_SAY} tone="slate" testId="ambassador-can-say" />
+        <ChecklistSection title="Ce qu’il ne faut jamais dire" introduction="Ces règles protègent les personnes que vous orientez, et votre propre compte ambassadeur." items={AMBASSADOR_NEVER_SAY} tone="blue" testId="ambassador-never-say" />
+        <FaqSection title="Questions des ambassadeurs" items={AMBASSADOR_FAQ} tone="white" testId="ambassador-faq" />
       </div>
     </main>
   );

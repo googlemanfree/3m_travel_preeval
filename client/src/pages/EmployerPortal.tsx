@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { ChecklistSection, CommitmentsSection, FaqSection, StepsSection } from "@/components/PageEnrichment";
+import { EMPLOYER_COMMITMENTS, EMPLOYER_FAQ, EMPLOYER_HIDDEN, EMPLOYER_HOW_STEPS, EMPLOYER_VISIBLE } from "@/data/contentCampaignPartners";
 
 const sessionKey = "3m_placement_employer_session";
 const orgKey = "3m_placement_employer_org";
@@ -354,6 +356,15 @@ export default function EmployerPortal() {
             <p className="mt-1 text-slate-600">{t("Les volumes de profils vérifiés, taux de placement et délais moyens ne sont pas publiés tant qu’une série de données vérifiable, datée et méthodologiquement définie n’est pas disponible.", "Verified profile volumes, placement rates and average times are not published until a verifiable, dated and methodologically defined data series is available.")}</p>
           </section>
         </div>
+        {!isAgencyPortal && (
+          <div className="-mx-4 mt-10" data-testid="employer-guide">
+            <StepsSection title="Comment fonctionne l’accès employeur" introduction="De l’identification de votre organisation au retour sur un profil." steps={EMPLOYER_HOW_STEPS} tone="white" testId="employer-steps" />
+            <ChecklistSection title="Ce que vous voyez d’un profil" introduction="Un profil est présenté sous une forme anonymisée." items={EMPLOYER_VISIBLE} tone="slate" testId="employer-visible" />
+            <ChecklistSection title="Ce que vous ne voyez jamais" items={EMPLOYER_HIDDEN} tone="blue" testId="employer-hidden" />
+            <CommitmentsSection title="Les règles du partage" items={EMPLOYER_COMMITMENTS} tone="white" testId="employer-commitments" />
+            <FaqSection title="Questions des employeurs" items={EMPLOYER_FAQ} tone="slate" testId="employer-faq" />
+          </div>
+        )}
       </main>
     );
   }

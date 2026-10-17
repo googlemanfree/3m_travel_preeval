@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import * as campaign from "../client/src/data/contentCampaign";
 import * as campaignDocs from "../client/src/data/contentCampaignDocs";
+import * as campaignPartners from "../client/src/data/contentCampaignPartners";
 import { composePublicPrerender, getIndexablePublicPaths, PUBLIC_PAGES } from "./publicPrerender";
 
 const root = resolve(import.meta.dirname, "..");
@@ -23,6 +24,7 @@ function collectTexts(): string[] {
   };
   Object.values(campaign).forEach(visit);
   Object.values(campaignDocs).forEach(visit);
+  Object.values(campaignPartners).forEach(visit);
   return texts;
 }
 
@@ -129,6 +131,42 @@ describe("campagne de contenu, lot 2 : documents, paiement, CNI, accessibilité,
     expect(read("client/src/pages/CniPasseport.tsx")).toContain('testId="cni-lost"');
     expect(read("client/src/pages/Accessibility.tsx")).toContain("ACCESSIBILITY_STATEMENT");
     expect(read("server/_core/index.ts")).toContain("registerPublicHealthRoute(app);");
+  });
+});
+
+describe("campagne de contenu, lot 3 : employeurs, agences de placement, ambassadeurs", () => {
+  it("les contenus sont complets et ne publient ni délai de vérification ni barème de commission", () => {
+    expect(campaignPartners.EMPLOYER_HOW_STEPS.length).toBe(5);
+    expect(campaignPartners.EMPLOYER_VISIBLE.length).toBeGreaterThanOrEqual(5);
+    expect(campaignPartners.EMPLOYER_HIDDEN.length).toBeGreaterThanOrEqual(4);
+    expect(campaignPartners.EMPLOYER_COMMITMENTS.length).toBe(4);
+    expect(campaignPartners.EMPLOYER_FAQ.length).toBeGreaterThanOrEqual(6);
+    expect(campaignPartners.AGENCY_PARTNER_STEPS.length).toBe(4);
+    expect(campaignPartners.AGENCY_PARTNER_FAQ.length).toBeGreaterThanOrEqual(5);
+    expect(campaignPartners.AMBASSADOR_HOW_STEPS.length).toBe(4);
+    expect(campaignPartners.AMBASSADOR_NEVER_SAY.length).toBeGreaterThanOrEqual(5);
+    expect(campaignPartners.AMBASSADOR_FAQ.length).toBeGreaterThanOrEqual(7);
+    const faq = [...campaignPartners.EMPLOYER_FAQ, ...campaignPartners.AGENCY_PARTNER_FAQ, ...campaignPartners.AMBASSADOR_FAQ];
+    for (const item of faq) {
+      expect(item.question.trim().endsWith("?"), item.question).toBe(true);
+      expect(item.answer.length, item.question).toBeGreaterThan(90);
+    }
+    expect(new Set(faq.map((item) => item.question)).size).toBe(faq.length);
+  });
+
+  it("les règles de protection des candidats et des ambassadeurs sont écrites", () => {
+    const hidden = campaignPartners.EMPLOYER_HIDDEN.join(" ");
+    expect(hidden).toMatch(/téléphone/);
+    expect(hidden).toMatch(/pièces d’identité/);
+    expect(campaignPartners.AMBASSADOR_NEVER_SAY.join(" ")).toMatch(/assuré/);
+    expect(campaignPartners.AMBASSADOR_YOU_CAN_SAY.join(" ")).toMatch(/confirmés par écrit avant tout paiement/);
+    expect(campaignPartners.AMBASSADOR_FAQ.map((item) => item.answer).join(" ")).toMatch(/aucun champ de paiement/);
+  });
+
+  it("les trois pages sont branchées sur les nouveaux contenus", () => {
+    expect(read("client/src/pages/EmployerPortal.tsx")).toContain('testId="employer-faq"');
+    expect(read("client/src/pages/PlacementPartnerPortal.tsx")).toContain('testId="agency-faq"');
+    expect(read("client/src/pages/AmbassadorProgram.tsx")).toContain('testId="ambassador-faq"');
   });
 });
 
