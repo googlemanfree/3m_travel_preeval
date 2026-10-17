@@ -472,6 +472,7 @@ export function CandidateDetailModal({
   const [relanceSentKeys, setRelanceSentKeys] = useState<Record<string, true>>({});
   const sendDynamicRelanceMutation = trpc.adminCandidateManagement.sendDynamicRelance.useMutation({
     onSuccess: (result, variables) => {
+      if (!variables) return;
       const key = `${variables.stage}:${variables.channel}`;
       setRelancePendingKey(null);
       setRelanceSentKeys((prev) => ({ ...prev, [key]: true }));

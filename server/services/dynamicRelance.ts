@@ -93,13 +93,17 @@ async function polishRelanceWithAi(input: {
         },
       ],
       outputSchema: {
-        type: "object",
-        properties: {
-          subject: { type: "string" },
-          body: { type: "string" },
+        name: "dynamic_relance",
+        schema: {
+          type: "object",
+          properties: {
+            subject: { type: "string" },
+            body: { type: "string" },
+          },
+          required: ["subject", "body"],
+          additionalProperties: false,
         },
-        required: ["subject", "body"],
-        additionalProperties: false,
+        strict: true,
       },
     });
     const raw = result.choices?.[0]?.message?.content;

@@ -93,7 +93,7 @@ export async function purgeEvalAgencyShell(
 export async function purgeAllOrphanEvalAgencyShells(
   db: Db,
   input?: { adminEmail?: string | null; limit?: number },
-): Promise<{ processed: number; purged: number; canonicals: string[] }> {
+): Promise<{ processed: number; purged: number; skippedUnpaid: number; canonicals: string[] }> {
   const limit = Math.min(Math.max(input?.limit ?? 200, 1), 500);
   const shells = await db
     .select({

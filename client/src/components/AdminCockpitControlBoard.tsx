@@ -71,6 +71,7 @@ export default function AdminCockpitControlBoard({
 
   const sendDynamicRelanceMutation = trpc.adminCandidateManagement.sendDynamicRelance.useMutation({
     onSuccess: (result, variables) => {
+      if (!variables) return;
       const key = `${variables.candidateId}:${variables.stage}:${variables.channel}`;
       setRelancePendingKey(null);
       setRelanceSentKeys((prev) => ({ ...prev, [key]: true }));
