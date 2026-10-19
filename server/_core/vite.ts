@@ -9,6 +9,7 @@ import { composePublicPrerender } from "../publicPrerender";
 import { canonicalRedirectFromHosts } from "../canonicalDomain";
 import { renderOgImageSvg } from "../seoAssets";
 import { renderRobotsTxt, renderSitemapXml } from "../seoRoutes";
+import { renderSecurityTxt } from "../securityTxt";
 import { getPublicBuildMarker } from "../publicBuildMarker";
 import { registerLegacyAliasRedirects } from "../legacyPublicRedirects";
 
@@ -20,6 +21,9 @@ function registerSeoAssetRoutes(app: Express) {
   });
   app.get("/sitemap.xml", (_req, res) => {
     res.status(200).set({ "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" }).send(renderSitemapXml());
+  });
+  app.get("/.well-known/security.txt", (_req, res) => {
+    res.status(200).set({ "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=86400" }).send(renderSecurityTxt());
   });
   app.get("/robots.txt", (_req, res) => {
     res.status(200).set({ "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=3600" }).send(renderRobotsTxt());

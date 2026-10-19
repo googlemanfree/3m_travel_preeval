@@ -176,7 +176,8 @@ const isProductionBuild = process.env.NODE_ENV === "production";
 const plugins = [
   react(),
   tailwindcss(),
-  vitePluginManusRuntime(),
+  // Le runtime Manus (~370 Ko) est injecté en fin de <body> : il ne retarde plus l’analyse du contenu de la page.
+  vitePluginManusRuntime({ injectTo: "body" }),
   buildMarkerPlugin(),
   ...(!isProductionBuild ? [jsxLocPlugin(), vitePluginManusDebugCollector()] : []),
 ];

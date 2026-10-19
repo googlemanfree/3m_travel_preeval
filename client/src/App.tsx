@@ -10,6 +10,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { AnimationPreferencesProvider } from "./contexts/AnimationPreferencesContext";
 import { FontSizePreferencesProvider } from "./contexts/FontSizePreferencesContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import CookieConsent from "./components/CookieConsent";
 import AuthGuard from "./components/AuthGuard";
 import SessionLoader from "./components/SessionLoader";
 import Home from "./pages/Home";
@@ -650,6 +651,7 @@ function AppShell() {
                   <MultiServiceCartProvider>
                   <SessionLoader isLoading={!sessionRestored} />
                   <Toaster />
+                  <CookieConsent />
                   <ChunkReloadNotice />
                   <PwaStatusNotice />
                   {sessionRestored && (

@@ -1,3 +1,4 @@
+import { openCookieSettings } from "@/lib/analyticsConsent";
 
 export default function PolitiqueConfidentialite() {
   return (
@@ -166,10 +167,16 @@ export default function PolitiqueConfidentialite() {
 
           {/* Section 8 */}
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">8. Cookies</h2>
+            <h2 id="cookies" className="text-2xl font-bold text-gray-900 mb-4 scroll-mt-24">8. Cookies</h2>
             <p className="text-gray-700 leading-relaxed">
-              Le site peut utiliser des cookies techniques nécessaires à son bon fonctionnement (session, préférences).
+              Le site utilise des cookies techniques nécessaires à son bon fonctionnement (session, préférences de langue et d’affichage) : ils ne demandent pas votre accord.
             </p>
+            <p className="mt-3 text-gray-700 leading-relaxed" data-testid="cookies-analytics-policy">
+              Des cookies de mesure d’audience (Google Analytics, Umami) ne sont déposés qu’avec votre accord, donné ou refusé dans le bandeau affiché à votre première visite. Refuser ne limite l’accès à aucun service. Vous pouvez modifier votre choix à tout moment ; un refus supprime les cookies de mesure déjà déposés.
+            </p>
+            <button type="button" onClick={openCookieSettings} className="mt-3 inline-flex min-h-11 items-center rounded-xl border border-blue-900 px-4 py-2 text-sm font-bold text-blue-950 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2" data-testid="cookies-manage">
+              Modifier mon choix
+            </button>
           </div>
 
           {/* Section 9 */}

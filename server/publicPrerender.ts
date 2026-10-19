@@ -15,6 +15,10 @@ import { getStudyDestinationArticle, studyDestinationArticles } from "../client/
 import { AGENCY_CHECKS, AGENCY_RED_FLAGS, FAQ_GENERAL_GROUPS } from "../client/src/data/contentCampaign";
 import { GUIDES, getGuide } from "../client/src/data/guidesData";
 import { EN_AGENCY_CHECKS, EN_AGENCY_RED_FLAGS, EN_FAQ_GROUPS } from "../client/src/data/contentCampaignEn";
+import * as campaignPartners from "../client/src/data/contentCampaignPartners";
+import * as campaignDocs from "../client/src/data/contentCampaignDocs";
+import * as campaignTranslation from "../client/src/data/contentCampaignTranslation";
+import * as campaignPages from "../client/src/data/contentCampaignPages";
 import { getEnglishContentByEnSlug, getEnglishContentByFrId, type ProcedureEnglishContent } from "../client/src/data/procedures107English";
 import { getCataloguedDestinationImage } from "../client/src/data/premiumVisuals";
 import { getServiceVisual } from "../client/src/data/premiumVisuals";
@@ -396,7 +400,29 @@ const OFFICIAL_SOURCE_DESTINATIONS = [
   ["etats-unis", "États-Unis", "U.S. Department of State"],
 ] as const;
 
+type PrerenderPair = { title: string; text: string };
+type PrerenderFaq = { question: string; answer: string };
+const prerenderSteps = (title: string, steps: PrerenderPair[]) => `<section aria-label="${esc(title)}"><h2>${esc(title)}</h2><ol>${steps.map((step) => `<li><strong>${esc(step.title)}</strong> — ${esc(step.text)}</li>`).join("")}</ol></section>`;
+const prerenderPairs = (title: string, items: PrerenderPair[]) => `<section aria-label="${esc(title)}"><h2>${esc(title)}</h2><ul>${items.map((item) => `<li><strong>${esc(item.title)}</strong> — ${esc(item.text)}</li>`).join("")}</ul></section>`;
+const prerenderList = (title: string, items: string[]) => `<section aria-label="${esc(title)}"><h2>${esc(title)}</h2><ul>${items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul></section>`;
+const prerenderFaq = (title: string, items: PrerenderFaq[]) => `<section aria-label="${esc(title)}"><h2>${esc(title)}</h2>${items.map((item) => `<h3>${esc(item.question)}</h3><p>${esc(item.answer)}</p>`).join("")}</section>`;
+
+/** Contenu des pages enrichies (campagne d'octobre 2026), lisible sans JavaScript : mêmes textes que les pages, issus des mêmes données. */
+export const CAMPAIGN_PRERENDER: Record<string, () => string> = {
+  "/employeurs": () => prerenderSteps("Comment fonctionne l’accès employeur", campaignPartners.EMPLOYER_HOW_STEPS) + prerenderList("Ce que vous voyez d’un profil", campaignPartners.EMPLOYER_VISIBLE) + prerenderList("Ce que vous ne voyez jamais", campaignPartners.EMPLOYER_HIDDEN) + prerenderPairs("Les règles du partage", campaignPartners.EMPLOYER_COMMITMENTS) + prerenderFaq("Questions des employeurs", campaignPartners.EMPLOYER_FAQ),
+  "/agences-placement": () => prerenderSteps("Devenir agence partenaire", campaignPartners.AGENCY_PARTNER_STEPS) + prerenderList("Ce que nous attendons d’une agence", campaignPartners.AGENCY_PARTNER_CRITERIA) + prerenderFaq("Questions des agences", campaignPartners.AGENCY_PARTNER_FAQ),
+  "/ambassador-program": () => prerenderSteps("Comment fonctionne le programme", campaignPartners.AMBASSADOR_HOW_STEPS) + prerenderList("Ce que vous pouvez dire", campaignPartners.AMBASSADOR_YOU_CAN_SAY) + prerenderList("Ce qu’il ne faut jamais dire", campaignPartners.AMBASSADOR_NEVER_SAY) + prerenderFaq("Questions des ambassadeurs", campaignPartners.AMBASSADOR_FAQ),
+  "/paiement": () => prerenderSteps("Comment payer, étape par étape", campaignDocs.PAY_STEPS) + prerenderList("Après votre paiement", campaignDocs.PAY_AFTER) + prerenderFaq("Questions sur le paiement", campaignDocs.PAY_FAQ),
+  "/cni-passeport": () => prerenderList("Avant de déposer votre demande", campaignDocs.CNI_BEFORE_CHECKLIST) + prerenderSteps("En cas de perte ou de vol", campaignDocs.CNI_LOST_STEPS) + prerenderList("Les pièges à éviter", campaignDocs.CNI_COMMON_ERRORS),
+  "/conformite-documents": () => prerenderPairs("Les six familles de pièces", campaignDocs.DOC_FAMILIES) + prerenderList("Bien préparer vos fichiers", campaignDocs.DOC_FORMAT_RULES) + prerenderSteps("Traduction, légalisation, apostille", campaignDocs.DOC_FORMALITIES) + prerenderList("Les erreurs qui font renvoyer un dossier", campaignDocs.DOC_COMMON_ERRORS) + prerenderFaq("Questions sur les documents", campaignDocs.DOC_FAQ),
+  "/traduction/order": () => prerenderSteps("Comment se déroule la traduction", campaignTranslation.TRANSLATION_STEPS) + prerenderList("Préparer votre document", campaignTranslation.TRANSLATION_PREPARE) + prerenderFaq("Questions sur la traduction", campaignTranslation.TRANSLATION_FAQ),
+  "/schengen": () => prerenderList("Les erreurs qui font refuser un dossier", campaignPages.SCHENGEN_COMMON_ERRORS) + prerenderFaq("Questions sur le visa Schengen", campaignPages.SCHENGEN_FAQ),
+  "/about": () => prerenderFaq("Questions sur l’agence", campaignPages.ABOUT_FAQ),
+};
+
 const routeSpecificPrerender = (path: string) => {
+  const campaignPage = CAMPAIGN_PRERENDER[path];
+  if (campaignPage) return campaignPage();
   if (path === "/") {
     const yaounde = COMPANY_PROFILE.offices.cameroon;
     const ottawa = COMPANY_PROFILE.offices.ottawa;

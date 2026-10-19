@@ -217,7 +217,7 @@ export default function EvisaDetailPage() {
                       {idx + 1}
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-slate-900">Étape {idx + 1}</h4>
+                      <h3 className="text-sm font-bold text-slate-900">Étape {idx + 1}</h3>
                       <p className="text-sm text-slate-600 mt-0.5">{step}</p>
                     </div>
                   </div>

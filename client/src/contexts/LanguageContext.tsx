@@ -2,8 +2,26 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { normalizeLanguage, type SupportedLanguage } from "@shared/languagePreference";
+import { useLocation } from "wouter";
 
 type Language = SupportedLanguage;
+
+/** Les adresses /en et /en/... sont des pages anglaises : l'interface (barre du haut, pied de page) y est toujours en anglais. */
+export function isEnglishSitePath(path: string): boolean {
+  return /^\/en(\/|$)/.test(path);
+}
+
+const ENGLISH_TO_FRENCH_PATHS: Record<string, string> = {
+  "/en": "/",
+  "/en/faq": "/faq",
+  "/en/verify-an-agency": "/verifier-une-agence",
+};
+
+/** Page française correspondante (repli : l'annuaire des procédures pour une procédure, sinon l'accueil). */
+export function frenchEquivalentOfEnglishPath(path: string): string {
+  if (ENGLISH_TO_FRENCH_PATHS[path]) return ENGLISH_TO_FRENCH_PATHS[path];
+  return path.startsWith("/en/procedures/") ? "/procedures" : "/";
+}
 
 interface LanguageContextType {
   language: Language;
@@ -85,7 +103,11 @@ function persistClientLanguage(language: Language, explicit = false) {
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const initialStored = useMemo(() => readStoredLanguage(), []);
-  const [language, setLanguageState] = useState<Language>(defaultLanguage(initialStored));
+  const [storedLanguage, setLanguageState] = useState<Language>(defaultLanguage(initialStored));
+  const [location, navigate] = useLocation();
+  const englishPage = isEnglishSitePath(location);
+  // Sur une page /en, l'interface est anglaise quel que soit le choix mémorisé (qui reste inchangé pour le reste du site).
+  const language: Language = englishPage ? "en" : storedLanguage;
   const [hasExplicitPreference, setHasExplicitPreference] = useState(initialStored.explicit);
   const { user, loading: authLoading } = useAuth();
   const canSyncProfile = Boolean(user) || hasCandidateSession();
@@ -117,12 +139,14 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
     // La détection navigateur devient la préférence locale seulement après
     // avoir vérifié qu'aucune préférence serveur explicite n'existe.
-    persistClientLanguage(language, false);
-  }, [authLoading, hasExplicitPreference, language, profileQuery.data?.preferredLanguage, profileQuery.isLoading]);
+    persistClientLanguage(storedLanguage, false);
+  }, [authLoading, hasExplicitPreference, storedLanguage, profileQuery.data?.preferredLanguage, profileQuery.isLoading]);
 
   const setLanguage = (nextLanguage: Language) => {
     const normalized = normalizeLanguage(nextLanguage);
     setLanguageState(normalized);
+    // Choisir le français depuis une page anglaise mène à la page française correspondante.
+    if (englishPage && normalized === "fr") navigate(frenchEquivalentOfEnglishPath(location));
     setHasExplicitPreference(true);
     persistClientLanguage(normalized, true);
 

@@ -10,7 +10,7 @@ import { GUIDES, getGuide } from "../client/src/data/guidesData";
 import * as campaignEn from "../client/src/data/contentCampaignEn";
 import * as campaignPages from "../client/src/data/contentCampaignPages";
 import { evisasDatabaseComplete } from "../client/src/data/evisasDatabaseComplete";
-import { composePublicPrerender, getIndexablePublicPaths, PUBLIC_PAGES } from "./publicPrerender";
+import { CAMPAIGN_PRERENDER, composePublicPrerender, getIndexablePublicPaths, PUBLIC_PAGES } from "./publicPrerender";
 
 const root = resolve(import.meta.dirname, "..");
 const read = (path: string) => readFileSync(resolve(root, path), "utf8").replace(/\r\n/g, "\n");
@@ -403,6 +403,32 @@ describe("campagne de contenu, lot 8 : Schengen et à propos", () => {
     expect(read("client/src/pages/Schengen.tsx")).toContain('testId="schengen-faq"');
     expect(read("client/src/pages/Schengen.tsx")).toContain('testId="schengen-errors"');
     expect(read("client/src/pages/About.tsx")).toContain('testId="about-faq"');
+  });
+});
+
+describe("campagne de contenu : le texte des pages enrichies est lisible sans JavaScript", () => {
+  const template = "<!doctype html><html lang=\"fr\"><head><title>x</title></head><body><div id=\"root\"><!--prerender-app--></div></body></html>";
+
+  it("chaque page enrichie est prérendue avec ses questions, étapes et listes", () => {
+    const expectations: Record<string, string> = {
+      "/employeurs": campaignPartners.EMPLOYER_FAQ[0].question,
+      "/agences-placement": campaignPartners.AGENCY_PARTNER_FAQ[0].question,
+      "/ambassador-program": campaignPartners.AMBASSADOR_FAQ[0].question,
+      "/paiement": campaignDocs.PAY_FAQ[0].question,
+      "/cni-passeport": campaignDocs.CNI_COMMON_ERRORS[0].slice(0, 30),
+      "/conformite-documents": campaignDocs.DOC_FAQ[0].question,
+      "/traduction/order": campaignTranslation.TRANSLATION_FAQ[0].question,
+      "/schengen": campaignPages.SCHENGEN_FAQ[0].question,
+      "/about": campaignPages.ABOUT_FAQ[0].question,
+    };
+    expect(Object.keys(CAMPAIGN_PRERENDER).sort()).toEqual(Object.keys(expectations).sort());
+    for (const [path, text] of Object.entries(expectations)) {
+      const rendered = composePublicPrerender(template, path);
+      expect(rendered.status, path).toBe(200);
+      const escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+      expect(rendered.html, path).toContain(escaped);
+      expect(rendered.html.length, path).toBeGreaterThan(4000);
+    }
   });
 });
 

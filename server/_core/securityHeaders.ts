@@ -11,6 +11,8 @@ import type { NextFunction, Request, Response } from "express";
  */
 export const PERMISSIONS_POLICY = "camera=(self), microphone=(), geolocation=(), payment=(), usb=()";
 export const REFERRER_POLICY = "strict-origin-when-cross-origin";
+/** Directives sans risque pour le site : aucun plugin objet, <base> limité au site. Ne restreint ni scripts, ni images, ni cadres. */
+export const BASE_CONTENT_SECURITY_POLICY = "object-src 'none'; base-uri 'self'";
 
 const PRIVATE_PATHS = /^\/(admin|login|connexion|mon-espace|mon-dossier|paiement|payment|payment-success|document-upload|panier|assistance-acces|employeurs|agences-placement|evaluation-space)(\/|$|\?)/i;
 
@@ -23,7 +25,9 @@ export function applySecurityHeaders(path: string, setHeader: (name: string, val
   setHeader("Permissions-Policy", PERMISSIONS_POLICY);
   if (isPrivatePath(path)) {
     setHeader("X-Frame-Options", "SAMEORIGIN");
-    setHeader("Content-Security-Policy", "frame-ancestors 'self'");
+    setHeader("Content-Security-Policy", `frame-ancestors 'self'; ${BASE_CONTENT_SECURITY_POLICY}`);
+  } else {
+    setHeader("Content-Security-Policy", BASE_CONTENT_SECURITY_POLICY);
   }
 }
 

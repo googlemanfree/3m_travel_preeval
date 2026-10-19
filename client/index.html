@@ -97,10 +97,13 @@
     <!-- Polices premium lisibles (Manrope corps + Sora titres), chargées sans bloquer le premier rendu. -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" /></noscript>
-    <!-- Analytics différé : aucune requête tierce ne concurrence le premier affichage. -->
+    <!-- Mesure d'audience : chargée UNIQUEMENT après consentement du visiteur (bandeau cookies, clé 3m-analytics-consent), jamais avant. -->
     <script>
       window.addEventListener('load', function () {
-        var loadAnalytics = function () {
+        var loaded = false;
+        window.__load3mAnalytics = function () {
+          if (loaded) return;
+          loaded = true;
           window.dataLayer = window.dataLayer || [];
           window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
           window.gtag('js', new Date());
@@ -115,8 +118,11 @@
           umami.dataset.websiteId = '%VITE_ANALYTICS_WEBSITE_ID%';
           document.body.appendChild(umami);
         };
-        if ('requestIdleCallback' in window) window.requestIdleCallback(loadAnalytics, { timeout: 2500 });
-        else window.setTimeout(loadAnalytics, 2500);
+        var consent = null;
+        try { consent = window.localStorage.getItem('3m-analytics-consent'); } catch (e) { consent = null; }
+        if (consent !== 'granted') return;
+        if ('requestIdleCallback' in window) window.requestIdleCallback(window.__load3mAnalytics, { timeout: 2500 });
+        else window.setTimeout(window.__load3mAnalytics, 2500);
       }, { once: true });
     </script>
   </head>
