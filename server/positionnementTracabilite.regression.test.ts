@@ -12,7 +12,7 @@ describe("positionnement 3M — dossier hub + traçabilité", () => {
     const proofsIdx = home.indexOf("<ProofGallerySection");
     const employerB2bIdx = home.indexOf('data-testid="home-employer-b2b"');
     expect(corridorIdx).toBeGreaterThan(0);
-    expect(quickIdx).toBeGreaterThan(corridorIdx);
+    expect(corridorIdx).toBeGreaterThan(quickIdx);
     expect(proofsIdx).toBeLessThan(quickIdx);
     expect(employerB2bIdx).toBeGreaterThan(proofsIdx);
     expect(home).toContain("3M prépare et suit — les partenaires recrutent");

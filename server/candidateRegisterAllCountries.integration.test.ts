@@ -36,6 +36,7 @@ const base = {
   fullName: "Aïcha Nkolo",
   email: "aicha.nkolo@example.test",
   password: "Motdepasse1!",
+  phone: "+237 690 00 00 00",
   portraitVerificationToken: "p".repeat(64),
 };
 

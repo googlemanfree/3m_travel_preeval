@@ -95,6 +95,8 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ countryCode, onClose, on
                     onClick={() => setRating(star)}
                     onMouseEnter={() => setHoverRating(star)}
                     onMouseLeave={() => setHoverRating(0)}
+                    aria-label={`Note : ${star} sur 5`}
+                    aria-pressed={rating === star}
                     className="transition-transform hover:scale-110"
                   >
                     <Star
