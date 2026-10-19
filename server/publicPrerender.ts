@@ -284,7 +284,7 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/contact": { title: `Contactez-nous | ${SITE}`, description: "Contact 3M TRAVEL AGENCY : WhatsApp Yaoundé +237 698 104 832 (canal principal), fixe +237 620 996 045 (appels), Ottawa sur rendez-vous.", keywords: ["contact 3M TRAVEL AGENCY", "agence visa Yaoundé", "WhatsApp Yaoundé", "agence voyage Cameroun", "Ottawa"], heading: "Contacter 3M TRAVEL AGENCY", lead: "Canal principal Yaoundé : WhatsApp +237 698 104 832 (messages, dossiers). Fixe +237 620 996 045 pour les appels vocaux uniquement. Ottawa : WhatsApp secondaire sur rendez-vous." },
   "/consultation": { title: `Prendre rendez-vous | ${SITE}`, description: "Demandez une consultation avec un conseiller 3M TRAVEL AGENCY : indiquez votre projet et votre pays cible, l’équipe vous recontacte sous 24 à 48 h ouvrées.", keywords: ["rendez-vous conseiller", "consultation visa", "consultation immigration", "agence visa Yaoundé", "3M TRAVEL AGENCY"], heading: "Prendre rendez-vous avec un conseiller", lead: "Indiquez votre projet et votre pays de destination ; un conseiller vous recontacte pour cadrer votre démarche, sans engagement ni promesse de résultat." },
   "/about": {
-    title: `Aureol DONFACK, fondateur de 3M Group SARL | ${SITE}`,
+    title: `Aureol DONFACK, fondateur 3M Group SARL | ${SITE}`,
     description:
       "Aureol DONFACK, fondateur et PDG de 3M Group SARL : direction de l’agence, engagements de transparence et accompagnement mobilité à Yaoundé.",
     keywords: [
