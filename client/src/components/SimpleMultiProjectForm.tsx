@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { getEvaluationDocumentRequirements } from "@/data/evaluationDocumentCatalogue";
 import { trpc } from "@/lib/trpc";
+import { describeFormError } from "@/lib/formErrors";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
 import React from "react";
@@ -160,6 +161,7 @@ export function SimpleMultiProjectForm() {
   const initialProject = projectParam ?? "travail";
   const [currentStep, setCurrentStep] = React.useState(0);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [uploadProgress, setUploadProgress] = React.useState<{ done: number; total: number } | null>(null);
   const [isSuccessVisible, setIsSuccessVisible] = React.useState(false);
   const [contactTouched, setContactTouched] = React.useState({ email: false, whatsappPhone: false });
   const [formData, setFormData] = React.useState<FormData>({ fullName: "", email: "", whatsappPhone: "", nationality: "", destinationCountry: canonicalDestinationParam, projectType: initialProject, studyCycle: "", visitorStatus: "", transcriptAvailable: false, geminiAnalysisConsent: false });
@@ -205,7 +207,7 @@ export function SimpleMultiProjectForm() {
     }));
   }, [candidate?.email, candidate?.fullName, isPostRegistrationOnboarding]);
 
-  const submitEvaluation = trpc.evaluation.submitEvaluation.useMutation({ onError: (error: { message?: string }) => toast.error(error.message || "Erreur lors de la soumission") });
+  const submitEvaluation = trpc.evaluation.submitEvaluation.useMutation({ onError: (error: { message?: string }) => toast.error("Votre évaluation n’a pas été envoyée", { description: describeFormError(error) }) });
   const uploadSupportingDocument = trpc.evaluation.uploadSupportingDocument.useMutation();
   const previewGeminiOrientation = trpc.evaluation.geminiOrientationPreview.useMutation({ onSuccess: (data) => {
     setOrientationPreview(data);
@@ -318,10 +320,20 @@ export function SimpleMultiProjectForm() {
         diplomaLevel: requirementsPayload.diplomaLevel || undefined,
       });
       let uploaded = 0;
+      const failedDocuments: string[] = [];
       for (const item of selectedDocuments) {
+        setUploadProgress({ done: uploaded + failedDocuments.length, total: selectedDocuments.length });
+        try {
         await uploadSupportingDocument.mutateAsync({ evaluationId: created.evaluationId, email: formData.email, uploadToken: created.documentUploadToken, documentType: item.documentType, fileName: item.file.name, mimeType: item.file.type as "application/pdf" | "image/jpeg" | "image/png", sizeBytes: item.file.size, fileBase64: await readFileAsDataUrl(item.file) });
         uploaded += 1;
+        } catch (uploadError) {
+          // L'évaluation est déjà enregistrée : un document refusé ne doit ni la bloquer ni passer inaperçu.
+          failedDocuments.push(item.file.name);
+          toast.warning(`Document non envoyé : ${item.file.name}`, { description: describeFormError(uploadError) });
+        }
       }
+      setUploadProgress(null);
+      if (failedDocuments.length > 0) toast.info("Votre évaluation est bien enregistrée. Vous pourrez ajouter les documents manquants depuis votre espace ou en répondant à notre e-mail.");
       setUploadedDocumentCount(uploaded);
       setSubmittedDossierCode(typeof created.dossierCode === "string" && created.dossierCode.trim() ? created.dossierCode.trim() : null);
       setSubmittedReviewDeadline(formatReviewDeadline(created.reviewDeadline));
@@ -333,7 +345,7 @@ export function SimpleMultiProjectForm() {
       });
       toast.success("Évaluation soumise avec succès. Vérifiez votre e-mail.");
       setIsSuccessVisible(true);
-    } finally { setIsSubmitting(false); }
+    } finally { setIsSubmitting(false); setUploadProgress(null); }
   };
 
   const requestOrientationPreview = () => {
@@ -506,7 +518,8 @@ export function SimpleMultiProjectForm() {
                 {currentStep === 4 && <div className="space-y-4"><div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4"><div className="flex gap-3"><MailCheck className="mt-0.5 h-5 w-5 text-emerald-700" /><div><h4 className="font-black text-emerald-950">Vérifiez votre évaluation avant l’envoi</h4><p className="mt-1 text-sm text-emerald-900">Utilisez Modifier pour corriger une étape. Aucun résultat automatique, visa, admission ou emploi n’est garanti.</p></div></div></div><SummarySection title="Projet" onEdit={() => setCurrentStep(0)} lines={[formData.projectType === "travail" ? "Visa travail" : formData.projectType === "etudes" ? "Visa études" : "Visa visiteurs", formData.destinationCountry, COUNTRY_GUIDANCE[formData.destinationCountry] || "Orientation à confirmer"]} /><SummarySection title="Profil" onEdit={() => setCurrentStep(1)} lines={[formData.fullName, formData.email, formData.whatsappPhone, formData.nationality]} /><SummarySection title="Critères" onEdit={() => setCurrentStep(2)} lines={[formData.projectType === "travail" ? [formData.sector && `Métier : ${formData.sector}`, formData.yearsOfExperience !== undefined && formData.yearsOfExperience !== null ? `Expérience : ${formData.yearsOfExperience} an(s)` : "", formData.languages && `Langues : ${formData.languages}`] : formData.projectType === "etudes" ? [formData.educationLevel && `Niveau obtenu : ${formData.educationLevel}`, formData.studyCycle ? `Cycle visé : ${STUDY_CYCLE_LABELS[formData.studyCycle]}` : "", formData.sector && `Filière : ${formData.sector}`, formData.financialGuarantee && `Financement : ${formData.financialGuarantee}`] : [formData.visitorStatus ? `Statut : ${VISITOR_STATUS_LABELS[formData.visitorStatus]}` : "", formData.visitReason && `Motif : ${formData.visitReason}`, formData.travelHistory && `Voyages : ${formData.travelHistory}`, formData.socialTies && `Attaches : ${formData.socialTies}`], formData.franceProjectStatus, formData.belgiumRegion, formData.germanyLanguageLevel, formData.germanyRecognitionStatus, dynamicResponses.filter((response) => response.answer.trim()).length ? `${dynamicResponses.filter((response) => response.answer.trim()).length} réponse(s) complémentaire(s)` : ""].flat().filter(Boolean) as string[]} /><SummarySection title="Documents" onEdit={() => setCurrentStep(3)} lines={[`${selectedDocuments.length} pièce(s) sélectionnée(s)`, formData.projectType === "travail" && formData.cvLink ? "Lien CV indiqué" : "", formData.projectType === "etudes" && formData.transcriptAvailable ? "Relevés confirmés prêts" : "", formData.projectType === "tourisme" ? "Pièces facultatives (formulaire visiteurs)" : ""].filter(Boolean) as string[]} /><p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-700">Après soumission, l’équipe examine les informations déclarées et les pièces séparément selon le type de visa. Seule une réponse relue et validée par un conseiller sera envoyée par e-mail et visible dans votre espace.</p></div>}
               </motion.section>
             </AnimatePresence>
-            <div className="mt-7 flex items-center justify-between gap-3 border-t border-slate-100 pt-5"><Button type="button" variant="outline" onClick={previous} disabled={currentStep === 0} className="gap-2"><ChevronLeft className="h-4 w-4" />Précédent</Button>{currentStep < STEPS.length - 1 ? <Button type="button" onClick={next} className="gap-2 bg-[#0B2A52] text-white hover:bg-[#163d73]">Continuer<ChevronRight className="h-4 w-4" /></Button> : <Button type="submit" disabled={isSubmitting} className="bg-[#D8A928] text-slate-950 hover:bg-[#c6971f]">{isSubmitting ? "Envoi…" : "Soumettre l’évaluation"}</Button>}</div>
+            <div className="mt-7 flex items-center justify-between gap-3 border-t border-slate-100 pt-5"><Button type="button" variant="outline" onClick={previous} disabled={currentStep === 0} className="gap-2"><ChevronLeft className="h-4 w-4" />Précédent</Button>{currentStep < STEPS.length - 1 ? <Button type="button" onClick={next} className="gap-2 bg-[#0B2A52] text-white hover:bg-[#163d73]">Continuer<ChevronRight className="h-4 w-4" /></Button> : <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting} data-testid="evaluation-submit" className="gap-2 bg-[#D8A928] text-slate-950 hover:bg-[#c6971f]">{isSubmitting && <LoaderCircle className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />}{isSubmitting ? (uploadProgress ? `Envoi des documents (${Math.min(uploadProgress.done + 1, uploadProgress.total)}/${uploadProgress.total})…` : "Envoi de votre évaluation…") : "Soumettre l’évaluation"}</Button>}</div>
+            <p role="status" aria-live="polite" className="sr-only" data-testid="evaluation-submit-status">{isSubmitting ? (uploadProgress ? `Envoi des documents : ${Math.min(uploadProgress.done + 1, uploadProgress.total)} sur ${uploadProgress.total}` : "Envoi de votre évaluation en cours") : ""}</p>
           </form>
         )}
         {!isSuccessVisible && <div className="mt-5 grid gap-2 sm:grid-cols-2"><button type="button" onClick={() => window.open(`https://wa.me/237698104832?text=${encodeURIComponent(summary)}`, "_blank")} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-3 text-sm font-bold text-white transition-transform duration-150 hover:-translate-y-0.5 hover:bg-emerald-800 active:scale-[0.98]"><MessageCircleMore className="h-4 w-4" />Partager au conseiller WhatsApp</button><button type="button" onClick={async () => { try { await navigator.clipboard.writeText(summary); toast.success("Récapitulatif copié"); } catch { toast.error("Copie non disponible sur cet appareil"); } }} className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-800 px-4 py-3 text-sm font-bold text-white transition-transform duration-150 hover:-translate-y-0.5 hover:bg-slate-900 active:scale-[0.98]"><MailCheck className="h-4 w-4" />Copier le récapitulatif</button></div>}

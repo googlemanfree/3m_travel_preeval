@@ -184,7 +184,7 @@ const procedureMetaForPathEn = (path: string): PublicMeta | undefined => {
   const projectLabelEn = procedure.visaType === "etudes" ? "study" : procedure.visaType === "visiteur" ? "visitor" : "work";
   return {
     title: `${displayTitle} | ${SITE}`,
-    description: `Steps, documents and preparation resources for your ${projectLabelEn} project to ${englishContent.name}, with remote support from 3M TRAVEL AGENCY — verify with the competent authorities.`,
+    description: `Steps, documents and preparation for your ${projectLabelEn} project to ${englishContent.name}, with remote support from 3M TRAVEL AGENCY. Verify with the authorities.`,
     heading: displayTitle,
     lead: `Review the preparation steps, documents to gather, and related resources for your ${projectLabelEn} project to ${englishContent.name}, with remote support from 3M TRAVEL AGENCY.`,
     keywords: [`${englishContent.name} visa`, `${projectLabelEn} visa ${englishContent.name}`, `${englishContent.name} procedure`, projectLabelEn, "international mobility", "Africa", "3M TRAVEL AGENCY"],

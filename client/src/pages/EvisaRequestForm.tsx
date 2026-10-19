@@ -11,6 +11,7 @@ import { FormProgressBar } from '@/components/FormProgressBar';
 import { SuccessConfirmation } from '@/components/SuccessConfirmation';
 import { PassportAssistanceWidget } from '@/components/PassportAssistanceWidget';
 import { trpc } from '@/lib/trpc';
+import { describeFormError } from '@/lib/formErrors';
 
 interface ExtractedData {
   fullName: string;
@@ -253,7 +254,7 @@ export default function EvisaRequestForm() {
       setError(null);
     },
     onError: (err: any) => {
-      setError(err.message || 'Une erreur est survenue lors de la soumission');
+      setError(describeFormError(err, 'Une erreur est survenue lors de la soumission de votre demande. Réessayez dans quelques instants.'));
       setIsLoading(false);
     },
   });
@@ -812,8 +813,11 @@ export default function EvisaRequestForm() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 bg-green-700 hover:bg-green-800 text-white"
+                  aria-busy={isLoading}
+                  data-testid="evisa-submit"
+                  className="flex-1 gap-2 bg-green-700 hover:bg-green-800 text-white"
                 >
+                  {isLoading && <Loader className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />}
                   {isLoading ? 'Soumission en cours...' : 'Soumettre la Demande'}
                 </Button>
               </div>

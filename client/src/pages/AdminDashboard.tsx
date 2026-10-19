@@ -1762,6 +1762,7 @@ export default function AdminDashboard() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [visaKindFilter, setVisaKindFilter] = useState("ALL");
   const [activationFilter, setActivationFilter] = useState<CandidateActivationStatus | "ALL">("ALL");
   const [sourceFilter, setSourceFilter] = useState<CandidateSource | "ALL">("ALL");
   const [destinationFilter, setDestinationFilter] = useState("ALL");
@@ -1957,9 +1958,10 @@ export default function AdminDashboard() {
     activationStatus: activationFilter !== "ALL" ? activationFilter : undefined,
     source: sourceFilter !== "ALL" ? sourceFilter : undefined,
     destination: destinationFilter !== "ALL" ? destinationFilter : undefined,
+    visaKind: visaKindFilter !== "ALL" ? (visaKindFilter as "evisa" | "work" | "study" | "visitor" | "family" | "residence" | "other") : undefined,
     assignedToMe: assignedToMeFilter || undefined,
     sortBy,
-  }), [sessionToken, search, statusFilter, activationFilter, sourceFilter, destinationFilter, assignedToMeFilter, sortBy]);
+  }), [sessionToken, search, statusFilter, activationFilter, sourceFilter, destinationFilter, visaKindFilter, assignedToMeFilter, sortBy]);
   const { data, isLoading, error: candidateListError, refetch, dataUpdatedAt, isFetching: isFetchingCandidates } = trpc.admin.listCandidates.useQuery(
     candidateListInput,
     {
@@ -2178,13 +2180,14 @@ export default function AdminDashboard() {
     await updateKanbanStatusMutation.mutateAsync({ sessionToken, candidateId: candidate.id, newStatus: requestedStatus, notifyClient: true });
   };
   const availableDestinations = data?.availableDestinations || [];
-  const hasCandidateFilters = Boolean(search || statusFilter !== "ALL" || activationFilter !== "ALL" || sourceFilter !== "ALL" || destinationFilter !== "ALL" || assignedToMeFilter || sortBy !== "priority" || nextActionFilter !== "ALL" || nextActionSort !== "default");
+  const hasCandidateFilters = Boolean(search || statusFilter !== "ALL" || activationFilter !== "ALL" || sourceFilter !== "ALL" || destinationFilter !== "ALL" || visaKindFilter !== "ALL" || assignedToMeFilter || sortBy !== "priority" || nextActionFilter !== "ALL" || nextActionSort !== "default");
   const resetCandidateFilters = () => {
     setSearch("");
     setStatusFilter("ALL");
     setActivationFilter("ALL");
     setSourceFilter("ALL");
     setDestinationFilter("ALL");
+    setVisaKindFilter("ALL");
     setAssignedToMeFilter(false);
     setSortBy("priority");
     setNextActionFilter("ALL");
@@ -3114,6 +3117,26 @@ export default function AdminDashboard() {
               ))}
             </SelectContent>
           </Select>
+          </div>
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par type de visa" data-testid="visa-kind-filters">
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Type de visa</span>
+            {([["ALL", "Tous"], ["work", "Travail"], ["study", "Études"], ["visitor", "Visiteur"], ["evisa", "e-Visa"], ["family", "Famille"], ["residence", "Résidence"], ["other", "À qualifier"]] as const).map(([key, label]) => {
+              const count = key === "ALL" ? undefined : (data as { availableVisaKinds?: Record<string, number> } | undefined)?.availableVisaKinds?.[key] ?? 0;
+              if (key !== "ALL" && !count && visaKindFilter !== key) return null;
+              const active = visaKindFilter === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={active}
+                  data-testid={`visa-kind-${key}`}
+                  onClick={() => setVisaKindFilter(key)}
+                  className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${active ? "border-blue-700 bg-blue-700 text-white" : "border-slate-300 bg-white text-slate-700 hover:border-blue-400"}`}
+                >
+                  {label}{count !== undefined && <span className={`rounded-full px-1.5 text-xs ${active ? "bg-white/20" : "bg-slate-100"}`}>{count}</span>}
+                </button>
+              );
+            })}
           </div>
           <div className="flex flex-col gap-3 lg:flex-row">
             <Select value={sourceFilter} onValueChange={(value) => setSourceFilter(value as CandidateSource | "ALL")}>

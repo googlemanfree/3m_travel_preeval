@@ -1647,6 +1647,7 @@ export const adminRouter = router({
        activationStatus: z.enum(["ALL", "active", "pending", "expired", "failed", "not_registered"]).optional(),
        source: z.enum(["WEB", "AGENCY_PHYSICAL", "ACCOUNT_ONLY"]).optional(),
        destination: z.string().trim().min(1).max(100).optional(),
+       visaKind: z.enum(["evisa", "work", "study", "visitor", "family", "residence", "other"]).optional(),
        assignedToMe: z.boolean().optional(),
        sortBy: z.enum(["priority", "recent", "oldest", "name", "score_desc"]).default("priority"),
               limit: z.number().int().min(1).max(200).default(100),
@@ -2103,6 +2104,13 @@ export const adminRouter = router({
           new Set(allCandidates.map((candidate) => candidate.destinationCountry).filter(Boolean)),
         ).sort((a, b) => a.localeCompare(b, "fr"));
 
+        // Décompte par type de visa (filtres rapides du tableau de bord), calculé avant les filtres pour rester stable.
+        const availableVisaKinds: Record<string, number> = {};
+        for (const candidate of allCandidates) {
+          const kind = detectAdminProcedureKind(candidate.projectType, candidate.projectType);
+          availableVisaKinds[kind] = (availableVisaKinds[kind] ?? 0) + 1;
+        }
+
         // Filtrer par statut — on conserve les procédures sœurs (travail + études) du même client.
         const universeBeforeNarrowFilters = allCandidates;
         if (input.status && input.status !== "ALL") {
@@ -2117,6 +2125,9 @@ export const adminRouter = router({
         if (input.destination) {
           const destination = input.destination.toLocaleLowerCase("fr-FR");
           allCandidates = allCandidates.filter(c => c.destinationCountry.toLocaleLowerCase("fr-FR") === destination);
+        }
+        if (input.visaKind) {
+          allCandidates = allCandidates.filter(c => detectAdminProcedureKind(c.projectType, c.projectType) === input.visaKind);
         }
         if (input.assignedToMe && admin.email) {
           const adminEmail = admin.email.toLowerCase();
@@ -2157,6 +2168,7 @@ export const adminRouter = router({
           candidates: allCandidates,
           total: allCandidates.length,
           availableDestinations,
+          availableVisaKinds,
           currentAdminEmail: admin.email ?? null,
         };
       } catch (err) {
