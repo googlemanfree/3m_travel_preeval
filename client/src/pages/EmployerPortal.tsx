@@ -284,6 +284,7 @@ export default function EmployerPortal() {
             </div>
           </div>
 
+          <div key={authTab} className="animate-in fade-in slide-in-from-right-2 duration-200 motion-reduce:animate-none" data-testid="partner-auth-transition">
           {authTab === "login" ? (
             <Card className="premium-surface overflow-hidden border-blue-100" data-testid="partner-auth-login">
               <CardHeader>
@@ -359,6 +360,7 @@ export default function EmployerPortal() {
               </CardContent>
             </Card>
           )}
+          </div>
 
           <section className="rounded-xl border border-white/25 bg-white/95 p-4 text-sm text-[#071b3d]">
             <p className="font-bold">{t("Indicateurs publics", "Public indicators")}</p>

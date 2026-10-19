@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Building2, CheckCircle2, IdCard, Loader2, LockKeyhole, Send } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -68,6 +68,8 @@ export function B2bPartnerRegistrationForm({
   const [form, setForm] = useState(() => readDraft(defaultOrganizationType));
   const [submittedId, setSubmittedId] = useState<number | null>(null);
   const [validationMessage, setValidationMessage] = useState("");
+  const [draftStatus, setDraftStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const skipNextDraftSave = useRef(false);
   const requiresLicence = form.organizationType === "placement_partner";
   const filledCount = useMemo(
     () => [
@@ -95,12 +97,26 @@ export function B2bPartnerRegistrationForm({
     || !form.acknowledgeCharter
   ), [form, requiresLicence]);
   useEffect(() => {
+    if (skipNextDraftSave.current) {
+      skipNextDraftSave.current = false;
+      return;
+    }
     const { acknowledgeReview: _ack, acknowledgeCharter: _charter, ...draft } = form;
-    localStorage.setItem(draftKey, JSON.stringify(draft));
+    setDraftStatus("saving");
+    const timer = window.setTimeout(() => {
+      try {
+        localStorage.setItem(draftKey, JSON.stringify({ savedAt: Date.now(), ...draft }));
+        setDraftStatus("saved");
+      } catch {
+        setDraftStatus("idle");
+      }
+    }, 250);
+    return () => window.clearTimeout(timer);
   }, [form]);
   const requestAccess = trpc.placementPortal.requestPartnerAccess.useMutation({
     onSuccess: (result) => {
       setSubmittedId(result.requestId || 1);
+      skipNextDraftSave.current = true;
       setForm(emptyForm(defaultOrganizationType));
       setValidationMessage("");
       localStorage.removeItem(draftKey);
@@ -232,7 +248,13 @@ export function B2bPartnerRegistrationForm({
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-indigo-100">
           <div className="h-full rounded-full bg-indigo-700 transition-[width] duration-200" style={{ width: `${(filledCount / 8) * 100}%` }} />
         </div>
-        <p className="mt-2 text-[11px] font-medium text-indigo-900/80">{t("Brouillon sauvegardé automatiquement sur cet appareil (sans mot de passe).", "Draft saved automatically on this device (no password).")}</p>
+        <p className="mt-2 text-[11px] font-medium text-indigo-900/80" role="status" aria-live="polite" data-testid="b2b-draft-status">
+          {draftStatus === "saving"
+            ? t("Sauvegarde du brouillon…", "Saving draft…")
+            : draftStatus === "saved"
+              ? t("Brouillon sauvegardé automatiquement sur cet appareil (sans mot de passe).", "Draft saved automatically on this device (no password).")
+              : t("Brouillon local prêt à être sauvegardé.", "Local draft ready to be saved.")}
+        </p>
       </div>
 
       <fieldset className="space-y-3">

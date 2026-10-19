@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 (globalThis as any).React = React;
 
@@ -56,5 +56,18 @@ describe("formulaire d’inscription partenaire — feedback de soumission", () 
     expect(message.getAttribute("aria-live")).toBe("assertive");
     expect(message.textContent).toContain("Confirmez l’exactitude des informations");
     expect(state.mutate).not.toHaveBeenCalled();
+  });
+
+  it("sauvegarde le brouillon local sans le mot de passe et annonce son statut", async () => {
+    render(<B2bPartnerRegistrationForm />);
+
+    fireEvent.change(screen.getByLabelText(/raison sociale/i), { target: { value: "Entreprise Santé" } });
+
+    await waitFor(() => {
+      const draft = JSON.parse(window.localStorage.getItem("3m-placement-partner-request-draft") || "{}");
+      expect(draft.legalName).toBe("Entreprise Santé");
+      expect(draft.acknowledgeCharter).toBeUndefined();
+      expect(screen.getByTestId("b2b-draft-status").textContent).toContain("Brouillon sauvegardé");
+    }, { timeout: 1000 });
   });
 });

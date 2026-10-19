@@ -1,4 +1,4 @@
-import { ArrowRight, BriefcaseBusiness, Building2, Globe2, ShieldCheck, UsersRound } from "lucide-react";
+import { ArrowRight, BriefcaseBusiness, Building2, Download, Globe2, ShieldCheck, UsersRound } from "lucide-react";
 import { FaqSection } from "@/components/PageEnrichment";
 import { PARTNERS_FAQ } from "@/data/pageEnrichment";
 
@@ -17,6 +17,55 @@ export default function PartnersHub() {
   const { language } = useLanguage();
   const en = language === "en";
   const visual = getServiceVisual("recrutement");
+
+  const exportAnonymisedProfile = async () => {
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+    doc.setFillColor(7, 27, 61);
+    doc.rect(0, 0, 210, 28, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("3M TRAVEL AGENCY", 18, 13);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(en ? "Anonymised partner profile — fictitious sample" : "Fiche partenaire anonymisée — exemple fictif", 18, 20);
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(15);
+    doc.setFont("helvetica", "bold");
+    doc.text(en ? "Anonymised profile" : "Fiche anonymisée", 18, 43);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(71, 85, 105);
+    doc.text(en ? "Fictitious data shared only as a layout example." : "Données fictives présentées uniquement comme exemple de format.", 18, 50);
+
+    const rows: Array<[string, string]> = en
+      ? [["Code", "PRF-3M-4821"], ["Sector", "Healthcare — nursing"], ["Experience", "4–6 years"], ["Languages", "French · English B1"], ["Target region", "Europe"], ["Availability", "Within 3 months"]]
+      : [["Code", "PRF-3M-4821"], ["Secteur", "Santé — soins infirmiers"], ["Expérience", "4–6 ans"], ["Langues", "Français · anglais B1"], ["Région cible", "Europe"], ["Disponibilité", "Sous 3 mois"]];
+    let y = 66;
+    rows.forEach(([label, value]) => {
+      doc.setFillColor(241, 245, 249);
+      doc.roundedRect(18, y - 6, 174, 12, 2, 2, "F");
+      doc.setTextColor(100, 116, 139);
+      doc.setFont("helvetica", "bold");
+      doc.text(label.toUpperCase(), 24, y + 1);
+      doc.setTextColor(15, 23, 42);
+      doc.setFont("helvetica", "normal");
+      doc.text(value, 82, y + 1);
+      y += 16;
+    });
+    doc.setTextColor(71, 85, 105);
+    doc.setFontSize(9);
+    const privacy = en
+      ? "Hidden by default: full name, phone, email, passport number, raw CV and address. Contact goes through 3M after candidate consent."
+      : "Masqués par défaut : nom complet, téléphone, e-mail, passeport, CV brut et adresse. Le contact passe par 3M après consentement du candidat.";
+    doc.text(doc.splitTextToSize(privacy, 174), 18, y + 8);
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    doc.text(en ? "Illustrative document — not a candidate record." : "Document illustratif — ne constitue pas un dossier candidat.", 18, 280);
+    doc.save("3m-fiche-anonymisee-exemple.pdf");
+  };
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_right,_rgba(135,185,255,0.25),_transparent_28rem),linear-gradient(160deg,_#071b3d_0%,_#0b2f6f_55%,_#1463ff_120%)]">
@@ -174,6 +223,17 @@ export default function PartnersHub() {
               ? "Hidden by default: full name, phone, email, passport number, raw CV and address. Contact always goes through 3M after candidate consent."
               : "Masqués par défaut : nom complet, téléphone, e-mail, n° de passeport, CV brut et adresse. Le contact passe toujours par 3M après consentement du candidat."}
           </p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={exportAnonymisedProfile}
+            className="mt-5 min-h-11 border-indigo-200 bg-white text-indigo-900 hover:bg-indigo-50"
+            data-testid="export-anonymised-profile-pdf"
+            aria-label={en ? "Download the anonymised profile example as PDF" : "Télécharger l’exemple de fiche anonymisée en PDF"}
+          >
+            <Download className="mr-2 h-4 w-4" aria-hidden="true" />
+            {en ? "Download PDF example" : "Télécharger l’exemple PDF"}
+          </Button>
         </aside>
       </section>
       <FaqSection title={en ? "Frequently asked questions" : "Questions fréquentes"} introduction={en ? "How candidate profiles are shared, and who decides what." : "Comment les profils candidats sont partagés, et qui décide de quoi."} items={en ? PARTNERS_FAQ.en : PARTNERS_FAQ.fr} tone="slate" testId="partners-faq" />

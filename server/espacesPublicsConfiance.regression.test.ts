@@ -48,5 +48,10 @@ describe("espaces publics — confiance (audit candidat / partenaires)", () => {
     expect(hub).toContain("anonymised-profile-sample");
     expect(hub).toContain("PRF-3M-4821");
     expect(hub).toContain("partners-access-terms");
+    expect(hub).toContain("export-anonymised-profile-pdf");
+    expect(hub).toContain("3m-fiche-anonymisee-exemple.pdf");
+    expect(read("client/src/pages/EmployerPortal.tsx")).toContain('data-testid="partner-auth-transition"');
+    expect(read("client/src/pages/EmployerPortal.tsx")).toContain("motion-reduce:animate-none");
+    expect(read("client/src/components/B2bPartnerRegistrationForm.tsx")).toContain('data-testid="b2b-draft-status"');
   });
 });
