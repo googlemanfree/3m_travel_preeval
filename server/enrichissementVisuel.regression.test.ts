@@ -25,10 +25,11 @@ describe("enrichissement visuel complet", () => {
 
   it("publie des preuves dédiées pour immigration et placements", () => {
     expect(filterProofPhotos(PROOF_PHOTOS, "immigration").length).toBeGreaterThan(0);
-    expect(filterProofPhotos(PROOF_PHOTOS, "placements").length).toBeGreaterThan(0);
-    expect(filterProofPhotos(PROOF_PHOTOS, "placements").every((photo) => photo.kind === "context")).toBe(true);
+    // Audit de crédibilité du 17 octobre (4921dd7e) : l'illustration « placements » a été retirée, aucune image d'illustration n'est présentée comme une preuve.
+    expect(filterProofPhotos(PROOF_PHOTOS, "placements").filter((photo) => photo.kind === "context")).toHaveLength(0);
+    expect(PROOF_PHOTOS.some((photo) => photo.kind === "context" && /placement/i.test(`${photo.id} ${photo.alt ?? ""}`))).toBe(false);
     expect(proofFilterCounts(PROOF_PHOTOS).map((entry) => entry.filter)).toEqual(
-      expect.arrayContaining(["immigration", "placements"]),
+      expect.arrayContaining(["immigration"]),
     );
   });
 

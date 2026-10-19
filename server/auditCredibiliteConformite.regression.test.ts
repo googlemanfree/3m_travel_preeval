@@ -43,8 +43,9 @@ describe("audit crédibilité / conformité (17 oct 2026)", () => {
 
   it("allège le menu candidat et place le corridor B2B après les preuves", () => {
     const navbar = read("client/src/components/Navbar.tsx");
-    expect(navbar).not.toContain('href: "/partenaires"');
-    expect(navbar).not.toContain('href: "/guide-procedures"');
+    // Les entrées Partenaires B2B, Guide PDF et 3M Solutions ont été rétablies à la demande (publication 2bcd28ac) : le menu les contient.
+    expect(navbar).toContain('href: "/partenaires"');
+    expect(navbar).toContain('href: "/guide-procedures"');
     const home = read("client/src/pages/Home.tsx");
     const proofsIdx = home.indexOf("<ProofGallerySection");
     const corridorIdx = home.indexOf('id="home-talent-corridor"');

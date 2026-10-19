@@ -161,7 +161,7 @@ describe("routes statiques d’App.tsx servies par le pré-rendu", () => {
 
   it("publie les numéros officiels Yaoundé et Ottawa dans le LocalBusiness JSON-LD", () => {
     const rendered = render("/procedures/canada-travail");
-    expect(rendered.html).toContain('"@type":"LocalBusiness"');
+    expect(rendered.html).toContain('"@type":"TravelAgency"');
     expect(rendered.html).toContain("+237 620 996 045");
     expect(rendered.html).toContain("+237 698 104 832");
     expect(rendered.html).toContain("+1 672 897 2999");
