@@ -11,6 +11,7 @@ import { trpc } from "@/lib/trpc";
 import { CountrySelect } from "@/components/CountryPicker";
 import { AvatarCropperModal } from "@/components/AvatarCropperModal";
 import { getCandidateToken } from "@/hooks/useCandidateAuth";
+import { resolveCandidateReturnPath } from "@/lib/candidateRedirect";
 import { verifyHumanPortrait } from "@/lib/portraitVerification";
 
 
@@ -41,20 +42,24 @@ export default function CompleteProfile() {
   // Récupérer l'email depuis les paramètres d'URL
   const params = new URLSearchParams(location.split("?")[1] ?? "");
   const email = params.get("email") ?? "";
+  const from = params.get("from");
+  // Un candidat déjà connecté qui arrive ici finalise son espace : ce n'est pas une inscription.
+  const isSignedIn = Boolean(getCandidateToken());
+  const returnPath = from ? resolveCandidateReturnPath(from) : "/mon-espace";
 
   useEffect(() => {
-    // Vérifier que l'utilisateur vient de l'inscription et récupérer le portrait déjà validé.
+    // Récupère le portrait déjà validé à l'inscription. Sans compte ni session, on renvoie vers la CONNEXION, jamais vers l'inscription.
     const candidateId = localStorage.getItem("candidateId");
     const storedAvatarUrl = sessionStorage.getItem("registrationAvatarUrl");
-    if (!candidateId || !email) {
-      navigate("/register");
+    if (!isSignedIn && (!candidateId || !email)) {
+      navigate("/login");
       return;
     }
     if (storedAvatarUrl) {
       setFormData((previous) => ({ ...previous, avatarUrl: storedAvatarUrl }));
       setAvatarPreview(storedAvatarUrl);
     }
-  }, [email, navigate]);
+  }, [email, isSignedIn, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -78,9 +83,14 @@ export default function CompleteProfile() {
   const updateProfileMutation = trpc.candidate.updateProfile.useMutation({
     onSuccess: () => {
       setIsLoading(false);
-      toast.success("Profil complété et photo de profil enregistrée ! Veuillez vous connecter.");
       localStorage.removeItem("candidateId");
-      navigate("/login");
+      if (isSignedIn) {
+        toast.success("Votre espace est activé.");
+        navigate(returnPath);
+      } else {
+        toast.success("Profil complété et photo de profil enregistrée ! Veuillez vous connecter.");
+        navigate("/login");
+      }
     },
     onError: (err) => {
       setIsLoading(false);
@@ -187,6 +197,12 @@ export default function CompleteProfile() {
         transition={{ duration: 0.5 }}
         className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full"
       >
+        {isSignedIn && (
+          <div role="status" data-testid="complete-profile-signed-in" className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+            <p className="font-bold">Vous êtes connecté{email ? ` avec ${email}` : ""}.</p>
+            <p className="mt-1">Il reste une dernière étape pour activer votre espace : ce n’est pas une nouvelle inscription.</p>
+          </div>
+        )}
         {/* Indicateur de progression (4 étapes incluant l'avatar) */}
         <div className="flex gap-2 mb-8">
           {[1, 2, 3, 4].map((s) => (
@@ -422,6 +438,11 @@ export default function CompleteProfile() {
           <p className="text-xs text-gray-500 text-center">
             Vous pourrez modifier ces informations dans votre profil après la connexion.
           </p>
+          {isSignedIn && (
+            <button type="button" onClick={() => navigate(returnPath)} data-testid="complete-profile-later" className="mx-auto mt-3 block min-h-11 text-sm font-semibold text-blue-700 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+              Terminer plus tard
+            </button>
+          )}
         </div>
       </motion.div>
 

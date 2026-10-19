@@ -94,7 +94,7 @@ export default function Login() {
       if (candidateWithPortrait.avatarVerificationStatus !== "verified") {
         localStorage.setItem("candidateId", String(candidateData.id));
         toast.info("Un portrait humain vérifié est nécessaire pour activer votre espace.");
-        navigate(`/complete-profile?email=${encodeURIComponent(candidateData.email)}`);
+        navigate(`/complete-profile?email=${encodeURIComponent(candidateData.email)}${from ? `&from=${encodeURIComponent(from)}` : ""}`);
         return;
       }
       toast.success(`Bienvenue, ${data.candidate.fullName} !`);
@@ -146,7 +146,7 @@ export default function Login() {
       if (data.candidate.requiresPortrait) {
         localStorage.setItem("candidateId", String(data.candidate.id));
         toast.info("Ajoutez maintenant votre portrait pour finaliser votre espace candidat.");
-        navigate(`/complete-profile?email=${encodeURIComponent(data.candidate.email)}`);
+        navigate(`/complete-profile?email=${encodeURIComponent(data.candidate.email)}${from ? `&from=${encodeURIComponent(from)}` : ""}`);
         return;
       }
       toast.success(`Bienvenue, ${data.candidate.fullName} !`);
