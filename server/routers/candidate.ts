@@ -223,11 +223,19 @@ function primaryDestinationOf(candidate: { destination?: string | null; preferre
   return candidate.destination ?? "autre";
 }
 
-export function hasUsableCandidatePortrait(candidate: { avatarVerificationStatus?: string | null; avatarUrl?: string | null }) {
+/** Comptes créés à partir de cette date : portrait vérifié exigé avant tout accès, sans tolérance historique. */
+export const STRICT_PORTRAIT_FROM = new Date("2026-10-20T00:00:00.000Z");
+
+export function hasUsableCandidatePortrait(candidate: { avatarVerificationStatus?: string | null; avatarUrl?: string | null; createdAt?: Date | string | null }) {
+  if (candidate.avatarVerificationStatus === "verified") return true;
+  // Depuis le 2026-10-20, un compte n'est utilisable qu'avec un portrait vérifié : une photo importée
+  // (ex. photo Google, statut « pending ») ne suffit plus à contourner la vérification.
+  const createdAt = candidate.createdAt ? new Date(candidate.createdAt) : null;
+  if (createdAt && !Number.isNaN(createdAt.getTime()) && createdAt >= STRICT_PORTRAIT_FROM) return false;
   // Les comptes créés avant l’ajout du statut ont parfois une photo valide mais
   // un statut historique « missing » ou « pending ». On ne bloque pas ces
   // candidats : seul un portrait absent ou explicitement rejeté reste bloquant.
-  return candidate.avatarVerificationStatus === "verified" || (candidate.avatarVerificationStatus !== "rejected" && Boolean(candidate.avatarUrl));
+  return candidate.avatarVerificationStatus !== "rejected" && Boolean(candidate.avatarUrl);
 }
 
 export const candidateProcedure = publicProcedure.use(async ({ ctx, next, path }) => {

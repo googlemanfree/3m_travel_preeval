@@ -200,7 +200,7 @@ export default function CompleteProfile() {
         {isSignedIn && (
           <div role="status" data-testid="complete-profile-signed-in" className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
             <p className="font-bold">Vous êtes connecté{email ? ` avec ${email}` : ""}.</p>
-            <p className="mt-1">Il reste une dernière étape pour activer votre espace : ce n’est pas une nouvelle inscription.</p>
+            <p className="mt-1">Il reste une dernière étape pour activer votre espace : un portrait vérifié est obligatoire. Ce n’est pas une nouvelle inscription.</p>
           </div>
         )}
         {/* Indicateur de progression (4 étapes incluant l'avatar) */}
@@ -438,11 +438,6 @@ export default function CompleteProfile() {
           <p className="text-xs text-gray-500 text-center">
             Vous pourrez modifier ces informations dans votre profil après la connexion.
           </p>
-          {isSignedIn && (
-            <button type="button" onClick={() => navigate(returnPath)} data-testid="complete-profile-later" className="mx-auto mt-3 block min-h-11 text-sm font-semibold text-blue-700 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
-              Terminer plus tard
-            </button>
-          )}
         </div>
       </motion.div>
 

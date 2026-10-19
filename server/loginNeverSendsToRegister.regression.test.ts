@@ -18,8 +18,10 @@ describe("« Se connecter » ne renvoie jamais vers l'inscription", () => {
 
   it("un candidat connecté voit qu'il finalise son espace, peut le faire plus tard et n'est pas renvoyé à la connexion", () => {
     expect(complete).toContain('data-testid="complete-profile-signed-in"');
-    expect(complete).toContain("ce n’est pas une nouvelle inscription");
-    expect(complete).toContain('data-testid="complete-profile-later"');
+    expect(complete).toContain("Ce n’est pas une nouvelle inscription");
+    // Le portrait vérifié est obligatoire : aucune échappatoire « plus tard ».
+    expect(complete).not.toContain("complete-profile-later");
+    expect(complete).toContain("un portrait vérifié est obligatoire");
     expect(complete).toContain('toast.success("Votre espace est activé.")');
   });
 
