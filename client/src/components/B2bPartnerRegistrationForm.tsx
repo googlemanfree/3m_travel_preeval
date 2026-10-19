@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Building2, CheckCircle2, IdCard, LockKeyhole, Send } from "lucide-react";
+import { Building2, CheckCircle2, IdCard, Loader2, LockKeyhole, Send } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { CORRIDOR_ROUTES } from "@shared/talentCorridor";
@@ -67,6 +67,7 @@ export function B2bPartnerRegistrationForm({
   const { t } = useLanguage();
   const [form, setForm] = useState(() => readDraft(defaultOrganizationType));
   const [submittedId, setSubmittedId] = useState<number | null>(null);
+  const [validationMessage, setValidationMessage] = useState("");
   const requiresLicence = form.organizationType === "placement_partner";
   const filledCount = useMemo(
     () => [
@@ -101,19 +102,25 @@ export function B2bPartnerRegistrationForm({
     onSuccess: (result) => {
       setSubmittedId(result.requestId || 1);
       setForm(emptyForm(defaultOrganizationType));
+      setValidationMessage("");
       localStorage.removeItem(draftKey);
       toast.success(t("Demande d’accès enregistrée", "Access request recorded"), { description: result.message });
     },
-    onError: (error) => toast.error(t("Inscription non enregistrée", "Registration not saved"), { description: error.message }),
+    onError: (error) => {
+      setValidationMessage(error.message);
+      toast.error(t("Inscription non enregistrée", "Registration not saved"), { description: error.message });
+    },
   });
 
   const update = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) => {
+    setValidationMessage("");
     setForm((current) => ({ ...current, [key]: value }));
   };
 
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (requiresLicence && form.registrationNumber.trim().length < 2) {
+      setValidationMessage(t("Indiquez le numéro d’enregistrement ou de licence requis.", "Enter the required registration or licence number."));
       toast.error(t("Licence requise", "Licence required"), {
         description: t(
           "Indiquez le numéro d’enregistrement ou de licence de placement pour permettre la vérification légale.",
@@ -123,12 +130,14 @@ export function B2bPartnerRegistrationForm({
       return;
     }
     if (!form.acknowledgeReview) {
+      setValidationMessage(t("Confirmez l’exactitude des informations d’identification.", "Confirm that the identification details are accurate."));
       toast.error(t("Confirmation requise", "Confirmation required"), {
         description: t("Confirmez que les informations d’identification sont exactes.", "Confirm that the identification details are accurate."),
       });
       return;
     }
     if (!form.acknowledgeCharter) {
+      setValidationMessage(t("Acceptez la charte partenaire avant l’envoi.", "Accept the partner charter before submitting."));
       toast.error(t("Charte partenaire requise", "Partner charter required"), {
         description: t(
           "Acceptez la charte : aucune facturation au candidat et confidentialité des profils.",
@@ -137,6 +146,11 @@ export function B2bPartnerRegistrationForm({
       });
       return;
     }
+    if (hasErrors) {
+      setValidationMessage(t("Vérifiez les champs obligatoires et le format de l’e-mail avant l’envoi.", "Check the required fields and email format before submitting."));
+      return;
+    }
+    setValidationMessage("");
     requestAccess.mutate({
       organizationType: form.organizationType,
       legalName: form.legalName,
@@ -157,7 +171,7 @@ export function B2bPartnerRegistrationForm({
 
   if (submittedId) {
     return (
-      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5 text-emerald-950" role="status" data-testid="b2b-registration-success">
+      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5 text-emerald-950" role="status" aria-live="polite" aria-atomic="true" data-testid="b2b-registration-success">
         <div className="flex items-start gap-3">
           <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
           <div>
@@ -190,7 +204,7 @@ export function B2bPartnerRegistrationForm({
     : t("Employeur international", "International employer");
 
   return (
-    <form onSubmit={submit} className="space-y-5" aria-labelledby="b2b-registration-title" data-testid="b2b-registration-form">
+    <form onSubmit={submit} noValidate className="space-y-5" aria-labelledby="b2b-registration-title" data-testid="b2b-registration-form">
       <div>
         <h2 id="b2b-registration-title" className="flex items-center gap-2 text-xl font-black text-[#071b3d]">
           <IdCard className="h-5 w-5 text-indigo-700" />
@@ -390,8 +404,14 @@ export function B2bPartnerRegistrationForm({
         </span>
       </label>
 
-      <Button type="submit" disabled={requestAccess.isPending || hasErrors} className="min-h-11 w-full bg-indigo-700 text-white hover:bg-indigo-800">
-        <Send className="mr-2 h-4 w-4" />
+      {validationMessage && (
+        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm font-semibold leading-5 text-rose-900" role="alert" aria-live="assertive" data-testid="b2b-registration-validation">
+          {validationMessage}
+        </p>
+      )}
+
+      <Button type="submit" disabled={requestAccess.isPending} aria-busy={requestAccess.isPending} className="min-h-11 w-full bg-indigo-700 text-white hover:bg-indigo-800">
+        {requestAccess.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Send className="mr-2 h-4 w-4" aria-hidden="true" />}
         {requestAccess.isPending ? t("Enregistrement…", "Saving…") : t("Soumettre mon identification", "Submit my identification")}
       </Button>
     </form>

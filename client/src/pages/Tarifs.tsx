@@ -207,7 +207,7 @@ export default function Tarifs() {
                 <PublicEvaluationCTA
                   hint
                   hintClassName="text-center text-xs leading-5 text-slate-600"
-                  className="mt-8 inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-700 px-4 py-3 text-sm font-black text-white transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                  className="mt-8 inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-700 px-4 py-3 text-sm font-black !text-white transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                 >
                   Demander une orientation
                 </PublicEvaluationCTA>

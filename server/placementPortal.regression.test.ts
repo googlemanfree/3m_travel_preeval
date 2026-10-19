@@ -73,6 +73,10 @@ describe("portail de placement protégé", () => {
     expect(form).toContain("requiresLicence");
     expect(form).toContain("onContinueToLogin");
     expect(form).not.toContain("onSubmitted?.()");
+    expect(form).toContain('data-testid="b2b-registration-validation"');
+    expect(form).toContain('aria-busy={requestAccess.isPending}');
+    expect(form).toContain('data-testid="b2b-registration-success"');
+    expect(form).toContain("Loader2");
     expect(agency).toContain("B2bPartnerRegistrationForm");
     expect(agency).toContain("lockOrganizationType");
     expect(agency).not.toContain("sendContactEmail");
