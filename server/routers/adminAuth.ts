@@ -15,7 +15,7 @@ import { and, count, desc, eq, gte, inArray } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { getPasswordChangedEmailTemplate, getPasswordChangeFailedEmailTemplate } from "../_core/emailTemplates";
 import { randomBytes, randomInt } from "node:crypto";
-import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts, scopedLoginIdentifier } from "../loginAttemptsService";
+import { checkLoginAttempts, recordExemptLoginAttempt, recordFailedAttempt, resetExemptLoginAttempts, resetLoginAttempts, scopedLoginIdentifier } from "../loginAttemptsService";
 function esc(v: string | undefined | null): string { return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 import { beginTwoFactorEnrollment, confirmTwoFactorEnrollment, getTwoFactorStatus, verifyTwoFactor } from "../twoFactor";
 
@@ -77,6 +77,29 @@ export async function requireSuperAdminSession(sessionToken: string) {
 
 export function isSuperAdminEmail(email: string | null | undefined) {
   return email?.trim().toLowerCase() === SUPER_ADMIN_EMAIL;
+}
+
+async function notifyExemptLoginAttempts(email: string, reason: string) {
+  const identifier = scopedLoginIdentifier("admin", email);
+  if (!isSuperAdminEmail(email) || !recordExemptLoginAttempt(identifier)) return;
+
+  try {
+    const timestamp = new Date().toLocaleString("fr-FR", { timeZone: "Africa/Douala" });
+    await sendEmail({
+      to: SUPER_ADMIN_EMAIL,
+      subject: "Alerte sécurité — tentatives répétées sur votre compte administrateur",
+      html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#172033">
+        <h2 style="color:#1e40af">Alerte sécurité 3M TRAVEL AGENCY</h2>
+        <p>Trois tentatives de connexion non abouties ont été détectées sur le compte administrateur <strong>${esc(email)}</strong>.</p>
+        <p><strong>Motif :</strong> ${esc(reason)}</p>
+        <p><strong>Date :</strong> ${esc(timestamp)} (Africa/Douala)</p>
+        <p>Aucun mot de passe ni code MFA n’est inclus dans cette alerte. Si ces tentatives ne sont pas les vôtres, vérifiez vos accès et votre appareil.</p>
+        <p style="color:#667085;font-size:12px">Notification automatique — hello@3mtravelagency.com</p>
+      </div>`,
+    });
+  } catch (error) {
+    console.error("[Admin Auth] Security alert email failed:", error);
+  }
 }
 
 /** Récupère et valide exclusivement le jeton contenu dans le cookie HttpOnly admin. */
@@ -149,6 +172,7 @@ export const adminAuthRouter = router({
 
       if (rows.length === 0) {
         if (!lockoutExempt) recordFailedAttempt(loginIdentifier);
+        else await notifyExemptLoginAttempts(input.email, "identifiants incorrects");
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
@@ -156,12 +180,14 @@ export const adminAuthRouter = router({
 
       if (admin.status !== "active") {
         if (!lockoutExempt) recordFailedAttempt(loginIdentifier);
+        else await notifyExemptLoginAttempts(input.email, "compte administrateur désactivé");
         await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login_blocked", expiresAt: null });
         throw new TRPCError({ code: "FORBIDDEN", message: "Ce compte administrateur est désactivé." });
       }
 
       if (!admin.passwordHash) {
         if (!lockoutExempt) recordFailedAttempt(loginIdentifier);
+        else await notifyExemptLoginAttempts(input.email, "mot de passe non configuré");
         await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login_failed", expiresAt: null });
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
@@ -169,6 +195,7 @@ export const adminAuthRouter = router({
       const valid = await bcrypt.compare(input.password, admin.passwordHash);
       if (!valid) {
         if (!lockoutExempt) recordFailedAttempt(loginIdentifier);
+        else await notifyExemptLoginAttempts(input.email, "mot de passe incorrect");
         await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login_failed", expiresAt: null });
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
@@ -176,12 +203,14 @@ export const adminAuthRouter = router({
       const twoFactor = await verifyTwoFactor("admin", admin.id, input.twoFactorCode ?? "");
       if (twoFactor.required && !twoFactor.valid) {
         if (input.twoFactorCode && !lockoutExempt) recordFailedAttempt(loginIdentifier);
+        if (input.twoFactorCode && lockoutExempt) await notifyExemptLoginAttempts(input.email, "code MFA invalide");
         // Un code non renseigné (TOTP_REQUIRED) n'est pas une tentative échouée : le client va simplement redemander le code.
         if (input.twoFactorCode) await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "twofactor_failed", expiresAt: null });
         throw new TRPCError({ code: "UNAUTHORIZED", message: input.twoFactorCode ? "Code 2FA invalide ou déjà utilisé." : "TOTP_REQUIRED" });
       }
 
       resetLoginAttempts(loginIdentifier);
+      if (lockoutExempt) resetExemptLoginAttempts(loginIdentifier);
       const sessionToken = generateSessionToken();
       const sessionExpiresAt = new Date(Date.now() + ADMIN_SESSION_DURATION_MS);
 
@@ -468,6 +497,29 @@ export const adminAuthRouter = router({
         .limit(100);
 
       return { success: true, admins };
+    }),
+
+  /** Remet à zéro le verrouillage mémoire d’un autre compte admin, direction uniquement. */
+  resetLoginAttemptCounter: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      adminId: z.number().int().positive(),
+    }))
+    .mutation(async ({ input }) => {
+      const actor = await requireSuperAdminSession(input.sessionToken);
+      if (actor.id === input.adminId) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Le compteur du super administrateur n’a pas besoin d’être réinitialisé." });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const rows = await db.select({ id: adminAccounts.id, email: adminAccounts.email }).from(adminAccounts).where(eq(adminAccounts.id, input.adminId)).limit(1);
+      const target = rows[0];
+      if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "Compte administrateur introuvable." });
+
+      resetLoginAttempts(scopedLoginIdentifier("admin", target.email));
+      await db.insert(adminSessionEvents).values({ adminId: target.id, eventType: "login_attempts_reset", expiresAt: null });
+      return { success: true, message: `Compteur de tentatives réinitialisé pour ${target.email}.` };
     }),
 
   /**

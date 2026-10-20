@@ -25,4 +25,6 @@
 ## Exemption anti-tentatives du super administrateur
 - [x] Exempter uniquement `aureoldonfack@gmail.com` du verrouillage anti-tentatives admin.
 - [x] Conserver le verrouillage et le journal des échecs pour les autres comptes admin.
-- [x] Valider typecheck et régressions ciblées avant publication : 12 tests verts.
+- [x] Envoyer une alerte e-mail unique après trois échecs sur le compte exempté, sans mot de passe ni code MFA.
+- [x] Ajouter le bouton serveur/UI de remise à zéro ciblée pour les autres comptes, réservé au super administrateur.
+- [x] Valider typecheck, build et régressions ciblées avant publication : 14 tests ciblés verts.

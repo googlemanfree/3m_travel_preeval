@@ -9,9 +9,12 @@ import { TRPCError } from "@trpc/server";
 
 // Stockage en mémoire des tentatives (dans un vrai système, utiliser Redis)
 const loginAttempts: Map<string, { count: number; lockedUntil: Date | null }> = new Map();
+const exemptLoginAlerts: Map<string, { count: number; alertedAt: Date | null }> = new Map();
 
 const MAX_ATTEMPTS = 3;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
+const EXEMPT_ALERT_THRESHOLD = 3;
+const EXEMPT_ALERT_COOLDOWN = 15 * 60 * 1000;
 
 /** Évite qu’un même e-mail utilisé sur plusieurs espaces partage son verrouillage. */
 export function scopedLoginIdentifier(scope: string, identifier: string): string {
@@ -50,6 +53,29 @@ export function recordFailedAttempt(identifier: string): void {
  */
 export function resetLoginAttempts(identifier: string): void {
   loginAttempts.delete(identifier);
+}
+
+/**
+ * Compte les échecs du compte exempté sans jamais le verrouiller.
+ * Retourne true une seule fois par fenêtre de 15 minutes lorsque le seuil est atteint.
+ */
+export function recordExemptLoginAttempt(identifier: string): boolean {
+  const now = new Date();
+  const current = exemptLoginAlerts.get(identifier);
+  if (current?.alertedAt && now.getTime() - current.alertedAt.getTime() >= EXEMPT_ALERT_COOLDOWN) {
+    exemptLoginAlerts.delete(identifier);
+  }
+
+  const refreshed = exemptLoginAlerts.get(identifier) || { count: 0, alertedAt: null };
+  const count = refreshed.count + 1;
+  const shouldAlert = count >= EXEMPT_ALERT_THRESHOLD && !refreshed.alertedAt;
+  exemptLoginAlerts.set(identifier, { count, alertedAt: shouldAlert ? now : refreshed.alertedAt });
+  return shouldAlert;
+}
+
+/** Réinitialise le compteur d’alerte après une connexion réussie. */
+export function resetExemptLoginAttempts(identifier: string): void {
+  exemptLoginAlerts.delete(identifier);
 }
 
 /**

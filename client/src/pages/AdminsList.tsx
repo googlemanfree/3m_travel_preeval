@@ -13,6 +13,7 @@ import {
   Plus,
   Search,
   Filter,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -89,6 +90,11 @@ export default function AdminsList() {
     onError: (error) => window.alert(error.message),
   });
 
+  const resetLoginAttemptCounter = trpc.adminAuth.resetLoginAttemptCounter.useMutation({
+    onSuccess: (result) => window.alert(result.message),
+    onError: (error) => window.alert(error.message),
+  });
+
   const deactivateAdmin = trpc.adminAuth.deactivateAdmin.useMutation({
     onSuccess: () => { void refetchAdmins(); },
     onError: (error) => window.alert(error.message),
@@ -111,6 +117,19 @@ export default function AdminsList() {
       return;
     }
     resetAllPasswords.mutate({ sessionToken });
+  };
+
+  const handleResetLoginAttempts = (admin: Admin) => {
+    const confirmed = window.confirm(
+      `Réinitialiser le compteur de tentatives de ${admin.name} (${admin.email}) ? Cette action ne modifie pas son mot de passe.`,
+    );
+    if (!confirmed) return;
+    const sessionToken = getAdminSessionToken();
+    if (!sessionToken) {
+      window.alert("Session administrateur introuvable. Veuillez vous reconnecter.");
+      return;
+    }
+    resetLoginAttemptCounter.mutate({ sessionToken, adminId: admin.id });
   };
 
   // Apply filters
@@ -484,6 +503,19 @@ export default function AdminsList() {
                     className="text-blue-600 border-blue-200 hover:bg-blue-50"
                   >
                     Renvoyer invitation
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleResetLoginAttempts(selectedAdmin)}
+                    disabled={
+                      resetLoginAttemptCounter.isPending ||
+                      selectedAdmin.email.trim().toLowerCase() === "aureoldonfack@gmail.com"
+                    }
+                    className="text-amber-700 border-amber-200 hover:bg-amber-50"
+                    title="Réinitialiser le compteur de tentatives de ce compte"
+                  >
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    {resetLoginAttemptCounter.isPending ? "Réinitialisation…" : "Réinitialiser tentatives"}
                   </Button>
                   <Button
                     className="bg-blue-600 hover:bg-blue-700"

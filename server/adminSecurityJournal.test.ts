@@ -4,11 +4,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const state = vi.hoisted(() => ({
   admins: [] as any[],
+  lookupEmail: null as string | null,
   updates: [] as Array<{ table: any; values: any }>,
   inserts: [] as any[],
   twoFactorRequired: false,
   twoFactorValid: true,
   failedAttempts: 0,
+  sentEmails: [] as Array<{ to: string; subject: string; html: string }>,
   nextEventId: 1,
 }));
 
@@ -19,7 +21,7 @@ vi.mock("./db", async () => {
       select: () => ({
         from: (table: any) => {
           if (table === schema.adminAccounts) {
-            const chain: any = { where: () => chain, limit: () => chain, then: (resolveRows: (rows: any[]) => unknown) => resolveRows(state.admins) };
+            const chain: any = { where: () => chain, limit: () => chain, then: (resolveRows: (rows: any[]) => unknown) => resolveRows(state.lookupEmail ? state.admins.filter((candidate) => candidate.email === state.lookupEmail) : state.admins) };
             return chain;
           }
           // adminSessionEvents.innerJoin(adminAccounts) : jointure faite à la main sur l'état en mémoire.
@@ -41,6 +43,9 @@ vi.mock("./db", async () => {
   };
 });
 vi.mock("bcryptjs", () => ({ default: { compare: async (password: string, hash: string) => password === "correct" && hash === "hash", hash: async () => "hash" } }));
+vi.mock("./_core/email", () => ({
+  sendEmail: async (options: { to: string; subject: string; html: string }) => { state.sentEmails.push(options); },
+}));
 vi.mock("./twoFactor", () => ({
   getTwoFactorStatus: async () => ({ enabled: state.twoFactorRequired, enrolledAt: null }),
   verifyTwoFactor: async () => ({ required: state.twoFactorRequired, valid: state.twoFactorValid, recovery: false }),
@@ -49,7 +54,15 @@ vi.mock("./twoFactor", () => ({
 }));
 vi.mock("./loginAttemptsService", () => ({
   checkLoginAttempts: () => undefined,
+  recordExemptLoginAttempt: (() => {
+    let count = 0;
+    return () => {
+      count += 1;
+      return count === 3;
+    };
+  })(),
   recordFailedAttempt: () => { state.failedAttempts += 1; },
+  resetExemptLoginAttempts: () => undefined,
   resetLoginAttempts: () => undefined,
   scopedLoginIdentifier: (scope: string, identifier: string) => `${scope}:${identifier.trim().toLowerCase()}`,
 }));
@@ -64,11 +77,13 @@ const admin = (overrides: Record<string, unknown> = {}) => ({ id: 7, email: "age
 
 beforeEach(() => {
   state.admins = [admin()];
+  state.lookupEmail = null;
   state.updates = [];
   state.inserts = [];
   state.twoFactorRequired = false;
   state.twoFactorValid = true;
   state.failedAttempts = 0;
+  state.sentEmails = [];
   state.nextEventId = 1;
 });
 afterEach(() => vi.restoreAllMocks());
@@ -120,6 +135,16 @@ describe("connexion admin : journal des échecs", () => {
     expect(state.failedAttempts).toBe(1);
   });
 
+  it("envoie une alerte unique après trois échecs du compte exempté", async () => {
+    state.admins = [admin({ email: "aureoldonfack@gmail.com" })];
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      await expect(caller().login({ email: "aureoldonfack@gmail.com", password: "faux" })).rejects.toThrow(/incorrect/);
+    }
+    expect(state.sentEmails).toHaveLength(1);
+    expect(state.sentEmails[0]).toMatchObject({ to: "aureoldonfack@gmail.com" });
+    expect(state.sentEmails[0].html).not.toContain("faux");
+  });
+
   it("connexion réussie : toujours seulement « login », comme avant", async () => {
     const result = await caller().login({ email: "agent@3mtravelagency.com", password: "correct" });
     expect(result.success).toBe(true);
@@ -139,11 +164,16 @@ describe("journal de sécurité de l'équipe (listSecurityEvents)", () => {
   });
 
   it("relie chaque événement à l'admin concerné (nom et e-mail), pas seulement un identifiant", async () => {
-    state.admins = [admin({ email: "aureoldonfack@gmail.com", fullName: "Aureol DONFACK" })];
-    await caller().login({ email: "aureoldonfack@gmail.com", password: "faux" }).catch(() => undefined);
+    state.admins = [
+      admin({ id: 7, email: "agent@3mtravelagency.com", fullName: "Agent 3M" }),
+      admin({ id: 8, email: "aureoldonfack@gmail.com", fullName: "Aureol DONFACK", sessionToken: "t" }),
+    ];
+    state.lookupEmail = "agent@3mtravelagency.com";
+    await caller().login({ email: "agent@3mtravelagency.com", password: "faux" }).catch(() => undefined);
+    state.lookupEmail = "aureoldonfack@gmail.com";
     const events = await caller().listSecurityEvents({ sessionToken: "t" });
     expect(events).toHaveLength(1);
-    expect(events[0]).toMatchObject({ eventType: "login_failed", adminEmail: "aureoldonfack@gmail.com", adminFullName: "Aureol DONFACK" });
+    expect(events[0]).toMatchObject({ eventType: "login_failed", adminEmail: "agent@3mtravelagency.com", adminFullName: "Agent 3M" });
   });
 
   it("réserve les opérations sensibles au super administrateur identifié", () => {
@@ -152,5 +182,14 @@ describe("journal de sécurité de l'équipe (listSecurityEvents)", () => {
     expect(source).toContain('export const SUPER_ADMIN_EMAIL = "aureoldonfack@gmail.com";');
     expect(body).toContain("admin.email.trim().toLowerCase() !== SUPER_ADMIN_EMAIL");
     expect(body).toContain("Cette action est réservée au super administrateur.");
+  });
+
+  it("protège la remise à zéro ciblée par le super administrateur", () => {
+    const source = read("server/routers/adminAuth.ts");
+    const start = source.indexOf("resetLoginAttemptCounter: publicProcedure");
+    const section = source.slice(start, start + 1400);
+    expect(section).toContain("requireSuperAdminSession(input.sessionToken)");
+    expect(section).toContain("resetLoginAttempts(scopedLoginIdentifier(\"admin\", target.email))");
+    expect(section).toContain("actor.id === input.adminId");
   });
 });
