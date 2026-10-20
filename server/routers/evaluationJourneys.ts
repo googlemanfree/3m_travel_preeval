@@ -5,6 +5,7 @@ import { evaluations } from "../../drizzle/schema";
 import { buildClientPlan } from "../../shared/dynamicForm";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
+import { loadFormOverrides } from "../services/formOverrides";
 import { requireValidAdminSession } from "./adminAuth";
 
 const SCAN_LIMIT = 1000;
@@ -56,9 +57,10 @@ export const evaluationJourneysRouter = router({
         educationLevel: evaluations.educationLevel, frenchLevel: evaluations.frenchLevel, englishLevel: evaluations.englishLevel,
       }).from(evaluations).orderBy(desc(evaluations.createdAt)).limit(SCAN_LIMIT);
 
+      const overrides = await loadFormOverrides(db);
       const analysed = rows.map((row) => {
         const details = parseDetails(row.projectDetailsJson);
-        const plan = details ? buildClientPlan({ projectType: row.projectType, country: row.destinationCountry, details, columns: { educationLevel: row.educationLevel ?? "", frenchLevel: row.frenchLevel ?? "", englishLevel: row.englishLevel ?? "" } }) : null;
+        const plan = details ? buildClientPlan({ projectType: row.projectType, country: row.destinationCountry, details, columns: { educationLevel: row.educationLevel ?? "", frenchLevel: row.frenchLevel ?? "", englishLevel: row.englishLevel ?? "" }, overrides }) : null;
         return {
           row,
           plan,

@@ -1,4 +1,5 @@
 import { describeProjectDetails } from "./resolve";
+import type { FormOverride } from "./overrides";
 import { PROJECT_KINDS, type ProjectKind } from "./types";
 
 /**
@@ -13,14 +14,14 @@ export type DeclaredResponse = { question: string; answer: string };
 const isProjectKind = (value: unknown): value is ProjectKind => typeof value === "string" && (PROJECT_KINDS as readonly string[]).includes(value);
 
 /** Clés de détails déjà restituées sous forme de question/réponse lisible : inutile de les répéter en brut. */
-export function describedDetailKeys(details: Record<string, unknown> | null | undefined, context: { country?: string | null; projectType?: string | null } = {}): Set<string> {
+export function describedDetailKeys(details: Record<string, unknown> | null | undefined, context: { country?: string | null; projectType?: string | null; overrides?: FormOverride[] } = {}): Set<string> {
   if (!details || typeof details.programId !== "string" || !isProjectKind(context.projectType)) return new Set();
-  return new Set(describeProjectDetails({ country: context.country, projectType: context.projectType }, details).map((item) => item.key));
+  return new Set(describeProjectDetails({ country: context.country, projectType: context.projectType, overrides: context.overrides }, details).map((item) => item.key));
 }
 
 export function collectDeclaredResponses(
   details: Record<string, unknown> | null | undefined,
-  context: { country?: string | null; projectType?: string | null } = {},
+  context: { country?: string | null; projectType?: string | null; overrides?: FormOverride[] } = {},
   limit: number = MAX_DECLARED_RESPONSES,
 ): DeclaredResponse[] {
   if (!details) return [];
@@ -35,7 +36,7 @@ export function collectDeclaredResponses(
   };
   // Formulaire dynamique : questions et réponses reconstruites depuis les clés enregistrées.
   if (typeof details.programId === "string" && isProjectKind(context.projectType)) {
-    for (const item of describeProjectDetails({ country: context.country, projectType: context.projectType }, details)) push(item.question, item.answer);
+    for (const item of describeProjectDetails({ country: context.country, projectType: context.projectType, overrides: context.overrides }, details)) push(item.question, item.answer);
   }
   // Questions complémentaires proposées par l'IA (parcours public) : conservées à leur tour.
   if (Array.isArray(details.dynamicResponses)) {

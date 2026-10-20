@@ -13,6 +13,7 @@ import {
 import { invokeLLM, type OutputSchema } from "../_core/llm";
 import { GEMINI_EVALUATION_MODEL } from "../geminiEvaluationDraftService";
 import { collectDeclaredResponses, describedDetailKeys } from "../../shared/dynamicForm";
+import { cachedFormOverrides } from "./formOverrides";
 import type { AiDraftOutcome } from "./evaluationValidationCore";
 import { maskPersonalData, type CvExcerpt } from "./cvExcerpt";
 
@@ -185,7 +186,8 @@ function scalarDetails(json: string | null | undefined, context: { country?: str
   const parsed = parseDetails(json);
   if (!parsed) return undefined;
   const result: Record<string, string | number | boolean> = {};
-  const described = describedDetailKeys(parsed, context);
+  const overrides = cachedFormOverrides();
+  const described = describedDetailKeys(parsed, { ...context, overrides });
   for (const [key, value] of Object.entries(parsed).slice(0, 120)) {
     if (EXCLUDED_DETAIL_KEYS.has(key) || PRIVATE_DETAIL_KEY.test(key) || described.has(key)) continue;
     if (typeof value === "string" && looksPrivate(value)) continue;
@@ -196,7 +198,7 @@ function scalarDetails(json: string | null | undefined, context: { country?: str
     else if (typeof value === "number" || typeof value === "boolean") result[key.slice(0, 60)] = value;
   }
   // Réponses du formulaire dynamique et questions complémentaires : « question → réponse », toutes conservées (jusqu'à 24).
-  collectDeclaredResponses(parsed, context).forEach((entry, index) => {
+  collectDeclaredResponses(parsed, { ...context, overrides }).forEach((entry, index) => {
     if (looksPrivate(entry.question) || looksPrivate(entry.answer)) return;
     const question = compactFree(entry.question, 150);
     const answer = compactFree(entry.answer, 300);

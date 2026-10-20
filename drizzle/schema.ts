@@ -10,6 +10,7 @@ export * from "./newsletterSchema";
 export * from "./partnerModuleSchema";
 export * from "./privacyCvthequeSchema";
 export * from "./recruitmentSchema";
+export * from "./evaluationFormSchema";
 export * from "./placementPortalSchema";
 export * from "./securityMfaSchema";
 

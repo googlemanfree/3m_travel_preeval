@@ -2,6 +2,7 @@ import { CheckCircle2, Circle, ClipboardList, FileText, ListChecks, Route } from
 import { buildClientPlan } from "@shared/dynamicForm";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useFormOverrides } from "@/hooks/useFormOverrides";
 
 type Props = {
   projectType?: string | null;
@@ -19,7 +20,8 @@ type Props = {
  * que le candidat a choisis dans son évaluation. Uniquement des repères de préparation, confirmés ensuite par un conseiller.
  */
 export function ClientProgramPlan({ projectType, country, projectDetails, columns, uploadedDocuments = [], onEditEvaluation }: Props) {
-  const plan = buildClientPlan({ projectType, country, details: projectDetails, uploaded: uploadedDocuments, columns });
+  const overrides = useFormOverrides();
+  const plan = buildClientPlan({ projectType, country, details: projectDetails, uploaded: uploadedDocuments, columns, overrides });
   if (!plan) return null;
   const received = plan.documents.filter((document) => document.received).length;
   return (

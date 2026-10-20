@@ -30,6 +30,7 @@ import { caseActivityLogs, cases, documentRequirements } from "../../drizzle/cas
 import { parseApplicationPack } from "../../shared/applicationPack";
 import { evaluationRequiresCv, resolveEvaluationProjectKind } from "../../shared/evaluationVisaCv";
 import { buildAiGuidance, collectDeclaredResponses, resolveDynamicForm } from "../../shared/dynamicForm";
+import { cachedFormOverrides, loadFormOverrides } from "../services/formOverrides";
 
 /**
  * Une évaluation ouverte dans la validation structurée (brouillon IA, checklist, publication) ne passe plus
@@ -320,7 +321,7 @@ function retryGuidance(evaluation: typeof evaluations.$inferSelect, details: Rec
   values.educationLevel = evaluation.educationLevel ?? "";
   values.frenchLevel = evaluation.frenchLevel ?? "";
   values.englishLevel = evaluation.englishLevel ?? "";
-  const form = resolveDynamicForm({ country: evaluation.destinationCountry, projectType, programId: values.programId, domainId: values.domainId });
+  const form = resolveDynamicForm({ country: evaluation.destinationCountry, projectType, programId: values.programId, domainId: values.domainId, overrides: cachedFormOverrides() });
   return buildAiGuidance(form, values);
 }
 
@@ -332,7 +333,7 @@ function retryInputFromEvaluation(evaluation: typeof evaluations.$inferSelect): 
   const countryDetails: Record<string, string | number | boolean | undefined> = {};
   for (const key of PREPARATION_DETAIL_KEYS) countryDetails[key] = textDetail(details[key]);
   // Toutes les réponses déclarées (formulaire dynamique et questions complémentaires) : la relance voit autant de réponses que la première génération.
-  collectDeclaredResponses(details, { country: evaluation.destinationCountry, projectType }).forEach((response, index) => {
+  collectDeclaredResponses(details, { country: evaluation.destinationCountry, projectType, overrides: cachedFormOverrides() }).forEach((response, index) => {
     countryDetails[`question_complementaire_${index + 1}`] = response.question;
     countryDetails[`reponse_complementaire_${index + 1}`] = response.answer;
   });
@@ -674,6 +675,7 @@ export const aiEvaluationManagementRouter = router({
         const [evaluation] = await db.select().from(evaluations).where(eq(evaluations.id, input.evaluationId)).limit(1);
         if (!evaluation) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
         if (evaluation.reviewedAt) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette évaluation est déjà validée ; aucune relance de brouillon n’est autorisée." });
+        await loadFormOverrides(db);
         const preparedInput = retryInputFromEvaluation(evaluation);
         if (!preparedInput) throw new TRPCError({ code: "BAD_REQUEST", message: "La relance requiert un consentement enregistré et des réponses déclarées exploitables." });
         try {

@@ -90,6 +90,7 @@ import { cvthequeRouter } from "./routers/cvtheque";
 import { privacyCenterRouter } from "./routers/privacyCenter";
 import { recruitmentRouter } from "./routers/recruitment";
 import { evaluationJourneysRouter } from "./routers/evaluationJourneys";
+import { evaluationFormsRouter } from "./routers/evaluationForms";
 import { simulatorDiagnosticsRouter } from "./routers/simulatorDiagnostics";
 import { accessRecoveryRouter } from "./routers/accessRecovery";
 import { dossierVerificationRouter } from "./routers/dossierVerification";
@@ -218,6 +219,7 @@ export const appRouter = router({
   privacyCenter: privacyCenterRouter,
   recruitment: recruitmentRouter,
   evaluationJourneys: evaluationJourneysRouter,
+  evaluationForms: evaluationFormsRouter,
   simulatorDiagnostics: simulatorDiagnosticsRouter,
   evisaFavorites: evisaFavoritesRouter,
   evisaReviews: evisaReviewsRouter,

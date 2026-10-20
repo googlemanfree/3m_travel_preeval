@@ -72,7 +72,7 @@ describe("formulaire public de l’accueil — visa, domaine et pays recomposent
 
   it("le serveur nettoie les réponses du parcours avant de les enregistrer et de les confier à l’IA", () => {
     const router = read("server/routers/evaluation.ts");
-    expect(router).toContain("const publicDetails = sanitizeProjectDetails({ country: input.destinationCountry, projectType: input.projectType }");
+    expect(router).toContain("const publicDetails = sanitizeProjectDetails({ country: input.destinationCountry, projectType: input.projectType, overrides: formOverrides }");
     expect(router).toContain("...publicDetails,\n          dynamicResponses: input.dynamicResponses,");
     expect(router).toContain("guidance: publicGuidance,");
     expect(router).toContain("projectAnswers: z.record(z.string().max(60), z.string().max(1000)).optional(),");

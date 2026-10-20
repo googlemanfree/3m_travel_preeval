@@ -135,6 +135,7 @@ import { AdminPartnerModule } from "@/components/AdminPartnerModule";
 import { AdminCvthequeReview } from "@/components/AdminCvthequeReview";
 import { AdminRecruitmentInbox } from "@/components/AdminRecruitmentInbox";
 import { AdminEvaluationJourneyBoard } from "@/components/AdminEvaluationJourneyBoard";
+import { AdminEvaluationFormEditor } from "@/components/AdminEvaluationFormEditor";
 import { AdminPrivacyCenter } from "@/components/AdminPrivacyCenter";
 import { AdminOperationsControlCenter } from "@/components/AdminOperationsControlCenter";
 import AdminTodayDashboard, { type TodayCandidate } from "@/components/AdminTodayDashboard";
@@ -2600,6 +2601,7 @@ export default function AdminDashboard() {
         <div id="admin-partner-module"><AdminPartnerModule sessionToken={sessionToken} /></div>
         <div id="admin-cvtheque-review"><AdminCvthequeReview sessionToken={sessionToken} /></div>
         <div id="admin-evaluation-journeys"><AdminEvaluationJourneyBoard sessionToken={sessionToken} /></div>
+        <div id="admin-evaluation-form-editor"><AdminEvaluationFormEditor sessionToken={sessionToken} /></div>
         <div id="admin-recruitment-inbox"><AdminRecruitmentInbox sessionToken={sessionToken} /></div>
         <div id="admin-privacy-center"><AdminPrivacyCenter sessionToken={sessionToken} /></div>
 

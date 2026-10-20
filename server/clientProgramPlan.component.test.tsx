@@ -2,10 +2,13 @@
 import React from "react";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 
 (globalThis as any).React = React;
+
+// Les composants lisent les règles de l'administration : sans serveur, aucune règle (le formulaire reste celui du moteur).
+vi.mock("@/lib/trpc", () => ({ trpc: {} }));
 
 import { buildClientPlan, buildPlanActions, documentIsReceived, parseClientProjectDetails, resolveDynamicForm } from "../shared/dynamicForm";
 import { containsForbiddenPromise } from "../shared/cvtheque";
@@ -135,7 +138,7 @@ describe("branchements", () => {
     expect((space.match(/<ClientProgramPlan /g) ?? []).length).toBe(2);
     expect(space).toContain("latestEvaluation?.projectDetails?.selectedProcedure");
     const candidate = read("server/routers/candidate.ts");
-    expect(candidate).toContain("projectDetails: parseClientProjectDetails(evaluation.projectDetailsJson, evaluation.destinationCountry, evaluation.projectType)");
+    expect(candidate).toContain("projectDetails: parseClientProjectDetails(evaluation.projectDetailsJson, evaluation.destinationCountry, evaluation.projectType, formOverrides)");
     expect(read("client/src/components/Candidate360Workspace.tsx")).toContain("<AdminDeclaredAnswersPanel");
   });
 });

@@ -7,6 +7,7 @@ import { storagePut } from "../storage";
 import { CV_MAX_BASE64_LENGTH } from "../../shared/evaluationCv";
 import { multiProjectEvaluationGap } from "../../shared/evaluationFormRequirements";
 import { buildAiGuidance, collectDeclaredResponses, resolveDynamicForm, sanitizeProjectDetails } from "../../shared/dynamicForm";
+import { loadFormOverrides } from "../services/formOverrides";
 import { EVALUATION_SUBMISSION_LIMITS, createSubmissionGuard } from "../_core/publicRateLimit";
 import { notifyOwner } from "../_core/notification";
 import { generateDossierCode } from "../utils/generateDossierCode";
@@ -234,7 +235,8 @@ export const evaluationRouter = router({
         throw new Error("Base de données non disponible");
       }
 
-      const publicDetails = sanitizeProjectDetails({ country: input.destinationCountry, projectType: input.projectType }, { ...(input.projectAnswers ?? {}), ...(input.programId ? { programId: input.programId } : {}), ...(input.domainId ? { domainId: input.domainId } : {}) });
+      const formOverrides = await loadFormOverrides(db);
+      const publicDetails = sanitizeProjectDetails({ country: input.destinationCountry, projectType: input.projectType, overrides: formOverrides }, { ...(input.projectAnswers ?? {}), ...(input.programId ? { programId: input.programId } : {}), ...(input.domainId ? { domainId: input.domainId } : {}) });
       const dossierCode = generateDossierCode();
       const reviewDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000);
       // Créer un enregistrement d'évaluation multi-projets
@@ -303,14 +305,14 @@ export const evaluationRouter = router({
       if (input.geminiAnalysisConsent) {
         const alternatives = (orientationAlternativeCandidates[input.destinationCountry] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== input.destinationCountry);
         // Questions et réponses lisibles (formulaire dynamique puis questions complémentaires de l'IA), toutes conservées.
-        const declared = collectDeclaredResponses({ ...(publicDetails ?? {}), dynamicResponses: input.dynamicResponses }, { country: input.destinationCountry, projectType: input.projectType });
+        const declared = collectDeclaredResponses({ ...(publicDetails ?? {}), dynamicResponses: input.dynamicResponses }, { country: input.destinationCountry, projectType: input.projectType, overrides: formOverrides });
         const dynamicDetails: Record<string, string> = {
           ...(publicDetails?.programLabel ? { programme: publicDetails.programLabel } : {}),
           ...(publicDetails?.domainLabel ? { domaine: publicDetails.domainLabel } : {}),
           ...Object.fromEntries(declared.flatMap((response, index) => [[`question_complementaire_${index + 1}`, response.question], [`reponse_complementaire_${index + 1}`, response.answer]])),
         };
         const publicGuidance = buildAiGuidance(
-          resolveDynamicForm({ country: input.destinationCountry, projectType: input.projectType, programId: publicDetails?.programId, domainId: publicDetails?.domainId }),
+          resolveDynamicForm({ country: input.destinationCountry, projectType: input.projectType, programId: publicDetails?.programId, domainId: publicDetails?.domainId, overrides: formOverrides }),
           { ...(publicDetails ?? {}), educationLevel: input.educationLevel ?? "", languages: input.languages ?? "" },
         );
         void (async () => {
@@ -441,7 +443,8 @@ export const evaluationRouter = router({
       const { evaluationRequiresCv } = await import("../../shared/evaluationVisaCv");
       const { CV_REQUIRED_MESSAGE } = await import("../../shared/evaluationCv");
       // Réponses du formulaire dynamique : recomposées côté serveur, seules celles des champs visibles et valides sont conservées.
-      const cleanDetails = input.projectDetails && input.projectType ? sanitizeProjectDetails({ country: input.destinationCountry, projectType: input.projectType }, input.projectDetails) : input.projectDetails;
+      const formOverrides = await loadFormOverrides(db);
+      const cleanDetails = input.projectDetails && input.projectType ? sanitizeProjectDetails({ country: input.destinationCountry, projectType: input.projectType, overrides: formOverrides }, input.projectDetails) : input.projectDetails;
       if (evaluationRequiresCv(input.visaType, input.projectType, cleanDetails?.programId) && !(input.cvBase64 && input.cvFileName)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: CV_REQUIRED_MESSAGE });
       }
@@ -530,14 +533,14 @@ export const evaluationRouter = router({
         const destinationCountry = input.destinationCountry || input.destinationCategory;
         const alternatives = (orientationAlternativeCandidates[destinationCountry ?? ""] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== destinationCountry);
         // Le modèle reçoit les questions et réponses lisibles (pas des codes), le visa et le domaine choisis, et des consignes propres au dossier.
-        const declared = collectDeclaredResponses(cleanDetails, { country: destinationCountry, projectType });
+        const declared = collectDeclaredResponses(cleanDetails, { country: destinationCountry, projectType, overrides: formOverrides });
         const geminiCountryDetails: Record<string, string> = {
           ...(cleanDetails?.programLabel ? { programme: cleanDetails.programLabel } : {}),
           ...(cleanDetails?.domainLabel ? { domaine: cleanDetails.domainLabel } : {}),
           ...Object.fromEntries(declared.flatMap((response, index) => [["question_" + (index + 1), response.question], ["reponse_" + (index + 1), response.answer]])),
         };
         const geminiGuidance = buildAiGuidance(
-          resolveDynamicForm({ country: destinationCountry, projectType, programId: cleanDetails?.programId, domainId: cleanDetails?.domainId }),
+          resolveDynamicForm({ country: destinationCountry, projectType, programId: cleanDetails?.programId, domainId: cleanDetails?.domainId, overrides: formOverrides }),
           { ...(cleanDetails ?? {}), educationLevel: input.educationLevel ?? "", frenchLevel: input.frenchLevel ?? "", englishLevel: input.englishLevel ?? "" },
         );
         (async () => {

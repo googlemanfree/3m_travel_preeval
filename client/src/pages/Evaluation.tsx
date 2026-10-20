@@ -14,6 +14,7 @@ import { createCroppedCvFile, type CropPixels } from '@/lib/cvImageCrop';
 import { AI_ANALYSIS_CONSENT_DETAIL, AI_ANALYSIS_CONSENT_LABEL, CV_ANALYSIS_CONSENT_DETAIL, CV_ANALYSIS_CONSENT_LABEL, CV_NOT_STORED_MESSAGE, CV_REQUIRED_MESSAGE } from '@shared/evaluationCv';
 import { COLUMN_FIELD_KEYS, FAMILY_RULES, deriveDestination, getDomain, getProgram, isColumnFieldKey, missingRequiredFields, resolveDynamicForm, splitFormValues, visibleSections, type FormValues } from '@shared/dynamicForm';
 import { DynamicFormSections } from '@/components/DynamicFormSections';
+import { useFormOverrides } from '@/hooks/useFormOverrides';
 import { DynamicDocumentsHint, DynamicProjectChoice } from '@/components/DynamicProjectChoice';
 import { normalizePublicEvaluationProject } from '@shared/evaluationFormRequirements';
 import { isEvaluationProjectType, PROJECT_EVALUATION_CONFIG, type EvaluationProjectType } from '@/lib/projectEvaluationConfig';
@@ -155,9 +156,10 @@ export default function Evaluation() {
   });
   const extractCvMutation = trpc.evaluation.extractFromCV.useMutation();
   const inspectPdfMutation = trpc.evaluation.inspectPdfPages.useMutation();
+  const formOverrides = useFormOverrides();
   const dynamicForm = useMemo(
-    () => resolveDynamicForm({ country: form.destinationCountry, projectType: form.projectType, programId: form.projectDetails.programId, domainId: form.projectDetails.domainId }),
-    [form.destinationCountry, form.projectType, form.projectDetails.programId, form.projectDetails.domainId],
+    () => resolveDynamicForm({ country: form.destinationCountry, projectType: form.projectType, programId: form.projectDetails.programId, domainId: form.projectDetails.domainId, overrides: formOverrides }),
+    [form.destinationCountry, form.projectType, form.projectDetails.programId, form.projectDetails.domainId, formOverrides],
   );
   const dynamicValues = useMemo<FormValues>(() => {
     const columns: FormValues = {};

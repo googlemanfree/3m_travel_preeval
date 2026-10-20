@@ -1,6 +1,7 @@
 import { AlertTriangle, ClipboardList } from "lucide-react";
 import { buildClientPlan } from "@shared/dynamicForm";
 import { Badge } from "@/components/ui/badge";
+import { useFormOverrides } from "@/hooks/useFormOverrides";
 
 type Props = {
   projectType?: string | null;
@@ -14,7 +15,8 @@ type Props = {
  * avec leurs libellés (plus de codes bruts). Les points à clarifier sont des questions à poser, jamais des accusations.
  */
 export function AdminDeclaredAnswersPanel({ projectType, country, details, columns }: Props) {
-  const plan = buildClientPlan({ projectType, country, details, columns });
+  const overrides = useFormOverrides();
+  const plan = buildClientPlan({ projectType, country, details, columns, overrides });
   if (!plan) return null;
   return (
     <section className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm" data-testid="admin-declared-answers" aria-labelledby="admin-declared-title">

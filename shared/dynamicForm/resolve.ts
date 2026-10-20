@@ -14,6 +14,7 @@ import {
   txt,
 } from "./fieldKit";
 import { programFields } from "./programModules";
+import { applyFormOverrides, type FormOverride } from "./overrides";
 import { FAMILY_RULES, getProgram, orientationProgram, programsFor, type CvPolicy, type FamilyRules, type ProgramDef, type ProgramFamily } from "./programs";
 import { COLUMN_FIELD_KEYS, visibleFields, type ColumnFieldKey, type DynamicField, type DynamicSection, type FormValues, type ProjectKind } from "./types";
 
@@ -24,6 +25,8 @@ export type DynamicFormContext = {
   projectType: ProjectKind;
   programId?: string | null;
   domainId?: string | null;
+  /** Règles de l'administration (questions masquées, renommées, obligatoires ou ajoutées). */
+  overrides?: FormOverride[];
 };
 
 export type ResolvedForm = {
@@ -143,7 +146,7 @@ export function resolveDynamicForm(context: DynamicFormContext): ResolvedForm {
     ? { id: "country", layer: "pays", title: `Spécificités — ${profile?.name ?? context.country}`, chip: `Pays : ${profile?.name ?? context.country}`, fields: countryExtra }
     : null;
 
-  const sections = dedupe([
+  const baseSections = dedupe([
     educationSection(family, rules.education),
     experienceSection(rules.experience, domain, visitLike),
     languagesSection(rules.languages, profile),
@@ -151,6 +154,7 @@ export function resolveDynamicForm(context: DynamicFormContext): ResolvedForm {
     domainSection,
     countrySection,
   ].filter((section): section is DynamicSection => Boolean(section)));
+  const sections = applyFormOverrides(baseSections, context.overrides, { kind, programId: program.id, domainId: domain?.id ?? null, countryCode: profile?.code ?? null });
 
   const documents = Array.from(new Set([...FAMILY_DOCUMENTS[family], ...(domain?.documents ?? [])]));
   return {

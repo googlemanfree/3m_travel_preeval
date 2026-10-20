@@ -2,6 +2,7 @@ import { FAMILY_DOCUMENTS } from "./documents";
 import { getDomain } from "./domains";
 import { describeProjectDetails, detectFormFlags, formCompleteness, resolveDynamicForm, sanitizeProjectDetails, type DescribedAnswer, type FormCompleteness, type FormFlag, type ResolvedForm } from "./resolve";
 import { getProgram } from "./programs";
+import type { FormOverride } from "./overrides";
 import { PROJECT_KINDS, type FormValues, type ProjectKind } from "./types";
 
 /**
@@ -96,14 +97,14 @@ export function documentIsReceived(expectedLabel: string, uploaded: Array<{ docu
 }
 
 /** Réponses du formulaire d'une évaluation, relues pour l'espace du candidat : uniquement les champs du formulaire dynamique (jamais les accords, liens ou pièces). */
-export function parseClientProjectDetails(json: string | null | undefined, country: string | null | undefined, projectType: string | null | undefined): Record<string, string> | null {
+export function parseClientProjectDetails(json: string | null | undefined, country: string | null | undefined, projectType: string | null | undefined, overrides?: FormOverride[]): Record<string, string> | null {
   if (!json || !isKind(projectType)) return null;
   try {
     const parsed: unknown = JSON.parse(json);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
     const strings: Record<string, string> = {};
     for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) if (typeof value === "string") strings[key] = value;
-    return strings.programId ? sanitizeProjectDetails({ country, projectType }, strings) : null;
+    return strings.programId ? sanitizeProjectDetails({ country, projectType, overrides }, strings) : null;
   } catch {
     return null;
   }
@@ -138,7 +139,7 @@ export function buildStaffFollowUps(form: ResolvedForm, values: FormValues): Pla
 const isKind = (value: unknown): value is ProjectKind => typeof value === "string" && (PROJECT_KINDS as readonly string[]).includes(value);
 
 export function buildClientPlan(
-  input: { projectType: string | null | undefined; country: string | null | undefined; details: Record<string, unknown> | null | undefined; uploaded?: Array<{ documentType?: string | null; documentName?: string | null }>; columns?: FormValues },
+  input: { projectType: string | null | undefined; country: string | null | undefined; details: Record<string, unknown> | null | undefined; uploaded?: Array<{ documentType?: string | null; documentName?: string | null }>; columns?: FormValues; overrides?: FormOverride[] },
 ): ClientPlan | null {
   const details = input.details;
   if (!details || typeof details.programId !== "string" || !isKind(input.projectType)) return null;
@@ -147,7 +148,7 @@ export function buildClientPlan(
   const strings: FormValues = {};
   for (const [key, value] of Object.entries(details)) if (typeof value === "string") strings[key] = value;
   const values = { ...(input.columns ?? {}), ...strings };
-  const form = resolveDynamicForm({ country: input.country, projectType: input.projectType, programId: program.id, domainId: strings.domainId });
+  const form = resolveDynamicForm({ country: input.country, projectType: input.projectType, programId: program.id, domainId: strings.domainId, overrides: input.overrides });
   const documents = Array.from(new Set([...FAMILY_DOCUMENTS[form.family], ...(getDomain(strings.domainId)?.documents ?? [])]))
     .map((label) => ({ label, received: documentIsReceived(label, input.uploaded ?? []) }));
   return {
@@ -158,7 +159,7 @@ export function buildClientPlan(
     actions: buildPlanActions(form, values),
     staffActions: buildStaffFollowUps(form, values),
     documents,
-    answers: describeProjectDetails({ country: input.country, projectType: input.projectType }, details),
+    answers: describeProjectDetails({ country: input.country, projectType: input.projectType, overrides: input.overrides }, details),
     completeness: formCompleteness(form, values),
     flags: detectFormFlags(form, values),
   };

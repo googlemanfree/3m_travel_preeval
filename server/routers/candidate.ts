@@ -40,6 +40,7 @@ import { notifyAgreementSignedWhatsApp } from "../services/clientWhatsAppNotify"
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
 import { parseClientProjectDetails } from "../../shared/dynamicForm";
+import { loadFormOverrides } from "../services/formOverrides";
 import { accountReference, resolveClientReference } from "../../shared/caseReference";
 import { resolveActiveDossierNumber } from "../../shared/activeDossier";
 import { createSubmissionGuard } from "../_core/publicRateLimit";
@@ -3041,6 +3042,7 @@ export const candidateRouter = router({
       ...document,
       documentUrl: await resolveClientDocumentUrl(document.documentUrl),
     })));
+    const formOverrides = await loadFormOverrides(db);
     const clientEvaluations = evalRows.map((evaluation) => ({
       id: evaluation.id,
       referenceCode: evaluation.referenceCode,
@@ -3055,7 +3057,7 @@ export const candidateRouter = router({
       finalResponseSentAt: evaluation.finalResponseSentAt,
       reviewDraft: evaluation.finalResponseSentAt ? evaluation.reviewDraft : null,
       // Ses propres réponses du formulaire dynamique (visa, domaine, questions du parcours) : de quoi adapter l'espace client.
-      projectDetails: parseClientProjectDetails(evaluation.projectDetailsJson, evaluation.destinationCountry, evaluation.projectType),
+      projectDetails: parseClientProjectDetails(evaluation.projectDetailsJson, evaluation.destinationCountry, evaluation.projectType, formOverrides),
       declaredColumns: {
         educationLevel: evaluation.educationLevel ?? "",
         frenchLevel: evaluation.frenchLevel ?? "",

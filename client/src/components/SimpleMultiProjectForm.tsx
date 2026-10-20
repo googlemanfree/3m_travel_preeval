@@ -17,6 +17,7 @@ import { CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, FileText, Loade
 import { CountrySelect } from "@/components/CountryPicker";
 import { DynamicFormSections } from "@/components/DynamicFormSections";
 import { DynamicProjectChoice } from "@/components/DynamicProjectChoice";
+import { useFormOverrides } from "@/hooks/useFormOverrides";
 import { resolveDynamicForm, visibleSections } from "@shared/dynamicForm";
 import { getCandidateDestinationOption } from "@shared/candidateDestinationOptions";
 import { DOCUMENT_VAULT_POLICY } from "@shared/documentVaultPolicy";
@@ -180,7 +181,8 @@ export function SimpleMultiProjectForm() {
   const [programId, setProgramId] = React.useState("");
   const [domainId, setDomainId] = React.useState("");
   const [programAnswers, setProgramAnswers] = React.useState<Record<string, string>>({});
-  const dynamicForm = React.useMemo(() => resolveDynamicForm({ country: formData.destinationCountry, projectType: formData.projectType, programId, domainId }), [formData.destinationCountry, formData.projectType, programId, domainId]);
+  const formOverrides = useFormOverrides();
+  const dynamicForm = React.useMemo(() => resolveDynamicForm({ country: formData.destinationCountry, projectType: formData.projectType, programId, domainId, overrides: formOverrides }), [formData.destinationCountry, formData.projectType, programId, domainId, formOverrides]);
   // Les questions de profil (études, expérience, langues) et celles déjà posées par les critères ci-dessous ne sont pas répétées.
   const PUBLIC_COVERED_KEYS = React.useMemo(() => new Set(["studyLevel", "programName", "fundingPlan", "targetJob", "relevantExperience", "visitorStatus", "returnTies", "travelHistory", "stayPurpose"]), []);
   const programSections = React.useMemo(() => visibleSections(dynamicForm, programAnswers)
