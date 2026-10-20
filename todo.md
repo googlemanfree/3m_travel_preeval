@@ -17,3 +17,7 @@
 - [x] Archiver les réponses par projet, pays et visa.
 - [x] Restaurer automatiquement les réponses au retour sur le même couple pays–visa.
 - [x] Valider typecheck, build et 13 tests ciblés.
+
+## Connexion administrateur
+- [x] Appliquer les tables MFA manquantes nécessaires au parcours de connexion.
+- [x] Vérifier que le login invalide reste contrôlé et que le serveur ne renvoie plus d’erreur interne liée au MFA : 2 tables présentes en production, réponse fictive `401 Email ou mot de passe incorrect`, et parcours mot de passe valide → `TOTP_REQUIRED` couvert par le test de route (sans manipuler le mot de passe réel du super administrateur).
