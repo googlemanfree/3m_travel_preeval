@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import AdminInvite from "@/components/AdminInvite";
 import ResendInviteDialog from "@/components/ResendInviteDialog";
+import AdminSecurityJournal from "@/components/AdminSecurityJournal";
 import { motion } from "framer-motion";
 import {
   Users,
@@ -238,6 +239,10 @@ export default function AdminsList() {
             <p className="text-gray-600 text-sm">Inactifs</p>
             <p className="text-3xl font-bold text-purple-600 mt-2">{admins.filter((a) => a.status === "inactive").length}</p>
           </motion.div>
+        </div>
+
+        <div className="mb-8">
+          <AdminSecurityJournal sessionToken={sessionToken} />
         </div>
 
         {/* Filters */}

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   checkLoginAttempts,
   recordFailedAttempt,
+  getLoginAttemptStatus,
   resetLoginAttempts,
   scopedLoginIdentifier,
 } from "./loginAttemptsService";
@@ -36,5 +37,14 @@ describe("isolation des verrouillages de connexion", () => {
 
     expect(() => checkLoginAttempts(admin)).toThrow(/Compte bloqué/);
     expect(() => checkLoginAttempts(candidate)).not.toThrow();
+  });
+
+  it("expose les tentatives restantes puis revient au maximum après reset", () => {
+    const admin = scopedLoginIdentifier("admin", "reset@example.com");
+    identifiers.push(admin);
+    recordFailedAttempt(admin);
+    expect(getLoginAttemptStatus(admin)).toMatchObject({ remainingAttempts: 2, maxAttempts: 3, lockedUntil: null });
+    resetLoginAttempts(admin);
+    expect(getLoginAttemptStatus(admin)).toMatchObject({ remainingAttempts: 3, maxAttempts: 3, lockedUntil: null });
   });
 });

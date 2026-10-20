@@ -17,6 +17,12 @@ export default function AdminLogin() {
   const [needsTwoFactor, setNeedsTwoFactor] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string>('');
+  const normalizedEmail = email.trim();
+  const hasValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail);
+  const attemptStatusQuery = trpc.adminAuth.loginAttemptStatus.useQuery(
+    { email: normalizedEmail || 'placeholder@example.com' },
+    { enabled: hasValidEmail, retry: false },
+  );
 
   const temporaryPasswordMutation = trpc.adminPasswordReset.requestTemporaryPassword.useMutation({
     onSuccess: (data) => toast.success(data.message),
@@ -43,6 +49,7 @@ export default function AdminLogin() {
       }
     },
     onError: (err) => {
+      if (hasValidEmail) void attemptStatusQuery.refetch();
       if (err.message.includes('TOTP_REQUIRED')) {
         setNeedsTwoFactor(true);
         setLocalError('Saisissez votre code 2FA ou un code de récupération.');
@@ -144,6 +151,15 @@ export default function AdminLogin() {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                {hasValidEmail && attemptStatusQuery.data && (
+                  <p className="mt-2 text-xs text-slate-600" aria-live="polite" data-testid="login-attempt-status">
+                    {attemptStatusQuery.data.exempt
+                      ? "Ce compte de direction n’est pas soumis au verrouillage automatique."
+                      : attemptStatusQuery.data.locked
+                        ? "Compte temporairement verrouillé. Réessayez après la période de sécurité."
+                        : `Tentatives restantes avant verrouillage : ${attemptStatusQuery.data.remainingAttempts}/${attemptStatusQuery.data.maxAttempts}.`}
+                  </p>
+                )}
               </div>
 
               {needsTwoFactor && <div>

@@ -64,6 +64,7 @@ vi.mock("./loginAttemptsService", () => ({
   recordFailedAttempt: () => { state.failedAttempts += 1; },
   resetExemptLoginAttempts: () => undefined,
   resetLoginAttempts: () => undefined,
+  getLoginAttemptStatus: () => ({ remainingAttempts: 2, maxAttempts: 3, lockedUntil: null }),
   scopedLoginIdentifier: (scope: string, identifier: string) => `${scope}:${identifier.trim().toLowerCase()}`,
 }));
 
@@ -135,6 +136,21 @@ describe("connexion admin : journal des échecs", () => {
     expect(state.failedAttempts).toBe(1);
   });
 
+  it("expose un compteur non sensible et masque la limite du super administrateur", async () => {
+    await expect(caller().loginAttemptStatus({ email: "agent@3mtravelagency.com" })).resolves.toMatchObject({
+      exempt: false,
+      remainingAttempts: 2,
+      maxAttempts: 3,
+      locked: false,
+    });
+    await expect(caller().loginAttemptStatus({ email: "aureoldonfack@gmail.com" })).resolves.toMatchObject({
+      exempt: true,
+      remainingAttempts: null,
+      maxAttempts: null,
+      locked: false,
+    });
+  });
+
   it("envoie une alerte unique après trois échecs du compte exempté", async () => {
     state.admins = [admin({ email: "aureoldonfack@gmail.com" })];
     for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -157,7 +173,7 @@ describe("journal de sécurité de l'équipe (listSecurityEvents)", () => {
   it("session admin requise avant toute lecture, en base avant l'appel de getDb ; routeur enregistré", () => {
     const source = read("server/routers/adminAuth.ts");
     const start = source.indexOf("listSecurityEvents: publicProcedure");
-    const section = source.slice(start, start + 1000);
+    const section = source.slice(start, start + 1400);
     expect(section.indexOf("requireSuperAdminSession(input.sessionToken)")).toBeGreaterThan(-1);
     expect(section.indexOf("requireSuperAdminSession(input.sessionToken)")).toBeLessThan(section.indexOf("getDb()"));
     expect(section).toContain("inArray(adminSessionEvents.eventType");
@@ -191,5 +207,14 @@ describe("journal de sécurité de l'équipe (listSecurityEvents)", () => {
     expect(section).toContain("requireSuperAdminSession(input.sessionToken)");
     expect(section).toContain("resetLoginAttempts(scopedLoginIdentifier(\"admin\", target.email))");
     expect(section).toContain("actor.id === input.adminId");
+  });
+
+  it("branche le tableau de sécurité et le bouton de remise à zéro dans les interfaces admin", () => {
+    const adminsPage = read("client/src/pages/AdminsList.tsx");
+    const loginPage = read("client/src/pages/AdminLogin.tsx");
+    expect(adminsPage).toContain("<AdminSecurityJournal sessionToken={sessionToken} />");
+    expect(adminsPage).toContain("Réinitialiser tentatives");
+    expect(loginPage).toContain("trpc.adminAuth.loginAttemptStatus.useQuery");
+    expect(loginPage).toContain("Tentatives restantes avant verrouillage");
   });
 });

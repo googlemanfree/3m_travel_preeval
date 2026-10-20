@@ -15,7 +15,7 @@ import { and, count, desc, eq, gte, inArray } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { getPasswordChangedEmailTemplate, getPasswordChangeFailedEmailTemplate } from "../_core/emailTemplates";
 import { randomBytes, randomInt } from "node:crypto";
-import { checkLoginAttempts, recordExemptLoginAttempt, recordFailedAttempt, resetExemptLoginAttempts, resetLoginAttempts, scopedLoginIdentifier } from "../loginAttemptsService";
+import { checkLoginAttempts, getLoginAttemptStatus, recordExemptLoginAttempt, recordFailedAttempt, resetExemptLoginAttempts, resetLoginAttempts, scopedLoginIdentifier } from "../loginAttemptsService";
 function esc(v: string | undefined | null): string { return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 import { beginTwoFactorEnrollment, confirmTwoFactorEnrollment, getTwoFactorStatus, verifyTwoFactor } from "../twoFactor";
 
@@ -244,6 +244,22 @@ export const adminAuthRouter = router({
       };
     }),
 
+  /** État non sensible affichable avant soumission, sans révéler l’existence du compte. */
+  loginAttemptStatus: publicProcedure
+    .input(z.object({ email: z.string().email().max(320) }))
+    .query(({ input }) => {
+      if (isSuperAdminEmail(input.email)) {
+        return { exempt: true, remainingAttempts: null, maxAttempts: null, locked: false } as const;
+      }
+      const status = getLoginAttemptStatus(scopedLoginIdentifier("admin", input.email));
+      return {
+        exempt: false,
+        remainingAttempts: status.remainingAttempts,
+        maxAttempts: status.maxAttempts,
+        locked: Boolean(status.lockedUntil && status.lockedUntil.getTime() > Date.now()),
+      } as const;
+    }),
+
   twoFactorStatus: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1) }))
     .query(async ({ input }) => {
@@ -330,7 +346,7 @@ export const adminAuthRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
       const since = new Date(Date.now() - input.days * 86_400_000);
-      const kinds = ["login", "login_failed", "login_blocked", "twofactor_failed", "revoked_all"] as const;
+      const kinds = ["login", "login_failed", "login_blocked", "twofactor_failed", "login_attempts_reset", "revoked_all"] as const;
       const rows = await db
         .select({ id: adminSessionEvents.id, eventType: adminSessionEvents.eventType, createdAt: adminSessionEvents.createdAt, adminEmail: adminAccounts.email, adminFullName: adminAccounts.fullName })
         .from(adminSessionEvents)

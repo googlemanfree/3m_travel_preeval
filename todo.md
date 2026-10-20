@@ -32,3 +32,9 @@
 ## Journal de sécurité admin — compatibilité SQL
 - [x] Remplacer l’ENUM historique de `admin_session_events.eventType` par un VARCHAR compatible avec les événements réellement journalisés.
 - [x] Appliquer la migration en base puis retester la connexion MFA sur l’aperçu : l’erreur interne a disparu et l’échec contrôlé renvoie `Email ou mot de passe incorrect.` ; l’alerte e-mail configurée a été déclenchée après les tentatives répétées.
+
+## Pilotage sécurité admin
+- [x] Tester le contrat de remise à zéro des tentatives pour un autre compte, avec garde serveur super administrateur et journalisation `login_attempts_reset`.
+- [x] Afficher le journal des alertes/échecs et ses indicateurs sur `/admin/admins`.
+- [x] Afficher le nombre de tentatives restantes sur la connexion admin, avec exemption explicitement signalée pour le compte de direction.
+- [x] Typecheck et tests ciblés : 23 tests verts.

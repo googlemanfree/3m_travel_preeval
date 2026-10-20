@@ -119,3 +119,14 @@ export function getRemainingAttempts(identifier: string): number {
 
   return Math.max(0, MAX_ATTEMPTS - current.count);
 }
+
+/** Retourne uniquement l’état nécessaire à l’interface de connexion. */
+export function getLoginAttemptStatus(identifier: string): { remainingAttempts: number; maxAttempts: number; lockedUntil: Date | null } {
+  const current = loginAttempts.get(identifier);
+  const remainingAttempts = getRemainingAttempts(identifier);
+  return {
+    remainingAttempts,
+    maxAttempts: MAX_ATTEMPTS,
+    lockedUntil: current?.lockedUntil ?? null,
+  };
+}
