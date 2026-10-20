@@ -508,6 +508,8 @@ export interface ProtocolOneVariables {
   clientNumeroPiece?: string;
   clientTelephoneWhatsapp?: string;
   clientEmail?: string;
+  /** Montant confirmé du dossier (XAF). Absent : le protocole renvoie au Reçu Officiel au lieu d'afficher un chiffre. */
+  montantValide?: number;
   modePaiement: string;
   dateHeurePaiement: string;
   conseillerEmail: string;
@@ -548,6 +550,12 @@ export function buildProtocolOneRichText(
   const kind = detectProtocolVisaKind(visaType);
   const clauses = protocolOneKindClauses(kind, profile);
   const program = profile.procedureProgramLabel ?? `Procédure ${profile.destinationLabel}`;
+  // Le montant vient du dossier (il varie selon le profil) : jamais un chiffre unique écrit en dur dans un texte contractuel.
+  const amountLabel = typeof vars.montantValide === "number" && Number.isFinite(vars.montantValide) && vars.montantValide > 0
+    ? `${Math.round(vars.montantValide).toLocaleString("fr-FR").replace(/[\u202f\u00a0]/g, " ")} XAF`
+    : null;
+  const amountClause = amountLabel ? `d'un montant de ${amountLabel}` : "dont le montant est celui indiqué sur le Reçu Officiel de paiement";
+  const amountValidated = amountLabel ?? "tel qu'indiqué sur le Reçu Officiel de paiement";
   const objectClause = profile.procedureObjectClause
     ?? `la préparation et la soumission du profil auprès des partenaires compétents pour ${profile.destinationLabel}, selon le projet et l'éligibilité constatée du candidat`;
   const article3Tail =
@@ -572,10 +580,10 @@ PRÉAMBULE ET CONTEXTE
 LE CLIENT a souscrit à une évaluation via la plateforme www.3mtravelagency.com. Suite à la notification du bilan d'évaluation dans son Espace Client, LE CLIENT a validé le projet ${profile.destinationLabel} (${program}) et s'est acquitté des frais d'ouverture et de traitement. Le présent protocole donne pleine valeur contractuelle aux mentions du Reçu de Confirmation de Paiement délivré par L'AGENCE. Les étapes de traitement suivent le guide de procédure publié pour ce programme sur www.3mtravelagency.com, synchronisé avec l'Espace Client.
 
 Article 1 — Objet des frais et nature de la prestation
-Conformément au Reçu Officiel de paiement, les frais confirmés d'un montant de 65 000 (soixante-cinq mille) FCFA/XAF couvrent exclusivement : (1) l'ouverture administrative du dossier du CLIENT au sein des registres de L'AGENCE et sur sa plateforme numérique ; (2) le traitement administratif, la vérification d'authenticité et la mise en conformité des pièces documentaires ; (3) ${objectClause}.
+Conformément au Reçu Officiel de paiement, les frais confirmés ${amountClause} couvrent exclusivement : (1) l'ouverture administrative du dossier du CLIENT au sein des registres de L'AGENCE et sur sa plateforme numérique ; (2) le traitement administratif, la vérification d'authenticité et la mise en conformité des pièces documentaires ; (3) ${objectClause}.
 
 Article 2 — Modalités de règlement, traçabilité et reçu officiel
-Le paiement fait l'objet d'un enregistrement automatique sous les références suivantes : Montant validé : 65 000 XAF. Mode de validation : ${vars.modePaiement}. Date et heure de validation : ${vars.dateHeurePaiement}. Conseiller validateur habilité : ${vars.conseillerEmail}. Empreinte cryptographique de sécurité : ${vars.empreinteSha}. Le Reçu de Confirmation de Paiement demeure archivé en permanence dans l'Espace Client du CANDIDAT comme justificatif comptable et juridique.
+Le paiement fait l'objet d'un enregistrement automatique sous les références suivantes : Montant validé : ${amountValidated}. Mode de validation : ${vars.modePaiement}. Date et heure de validation : ${vars.dateHeurePaiement}. Conseiller validateur habilité : ${vars.conseillerEmail}. Empreinte cryptographique de sécurité : ${vars.empreinteSha}. Le Reçu de Confirmation de Paiement demeure archivé en permanence dans l'Espace Client du CANDIDAT comme justificatif comptable et juridique.
 
 Article 3 — Caractère strictement non remboursable des frais
 Conformément au Reçu de paiement, ces frais sont strictement non remboursables une fois le traitement administratif engagé, car ils rémunèrent les diligences, vérifications et démarches déjà réalisées avant et pendant le traitement. ${article3Tail}

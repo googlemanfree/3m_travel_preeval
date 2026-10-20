@@ -1842,6 +1842,7 @@ export const candidateRouter = router({
         destinationProjet: application.destination || "Non spécifiée",
         clientTelephoneWhatsapp: application.whatsappNumber || undefined,
         clientEmail: application.email,
+        montantValide: Number(application.paymentConfirmedAmount ?? application.paymentAmount) || undefined,
         modePaiement: application.paymentMethod || "Paiement confirmé",
         dateHeurePaiement: (application.paymentValidatedAt || application.paymentDate)
           ? new Date(application.paymentValidatedAt || application.paymentDate as Date).toLocaleString("fr-FR", { timeZone: "Africa/Douala" })

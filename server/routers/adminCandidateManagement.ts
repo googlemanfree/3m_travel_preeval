@@ -2565,6 +2565,7 @@ export const adminCandidateManagementRouter = router({
       let visaType = "";
       let whatsapp = "";
       let paymentMethodLabel = "";
+      let paymentAmountValue: number | undefined;
       let paymentTimestamp: Date | null = null;
       if (reference.source === "agency") {
         const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
@@ -2590,6 +2591,7 @@ export const adminCandidateManagementRouter = router({
         whatsapp = application.whatsappNumber || "";
         paymentMethodLabel = application.paymentMethod || "";
         paymentTimestamp = application.paymentValidatedAt || application.paymentDate || null;
+        paymentAmountValue = Number(application.paymentConfirmedAmount ?? application.paymentAmount) || undefined;
       }
       if (!paymentConfirmed) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le protocole ne peut être envoyé qu’après confirmation du paiement." });
       // Protocole généré selon pays + type de visa (guides PDF publiés / COUNTRY_PROTOCOL_PROFILES).
@@ -2600,6 +2602,7 @@ export const adminCandidateManagementRouter = router({
         destinationProjet: destination || "Non spécifiée",
         clientTelephoneWhatsapp: whatsapp || undefined,
         clientEmail: email,
+        montantValide: paymentAmountValue,
         modePaiement: paymentMethodLabel || "Validation manuelle par un conseiller",
         dateHeurePaiement: paymentTimestamp ? paymentTimestamp.toLocaleString("fr-FR", { timeZone: "Africa/Douala" }) : "Non renseignée",
         conseillerEmail: admin.email || "",

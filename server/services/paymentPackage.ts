@@ -134,6 +134,8 @@ export async function sendReceiptAndProtocol(db: Db, reference: PaymentReference
     destinationProjet: dossier.destination || "Non spécifiée",
     clientTelephoneWhatsapp: dossier.whatsapp || undefined,
     clientEmail: dossier.email,
+    // Dossier en ligne : montant confirmé du dossier. Dossier d'agence : le texte renvoie au reçu (pas de chiffre supposé).
+    montantValide: dossier.applicationId ? dossier.amount : undefined,
     modePaiement: dossier.paymentMethod || "Validation manuelle par un conseiller",
     dateHeurePaiement: dossier.paymentDate.toLocaleString("fr-FR", { timeZone: "Africa/Douala" }),
     conseillerEmail: adminEmail,
