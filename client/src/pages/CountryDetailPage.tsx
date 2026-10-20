@@ -22,6 +22,7 @@ import { trpc } from '@/lib/trpc';
 import { DestinationVisualSheet } from '@/components/DestinationVisualSheet';
 import { PublishedGuideSummaryPanel } from '@/components/PublishedGuideSummaryPanel';
 import ProofGallerySection from '@/components/ProofGallerySection';
+import { ProcedureBlueprint } from '@/components/ProcedureBlueprint';
 import { EVALUATION_CTA_HINT } from '@/components/PublicEvaluationCTA';
 import { proofFilterForProcedure } from '@/data/destinationGallery';
 import { setPageSeo } from '@/lib/pageSeo';
@@ -577,6 +578,16 @@ export default function CountryDetailPage() {
                 ))}
               </div>
             </Card>
+
+            {/* Parcours complet : étapes, pièces, coûts, délais, erreurs, après-décision, rôle de 3M */}
+            <ProcedureBlueprint
+              countryName={country.name}
+              visaType={country.visaType}
+              slug={country.id}
+              locale={locale}
+              evaluationUrl={evaluationUrl}
+              officialUrl={institutionalSource?.officialUrl || portal?.officialPortalUrl || null}
+            />
 
             {/* FAQ */}
             <Card className="p-8 border-slate-200 shadow-sm bg-white rounded-3xl">

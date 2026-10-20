@@ -3,7 +3,8 @@
  * Cascade : photos locales Wikimedia (fiables) → manus-storage si aucun local.
  * Ne pas inventer d’URLs Unsplash ici — réutiliser les assets déjà hébergés.
  */
-import { getCountryPhotos } from "@/data/countryPhotos";
+import { countryPhotos, getCountryPhotos } from "@/data/countryPhotos";
+import { generatedCountryPhotos } from "@/data/countryPhotosGenerated";
 
 export type VisualSources = {
   desktop: string;
@@ -114,7 +115,7 @@ export function normalizeDestinationSlug(raw: string): string {
   if (SLUG_ALIASES[value]) return SLUG_ALIASES[value];
 
   const stripped = value
-    .replace(/-(travail|etudes|formation|immigration|visite|tourisme|stage)$/i, "")
+    .replace(/-(travail|etudes|formation|immigration|visiteur|visite|tourisme|stage|evisa|e-visa)$/i, "")
     .replace(/^(procedure|visa)-/, "");
   if (DESTINATION_MANUS[stripped] || stripped in countryPhotoSlugSet()) return stripped;
   if (SLUG_ALIASES[stripped]) return SLUG_ALIASES[stripped];
@@ -131,6 +132,7 @@ export function normalizeDestinationSlug(raw: string): string {
 function countryPhotoSlugSet(): Record<string, true> {
   // Lazy via getCountryPhotos known keys — duplicated lightly to avoid circular imports at module eval.
   return {
+    ...Object.fromEntries(Object.keys({ ...generatedCountryPhotos, ...countryPhotos }).map((key) => [key, true])),
     canada: true,
     france: true,
     belgique: true,
@@ -186,7 +188,7 @@ export function getDestinationVisual(slugOrId: string): VisualSources | null {
     desktop,
     mobile: desktop,
     localFallback: reliableLocal,
-    alt: DESTINATION_ALT[slug] ?? `Destination ${slug}`,
+    alt: DESTINATION_ALT[slug] ?? getCountryPhotos(slug)[0]?.alt ?? `Destination ${slug}`,
   };
 }
 

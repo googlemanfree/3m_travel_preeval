@@ -4,6 +4,8 @@
  * licence sont affichés sous les photos par CountryPhotoGallery : ne jamais retirer l'auteur ni la licence.
  * La première photo sert d'image d'en-tête, la seconde de photo de galerie.
  */
+import { generatedCountryPhotos } from "./countryPhotosGenerated";
+
 export type CountryPhoto = {
   src: string;
   alt: string;
@@ -109,5 +111,6 @@ export const countryPhotos: Record<string, CountryPhoto[]> = {
 };
 
 export function getCountryPhotos(slug: string): CountryPhoto[] {
-  return countryPhotos[slug] ?? [];
+  // Photos des guides d'études (choisies à la main) d'abord, puis photos de villes ajoutées pour les autres pays.
+  return countryPhotos[slug] ?? generatedCountryPhotos[slug] ?? [];
 }

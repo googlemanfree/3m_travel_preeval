@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { SocialShareButtons } from '@/components/SocialShareButtons';
 import { evisasDatabaseComplete, EvisaDestination } from '@/data/evisasDatabaseComplete';
+import { getCountryPhotos } from '@/data/countryPhotos';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { setPageSeo } from '@/lib/pageSeo';
@@ -71,6 +72,10 @@ export default function EvisaDetailPage() {
     );
   }
 
+  // Photo de ville libre de droits (Wikimedia Commons) : prioritaire sur l'image du catalogue, avec son crédit obligatoire.
+  const cityPhoto = getCountryPhotos(destination.id)[0];
+  const heroImage = cityPhoto?.src ?? destination.image;
+
   return (
     <main className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -100,9 +105,9 @@ export default function EvisaDetailPage() {
           className="relative rounded-3xl overflow-hidden shadow-2xl border border-slate-200 bg-slate-900 text-white"
         >
           <div className="absolute inset-0 z-0">
-            {destination.image ? <img
-              src={destination.image}
-              alt={destination.country}
+            {heroImage ? <img
+              src={heroImage}
+              alt={cityPhoto?.alt ?? destination.country}
               loading="eager"
               decoding="async"
               fetchPriority="high"
@@ -132,6 +137,13 @@ export default function EvisaDetailPage() {
             <p className="text-slate-200 text-base sm:text-lg max-w-3xl leading-relaxed font-light">
               {destination.culture}
             </p>
+            {cityPhoto && (
+              <p className="text-[11px] leading-5 text-slate-300" data-testid="evisa-photo-credit">
+                Photo d’illustration : {cityPhoto.place},{" "}
+                <a href={cityPhoto.fileUrl} target="_blank" rel="noreferrer noopener" className="underline underline-offset-2">{cityPhoto.author}</a>{" "}
+                (<a href={cityPhoto.licenseUrl} target="_blank" rel="noreferrer noopener" className="underline underline-offset-2">{cityPhoto.license}</a>) — via Wikimedia Commons.
+              </p>
+            )}
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-white/10">
               <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10">

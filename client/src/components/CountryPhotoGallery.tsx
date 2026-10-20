@@ -12,7 +12,19 @@ type Props = {
  */
 export function CountryPhotoGallery({ photos, country }: Props) {
   const feature = photos[1];
-  if (!feature) return null;
+  // Une seule photo (déjà affichée en en-tête) : on garde obligatoirement son crédit, exigé par la licence.
+  if (!feature) {
+    const [only] = photos;
+    if (!only) return null;
+    return (
+      <p className="mt-2 text-[11px] leading-5 text-slate-500" data-testid="country-photo-credits">
+        <span className="font-semibold text-slate-700">{only.place}.</span> Photo d’illustration ({country}).{" "}
+        <span className="font-semibold">Crédit :</span>{" "}
+        <a href={only.fileUrl} target="_blank" rel="noreferrer noopener" className="underline underline-offset-2 hover:text-blue-700">{only.author}</a>{" "}
+        (<a href={only.licenseUrl} target="_blank" rel="noreferrer noopener" className="underline underline-offset-2 hover:text-blue-700">{only.license}</a>) — via Wikimedia Commons.
+      </p>
+    );
+  }
 
   return (
     <figure className="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-slate-900" data-testid="country-photo-gallery">

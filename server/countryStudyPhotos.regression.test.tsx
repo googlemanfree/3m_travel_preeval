@@ -70,7 +70,12 @@ describe("guides d'études : photos, crédits et repères pour chaque pays", () 
       expect(html).toContain(photo.licenseUrl);
     }
     expect(html).toContain("Wikimedia Commons");
-    expect(renderToStaticMarkup(<CountryPhotoGallery photos={photos.slice(0, 1)} country="France" />)).toBe("");
+    // Une seule photo (déjà en en-tête) : pas de seconde image, mais le crédit exigé par la licence reste affiché.
+    const single = renderToStaticMarkup(<CountryPhotoGallery photos={photos.slice(0, 1)} country="France" />);
+    expect(single).not.toContain("<img");
+    expect(single).toContain(photos[0].author);
+    expect(single).toContain(photos[0].licenseUrl);
+    expect(renderToStaticMarkup(<CountryPhotoGallery photos={[]} country="France" />)).toBe("");
   });
 
   it("le panneau de repères affiche capitale, monnaie, langues et villes", () => {

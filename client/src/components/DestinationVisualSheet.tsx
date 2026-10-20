@@ -31,7 +31,7 @@ export function DestinationVisualSheet({
           imgClassName="h-full w-full object-cover"
         />
       </div>
-      {showGallery && sheet.gallery.length > 1 && (
+      {showGallery && sheet.gallery.length >= 1 && (
         <CountryPhotoGallery photos={sheet.gallery} country={countryName} />
       )}
     </div>
