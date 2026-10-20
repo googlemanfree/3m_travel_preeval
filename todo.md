@@ -28,3 +28,7 @@
 - [x] Envoyer une alerte e-mail unique après trois échecs sur le compte exempté, sans mot de passe ni code MFA.
 - [x] Ajouter le bouton serveur/UI de remise à zéro ciblée pour les autres comptes, réservé au super administrateur.
 - [x] Valider typecheck, build et régressions ciblées avant publication : 14 tests ciblés verts.
+
+## Journal de sécurité admin — compatibilité SQL
+- [x] Remplacer l’ENUM historique de `admin_session_events.eventType` par un VARCHAR compatible avec les événements réellement journalisés.
+- [x] Appliquer la migration en base puis retester la connexion MFA sur l’aperçu : l’erreur interne a disparu et l’échec contrôlé renvoie `Email ou mot de passe incorrect.` ; l’alerte e-mail configurée a été déclenchée après les tentatives répétées.
