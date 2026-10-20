@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toDataURL } from "qrcode";
-import { Bell, Building2, BriefcaseBusiness, CheckCircle2, ClipboardCheck, Clock3, Download, IdCard, LockKeyhole, LogOut, RefreshCw, Share2, ShieldCheck, Star, UserRoundCog, X, Eye, EyeOff, Search, BookmarkCheck } from "lucide-react";
+import { Bell, Building2, BriefcaseBusiness, CheckCircle2, ClipboardCheck, Clock3, Download, IdCard, LockKeyhole, LogOut, RefreshCw, Share2, ShieldCheck, Star, UserRoundCog, X, Eye, EyeOff, Search, BookmarkCheck, ClipboardList } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { B2bPartnerRegistrationForm, type PartnerOrganizationType } from "@/components/B2bPartnerRegistrationForm";
@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { ChecklistSection, CommitmentsSection, FaqSection, StepsSection } from "@/components/PageEnrichment";
 import { PartnerTeamPanel } from "@/components/PartnerTeamPanel";
 import { PartnerCvtheque } from "@/components/PartnerCvtheque";
+import { PartnerNeeds, PartnerTracking } from "@/components/PartnerRecruitment";
 import { EMPLOYER_COMMITMENTS, EMPLOYER_FAQ, EMPLOYER_HIDDEN, EMPLOYER_HOW_STEPS, EMPLOYER_VISIBLE } from "@/data/contentCampaignPartners";
 
 const sessionKey = "3m_placement_employer_session";
@@ -22,7 +23,7 @@ type Decision = "under_review" | "shortlisted" | "selected" | "not_selected" | "
 type CollaborationAuditAction = "all" | "favorite_shared" | "favorite_share_revoked" | "collaborator_promoted" | "collaborator_role_reader" | "collaborator_suspended" | "collaborator_reactivated" | "collaborator_suspension_reviewed";
 type CollaborationAuditRange = "7d" | "30d" | "all";
 type AuthTab = "login" | "register";
-type WorkspaceTab = "profiles" | "cvtheque" | "selection" | "history" | "team" | "security";
+type WorkspaceTab = "profiles" | "cvtheque" | "selection" | "needs" | "tracking" | "history" | "team" | "security";
 type PortalOrganization = { name: string; country: string; organizationType: PartnerOrganizationType };
 
 function readPortalDefaults(): { tab: AuthTab; organizationType: PartnerOrganizationType } {
@@ -420,11 +421,13 @@ export default function EmployerPortal() {
       <p className="flex items-center gap-2 font-bold"><ShieldCheck className="h-4 w-4" />{t("Règle de confidentialité", "Privacy rule")}</p>
       <p className="mt-1">{t("Les décisions enregistrées ici sont des retours de sélection. 3M les examine avant toute communication ou transmission de pièces au candidat.", "Decisions recorded here are selection feedback. 3M reviews them before any communication or document transfer to a candidate.")}</p>
     </section>
-    <nav className="grid grid-cols-2 gap-1 rounded-2xl border border-slate-200 bg-white p-1 sm:grid-cols-3 lg:grid-cols-6" role="tablist" aria-label={t("Sections de l’espace partenaire", "Partner workspace sections")}>
+    <nav className="grid grid-cols-2 gap-1 rounded-2xl border border-slate-200 bg-white p-1 sm:grid-cols-4 lg:grid-cols-8" role="tablist" aria-label={t("Sections de l’espace partenaire", "Partner workspace sections")}>
       {([
         ["profiles", t("Profils", "Profiles"), BriefcaseBusiness],
         ["cvtheque", t("CVthèque", "CV library"), Search],
         ["selection", t("Ma sélection", "My selection"), BookmarkCheck],
+        ["needs", t("Besoins", "Needs"), ClipboardList],
+        ["tracking", t("Suivi", "Follow-up"), Bell],
         ["history", t("Historique", "History"), Clock3],
         ["team", t("Équipe", "Team"), UserRoundCog],
         ["security", t("Sécurité", "Security"), LockKeyhole],
@@ -518,6 +521,8 @@ export default function EmployerPortal() {
     )}
     {workspaceTab === "cvtheque" && <PartnerCvtheque sessionToken={sessionToken} mode="search" />}
     {workspaceTab === "selection" && <PartnerCvtheque sessionToken={sessionToken} mode="selection" />}
+    {workspaceTab === "needs" && <PartnerNeeds sessionToken={sessionToken} />}
+    {workspaceTab === "tracking" && <PartnerTracking sessionToken={sessionToken} />}
     {workspaceTab === "profiles" && (profiles.isLoading ? <div role="status" aria-live="polite" data-testid="partner-profiles-loading" className="space-y-3 py-4"><span className="sr-only">{t("Chargement des profils autorisés…", "Loading authorised profiles…")}</span><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{[0, 1, 2, 3].map(index => <div key={index} className="h-16 animate-pulse rounded-xl bg-slate-200 motion-reduce:animate-none" />)}</div><div className="grid gap-4 md:grid-cols-2">{[0, 1].map(index => <div key={index} className="h-56 animate-pulse rounded-xl bg-slate-200 motion-reduce:animate-none" />)}</div></div> : profiles.error ? <p className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-800">{t("Votre session n’est plus valide. Reconnectez-vous.", "Your session is no longer valid. Please sign in again.")}</p> : <div className="space-y-4" data-testid="partner-profiles-panel">
       {availableProfiles.length > 0 && <section aria-label={t("Synthèse de vos profils", "Summary of your profiles")} className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="partner-summary">{([
         [t("Profils reçus", "Profiles received"), availableProfiles.length],

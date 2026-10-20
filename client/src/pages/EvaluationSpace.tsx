@@ -66,6 +66,7 @@ import FlightAfterVisaCard from "@/components/FlightAfterVisaCard";
 import { ReviewInviteCard } from "@/components/ReviewInviteCard";
 import { PlacementConsentCard } from "@/components/PlacementConsentCard";
 import { CvthequePresenceCard } from "@/components/CvthequePresenceCard";
+import { CandidateOpportunitiesCard } from "@/components/CandidateOpportunitiesCard";
 import { SelectableProfileCard } from "@/components/SelectableProfileCard";
 import SubmitReview from "@/pages/SubmitReview";
 import CaseDocumentsPanel, { agencyDepositedDocuments, allCaseDocuments } from "@/components/CaseDocumentsPanel";
@@ -1028,6 +1029,7 @@ export default function EvaluationSpace() {
               <SelectableProfileCard />
               <PlacementConsentCard />
               <CvthequePresenceCard />
+              <CandidateOpportunitiesCard />
               {passportPhotoRequired ? (
                 <Card className="border-amber-300 bg-amber-50 p-5" data-testid="passport-photo-required-overview" role="region" aria-labelledby="passport-photo-required-title">
                   <div className="flex flex-wrap items-center justify-between gap-3">

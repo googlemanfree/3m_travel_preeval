@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PrivacyNotice } from "@/components/PrivacyNotice";
+import { InterviewForm, NeedForm } from "@/components/PartnerRecruitment";
 
 type Props = { sessionToken: string; mode: "search" | "selection" };
 
@@ -43,7 +44,7 @@ type Card = {
 
 const FIELD_LABEL: Record<(typeof VERIFICATION_FIELDS)[number], string> = { skills: "Compétences", experience: "Expérience", education: "Formation", languages: "Langues" };
 
-function ProfileCard({ card, onToggle, onOpen, busy }: { card: Card; onToggle: () => void; onOpen: () => void; busy: boolean }) {
+function ProfileCard({ card, onToggle, onOpen, onPropose, onInterview, busy }: { card: Card; onToggle: () => void; onOpen: () => void; onPropose: () => void; onInterview: () => void; busy: boolean }) {
   return (
     <li className="rounded-xl border border-slate-200 bg-white p-4" data-testid="cvtheque-card">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -69,7 +70,11 @@ function ProfileCard({ card, onToggle, onOpen, busy }: { card: Card; onToggle: (
       <p className="mt-2 text-xs text-slate-600" data-testid="cvtheque-verification">{VERIFICATION_FIELDS.map((field) => `${FIELD_LABEL[field]} : ${VERIFICATION_LABELS[card.verification[field]].fr}`).join(" · ")}</p>
       {card.summary && <p className="mt-2 text-sm leading-6 text-slate-700">{card.summary}</p>}
       {card.note && <p className="mt-2 rounded-lg bg-amber-50 p-2 text-xs text-amber-950">Ma note : {card.note}</p>}
-      <button type="button" onClick={onOpen} className="mt-2 text-sm font-bold text-indigo-800 underline underline-offset-2">Voir la fiche complète</button>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <button type="button" onClick={onOpen} className="text-sm font-bold text-indigo-800 underline underline-offset-2">Voir la fiche complète</button>
+        <Button type="button" size="sm" variant="outline" onClick={onPropose} data-testid="cvtheque-propose">Proposer un poste</Button>
+        <Button type="button" size="sm" variant="outline" onClick={onInterview} data-testid="cvtheque-interview">Demander un entretien</Button>
+      </div>
     </li>
   );
 }
@@ -82,6 +87,7 @@ export function PartnerCvtheque({ sessionToken, mode }: Props) {
   const [applied, setApplied] = useState<typeof filters | null>(null);
   const [page, setPage] = useState(1);
   const [openCode, setOpenCode] = useState<string | null>(null);
+  const [action, setAction] = useState<{ kind: "need" | "interview"; profileCode: string } | null>(null);
 
   const search = trpc.cvtheque.search.useQuery({
     sessionToken,
@@ -141,8 +147,10 @@ export function PartnerCvtheque({ sessionToken, mode }: Props) {
       {error && <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950" role="status">{error.message}</p>}
       {mode === "search" && applied === null && <p className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-600">Lancez une recherche pour consulter les profils autorisés.</p>}
       {mode === "search" && search.data && <p className="text-sm text-slate-600" aria-live="polite">{search.data.total} profil(s) correspondant(s).</p>}
+      {action?.kind === "need" && <NeedForm sessionToken={sessionToken} profileCode={action.profileCode} onDone={() => setAction(null)} onCancel={() => setAction(null)} />}
+      {action?.kind === "interview" && <InterviewForm sessionToken={sessionToken} profileCode={action.profileCode} onDone={() => setAction(null)} onCancel={() => setAction(null)} />}
       <ul className="grid gap-3 lg:grid-cols-2">
-        {(list ?? []).map((card) => <ProfileCard key={card.cvthequeProfileId} card={card} busy={busy} onToggle={() => toggle(card)} onOpen={() => setOpenCode(card.profileCode)} />)}
+        {(list ?? []).map((card) => <ProfileCard key={card.cvthequeProfileId} card={card} busy={busy} onToggle={() => toggle(card)} onOpen={() => setOpenCode(card.profileCode)} onPropose={() => setAction({ kind: "need", profileCode: card.profileCode })} onInterview={() => setAction({ kind: "interview", profileCode: card.profileCode })} />)}
       </ul>
       {mode === "selection" && !selection.isLoading && (list ?? []).length === 0 && !error && <p className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-600">Votre sélection est vide. Ajoutez des profils depuis la CVthèque.</p>}
       {mode === "search" && search.data && search.data.total > search.data.pageSize && (

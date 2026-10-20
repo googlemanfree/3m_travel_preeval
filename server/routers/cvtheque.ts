@@ -114,14 +114,14 @@ function toEmployerCard(row: { cp: typeof cvthequeProfiles.$inferSelect; profile
   };
 }
 
-const visibleWhere = () => and(
+export const visibleWhere = () => and(
   eq(cvthequeProfiles.visibilityState, "published"),
   eq(placementCandidateProfiles.summaryStatus, "approved"),
   isNull(placementCandidateProfiles.archivedAt),
   eq(candidatePlacementConsents.status, "granted"),
 );
 
-const visibleSelect = (db: Db) => db
+export const visibleSelect = (db: Db) => db
   .select({ cp: cvthequeProfiles, profileCode: placementCandidateProfiles.profileCode, summary: placementCandidateProfiles.summary, sector: placementCandidateProfiles.sector })
   .from(cvthequeProfiles)
   .innerJoin(placementCandidateProfiles, eq(placementCandidateProfiles.id, cvthequeProfiles.profileId))
