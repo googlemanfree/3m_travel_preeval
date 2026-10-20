@@ -189,7 +189,7 @@ const multiProjectEvaluationInput = z.object({
   dynamicResponses: z.array(z.object({
     question: z.string().trim().min(3).max(260),
     answer: z.string().trim().min(1).max(1000),
-  })).max(5).default([]),
+  })).max(12).default([]),
 }).superRefine((value, ctx) => {
   const gap = multiProjectEvaluationGap({
     projectType: value.projectType,

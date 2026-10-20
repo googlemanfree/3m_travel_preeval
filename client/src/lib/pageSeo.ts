@@ -3,6 +3,8 @@
  * Le prerender serveur reste la source canonique pour le crawl initial.
  */
 
+import { clampSeoDescription, clampSeoTitle } from "./seoText";
+
 type PageSeoInput = {
   title: string;
   description: string;
@@ -28,8 +30,12 @@ function upsertMeta(attr: "name" | "property", key: string, content: string) {
   el.setAttribute("content", content);
 }
 
-export function setPageSeo({ title, description, image, imageAlt }: PageSeoInput) {
+export function setPageSeo(input: PageSeoInput) {
   if (typeof document === "undefined") return;
+  // Titres et descriptions trop longs sont raccourcis proprement (marque conservée) pour les résultats de recherche et le partage.
+  const title = clampSeoTitle(input.title);
+  const description = clampSeoDescription(input.description);
+  const { image, imageAlt } = input;
   document.title = title;
   upsertMeta("name", "description", description);
   upsertMeta("property", "og:title", title);

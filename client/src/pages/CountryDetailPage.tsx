@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { getGuideLastUpdatedAt, getPublicDestinationDetail, isDestinationRecentlyUpdated } from '@/lib/publicDestinationCatalog';
+import { getGuideLastUpdatedAt, getPublicDestinationDetail, isDestinationRecentlyUpdated, PUBLIC_DESTINATION_DETAILS } from '@/lib/publicDestinationCatalog';
+import { evisasDatabaseComplete } from '@/data/evisasDatabaseComplete';
 import { DestinationCallbackDialog } from '@/components/DestinationCallbackDialog';
 import { DestinationComparisonDialog } from '@/components/DestinationComparisonDialog';
 import { PublicProcedurePdfButton } from '@/components/PublicProcedurePdfButton';
@@ -174,6 +175,19 @@ export default function CountryDetailPage() {
   const pageUpdatedAt = publicPortal?.updatedAt
     ? new Date(publicPortal.updatedAt).toLocaleDateString("fr-FR")
     : destinationDetail?.lastUpdatedAt;
+  // Autres procédures publiées pour le même pays : liens réels vers les fiches qui existent (français uniquement).
+  const siblingKey = (value: string) => value.toLocaleLowerCase('fr-FR').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-');
+  const siblingTypeLabel: Record<string, string> = { travail: 'Travail', etudes: 'Études', visiteur: 'Visite / court séjour' };
+  const procedureSiblings = locale === 'fr'
+    ? [
+        ...PUBLIC_DESTINATION_DETAILS
+          .filter((detail) => siblingKey(detail.procedure.name) === siblingKey(country.name) && detail.procedure.id !== country.id)
+          .map((detail) => ({ href: `/procedures/${detail.procedure.id}`, label: `${siblingTypeLabel[detail.procedure.visaType] ?? detail.procedure.visaType} — ${detail.procedure.name}` })),
+        ...evisasDatabaseComplete
+          .filter((entry) => siblingKey(entry.country) === siblingKey(country.name))
+          .map((entry) => ({ href: `/evisa/${entry.id}`, label: `e-Visa — ${entry.country}` })),
+      ]
+    : [];
   const displayCost = verifiedFee?.costLabel ?? country.cost;
   const displayDelay = verifiedFee?.delayLabel ?? country.processingTime;
 
@@ -587,6 +601,7 @@ export default function CountryDetailPage() {
               locale={locale}
               evaluationUrl={evaluationUrl}
               officialUrl={institutionalSource?.officialUrl || portal?.officialPortalUrl || null}
+              siblings={procedureSiblings}
             />
 
             {/* FAQ */}

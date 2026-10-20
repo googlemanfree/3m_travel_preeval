@@ -1,6 +1,7 @@
 import { evisasDatabaseComplete } from "@/data/evisasDatabaseComplete";
 import { CANDIDATE_DESTINATION_OPTIONS, getCandidateDestinationOption } from "@shared/candidateDestinationOptions";
 import { getAllResources, type PdfResource } from "@shared/pdfResources";
+import { buildCountryAdaptiveFields } from "@shared/countryEvaluationProfile";
 import type { EvaluationProjectType, ProjectDetailField } from "./projectEvaluationConfig";
 
 export type ProcedureGuide = {
@@ -274,5 +275,6 @@ export const getCountryProcedureFields = (projectType: EvaluationProjectType, co
     return [...shared, field("enrolmentConfirmation", "Offre d’admission ou confirmation d’inscription", receivedStatus), field("studyFunding", "Financement des études", [{ value: "personnel", label: "Ressources personnelles" }, { value: "garant", label: "Garant / sponsor" }, { value: "bourse", label: "Bourse" }, { value: "mixte", label: "Plusieurs sources" }])];
   }
 
-  return shared;
+  // Tous les autres pays : questions adaptées à leur langue, à leur zone (Schengen ou non) et au type de projet.
+  return [...shared, ...buildCountryAdaptiveFields(projectType, country)];
 };

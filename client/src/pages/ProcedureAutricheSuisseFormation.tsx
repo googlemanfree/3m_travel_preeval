@@ -74,8 +74,8 @@ export default function ProcedureAutricheSuisseFormation() {
 
   useEffect(() => {
     document.title = isSuisseRoute
-      ? "Suisse : apprentissage (formation professionnelle) & visa | 3M TRAVEL AGENCY"
-      : "Autriche : Lehre (apprentissage) & Red-White-Red Card | 3M TRAVEL AGENCY";
+      ? "Suisse : apprentissage professionnel & visa | 3M TRAVEL AGENCY"
+      : "Autriche : Lehre & Red-White-Red Card | 3M TRAVEL AGENCY";
     document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
       "content",
       "Apprentissage rémunéré en Autriche (Lehre) ou en Suisse : conditions, étapes du visa et documents requis, avec l'accompagnement 3M TRAVEL AGENCY depuis Yaoundé.",

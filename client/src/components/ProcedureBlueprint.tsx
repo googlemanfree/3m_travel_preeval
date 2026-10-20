@@ -1,6 +1,7 @@
-import { AlertTriangle, CheckCircle2, ClipboardList, Compass, ExternalLink, FileText, HandHeart, Hourglass, ListChecks, Scale, ShieldCheck, Wallet } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ClipboardList, Compass, ExternalLink, FileText, HandHeart, Hourglass, Layers, ListChecks, Scale, ShieldCheck, Wallet } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { getProcedureBlueprint, resolveProcedureKind, type BlueprintLocale } from "@/data/procedureBlueprints";
+import { getProgramCatalog } from "@/data/procedurePrograms";
 
 type Props = {
   countryName: string;
@@ -9,6 +10,8 @@ type Props = {
   locale: BlueprintLocale;
   evaluationUrl: string;
   officialUrl?: string | null;
+  /** Autres procédures publiées pour le même pays (travail, études, visite, e-Visa) : de vrais liens, jamais inventés. */
+  siblings?: Array<{ href: string; label: string }>;
 };
 
 const COPY = {
@@ -17,6 +20,14 @@ const COPY = {
     intro: "Le parcours ci-dessous vaut pour ce type de procédure. Les montants, délais et pièces exacts du pays sont à confirmer sur le portail officiel cité sur cette fiche ; la décision revient toujours à l’autorité du pays.",
     forWhom: "À qui s’adresse cette procédure",
     journey: "Le parcours, étape par étape",
+    programs: "Types de visa et programmes possibles",
+    programsIntro: (country: string) => `Chaque pays propose un ensemble de programmes, sous des noms qui lui sont propres. Dites-nous lequel vous intéresse : nous vérifions s’il existe pour ${country} et sur quelle source officielle il s’appuie, avant tout dépôt.`,
+    programWho: "Pour qui",
+    programCheck: "À vérifier",
+    programAvailability: "Disponibilité, nom et conditions à confirmer sur le portail officiel du pays.",
+    otherRoutes: "Autres voies possibles",
+    siblingsTitle: (country: string) => `Autres procédures pour ${country}`,
+    evaluateProgram: "Faire évaluer ce programme",
     watch: "Point de vigilance",
     help: "Ce que fait 3M",
     documents: "Pièces à réunir",
@@ -43,6 +54,14 @@ const COPY = {
     intro: "The path below applies to this type of procedure. Exact amounts, timelines and documents for the country must be confirmed on the official portal cited on this page; the decision always rests with the country’s authority.",
     forWhom: "Who this procedure is for",
     journey: "The path, step by step",
+    programs: "Possible visa types and programmes",
+    programsIntro: (country: string) => `Each country offers its own set of programmes, under names of its own. Tell us which one interests you: we check whether it exists for ${country} and which official source it relies on, before any filing.`,
+    programWho: "Who it is for",
+    programCheck: "To check",
+    programAvailability: "Availability, name and conditions to confirm on the country’s official portal.",
+    otherRoutes: "Other possible routes",
+    siblingsTitle: (country: string) => `Other procedures for ${country}`,
+    evaluateProgram: "Get this programme assessed",
     watch: "Watch point",
     help: "What 3M does",
     documents: "Documents to gather",
@@ -66,10 +85,11 @@ const COPY = {
   },
 } as const;
 
-export function ProcedureBlueprint({ countryName, visaType, slug, locale, evaluationUrl, officialUrl }: Props) {
+export function ProcedureBlueprint({ countryName, visaType, slug, locale, evaluationUrl, officialUrl, siblings = [] }: Props) {
   const kind = resolveProcedureKind(visaType, slug);
   const blueprint = getProcedureBlueprint(kind, locale);
   const t = COPY[locale];
+  const catalog = getProgramCatalog(kind, locale);
   const contactHref = locale === "en" ? "/en" : "/contact";
 
   return (
@@ -81,6 +101,7 @@ export function ProcedureBlueprint({ countryName, visaType, slug, locale, evalua
         <p className="text-sm leading-6 text-slate-600">{t.intro}</p>
         <nav aria-label={locale === "en" ? "On this page" : "Sur cette page"} className="flex flex-wrap gap-2 text-xs font-bold">
           {[
+            ["blueprint-programs", t.programs],
             ["blueprint-journey", t.journey],
             ["blueprint-documents", t.documents],
             ["blueprint-costs", t.costs],
@@ -94,6 +115,42 @@ export function ProcedureBlueprint({ countryName, visaType, slug, locale, evalua
           <h3 className="flex items-center gap-2 font-bold text-slate-900"><ClipboardList className="h-4 w-4 text-blue-700" aria-hidden="true" /> {t.forWhom}</h3>
           <p className="mt-1 text-sm leading-6 text-slate-700">{blueprint.forWhom}</p>
         </div>
+      </Card>
+
+      <Card id="blueprint-programs" className="scroll-mt-24 space-y-4 rounded-3xl border-slate-200 bg-white p-8 shadow-sm" data-testid="blueprint-programs">
+        <h3 className="flex items-center gap-2 text-xl font-bold text-slate-900"><Layers className="h-5 w-5 text-blue-700" aria-hidden="true" /> {t.programs}</h3>
+        <p className="text-sm leading-6 text-slate-600">{t.programsIntro(countryName)}</p>
+        <div className="grid gap-3 md:grid-cols-2">
+          {catalog.programs.map((program) => (
+            <details key={program.name} className="group rounded-2xl border border-slate-100 bg-slate-50 p-4 open:border-blue-200 open:bg-blue-50/40">
+              <summary className="cursor-pointer list-none font-bold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">{program.name}</summary>
+              <p className="mt-2 text-sm leading-6 text-slate-700"><strong>{t.programWho} : </strong>{program.who}</p>
+              <p className="mt-1 text-sm leading-6 text-slate-700"><strong>{t.programCheck} : </strong>{program.check}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">{t.programAvailability}</p>
+              <a href={evaluationUrl} className="mt-2 inline-flex min-h-9 items-center text-sm font-bold text-blue-800 underline underline-offset-2">{t.evaluateProgram}</a>
+            </details>
+          ))}
+        </div>
+        <h4 className="pt-2 font-bold text-slate-900">{t.otherRoutes}</h4>
+        <ul className="grid gap-3 md:grid-cols-3">
+          {catalog.other.map((route) => (
+            <li key={route.name} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+              <p className="font-bold text-slate-900">{route.name}</p>
+              <p className="mt-1 text-sm leading-6 text-slate-700">{route.who}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-600"><strong>{t.programCheck} : </strong>{route.check}</p>
+            </li>
+          ))}
+        </ul>
+        {siblings.length > 0 && (
+          <div data-testid="blueprint-siblings">
+            <h4 className="font-bold text-slate-900">{t.siblingsTitle(countryName)}</h4>
+            <ul className="mt-2 flex flex-wrap gap-2">
+              {siblings.map((sibling) => (
+                <li key={sibling.href}><a href={sibling.href} className="inline-flex min-h-9 items-center rounded-full border border-blue-200 bg-blue-50 px-3 text-sm font-semibold text-blue-900 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">{sibling.label}</a></li>
+              ))}
+            </ul>
+          </div>
+        )}
       </Card>
 
       <Card id="blueprint-journey" className="scroll-mt-24 space-y-5 rounded-3xl border-slate-200 bg-white p-8 shadow-sm">
