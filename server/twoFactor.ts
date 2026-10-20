@@ -23,6 +23,19 @@ function decryptSecret(value: string) {
   return Buffer.concat([decipher.update(Buffer.from(encryptedRaw, "base64url")), decipher.final()]).toString("utf8");
 }
 
+/** Un code d'application d'authentification a toujours six chiffres ; la bibliothèque lève une erreur sur tout autre format (vide, code de secours…). */
+export const isTotpFormat = (token: string) => /^[0-9]{6}$/.test(token);
+
+/** Vérifie un code d'application sans jamais lever : un format invalide est simplement refusé. */
+async function verifyTotp(secret: string, token: string): Promise<boolean> {
+  if (!isTotpFormat(token)) return false;
+  try {
+    return (await verify({ secret, token })).valid;
+  } catch {
+    return false;
+  }
+}
+
 const makeRecoveryCodes = () => Array.from({ length: 8 }, () => `${randomBytes(3).toString("hex").toUpperCase()}-${randomBytes(3).toString("hex").toUpperCase()}`);
 
 export async function getTwoFactorStatus(actorType: TwoFactorActor, actorId: number) {
@@ -48,8 +61,7 @@ export async function confirmTwoFactorEnrollment(actorType: TwoFactorActor, acto
   if (!db) throw new Error("Base indisponible.");
   const factor = (await db.select().from(securityTotpFactors).where(and(eq(securityTotpFactors.actorType, actorType), eq(securityTotpFactors.actorId, actorId))).limit(1))[0];
   if (!factor) throw new Error("Commencez d’abord l’enrôlement 2FA.");
-  const result = await verify({ secret: decryptSecret(factor.secretCiphertext), token });
-  if (!result.valid) throw new Error("Code d’authentification invalide.");
+  if (!(await verifyTotp(decryptSecret(factor.secretCiphertext), token.trim()))) throw new Error("Code d’authentification invalide.");
   const recoveryCodes = makeRecoveryCodes();
   await db.delete(securityRecoveryCodes).where(and(eq(securityRecoveryCodes.actorType, actorType), eq(securityRecoveryCodes.actorId, actorId)));
   await db.insert(securityRecoveryCodes).values(await Promise.all(recoveryCodes.map(async (code) => ({ actorType, actorId, codeHash: await bcrypt.hash(code, 12) }))));
@@ -63,8 +75,9 @@ export async function verifyTwoFactor(actorType: TwoFactorActor, actorId: number
   const factor = (await db.select().from(securityTotpFactors).where(and(eq(securityTotpFactors.actorType, actorType), eq(securityTotpFactors.actorId, actorId), eq(securityTotpFactors.enabled, true))).limit(1))[0];
   if (!factor) return { required: false, valid: true, recovery: false };
   const normalized = token.trim().toUpperCase();
-  const totp = await verify({ secret: decryptSecret(factor.secretCiphertext), token: normalized });
-  if (totp.valid) return { required: true, valid: true, recovery: false };
+  // Aucun code saisi : l'authentification est requise mais pas encore valide (le client redemande le code), jamais une erreur interne.
+  if (!normalized) return { required: true, valid: false, recovery: false };
+  if (await verifyTotp(decryptSecret(factor.secretCiphertext), normalized)) return { required: true, valid: true, recovery: false };
   const codes = await db.select().from(securityRecoveryCodes).where(and(eq(securityRecoveryCodes.actorType, actorType), eq(securityRecoveryCodes.actorId, actorId), isNull(securityRecoveryCodes.usedAt)));
   for (const code of codes) {
     if (await bcrypt.compare(normalized, code.codeHash)) {
