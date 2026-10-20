@@ -21,6 +21,11 @@ describe("Label : relie automatiquement l'étiquette au champ qui la suit", () =
     expect(screen.getByLabelText("Pays").tagName).toBe("SELECT");
   });
 
+  it("relie aussi l'étiquette placée dans un en-tête (avec pastille) suivi du champ", () => {
+    render(<div><div className="flex"><Label>Niveau en anglais</Label><span>Recommandé</span></div><select><option>A</option></select></div>);
+    expect(screen.getByLabelText("Niveau en anglais").tagName).toBe("SELECT");
+  });
+
   it("respecte un htmlFor explicite et un aria-label existant, sans les écraser", () => {
     render(<div><Label htmlFor="mon-champ">Explicite</Label><Input id="mon-champ" /><Label>Autre</Label><Input aria-label="Nom propre" /></div>);
     expect(screen.getByLabelText("Explicite").id).toBe("mon-champ");

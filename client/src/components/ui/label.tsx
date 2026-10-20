@@ -6,14 +6,24 @@ import { cn } from "@/lib/utils";
 /** Champs que l'on peut relier à une étiquette (cases et boutons radio gardent leur propre <label> englobant). */
 const LABELABLE_CONTROL = "input:not([type=hidden]):not([type=checkbox]):not([type=radio]),textarea,select,button[role=combobox]";
 
-function findControlAfter(label: HTMLElement): HTMLElement | null {
+function findControlAmongNextSiblings(anchor: Element): HTMLElement | null {
   // On ne regarde que les deux frères suivants : `<Label/><Input/>` ou `<Label/><div><Input/></div>`.
   // Un champ plus éloigné appartient presque toujours à une autre étiquette.
-  let sibling = label.nextElementSibling;
+  let sibling = anchor.nextElementSibling;
   for (let hops = 0; sibling && hops < 2; hops += 1, sibling = sibling.nextElementSibling) {
     const control = sibling.matches(LABELABLE_CONTROL) ? sibling : sibling.querySelector(LABELABLE_CONTROL);
     if (control && !control.closest('[aria-hidden="true"]')) return control as HTMLElement;
   }
+  return null;
+}
+
+function findControlAfter(label: HTMLElement): HTMLElement | null {
+  const direct = findControlAmongNextSiblings(label);
+  if (direct) return direct;
+  // `<div><Label/><Badge/></div><Input/>` : l'étiquette est seule avec ses accessoires dans un conteneur d'en-tête,
+  // le champ suit ce conteneur. On ne remonte que si l'étiquette est le premier élément de l'en-tête.
+  const header = label.parentElement;
+  if (header && header.firstElementChild === label && !header.querySelector(LABELABLE_CONTROL)) return findControlAmongNextSiblings(header);
   return null;
 }
 

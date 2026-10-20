@@ -29,7 +29,7 @@ describe("catalogue des types de visa et des programmes", () => {
     for (const keyword of [/employeur/i, /points/i, /qualifi/i, /recherche d’emploi/i, /saisonnier/i, /vacances-travail/i, /entrepreneur/i, /nomade/i, /au pair/i]) expect(work).toMatch(keyword);
     const study = PROGRAMS_FR.etudes.map((entry) => entry.name).join(" | ");
     for (const keyword of [/étudiant/i, /langue/i, /échange/i, /apprentissage/i, /doctorat/i, /bourses/i, /après le diplôme/i]) expect(study).toMatch(keyword);
-    expect(OTHER_ROUTES_FR.map((entry) => entry.name).join(" | ")).toMatch(/famil.*résidence.*retraite/is);
+    expect(OTHER_ROUTES_FR.map((entry) => entry.name).join(" | ")).toMatch(/famil[\s\S]*résidence[\s\S]*retraite/i);
     expect(OTHER_ROUTES_EN.length).toBe(OTHER_ROUTES_FR.length);
   });
 
