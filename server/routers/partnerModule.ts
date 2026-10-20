@@ -163,7 +163,8 @@ export const partnerModuleRouter = router({
     const mime = detectAuthorizationDocumentType(bytes);
     if (!mime) throw new TRPCError({ code: "BAD_REQUEST", message: "Format non accepté : joignez un PDF, un JPEG ou un PNG." });
     const extension = mime === "application/pdf" ? "pdf" : mime === "image/png" ? "png" : "jpg";
-    const stored = await storagePut(`partner-authorizations/${input.requestId}/authorization.${extension}`, bytes, mime);
+    // Clé non devinable (128 bits aléatoires) : le fichier n'est lu que par lien temporaire signé, jamais par adresse directe.
+    const stored = await storagePut(`partner-authorizations/${input.requestId}/${randomBytes(16).toString("hex")}.${extension}`, bytes, mime);
     await db.update(partnerRegistrationExtras).set({
       authorizationDocKey: stored.key,
       authorizationDocName: input.fileName.replace(/[\r\n\\/]/g, " ").slice(0, 200),

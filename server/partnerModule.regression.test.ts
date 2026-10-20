@@ -117,6 +117,9 @@ describe("module Entreprises & partenaires — propriétés de sécurité du ser
     expect(upload).toContain("AUTHORIZATION_DOCUMENT_MAX_BYTES");
     expect(upload).toContain("uploadTokenHash");
     expect(byName("adminAuthorizationDocumentUrl")).toContain("storageGetSignedUrl");
+    // Clé aléatoire non devinable ; jamais d'adresse publique enregistrée (seule la clé est conservée).
+    expect(upload).toContain("randomBytes(16).toString(\"hex\")");
+    expect(upload).not.toContain("url: stored.url");
   });
 
   it("une migration non appliquée donne un message clair au lieu d'une erreur technique", () => {
