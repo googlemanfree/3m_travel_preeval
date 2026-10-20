@@ -17,6 +17,8 @@ export type ClientPlan = {
   countryName: string | null;
   blurb: string;
   actions: PlanAction[];
+  /** Les mêmes actions, formulées pour le conseiller. */
+  staffActions: PlanAction[];
   documents: Array<{ label: string; received: boolean }>;
   answers: DescribedAnswer[];
   completeness: FormCompleteness;
@@ -67,6 +69,21 @@ const KEYWORD_GROUPS: string[][] = [
 ];
 const fold = (value: string) => value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 
+/** Indice du groupe de mots-clés d'une pièce (passeport, diplôme, contrat…) : deux libellés du même groupe désignent la même pièce. */
+export function keywordGroupIndex(label: string): number {
+  const folded = fold(label);
+  return KEYWORD_GROUPS.findIndex((words) => words.some((word) => folded.includes(word)));
+}
+
+/** Pièces propres au visa ou programme et au domaine choisis, au format des checklists de dossier. */
+export function programChecklistLines(programId: string | null | undefined, domainId: string | null | undefined): Array<{ documentType: string; comment: string; source: "program" }> {
+  const program = getProgram(programId);
+  if (!program || program.id.endsWith("-orientation")) return [];
+  const domain = getDomain(domainId);
+  const labels = Array.from(new Set([...FAMILY_DOCUMENTS[program.family], ...(domain?.documents ?? [])]));
+  return labels.map((documentType) => ({ documentType, comment: `Pièce propre au parcours « ${program.label} »${domain ? ` · ${domain.label}` : ""} : à confirmer par le conseiller selon la source officielle.`, source: "program" as const }));
+}
+
 /** Une pièce attendue est considérée reçue si un document déposé porte le même mot-clé (passeport, diplôme, contrat…). */
 export function documentIsReceived(expectedLabel: string, uploaded: Array<{ documentType?: string | null; documentName?: string | null }>): boolean {
   const label = fold(expectedLabel);
@@ -92,6 +109,32 @@ export function parseClientProjectDetails(json: string | null | undefined, count
   }
 }
 
+const STAFF_TEXT: Record<string, string> = {
+  offer: "Aider le candidat à sécuriser une offre d’emploi (employeurs partenaires, canaux de recrutement fiables) ou à la faire confirmer par écrit.",
+  training_contract: "Identifier avec le candidat un employeur ou un établissement formateur et obtenir un contrat ou une promesse de formation.",
+  recognition: "Ouvrir le dossier de reconnaissance du diplôme : organisme compétent, pièces, traductions assermentées si exigées.",
+  assessment: "Orienter le candidat vers l’évaluation de ses diplômes (organisme à confirmer sur la source officielle).",
+  language_test: "Planifier un test de langue officiel avec le candidat (calendrier, centre, préparation).",
+  admission: "Préparer les candidatures aux établissements : programmes, dossiers, échéances.",
+  funds: "Faire le point sur les ressources et leur justification.",
+  funding_plan: "Clarifier le plan de financement avec le candidat.",
+  invitation: "Aider le candidat à obtenir l’invitation ou l’attestation d’accueil de son hôte.",
+  invitation_letter: "Obtenir la lettre d’invitation de l’organisation d’accueil.",
+  registration: "Vérifier si la profession est encadrée par un ordre ou un registre et rassembler les attestations.",
+  host_family: "Aider à identifier une famille d’accueil ou une agence agréée.",
+  onward_ticket: "Vérifier le billet vers la destination finale et les règles de transit.",
+  scholarship: "Suivre l’échéancier de la bourse.",
+  scholarship_apply: "Accompagner le dépôt de la candidature à la bourse avant l’échéance.",
+  passport: "Contrôler la validité du passeport au regard de la date de voyage.",
+  business_plan: "Accompagner la rédaction d’un plan d’affaires structuré.",
+  review: "Examiner le dossier et indiquer au candidat les pièces à fournir.",
+};
+
+/** Mêmes actions que dans l'espace du candidat, formulées pour le conseiller (qui fait quoi avec le candidat). */
+export function buildStaffFollowUps(form: ResolvedForm, values: FormValues): PlanAction[] {
+  return buildPlanActions(form, values).map((action) => ({ id: action.id, text: STAFF_TEXT[action.id] ?? (action.id.startsWith("lang_") ? "Prévoir avec le candidat un plan de préparation dans la langue du pays." : action.text) }));
+}
+
 const isKind = (value: unknown): value is ProjectKind => typeof value === "string" && (PROJECT_KINDS as readonly string[]).includes(value);
 
 export function buildClientPlan(
@@ -113,6 +156,7 @@ export function buildClientPlan(
     countryName: form.countryName,
     blurb: form.blurb,
     actions: buildPlanActions(form, values),
+    staffActions: buildStaffFollowUps(form, values),
     documents,
     answers: describeProjectDetails({ country: input.country, projectType: input.projectType }, details),
     completeness: formCompleteness(form, values),

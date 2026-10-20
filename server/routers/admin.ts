@@ -316,9 +316,9 @@ export function countryChecklistFor(destination?: string | null) {
   return COUNTRY_DOCUMENT_CHECKLISTS.default;
 }
 
-export function procedureChecklistFor(procedureType?: string | null, destination?: string | null) {
-  // Source unique : pays + procédure + pièces du parcours (catalogue journey).
-  const unified = buildCountryProcedureDocumentChecklist({ destination, procedureType });
+export function procedureChecklistFor(procedureType?: string | null, destination?: string | null, program: { programId?: string | null; domainId?: string | null } = {}) {
+  // Source unique : pays + procédure + parcours choisi (visa, domaine) + pièces du guide (catalogue journey).
+  const unified = buildCountryProcedureDocumentChecklist({ destination, procedureType, programId: program.programId, domainId: program.domainId });
   return {
     label: unified.label,
     documents: unified.documents.map((item) => ({ documentType: item.documentType, comment: item.comment })),
@@ -4636,6 +4636,8 @@ export const adminRouter = router({
         destination,
         procedureType: procedureLabel ?? visaTypeForJourney,
         documents: documentMatches,
+        programId: typeof projectDetails.programId === "string" ? projectDetails.programId : null,
+        domainId: typeof projectDetails.domainId === "string" ? projectDetails.domainId : null,
       });
       const journeySla = buildJourneyStepSla({
         destination,
@@ -6090,6 +6092,8 @@ export const adminRouter = router({
       destination: z.string().trim().min(2).max(100).optional(),
       procedureType: z.string().trim().max(120).optional(),
       customDocuments: z.array(z.string().trim().min(2).max(120)).max(16).optional(),
+      programId: z.string().trim().max(80).optional(),
+      domainId: z.string().trim().max(40).optional(),
     }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
@@ -6098,7 +6102,7 @@ export const adminRouter = router({
       const reference = parseAdminCandidateReference(input.candidateId);
       if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
       const operationalCase = await ensureOperationalCase(db, reference);
-      const template = procedureChecklistFor(input.procedureType, input.destination);
+      const template = procedureChecklistFor(input.procedureType, input.destination, { programId: input.programId, domainId: input.domainId });
       const customDocuments = (input.customDocuments ?? []).map((documentType) => ({ documentType, comment: "Pièce ajoutée spécifiquement par l’administration pour cette procédure." }));
       // Capacité partagée client ↔ admin : 16 pièces max (demandes custom prioritaires).
       const checklist = [...customDocuments, ...template.documents].slice(0, 16);

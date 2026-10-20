@@ -5,12 +5,13 @@
  */
 
 import { getEnrichedCandidateJourney } from "./candidateJourneyCatalog";
+import { keywordGroupIndex, programChecklistLines } from "./dynamicForm/clientPlan";
 import { MAX_CHECKLIST_DOCUMENTS, capDocumentList } from "./documentLimits";
 
 export type ChecklistDocumentLine = {
   documentType: string;
   comment: string;
-  source: "country" | "procedure" | "journey" | "custom";
+  source: "country" | "procedure" | "journey" | "custom" | "program";
 };
 
 export type ChecklistDocumentMatch = {
@@ -189,6 +190,9 @@ export function buildCountryProcedureDocumentChecklist(input: {
   destination?: string | null;
   procedureType?: string | null;
   customDocuments?: string[];
+  /** Visa ou programme et domaine choisis dans l'évaluation : ajoutent les pièces propres au parcours. */
+  programId?: string | null;
+  domainId?: string | null;
 }): { label: string; documents: ChecklistDocumentLine[] } {
   const procedureKey = resolveProcedureChecklistKey(input.procedureType);
   const procedure = procedureKey ? PROCEDURE_EXTRA[procedureKey] : undefined;
@@ -207,15 +211,26 @@ export function buildCountryProcedureDocumentChecklist(input: {
     if (!key || merged.has(key)) continue;
     merged.set(key, line);
   }
+  // Pièces du parcours choisi : ajoutées seulement si le même type de pièce (passeport, diplôme…) n'est pas déjà demandé.
+  const takenGroups = new Set(Array.from(merged.values()).map((line) => keywordGroupIndex(line.documentType)).filter((index) => index >= 0));
+  const programLines: ChecklistDocumentLine[] = [];
+  for (const line of programChecklistLines(input.programId, input.domainId)) {
+    const key = fold(line.documentType);
+    const group = keywordGroupIndex(line.documentType);
+    if (!key || merged.has(key) || (group >= 0 && takenGroups.has(group))) continue;
+    if (group >= 0) takenGroups.add(group);
+    merged.set(key, line);
+    programLines.push(line);
+  }
   const all = Array.from(merged.values());
   const customs = all.filter((line) => line.source === "custom");
   const country = all.filter((line) => line.source === "country");
   const procedureLines = all.filter((line) => line.source === "procedure");
   const journey = all.filter((line) => line.source === "journey");
-  // Priorité : demandes admin → pays → procédure → parcours (jamais plus de 16).
+  // Priorité : demandes admin → pays → parcours choisi → procédure → étapes du guide (jamais plus de 16).
   return {
     label: procedure?.label ?? (input.procedureType?.trim() || "Procédure standard"),
-    documents: capDocumentList([...customs, ...country, ...procedureLines, ...journey], MAX_CHECKLIST_DOCUMENTS),
+    documents: capDocumentList([...customs, ...country, ...programLines, ...procedureLines, ...journey], MAX_CHECKLIST_DOCUMENTS),
   };
 }
 
@@ -236,6 +251,8 @@ export function summarizeCountryProcedureChecklist(input: {
   procedureType?: string | null;
   customDocuments?: string[];
   documents?: ChecklistDocumentMatch[];
+  programId?: string | null;
+  domainId?: string | null;
 }): ChecklistProgressSnapshot {
   const template = buildCountryProcedureDocumentChecklist(input);
   const lines = template.documents.map((line) => ({

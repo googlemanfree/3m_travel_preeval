@@ -26,6 +26,10 @@ export function AdminDeclaredAnswersPanel({ projectType, country, details, colum
         <span className="ml-auto text-xs font-semibold text-slate-600" data-testid="admin-declared-completeness">{plan.completeness.answered}/{plan.completeness.total} réponses ({plan.completeness.percent} %)</span>
       </div>
       {plan.completeness.missingRequired.length > 0 && <p className="mt-2 text-xs text-amber-900">Questions obligatoires sans réponse : {plan.completeness.missingRequired.join(" ; ")}.</p>}
+      <section className="mt-3" aria-labelledby="admin-declared-followups" data-testid="admin-declared-followups">
+        <h5 id="admin-declared-followups" className="text-xs font-black uppercase tracking-wide text-emerald-800">À suivre avec le candidat</h5>
+        <ul className="mt-1.5 space-y-1 text-sm text-slate-800">{plan.staffActions.map((action) => <li key={action.id} className="flex gap-2"><span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-600" aria-hidden="true" />{action.text}</li>)}</ul>
+      </section>
       {plan.flags.length > 0 && (
         <ul className="mt-3 space-y-1.5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950" aria-label="Points à clarifier avec le candidat" data-testid="admin-declared-flags">
           {plan.flags.map((flag) => <li key={flag.code} className="flex gap-2"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /><span>{flag.message}</span></li>)}
