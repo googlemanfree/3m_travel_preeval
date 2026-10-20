@@ -12,3 +12,8 @@
 - [x] Implémenter la confirmation de changement pays/projet, le résumé d’impact et les erreurs de validation accessibles.
 - [x] Préserver les champs communs et archiver les réponses spécifiques devenues inactives dans le brouillon.
 - [x] Ajouter les régressions ciblées puis valider typecheck, tests et build.
+
+## Restauration du parcours précédent
+- [x] Archiver les réponses par projet, pays et visa.
+- [x] Restaurer automatiquement les réponses au retour sur le même couple pays–visa.
+- [x] Valider typecheck, build et 13 tests ciblés.

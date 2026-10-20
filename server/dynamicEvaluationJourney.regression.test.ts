@@ -17,8 +17,18 @@ describe("parcours d’évaluation dynamique pays / visa", () => {
     expect(source).toContain("archivedProjectDetails");
     expect(source).toContain("localStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), owner: draftOwner, form, archivedProjectDetails }))");
     expect(source).toContain("const details = formRef.current.projectDetails");
+    expect(source).toContain("journeyArchiveKey = (projectType: EvaluationProjectType, country: string, visaType: string)");
+    expect(source).toContain("restoreArchivedDetails");
+    expect(source).toContain("formRef.current.visaType");
+    expect(source).toContain("const changeVisaType = (visaType: string)");
     expect(source).toContain("applyProjectType");
     expect(source).toContain("applyDestinationCountry");
+  });
+
+  it("restaure les réponses quand le même pays et le même visa redeviennent actifs", () => {
+    expect(source).toContain("projectDetails: restoreArchivedDetails(formRef.current.projectType, country, formRef.current.visaType");
+    expect(source).toContain("key === 'visaType'");
+    expect(source).toContain("restoreArchivedDetails(formRef.current.projectType, formRef.current.destinationCountry, visaType, {}");
   });
 
   it("expose les erreurs de validation au lecteur d’écran et cible le champ concerné", () => {

@@ -137,7 +137,7 @@ export default function Evaluation() {
   const [cropPixels, setCropPixels] = useState<CropPixels | null>(null);
   const [customDestinationMode, setCustomDestinationMode] = useState(false);
   const [pendingJourneyChange, setPendingJourneyChange] = useState<PendingJourneyChange | null>(null);
-  const [archivedProjectDetails, setArchivedProjectDetails] = useState<Record<string, string>>({});
+  const [archivedProjectDetails, setArchivedProjectDetails] = useState<Record<string, Record<string, string>>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const DRAFT_KEY = 'eval_draft';
@@ -153,7 +153,7 @@ export default function Evaluation() {
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
       if (!raw) return;
-      const saved = JSON.parse(raw) as { savedAt?: number; owner?: string; form?: Partial<FormState>; archivedProjectDetails?: Record<string, string> };
+      const saved = JSON.parse(raw) as { savedAt?: number; owner?: string; form?: Partial<FormState>; archivedProjectDetails?: Record<string, Record<string, string>> };
       const expired = typeof saved.savedAt !== 'number' || Date.now() - saved.savedAt > DRAFT_MAX_AGE_MS;
       if (!saved.form || expired || saved.owner !== draftOwner) { clearDraft(); return; }
       // Un projet choisi explicitement dans l'URL prime sur un ancien brouillon.
@@ -210,8 +210,18 @@ export default function Evaluation() {
   const selectedProcedure = getProcedureById(form.projectDetails.procedureId);
   const countryProcedureFields = getCountryProcedureFields(form.projectType, form.destinationCountry, selectedProcedure);
 
+  const journeyArchiveKey = (projectType: EvaluationProjectType, country: string, visaType: string) => `${projectType}::${country || 'pays'}::${visaType || 'visa'}`;
+  const restoreArchivedDetails = (projectType: EvaluationProjectType, country: string, visaType: string, baseDetails: Record<string, string>) => ({
+    ...baseDetails,
+    ...(archivedProjectDetails[journeyArchiveKey(projectType, country, visaType)] ?? {}),
+  });
+
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
-    const next = { ...formRef.current, [key]: value };
+    const next = {
+      ...formRef.current,
+      [key]: value,
+      ...(key === 'visaType' ? { projectDetails: restoreArchivedDetails(formRef.current.projectType, formRef.current.destinationCountry, value as string, formRef.current.projectDetails) } : {}),
+    };
     formRef.current = next;
     setForm(next);
   };
@@ -233,7 +243,7 @@ export default function Evaluation() {
       ...formRef.current,
       destinationCountry: country,
       destinationCategory: getSuggestedDestinationCategory(country),
-      projectDetails: procedure ? { procedureId: procedure.id, selectedProcedure: procedure.procedureLabel } : {},
+      projectDetails: restoreArchivedDetails(formRef.current.projectType, country, formRef.current.visaType, procedure ? { procedureId: procedure.id, selectedProcedure: procedure.procedureLabel } : {}),
     };
     formRef.current = next;
     setForm(next);
@@ -260,13 +270,37 @@ export default function Evaluation() {
     applyDestinationCountry(country);
   };
 
+  const changeVisaType = (visaType: string) => {
+    if (visaType === formRef.current.visaType) return;
+    const details = formRef.current.projectDetails;
+    const keys = Object.keys(details).filter((key) => Boolean(details[key]));
+    if (keys.length) {
+      const archiveKey = journeyArchiveKey(formRef.current.projectType, formRef.current.destinationCountry, formRef.current.visaType);
+      setArchivedProjectDetails((current) => ({
+        ...current,
+        [archiveKey]: { ...(current[archiveKey] ?? {}), ...Object.fromEntries(keys.map((key) => [key, details[key]])) },
+      }));
+    }
+    const next = {
+      ...formRef.current,
+      visaType,
+      projectDetails: restoreArchivedDetails(formRef.current.projectType, formRef.current.destinationCountry, visaType, {}),
+    };
+    formRef.current = next;
+    setForm(next);
+  };
+
   const confirmJourneyChange = () => {
     if (!pendingJourneyChange) return;
     const details = formRef.current.projectDetails;
     if (pendingJourneyChange.archivedKeys.length) {
+      const archiveKey = journeyArchiveKey(formRef.current.projectType, formRef.current.destinationCountry, formRef.current.visaType);
       setArchivedProjectDetails((current) => ({
         ...current,
-        ...Object.fromEntries(pendingJourneyChange.archivedKeys.map((key) => [`${formRef.current.projectType}.${formRef.current.destinationCountry || 'pays'}.${key}`, details[key]])),
+        [archiveKey]: {
+          ...(current[archiveKey] ?? {}),
+          ...Object.fromEntries(pendingJourneyChange.archivedKeys.map((key) => [key, details[key]])),
+        },
       }));
     }
     if (pendingJourneyChange.kind === 'project') applyProjectType(pendingJourneyChange.value as EvaluationProjectType);
@@ -814,7 +848,7 @@ export default function Evaluation() {
               </div>}
               <div>
                 <Label>Type de visa recherché *</Label>
-                <select value={form.visaType} onChange={(e) => update('visaType', e.target.value)} className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm">
+                  <select value={form.visaType} onChange={(e) => changeVisaType(e.target.value)} className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm">
                   <option value="canada_rp">Canada — Résidence Permanente</option>
                   <option value="canada_etude">Canada — Études</option>
                   <option value="canada_tourisme">Canada — Visiteur</option>
