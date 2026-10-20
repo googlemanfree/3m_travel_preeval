@@ -177,10 +177,26 @@ describe("Confidentialité — pièces privées et prestataires", () => {
     expect(update).toContain("Impossible d’activer");
   });
 
-  it("l'authentification renforcée est un réglage d'environnement, sans verrouiller les administrateurs par surprise", () => {
+  it("l'authentification renforcée est exigée PAR DÉFAUT : seule une désactivation explicite l'ouvre, et une erreur refuse l'action", async () => {
     const strong = read("server/services/adminStrongAuth.ts");
-    expect(strong).toContain("ADMIN_2FA_ENFORCEMENT");
-    expect(strong).toContain('=== "on"');
+    expect(strong).toContain('?? "on"');
+    expect(strong).toContain('!== "off"');
+    expect(strong).not.toMatch(/catch\s*\{\s*enabled = false/);
+    const { isStrongAdminEnforced } = await import("./services/adminStrongAuth");
+    const previous = process.env.ADMIN_2FA_ENFORCEMENT;
+    try {
+      delete process.env.ADMIN_2FA_ENFORCEMENT;
+      expect(isStrongAdminEnforced()).toBe(true);
+      process.env.ADMIN_2FA_ENFORCEMENT = "";
+      expect(isStrongAdminEnforced()).toBe(true);
+      process.env.ADMIN_2FA_ENFORCEMENT = "ON";
+      expect(isStrongAdminEnforced()).toBe(true);
+      process.env.ADMIN_2FA_ENFORCEMENT = "off";
+      expect(isStrongAdminEnforced()).toBe(false);
+    } finally {
+      if (previous === undefined) delete process.env.ADMIN_2FA_ENFORCEMENT;
+      else process.env.ADMIN_2FA_ENFORCEMENT = previous;
+    }
   });
 
   it("le registre des prestataires est amorcé en « non examiné » et l'audit n'enregistre pas d'adresse IP en clair", () => {

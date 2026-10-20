@@ -77,7 +77,7 @@ export function AdminCvthequeReview({ sessionToken }: { sessionToken: string }) 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5" aria-labelledby="admin-cvtheque-title" data-testid="admin-cvtheque-review">
       <h2 id="admin-cvtheque-title" className="flex items-center gap-2 text-lg font-black text-slate-950"><Library className="h-5 w-5 text-sky-700" aria-hidden="true" />CVthèque — examen avant publication</h2>
-      <p className="mt-1 text-sm text-slate-600">Une fiche n’est visible des employeurs que si le candidat a autorisé la diffusion, que son résumé est approuvé et que vous l’avez publiée. La publication peut exiger la double authentification.</p>
+      <p className="mt-1 text-sm text-slate-600">Une fiche n’est visible des employeurs que si le candidat a autorisé la diffusion, que son résumé est approuvé et que vous l’avez publiée. La publication exige la double authentification de l’administrateur.</p>
       {queue.error && <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950" role="status">{queue.error.message}</p>}
       <div className="mt-3 flex flex-wrap gap-2">
         {CVTHEQUE_STATES.map((state) => <button key={state} type="button" onClick={() => setFilter(filter === state ? "all" : state)} aria-pressed={filter === state} className={`rounded-full border px-3 py-1 text-xs font-bold ${filter === state ? "border-sky-600 bg-sky-50 text-sky-950" : "border-slate-200 text-slate-700"}`}>{CVTHEQUE_STATE_LABELS[state].fr} · {count(state)}</button>)}
