@@ -63,6 +63,7 @@ import WelcomeJourneyCard from "@/components/WelcomeJourneyCard";
 import MyFlightRequestsCard from "@/components/MyFlightRequestsCard";
 import PrivacyDataCard from "@/components/PrivacyDataCard";
 import FlightAfterVisaCard from "@/components/FlightAfterVisaCard";
+import { ReviewInviteCard } from "@/components/ReviewInviteCard";
 import { PlacementConsentCard } from "@/components/PlacementConsentCard";
 import { SelectableProfileCard } from "@/components/SelectableProfileCard";
 import SubmitReview from "@/pages/SubmitReview";
@@ -953,6 +954,7 @@ export default function EvaluationSpace() {
                 receiptApprovedAt={(workflow as any)?.paymentReceiptApprovedAt ?? null}
                 receiptAmountLabel={(workflow as any)?.paymentReceiptAmount ?? null}
               />
+              <ReviewInviteCard approved={["approuve", "visa_approuve"].includes(String(cProfile.dossierStatus))} destination={primaryDestination} visaType={(cProfile as any).visaType} />
               <FlightAfterVisaCard approved={["approuve", "visa_approuve"].includes(String(cProfile.dossierStatus)) || ["approuve", "visa_approuve"].includes(String((activeDossier as any)?.status ?? (activeDossier as any)?.dossierStatus))} destination={primaryDestination} />
               <MyFlightRequestsCard />
               <Card className="border-slate-200 bg-white p-5 shadow-sm" data-testid="client-online-services-sync">
