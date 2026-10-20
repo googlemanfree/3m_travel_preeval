@@ -78,6 +78,18 @@ describe("photos de villes des fiches de procédure", () => {
     expect(credit.querySelectorAll("a").length).toBe(2);
   });
 
+  it("expose un chargement progressif, des filtres et une visionneuse accessible", () => {
+    const source = read("client/src/components/CountryPhotoGallery.tsx");
+    expect(source).toContain('loading={priority ? "eager" : "lazy"}');
+    expect(source).toContain('data-testid="country-photo-skeleton"');
+    expect(source).toContain('data-testid="country-photo-lightbox"');
+    expect(source).toContain('onTouchStart=');
+    expect(source).toContain('id="country-photo-place"');
+    expect(source).toContain('id="country-photo-sort"');
+    expect(source).toContain('aria-label="Photo précédente"');
+    expect(source).toContain('aria-label="Photo suivante"');
+  });
+
   it("la fiche e-Visa utilise la photo de ville et son crédit", () => {
     const page = read("client/src/pages/EvisaDetailPage.tsx");
     expect(page).toContain("getCountryPhotos(destination.id)[0]");
