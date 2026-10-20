@@ -53,7 +53,7 @@ describe("serveur : l'accord au CV n'est jamais déduit ni forgé", () => {
   });
 
   it("les clés de consentement viennent APRÈS les détails du client : un détail forgé ne peut pas les écraser", () => {
-    const start = router.indexOf("...(input.projectDetails ?? {}),");
+    const start = router.indexOf("...(cleanDetails ?? {}),");
     expect(start).toBeGreaterThan(-1);
     expect(router.indexOf("preparatoryAnalysisConsent: input.geminiAnalysisConsent", start)).toBeGreaterThan(start);
     expect(router.indexOf("preparatoryCvAnalysisConsent: Boolean(", start)).toBeGreaterThan(start);

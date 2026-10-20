@@ -8,7 +8,7 @@ describe("Rôle administrateur commun", () => {
   it("ne conserve aucun verrou super_admin dans l’authentification serveur", () => {
     const source = read("server/routers/adminAuth.ts");
     expect(source).toContain("export async function requireSuperAdminSession(sessionToken: string)");
-    expect(source).toContain("return requireValidAdminSession(sessionToken);");
+    expect(source).toContain("admin.email.trim().toLowerCase() !== SUPER_ADMIN_EMAIL");
     expect(source).not.toContain('admin.role !== "super_admin"');
     expect(source).toContain('role: "admin"');
   });

@@ -165,6 +165,8 @@ export type EvaluationContext = {
   /** Type de visa / projet — le CV n’est obligatoire que pour le travail. */
   visaType: string | null;
   projectType: string | null;
+  /** Visa ou programme choisi dans le formulaire dynamique : précise si le CV est exigé. */
+  programId?: string | null;
   /** CV au dossier : obligatoire pour visa travail, optionnel sinon. */
   cvOnFile: boolean;
   cvFileName: string | null;
@@ -561,7 +563,7 @@ export async function publishEvaluation(deps: ValidationDeps, admin: Actor, eval
 
   const context = await requireContext(deps.store, evaluationId);
   // Visa travail : CV obligatoire. Autres visas : évaluation intelligente sans bloquer sur le CV.
-  if (evaluationRequiresCv(context.visaType, context.projectType) && !context.cvOnFile) {
+  if (evaluationRequiresCv(context.visaType, context.projectType, context.programId) && !context.cvOnFile) {
     throw new ValidationFlowError("CV_REQUIRED", `CV manquant : ${CV_MISSING_FOR_PUBLICATION}`);
   }
   const now = deps.now();

@@ -29,6 +29,7 @@ import { getValidationStore, isMissingTableError } from "../services/evaluationV
 import { caseActivityLogs, cases, documentRequirements } from "../../drizzle/caseTrackingSchema";
 import { parseApplicationPack } from "../../shared/applicationPack";
 import { evaluationRequiresCv, resolveEvaluationProjectKind } from "../../shared/evaluationVisaCv";
+import { buildAiGuidance, collectDeclaredResponses, resolveDynamicForm } from "../../shared/dynamicForm";
 
 /**
  * Une évaluation ouverte dans la validation structurée (brouillon IA, checklist, publication) ne passe plus
@@ -312,6 +313,17 @@ async function ensureEvaluationCase(db: NonNullable<Awaited<ReturnType<typeof ge
   return created;
 }
 
+/** Consignes propres au visa, au domaine et au pays déclarés dans le formulaire (mêmes que lors de la première génération). */
+function retryGuidance(evaluation: typeof evaluations.$inferSelect, details: Record<string, unknown>, projectType: "travail" | "etudes" | "tourisme"): string[] {
+  const values: Record<string, string> = {};
+  for (const [key, value] of Object.entries(details)) if (typeof value === "string") values[key] = value;
+  values.educationLevel = evaluation.educationLevel ?? "";
+  values.frenchLevel = evaluation.frenchLevel ?? "";
+  values.englishLevel = evaluation.englishLevel ?? "";
+  const form = resolveDynamicForm({ country: evaluation.destinationCountry, projectType, programId: values.programId, domainId: values.domainId });
+  return buildAiGuidance(form, values);
+}
+
 function retryInputFromEvaluation(evaluation: typeof evaluations.$inferSelect): GeminiEvaluationDraftInput | null {
   const projectType = evaluation.projectType;
   if (projectType !== "travail" && projectType !== "etudes" && projectType !== "tourisme") return null;
@@ -319,16 +331,16 @@ function retryInputFromEvaluation(evaluation: typeof evaluations.$inferSelect): 
   if (details.preparatoryAnalysisConsent !== true) return null;
   const countryDetails: Record<string, string | number | boolean | undefined> = {};
   for (const key of PREPARATION_DETAIL_KEYS) countryDetails[key] = textDetail(details[key]);
-  if (Array.isArray(details.dynamicResponses)) {
-    details.dynamicResponses.slice(0, 5).forEach((item, index) => {
-      if (!item || typeof item !== "object") return;
-      const response = item as Record<string, unknown>;
-      const question = textDetail(response.question, 260);
-      const answer = textDetail(response.answer, 1000);
-      if (question) countryDetails[`question_complementaire_${index + 1}`] = question;
-      if (answer) countryDetails[`reponse_complementaire_${index + 1}`] = answer;
-    });
-  }
+  // Toutes les réponses déclarées (formulaire dynamique et questions complémentaires) : la relance voit autant de réponses que la première génération.
+  collectDeclaredResponses(details, { country: evaluation.destinationCountry, projectType }).forEach((response, index) => {
+    countryDetails[`question_complementaire_${index + 1}`] = response.question;
+    countryDetails[`reponse_complementaire_${index + 1}`] = response.answer;
+  });
+  const programLabel = textDetail(details.programLabel, 200);
+  const domainLabel = textDetail(details.domainLabel, 120);
+  if (programLabel) countryDetails.programme = programLabel;
+  if (domainLabel) countryDetails.domaine = domainLabel;
+  const guidance = retryGuidance(evaluation, details, projectType);
   const destinationCountry = evaluation.destinationCountry?.trim();
   if (!destinationCountry) return null;
   return {
@@ -341,6 +353,7 @@ function retryInputFromEvaluation(evaluation: typeof evaluations.$inferSelect): 
     languages: textDetail(details.languages, 500),
     financialGuarantee: textDetail(details.financialGuarantee, 500),
     countryDetails,
+    guidance,
     alternativeCountries: (PREPARATION_ALTERNATIVES[destinationCountry] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== destinationCountry),
   };
 }
@@ -464,7 +477,7 @@ export const aiEvaluationManagementRouter = router({
           cvFileUrl: e.cvFileUrl ?? null,
           cvFileName: e.cvFileName ?? null,
           phone: e.phone ?? null,
-          requiresCv: evaluationRequiresCv(e.visaType, e.projectType),
+          requiresCv: evaluationRequiresCv(e.visaType, e.projectType, textDetail(parseProjectDetails(e.projectDetailsJson ?? null).programId, 80)),
         });
       }
 

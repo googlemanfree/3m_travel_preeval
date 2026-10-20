@@ -89,15 +89,15 @@ describe("formulaire d'évaluation — progression et brouillon", () => {
   it("affiche une progression accessible sur les six sections, section par section", () => {
     expect(form).toContain("Progression du formulaire");
     expect(form).toContain('role="progressbar"');
-    expect(form).toContain("sectionProgress / 6");
-    expect(form).toContain("sectionsDone[i]");
-    for (const label of ["État civil", "Études", "Expérience", "Langues", "Projet", "Historique"]) {
-      expect(form).toContain(`"${label}"`);
-    }
+    // Une étape par bloc réellement affiché : la progression suit le formulaire dynamique.
+    expect(form).toContain("progressPercent");
+    expect(form).toContain("progressSteps");
+    for (const label of ["Études", "Expérience", "Langues"]) expect(form).toContain(`${label}`);
+    for (const label of ["Projet", "État civil", "Historique"]) expect(form).toContain(`'${label}'`);
   });
 
   it("ne part pas de 17 % : « Historique » n'est acquis qu'une fois les cinq autres sections complétées", () => {
-    expect(form).toContain("return [...done, done.every(Boolean)];");
+    expect(form).toContain("{ label: 'Historique', done: steps.every((step) => step.done) }");
     expect(form).not.toContain("const s6 = 1");
   });
 

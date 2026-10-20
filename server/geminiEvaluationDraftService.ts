@@ -14,6 +14,8 @@ export type GeminiEvaluationDraftInput = {
   financialGuarantee?: string;
   countryDetails: Record<string, string | number | boolean | undefined>;
   alternativeCountries?: string[];
+  /** Consignes propres au visa, au domaine et au pays choisis (faits stables et points à clarifier ; aucune condition d'entrée). */
+  guidance?: string[];
 };
 
 export type GeminiOrientationAlternative = {
@@ -51,6 +53,8 @@ export const isSensitivePreparationQuestion = (value: string) => SENSITIVE_QUEST
 
 export function buildGeminiEvaluationPrompt(input: GeminiEvaluationDraftInput): string {
   const allowedAlternatives = (input.alternativeCountries ?? []).map((country) => country.trim()).filter(Boolean).slice(0, 6);
+  const guidanceLines = (input.guidance ?? []).map((line) => compactText(line, 400)).filter(Boolean).slice(0, 8);
+  const guidanceBlock = guidanceLines.length ? ["Contexte du dossier choisi par le candidat (consignes de notre équipe, non vérifiées par le candidat) :", ...guidanceLines.map((line) => `- ${line}`), "", ""].join("\n") : "";
   const declaredProfile = {
     destinationCountry: input.destinationCountry,
     projectType: input.projectType,
@@ -72,7 +76,7 @@ Les alternatives sont facultatives et doivent être limitées à trois pistes de
 
 Utilise un français professionnel, prudent et clair. Le résultat est uniquement destiné à un conseiller avant une revue humaine obligatoire.
 
-Réponses déclarées (JSON délimité) :
+${guidanceBlock}Réponses déclarées (JSON délimité) :
 <declared_profile>
 ${JSON.stringify(declaredProfile)}
 </declared_profile>`;

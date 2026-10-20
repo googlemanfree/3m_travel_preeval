@@ -22,7 +22,7 @@ describe("rôle administrateur commun", () => {
 
   it("protège les fonctions admin avec une session serveur valide", () => {
     expect(authSource).toContain("export async function requireSuperAdminSession");
-    expect(authSource).toContain("return requireValidAdminSession(sessionToken);");
+    expect(authSource).toContain("admin.email.trim().toLowerCase() !== SUPER_ADMIN_EMAIL");
     expect(authSource).not.toContain('if (admin.role !== "super_admin")');
     expect(authSource).toContain("await requireSuperAdminSession(input.sessionToken);");
   });

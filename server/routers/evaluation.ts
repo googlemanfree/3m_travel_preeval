@@ -6,6 +6,7 @@ import { clientDocuments, evaluations } from "../../drizzle/schema";
 import { storagePut } from "../storage";
 import { CV_MAX_BASE64_LENGTH } from "../../shared/evaluationCv";
 import { multiProjectEvaluationGap } from "../../shared/evaluationFormRequirements";
+import { buildAiGuidance, collectDeclaredResponses, resolveDynamicForm, sanitizeProjectDetails } from "../../shared/dynamicForm";
 import { EVALUATION_SUBMISSION_LIMITS, createSubmissionGuard } from "../_core/publicRateLimit";
 import { notifyOwner } from "../_core/notification";
 import { generateDossierCode } from "../utils/generateDossierCode";
@@ -425,7 +426,9 @@ export const evaluationRouter = router({
 
       const { evaluationRequiresCv } = await import("../../shared/evaluationVisaCv");
       const { CV_REQUIRED_MESSAGE } = await import("../../shared/evaluationCv");
-      if (evaluationRequiresCv(input.visaType, input.projectType) && !(input.cvBase64 && input.cvFileName)) {
+      // Réponses du formulaire dynamique : recomposées côté serveur, seules celles des champs visibles et valides sont conservées.
+      const cleanDetails = input.projectDetails && input.projectType ? sanitizeProjectDetails({ country: input.destinationCountry, projectType: input.projectType }, input.projectDetails) : input.projectDetails;
+      if (evaluationRequiresCv(input.visaType, input.projectType, cleanDetails?.programId) && !(input.cvBase64 && input.cvFileName)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: CV_REQUIRED_MESSAGE });
       }
 
@@ -481,8 +484,8 @@ export const evaluationRouter = router({
         travelReason: input.travelReason,
         availableBudget: input.availableBudget,
         projectType: input.projectType,
-        projectDetailsJson: input.projectDetails || input.geminiAnalysisConsent ? JSON.stringify({
-          ...(input.projectDetails ?? {}),
+        projectDetailsJson: cleanDetails || input.geminiAnalysisConsent ? JSON.stringify({
+          ...(cleanDetails ?? {}),
           preparatoryAnalysisConsent: input.geminiAnalysisConsent,
           preparatoryAnalysisConsentRecordedAt: input.geminiAnalysisConsent ? new Date().toISOString() : null,
           // Consentement DISTINCT à la lecture du CV : jamais déduit du consentement général, et sans effet sans CV enregistré.
@@ -512,6 +515,17 @@ export const evaluationRouter = router({
         const projectType = input.projectType as "travail" | "etudes" | "tourisme";
         const destinationCountry = input.destinationCountry || input.destinationCategory;
         const alternatives = (orientationAlternativeCandidates[destinationCountry ?? ""] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== destinationCountry);
+        // Le modèle reçoit les questions et réponses lisibles (pas des codes), le visa et le domaine choisis, et des consignes propres au dossier.
+        const declared = collectDeclaredResponses(cleanDetails, { country: destinationCountry, projectType });
+        const geminiCountryDetails: Record<string, string> = {
+          ...(cleanDetails?.programLabel ? { programme: cleanDetails.programLabel } : {}),
+          ...(cleanDetails?.domainLabel ? { domaine: cleanDetails.domainLabel } : {}),
+          ...Object.fromEntries(declared.flatMap((response, index) => [["question_" + (index + 1), response.question], ["reponse_" + (index + 1), response.answer]])),
+        };
+        const geminiGuidance = buildAiGuidance(
+          resolveDynamicForm({ country: destinationCountry, projectType, programId: cleanDetails?.programId, domainId: cleanDetails?.domainId }),
+          { ...(cleanDetails ?? {}), educationLevel: input.educationLevel ?? "", frenchLevel: input.frenchLevel ?? "", englishLevel: input.englishLevel ?? "" },
+        );
         (async () => {
           try {
             const draft = await generateGeminiEvaluationDraft({
@@ -523,8 +537,9 @@ export const evaluationRouter = router({
               educationLevel: input.educationLevel,
               languages: [input.frenchLevel, input.englishLevel, input.languageTestsTaken].filter(Boolean).join(", "),
               financialGuarantee: input.availableBudget,
-              countryDetails: input.projectDetails ?? {},
+              countryDetails: geminiCountryDetails,
               alternativeCountries: alternatives,
+              guidance: geminiGuidance,
             });
             await db.update(evaluations).set({
               aiReportContent: JSON.stringify(draft),

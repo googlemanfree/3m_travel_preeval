@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CheckCircle2, Loader, AlertCircle, Sparkles, FileText, Upload, X, ExternalLink } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { motion } from 'framer-motion';
@@ -13,10 +12,12 @@ import { PremiumCoverImage } from '@/components/PremiumCoverImage';
 import Cropper, { type Area } from 'react-easy-crop';
 import { createCroppedCvFile, type CropPixels } from '@/lib/cvImageCrop';
 import { AI_ANALYSIS_CONSENT_DETAIL, AI_ANALYSIS_CONSENT_LABEL, CV_ANALYSIS_CONSENT_DETAIL, CV_ANALYSIS_CONSENT_LABEL, CV_NOT_STORED_MESSAGE, CV_REQUIRED_MESSAGE } from '@shared/evaluationCv';
-import { evaluationRequiresCv } from '@shared/evaluationVisaCv';
+import { COLUMN_FIELD_KEYS, FAMILY_RULES, deriveDestination, getDomain, getProgram, isColumnFieldKey, missingRequiredFields, resolveDynamicForm, splitFormValues, visibleSections, type FormValues } from '@shared/dynamicForm';
+import { DynamicFormSections } from '@/components/DynamicFormSections';
+import { DynamicDocumentsHint, DynamicProjectChoice } from '@/components/DynamicProjectChoice';
 import { normalizePublicEvaluationProject } from '@shared/evaluationFormRequirements';
 import { isEvaluationProjectType, PROJECT_EVALUATION_CONFIG, type EvaluationProjectType } from '@/lib/projectEvaluationConfig';
-import { getCountriesForProject, getAllDestinationOptionsForProject, getCountryProcedureFields, getProcedureById, getProceduresForCountry, getSuggestedDestinationCategory, type ProcedureGuide } from '@/lib/destinationProcedureCatalog';
+import { getAllDestinationOptionsForProject, getProcedureById, getProceduresForCountry } from '@/lib/destinationProcedureCatalog';
 import { getServiceVisual } from '@/data/premiumVisuals';
 import { setPageSeo } from '@/lib/pageSeo';
 import { useCandidateAuth } from '@/hooks/useCandidateAuth';
@@ -34,13 +35,6 @@ interface FormState {
   message: string;
 }
 
-type PendingJourneyChange = {
-  kind: 'project' | 'country';
-  value: string;
-  label: string;
-  archivedKeys: string[];
-};
-
 const initialForm: FormState = {
   fullName: '', email: '', phone: '', dateOfBirth: '', nationality: '',
   cityOfResidence: '', maritalStatus: '', numberOfDependents: '',
@@ -55,33 +49,6 @@ const initialForm: FormState = {
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="text-lg font-bold text-blue-900 mb-4 mt-8 first:mt-0 border-b border-blue-100 pb-2">{children}</h2>;
-}
-
-function PrefillLabel({ children, active }: { children: React.ReactNode; active: boolean }) {
-  return <div className="flex min-h-5 items-center justify-between gap-2"><Label>{children}</Label>{active && <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-800"><Sparkles className="h-3 w-3" />Pré-rempli depuis le CV</span>}</div>;
-}
-
-function ProjectDetailsSection({ projectType, values, onChange, countryFields, procedure }: { projectType: EvaluationProjectType; values: Record<string, string>; onChange: (key: string, value: string) => void; countryFields: ReturnType<typeof getCountryProcedureFields>; procedure?: ProcedureGuide }) {
-  const config = PROJECT_EVALUATION_CONFIG[projectType];
-  const fields = [...config.requiredDetails, ...countryFields.filter((field) => field.key !== 'selectedProcedure')];
-  return <section className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4 md:p-5" aria-labelledby="project-details-title">
-    <div className="mb-4">
-      <p className="text-xs font-bold uppercase tracking-wide text-blue-700">{config.subtitle}</p>
-      <h2 id="project-details-title" className="mt-1 text-lg font-bold text-slate-900">Informations utiles pour votre projet {config.label}</h2>
-      <p className="mt-1 text-sm leading-6 text-slate-600">{config.objective}</p>
-      <p className="mt-3 rounded-lg border border-blue-100 bg-white/80 px-3 py-2 text-xs leading-5 text-slate-700"><strong>Dossier à préparer :</strong> {config.dossierHint}</p>
-      {procedure && <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-950">
-        <span><strong>Référence sélectionnée :</strong> {procedure.procedureLabel} — {procedure.country}</span>
-        {procedure.guideUrl && <a href={procedure.guideUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-emerald-800 underline underline-offset-2"><FileText className="h-3.5 w-3.5" />Consulter le guide 3M<ExternalLink className="h-3 w-3" /></a>}
-      </div>}
-    </div>
-    <div className="grid gap-4 sm:grid-cols-2">
-      {fields.map((field) => <div key={field.key} className={field.kind === 'textarea' ? 'sm:col-span-2' : ''}>
-        <Label htmlFor={`project-${field.key}`}>{field.label}{field.required ? ' *' : ''}</Label>
-        {field.kind === 'select' ? <select id={`project-${field.key}`} value={values[field.key] ?? ''} onChange={(event) => onChange(field.key, event.target.value)} className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="">Sélectionner…</option>{field.options?.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select> : field.kind === 'textarea' ? <Textarea id={`project-${field.key}`} value={values[field.key] ?? ''} onChange={(event) => onChange(field.key, event.target.value)} placeholder={field.placeholder} rows={3} className="mt-1 bg-white" maxLength={2000} /> : <Input id={`project-${field.key}`} type={field.kind === 'date' ? 'date' : 'text'} value={values[field.key] ?? ''} onChange={(event) => onChange(field.key, event.target.value)} placeholder={field.placeholder} className="mt-1 bg-white" maxLength={255} />}
-      </div>)}
-    </div>
-  </section>;
 }
 
 export default function Evaluation() {
@@ -110,7 +77,7 @@ export default function Evaluation() {
     email: candidate?.email ?? '',
     projectType: initialProject,
     visaType: PROJECT_EVALUATION_CONFIG[initialProject].recommendedVisaTypes[0] ?? initialForm.visaType,
-    ...(preferredDestination ? { destinationCountry: preferredDestination, destinationCategory: getSuggestedDestinationCategory(preferredDestination) } : {}),
+    ...(preferredDestination ? { destinationCountry: preferredDestination, ...deriveDestination(preferredDestination, initialProject) } : {}),
   };
   const [form, setForm] = useState<FormState>(initialProjectForm);
   const formRef = useRef<FormState>(initialProjectForm);
@@ -136,8 +103,6 @@ export default function Evaluation() {
   const [cropZoom, setCropZoom] = useState(1);
   const [cropPixels, setCropPixels] = useState<CropPixels | null>(null);
   const [customDestinationMode, setCustomDestinationMode] = useState(false);
-  const [pendingJourneyChange, setPendingJourneyChange] = useState<PendingJourneyChange | null>(null);
-  const [archivedProjectDetails, setArchivedProjectDetails] = useState<Record<string, Record<string, string>>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const DRAFT_KEY = 'eval_draft';
@@ -153,7 +118,7 @@ export default function Evaluation() {
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
       if (!raw) return;
-      const saved = JSON.parse(raw) as { savedAt?: number; owner?: string; form?: Partial<FormState>; archivedProjectDetails?: Record<string, Record<string, string>> };
+      const saved = JSON.parse(raw) as { savedAt?: number; owner?: string; form?: Partial<FormState> };
       const expired = typeof saved.savedAt !== 'number' || Date.now() - saved.savedAt > DRAFT_MAX_AGE_MS;
       if (!saved.form || expired || saved.owner !== draftOwner) { clearDraft(); return; }
       // Un projet choisi explicitement dans l'URL prime sur un ancien brouillon.
@@ -161,7 +126,6 @@ export default function Evaluation() {
       const restored = { ...initialProjectForm, ...saved.form };
       formRef.current = restored;
       setForm(restored);
-      setArchivedProjectDetails(saved.archivedProjectDetails ?? {});
       toast.info('Brouillon restauré', {
         description: 'Votre saisie précédente a été récupérée. Sur un ordinateur partagé, effacez-la.',
         duration: 10000,
@@ -179,161 +143,135 @@ export default function Evaluation() {
           return;
         }
         draftTouched.current = true;
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), owner: draftOwner, form, archivedProjectDetails }));
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), owner: draftOwner, form }));
       } catch { /* quota exceeded — ignore */ }
     }, 1000);
     return () => clearTimeout(timer);
-  }, [form, draftOwner, archivedProjectDetails]);
+  }, [form, draftOwner]);
 
-  // Sections renseignées (0-6). « Historique » n'a que des champs facultatifs : il compte une fois les cinq autres complétées.
-  const sectionsDone = useMemo(() => {
-    const done = [
-      Boolean(form.fullName && form.email && form.phone),
-      Boolean(form.educationLevel),
-      Boolean(form.employmentStatus),
-      Boolean(form.frenchLevel),
-      Boolean(form.destinationCountry),
-    ];
-    return [...done, done.every(Boolean)];
-  }, [form.fullName, form.email, form.phone, form.educationLevel, form.employmentStatus, form.frenchLevel, form.destinationCountry]);
-  const sectionProgress = sectionsDone.filter(Boolean).length;
 
   const submitMutation = trpc.evaluation.submit.useMutation({
     onSuccess: clearDraft,
   });
   const extractCvMutation = trpc.evaluation.extractFromCV.useMutation();
   const inspectPdfMutation = trpc.evaluation.inspectPdfPages.useMutation();
-  const availableCountries = getCountriesForProject(form.projectType);
+  const dynamicForm = useMemo(
+    () => resolveDynamicForm({ country: form.destinationCountry, projectType: form.projectType, programId: form.projectDetails.programId, domainId: form.projectDetails.domainId }),
+    [form.destinationCountry, form.projectType, form.projectDetails.programId, form.projectDetails.domainId],
+  );
+  const dynamicValues = useMemo<FormValues>(() => {
+    const columns: FormValues = {};
+    for (const key of COLUMN_FIELD_KEYS) columns[key] = form[key];
+    return { ...columns, ...form.projectDetails };
+  }, [form]);
+  const dynamicSections = useMemo(() => visibleSections(dynamicForm, dynamicValues), [dynamicForm, dynamicValues]);
   const destinationOptions = getAllDestinationOptionsForProject(form.projectType);
-  const isLibraryCountry = availableCountries.includes(form.destinationCountry);
   const availableProcedures = form.destinationCountry ? getProceduresForCountry(form.projectType, form.destinationCountry) : [];
   const selectedProcedure = getProcedureById(form.projectDetails.procedureId);
-  const countryProcedureFields = getCountryProcedureFields(form.projectType, form.destinationCountry, selectedProcedure);
 
-  const journeyArchiveKey = (projectType: EvaluationProjectType, country: string, visaType: string) => `${projectType}::${country || 'pays'}::${visaType || 'visa'}`;
-  const restoreArchivedDetails = (projectType: EvaluationProjectType, country: string, visaType: string, baseDetails: Record<string, string>) => ({
-    ...baseDetails,
-    ...(archivedProjectDetails[journeyArchiveKey(projectType, country, visaType)] ?? {}),
-  });
+  // Progression : une étape par bloc réellement affiché. Elle change avec le formulaire.
+  const SECTION_SHORT_LABEL: Record<string, string> = { education: 'Études', experience: 'Expérience', languages: 'Langues', program: 'Visa', domain: 'Domaine', country: 'Pays' };
+  const progressSteps = useMemo(() => {
+    const answered = (key: string) => Boolean((dynamicValues[key] ?? '').trim());
+    const steps = [
+      { label: 'Projet', done: Boolean(form.destinationCountry && form.projectDetails.programId) },
+      { label: 'État civil', done: Boolean(form.fullName && form.email && form.phone) },
+      ...dynamicSections.map((section) => ({
+        label: SECTION_SHORT_LABEL[section.id] ?? section.title,
+        done: section.fields.some((field) => answered(field.key)) && section.fields.filter((field) => field.required).every((field) => answered(field.key)),
+      })),
+    ];
+    return [...steps, { label: 'Historique', done: steps.every((step) => step.done) }];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dynamicSections, dynamicValues, form.destinationCountry, form.projectDetails.programId, form.fullName, form.email, form.phone]);
+  const progressPercent = Math.round((progressSteps.filter((step) => step.done).length / progressSteps.length) * 100);
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
-    const next = {
-      ...formRef.current,
-      [key]: value,
-      ...(key === 'visaType' ? { projectDetails: restoreArchivedDetails(formRef.current.projectType, formRef.current.destinationCountry, value as string, formRef.current.projectDetails) } : {}),
-    };
+    const next = { ...formRef.current, [key]: value };
     formRef.current = next;
     setForm(next);
   };
 
   const updateProjectDetails = (key: string, value: string) => update('projectDetails', { ...formRef.current.projectDetails, [key]: value });
 
-  const applyProjectType = (projectType: EvaluationProjectType) => {
-    const recommendedVisa = PROJECT_EVALUATION_CONFIG[projectType].recommendedVisaTypes[0];
-    const next = { ...formRef.current, projectType, projectDetails: {}, destinationCountry: '', destinationCategory: 'autre', visaType: recommendedVisa ?? formRef.current.visaType };
-    formRef.current = next;
-    setForm(next);
-    setCustomDestinationMode(false);
+  const changeDynamicValue = (key: string, value: string) => {
+    if (isColumnFieldKey(key)) update(key, value as FormState[typeof key]);
+    else updateProjectDetails(key, value);
   };
 
-  const applyDestinationCountry = (country: string) => {
-    const procedures = getProceduresForCountry(formRef.current.projectType, country);
-    const procedure = procedures[0];
+  // Le guide 3M associé au pays et au type de projet est rattaché automatiquement ; le candidat peut en choisir un autre s'il y en a plusieurs.
+  const withGuide = (country: string, projectType: EvaluationProjectType, keep: Record<string, string> = {}) => {
+    const guide = country ? getProceduresForCountry(projectType, country)[0] : undefined;
+    return { ...keep, ...(guide ? { procedureId: guide.id, selectedProcedure: guide.procedureLabel } : {}) };
+  };
+  // Les réponses ne sont jamais effacées par un changement de choix : les questions masquées gardent leur réponse et ne sont simplement pas envoyées.
+  const retainAnswers = (details: Record<string, string>): Record<string, string> => {
+    const { programId: _programId, procedureId: _procedureId, selectedProcedure: _selectedProcedure, ...rest } = details;
+    return rest;
+  };
+  const keepChoices = (details: Record<string, string>): Record<string, string> => ({ ...(details.programId ? { programId: details.programId } : {}), ...(details.domainId ? { domainId: details.domainId } : {}) });
+
+  const selectProjectType = (projectType: EvaluationProjectType) => {
+    const derived = deriveDestination(formRef.current.destinationCountry, projectType);
+    const next = { ...formRef.current, projectType, projectDetails: withGuide(formRef.current.destinationCountry, projectType, retainAnswers(formRef.current.projectDetails)), destinationCategory: derived.destinationCategory, visaType: derived.visaType };
+    formRef.current = next;
+    setForm(next);
+  };
+
+  const selectDestinationCountry = (country: string) => {
+    const derived = deriveDestination(country, formRef.current.projectType);
     const next = {
       ...formRef.current,
       destinationCountry: country,
-      destinationCategory: getSuggestedDestinationCategory(country),
-      projectDetails: restoreArchivedDetails(formRef.current.projectType, country, formRef.current.visaType, procedure ? { procedureId: procedure.id, selectedProcedure: procedure.procedureLabel } : {}),
+      destinationCategory: derived.destinationCategory,
+      visaType: derived.visaType,
+      projectDetails: withGuide(country, formRef.current.projectType, keepChoices(formRef.current.projectDetails)),
     };
     formRef.current = next;
     setForm(next);
     setCustomDestinationMode(false);
   };
 
-  const requestProjectTypeChange = (projectType: EvaluationProjectType) => {
-    if (projectType === formRef.current.projectType) return;
-    const archivedKeys = Object.keys(formRef.current.projectDetails).filter((key) => Boolean(formRef.current.projectDetails[key]));
-    if (archivedKeys.length || formRef.current.destinationCountry) {
-      setPendingJourneyChange({ kind: 'project', value: projectType, label: PROJECT_EVALUATION_CONFIG[projectType].label, archivedKeys });
-      return;
-    }
-    applyProjectType(projectType);
-  };
-
-  const requestDestinationCountryChange = (country: string) => {
-    if (country === formRef.current.destinationCountry) return;
-    const archivedKeys = Object.keys(formRef.current.projectDetails).filter((key) => Boolean(formRef.current.projectDetails[key]));
-    if (archivedKeys.length || formRef.current.destinationCountry) {
-      setPendingJourneyChange({ kind: 'country', value: country, label: country, archivedKeys });
-      return;
-    }
-    applyDestinationCountry(country);
-  };
-
-  const changeVisaType = (visaType: string) => {
-    if (visaType === formRef.current.visaType) return;
-    const details = formRef.current.projectDetails;
-    const keys = Object.keys(details).filter((key) => Boolean(details[key]));
-    if (keys.length) {
-      const archiveKey = journeyArchiveKey(formRef.current.projectType, formRef.current.destinationCountry, formRef.current.visaType);
-      setArchivedProjectDetails((current) => ({
-        ...current,
-        [archiveKey]: { ...(current[archiveKey] ?? {}), ...Object.fromEntries(keys.map((key) => [key, details[key]])) },
-      }));
-    }
-    const next = {
-      ...formRef.current,
-      visaType,
-      projectDetails: restoreArchivedDetails(formRef.current.projectType, formRef.current.destinationCountry, visaType, {}),
-    };
-    formRef.current = next;
-    setForm(next);
-  };
-
-  const confirmJourneyChange = () => {
-    if (!pendingJourneyChange) return;
-    const details = formRef.current.projectDetails;
-    if (pendingJourneyChange.archivedKeys.length) {
-      const archiveKey = journeyArchiveKey(formRef.current.projectType, formRef.current.destinationCountry, formRef.current.visaType);
-      setArchivedProjectDetails((current) => ({
-        ...current,
-        [archiveKey]: {
-          ...(current[archiveKey] ?? {}),
-          ...Object.fromEntries(pendingJourneyChange.archivedKeys.map((key) => [key, details[key]])),
-        },
-      }));
-    }
-    if (pendingJourneyChange.kind === 'project') applyProjectType(pendingJourneyChange.value as EvaluationProjectType);
-    else if (pendingJourneyChange.value === '__custom__') applyCustomDestination();
-    else applyDestinationCountry(pendingJourneyChange.value);
-    setFieldErrors({});
-    setFormError('');
-    setPendingJourneyChange(null);
-  };
-
   const chooseCustomDestination = () => {
-    const archivedKeys = Object.keys(formRef.current.projectDetails).filter((key) => Boolean(formRef.current.projectDetails[key]));
-    if (archivedKeys.length || formRef.current.destinationCountry) {
-      setPendingJourneyChange({ kind: 'country', value: '__custom__', label: 'une autre destination', archivedKeys });
-      return;
-    }
-    applyCustomDestination();
-  };
-
-  const applyCustomDestination = () => {
-    const next = { ...formRef.current, destinationCountry: '', destinationCategory: 'autre', projectDetails: {} };
+    const next = { ...formRef.current, destinationCountry: '', destinationCategory: 'autre', visaType: 'autre', projectDetails: keepChoices(formRef.current.projectDetails) };
     formRef.current = next;
     setForm(next);
     setCustomDestinationMode(true);
   };
 
+  const updateCustomDestination = (country: string) => {
+    const derived = deriveDestination(country, formRef.current.projectType);
+    const next = { ...formRef.current, destinationCountry: country, destinationCategory: derived.destinationCategory, visaType: derived.visaType };
+    formRef.current = next;
+    setForm(next);
+  };
+
+  const selectProgram = (programId: string) => {
+    const program = getProgram(programId);
+    const details: Record<string, string> = { ...formRef.current.projectDetails, programId };
+    // Un programme qui ne dépend pas du métier retire le domaine choisi (ses réponses sont conservées si le candidat revient).
+    if (program && !FAMILY_RULES[program.family].domain) delete details.domainId;
+    const next = { ...formRef.current, projectDetails: details };
+    formRef.current = next;
+    setForm(next);
+  };
+
+  const selectDomain = (domainId: string) => {
+    const previous = getDomain(formRef.current.projectDetails.domainId);
+    const domain = getDomain(domainId);
+    const details = { ...formRef.current.projectDetails };
+    if (domainId) details.domainId = domainId; else delete details.domainId;
+    // Le secteur d'activité se renseigne seul, sans écraser une saisie du candidat.
+    const sector = formRef.current.industrySector;
+    const industrySector = domain && (!sector || sector === previous?.label) ? domain.label : !domain && sector === previous?.label ? '' : sector;
+    const next = { ...formRef.current, projectDetails: details, industrySector };
+    formRef.current = next;
+    setForm(next);
+  };
+
   const selectProcedure = (procedureId: string) => {
     const procedure = getProcedureById(procedureId);
-    update('projectDetails', {
-      ...formRef.current.projectDetails,
-      procedureId,
-      selectedProcedure: procedure?.procedureLabel ?? '',
-    });
+    update('projectDetails', { ...formRef.current.projectDetails, procedureId, selectedProcedure: procedure?.procedureLabel ?? '' });
   };
 
   const fileToBase64 = (file: File): Promise<string> =>
@@ -347,7 +285,6 @@ export default function Evaluation() {
   const prefillKeys: Array<keyof Pick<FormState, 'educationLevel' | 'diplomaTitle' | 'graduationYear' | 'fieldOfStudy' | 'employmentStatus' | 'currentJobTitle' | 'yearsOfExperience' | 'industrySector' | 'mainTasks' | 'frenchLevel' | 'englishLevel' | 'languageTestsTaken'>> = [
     'educationLevel', 'diplomaTitle', 'graduationYear', 'fieldOfStudy', 'employmentStatus', 'currentJobTitle', 'yearsOfExperience', 'industrySector', 'mainTasks', 'frenchLevel', 'englishLevel', 'languageTestsTaken',
   ];
-  const prefillClass = (field: (typeof prefillKeys)[number]) => autoFilledFields.has(field) ? 'border-indigo-400 bg-indigo-50 ring-2 ring-indigo-200 focus-visible:ring-indigo-500' : '';
   const getCvMimeType = (file: File) => file.type || (file.name.toLowerCase().endsWith('.png') ? 'image/png' : file.name.toLowerCase().endsWith('.jpg') || file.name.toLowerCase().endsWith('.jpeg') ? 'image/jpeg' : 'application/pdf');
 
   const extractAndAutoFill = async (file: File, selectedPages?: number[]) => {
@@ -506,37 +443,32 @@ export default function Evaluation() {
     setFormError('');
     setFieldErrors({});
 
-    const failValidation = (message: string, field?: string) => {
+    // Chaque refus nomme le champ concerné, le marque (aria-invalid) et y place le focus : un lecteur d'écran sait où corriger.
+    const failValidation = (message: string, fieldIds: string[] = []) => {
       setFormError(message);
-      if (field) {
-        setFieldErrors({ [field]: message });
-        window.setTimeout(() => document.getElementById(field)?.focus(), 0);
-      }
+      setFieldErrors(Object.fromEntries(fieldIds.map((id) => [id, message])));
+      if (fieldIds[0]) window.setTimeout(() => document.getElementById(fieldIds[0])?.focus(), 0);
       return undefined;
     };
 
-    if (form.fullName.trim().length < 3) return failValidation('Merci d\'indiquer votre nom complet.', 'evaluation-full-name');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return failValidation('Adresse email invalide.', 'evaluation-email');
-    if (form.phone.trim().length < 8) return failValidation('Numéro de téléphone invalide.', 'evaluation-phone');
-    if (!form.destinationCategory) return failValidation('Merci de sélectionner une destination.', 'evaluation-destination');
-    if (!form.destinationCountry.trim()) return failValidation('Merci de sélectionner ou préciser le pays de destination.', 'evaluation-destination');
-    const availableCountryProcedures = getProceduresForCountry(form.projectType, form.destinationCountry);
-    if (availableCountryProcedures.length > 0 && !form.projectDetails.procedureId) return failValidation('Merci de sélectionner la procédure correspondant au pays choisi.', 'evaluation-procedure');
-    const selectedProcedure = getProcedureById(form.projectDetails.procedureId);
-    const requiredProjectFields = [
-      ...PROJECT_EVALUATION_CONFIG[form.projectType].requiredDetails,
-      ...getCountryProcedureFields(form.projectType, form.destinationCountry, selectedProcedure),
-    ];
-    const missingProjectFields = requiredProjectFields.filter((field) => field.required && !form.projectDetails[field.key]?.trim());
-    if (missingProjectFields.length) return failValidation(`Merci de compléter les informations requises pour votre projet : ${missingProjectFields.map((field) => field.label).join(', ')}.`, `project-${missingProjectFields[0].key}`);
+    if (form.fullName.trim().length < 3) return failValidation('Merci d\'indiquer votre nom complet.', ['evaluation-full-name']);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return failValidation('Adresse email invalide.', ['evaluation-email']);
+    if (form.phone.trim().length < 8) return failValidation('Numéro de téléphone invalide.', ['evaluation-phone']);
+    if (!form.destinationCountry.trim()) return failValidation('Merci de sélectionner ou préciser le pays de destination.', ['evaluation-destination']);
+    if (!form.projectDetails.programId) return failValidation('Merci de choisir le visa ou programme qui vous correspond (ou « Je ne sais pas encore »).', ['dyn-program']);
+    const missingProjectFields = missingRequiredFields(dynamicForm, dynamicValues);
+    if (missingProjectFields.length) return failValidation(`Merci de compléter les informations requises pour votre projet : ${missingProjectFields.map((field) => field.label).join(', ')}.`, missingProjectFields.map((field) => `dyn-${field.key}`));
 
-    // CV obligatoire uniquement pour le visa travail (études / visiteurs : formulaires distincts).
-    const cvMandatory = evaluationRequiresCv(form.visaType, form.projectType);
+    // CV obligatoire selon le visa ou programme choisi (travail qualifié) ; recommandé ou facultatif ailleurs.
+    const cvMandatory = dynamicForm.cv === 'required';
     if (cvMandatory && !cvFile) {
       setCvAnalysisNotice(CV_REQUIRED_MESSAGE);
       document.getElementById('cv-upload')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return setFormError(CV_REQUIRED_MESSAGE);
     }
+
+    const { columns, details } = splitFormValues(dynamicForm, dynamicValues, form.projectDetails);
+    const derived = deriveDestination(form.destinationCountry, form.projectType);
 
     let cvBase64: string | undefined;
     if (cvFile) {
@@ -557,25 +489,25 @@ export default function Evaluation() {
       cityOfResidence: form.cityOfResidence || undefined,
       maritalStatus: form.maritalStatus || undefined,
       numberOfDependents: form.numberOfDependents ? parseInt(form.numberOfDependents) : undefined,
-      educationLevel: form.educationLevel || undefined,
-      diplomaTitle: form.diplomaTitle || undefined,
-      graduationYear: form.graduationYear || undefined,
-      fieldOfStudy: form.fieldOfStudy || undefined,
-      employmentStatus: form.employmentStatus || undefined,
-      currentJobTitle: form.currentJobTitle || undefined,
-      yearsOfExperience: form.yearsOfExperience || undefined,
-      industrySector: form.industrySector || undefined,
-      mainTasks: form.mainTasks || undefined,
-      frenchLevel: form.frenchLevel || undefined,
-      englishLevel: form.englishLevel || undefined,
-      languageTestsTaken: form.languageTestsTaken || undefined,
-      destinationCategory: form.destinationCategory as any,
+      educationLevel: columns.educationLevel,
+      diplomaTitle: columns.diplomaTitle,
+      graduationYear: columns.graduationYear,
+      fieldOfStudy: columns.fieldOfStudy,
+      employmentStatus: columns.employmentStatus,
+      currentJobTitle: columns.currentJobTitle,
+      yearsOfExperience: columns.yearsOfExperience,
+      industrySector: columns.industrySector ?? dynamicForm.domain?.label,
+      mainTasks: columns.mainTasks,
+      frenchLevel: columns.frenchLevel,
+      englishLevel: columns.englishLevel,
+      languageTestsTaken: columns.languageTestsTaken,
+      destinationCategory: derived.destinationCategory,
       destinationCountry: form.destinationCountry || undefined,
-      visaType: form.visaType as any,
-      travelReason: form.travelReason || undefined,
+      visaType: derived.visaType,
+      travelReason: form.travelReason || dynamicForm.program.label,
       availableBudget: form.availableBudget || undefined,
       projectType: form.projectType,
-      projectDetails: form.projectDetails,
+      projectDetails: details,
       priorVisaRefusal: form.priorVisaRefusal,
       priorVisaRefusalCountry: form.priorVisaRefusalCountry || undefined,
       criminalRecord: form.criminalRecord,
@@ -671,7 +603,7 @@ export default function Evaluation() {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Progression du formulaire</span>
-            <span className="text-xs font-black text-blue-700">{Math.round((sectionProgress / 6) * 100)} %</span>
+            <span className="text-xs font-black text-blue-700">{progressPercent} %</span>
           </div>
           <div
             className="relative h-2 w-full overflow-hidden rounded-full bg-slate-200"
@@ -679,47 +611,54 @@ export default function Evaluation() {
             aria-label="Progression du formulaire"
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-valuenow={Math.round((sectionProgress / 6) * 100)}
+            aria-valuenow={progressPercent}
           >
             <motion.div
               className="absolute inset-y-0 left-0 rounded-full bg-blue-600"
               initial={{ width: 0 }}
-              animate={{ width: `${(sectionProgress / 6) * 100}%` }}
+              animate={{ width: `${progressPercent}%` }}
               transition={{ duration: 0.4, ease: "easeOut" }}
             />
           </div>
-          <div className="mt-2 grid grid-cols-6 gap-1" aria-hidden="true">
-            {["État civil", "Études", "Expérience", "Langues", "Projet", "Historique"].map((label, i) => (
-              <div key={label} className="text-center">
-                <div className={`mx-auto mb-1 h-1.5 rounded-full ${sectionsDone[i] ? "bg-blue-600" : "bg-slate-200"}`} />
-                <span className={`hidden text-[10px] font-medium leading-tight sm:block ${sectionsDone[i] ? "text-blue-700" : "text-slate-500"}`}>{label}</span>
+          <div className="mt-2 grid gap-1" style={{ gridTemplateColumns: `repeat(${progressSteps.length}, minmax(0, 1fr))` }} aria-hidden="true" data-testid="progress-steps">
+            {progressSteps.map((step) => (
+              <div key={step.label} className="text-center">
+                <div className={`mx-auto mb-1 h-1.5 rounded-full ${step.done ? "bg-blue-600" : "bg-slate-200"}`} />
+                <span className={`hidden text-[10px] font-medium leading-tight sm:block ${step.done ? "text-blue-700" : "text-slate-500"}`}>{step.label}</span>
               </div>
             ))}
           </div>
         </div>
 
         <Card className="p-6 md:p-8">
-          <Dialog open={Boolean(pendingJourneyChange)} onOpenChange={(open) => { if (!open) setPendingJourneyChange(null); }}>
-            <DialogContent aria-describedby="journey-change-description">
-              <DialogHeader>
-                <DialogTitle>Adapter votre formulaire</DialogTitle>
-                <DialogDescription id="journey-change-description">
-                  Le formulaire sera reconstruit pour {pendingJourneyChange?.kind === 'project' ? `le projet ${pendingJourneyChange.label}` : `la destination ${pendingJourneyChange?.label}`}.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-3 text-sm text-slate-700">
-                <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2"><strong>Conservé :</strong> identité, contact, études, expérience et préférences générales.</p>
-                <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2"><strong>À reprendre :</strong> les questions propres à l’ancien pays ou visa disparaîtront du formulaire actif.</p>
-                {pendingJourneyChange && pendingJourneyChange.archivedKeys.length > 0 && <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2"><strong>Archivé dans le brouillon :</strong> {pendingJourneyChange.archivedKeys.length} réponse(s), récupérable(s) si vous revenez à ce parcours.</p>}
-              </div>
-              <DialogFooter>
-                <DialogClose asChild><Button type="button" variant="outline">Annuler</Button></DialogClose>
-                <Button type="button" onClick={confirmJourneyChange} className="bg-blue-700 hover:bg-blue-800">Adapter le formulaire</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
           <form onSubmit={handleSubmit} className="space-y-4">
             {onboardingFromRegistration && <div role="status" aria-live="polite" className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-950"><strong>Votre compte est activé.</strong> Complétez votre évaluation préparatoire en sélectionnant votre projet, votre pays et la procédure concernée. Les critères et pièces définitifs seront confirmés par un conseiller à partir des sources institutionnelles.</div>}
+            <div className="rounded-2xl border border-blue-100 bg-white p-4 md:p-5" data-testid="project-destination">
+              <p className="text-xs font-bold uppercase tracking-wide text-blue-700">Étape 1 — destination</p>
+              <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <Label htmlFor="evaluation-destination">Destination ciblée *</Label>
+                  <DestinationAutocomplete id="evaluation-destination" value={customDestinationMode ? '' : form.destinationCountry} options={destinationOptions} onSelect={selectDestinationCountry} onCustom={chooseCustomDestination} />
+                  <p className="mt-1 text-xs text-slate-500">Recherchez un pays : le formulaire se recompose selon la langue, la zone et les démarches de la destination.</p>
+                </div>
+                {customDestinationMode && <div className="sm:col-span-2">
+                  <Label htmlFor="evaluation-custom-destination">Précisez la destination</Label>
+                  <Input id="evaluation-custom-destination" value={form.destinationCountry} onChange={(event) => updateCustomDestination(event.target.value)} placeholder="Ex. Japon, Brésil, Cameroun…" maxLength={100} className="mt-1" />
+                </div>}
+                <div><Label htmlFor="evaluation-budget">Budget disponible (FCFA)</Label><Input id="evaluation-budget" value={form.availableBudget} onChange={(e) => update('availableBudget', e.target.value)} maxLength={50} className="mt-1" /></div>
+              </div>
+            </div>
+
+            <DynamicProjectChoice form={dynamicForm} projectKind={form.projectType} programId={form.projectDetails.programId ?? ''} domainId={form.projectDetails.domainId ?? ''} onKind={selectProjectType} onProgram={selectProgram} onDomain={selectDomain} />
+
+            {availableProcedures.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-950" data-testid="project-guide">
+              {availableProcedures.length > 1
+                ? <div className="min-w-0 flex-1"><Label htmlFor="evaluation-guide">Guide 3M associé</Label><select id="evaluation-guide" value={form.projectDetails.procedureId ?? ''} onChange={(event) => selectProcedure(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm">{availableProcedures.map((procedure) => <option key={procedure.id} value={procedure.id}>{procedure.procedureLabel}</option>)}</select></div>
+                : <span><strong>Guide 3M associé :</strong> {availableProcedures[0].procedureLabel} — {availableProcedures[0].country}</span>}
+              {selectedProcedure?.guideUrl && <a href={selectedProcedure.guideUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-emerald-800 underline underline-offset-2"><FileText className="h-3.5 w-3.5" />Consulter le guide 3M<ExternalLink className="h-3 w-3" /></a>}
+            </div>}
+            {form.destinationCountry && availableProcedures.length === 0 && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"><strong>Destination à comparer :</strong> aucun guide spécifique n’est encore associé à cette combinaison. Votre dossier est néanmoins enregistré pour vérification par un conseiller.</div>}
+
             <SectionTitle>État civil & famille</SectionTitle>
             <div className="grid sm:grid-cols-2 gap-4">
               <div><Label htmlFor="evaluation-full-name">Nom complet *</Label><Input id="evaluation-full-name" value={form.fullName} onChange={(e) => update('fullName', e.target.value)} aria-invalid={Boolean(fieldErrors['evaluation-full-name'])} maxLength={255} className="mt-1" /></div>
@@ -741,129 +680,8 @@ export default function Evaluation() {
               <div><Label>Nombre d'enfants à charge</Label><Input type="number" min="0" value={form.numberOfDependents} onChange={(e) => update('numberOfDependents', e.target.value)} className="mt-1" /></div>
             </div>
 
-            <SectionTitle>Études & académique</SectionTitle>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <PrefillLabel active={autoFilledFields.has('educationLevel')}>Niveau d'études le plus élevé</PrefillLabel>
-                <select value={form.educationLevel} onChange={(e) => update('educationLevel', e.target.value)} className={`mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm ${prefillClass('educationLevel')}`}>
-                  <option value="">Sélectionner...</option>
-                  <option value="bac">Baccalauréat</option>
-                  <option value="bac2">Bac+2 / BTS / DUT</option>
-                  <option value="licence">Licence</option>
-                  <option value="master">Master ou plus</option>
-                  <option value="doctorat">Doctorat</option>
-                </select>
-              </div>
-              <div><PrefillLabel active={autoFilledFields.has('diplomaTitle')}>Intitulé exact du diplôme</PrefillLabel><Input value={form.diplomaTitle} onChange={(e) => update('diplomaTitle', e.target.value)} maxLength={255} className={`mt-1 ${prefillClass('diplomaTitle')}`} /></div>
-              <div><PrefillLabel active={autoFilledFields.has('graduationYear')}>Année d'obtention</PrefillLabel><Input value={form.graduationYear} onChange={(e) => update('graduationYear', e.target.value)} placeholder="2022" maxLength={20} className={`mt-1 ${prefillClass('graduationYear')}`} /></div>
-              <div><PrefillLabel active={autoFilledFields.has('fieldOfStudy')}>Domaine d'études</PrefillLabel><Input value={form.fieldOfStudy} onChange={(e) => update('fieldOfStudy', e.target.value)} maxLength={150} className={`mt-1 ${prefillClass('fieldOfStudy')}`} /></div>
-            </div>
-
-            <SectionTitle>Expérience professionnelle</SectionTitle>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <PrefillLabel active={autoFilledFields.has('employmentStatus')}>Situation professionnelle</PrefillLabel>
-                <select value={form.employmentStatus} onChange={(e) => update('employmentStatus', e.target.value)} className={`mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm ${prefillClass('employmentStatus')}`}>
-                  <option value="">Sélectionner...</option>
-                  <option value="employe">Employé(e)</option>
-                  <option value="independant">Indépendant(e)</option>
-                  <option value="sans_emploi">Sans emploi</option>
-                  <option value="etudiant">Étudiant(e)</option>
-                </select>
-              </div>
-              <div><PrefillLabel active={autoFilledFields.has('currentJobTitle')}>Intitulé du poste actuel</PrefillLabel><Input value={form.currentJobTitle} onChange={(e) => update('currentJobTitle', e.target.value)} maxLength={150} className={`mt-1 ${prefillClass('currentJobTitle')}`} /></div>
-              <div>
-                <PrefillLabel active={autoFilledFields.has('yearsOfExperience')}>Années d'expérience continue</PrefillLabel>
-                <select value={form.yearsOfExperience} onChange={(e) => update('yearsOfExperience', e.target.value)} className={`mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm ${prefillClass('yearsOfExperience')}`}>
-                  <option value="">Sélectionner...</option>
-                  <option value="0-1">Moins d'1 an</option>
-                  <option value="1-3">1 à 3 ans</option>
-                  <option value="3-5">3 à 5 ans</option>
-                  <option value="5-10">5 à 10 ans</option>
-                  <option value="10+">10 ans ou plus</option>
-                </select>
-              </div>
-              <div><PrefillLabel active={autoFilledFields.has('industrySector')}>Secteur d'activité</PrefillLabel><Input value={form.industrySector} onChange={(e) => update('industrySector', e.target.value)} maxLength={100} className={`mt-1 ${prefillClass('industrySector')}`} /></div>
-            </div>
-            <div><PrefillLabel active={autoFilledFields.has('mainTasks')}>Tâches principales</PrefillLabel><Textarea value={form.mainTasks} onChange={(e) => update('mainTasks', e.target.value)} rows={2} maxLength={2000} className={`mt-1 ${prefillClass('mainTasks')}`} /></div>
-
-            <SectionTitle>Compétences linguistiques</SectionTitle>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <PrefillLabel active={autoFilledFields.has('frenchLevel')}>Niveau en français</PrefillLabel>
-                <select value={form.frenchLevel} onChange={(e) => update('frenchLevel', e.target.value)} className={`mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm ${prefillClass('frenchLevel')}`}>
-                  <option value="">Sélectionner...</option>
-                  <option value="natif">Natif</option>
-                  <option value="c1_c2">C1 / C2 (courant)</option>
-                  <option value="b2">B2</option>
-                  <option value="b1">B1</option>
-                  <option value="debutant">Débutant</option>
-                </select>
-              </div>
-              <div>
-                <PrefillLabel active={autoFilledFields.has('englishLevel')}>Niveau en anglais</PrefillLabel>
-                <select value={form.englishLevel} onChange={(e) => update('englishLevel', e.target.value)} className={`mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm ${prefillClass('englishLevel')}`}>
-                  <option value="">Sélectionner...</option>
-                  <option value="natif">Natif</option>
-                  <option value="c1_c2">C1 / C2 (courant)</option>
-                  <option value="b2">B2</option>
-                  <option value="b1">B1</option>
-                  <option value="debutant">Débutant / Basique</option>
-                </select>
-              </div>
-            </div>
-            <div><PrefillLabel active={autoFilledFields.has('languageTestsTaken')}>Tests officiels passés ou à passer</PrefillLabel><Input value={form.languageTestsTaken} onChange={(e) => update('languageTestsTaken', e.target.value)} placeholder="Ex: TEF, TCF, IELTS..." maxLength={255} className={`mt-1 ${prefillClass('languageTestsTaken')}`} /></div>
-
-            <SectionTitle>Projet & pays cible</SectionTitle>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <Label>Projet à évaluer *</Label>
-                <select id="evaluation-project-type" value={form.projectType} onChange={(e) => isEvaluationProjectType(e.target.value) && requestProjectTypeChange(e.target.value)} className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm">
-                  {(Object.keys(PROJECT_EVALUATION_CONFIG) as EvaluationProjectType[]).map((projectType) => <option key={projectType} value={projectType}>{PROJECT_EVALUATION_CONFIG[projectType].label} — {PROJECT_EVALUATION_CONFIG[projectType].subtitle}</option>)}
-                </select>
-              </div>
-              <div>
-                <Label>Catégorie de destination *</Label>
-                <select id="evaluation-destination-category" value={form.destinationCategory} onChange={(e) => update('destinationCategory', e.target.value)} className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm">
-                  <option value="canada">Canada</option>
-                  <option value="schengen">Europe / Schengen</option>
-                  <option value="autre">Monde — laissez-nous comparer les possibilités</option>
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="evaluation-destination">Destination ciblée *</Label>
-                <DestinationAutocomplete id="evaluation-destination" value={customDestinationMode ? '' : form.destinationCountry} options={destinationOptions} onSelect={requestDestinationCountryChange} onCustom={chooseCustomDestination} />
-                <p className="mt-1 text-xs text-slate-500">Recherchez par pays, sélectionnez une destination avec son drapeau, puis choisissez la procédure associée.</p>
-              </div>
-              {customDestinationMode && <div>
-                <Label>Précisez la destination</Label>
-                <Input value={form.destinationCountry} onChange={(event) => update('destinationCountry', event.target.value)} placeholder="Ex. Japon, Brésil, Cameroun…" maxLength={100} className="mt-1" />
-              </div>}
-              {availableProcedures.length > 0 && <div>
-                <Label>Procédure à évaluer *</Label>
-                <select id="evaluation-procedure" value={form.projectDetails.procedureId ?? ''} onChange={(event) => selectProcedure(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm">
-                  <option value="">Sélectionner une procédure</option>
-                  {availableProcedures.map((procedure) => <option key={procedure.id} value={procedure.id}>{procedure.procedureLabel}</option>)}
-                </select>
-              </div>}
-              <div>
-                <Label>Type de visa recherché *</Label>
-                  <select value={form.visaType} onChange={(e) => changeVisaType(e.target.value)} className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm">
-                  <option value="canada_rp">Canada — Résidence Permanente</option>
-                  <option value="canada_etude">Canada — Études</option>
-                  <option value="canada_tourisme">Canada — Visiteur</option>
-                  <option value="schengen_travail">Europe — Travail</option>
-                  <option value="schengen_etude">Europe — Études</option>
-                  <option value="schengen_tourisme">Europe — Visiteur</option>
-                  <option value="autre">Autre</option>
-                </select>
-              </div>
-              <div><Label>Budget disponible (FCFA)</Label><Input value={form.availableBudget} onChange={(e) => update('availableBudget', e.target.value)} maxLength={50} className="mt-1" /></div>
-            </div>
-            <div><Label>Motif du séjour</Label><Input value={form.travelReason} onChange={(e) => update('travelReason', e.target.value)} placeholder="Travail, études, recrutement, visite, installation…" maxLength={255} className="mt-1" /></div>
-            {form.destinationCountry && availableProcedures.length === 0 && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"><strong>Destination à comparer :</strong> aucun guide spécifique n’est encore associé à cette combinaison. Votre dossier est néanmoins enregistré pour vérification par un conseiller.</div>}
-
-            <ProjectDetailsSection projectType={form.projectType} values={form.projectDetails} onChange={updateProjectDetails} countryFields={countryProcedureFields} procedure={selectedProcedure} />
+            <DynamicFormSections sections={dynamicSections} values={dynamicValues} onChange={changeDynamicValue} autoFilled={autoFilledFields} invalid={new Set(Object.keys(fieldErrors))} />
+            <DynamicDocumentsHint form={dynamicForm} />
 
             <SectionTitle>Historique & antécédents</SectionTitle>
             <div className="space-y-3">
@@ -891,14 +709,14 @@ export default function Evaluation() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <Label htmlFor="cv-upload" className="text-sm font-semibold text-blue-950">
-                    {evaluationRequiresCv(form.visaType, form.projectType)
+                    {dynamicForm.cv === 'required'
                       ? 'CV (obligatoire — PDF, JPG ou PNG)'
                       : 'CV (facultatif — PDF, JPG ou PNG)'}
                   </Label>
                   <p className="mt-1 text-xs text-blue-800/75">
-                    {evaluationRequiresCv(form.visaType, form.projectType)
+                    {dynamicForm.cv === 'required'
                       ? 'Pour un visa travail, un CV actualisé est obligatoire pour finaliser l’évaluation. PDF, JPG ou PNG, 5 Mo maximum.'
-                      : 'Le CV n’est pas exigé pour ce type de visa (études / visiteurs). Vous pouvez en joindre un si utile. PDF, JPG ou PNG, 5 Mo maximum.'}
+                      : dynamicForm.cv === 'recommended' ? 'Le CV n’est pas exigé pour ce visa ou programme, mais il aide votre conseiller à préparer le dossier. PDF, JPG ou PNG, 5 Mo maximum.' : 'Le CV n’est pas exigé pour ce visa ou programme. Vous pouvez en joindre un si utile. PDF, JPG ou PNG, 5 Mo maximum.'}
                   </p>
                   <input
                     id="cv-upload"

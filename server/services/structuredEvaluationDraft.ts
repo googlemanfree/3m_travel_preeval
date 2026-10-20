@@ -12,6 +12,7 @@ import {
 } from "../../shared/evaluationValidation";
 import { invokeLLM, type OutputSchema } from "../_core/llm";
 import { GEMINI_EVALUATION_MODEL } from "../geminiEvaluationDraftService";
+import { collectDeclaredResponses, describedDetailKeys } from "../../shared/dynamicForm";
 import type { AiDraftOutcome } from "./evaluationValidationCore";
 import { maskPersonalData, type CvExcerpt } from "./cvExcerpt";
 
@@ -180,12 +181,13 @@ export const AI_UNAVAILABLE_MESSAGE = "Le service d’analyse IA est momentaném
 
 export const NO_CONSENT_MESSAGE = "Le candidat n’a pas autorisé l’analyse IA de ses réponses : saisissez l’évaluation à la main.";
 
-function scalarDetails(json: string | null | undefined): Record<string, string | number | boolean> | undefined {
+function scalarDetails(json: string | null | undefined, context: { country?: string | null; projectType?: string | null } = {}): Record<string, string | number | boolean> | undefined {
   const parsed = parseDetails(json);
   if (!parsed) return undefined;
   const result: Record<string, string | number | boolean> = {};
-  for (const [key, value] of Object.entries(parsed).slice(0, 40)) {
-    if (EXCLUDED_DETAIL_KEYS.has(key) || PRIVATE_DETAIL_KEY.test(key)) continue;
+  const described = describedDetailKeys(parsed, context);
+  for (const [key, value] of Object.entries(parsed).slice(0, 120)) {
+    if (EXCLUDED_DETAIL_KEYS.has(key) || PRIVATE_DETAIL_KEY.test(key) || described.has(key)) continue;
     if (typeof value === "string" && looksPrivate(value)) continue;
     if (typeof value === "string") {
       const text = compactFree(value, 300);
@@ -193,18 +195,13 @@ function scalarDetails(json: string | null | undefined): Record<string, string |
     }
     else if (typeof value === "number" || typeof value === "boolean") result[key.slice(0, 60)] = value;
   }
-  // questions complémentaires du parcours multi-projets : « question → réponse »
-  if (Array.isArray(parsed.dynamicResponses)) {
-    parsed.dynamicResponses.slice(0, 10).forEach((entry, index) => {
-      const item = entry && typeof entry === "object" ? (entry as Record<string, unknown>) : {};
-      const rawQuestion = compact(item.question, 150);
-      const rawAnswer = compact(item.answer, 300);
-      if (!rawQuestion || !rawAnswer || looksPrivate(rawQuestion) || looksPrivate(rawAnswer)) return;
-      const question = compactFree(rawQuestion, 150);
-      const answer = compactFree(rawAnswer, 300);
-      if (question && answer) result[`reponse_complementaire_${index + 1}`] = `${question} → ${answer}`;
-    });
-  }
+  // Réponses du formulaire dynamique et questions complémentaires : « question → réponse », toutes conservées (jusqu'à 24).
+  collectDeclaredResponses(parsed, context).forEach((entry, index) => {
+    if (looksPrivate(entry.question) || looksPrivate(entry.answer)) return;
+    const question = compactFree(entry.question, 150);
+    const answer = compactFree(entry.answer, 300);
+    if (question && answer) result[`reponse_complementaire_${index + 1}`] = `${question} → ${answer}`;
+  });
   return Object.keys(result).length > 0 ? result : undefined;
 }
 
@@ -218,7 +215,7 @@ const detailText = (details: Record<string, string | number | boolean> | undefin
  * ni antécédent judiciaire ; le contenu du CV n'est pas lu (seule sa présence est indiquée).
  */
 export function buildDeclaredProfile(row: EvaluationRowForDraft, now: Date): DeclaredProfile {
-  const details = scalarDetails(row.projectDetailsJson);
+  const details = scalarDetails(row.projectDetailsJson, { country: priorityCountryOf(row), projectType: row.projectType });
   // le parcours multi-projets range âge, expérience, langues… dans les détails du projet plutôt que dans des colonnes
   const declaredAge = Number(details?.age);
   return {
