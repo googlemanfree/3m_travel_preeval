@@ -16,6 +16,9 @@ describe("retours d’interface", () => {
     expect(toasterSource).toContain('position="top-right"');
     expect(toasterSource).toContain("richColors");
     expect(toasterSource).toContain("closeButton");
+    expect(toasterSource).toContain("duration={4200}");
+    expect(toasterSource).toContain("w-[calc(100vw-2rem)]");
+    expect(toasterSource).toContain('success: "border-emerald-500"');
   });
 
   it("affiche et permet d’effacer la recherche instantanée des journaux e-mail", () => {

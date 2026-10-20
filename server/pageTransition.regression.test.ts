@@ -17,6 +17,7 @@ describe("premium page transitions", () => {
     expect(source).toContain("initial={motionDisabled ? false : { y: 8 }}");
     expect(source).toContain("opacity: 0, y: -8");
     expect(source).not.toContain("opacity: 0, y: 8");
+    expect(source).toContain("page-transition-shell");
   });
 
   it("ne crée pas de containing block transformé pour les sticky/fixed enfants", () => {

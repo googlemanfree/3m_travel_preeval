@@ -10,7 +10,19 @@ const Toaster = ({ ...props }: ToasterProps) => {
       position="top-right"
       richColors
       closeButton
+      duration={4200}
+      visibleToasts={4}
       className="toaster group"
+      toastOptions={{
+        duration: 4200,
+        classNames: {
+          toast: "w-[calc(100vw-2rem)] max-w-md shadow-xl backdrop-blur-md sm:w-auto",
+          title: "text-sm font-bold leading-5",
+          description: "text-xs leading-5",
+          success: "border-emerald-500",
+          error: "border-rose-500",
+        },
+      }}
       style={
         {
           "--normal-bg": "var(--popover)",
