@@ -132,6 +132,8 @@ import { AdminSimulatorHealth } from "@/components/AdminSimulatorHealth";
 import { AdminFooterEngagement } from "@/components/AdminFooterEngagement";
 import { AdminPlacementPipeline } from "@/components/AdminPlacementPipeline";
 import { AdminPartnerModule } from "@/components/AdminPartnerModule";
+import { AdminCvthequeReview } from "@/components/AdminCvthequeReview";
+import { AdminPrivacyCenter } from "@/components/AdminPrivacyCenter";
 import { AdminOperationsControlCenter } from "@/components/AdminOperationsControlCenter";
 import AdminTodayDashboard, { type TodayCandidate } from "@/components/AdminTodayDashboard";
 import { AdminCandidateKanban, getNextKanbanStatus, type KanbanCandidate } from "@/components/AdminCandidateKanban";
@@ -2594,6 +2596,8 @@ export default function AdminDashboard() {
 
         <div id="admin-placement-pipeline"><AdminPlacementPipeline sessionToken={sessionToken} onOpenCandidate={(adminCandidateRef) => setSelectedCandidateId(adminCandidateRef)} /></div>
         <div id="admin-partner-module"><AdminPartnerModule sessionToken={sessionToken} /></div>
+        <div id="admin-cvtheque-review"><AdminCvthequeReview sessionToken={sessionToken} /></div>
+        <div id="admin-privacy-center"><AdminPrivacyCenter sessionToken={sessionToken} /></div>
 
         {/* Modal de secours si les e-mails de réinitialisation ont échoué */}
         {resetModalData && (

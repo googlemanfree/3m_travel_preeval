@@ -86,6 +86,8 @@ import { jinkoHotelSearchRouter } from "./routers/jinkoHotelSearch";
 import { footerEngagementRouter } from "./routers/footerEngagement";
 import { placementPortalRouter } from "./routers/placementPortal";
 import { partnerModuleRouter } from "./routers/partnerModule";
+import { cvthequeRouter } from "./routers/cvtheque";
+import { privacyCenterRouter } from "./routers/privacyCenter";
 import { simulatorDiagnosticsRouter } from "./routers/simulatorDiagnostics";
 import { accessRecoveryRouter } from "./routers/accessRecovery";
 import { dossierVerificationRouter } from "./routers/dossierVerification";
@@ -210,6 +212,8 @@ export const appRouter = router({
   footerEngagement: footerEngagementRouter,
   placementPortal: placementPortalRouter,
   partnerModule: partnerModuleRouter,
+  cvtheque: cvthequeRouter,
+  privacyCenter: privacyCenterRouter,
   simulatorDiagnostics: simulatorDiagnosticsRouter,
   evisaFavorites: evisaFavoritesRouter,
   evisaReviews: evisaReviewsRouter,

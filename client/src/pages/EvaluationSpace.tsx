@@ -65,6 +65,7 @@ import PrivacyDataCard from "@/components/PrivacyDataCard";
 import FlightAfterVisaCard from "@/components/FlightAfterVisaCard";
 import { ReviewInviteCard } from "@/components/ReviewInviteCard";
 import { PlacementConsentCard } from "@/components/PlacementConsentCard";
+import { CvthequePresenceCard } from "@/components/CvthequePresenceCard";
 import { SelectableProfileCard } from "@/components/SelectableProfileCard";
 import SubmitReview from "@/pages/SubmitReview";
 import CaseDocumentsPanel, { agencyDepositedDocuments, allCaseDocuments } from "@/components/CaseDocumentsPanel";
@@ -1026,6 +1027,7 @@ export default function EvaluationSpace() {
               <Card className="border-blue-100 bg-white p-5 shadow-sm"><SubmitReview embedded initialFullName={cProfile.fullName} initialEmail={cProfile.email} /></Card>
               <SelectableProfileCard />
               <PlacementConsentCard />
+              <CvthequePresenceCard />
               {passportPhotoRequired ? (
                 <Card className="border-amber-300 bg-amber-50 p-5" data-testid="passport-photo-required-overview" role="region" aria-labelledby="passport-photo-required-title">
                   <div className="flex flex-wrap items-center justify-between gap-3">

@@ -6,6 +6,7 @@ import { PARTNER_ROUTES, partnerPasswordProblem } from "@shared/partnerModule";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PrivacyNotice } from "@/components/PrivacyNotice";
 
 /** Activation d'un compte partenaire depuis un lien d'invitation personnel (usage unique, durée limitée). */
 export default function PartnerInvitationActivation() {
@@ -62,6 +63,7 @@ export default function PartnerInvitationActivation() {
           </div>
         ) : (
           <form onSubmit={submit} noValidate className="mt-4 space-y-4">
+            <PrivacyNotice notice="partner_invitation" />
             <p className="text-sm leading-6 text-slate-600">
               {t(`${valid?.organizationName ?? "Votre organisation"} vous invite. Choisissez votre mot de passe personnel : il ne sera jamais demandé par e-mail.`, `${valid?.organizationName ?? "Your organisation"} has invited you. Choose your personal password: it will never be requested by email.`)}
             </p>

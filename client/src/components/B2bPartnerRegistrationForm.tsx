@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { PrivacyNotice } from "@/components/PrivacyNotice";
 
 export type PartnerOrganizationType = "placement_partner" | "employer";
 
@@ -272,6 +273,8 @@ export function B2bPartnerRegistrationForm({
           )}
         </p>
       </div>
+
+      <PrivacyNotice notice="partner_registration" />
 
       <div className="rounded-xl border border-indigo-100 bg-indigo-50/70 p-3" aria-live="polite">
         <div className="flex items-center justify-between gap-3 text-xs font-bold text-indigo-950">
