@@ -46,7 +46,12 @@ vi.mock("./twoFactor", () => ({
   beginTwoFactorEnrollment: async () => ({}),
   confirmTwoFactorEnrollment: async () => ({}),
 }));
-vi.mock("./loginAttemptsService", () => ({ checkLoginAttempts: () => undefined, recordFailedAttempt: () => undefined, resetLoginAttempts: () => undefined }));
+vi.mock("./loginAttemptsService", () => ({
+  checkLoginAttempts: () => undefined,
+  recordFailedAttempt: () => undefined,
+  resetLoginAttempts: () => undefined,
+  scopedLoginIdentifier: (scope: string, identifier: string) => `${scope}:${identifier.trim().toLowerCase()}`,
+}));
 
 import { adminAuthRouter } from "./routers/adminAuth";
 
@@ -94,6 +99,12 @@ describe("connexion admin : journal des échecs", () => {
     await expect(caller().login({ email: "agent@3mtravelagency.com", password: "correct", twoFactorCode: "000000" })).rejects.toThrow(/Code 2FA invalide/);
     expect(state.inserts).toHaveLength(1);
     expect(state.inserts[0]).toMatchObject({ eventType: "twofactor_failed" });
+  });
+
+  it("isole les tentatives admin et ne compte pas le premier affichage du 2FA", () => {
+    const source = read("server/routers/adminAuth.ts");
+    expect(source).toContain('scopedLoginIdentifier("admin", input.email)');
+    expect(source).toContain("if (input.twoFactorCode) recordFailedAttempt(loginIdentifier);");
   });
 
   it("connexion réussie : toujours seulement « login », comme avant", async () => {

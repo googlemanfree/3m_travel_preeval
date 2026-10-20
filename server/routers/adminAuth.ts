@@ -15,7 +15,7 @@ import { and, count, desc, eq, gte, inArray } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { getPasswordChangedEmailTemplate, getPasswordChangeFailedEmailTemplate } from "../_core/emailTemplates";
 import { randomBytes, randomInt } from "node:crypto";
-import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../loginAttemptsService";
+import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts, scopedLoginIdentifier } from "../loginAttemptsService";
 function esc(v: string | undefined | null): string { return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 import { beginTwoFactorEnrollment, confirmTwoFactorEnrollment, getTwoFactorStatus, verifyTwoFactor } from "../twoFactor";
 
@@ -124,7 +124,8 @@ export const adminAuthRouter = router({
       twoFactorCode: z.string().trim().min(6).max(32).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      checkLoginAttempts(input.email);
+      const loginIdentifier = scopedLoginIdentifier("admin", input.email);
+      checkLoginAttempts(loginIdentifier);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -136,40 +137,40 @@ export const adminAuthRouter = router({
         .limit(1);
 
       if (rows.length === 0) {
-        recordFailedAttempt(input.email);
+        recordFailedAttempt(loginIdentifier);
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
       const admin = rows[0];
 
       if (admin.status !== "active") {
-        recordFailedAttempt(input.email);
+        recordFailedAttempt(loginIdentifier);
         await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login_blocked", expiresAt: null });
         throw new TRPCError({ code: "FORBIDDEN", message: "Ce compte administrateur est désactivé." });
       }
 
       if (!admin.passwordHash) {
-        recordFailedAttempt(input.email);
+        recordFailedAttempt(loginIdentifier);
         await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login_failed", expiresAt: null });
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
       const valid = await bcrypt.compare(input.password, admin.passwordHash);
       if (!valid) {
-        recordFailedAttempt(input.email);
+        recordFailedAttempt(loginIdentifier);
         await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login_failed", expiresAt: null });
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
       const twoFactor = await verifyTwoFactor("admin", admin.id, input.twoFactorCode ?? "");
       if (twoFactor.required && !twoFactor.valid) {
-        recordFailedAttempt(input.email);
+        if (input.twoFactorCode) recordFailedAttempt(loginIdentifier);
         // Un code non renseigné (TOTP_REQUIRED) n'est pas une tentative échouée : le client va simplement redemander le code.
         if (input.twoFactorCode) await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "twofactor_failed", expiresAt: null });
         throw new TRPCError({ code: "UNAUTHORIZED", message: input.twoFactorCode ? "Code 2FA invalide ou déjà utilisé." : "TOTP_REQUIRED" });
       }
 
-      resetLoginAttempts(input.email);
+      resetLoginAttempts(loginIdentifier);
       const sessionToken = generateSessionToken();
       const sessionExpiresAt = new Date(Date.now() + ADMIN_SESSION_DURATION_MS);
 

@@ -13,6 +13,11 @@ const loginAttempts: Map<string, { count: number; lockedUntil: Date | null }> = 
 const MAX_ATTEMPTS = 3;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
 
+/** Évite qu’un même e-mail utilisé sur plusieurs espaces partage son verrouillage. */
+export function scopedLoginIdentifier(scope: string, identifier: string): string {
+  return `${scope}:${identifier.trim().toLowerCase()}`;
+}
+
 /**
  * Enregistre une tentative de connexion infructueuse
  */
