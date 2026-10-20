@@ -187,6 +187,10 @@ const multiProjectEvaluationInput = z.object({
   germanyLanguageLevel: z.string().max(120).optional(),
   germanyRecognitionStatus: z.string().max(500).optional(),
   geminiAnalysisConsent: z.boolean().default(false),
+  // Visa ou programme, domaine et réponses propres au parcours (formulaire dynamique) : nettoyés côté serveur avant tout enregistrement.
+  programId: z.string().max(80).optional(),
+  domainId: z.string().max(40).optional(),
+  projectAnswers: z.record(z.string().max(60), z.string().max(1000)).optional(),
   dynamicResponses: z.array(z.object({
     question: z.string().trim().min(3).max(260),
     answer: z.string().trim().min(1).max(1000),
@@ -230,6 +234,7 @@ export const evaluationRouter = router({
         throw new Error("Base de données non disponible");
       }
 
+      const publicDetails = sanitizeProjectDetails({ country: input.destinationCountry, projectType: input.projectType }, { ...(input.projectAnswers ?? {}), ...(input.programId ? { programId: input.programId } : {}), ...(input.domainId ? { domainId: input.domainId } : {}) });
       const dossierCode = generateDossierCode();
       const reviewDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000);
       // Créer un enregistrement d'évaluation multi-projets
@@ -279,6 +284,7 @@ export const evaluationRouter = router({
           germanyRecognitionStatus: input.germanyRecognitionStatus,
           preparatoryAnalysisConsent: input.geminiAnalysisConsent,
           preparatoryAnalysisConsentRecordedAt: input.geminiAnalysisConsent ? new Date().toISOString() : null,
+          ...publicDetails,
           dynamicResponses: input.dynamicResponses,
         }),
         cvFileUrl: undefined,
@@ -296,10 +302,17 @@ export const evaluationRouter = router({
       await openStructuredEvaluation(evaluationId);
       if (input.geminiAnalysisConsent) {
         const alternatives = (orientationAlternativeCandidates[input.destinationCountry] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== input.destinationCountry);
-        const dynamicDetails = Object.fromEntries(input.dynamicResponses.flatMap((response, index) => [
-          [`question_complementaire_${index + 1}`, response.question],
-          [`reponse_complementaire_${index + 1}`, response.answer],
-        ]));
+        // Questions et réponses lisibles (formulaire dynamique puis questions complémentaires de l'IA), toutes conservées.
+        const declared = collectDeclaredResponses({ ...(publicDetails ?? {}), dynamicResponses: input.dynamicResponses }, { country: input.destinationCountry, projectType: input.projectType });
+        const dynamicDetails: Record<string, string> = {
+          ...(publicDetails?.programLabel ? { programme: publicDetails.programLabel } : {}),
+          ...(publicDetails?.domainLabel ? { domaine: publicDetails.domainLabel } : {}),
+          ...Object.fromEntries(declared.flatMap((response, index) => [[`question_complementaire_${index + 1}`, response.question], [`reponse_complementaire_${index + 1}`, response.answer]])),
+        };
+        const publicGuidance = buildAiGuidance(
+          resolveDynamicForm({ country: input.destinationCountry, projectType: input.projectType, programId: publicDetails?.programId, domainId: publicDetails?.domainId }),
+          { ...(publicDetails ?? {}), educationLevel: input.educationLevel ?? "", languages: input.languages ?? "" },
+        );
         void (async () => {
           try {
             const draft = await generateGeminiEvaluationDraft({
@@ -324,6 +337,7 @@ export const evaluationRouter = router({
                 ...dynamicDetails,
               },
               alternativeCountries: alternatives,
+              guidance: publicGuidance,
             });
             await db.update(evaluations).set({ aiReportContent: JSON.stringify(draft), aiProcessedAt: new Date(), aiProcessingError: null }).where(eq(evaluations.id, evaluationId));
             logger.info("evaluation.preparation_draft.completed", { evaluationId });

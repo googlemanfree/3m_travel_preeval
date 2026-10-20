@@ -12,6 +12,8 @@ const KIND_CHOICES: Array<{ kind: ProjectKind; label: string; hint: string }> = 
 ];
 
 type Props = {
+  /** Le formulaire public choisit déjà le type de projet : le sélecteur de type peut être masqué. */
+  showKind?: boolean;
   form: ResolvedForm;
   projectKind: ProjectKind;
   programId: string;
@@ -34,7 +36,7 @@ function describeChange(change: FormChange): string | null {
  * Le choix qui pilote tout le formulaire : type de projet, visa ou programme, domaine métier. Chaque changement recompose les
  * sections en dessous ; le résultat est annoncé (région « status ») pour les lecteurs d'écran.
  */
-export function DynamicProjectChoice({ form, projectKind, programId, domainId, onKind, onProgram, onDomain }: Props) {
+export function DynamicProjectChoice({ form, projectKind, programId, domainId, onKind, onProgram, onDomain, showKind = true }: Props) {
   const previous = useRef<ResolvedForm | null>(null);
   const [announcement, setAnnouncement] = useState<string | null>(null);
   const signature = `${form.program.id}|${form.domain?.id ?? ""}|${form.countryCode ?? form.countryName ?? ""}`;
@@ -53,7 +55,7 @@ export function DynamicProjectChoice({ form, projectKind, programId, domainId, o
         <p className="mt-1 text-sm leading-6 text-slate-600">Le pays, le visa ou programme et votre domaine changent les questions posées. Rien n’est confirmé à ce stade : un conseiller vérifie chaque dossier avec les sources officielles.</p>
       </div>
 
-      <fieldset>
+      {showKind && <fieldset>
         <legend className="mb-2 text-sm font-semibold text-slate-800">Que souhaitez-vous faire ? *</legend>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3" role="radiogroup" aria-label="Type de projet">
           {KIND_CHOICES.map((choice) => {
@@ -66,7 +68,7 @@ export function DynamicProjectChoice({ form, projectKind, programId, domainId, o
             );
           })}
         </div>
-      </fieldset>
+      </fieldset>}
 
       <fieldset id="dyn-program" tabIndex={-1} className="focus:outline-none">
         <legend className="mb-2 text-sm font-semibold text-slate-800">Quel visa ou programme vous correspond ? *</legend>

@@ -103,8 +103,9 @@ describe("questions adaptées dans le formulaire", () => {
 
   it("le formulaire d'accueil les envoie avec le dossier (fusionnées aux questions complémentaires, jusqu'à douze)", () => {
     const form = read("client/src/components/SimpleMultiProjectForm.tsx");
-    expect(form).toContain("<CountryAdaptiveQuestions");
-    expect(form).toContain("buildCountryResponses(buildCountryAdaptiveFields(");
+    // Le formulaire d'accueil utilise désormais le moteur partagé (visa, domaine, pays) ; ces questions génériques restent le repli du catalogue.
+    expect(form).toContain("<DynamicFormSections");
+    expect(form).toContain("projectAnswers: visibleProgramAnswers()");
     expect(form).toContain(".slice(0, 12)");
     expect(read("server/routers/evaluation.ts")).toContain("})).max(12).default([]),");
   });
