@@ -7,3 +7,8 @@
 - [x] Propagation explicite de `destination` et `visaType` vers le bureau des reçus.
 - [x] Régressions ciblées protocoles + PDF : 11/11 vertes ; `git diff --check` vert.
 - [x] `pnpm run check` global vert après correction des comparaisons visa et des contrats Zod du workflow 360°.
+
+## Formulaire dynamique pays / visa
+- [ ] Implémenter la confirmation de changement pays/projet, le résumé d’impact et les erreurs de validation accessibles.
+- [ ] Préserver les champs communs et archiver les réponses spécifiques devenues inactives dans le brouillon.
+- [ ] Ajouter les régressions ciblées puis valider typecheck, tests et build.

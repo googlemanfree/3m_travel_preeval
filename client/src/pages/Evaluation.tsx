@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CheckCircle2, Loader, AlertCircle, Sparkles, FileText, Upload, X, ExternalLink } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { motion } from 'framer-motion';
@@ -32,6 +33,13 @@ interface FormState {
   priorVisaRefusal: boolean; priorVisaRefusalCountry: string; criminalRecord: boolean; familyAbroad: boolean;
   message: string;
 }
+
+type PendingJourneyChange = {
+  kind: 'project' | 'country';
+  value: string;
+  label: string;
+  archivedKeys: string[];
+};
 
 const initialForm: FormState = {
   fullName: '', email: '', phone: '', dateOfBirth: '', nationality: '',
@@ -128,6 +136,9 @@ export default function Evaluation() {
   const [cropZoom, setCropZoom] = useState(1);
   const [cropPixels, setCropPixels] = useState<CropPixels | null>(null);
   const [customDestinationMode, setCustomDestinationMode] = useState(false);
+  const [pendingJourneyChange, setPendingJourneyChange] = useState<PendingJourneyChange | null>(null);
+  const [archivedProjectDetails, setArchivedProjectDetails] = useState<Record<string, string>>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const DRAFT_KEY = 'eval_draft';
   const DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -142,7 +153,7 @@ export default function Evaluation() {
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
       if (!raw) return;
-      const saved = JSON.parse(raw) as { savedAt?: number; owner?: string; form?: Partial<FormState> };
+      const saved = JSON.parse(raw) as { savedAt?: number; owner?: string; form?: Partial<FormState>; archivedProjectDetails?: Record<string, string> };
       const expired = typeof saved.savedAt !== 'number' || Date.now() - saved.savedAt > DRAFT_MAX_AGE_MS;
       if (!saved.form || expired || saved.owner !== draftOwner) { clearDraft(); return; }
       // Un projet choisi explicitement dans l'URL prime sur un ancien brouillon.
@@ -150,6 +161,7 @@ export default function Evaluation() {
       const restored = { ...initialProjectForm, ...saved.form };
       formRef.current = restored;
       setForm(restored);
+      setArchivedProjectDetails(saved.archivedProjectDetails ?? {});
       toast.info('Brouillon restauré', {
         description: 'Votre saisie précédente a été récupérée. Sur un ordinateur partagé, effacez-la.',
         duration: 10000,
@@ -167,11 +179,11 @@ export default function Evaluation() {
           return;
         }
         draftTouched.current = true;
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), owner: draftOwner, form }));
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), owner: draftOwner, form, archivedProjectDetails }));
       } catch { /* quota exceeded — ignore */ }
     }, 1000);
     return () => clearTimeout(timer);
-  }, [form, draftOwner]);
+  }, [form, draftOwner, archivedProjectDetails]);
 
   // Sections renseignées (0-6). « Historique » n'a que des champs facultatifs : il compte une fois les cinq autres complétées.
   const sectionsDone = useMemo(() => {
@@ -206,7 +218,7 @@ export default function Evaluation() {
 
   const updateProjectDetails = (key: string, value: string) => update('projectDetails', { ...formRef.current.projectDetails, [key]: value });
 
-  const selectProjectType = (projectType: EvaluationProjectType) => {
+  const applyProjectType = (projectType: EvaluationProjectType) => {
     const recommendedVisa = PROJECT_EVALUATION_CONFIG[projectType].recommendedVisaTypes[0];
     const next = { ...formRef.current, projectType, projectDetails: {}, destinationCountry: '', destinationCategory: 'autre', visaType: recommendedVisa ?? formRef.current.visaType };
     formRef.current = next;
@@ -214,7 +226,7 @@ export default function Evaluation() {
     setCustomDestinationMode(false);
   };
 
-  const selectDestinationCountry = (country: string) => {
+  const applyDestinationCountry = (country: string) => {
     const procedures = getProceduresForCountry(formRef.current.projectType, country);
     const procedure = procedures[0];
     const next = {
@@ -228,7 +240,53 @@ export default function Evaluation() {
     setCustomDestinationMode(false);
   };
 
+  const requestProjectTypeChange = (projectType: EvaluationProjectType) => {
+    if (projectType === formRef.current.projectType) return;
+    const archivedKeys = Object.keys(formRef.current.projectDetails).filter((key) => Boolean(formRef.current.projectDetails[key]));
+    if (archivedKeys.length || formRef.current.destinationCountry) {
+      setPendingJourneyChange({ kind: 'project', value: projectType, label: PROJECT_EVALUATION_CONFIG[projectType].label, archivedKeys });
+      return;
+    }
+    applyProjectType(projectType);
+  };
+
+  const requestDestinationCountryChange = (country: string) => {
+    if (country === formRef.current.destinationCountry) return;
+    const archivedKeys = Object.keys(formRef.current.projectDetails).filter((key) => Boolean(formRef.current.projectDetails[key]));
+    if (archivedKeys.length || formRef.current.destinationCountry) {
+      setPendingJourneyChange({ kind: 'country', value: country, label: country, archivedKeys });
+      return;
+    }
+    applyDestinationCountry(country);
+  };
+
+  const confirmJourneyChange = () => {
+    if (!pendingJourneyChange) return;
+    const details = formRef.current.projectDetails;
+    if (pendingJourneyChange.archivedKeys.length) {
+      setArchivedProjectDetails((current) => ({
+        ...current,
+        ...Object.fromEntries(pendingJourneyChange.archivedKeys.map((key) => [`${formRef.current.projectType}.${formRef.current.destinationCountry || 'pays'}.${key}`, details[key]])),
+      }));
+    }
+    if (pendingJourneyChange.kind === 'project') applyProjectType(pendingJourneyChange.value as EvaluationProjectType);
+    else if (pendingJourneyChange.value === '__custom__') applyCustomDestination();
+    else applyDestinationCountry(pendingJourneyChange.value);
+    setFieldErrors({});
+    setFormError('');
+    setPendingJourneyChange(null);
+  };
+
   const chooseCustomDestination = () => {
+    const archivedKeys = Object.keys(formRef.current.projectDetails).filter((key) => Boolean(formRef.current.projectDetails[key]));
+    if (archivedKeys.length || formRef.current.destinationCountry) {
+      setPendingJourneyChange({ kind: 'country', value: '__custom__', label: 'une autre destination', archivedKeys });
+      return;
+    }
+    applyCustomDestination();
+  };
+
+  const applyCustomDestination = () => {
     const next = { ...formRef.current, destinationCountry: '', destinationCategory: 'autre', projectDetails: {} };
     formRef.current = next;
     setForm(next);
@@ -412,21 +470,31 @@ export default function Evaluation() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
+    setFieldErrors({});
 
-    if (form.fullName.trim().length < 3) return setFormError('Merci d\'indiquer votre nom complet.');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return setFormError('Adresse email invalide.');
-    if (form.phone.trim().length < 8) return setFormError('Numéro de téléphone invalide.');
-    if (!form.destinationCategory) return setFormError('Merci de sélectionner une destination.');
-    if (!form.destinationCountry.trim()) return setFormError('Merci de sélectionner ou préciser le pays de destination.');
+    const failValidation = (message: string, field?: string) => {
+      setFormError(message);
+      if (field) {
+        setFieldErrors({ [field]: message });
+        window.setTimeout(() => document.getElementById(field)?.focus(), 0);
+      }
+      return undefined;
+    };
+
+    if (form.fullName.trim().length < 3) return failValidation('Merci d\'indiquer votre nom complet.', 'evaluation-full-name');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return failValidation('Adresse email invalide.', 'evaluation-email');
+    if (form.phone.trim().length < 8) return failValidation('Numéro de téléphone invalide.', 'evaluation-phone');
+    if (!form.destinationCategory) return failValidation('Merci de sélectionner une destination.', 'evaluation-destination');
+    if (!form.destinationCountry.trim()) return failValidation('Merci de sélectionner ou préciser le pays de destination.', 'evaluation-destination');
     const availableCountryProcedures = getProceduresForCountry(form.projectType, form.destinationCountry);
-    if (availableCountryProcedures.length > 0 && !form.projectDetails.procedureId) return setFormError('Merci de sélectionner la procédure correspondant au pays choisi.');
+    if (availableCountryProcedures.length > 0 && !form.projectDetails.procedureId) return failValidation('Merci de sélectionner la procédure correspondant au pays choisi.', 'evaluation-procedure');
     const selectedProcedure = getProcedureById(form.projectDetails.procedureId);
     const requiredProjectFields = [
       ...PROJECT_EVALUATION_CONFIG[form.projectType].requiredDetails,
       ...getCountryProcedureFields(form.projectType, form.destinationCountry, selectedProcedure),
     ];
     const missingProjectFields = requiredProjectFields.filter((field) => field.required && !form.projectDetails[field.key]?.trim());
-    if (missingProjectFields.length) return setFormError(`Merci de compléter les informations requises pour votre projet : ${missingProjectFields.map((field) => field.label).join(', ')}.`);
+    if (missingProjectFields.length) return failValidation(`Merci de compléter les informations requises pour votre projet : ${missingProjectFields.map((field) => field.label).join(', ')}.`, `project-${missingProjectFields[0].key}`);
 
     // CV obligatoire uniquement pour le visa travail (études / visiteurs : formulaires distincts).
     const cvMandatory = evaluationRequiresCv(form.visaType, form.projectType);
@@ -597,14 +665,33 @@ export default function Evaluation() {
         </div>
 
         <Card className="p-6 md:p-8">
+          <Dialog open={Boolean(pendingJourneyChange)} onOpenChange={(open) => { if (!open) setPendingJourneyChange(null); }}>
+            <DialogContent aria-describedby="journey-change-description">
+              <DialogHeader>
+                <DialogTitle>Adapter votre formulaire</DialogTitle>
+                <DialogDescription id="journey-change-description">
+                  Le formulaire sera reconstruit pour {pendingJourneyChange?.kind === 'project' ? `le projet ${pendingJourneyChange.label}` : `la destination ${pendingJourneyChange?.label}`}.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3 text-sm text-slate-700">
+                <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2"><strong>Conservé :</strong> identité, contact, études, expérience et préférences générales.</p>
+                <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2"><strong>À reprendre :</strong> les questions propres à l’ancien pays ou visa disparaîtront du formulaire actif.</p>
+                {pendingJourneyChange && pendingJourneyChange.archivedKeys.length > 0 && <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2"><strong>Archivé dans le brouillon :</strong> {pendingJourneyChange.archivedKeys.length} réponse(s), récupérable(s) si vous revenez à ce parcours.</p>}
+              </div>
+              <DialogFooter>
+                <DialogClose asChild><Button type="button" variant="outline">Annuler</Button></DialogClose>
+                <Button type="button" onClick={confirmJourneyChange} className="bg-blue-700 hover:bg-blue-800">Adapter le formulaire</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           <form onSubmit={handleSubmit} className="space-y-4">
             {onboardingFromRegistration && <div role="status" aria-live="polite" className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-950"><strong>Votre compte est activé.</strong> Complétez votre évaluation préparatoire en sélectionnant votre projet, votre pays et la procédure concernée. Les critères et pièces définitifs seront confirmés par un conseiller à partir des sources institutionnelles.</div>}
             <SectionTitle>État civil & famille</SectionTitle>
             <div className="grid sm:grid-cols-2 gap-4">
-              <div><Label>Nom complet *</Label><Input value={form.fullName} onChange={(e) => update('fullName', e.target.value)} maxLength={255} className="mt-1" /></div>
+              <div><Label htmlFor="evaluation-full-name">Nom complet *</Label><Input id="evaluation-full-name" value={form.fullName} onChange={(e) => update('fullName', e.target.value)} aria-invalid={Boolean(fieldErrors['evaluation-full-name'])} maxLength={255} className="mt-1" /></div>
               <div><Label>Date de naissance</Label><Input type="date" value={form.dateOfBirth} onChange={(e) => update('dateOfBirth', e.target.value)} className="mt-1" /></div>
-              <div><Label>Email *</Label><Input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} maxLength={320} className="mt-1" /></div>
-              <div><Label>Téléphone *</Label><Input value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="+237 6XX XXX XXX" maxLength={50} className="mt-1" /></div>
+              <div><Label htmlFor="evaluation-email">Email *</Label><Input id="evaluation-email" type="email" value={form.email} onChange={(e) => update('email', e.target.value)} aria-invalid={Boolean(fieldErrors['evaluation-email'])} maxLength={320} className="mt-1" /></div>
+              <div><Label htmlFor="evaluation-phone">Téléphone *</Label><Input id="evaluation-phone" value={form.phone} onChange={(e) => update('phone', e.target.value)} aria-invalid={Boolean(fieldErrors['evaluation-phone'])} placeholder="+237 6XX XXX XXX" maxLength={50} className="mt-1" /></div>
               <div><Label>Nationalité</Label><Input value={form.nationality} onChange={(e) => update('nationality', e.target.value)} maxLength={100} className="mt-1" /></div>
               <div><Label>Ville de résidence</Label><Input value={form.cityOfResidence} onChange={(e) => update('cityOfResidence', e.target.value)} maxLength={100} className="mt-1" /></div>
               <div>
@@ -697,13 +784,13 @@ export default function Evaluation() {
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <Label>Projet à évaluer *</Label>
-                <select value={form.projectType} onChange={(e) => isEvaluationProjectType(e.target.value) && selectProjectType(e.target.value)} className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm">
+                <select id="evaluation-project-type" value={form.projectType} onChange={(e) => isEvaluationProjectType(e.target.value) && requestProjectTypeChange(e.target.value)} className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm">
                   {(Object.keys(PROJECT_EVALUATION_CONFIG) as EvaluationProjectType[]).map((projectType) => <option key={projectType} value={projectType}>{PROJECT_EVALUATION_CONFIG[projectType].label} — {PROJECT_EVALUATION_CONFIG[projectType].subtitle}</option>)}
                 </select>
               </div>
               <div>
                 <Label>Catégorie de destination *</Label>
-                <select value={form.destinationCategory} onChange={(e) => update('destinationCategory', e.target.value)} className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm">
+                <select id="evaluation-destination-category" value={form.destinationCategory} onChange={(e) => update('destinationCategory', e.target.value)} className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm">
                   <option value="canada">Canada</option>
                   <option value="schengen">Europe / Schengen</option>
                   <option value="autre">Monde — laissez-nous comparer les possibilités</option>
@@ -711,7 +798,7 @@ export default function Evaluation() {
               </div>
               <div>
                 <Label htmlFor="evaluation-destination">Destination ciblée *</Label>
-                <DestinationAutocomplete id="evaluation-destination" value={customDestinationMode ? '' : form.destinationCountry} options={destinationOptions} onSelect={selectDestinationCountry} onCustom={chooseCustomDestination} />
+                <DestinationAutocomplete id="evaluation-destination" value={customDestinationMode ? '' : form.destinationCountry} options={destinationOptions} onSelect={requestDestinationCountryChange} onCustom={chooseCustomDestination} />
                 <p className="mt-1 text-xs text-slate-500">Recherchez par pays, sélectionnez une destination avec son drapeau, puis choisissez la procédure associée.</p>
               </div>
               {customDestinationMode && <div>
@@ -720,7 +807,7 @@ export default function Evaluation() {
               </div>}
               {availableProcedures.length > 0 && <div>
                 <Label>Procédure à évaluer *</Label>
-                <select value={form.projectDetails.procedureId ?? ''} onChange={(event) => selectProcedure(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm">
+                <select id="evaluation-procedure" value={form.projectDetails.procedureId ?? ''} onChange={(event) => selectProcedure(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm">
                   <option value="">Sélectionner une procédure</option>
                   {availableProcedures.map((procedure) => <option key={procedure.id} value={procedure.id}>{procedure.procedureLabel}</option>)}
                 </select>
@@ -900,9 +987,12 @@ export default function Evaluation() {
             </fieldset>
 
             {(formError || submitMutation.error) && (
-              <div className="flex gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              <div className="flex gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700" role="alert" aria-live="assertive" aria-atomic="true">
                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span>{formError || submitMutation.error?.message}</span>
+                <div>
+                  <span>{formError || submitMutation.error?.message}</span>
+                  {Object.keys(fieldErrors).length > 0 && <p className="mt-1 text-xs text-red-800">Le champ concerné a été ciblé automatiquement. Corrigez-le puis renvoyez le formulaire.</p>}
+                </div>
               </div>
             )}
 
