@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { PremiumCoverImage } from "@/components/PremiumCoverImage";
 import { getServiceVisual } from "@/data/premiumVisuals";
 import { INTERNATIONAL_BRAND } from "@/data/internationalBrand";
+import { PARTNER_CATEGORIES, PARTNER_CATEGORY_LABELS, PARTNER_ROUTES } from "@shared/partnerModule";
 
 /**
  * Hub public des 4 interfaces — porte d’entrée internationale pour recruteurs
@@ -103,6 +104,38 @@ export default function PartnersHub() {
             {en ? INTERNATIONAL_BRAND.cta.advisor.en : INTERNATIONAL_BRAND.cta.advisor.fr}
           </a>
         </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 pb-12" aria-labelledby="companies-partners-title" id="entreprises-partenaires" data-testid="companies-partners">
+        <div className="rounded-3xl border border-white/20 bg-white/95 p-6 shadow-xl sm:p-8">
+          <h2 id="companies-partners-title" className="text-2xl font-black text-[#071b3d] sm:text-3xl">{en ? "Companies & partners" : "Entreprises & partenaires"}</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
+            {en
+              ? "Employers, recruitment firms and placement agencies can join the platform, share their needs and work with our team. 3M TRAVEL AGENCY keeps the management of applications: we check each offer, confirm the candidate’s interest and coordinate the next steps."
+              : "Employeurs, cabinets de recrutement et agences de placement peuvent rejoindre la plateforme, transmettre leurs besoins et collaborer avec notre équipe. 3M TRAVEL AGENCY conserve la gestion des candidatures : nous vérifions chaque offre, confirmons l’intérêt du candidat et coordonnons la suite."}
+          </p>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-3" aria-label={en ? "Professional account types" : "Types de comptes professionnels"}>
+            {PARTNER_CATEGORIES.map((category) => (
+              <li key={category} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="font-black text-slate-900">{en ? PARTNER_CATEGORY_LABELS[category].en : PARTNER_CATEGORY_LABELS[category].fr}</p>
+                <p className="mt-1 text-sm text-slate-600">{en ? PARTNER_CATEGORY_LABELS[category].hintEn : PARTNER_CATEGORY_LABELS[category].hintFr}</p>
+              </li>
+            ))}
+          </ul>
+          <ol className="mt-5 grid gap-3 text-sm text-slate-700 sm:grid-cols-4" aria-label={en ? "How it works" : "Fonctionnement"}>
+            {(en
+              ? ["Request access with your company identification", "3M verifies your organisation and any required authorisation", "You activate your account through a personal secure link", "You see authorised profiles and submit needs; 3M coordinates"]
+              : ["Vous demandez un accès avec l’identification de votre entreprise", "3M vérifie votre organisation et l’autorisation éventuellement requise", "Vous activez votre compte par un lien personnel sécurisé", "Vous consultez les profils autorisés et transmettez vos besoins ; 3M coordonne"]).map((step, index) => (
+              <li key={step} className="flex gap-3 rounded-2xl border border-slate-200 p-3"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-700 text-xs font-black text-white" aria-hidden="true">{index + 1}</span><span>{step}</span></li>
+            ))}
+          </ol>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <a href={PARTNER_ROUTES.register} data-testid="partners-cta-join" className="inline-flex min-h-12 items-center justify-center rounded-xl bg-blue-700 px-5 py-3 text-sm font-black text-white hover:bg-blue-800">{en ? "Become a partner" : "Devenir partenaire"}</a>
+            <a href={PARTNER_ROUTES.registerNeed} data-testid="partners-cta-need" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-blue-300 bg-blue-50 px-5 py-3 text-sm font-black text-blue-950 hover:bg-blue-100">{en ? "Submit a recruitment need" : "Transmettre un besoin de recrutement"}</a>
+            <a href={PARTNER_ROUTES.login} data-testid="partners-cta-login" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-900 hover:bg-slate-50">{en ? "Sign in" : "Se connecter"}</a>
+          </div>
+          <p className="mt-4 text-xs leading-5 text-slate-500">{en ? "Access is free of registration fees and subject to administrative validation. An inscription alone never makes a company an “official partner”; no name or logo is published without written authorisation." : "L’accès est sans frais d’inscription et soumis à validation administrative. Une simple inscription ne fait jamais d’une entreprise un « partenaire officiel » ; aucun nom ni logo n’est publié sans autorisation écrite."}</p>
         </div>
       </section>
 

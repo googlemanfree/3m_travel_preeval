@@ -357,6 +357,7 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/procedures/japon": { title: `Japon : stage technique et visa | ${SITE}`, description: "Programme de stagiaires techniques (TITP) et visas de spécialistes au Japon : secteurs, étapes et vigilance sur les organismes agréés.", keywords: ["visa Japon", "stage technique Japon", "TITP", "travail Japon", "3M TRAVEL AGENCY"], heading: "Travailler au Japon", lead: "Repères sur le programme de stagiaires techniques et les visas de spécialistes ; ne traitez qu’avec des organismes agréés et vérifiés." },
   // Parcours personnels, transactionnels ou doublons d’une page de référence : servis en 200 non indexable.
   "/complete-profile": privateShell("Compléter mon profil", "Renseignez les informations manquantes de votre profil pour finaliser votre espace client 3M TRAVEL AGENCY."),
+  "/partenaires/activation": privateShell("Activer mon accès partenaire", "Activation d’un accès partenaire à partir d’un lien d’invitation personnel, à usage unique et de durée limitée."),
   "/forgot-password": privateShell("Mot de passe oublié", "Demandez un lien sécurisé pour réinitialiser le mot de passe de votre espace client 3M TRAVEL AGENCY."),
   "/reset-password": privateShell("Nouveau mot de passe", "Définissez un nouveau mot de passe grâce au lien sécurisé reçu par e-mail pour retrouver l’accès à votre espace client."),
   "/payment/method-selection": privateShell("Choisir un mode de paiement", "Sélectionnez le mode de règlement d’un dossier 3M TRAVEL AGENCY depuis votre espace client."),

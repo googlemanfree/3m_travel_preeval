@@ -44,7 +44,7 @@ const menuItems: { href: string; label: NavCopy; icon: LucideIcon; highlight?: b
   { href: "/?project=travail#evaluation-multi", label: { fr: "Évaluation rapide", en: "Quick assessment" }, icon: Zap },
   { href: "/evisas", label: { fr: "E-Visa", en: "e-Visa" }, icon: Smartphone, highlight: true },
   { href: "/3m-solutions", label: { fr: "3M Solutions", en: "3M Solutions" }, icon: UsersRound },
-  { href: "/partenaires", label: { fr: "Partenaires B2B", en: "B2B partners" }, icon: Building2 },
+  { href: "/partenaires", label: { fr: "Entreprises & partenaires", en: "Companies & partners" }, icon: Building2 },
 ];
 
 const NAV_COPY = {

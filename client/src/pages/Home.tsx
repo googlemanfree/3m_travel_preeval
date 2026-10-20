@@ -201,7 +201,7 @@ export default function Home() {
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <a href={CORRIDOR_ROUTES.partnersHub} className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
-              <p className="text-base font-black text-slate-950">{t("Hub partenaires", "Partners hub")}</p>
+              <p className="text-base font-black text-slate-950">{t("Entreprises & partenaires", "Companies & partners")}</p>
               <p className="mt-1 text-sm text-slate-600">{t("Candidat, admin 3M, agences et employeurs — un corridor traçable.", "Candidate, 3M admin, agencies and employers — one traceable corridor.")}</p>
               <span className="mt-3 inline-flex items-center text-sm font-bold text-indigo-700">{t("Voir le corridor →", "View the corridor →")}</span>
             </a>

@@ -9,6 +9,11 @@ const state = vi.hoisted(() => ({ pending: false, mutate: vi.fn() }));
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
+    partnerModule: {
+      uploadAuthorizationDocument: {
+        useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
+      },
+    },
     placementPortal: {
       requestPartnerAccess: {
         useMutation: () => ({ mutate: state.mutate, isPending: state.pending }),

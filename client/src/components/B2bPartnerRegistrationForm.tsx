@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Building2, CheckCircle2, IdCard, Loader2, LockKeyhole, Send } from "lucide-react";
+import { Building2, CheckCircle2, FileUp, IdCard, Loader2, LockKeyhole, Send } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { CORRIDOR_ROUTES } from "@shared/talentCorridor";
+import { AUTHORIZATION_DOCUMENT_MAX_BYTES, PARTNER_CATEGORIES, PARTNER_CATEGORY_LABELS, defaultCategoryForOrganizationType, isIntermediaryCategory, organizationTypeForCategory, type PartnerCategory } from "@shared/partnerModule";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -35,6 +36,9 @@ const emptyForm = (organizationType: PartnerOrganizationType) => ({
   sectors: "",
   targetMarkets: "",
   message: "",
+  partnerCategory: defaultCategoryForOrganizationType(organizationType) as PartnerCategory,
+  mandateCompany: "",
+  mandateConfidential: false,
   acknowledgeReview: false,
   acknowledgeCharter: false,
 });
@@ -50,6 +54,8 @@ function readDraft(organizationType: PartnerOrganizationType): FormState {
       ...base,
       ...raw,
       organizationType: organizationType,
+      // Une catégorie enregistrée dans un ancien brouillon n'est reprise que si elle correspond au type d'organisation demandé.
+      partnerCategory: raw.partnerCategory && PARTNER_CATEGORIES.includes(raw.partnerCategory) && organizationTypeForCategory(raw.partnerCategory) === organizationType ? raw.partnerCategory : base.partnerCategory,
       acknowledgeReview: false,
       acknowledgeCharter: false,
     };
@@ -70,7 +76,11 @@ export function B2bPartnerRegistrationForm({
   const [validationMessage, setValidationMessage] = useState("");
   const [draftStatus, setDraftStatus] = useState<"idle" | "saving" | "saved">("idle");
   const skipNextDraftSave = useRef(false);
+  const [authorizationFile, setAuthorizationFile] = useState<File | null>(null);
+  const pendingAuthorizationFile = useRef<File | null>(null);
   const requiresLicence = form.organizationType === "placement_partner";
+  const isIntermediary = isIntermediaryCategory(form.partnerCategory);
+  const allowedCategories = lockOrganizationType ? PARTNER_CATEGORIES.filter((category) => organizationTypeForCategory(category) === defaultOrganizationType) : PARTNER_CATEGORIES;
   const filledCount = useMemo(
     () => [
       form.legalName,
@@ -93,9 +103,10 @@ export function B2bPartnerRegistrationForm({
     || form.contactRole.trim().length < 2
     || form.message.trim().length < 20
     || (requiresLicence && form.registrationNumber.trim().length < 2)
+    || (isIntermediary && !form.mandateCompany.trim() && !form.mandateConfidential)
     || !form.acknowledgeReview
     || !form.acknowledgeCharter
-  ), [form, requiresLicence]);
+  ), [form, requiresLicence, isIntermediary]);
   useEffect(() => {
     if (skipNextDraftSave.current) {
       skipNextDraftSave.current = false;
@@ -113,8 +124,26 @@ export function B2bPartnerRegistrationForm({
     }, 250);
     return () => window.clearTimeout(timer);
   }, [form]);
+  const uploadAuthorization = trpc.partnerModule.uploadAuthorizationDocument.useMutation();
+  const attachAuthorization = async (requestId: number, uploadToken: string, file: File) => {
+    try {
+      const buffer = new Uint8Array(await file.arrayBuffer());
+      let binary = "";
+      for (let index = 0; index < buffer.length; index += 0x8000) binary += String.fromCharCode.apply(null, Array.from(buffer.subarray(index, index + 0x8000)));
+      await uploadAuthorization.mutateAsync({ requestId, uploadToken, fileName: file.name, fileBase64: btoa(binary) });
+      toast.success(t("Justificatif joint à votre demande", "Supporting document attached to your request"));
+    } catch (error) {
+      toast.warning(t("Justificatif non joint", "Document not attached"), {
+        description: error instanceof Error ? error.message : t("Envoyez-le par e-mail à 3M TRAVEL AGENCY.", "Please email it to 3M TRAVEL AGENCY."),
+      });
+    }
+  };
   const requestAccess = trpc.placementPortal.requestPartnerAccess.useMutation({
     onSuccess: (result) => {
+      const file = pendingAuthorizationFile.current;
+      pendingAuthorizationFile.current = null;
+      if (file && result.requestId && result.uploadToken) void attachAuthorization(result.requestId, result.uploadToken, file);
+      setAuthorizationFile(null);
       setSubmittedId(result.requestId || 1);
       skipNextDraftSave.current = true;
       setForm(emptyForm(defaultOrganizationType));
@@ -167,7 +196,11 @@ export function B2bPartnerRegistrationForm({
       return;
     }
     setValidationMessage("");
+    pendingAuthorizationFile.current = authorizationFile;
     requestAccess.mutate({
+      partnerCategory: form.partnerCategory,
+      mandateCompany: form.mandateCompany.trim() || undefined,
+      mandateConfidential: isIntermediary ? form.mandateConfidential : undefined,
       organizationType: form.organizationType,
       legalName: form.legalName,
       registrationNumber: form.registrationNumber.trim() || undefined,
@@ -294,15 +327,27 @@ export function B2bPartnerRegistrationForm({
             <label className="text-sm font-semibold text-slate-800">
               {t("Type d’organisation", "Organisation type")}
               <Select
-                value={form.organizationType}
-                onValueChange={(value) => update("organizationType", value as PartnerOrganizationType)}
+                value={form.partnerCategory}
+                onValueChange={(value) => { update("partnerCategory", value as PartnerCategory); update("organizationType", organizationTypeForCategory(value as PartnerCategory)); }}
               >
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1" data-testid="b2b-category-select"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="placement_partner">{t("Agence de placement", "Placement agency")}</SelectItem>
-                  <SelectItem value="employer">{t("Employeur international", "International employer")}</SelectItem>
+                  {allowedCategories.map((category) => <SelectItem key={category} value={category}>{t(PARTNER_CATEGORY_LABELS[category].fr, PARTNER_CATEGORY_LABELS[category].en)}</SelectItem>)}
                 </SelectContent>
               </Select>
+              <span className="mt-1 block text-xs font-medium text-slate-500">{t(PARTNER_CATEGORY_LABELS[form.partnerCategory].hintFr, PARTNER_CATEGORY_LABELS[form.partnerCategory].hintEn)}</span>
+            </label>
+          )}
+          {lockOrganizationType && allowedCategories.length > 1 && (
+            <label className="text-sm font-semibold text-slate-800">
+              {t("Votre activité", "Your activity")}
+              <Select value={form.partnerCategory} onValueChange={(value) => update("partnerCategory", value as PartnerCategory)}>
+                <SelectTrigger className="mt-1" data-testid="b2b-category-select"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {allowedCategories.map((category) => <SelectItem key={category} value={category}>{t(PARTNER_CATEGORY_LABELS[category].fr, PARTNER_CATEGORY_LABELS[category].en)}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <span className="mt-1 block text-xs font-medium text-slate-500">{t(PARTNER_CATEGORY_LABELS[form.partnerCategory].hintFr, PARTNER_CATEGORY_LABELS[form.partnerCategory].hintEn)}</span>
             </label>
           )}
           <label className="text-sm font-semibold text-slate-800">
@@ -345,6 +390,35 @@ export function B2bPartnerRegistrationForm({
         </div>
       </fieldset>
 
+      {isIntermediary && (
+        <fieldset className="space-y-3" data-testid="b2b-mandate-fieldset">
+          <legend className="text-sm font-black uppercase tracking-wide text-slate-700">{t("Mandat et entreprises bénéficiaires", "Mandate and beneficiary companies")}</legend>
+          <label className="block text-sm font-semibold text-slate-800">
+            {t("Entreprise bénéficiaire ou mandat", "Beneficiary company or mandate")}{form.mandateConfidential ? "" : " *"}
+            <Input maxLength={255} value={form.mandateCompany} onChange={(event) => update("mandateCompany", event.target.value)} className="mt-1" placeholder={t("Nom de l’entreprise pour laquelle vous recrutez, ou référence du mandat", "Name of the company you recruit for, or mandate reference")} data-testid="b2b-mandate-company" />
+          </label>
+          <label className="flex items-start gap-2 text-sm text-slate-700">
+            <input type="checkbox" checked={form.mandateConfidential} onChange={(event) => update("mandateConfidential", event.target.checked)} className="mt-1 h-4 w-4" data-testid="b2b-mandate-confidential" />
+            <span>{t("Ces informations sont confidentielles : je les communiquerai directement à 3M TRAVEL AGENCY. Elles ne seront visibles que de l’administration.", "This information is confidential: I will share it directly with 3M TRAVEL AGENCY. It will only be visible to the administration.")}</span>
+          </label>
+          <label className="block text-sm font-semibold text-slate-800">
+            <span className="flex items-center gap-2"><FileUp className="h-4 w-4 text-indigo-700" aria-hidden="true" />{t("Justificatif d’autorisation (licence, agrément, mandat)", "Authorisation document (licence, approval, mandate)")}</span>
+            <input type="file" accept="application/pdf,image/jpeg,image/png" onChange={(event) => {
+              const file = event.target.files?.[0] ?? null;
+              if (file && file.size > AUTHORIZATION_DOCUMENT_MAX_BYTES) {
+                setValidationMessage(t("Le justificatif doit peser moins de 5 Mo.", "The document must be under 5 MB."));
+                event.target.value = "";
+                setAuthorizationFile(null);
+                return;
+              }
+              setValidationMessage("");
+              setAuthorizationFile(file);
+            }} className="mt-1 block w-full text-sm" data-testid="b2b-authorization-file" />
+            <span className="mt-1 block text-xs font-medium text-slate-500">{t("PDF, JPEG ou PNG, 5 Mo au plus. Le fichier est stocké de façon privée et lu uniquement par l’administration.", "PDF, JPEG or PNG, up to 5 MB. The file is stored privately and read only by the administration.")}</span>
+          </label>
+        </fieldset>
+      )}
+
       <fieldset className="space-y-3">
         <legend className="text-sm font-black uppercase tracking-wide text-slate-700">{t("Contact responsable", "Responsible contact")}</legend>
         <div className={`grid gap-3 ${compact ? "" : "md:grid-cols-2"}`}>
@@ -369,6 +443,9 @@ export function B2bPartnerRegistrationForm({
 
       <fieldset className="space-y-3">
         <legend className="text-sm font-black uppercase tracking-wide text-slate-700">{t("Besoin de recrutement", "Recruitment need")}</legend>
+        {typeof window !== "undefined" && new URLSearchParams(window.location.search).get("intent") === "need" && (
+          <p className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-950" data-testid="b2b-need-intent">{t("Vous souhaitez transmettre un besoin : décrivez-le ci-dessous (postes, pays, volumes). Une fois votre organisation vérifiée, vous pourrez déposer et suivre vos besoins depuis votre espace.", "You want to submit a need: describe it below (roles, countries, volumes). Once your organisation is verified, you can submit and follow your needs from your workspace.")}</p>
+        )}
         <div className={`grid gap-3 ${compact ? "" : "md:grid-cols-2"}`}>
           <label className="text-sm font-semibold text-slate-800">
             {t("Secteurs / métiers ciblés", "Target sectors / roles")}

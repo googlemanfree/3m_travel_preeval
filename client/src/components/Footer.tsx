@@ -87,7 +87,7 @@ const NAVIGATION_LINKS: FooterLink[] = [
   { key: "nav_procedures", label: { fr: "Procédures & destinations", en: "Procedures & destinations" }, href: "/procedures", description: { fr: "Comparer les démarches de mobilité internationale.", en: "Compare international mobility procedures." } },
   { key: "nav_register", label: { fr: "Inscription", en: "Sign up" }, href: "/register", description: { fr: "Créer un espace personnel pour suivre vos demandes.", en: "Create a personal space to follow your requests." } },
   { key: "nav_login", label: { fr: "Espace candidat", en: "Candidate space" }, href: "/login", description: { fr: "Accéder à votre espace et à vos dossiers existants.", en: "Access your space and existing cases." } },
-  { key: "nav_partners", label: { fr: "Partenaires B2B", en: "B2B partners" }, href: "/partenaires", description: { fr: "Hub international des 4 interfaces.", en: "International hub for the four interfaces." } },
+  { key: "nav_partners", label: { fr: "Entreprises & partenaires", en: "Companies & partners" }, href: "/partenaires", description: { fr: "Hub international des 4 interfaces.", en: "International hub for the four interfaces." } },
   { key: "nav_placement", label: { fr: "Agences de placement", en: "Placement agencies" }, href: "/agences-placement", description: { fr: "Accéder à la porte d’entrée des agences partenaires.", en: "Open the placement agency entry point." } },
   { key: "nav_employers", label: { fr: "Employeurs internationaux", en: "International employers" }, href: "/employeurs", description: { fr: "Accéder au portail des employeurs vérifiés.", en: "Open the verified employer portal." } },
 ];

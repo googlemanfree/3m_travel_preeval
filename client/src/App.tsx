@@ -89,6 +89,7 @@ const Accessibility = lazyWithTimeout(() => import("./pages/Accessibility"));
 const Sitemap = lazyWithTimeout(() => import("./pages/Sitemap"));
 const ServiceStatus = lazyWithTimeout(() => import("./pages/ServiceStatus"));
 const EmployerPortal = lazyWithTimeout(() => import("./pages/EmployerPortal"));
+const PartnerInvitationActivation = lazyWithTimeout(() => import("./pages/PartnerInvitationActivation"));
 const PlacementPartnerPortal = lazyWithTimeout(() => import("./pages/PlacementPartnerPortal"));
 import PartnersHub from "./pages/PartnersHub";
 const AdminEvaluation = lazyWithTimeout(() => import("./pages/AdminEvaluation"));
@@ -220,6 +221,7 @@ function Router() {
       <Route path={"/plan-du-site"} component={Sitemap} />
       <Route path={"/etat-du-service"} component={ServiceStatus} />
       <Route path={"/partenaires"} component={PartnersHub} />
+      <Route path={"/partenaires/activation"} component={PartnerInvitationActivation} />
       <Route path={"/agences-placement"} component={PlacementPartnerPortal} />
       <Route path={"/employeurs"} component={EmployerPortal} />
       <Route path={"/traduction/order"} component={TranslationOrder} />
