@@ -6,7 +6,7 @@ import { and, desc, eq, isNull, isNotNull, like, sql } from "drizzle-orm";
 import { applications, agencyDossiers, agencyDossierDocuments, agencyDossierHistory, agencySettings, clientDocuments, candidateFiles, candidateMessages, candidates, evaluations, paymentAuditLogs, paymentReceiptApprovals } from "../../drizzle/schema";
 import { caseActivityLogs, caseStatusHistory, cases, clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
-import { requireAdminSessionFromCookie, requireValidAdminSession } from "./adminAuth";
+import { requireAdminSessionFromCookie, requireSuperAdminSession, requireValidAdminSession } from "./adminAuth";
 import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../emailService";
 import { describeDossierProgress, progressText } from "../../shared/dossierProgress";
 import { sendReceiptAndProtocol } from "../services/paymentPackage";
@@ -2961,6 +2961,7 @@ export const adminCandidateManagementRouter = router({
     .input(z.object({ sessionToken: z.string().min(1), confirmDelete: z.boolean().default(false) }))
     .mutation(async ({ input, ctx }) => {
       const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      if (input.confirmDelete) await requireSuperAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 

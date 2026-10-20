@@ -4,7 +4,7 @@
  */
 
 import { publicProcedure, router } from "../_core/trpc";
-import { requireAdminSessionFromCookie, requireValidAdminSession } from "./adminAuth";
+import { requireAdminSessionFromCookie, requireSuperAdminSession, requireValidAdminSession } from "./adminAuth";
 import { richTextToPlainText, sanitizeRichTextHtml } from "../services/richText";
 import { buildEmailDeliveryTrend30Days, emailErrorPatterns, summarizeEmailDeliveryLogs } from "../services/emailDelivery";
 import { TRPCError } from "@trpc/server";
@@ -5224,7 +5224,7 @@ export const adminRouter = router({
   archiveDuplicateRecord: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1).max(512), candidateId: z.string().min(1), reason: z.string().trim().min(8).max(500), confirmation: z.literal("CORBEILLE") }))
     .mutation(async ({ input }) => {
-      const admin = await requireValidAdminSession(input.sessionToken);
+      const admin = await requireSuperAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
       const parsed = /^(account|online|agency)_(\d+)$/.exec(input.candidateId.trim());
@@ -5252,7 +5252,7 @@ export const adminRouter = router({
   restoreArchivedRecord: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1).max(512), candidateId: z.string().min(1), confirmation: z.literal("RESTAURER") }))
     .mutation(async ({ input }) => {
-      await requireValidAdminSession(input.sessionToken);
+      await requireSuperAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
       const parsed = /^(account|online|agency)_(\d+)$/.exec(input.candidateId.trim());

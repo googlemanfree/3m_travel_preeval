@@ -126,15 +126,18 @@ describe("journal de sécurité de l'équipe (listSecurityEvents)", () => {
   });
 
   it("relie chaque événement à l'admin concerné (nom et e-mail), pas seulement un identifiant", async () => {
-    await caller().login({ email: "agent@3mtravelagency.com", password: "faux" }).catch(() => undefined);
+    state.admins = [admin({ email: "aureoldonfack@gmail.com", fullName: "Aureol DONFACK" })];
+    await caller().login({ email: "aureoldonfack@gmail.com", password: "faux" }).catch(() => undefined);
     const events = await caller().listSecurityEvents({ sessionToken: "t" });
     expect(events).toHaveLength(1);
-    expect(events[0]).toMatchObject({ eventType: "login_failed", adminEmail: "agent@3mtravelagency.com", adminFullName: "Agent 3M" });
+    expect(events[0]).toMatchObject({ eventType: "login_failed", adminEmail: "aureoldonfack@gmail.com", adminFullName: "Aureol DONFACK" });
   });
 
-  it("mêmes règles d'accès que le reste de l'administration (session admin valide, pas de rôle à part)", () => {
+  it("réserve les opérations sensibles au super administrateur identifié", () => {
     const source = read("server/routers/adminAuth.ts");
-    const body = source.slice(source.indexOf("export async function requireSuperAdminSession"), source.indexOf("export async function requireSuperAdminSession") + 200);
-    expect(body).toContain("return requireValidAdminSession(sessionToken);");
+    const body = source.slice(source.indexOf("export async function requireSuperAdminSession"), source.indexOf("export async function requireSuperAdminSession") + 500);
+    expect(source).toContain('export const SUPER_ADMIN_EMAIL = "aureoldonfack@gmail.com";');
+    expect(body).toContain("admin.email.trim().toLowerCase() !== SUPER_ADMIN_EMAIL");
+    expect(body).toContain("Cette action est réservée au super administrateur.");
   });
 });

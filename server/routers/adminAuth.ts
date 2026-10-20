@@ -20,6 +20,7 @@ function esc(v: string | undefined | null): string { return String(v ?? "").repl
 import { beginTwoFactorEnrollment, confirmTwoFactorEnrollment, getTwoFactorStatus, verifyTwoFactor } from "../twoFactor";
 
 export const ADMIN_SESSION_COOKIE = "admin_session";
+export const SUPER_ADMIN_EMAIL = "aureoldonfack@gmail.com";
 const ADMIN_SESSION_DURATION_MS = 24 * 60 * 60 * 1000;
 
 // Générer un token de session
@@ -63,12 +64,19 @@ export async function requireValidAdminSession(sessionToken: string, options: Ad
 }
 
 /**
- * Compatibilité historique : toutes les fonctions de gestion admin utilisent
- * désormais le même rôle opérationnel. La sécurité repose toujours sur une
- * session admin HttpOnly valide et sur le statut actif du compte.
+ * Garde les opérations sensibles (réinitialisation globale et corbeille) au
+ * compte de direction identifié par son adresse, en plus de la session admin.
  */
 export async function requireSuperAdminSession(sessionToken: string) {
-  return requireValidAdminSession(sessionToken);
+  const admin = await requireValidAdminSession(sessionToken);
+  if (admin.email.trim().toLowerCase() !== SUPER_ADMIN_EMAIL) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Cette action est réservée au super administrateur." });
+  }
+  return admin;
+}
+
+export function isSuperAdminEmail(email: string | null | undefined) {
+  return email?.trim().toLowerCase() === SUPER_ADMIN_EMAIL;
 }
 
 /** Récupère et valide exclusivement le jeton contenu dans le cookie HttpOnly admin. */
@@ -603,7 +611,7 @@ export const adminAuthRouter = router({
   resetAllPasswords: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1).max(512) }))
     .mutation(async ({ input }) => {
-      await requireValidAdminSession(input.sessionToken);
+      await requireSuperAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
