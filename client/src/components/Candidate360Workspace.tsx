@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
+import { AdminDeclaredAnswersPanel } from "@/components/AdminDeclaredAnswersPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1391,6 +1392,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
               <div className="mt-3 flex items-center justify-between text-xs text-slate-500"><span>{dossierProgress.documentsLabel}</span><span>{data.metrics.openTasks} action(s) ouverte(s)</span></div>
             </div>
           </section>
+          <AdminDeclaredAnswersPanel projectType={data.evaluationContext?.projectType} country={data.evaluationContext?.destinationCountry} details={data.evaluationContext?.details as Record<string, unknown> | undefined} columns={(data.evaluationContext as { declaredColumns?: Record<string, string> } | undefined)?.declaredColumns} />
           {(() => {
             const rawSiblings = ((data as any).siblingProcedures as SiblingProcedureTab[] | undefined)?.length
               ? ((data as any).siblingProcedures as SiblingProcedureTab[])

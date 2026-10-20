@@ -51,6 +51,7 @@ import EvaluationHistoryPanel from "@/components/EvaluationHistoryPanel";
 import ClientAppointmentRequest from "@/components/ClientAppointmentRequest";
 import SignatureCanvas from "@/components/SignatureCanvas";
 import { CandidateCountryJourney } from "@/components/CandidateCountryJourney";
+import { ClientProgramPlan } from "@/components/ClientProgramPlan";
 import CandidateEvaluationStatus from "@/components/CandidateEvaluationStatus";
 import { SignableDocumentsPanel } from "@/components/SignableDocumentsPanel";
 import NextStepCard from "@/components/NextStepCard";
@@ -577,7 +578,9 @@ export default function EvaluationSpace() {
       ?? "",
   );
   const journeyProcedureLabel = String(
-    latestEvaluation?.projectDetails?.procedureLabel
+    latestEvaluation?.projectDetails?.selectedProcedure
+      ?? latestEvaluation?.projectDetails?.programLabel
+      ?? latestEvaluation?.projectDetails?.procedureLabel
       ?? latestEvaluation?.projectDetails?.procedureName
       ?? latestEvaluation?.projectType
       ?? latestEvaluation?.visaType
@@ -1211,6 +1214,8 @@ export default function EvaluationSpace() {
                 </Button>
               </Card>
 
+              <ClientProgramPlan projectType={latestEvaluation?.projectType} country={latestEvaluation?.destinationCountry ?? primaryDestination} projectDetails={latestEvaluation?.projectDetails} columns={latestEvaluation?.declaredColumns} uploadedDocuments={checklistDocuments} onEditEvaluation={openEvaluation} />
+
               <section aria-labelledby="client-priority-title">
                 <Card className={`border p-5 shadow-sm ${priorityTone}`} data-testid="client-priority-mirror">
                   <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
@@ -1319,6 +1324,7 @@ export default function EvaluationSpace() {
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Dossier d'immigration actif ({displayReference})</h3>
                 <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
               </Card>
+              <ClientProgramPlan projectType={latestEvaluation?.projectType} country={latestEvaluation?.destinationCountry ?? primaryDestination} projectDetails={latestEvaluation?.projectDetails} columns={latestEvaluation?.declaredColumns} uploadedDocuments={checklistDocuments} onEditEvaluation={openEvaluation} />
               <CandidateCountryJourney
                 destination={primaryDestination}
                 visaType={journeyVisaType}

@@ -39,6 +39,7 @@ import {
 import { notifyAgreementSignedWhatsApp } from "../services/clientWhatsAppNotify";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
+import { parseClientProjectDetails } from "../../shared/dynamicForm";
 import { accountReference, resolveClientReference } from "../../shared/caseReference";
 import { resolveActiveDossierNumber } from "../../shared/activeDossier";
 import { createSubmissionGuard } from "../_core/publicRateLimit";
@@ -3053,6 +3054,13 @@ export const candidateRouter = router({
       reviewedAt: evaluation.reviewedAt,
       finalResponseSentAt: evaluation.finalResponseSentAt,
       reviewDraft: evaluation.finalResponseSentAt ? evaluation.reviewDraft : null,
+      // Ses propres réponses du formulaire dynamique (visa, domaine, questions du parcours) : de quoi adapter l'espace client.
+      projectDetails: parseClientProjectDetails(evaluation.projectDetailsJson, evaluation.destinationCountry, evaluation.projectType),
+      declaredColumns: {
+        educationLevel: evaluation.educationLevel ?? "",
+        frenchLevel: evaluation.frenchLevel ?? "",
+        englishLevel: evaluation.englishLevel ?? "",
+      },
     }));
 
     const profileCompletion = computeProfileCompletion(candidate);

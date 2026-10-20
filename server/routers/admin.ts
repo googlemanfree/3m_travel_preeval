@@ -4932,6 +4932,7 @@ export const adminRouter = router({
           procedureLabel,
           submittedAt: latestEvaluation.createdAt,
           details: projectDetails,
+          declaredColumns: { educationLevel: latestEvaluation.educationLevel ?? "", frenchLevel: latestEvaluation.frenchLevel ?? "", englishLevel: latestEvaluation.englishLevel ?? "" },
           cvFileUrl: latestEvaluation.cvFileUrl ?? null,
           cvFileName: latestEvaluation.cvFileName ?? null,
         } : null,
