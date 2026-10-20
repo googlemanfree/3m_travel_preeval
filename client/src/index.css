@@ -1109,6 +1109,43 @@ html.text-size-xlarge {
   }
 }
 
+/* Retour interactif commun : réservé aux pointeurs précis pour ne pas gêner le tactile. */
+@media (hover: hover) and (pointer: fine) {
+  .app-content button:not(:disabled),
+  .app-content [role="button"]:not([aria-disabled="true"]),
+  .app-content a[href] {
+    transition-property: transform, color, background-color, border-color, box-shadow, text-decoration-color;
+    transition-duration: 160ms;
+    transition-timing-function: var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+  }
+
+  .app-content button:not(:disabled):hover,
+  .app-content [role="button"]:not([aria-disabled="true"]):hover,
+  .app-content a[href]:hover {
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+
+  .app-content button:not(:disabled):hover,
+  .app-content [role="button"]:not([aria-disabled="true"]):hover {
+    filter: brightness(1.03);
+    box-shadow: 0 7px 18px -14px rgba(7, 34, 78, 0.8);
+  }
+
+  .app-content button:not(:disabled):active,
+  .app-content [role="button"]:not([aria-disabled="true"]):active {
+    transform: scale(0.985);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-content button:not(:disabled),
+  .app-content [role="button"]:not([aria-disabled="true"]),
+  .app-content a[href] {
+    transition: none !important;
+  }
+}
+
 .dark .premium-surface:hover,
 .dark .glass-card:hover {
   border-color: rgba(147, 197, 253, 0.42);

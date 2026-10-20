@@ -5,6 +5,8 @@ import { resolve } from "node:path";
 const progressSource = readFileSync(resolve(process.cwd(), "client/src/components/NavigationProgress.tsx"), "utf8");
 const toasterSource = readFileSync(resolve(process.cwd(), "client/src/components/ui/sonner.tsx"), "utf8");
 const emailSource = readFileSync(resolve(process.cwd(), "client/src/components/AdminEmailDeliveryManagement.tsx"), "utf8");
+const guideSource = readFileSync(resolve(process.cwd(), "client/src/pages/ProcedureResourceGuide.tsx"), "utf8");
+const stylesSource = readFileSync(resolve(process.cwd(), "client/src/index.css"), "utf8");
 
 describe("retours d’interface", () => {
   it("prévoit une fermeture de secours pour l’indicateur de navigation", () => {
@@ -25,5 +27,19 @@ describe("retours d’interface", () => {
     expect(emailSource).toContain("Rechercher instantanément dans les journaux e-mail");
     expect(emailSource).toContain('onClick={() => setSearch("")}');
     expect(emailSource).toContain('aria-live="polite"');
+  });
+
+  it("confirme la copie du lien et expose l’état de partage en cours", () => {
+    expect(guideSource).toContain("navigator.clipboard.writeText(shareUrl)");
+    expect(guideSource).toContain('toast.success("Lien du guide copié"');
+    expect(guideSource).toContain("aria-busy={isSharing}");
+    expect(guideSource).toContain("Partage en cours…");
+  });
+
+  it("prévoit un retour hover global sans gêner le tactile ni le mouvement réduit", () => {
+    expect(stylesSource).toContain("@media (hover: hover) and (pointer: fine)");
+    expect(stylesSource).toContain(".app-content a[href]:hover");
+    expect(stylesSource).toContain(".app-content button:not(:disabled):active");
+    expect(stylesSource).toContain(".app-content a[href]");
   });
 });
