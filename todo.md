@@ -21,3 +21,8 @@
 ## Connexion administrateur
 - [x] Appliquer les tables MFA manquantes nécessaires au parcours de connexion.
 - [x] Vérifier que le login invalide reste contrôlé et que le serveur ne renvoie plus d’erreur interne liée au MFA : 2 tables présentes en production, réponse fictive `401 Email ou mot de passe incorrect`, et parcours mot de passe valide → `TOTP_REQUIRED` couvert par le test de route (sans manipuler le mot de passe réel du super administrateur).
+
+## Exemption anti-tentatives du super administrateur
+- [x] Exempter uniquement `aureoldonfack@gmail.com` du verrouillage anti-tentatives admin.
+- [x] Conserver le verrouillage et le journal des échecs pour les autres comptes admin.
+- [x] Valider typecheck et régressions ciblées avant publication : 12 tests verts.

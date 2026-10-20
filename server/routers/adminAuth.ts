@@ -133,7 +133,10 @@ export const adminAuthRouter = router({
     }))
     .mutation(async ({ input, ctx }) => {
       const loginIdentifier = scopedLoginIdentifier("admin", input.email);
-      checkLoginAttempts(loginIdentifier);
+      // Le compte de direction doit pouvoir récupérer son accès sans être
+      // verrouillé par une erreur de saisie ; les autres admins restent protégés.
+      const lockoutExempt = isSuperAdminEmail(input.email);
+      if (!lockoutExempt) checkLoginAttempts(loginIdentifier);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -145,34 +148,34 @@ export const adminAuthRouter = router({
         .limit(1);
 
       if (rows.length === 0) {
-        recordFailedAttempt(loginIdentifier);
+        if (!lockoutExempt) recordFailedAttempt(loginIdentifier);
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
       const admin = rows[0];
 
       if (admin.status !== "active") {
-        recordFailedAttempt(loginIdentifier);
+        if (!lockoutExempt) recordFailedAttempt(loginIdentifier);
         await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login_blocked", expiresAt: null });
         throw new TRPCError({ code: "FORBIDDEN", message: "Ce compte administrateur est désactivé." });
       }
 
       if (!admin.passwordHash) {
-        recordFailedAttempt(loginIdentifier);
+        if (!lockoutExempt) recordFailedAttempt(loginIdentifier);
         await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login_failed", expiresAt: null });
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
       const valid = await bcrypt.compare(input.password, admin.passwordHash);
       if (!valid) {
-        recordFailedAttempt(loginIdentifier);
+        if (!lockoutExempt) recordFailedAttempt(loginIdentifier);
         await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login_failed", expiresAt: null });
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
       const twoFactor = await verifyTwoFactor("admin", admin.id, input.twoFactorCode ?? "");
       if (twoFactor.required && !twoFactor.valid) {
-        if (input.twoFactorCode) recordFailedAttempt(loginIdentifier);
+        if (input.twoFactorCode && !lockoutExempt) recordFailedAttempt(loginIdentifier);
         // Un code non renseigné (TOTP_REQUIRED) n'est pas une tentative échouée : le client va simplement redemander le code.
         if (input.twoFactorCode) await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "twofactor_failed", expiresAt: null });
         throw new TRPCError({ code: "UNAUTHORIZED", message: input.twoFactorCode ? "Code 2FA invalide ou déjà utilisé." : "TOTP_REQUIRED" });

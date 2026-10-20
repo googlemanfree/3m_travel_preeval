@@ -8,6 +8,7 @@ const state = vi.hoisted(() => ({
   inserts: [] as any[],
   twoFactorRequired: false,
   twoFactorValid: true,
+  failedAttempts: 0,
   nextEventId: 1,
 }));
 
@@ -48,7 +49,7 @@ vi.mock("./twoFactor", () => ({
 }));
 vi.mock("./loginAttemptsService", () => ({
   checkLoginAttempts: () => undefined,
-  recordFailedAttempt: () => undefined,
+  recordFailedAttempt: () => { state.failedAttempts += 1; },
   resetLoginAttempts: () => undefined,
   scopedLoginIdentifier: (scope: string, identifier: string) => `${scope}:${identifier.trim().toLowerCase()}`,
 }));
@@ -67,6 +68,7 @@ beforeEach(() => {
   state.inserts = [];
   state.twoFactorRequired = false;
   state.twoFactorValid = true;
+  state.failedAttempts = 0;
   state.nextEventId = 1;
 });
 afterEach(() => vi.restoreAllMocks());
@@ -104,7 +106,18 @@ describe("connexion admin : journal des échecs", () => {
   it("isole les tentatives admin et ne compte pas le premier affichage du 2FA", () => {
     const source = read("server/routers/adminAuth.ts");
     expect(source).toContain('scopedLoginIdentifier("admin", input.email)');
-    expect(source).toContain("if (input.twoFactorCode) recordFailedAttempt(loginIdentifier);");
+    expect(source).toContain("if (input.twoFactorCode && !lockoutExempt) recordFailedAttempt(loginIdentifier);");
+  });
+
+  it("exempte uniquement le super administrateur du verrouillage anti-tentatives", async () => {
+    state.admins = [admin({ email: "aureoldonfack@gmail.com" })];
+    await expect(caller().login({ email: "aureoldonfack@gmail.com", password: "faux" })).rejects.toThrow(/incorrect/);
+    await expect(caller().login({ email: "aureoldonfack@gmail.com", password: "faux" })).rejects.toThrow(/incorrect/);
+    expect(state.failedAttempts).toBe(0);
+
+    state.admins = [admin()];
+    await expect(caller().login({ email: "agent@3mtravelagency.com", password: "faux" })).rejects.toThrow(/incorrect/);
+    expect(state.failedAttempts).toBe(1);
   });
 
   it("connexion réussie : toujours seulement « login », comme avant", async () => {
