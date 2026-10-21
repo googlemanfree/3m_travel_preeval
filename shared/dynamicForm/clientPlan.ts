@@ -164,3 +164,11 @@ export function buildClientPlan(
     flags: detectFormFlags(form, values),
   };
 }
+
+/** Deux libellés désignent-ils la même pièce ? (même texte, ou même mot-clé précis : passeport, diplôme, contrat… — le groupe très large « attestation/certificat » est exclu.) */
+export function sameExpectedPiece(a: string, b: string): boolean {
+  if (fold(a) === fold(b)) return true;
+  const groupA = keywordGroupIndex(a);
+  if (groupA < 0 || groupA !== keywordGroupIndex(b)) return false;
+  return !KEYWORD_GROUPS[groupA].includes("attestation");
+}

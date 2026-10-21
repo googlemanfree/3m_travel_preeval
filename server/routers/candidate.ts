@@ -41,6 +41,7 @@ import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
 import { parseClientProjectDetails } from "../../shared/dynamicForm";
 import { loadFormOverrides } from "../services/formOverrides";
+import { latestProgramContext } from "../services/evaluationProgramContext";
 import { accountReference, resolveClientReference } from "../../shared/caseReference";
 import { resolveActiveDossierNumber } from "../../shared/activeDossier";
 import { createSubmissionGuard } from "../_core/publicRateLimit";
@@ -2438,9 +2439,10 @@ export const candidateRouter = router({
                 ? "refuse"
                 : historicalAgencyDossier.status === "en_cours"
                   ? "en_evaluation"
-                  : "nouveau",
+                  : historicalAgencyDossier.initialPaymentStatus === "paid" ? "paye" : "nouveau",
         agreementSigned: false,
-        paymentStatus: "non_paye",
+        // Frais d'ouverture réglés à l'agence : le dossier activé ne doit jamais s'afficher « non payé » à côté de sa référence 3M-.
+        paymentStatus: historicalAgencyDossier.initialPaymentStatus === "paid" ? "SUCCESS" : "non_paye",
         scoringTotal: null,
         evaluationScore: null,
         createdAt: historicalAgencyDossier.createdAt,
@@ -2541,7 +2543,8 @@ export const candidateRouter = router({
     const [progress] = await db.select().from(procedureChecklistProgress)
       .where(and(eq(procedureChecklistProgress.dossierKey, context.dossierKey), eq(procedureChecklistProgress.candidateId, context.candidateId)))
       .limit(1);
-    const journey = getEnrichedCandidateJourney(context.destination, context.visaType, context.visaType);
+    const journeyProgram = await latestProgramContext(db, ctx.candidate.email);
+    const journey = getEnrichedCandidateJourney(context.destination, context.visaType, context.visaType, journeyProgram.programId, journeyProgram.domainId);
     const currentIndex = journeyStepIndex(journey, context.dossierStatus, null, {
       evaluationClientConfirmed: context.evaluationClientConfirmed,
       activationRequested: context.activationRequested,
@@ -2568,7 +2571,8 @@ export const candidateRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const context = await resolveCandidateProcedureContext(db, ctx.candidate);
       if (!context) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier candidat introuvable." });
-      const journey = getEnrichedCandidateJourney(context.destination, context.visaType, context.visaType);
+      const journeyProgram = await latestProgramContext(db, ctx.candidate.email);
+      const journey = getEnrichedCandidateJourney(context.destination, context.visaType, context.visaType, journeyProgram.programId, journeyProgram.domainId);
       const indexMatch = /^checklist-(\d+)$/.exec(input.stepId);
       const stepIndex = indexMatch ? Number(indexMatch[1]) : journey.steps.findIndex(step => step.id === input.stepId);
       if (!Number.isInteger(stepIndex) || stepIndex < 0 || stepIndex >= journey.steps.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette étape ne correspond pas à votre procédure." });
@@ -3034,7 +3038,7 @@ export const candidateRouter = router({
     // `dossierNumber` reste la clé technique (paiement, pièces) ; l'affichage passe par `reference`.
     const clientReference = resolveClientReference({
       candidateId: candidate.id,
-      agencyDossier: (!selectedApp && activeAgencyDossier) ? { id: activeAgencyDossier.id, status: activeAgencyDossier.status } : null,
+      agencyDossier: (!selectedApp && activeAgencyDossier) ? { id: activeAgencyDossier.id, status: activeAgencyDossier.status, initialPaymentStatus: activeAgencyDossier.initialPaymentStatus } : null,
       onlineApplication: activeApp ? { dossierNumber: activeApp.dossierNumber, paymentStatus: activeApp.paymentStatus, paymentValidatedAt: (activeApp as any).paymentValidatedAt ?? null } : null,
     });
     const { resolveClientDocumentUrl } = await import("../services/resolveClientDocumentUrl");

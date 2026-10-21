@@ -11,6 +11,7 @@ import {
   referenceChangeSentence,
   referenceKind,
   resolveClientReference,
+  agencyDossierIsActivated,
 } from "../shared/caseReference";
 import { findRedundantPreAccounts, samePhone } from "./services/redundantPreAccounts";
 import { archiveRedundantPreAccounts, loadRedundantPreAccounts } from "./services/redundantPreAccountsStore";
@@ -48,6 +49,11 @@ describe("références : du compte au dossier actif", () => {
   it("un pré-dossier « nouveau » ou un paiement non validé n'active pas ; un dossier ouvert ou un paiement validé si", () => {
     expect(resolveClientReference({ candidateId: 5, agencyDossier: { id: 9, status: "nouveau" } }).reference).toBe("COMPTE-00005");
     expect(resolveClientReference({ candidateId: 5, agencyDossier: { id: 9, status: "en_cours" } }).reference).toBe("3M-AGN-0009");
+    // Activation : la ligne agence est créée « nouveau » mais payée → le client lit 3M-AGN-…, plus COMPTE-… (régression signalée en production).
+    expect(resolveClientReference({ candidateId: 5, agencyDossier: { id: 9, status: "nouveau", initialPaymentStatus: "paid" } })).toMatchObject({ reference: "3M-AGN-0009", activated: true, formerAccountReference: "COMPTE-00005" });
+    expect(resolveClientReference({ candidateId: 5, agencyDossier: { id: 9, status: "nouveau", initialPaymentStatus: "pending" } }).reference).toBe("COMPTE-00005");
+    expect(agencyDossierIsActivated({ status: "nouveau", initialPaymentStatus: "paid" })).toBe(true);
+    expect(agencyDossierIsActivated({ status: null, initialPaymentStatus: null })).toBe(false);
     expect(resolveClientReference({ candidateId: 5, onlineApplication: { dossierNumber: "3M-2026-0042", paymentStatus: "SUCCESS", paymentValidatedAt: null } }).reference).toBe("COMPTE-00005");
     expect(resolveClientReference({ candidateId: 5, onlineApplication: { dossierNumber: "3M-2026-0042", paymentStatus: "PENDING", paymentValidatedAt: new Date() } }).reference).toBe("COMPTE-00005");
     expect(resolveClientReference({ candidateId: 5, onlineApplication: { dossierNumber: "3M-2026-0042", paymentStatus: "SUCCESS", paymentValidatedAt: new Date() } }).reference).toBe("3M-2026-0042");

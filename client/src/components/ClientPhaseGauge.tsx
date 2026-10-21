@@ -7,6 +7,9 @@ type Props = {
   destination?: string | null;
   visaType?: string | null;
   procedureLabel?: string | null;
+  /** Visa ou programme et domaine choisis dans l'évaluation : les étapes s'y adaptent. */
+  programId?: string | null;
+  domainId?: string | null;
   evaluationStatus?: string | null;
   paymentConfirmed?: boolean;
   className?: string;
@@ -21,12 +24,16 @@ export default function ClientPhaseGauge({
   destination,
   visaType,
   procedureLabel,
+  programId,
+  domainId,
   evaluationStatus,
   paymentConfirmed,
   className,
 }: Props) {
   const phase = describeClientDossierPhase(dossierStatus);
   const progress = describeDossierProgress({
+    programId,
+    domainId,
     destination,
     visaType,
     procedureLabel,

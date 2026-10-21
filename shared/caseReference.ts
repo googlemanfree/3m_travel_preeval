@@ -61,10 +61,19 @@ export function referenceChangeSentence(accountRef: string, dossierRef: string):
   return `Votre référence de compte ${accountRef} est remplacée par votre numéro de dossier ${dossierRef}. Utilisez désormais ${dossierRef} dans tous vos échanges avec l’agence.`;
 }
 
+/**
+ * Un dossier agence rattaché à un compte est ACTIVÉ dès que ses frais d'ouverture sont payés (l'activation crée la ligne avec le statut
+ * « nouveau » mais « payé »), ou dès que l'agence l'a fait avancer. Seul un pré-dossier non payé et sans suite reste un compte.
+ */
+export function agencyDossierIsActivated(agency: { status?: string | null; initialPaymentStatus?: string | null }): boolean {
+  if (String(agency.initialPaymentStatus ?? "").toLowerCase() === "paid") return true;
+  return Boolean(agency.status) && agency.status !== "nouveau";
+}
+
 export type ReferenceSources = {
   candidateId: number;
   /** Dossier agence rattaché au compte (par e-mail). Un pré-dossier « nouveau » n'est pas un dossier activé. */
-  agencyDossier?: { id: number; status?: string | null } | null;
+  agencyDossier?: { id: number; status?: string | null; initialPaymentStatus?: string | null } | null;
   /** Dossier en ligne : activé quand le paiement des frais d'ouverture est confirmé ET validé par l'administration. */
   onlineApplication?: { dossierNumber?: string | null; paymentStatus?: string | null; paymentValidatedAt?: Date | string | null } | null;
 };
@@ -76,7 +85,7 @@ export type ReferenceSources = {
  */
 export function resolveClientReference(input: ReferenceSources): ReferenceStage {
   const agency = input.agencyDossier;
-  if (agency && agency.status && agency.status !== "nouveau") {
+  if (agency && agencyDossierIsActivated(agency)) {
     return currentReference({ candidateId: input.candidateId, activeDossierReference: agencyDossierReference(agency.id) });
   }
   const online = input.onlineApplication;

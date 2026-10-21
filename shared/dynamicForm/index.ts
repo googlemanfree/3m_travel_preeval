@@ -5,4 +5,5 @@ export * from "./resolve";
 export { FAMILY_DOCUMENTS } from "./documents";
 export * from "./declared";
 export * from "./clientPlan";
+export * from "./journeyOverlay";
 export * from "./overrides";

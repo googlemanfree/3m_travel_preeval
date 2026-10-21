@@ -59,6 +59,7 @@ import { buildAdminDynamicPilotageContext, detectAdminProcedureKind, determineDy
 import { buildCountryProcedureDocumentChecklist, summarizeCountryProcedureChecklist } from "../../shared/countryProcedureChecklist";
 import { evaluateAdminStageTransition } from "../../shared/transitionGuards";
 import { buildJourneyStepSla, suggestedDueAtForAdminStage } from "../../shared/journeyStepSla";
+import { latestProgramContext, pickProgramContext, programContextsByEmail } from "../services/evaluationProgramContext";
 import { describeSecondProtocolState, dualOpportunityHandoffMessage } from "../../shared/secondAgreementProtocol";
 import { ADMIN_STAGE_CATALOG, ADMIN_STAGE_SEQUENCE, resolveGuidedNextAdminAction } from "../../shared/adminStageCatalog";
 import {
@@ -2068,8 +2069,13 @@ export const adminRouter = router({
         // Combiner les sources avant les filtres et le tri explicitement choisis par l’administrateur.
         // siblingProcedures : même e-mail → plusieurs procédures (ex. travail + études) visibles côté admin.
         // procedureJourney : étape réelle du parcours pays/procédure (plus de libellé générique unique).
-        let allCandidates = attachSiblingProcedures([...onlineWithoutEvalShells, ...agencyWithEvalSearch, ...normalizedAccounts]).map((row) => {
+        const combinedRows = attachSiblingProcedures([...onlineWithoutEvalShells, ...agencyWithEvalSearch, ...normalizedAccounts]);
+        // Visa ou programme choisi dans l'évaluation de chaque candidat : mêmes étapes que dans son espace client.
+        const programContextByEmail = await programContextsByEmail(db, combinedRows.map((row) => (row as { email?: string | null }).email));
+        let allCandidates = combinedRows.map((row) => {
+          const programContext = pickProgramContext(programContextByEmail.get(String((row as { email?: string | null }).email ?? "").trim().toLowerCase()), row.projectType);
           const procedureJourney = buildAdminProcedureSnapshot({
+            ...programContext,
             destination: row.destinationCountry,
             visaType: row.projectType,
             procedureLabel: row.projectType,
@@ -2078,6 +2084,7 @@ export const adminRouter = router({
             evaluationStatus: row.evaluationDeclarationStatus === "validated" ? "validated" : row.evaluationDeclarationStatus,
           });
           const journeySla = buildJourneyStepSla({
+            ...programContext,
             destination: row.destinationCountry,
             visaType: row.projectType,
             procedureLabel: row.projectType,
@@ -3186,8 +3193,9 @@ export const adminRouter = router({
           let linkedAgencyDossierDestination: string | null = null;
           let linkedAgencyDossierId: number | null = null;
           let linkedAgencyDossierStatus: string | null = null;
+          let linkedAgencyDossierPayment: string | null = null;
           if (account.dossierStatus !== "nouveau") {
-            const [linkedDossier] = await db.select({ id: agencyDossiers.id, destination: agencyDossiers.destination, status: agencyDossiers.status }).from(agencyDossiers)
+            const [linkedDossier] = await db.select({ id: agencyDossiers.id, destination: agencyDossiers.destination, status: agencyDossiers.status, initialPaymentStatus: agencyDossiers.initialPaymentStatus }).from(agencyDossiers)
               .where(and(isNull(agencyDossiers.deletedAt), sql`LOWER(${agencyDossiers.email}) = LOWER(${account.email})`))
               .orderBy(desc(agencyDossiers.createdAt))
               .limit(1);
@@ -3196,12 +3204,13 @@ export const adminRouter = router({
               linkedAgencyDossierDestination = linkedDossier.destination;
               linkedAgencyDossierId = linkedDossier.id;
               linkedAgencyDossierStatus = linkedDossier.status ?? null;
+              linkedAgencyDossierPayment = linkedDossier.initialPaymentStatus ?? null;
             }
           }
           const referenceStage = resolveClientReference({
             candidateId: account.id,
             agencyDossier: linkedAgencyDossierId
-              ? { id: linkedAgencyDossierId, status: linkedAgencyDossierStatus }
+              ? { id: linkedAgencyDossierId, status: linkedAgencyDossierStatus, initialPaymentStatus: linkedAgencyDossierPayment }
               : null,
           });
           const [evaluationRow] = await db.select({
@@ -4598,7 +4607,9 @@ export const adminRouter = router({
         (sourceRecord as any).visaType,
         procedureLabel,
       );
-      const candidateJourney = getEnrichedCandidateJourney(destination, visaTypeForJourney, procedureLabel);
+      const detailProgramId = typeof projectDetails.programId === "string" ? projectDetails.programId : null;
+      const detailDomainId = typeof projectDetails.domainId === "string" ? projectDetails.domainId : null;
+      const candidateJourney = getEnrichedCandidateJourney(destination, visaTypeForJourney, procedureLabel, detailProgramId, detailDomainId);
       const currentJourneyStep = journeyStepIndex(candidateJourney, operationalCase.currentStatus, latestEvaluation?.status ?? null, {
         evaluationClientConfirmed: Boolean((sourceRecord as any).evaluationClientConfirmedAt),
         activationRequested: Boolean((sourceRecord as any).activationRequestedAt),
@@ -4640,6 +4651,8 @@ export const adminRouter = router({
         domainId: typeof projectDetails.domainId === "string" ? projectDetails.domainId : null,
       });
       const journeySla = buildJourneyStepSla({
+        programId: detailProgramId,
+        domainId: detailDomainId,
         destination,
         visaType: visaTypeForJourney,
         procedureLabel,
@@ -5475,7 +5488,8 @@ export const adminRouter = router({
         .orderBy(desc(evaluations.createdAt))
         .limit(1);
       const visaType = source.visaType || linkedEvaluation?.projectType || linkedEvaluation?.visaType || "Visiteur";
-      const journey = getEnrichedCandidateJourney(destination, visaType, visaType);
+      const stepProgram = await latestProgramContext(db, source.email);
+      const journey = getEnrichedCandidateJourney(destination, visaType, visaType, stepProgram.programId, stepProgram.domainId);
       const indexMatch = /^checklist-(\d+)$/.exec(input.stepId);
       const stepIndex = indexMatch ? Number(indexMatch[1]) : journey.steps.findIndex((step) => step.id === input.stepId);
       if (!Number.isInteger(stepIndex) || stepIndex < 0 || stepIndex >= journey.steps.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette étape ne correspond pas à la procédure sélectionnée." });
@@ -5624,7 +5638,9 @@ export const adminRouter = router({
         ? source.paymentStatus === "SUCCESS"
         : source.paymentStatus === "SUCCESS" || source.initialPaymentStatus === "paid";
       const agreementSigned = Boolean(source.agreementSigned || source.agreementSignedAt);
+      const progressProgram = await latestProgramContext(db, source.email);
       const progress = describeDossierProgress({
+        ...progressProgram,
         destination,
         visaType,
         procedureLabel: visaType,

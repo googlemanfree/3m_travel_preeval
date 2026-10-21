@@ -91,6 +91,17 @@ export const ALL_PROGRAMS: ProgramDef[] = Object.values(PROGRAMS_BY_KIND).flat()
 
 export const programsFor = (kind: ProjectKind): ProgramDef[] => PROGRAMS_BY_KIND[kind];
 export const getProgram = (id: string | null | undefined): ProgramDef | null => ALL_PROGRAMS.find((program) => program.id === id) ?? null;
+const foldLabel = (value: string) => value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+/** Retrouve un programme à partir de son libellé exact (les dossiers anciens ne portent que le libellé) ; jamais de correspondance approximative. */
+export const findProgramByLabel = (...labels: Array<string | null | undefined>): ProgramDef | null => {
+  for (const label of labels) {
+    const key = foldLabel(label ?? "");
+    if (!key) continue;
+    const match = ALL_PROGRAMS.find((program) => foldLabel(program.label) === key && !program.id.endsWith("-orientation"));
+    if (match) return match;
+  }
+  return null;
+};
 /** Programme à utiliser quand le candidat n'a rien choisi : la version générique du type de projet. */
 export const orientationProgram = (kind: ProjectKind): ProgramDef => PROGRAMS_BY_KIND[kind][PROGRAMS_BY_KIND[kind].length - 1];
 export const isOrientationProgram = (program: ProgramDef | null | undefined): boolean => !program || program.id.endsWith("-orientation");

@@ -72,7 +72,7 @@ import { SelectableProfileCard } from "@/components/SelectableProfileCard";
 import SubmitReview from "@/pages/SubmitReview";
 import CaseDocumentsPanel, { agencyDepositedDocuments, allCaseDocuments } from "@/components/CaseDocumentsPanel";
 import ClientNotificationsInbox from "@/components/ClientNotificationsInbox";
-import { pickActiveCaseRequirements } from "@/lib/documentChecklist";
+import { checklistLines, pickActiveCaseRequirements } from "@/lib/documentChecklist";
 import { EVALUATION_ANCHOR_ID, computeNextStep, type NextStep } from "@/lib/nextStep";
 import { CLIENT_SPACE_SUMMARY_POLL_MS, buildClientSpaceSnapshot, clientSpacePolling, diffClientSpace, limitAnnouncements, mergeClientSpaceSnapshots, type ClientSpaceSnapshot } from "@/lib/clientSpaceSync";
 import { SECONDARY_PROJECT_OPTIONS, procedureLabelForDossier, secondaryDossierEvaluationPath, type SecondaryProjectType } from "@shared/clientMultiDossier";
@@ -586,6 +586,9 @@ export default function EvaluationSpace() {
       ?? latestEvaluation?.visaType
       ?? "",
   );
+  // Visa ou programme et domaine choisis dans l'évaluation : étapes, pièces et prochaines actions s'y adaptent partout de la même façon.
+  const journeyProgramId: string | null = typeof latestEvaluation?.projectDetails?.programId === "string" && latestEvaluation.projectDetails.programId ? latestEvaluation.projectDetails.programId : null;
+  const journeyDomainId: string | null = typeof latestEvaluation?.projectDetails?.domainId === "string" && latestEvaluation.projectDetails.domainId ? latestEvaluation.projectDetails.domainId : null;
   const openEvaluation = () => {
     const project =
       normalizePublicEvaluationProject(
@@ -615,7 +618,11 @@ export default function EvaluationSpace() {
     setLocation(`/mon-espace?section=${nextSection}`);
   };
   const structuredStage = structuredEvaluation?.available ? structuredEvaluation.view.stage : undefined;
-  const checklistSummary = summarizeChecklist(primaryDestination, latestEvaluation?.projectType, checklistDocuments, customRequirements);
+  // Une seule liste de pièces pour la checklist, le parcours, la prochaine étape et les relances : pays × visa × programme × domaine.
+  const checklistScope = { programId: journeyProgramId, domainId: journeyDomainId };
+  const checklistSummary = summarizeChecklist(primaryDestination, latestEvaluation?.projectType, checklistDocuments, customRequirements, checklistScope);
+  const planDocumentLines = checklistLines(primaryDestination, latestEvaluation?.projectType, checklistDocuments, customRequirements, checklistScope)
+    .map((line) => ({ label: line.label, received: line.kind === "received" || line.kind === "verified", replace: line.kind === "replace" }));
   const checklistReceived = Math.max(0, checklistSummary.total - checklistSummary.missing - checklistSummary.replace);
   const documentsActionCount = checklistSummary.missing + checklistSummary.replace;
   const unreadNotificationsCount = Math.max(0, Number(caseTrackingData?.unreadNotifications) || 0);
@@ -628,6 +635,8 @@ export default function EvaluationSpace() {
   const advisorWhatsAppUrl = clientAdvisorWhatsAppHref(paymentDossierNumber || displayReference, cProfile.fullName);
   // « Étape N sur M » : même calcul (et mêmes jalons) que le parcours affiché plus bas et que les e-mails de l'agence.
   const journeyProgress = describeDossierProgress({
+    programId: journeyProgramId,
+    domainId: journeyDomainId,
     destination: primaryDestination,
     visaType: journeyVisaType,
     procedureLabel: journeyProcedureLabel,
@@ -1202,6 +1211,8 @@ export default function EvaluationSpace() {
                   </p>
                 </div>
                 <ClientPhaseGauge
+                  programId={journeyProgramId}
+                  domainId={journeyDomainId}
                   dossierStatus={cProfile.dossierStatus}
                   destination={primaryDestination}
                   visaType={journeyVisaType}
@@ -1214,7 +1225,7 @@ export default function EvaluationSpace() {
                 </Button>
               </Card>
 
-              <ClientProgramPlan projectType={latestEvaluation?.projectType} country={latestEvaluation?.destinationCountry ?? primaryDestination} projectDetails={latestEvaluation?.projectDetails} columns={latestEvaluation?.declaredColumns} uploadedDocuments={checklistDocuments} onEditEvaluation={openEvaluation} />
+              <ClientProgramPlan projectType={latestEvaluation?.projectType} country={latestEvaluation?.destinationCountry ?? primaryDestination} projectDetails={latestEvaluation?.projectDetails} columns={latestEvaluation?.declaredColumns} uploadedDocuments={checklistDocuments} documentLines={planDocumentLines} onOpenDocuments={() => switchToSection("documents")} onEditEvaluation={openEvaluation} />
 
               <section aria-labelledby="client-priority-title">
                 <Card className={`border p-5 shadow-sm ${priorityTone}`} data-testid="client-priority-mirror">
@@ -1262,7 +1273,7 @@ export default function EvaluationSpace() {
                   <div><h3 className="text-lg font-bold text-gray-900">Documents à compléter</h3><p className="text-sm text-gray-600">Les pièces complémentaires dépendent de votre destination et restent à confirmer par l’agence.</p></div>
                   <Button type="button" variant="outline" onClick={() => { setActiveTab("documents"); setLocation("/mon-espace?section=documents"); }}><FileText className="mr-2 h-4 w-4" />Ajouter mes documents</Button>
                 </div>
-                <DossierDocumentChecklist destination={primaryDestination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} clarifications={documentClarifications} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} onUploaded={refreshDocuments} />
+                <DossierDocumentChecklist scope={checklistScope} destination={primaryDestination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} clarifications={documentClarifications} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} onUploaded={refreshDocuments} />
               </section>
 
               {/* Résumé des dernières activités */}
@@ -1324,8 +1335,10 @@ export default function EvaluationSpace() {
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Dossier d'immigration actif ({displayReference})</h3>
                 <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
               </Card>
-              <ClientProgramPlan projectType={latestEvaluation?.projectType} country={latestEvaluation?.destinationCountry ?? primaryDestination} projectDetails={latestEvaluation?.projectDetails} columns={latestEvaluation?.declaredColumns} uploadedDocuments={checklistDocuments} onEditEvaluation={openEvaluation} />
+              <ClientProgramPlan projectType={latestEvaluation?.projectType} country={latestEvaluation?.destinationCountry ?? primaryDestination} projectDetails={latestEvaluation?.projectDetails} columns={latestEvaluation?.declaredColumns} uploadedDocuments={checklistDocuments} documentLines={planDocumentLines} onOpenDocuments={() => switchToSection("documents")} onEditEvaluation={openEvaluation} />
               <CandidateCountryJourney
+                programId={journeyProgramId}
+                domainId={journeyDomainId}
                 destination={primaryDestination}
                 visaType={journeyVisaType}
                 procedureLabel={journeyProcedureLabel}
@@ -1672,7 +1685,7 @@ export default function EvaluationSpace() {
               </Card>
 
               <section aria-label="Checklist documentaire à préparer">
-                <DossierDocumentChecklist destination={primaryDestination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} clarifications={documentClarifications} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} onUploadClarification={setUploadClarification} onUploaded={refreshDocuments} />
+                <DossierDocumentChecklist scope={checklistScope} destination={primaryDestination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} clarifications={documentClarifications} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} onUploadClarification={setUploadClarification} onUploaded={refreshDocuments} />
               </section>
 
               <section aria-label="Statut de vos dépôts">
@@ -1700,7 +1713,7 @@ export default function EvaluationSpace() {
                 </p>
                 <DocumentUploader
                   dossierNumber={cProfile.dossierNumber}
-                  requirementOptions={buildRequirementOptions(primaryDestination, latestEvaluation?.projectType, customRequirements)}
+                  requirementOptions={buildRequirementOptions(primaryDestination, latestEvaluation?.projectType, customRequirements, checklistScope)}
                   onUploadSuccess={() => {
                     void trpcUtils.candidate.getMyAgencyDocuments.invalidate();
                     void refetchCaseTracking();

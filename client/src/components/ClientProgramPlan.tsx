@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, ClipboardList, FileText, ListChecks, Route } from "lucide-react";
+import { AlertCircle, CheckCircle2, Circle, ClipboardList, FileText, ListChecks, Route } from "lucide-react";
 import { buildClientPlan } from "@shared/dynamicForm";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,6 +12,9 @@ type Props = {
   /** Colonnes de l'évaluation utiles aux règles (niveau de langue…). */
   columns?: Record<string, string>;
   uploadedDocuments?: Array<{ documentType?: string | null; documentName?: string | null }>;
+  /** Lignes de la checklist du dossier (même liste et mêmes états que l'onglet Documents) : évite deux listes qui se contredisent. */
+  documentLines?: Array<{ label: string; received: boolean; replace?: boolean }>;
+  onOpenDocuments?: () => void;
   onEditEvaluation?: () => void;
 };
 
@@ -19,11 +22,12 @@ type Props = {
  * « Votre parcours » dans l'espace client : actions, pièces et réponses propres au pays, au visa ou programme et au domaine
  * que le candidat a choisis dans son évaluation. Uniquement des repères de préparation, confirmés ensuite par un conseiller.
  */
-export function ClientProgramPlan({ projectType, country, projectDetails, columns, uploadedDocuments = [], onEditEvaluation }: Props) {
+export function ClientProgramPlan({ projectType, country, projectDetails, columns, uploadedDocuments = [], documentLines, onOpenDocuments, onEditEvaluation }: Props) {
   const overrides = useFormOverrides();
   const plan = buildClientPlan({ projectType, country, details: projectDetails, uploaded: uploadedDocuments, columns, overrides });
   if (!plan) return null;
-  const received = plan.documents.filter((document) => document.received).length;
+  const documents: Array<{ label: string; received: boolean; replace?: boolean }> = documentLines && documentLines.length > 0 ? documentLines : plan.documents;
+  const received = documents.filter((document) => document.received).length;
   return (
     <Card className="border-emerald-200 bg-white p-6 shadow-sm" data-testid="client-program-plan" role="region" aria-labelledby="client-plan-title">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -50,15 +54,16 @@ export function ClientProgramPlan({ projectType, country, projectDetails, column
         </section>
 
         <section aria-labelledby="client-plan-documents">
-          <h4 id="client-plan-documents" className="flex items-center gap-2 text-sm font-black text-slate-900"><FileText className="h-4 w-4 text-amber-700" aria-hidden="true" />Pièces à préparer pour ce parcours <span className="font-semibold text-slate-500">({received}/{plan.documents.length} reçues)</span></h4>
+          <h4 id="client-plan-documents" className="flex items-center gap-2 text-sm font-black text-slate-900"><FileText className="h-4 w-4 text-amber-700" aria-hidden="true" />Pièces à préparer pour ce parcours <span className="font-semibold text-slate-500">({received}/{documents.length} reçues)</span></h4>
           <ul className="mt-2 space-y-1.5" data-testid="client-plan-documents">
-            {plan.documents.map((document) => (
+            {documents.map((document) => (
               <li key={document.label} className="flex items-start gap-2 text-sm text-slate-800">
-                {document.received ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-label="Reçue" /> : <Circle className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-label="À fournir" />}
-                <span className={document.received ? "text-slate-500 line-through decoration-slate-300" : ""}>{document.label}</span>
+                {document.received ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-label="Reçue" /> : document.replace ? <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" aria-label="À remplacer" /> : <Circle className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-label="À fournir" />}
+                <span className={document.received ? "text-slate-500 line-through decoration-slate-300" : ""}>{document.label}{document.replace ? <span className="ml-1 text-xs font-semibold text-rose-700">(à remplacer)</span> : null}</span>
               </li>
             ))}
           </ul>
+          {onOpenDocuments && <Button type="button" variant="link" size="sm" className="mt-1 h-auto px-0 text-xs" onClick={onOpenDocuments}>Voir la checklist complète et déposer mes pièces</Button>}
         </section>
       </div>
 

@@ -10,6 +10,7 @@ import { and, desc, eq, inArray, isNull, like } from "drizzle-orm";
 import { agencyDossierDocuments, agencyDossiers, agencySettings, applications, candidateFiles, candidates, clientDocuments, emailDeliveryLogs, evaluations } from "../../drizzle/schema";
 import { COMPANY_PROFILE } from "../../client/src/lib/companyContacts";
 import { summarizeChecklist, type ChecklistDocument } from "../../client/src/lib/documentChecklist";
+import { programContextFromDetails } from "../services/evaluationProgramContext";
 import { sendEmail } from "../_core/email";
 import { getDb } from "../db";
 import { runFlightFollowUps, type FlightFollowUpOutcome } from "./flightFollowUps";
@@ -63,7 +64,7 @@ export async function assessCandidate(db: Db, candidate: typeof candidates.$infe
   const agencyRows = await db.select({ id: agencyDossiers.id }).from(agencyDossiers).where(eq(agencyDossiers.email, candidate.email)).limit(5);
   const agencyDocs = agencyRows.length ? await db.select({ documentType: agencyDossierDocuments.documentType, documentName: agencyDossierDocuments.documentName, verificationStatus: agencyDossierDocuments.verificationStatus, createdAt: agencyDossierDocuments.createdAt }).from(agencyDossierDocuments).where(inArray(agencyDossierDocuments.dossierId, agencyRows.map((row) => row.id))) : [];
   const clientDocs = await db.select({ documentType: clientDocuments.documentType, documentName: clientDocuments.documentName, verificationStatus: clientDocuments.verificationStatus, uploadedAt: clientDocuments.uploadedAt }).from(clientDocuments).where(eq(clientDocuments.candidateEmail, candidate.email));
-  const [evaluation] = await db.select({ projectType: evaluations.projectType }).from(evaluations).where(eq(evaluations.email, candidate.email)).orderBy(desc(evaluations.createdAt)).limit(1);
+  const [evaluation] = await db.select({ projectType: evaluations.projectType, projectDetailsJson: evaluations.projectDetailsJson }).from(evaluations).where(eq(evaluations.email, candidate.email)).orderBy(desc(evaluations.createdAt)).limit(1);
 
   const documents: ChecklistDocument[] = [
     ...files.map((file) => ({ documentType: file.fileType, documentName: file.fileName, status: file.status })),
@@ -71,7 +72,8 @@ export async function assessCandidate(db: Db, candidate: typeof candidates.$infe
     ...clientDocs.map((doc) => ({ documentType: doc.documentType, documentName: doc.documentName, verificationStatus: doc.verificationStatus === "approved" ? "verified" : doc.verificationStatus })),
   ];
   const destination = parseDestinations(candidate.preferredDestinations)[0] || candidate.destination;
-  const summary = summarizeChecklist(destination, evaluation?.projectType, documents);
+  // Même liste que dans l'espace client : pays × visa × programme × domaine déclarés dans l'évaluation.
+  const summary = summarizeChecklist(destination, evaluation?.projectType, documents, [], programContextFromDetails(evaluation?.projectDetailsJson));
   const lastActivityAt = latest(candidate.lastLoginAt, candidate.createdAt, ...files.map((file) => file.uploadedAt), ...agencyDocs.map((doc) => doc.createdAt), ...clientDocs.map((doc) => doc.uploadedAt));
   const sentLogs = await db.select({ createdAt: emailDeliveryLogs.createdAt }).from(emailDeliveryLogs).where(and(eq(emailDeliveryLogs.recipientEmail, email), like(emailDeliveryLogs.subject, `${REMINDER_SUBJECT_PREFIX}%`), eq(emailDeliveryLogs.status, "sent"))).orderBy(desc(emailDeliveryLogs.createdAt)).limit(10);
   return { candidate, email, summary, lastActivityAt, remindersSinceActivity: sentLogs.filter((log) => log.createdAt > lastActivityAt).length, lastReminderAt: sentLogs[0]?.createdAt ?? null, optedOut: Boolean(optOut) };

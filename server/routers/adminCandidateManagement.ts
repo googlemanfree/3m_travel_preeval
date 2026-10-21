@@ -1030,15 +1030,16 @@ export const adminCandidateManagementRouter = router({
       const receiptByDossier = new Set(receiptApprovals.map((row) => row.dossierNumber.trim().toUpperCase()));
       const receiptByEmail = new Set(receiptApprovals.map((row) => row.candidateEmail.trim().toLowerCase()));
 
-      const agencyByEmail = new Map<string, { id: number; status: string | null }>();
+      const agencyByEmail = new Map<string, { id: number; status: string | null; initialPaymentStatus: string | null }>();
       const agencyRows = await db.select({
         id: agencyDossiers.id,
         email: agencyDossiers.email,
         status: agencyDossiers.status,
+        initialPaymentStatus: agencyDossiers.initialPaymentStatus,
       }).from(agencyDossiers).where(isNull(agencyDossiers.deletedAt)).orderBy(desc(agencyDossiers.updatedAt)).limit(2000);
       for (const row of agencyRows) {
         const key = row.email.trim().toLowerCase();
-        if (!agencyByEmail.has(key)) agencyByEmail.set(key, { id: row.id, status: row.status });
+        if (!agencyByEmail.has(key)) agencyByEmail.set(key, { id: row.id, status: row.status, initialPaymentStatus: row.initialPaymentStatus });
       }
 
       const onlinePipeline = paidApps.map((app) => {

@@ -4,6 +4,8 @@ import {
   resolveEvaluationProjectKind,
   type EvaluationProjectKind,
 } from "./evaluationVisaCv";
+import { adaptCoreStages, adaptedStepIndex } from "./dynamicForm/journeyOverlay";
+import { findProgramByLabel } from "./dynamicForm/programs";
 import {
   publishedProcedureKindLabel,
   resolvePublishedProcedureTreatment,
@@ -51,6 +53,10 @@ export type CandidateJourney = {
   officialSources: string[];
   /** Guide PDF publié sur le site — même référence admin / client. */
   publishedGuide?: PublishedGuideRef | null;
+  /** Visa ou programme qui a servi à adapter les étapes internes (absent : parcours général du pays et du type de visa). */
+  program?: { id: string; label: string; family: string } | null;
+  /** Index d'origine (parcours de base) de chaque étape affichée : sert à placer l'avancement d'un dossier dans un parcours adapté. */
+  stepOrigins?: number[];
 };
 
 const CANADA = "https://www.canada.ca/fr/services/immigration-citoyennete.html";
@@ -1252,7 +1258,27 @@ function countryStepsFromTreatment(treatment: PublishedProcedureTreatment): Jour
  * du guide PDF publié pour le pays / type de visa (Canada détaillé en premier ;
  * autres destinations via le catalogue 107 + URL PDF du site).
  */
-export function getEnrichedCandidateJourney(destination?: string | null, visaType?: string | null, procedureLabel?: string | null): CandidateJourney {
+export function getEnrichedCandidateJourney(destination?: string | null, visaType?: string | null, procedureLabel?: string | null, programId?: string | null, domainId?: string | null): CandidateJourney {
+  const journey = buildEnrichedCandidateJourney(destination, visaType, procedureLabel);
+  // Visa ou programme explicitement connu, sinon retrouvé par son libellé exact : les étapes s'adaptent partout de la même façon.
+  const resolvedProgramId = programId || findProgramByLabel(procedureLabel, visaType)?.id || null;
+  if (!resolvedProgramId) return journey;
+  const core = journey.steps.slice(0, 13);
+  const adapted = adaptCoreStages(core, resolvedProgramId, domainId, (step, texts) => {
+    const requiredInputs = texts.requiredInputs ?? step.requiredInputs;
+    return { ...step, label: texts.label ?? step.label, description: texts.description ?? step.description, requiredInputs, documents: requiredInputs.map((input, index) => ({ id: `${step.id}-document-${index + 1}`, label: input, kind: "to_prepare" as const, sourceUrl: step.sourceUrl })) };
+  });
+  if (!adapted) return journey;
+  const rest = journey.steps.slice(13);
+  return {
+    ...journey,
+    steps: [...adapted.steps, ...rest],
+    stepOrigins: [...adapted.origins, ...rest.map((_, index) => 13 + index)],
+    program: { id: adapted.program.id, label: adapted.program.label, family: adapted.program.family },
+  };
+}
+
+function buildEnrichedCandidateJourney(destination?: string | null, visaType?: string | null, procedureLabel?: string | null): CandidateJourney {
   const baseJourney = getCandidateJourney(destination, visaType, procedureLabel);
   // Les 13 premières étapes du parcours de base sont le traitement interne d’une
   // agence de mobilité internationale ; journeyStepIndex() suppose ces 13 positions.
@@ -1332,6 +1358,12 @@ export type JourneyMilestones = {
 };
 
 export function journeyStepIndex(journey: CandidateJourney, dossierStatus?: string | null, evaluationStatus?: string | null, milestones?: JourneyMilestones) {
+  const origins = journey.stepOrigins;
+  const rawIndex = rawJourneyStepIndex(journey, dossierStatus, evaluationStatus, milestones, origins ? origins[origins.length - 1] + 1 : journey.steps.length);
+  return origins ? adaptedStepIndex(origins, rawIndex) : rawIndex;
+}
+
+function rawJourneyStepIndex(journey: CandidateJourney, dossierStatus: string | null | undefined, evaluationStatus: string | null | undefined, milestones: JourneyMilestones | undefined, originalLength: number) {
   const status = normalize(dossierStatus);
   if (evaluationStatus !== "validated" && journey.steps[0]) return 0;
   if (is(status, "nouveau", "evaluation", "en evaluation")) return 1;
@@ -1341,12 +1373,12 @@ export function journeyStepIndex(journey: CandidateJourney, dossierStatus?: stri
   if (is(status, "soumis", "en cours", "recrutement", "adem")) return 9;
   if (is(status, "contrat")) return 10;
   if (is(status, "visa", "consulaire")) return 12;
-  if (is(status, "approuve")) return journey.steps.length - 1;
+  if (is(status, "approuve")) return originalLength - 1;
   if (milestones?.activationRequested && !milestones.paymentConfirmed) return 5;
   // Pièces reçues : le conseiller contrôle et complète le profil (étape suivante) ; pièces attendues : étape des pièces.
   if (is(status, "recu")) return 7;
   if (milestones?.paymentConfirmed || is(status, "paye", "payment")) return 6;
   if (is(status, "attente paiement", "en attente paiement", "paiement")) return 5;
   if (is(status, "document", "documents")) return 6;
-  return Math.min(1, journey.steps.length - 1);
+  return Math.min(1, originalLength - 1);
 }
