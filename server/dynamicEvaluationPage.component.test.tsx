@@ -225,6 +225,21 @@ describe("évaluation — le formulaire se recompose à chaque choix", () => {
     expect(screen.getByLabelText(/Nom complet/).getAttribute("aria-invalid")).toBe("true");
   });
 
+  it("le domaine choisi revient quand le candidat revient à un programme qui en dépend", () => {
+    render(<Evaluation />);
+    fireEvent.click(screen.getByRole("button", { name: "Choisir Allemagne" }));
+    fireEvent.click(radio(/Étudier ou se former/));
+    fireEvent.click(radio(/Formation professionnelle ou apprentissage/));
+    fireEvent.change(screen.getByLabelText(/Dans quel domaine/), { target: { value: "sante" } });
+    fireEvent.click(radio(/Séjour temporaire/));
+    fireEvent.click(radio(/Visite familiale ou amicale/));
+    expect(sectionTitles().some((title) => title.startsWith("Votre domaine"))).toBe(false);
+    fireEvent.click(radio(/Étudier ou se former/));
+    fireEvent.click(radio(/Formation professionnelle ou apprentissage/));
+    expect(sectionTitles()).toContain("Votre domaine : Santé et soins");
+    expect((screen.getByLabelText(/Dans quel domaine/) as HTMLSelectElement).value).toBe("sante");
+  });
+
   it("la progression a une étape par bloc affiché", () => {
     render(<Evaluation />);
     fireEvent.click(screen.getByRole("button", { name: "Choisir Allemagne" }));

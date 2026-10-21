@@ -12,7 +12,7 @@ import { PremiumCoverImage } from '@/components/PremiumCoverImage';
 import Cropper, { type Area } from 'react-easy-crop';
 import { createCroppedCvFile, type CropPixels } from '@/lib/cvImageCrop';
 import { AI_ANALYSIS_CONSENT_DETAIL, AI_ANALYSIS_CONSENT_LABEL, CV_ANALYSIS_CONSENT_DETAIL, CV_ANALYSIS_CONSENT_LABEL, CV_NOT_STORED_MESSAGE, CV_REQUIRED_MESSAGE } from '@shared/evaluationCv';
-import { COLUMN_FIELD_KEYS, FAMILY_RULES, deriveDestination, getDomain, getProgram, isColumnFieldKey, missingRequiredFields, resolveDynamicForm, splitFormValues, visibleSections, type FormValues } from '@shared/dynamicForm';
+import { COLUMN_FIELD_KEYS, deriveDestination, getDomain, isColumnFieldKey, missingRequiredFields, resolveDynamicForm, splitFormValues, visibleSections, type FormValues } from '@shared/dynamicForm';
 import { DynamicFormSections } from '@/components/DynamicFormSections';
 import { useFormOverrides } from '@/hooks/useFormOverrides';
 import { DynamicDocumentsHint, DynamicProjectChoice } from '@/components/DynamicProjectChoice';
@@ -281,10 +281,8 @@ export default function Evaluation() {
   };
 
   const selectProgram = (programId: string) => {
-    const program = getProgram(programId);
+    // Le domaine choisi est conservé même si ce programme n'en dépend pas (le moteur l'ignore) : il revient si le candidat revient.
     const details: Record<string, string> = { ...formRef.current.projectDetails, programId };
-    // Un programme qui ne dépend pas du métier retire le domaine choisi (ses réponses sont conservées si le candidat revient).
-    if (program && !FAMILY_RULES[program.family].domain) delete details.domainId;
     const next = { ...formRef.current, projectDetails: details };
     formRef.current = next;
     setForm(next);
