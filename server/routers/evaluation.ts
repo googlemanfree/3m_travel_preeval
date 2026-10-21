@@ -223,7 +223,11 @@ const multiProjectEvaluationInput = z.object({
 export const evaluationRouter = router({
   geminiOrientationPreview: publicProcedure.input(z.object({ destinationCountry: z.string().min(2).max(80), projectType: z.enum(["travail", "etudes", "tourisme"]), nationality: z.string().max(120).optional(), age: z.number().int().min(16).max(100).optional(), sector: z.string().max(300).optional(), yearsOfExperience: z.number().min(0).max(80).optional(), educationLevel: z.string().max(120).optional(), languages: z.string().max(500).optional(), financialGuarantee: z.string().max(500).optional(), countryDetails: z.record(z.string(), z.union([z.string().max(1000), z.number(), z.boolean()])).default({}), consent: z.literal(true) })).mutation(async ({ input }) => {
     const alternatives = (orientationAlternativeCandidates[input.destinationCountry] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== input.destinationCountry);
-    return generateGeminiEvaluationDraft({ destinationCountry: input.destinationCountry, projectType: input.projectType, nationality: input.nationality, age: input.age, sector: input.sector, yearsOfExperience: input.yearsOfExperience, educationLevel: input.educationLevel, languages: input.languages, financialGuarantee: input.financialGuarantee, countryDetails: input.countryDetails, alternativeCountries: alternatives });
+    return generateGeminiEvaluationDraft({ destinationCountry: input.destinationCountry, projectType: input.projectType, nationality: input.nationality, age: input.age, sector: input.sector, yearsOfExperience: input.yearsOfExperience, educationLevel: input.educationLevel, languages: input.languages, financialGuarantee: input.financialGuarantee, countryDetails: input.countryDetails, alternativeCountries: alternatives }).catch((error: unknown) => {
+      // Service d'IA indisponible ou non configuré : message clair, le candidat poursuit avec le questionnaire standard.
+      logger.warn("evaluation.orientation_preview.unavailable", { reason: error instanceof Error ? error.message.slice(0, 200) : "inconnu" });
+      throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Les questions personnalisées sont momentanément indisponibles. Vous pouvez poursuivre avec le questionnaire standard." });
+    });
   }),
 
   submitEvaluation: publicProcedure
