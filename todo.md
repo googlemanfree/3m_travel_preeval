@@ -38,3 +38,8 @@
 - [x] Afficher le journal des alertes/échecs et ses indicateurs sur `/admin/admins`.
 - [x] Afficher le nombre de tentatives restantes sur la connexion admin, avec exemption explicitement signalée pour le compte de direction.
 - [x] Typecheck et tests ciblés : 23 tests verts.
+
+## Brouillon d’évaluation dans l’espace client
+- [x] Afficher l’état de sauvegarde automatique et l’heure du dernier enregistrement.
+- [x] Restaurer le brouillon de manière contrôlée et permettre son effacement local.
+- [x] Ajouter les régressions puis valider typecheck et build : 15 tests ciblés verts.

@@ -36,6 +36,8 @@ interface FormState {
   message: string;
 }
 
+type DraftStatus = 'idle' | 'saving' | 'saved' | 'restored' | 'error';
+
 const initialForm: FormState = {
   fullName: '', email: '', phone: '', dateOfBirth: '', nationality: '',
   cityOfResidence: '', maritalStatus: '', numberOfDependents: '',
@@ -85,6 +87,7 @@ export default function Evaluation() {
   const acquisitionParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
   const rawSource = acquisitionParams.get("source")?.toLowerCase();
   const acquisitionSource = rawSource === "whatsapp" || rawSource === "wa" ? "whatsapp" : rawSource === "facebook" || rawSource === "fb" ? "facebook" : "direct";
+  const isClientSpaceEntry = acquisitionParams.get("source") === "client-space";
   const acquisitionCampaign = acquisitionParams.get("campaign") || acquisitionParams.get("campagne") || undefined;
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [formError, setFormError] = useState('');
@@ -105,6 +108,8 @@ export default function Evaluation() {
   const [cropPixels, setCropPixels] = useState<CropPixels | null>(null);
   const [customDestinationMode, setCustomDestinationMode] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [draftStatus, setDraftStatus] = useState<DraftStatus>('idle');
+  const [lastDraftSavedAt, setLastDraftSavedAt] = useState<number | null>(null);
 
   const DRAFT_KEY = 'eval_draft';
   const DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -114,6 +119,16 @@ export default function Evaluation() {
   const initialSnapshot = useRef(JSON.stringify(initialProjectForm));
   const draftTouched = useRef(false);
   const clearDraft = () => { try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ } };
+  const discardDraft = () => {
+    clearDraft();
+    draftTouched.current = false;
+    setDraftStatus('idle');
+    setLastDraftSavedAt(null);
+    const reset = { ...initialProjectForm };
+    formRef.current = reset;
+    setForm(reset);
+    toast.success('Brouillon effacé', { description: 'Votre saisie locale a été supprimée de cet appareil.' });
+  };
 
   useEffect(() => {
     try {
@@ -127,16 +142,19 @@ export default function Evaluation() {
       const restored = { ...initialProjectForm, ...saved.form };
       formRef.current = restored;
       setForm(restored);
+      setDraftStatus('restored');
+      setLastDraftSavedAt(saved.savedAt);
       toast.info('Brouillon restauré', {
         description: 'Votre saisie précédente a été récupérée. Sur un ordinateur partagé, effacez-la.',
         duration: 10000,
-        action: { label: 'Effacer', onClick: () => { clearDraft(); draftTouched.current = false; formRef.current = initialProjectForm; setForm(initialProjectForm); } },
+        action: { label: 'Effacer', onClick: () => { clearDraft(); draftTouched.current = false; setDraftStatus('idle'); setLastDraftSavedAt(null); formRef.current = initialProjectForm; setForm(initialProjectForm); } },
       });
     } catch { clearDraft(); }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
+    if (JSON.stringify(form) !== initialSnapshot.current) setDraftStatus('saving');
     const timer = setTimeout(() => {
       try {
         if (JSON.stringify(form) === initialSnapshot.current) {
@@ -144,8 +162,13 @@ export default function Evaluation() {
           return;
         }
         draftTouched.current = true;
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), owner: draftOwner, form }));
-      } catch { /* quota exceeded — ignore */ }
+        const savedAt = Date.now();
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ version: 1, savedAt, owner: draftOwner, form }));
+        setLastDraftSavedAt(savedAt);
+        setDraftStatus('saved');
+      } catch {
+        setDraftStatus('error');
+      }
     }, 1000);
     return () => clearTimeout(timer);
   }, [form, draftOwner]);
@@ -187,6 +210,15 @@ export default function Evaluation() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dynamicSections, dynamicValues, form.destinationCountry, form.projectDetails.programId, form.fullName, form.email, form.phone]);
   const progressPercent = Math.round((progressSteps.filter((step) => step.done).length / progressSteps.length) * 100);
+  const draftStatusLabel = draftStatus === 'saving'
+    ? 'Sauvegarde du brouillon…'
+    : draftStatus === 'saved'
+      ? `Brouillon sauvegardé${lastDraftSavedAt ? ` à ${new Date(lastDraftSavedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}` : ''}`
+      : draftStatus === 'restored'
+        ? 'Brouillon précédent restauré'
+        : draftStatus === 'error'
+          ? 'Sauvegarde locale indisponible'
+          : '';
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     const next = { ...formRef.current, [key]: value };
@@ -600,6 +632,28 @@ export default function Evaluation() {
       </section>
 
       <div className="max-w-2xl mx-auto px-4 py-12">
+
+        {(isClientSpaceEntry || draftStatus !== 'idle') && (
+          <div
+            className={`mb-6 flex flex-col gap-3 rounded-xl border px-4 py-3 text-sm shadow-sm sm:flex-row sm:items-center sm:justify-between ${draftStatus === 'error' ? 'border-amber-300 bg-amber-50 text-amber-950' : 'border-blue-200 bg-blue-50 text-blue-950'}`}
+            role="status"
+            aria-live="polite"
+            data-testid="evaluation-draft-status"
+          >
+            <div className="flex min-w-0 items-start gap-3">
+              {draftStatus === 'saving' ? <Loader className="mt-0.5 h-4 w-4 shrink-0 animate-spin" aria-hidden="true" /> : draftStatus === 'error' ? <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /> : <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />}
+              <div>
+                <p className="font-semibold">{draftStatusLabel || 'Brouillon prêt à être sauvegardé'}</p>
+                <p className="mt-0.5 text-xs opacity-80">Votre saisie reste sur cet appareil jusqu’à l’envoi de l’évaluation. Les accords et le CV ne sont jamais enregistrés dans ce brouillon local.</p>
+              </div>
+            </div>
+            {(draftStatus === 'saved' || draftStatus === 'restored') && (
+              <Button type="button" variant="outline" size="sm" onClick={discardDraft} className="shrink-0 border-blue-300 bg-white text-blue-900 hover:bg-blue-100">
+                Effacer le brouillon
+              </Button>
+            )}
+          </div>
+        )}
 
         {/* Barre de progression multi-étapes */}
         <div className="mb-6">
