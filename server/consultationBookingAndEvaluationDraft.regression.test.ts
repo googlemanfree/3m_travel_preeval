@@ -103,7 +103,7 @@ describe("formulaire d'évaluation — progression et brouillon", () => {
 
   it("sauvegarde le brouillon avec délai, le restaure, l'efface après envoi réussi ou sur demande", () => {
     expect(form).toContain("const DRAFT_KEY = 'eval_draft'");
-    expect(form).toContain("localStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), owner: draftOwner, form }))");
+    expect(form).toContain("localStorage.setItem(DRAFT_KEY, JSON.stringify({ version: 1, savedAt, owner: draftOwner, form }))");
     expect(form).toContain("localStorage.getItem(DRAFT_KEY)");
     expect(form).toContain("Brouillon restauré");
     expect(form).toContain("localStorage.removeItem(DRAFT_KEY)");
