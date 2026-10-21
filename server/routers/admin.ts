@@ -5737,6 +5737,9 @@ export const adminRouter = router({
           dossierNumber,
           destination,
           visaType,
+          // Même visa ou programme que dans l'espace réel du candidat : l'aperçu montre les mêmes étapes.
+          programId: progressProgram.programId,
+          domainId: progressProgram.domainId,
           dossierStatus,
           statusLabel: progress.statusLabel,
           statusDetail: progress.statusDetail,

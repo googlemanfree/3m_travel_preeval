@@ -197,23 +197,33 @@ export const translationRouter = router({
   getMyRequests: candidateProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-    return db
-      .select({
-        id: drizzleSchema.translationRequests.id,
-        documentType: drizzleSchema.translationRequests.documentType,
-        sourceLanguageCode: drizzleSchema.translationRequests.sourceLanguageCode,
-        targetLanguageCode: drizzleSchema.translationRequests.targetLanguageCode,
-        sourceDocumentName: drizzleSchema.translationRequests.sourceDocumentName,
-        status: drizzleSchema.translationRequests.status,
-        totalPrice: drizzleSchema.translationRequests.totalPrice,
-        currency: drizzleSchema.translationRequests.currency,
-        translatedDocumentUrl: drizzleSchema.translationRequests.translatedDocumentUrl,
-        createdAt: drizzleSchema.translationRequests.createdAt,
-        updatedAt: drizzleSchema.translationRequests.updatedAt,
-      })
-      .from(drizzleSchema.translationRequests)
-      .where(eq(drizzleSchema.translationRequests.candidateEmail, ctx.candidate.email))
-      .orderBy(desc(drizzleSchema.translationRequests.createdAt))
-      .limit(50);
+    try {
+      return await db
+        .select({
+          id: drizzleSchema.translationRequests.id,
+          documentType: drizzleSchema.translationRequests.documentType,
+          sourceLanguageCode: drizzleSchema.translationRequests.sourceLanguageCode,
+          targetLanguageCode: drizzleSchema.translationRequests.targetLanguageCode,
+          sourceDocumentName: drizzleSchema.translationRequests.sourceDocumentName,
+          status: drizzleSchema.translationRequests.status,
+          totalPrice: drizzleSchema.translationRequests.totalPrice,
+          currency: drizzleSchema.translationRequests.currency,
+          translatedDocumentUrl: drizzleSchema.translationRequests.translatedDocumentUrl,
+          createdAt: drizzleSchema.translationRequests.createdAt,
+          updatedAt: drizzleSchema.translationRequests.updatedAt,
+        })
+        .from(drizzleSchema.translationRequests)
+        .where(eq(drizzleSchema.translationRequests.candidateEmail, ctx.candidate.email))
+        .orderBy(desc(drizzleSchema.translationRequests.createdAt))
+        .limit(50);
+    } catch (error) {
+      // Table des traductions absente (migration 0014 non appliquée) : la carte reste vide au lieu de faire échouer tout l'espace client.
+      const detail = error instanceof Error ? `${error.message} ${String((error as { cause?: unknown }).cause ?? "")}` : String(error);
+      if (/ER_NO_SUCH_TABLE|doesn't exist/i.test(detail)) {
+        console.warn("[translation.getMyRequests] table translation_requests absente : migration 0014 à appliquer.");
+        return [];
+      }
+      throw error;
+    }
   }),
 });

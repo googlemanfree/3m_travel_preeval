@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import crypto from "node:crypto";
 import { z } from "zod";
 import { and, desc, eq, isNull, isNotNull, like, sql } from "drizzle-orm";
+import { declaredProjectWarnings } from "../../shared/declaredConsistency";
 import { applications, agencyDossiers, agencyDossierDocuments, agencyDossierHistory, agencySettings, clientDocuments, candidateFiles, candidateMessages, candidates, evaluations, paymentAuditLogs, paymentReceiptApprovals } from "../../drizzle/schema";
 import { caseActivityLogs, caseStatusHistory, cases, clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
@@ -1567,6 +1568,26 @@ export const adminCandidateManagementRouter = router({
         newValue: dossierReference,
         details: "Référence de compte remplacée par le numéro de dossier actif après paiement des frais d’ouverture validé et activation par l’administration",
       });
+      // Cohérence avec les informations données au départ : un écart est signalé, tracé, jamais bloquant.
+      let consistencyWarnings: string[] = [];
+      try {
+        const [declaredEvaluation] = await db.select({ destinationCountry: evaluations.destinationCountry, projectType: evaluations.projectType, visaType: evaluations.visaType, projectDetailsJson: evaluations.projectDetailsJson })
+          .from(evaluations).where(sql`LOWER(${evaluations.email}) = LOWER(${candidate.email})`).orderBy(desc(evaluations.createdAt)).limit(1);
+        const declaredLabel = (() => { try { const parsed = declaredEvaluation?.projectDetailsJson ? JSON.parse(declaredEvaluation.projectDetailsJson) : null; return typeof parsed?.programLabel === "string" ? parsed.programLabel : null; } catch { return null; } })();
+        consistencyWarnings = declaredProjectWarnings(declaredEvaluation ? { ...declaredEvaluation, programLabel: declaredLabel } : null, { destination: primaryProcedure.destination, visaType: primaryProcedure.visaType });
+        if (consistencyWarnings.length > 0) {
+          await db.insert(agencyDossierHistory).values({
+            dossierId: agencyDossierId,
+            action: "declared_mismatch",
+            changedBy: admin.email || "unknown",
+            oldValue: null,
+            newValue: JSON.stringify(consistencyWarnings),
+            details: "Écart entre l'évaluation du candidat et la procédure ouverte à l'activation",
+          });
+        }
+      } catch (err) {
+        console.error("[activatePreDossierAccount] Contrôle de cohérence non effectué:", err);
+      }
       let additionalAgencyDossierId: number | null = null;
       let additionalDossierReference: string | null = null;
       if (additionalProcedure) {
@@ -1769,6 +1790,7 @@ export const adminCandidateManagementRouter = router({
         dossierReference,
         previousAccountReference,
         archivedDuplicates,
+        consistencyWarnings,
         additionalAgencyDossierId,
         additionalDossierReference,
         simultaneousProcedures: Boolean(additionalAgencyDossierId),

@@ -1,3 +1,4 @@
+import { declaredProjectWarnings } from "../shared/declaredConsistency";
 import { describe, expect, it } from "vitest";
 import { getEnrichedCandidateJourney, journeyStepIndex } from "../shared/candidateJourneyCatalog";
 import { describeDossierProgress } from "../shared/dossierProgress";
@@ -118,5 +119,14 @@ describe("liste de pièces : une seule source pour le client, l'administration e
   it("le programme est lu de la même façon dans les réponses d'une évaluation", () => {
     expect(checklistScopeFromDetails({ programId: "etudes-cursus", domainId: "sante" })).toEqual({ programId: "etudes-cursus", domainId: "sante" });
     expect(checklistScopeFromDetails(null)).toEqual({ programId: null, domainId: null });
+  });
+});
+
+describe("cohérence avec les informations données au départ", () => {
+  it("signale, sans bloquer, une procédure ouverte différente de celle déclarée par le candidat", () => {
+    expect(declaredProjectWarnings({ destinationCountry: "Canada", projectType: "travail" }, { destination: "Canada", visaType: "Travail" })).toEqual([]);
+    expect(declaredProjectWarnings({ destinationCountry: "Allemagne", projectType: "etudes", programLabel: "Formation professionnelle ou apprentissage" }, { destination: "Allemagne", visaType: "Travail" })[0]).toMatch(/Projet déclaré.*Formation professionnelle/);
+    expect(declaredProjectWarnings({ destinationCountry: "Canada", projectType: "travail" }, { destination: "France", visaType: "Travail" })[0]).toMatch(/Destination déclarée.*Canada.*France/);
+    expect(declaredProjectWarnings(null, { destination: "France", visaType: "Travail" })).toEqual([]);
   });
 });

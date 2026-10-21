@@ -378,7 +378,7 @@ export default function AdminPreDossierAccountsPanel({
               : "Dossier activé",
           description: result.additionalDossierReference
             ? `${result.dossierReference} et ${result.additionalDossierReference} sont actifs — traitez-les simultanément dans le back-office.`
-            : `${result.previousAccountReference} devient ${result.dossierReference}. ${result.emailSent ? "Le dossier est actif dans l’espace client et l’e-mail a été envoyé." : "Le dossier est actif dans l’espace client ; l’e-mail devra être relancé."}${result.archivedDuplicates?.length ? ` ${result.archivedDuplicates.length} doublon(s) mis en corbeille (réversible) : ${result.archivedDuplicates.join(", ")}.` : ""}`,
+            : `${result.previousAccountReference} devient ${result.dossierReference}. ${result.emailSent ? "Le dossier est actif dans l’espace client et l’e-mail a été envoyé." : "Le dossier est actif dans l’espace client ; l’e-mail devra être relancé."}${result.archivedDuplicates?.length ? ` ${result.archivedDuplicates.length} doublon(s) mis en corbeille (réversible) : ${result.archivedDuplicates.join(", ")}.` : ""}${result.consistencyWarnings?.length ? ` À vérifier — ${result.consistencyWarnings.join(" ")}` : ""}`,
         });
         setAdminNotes("");
         void utils.adminCandidateManagement.listPreDossierAccounts.invalidate();
