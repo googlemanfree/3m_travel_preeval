@@ -338,8 +338,8 @@ describe("activation : les doublons et dossiers frères restent conservés", () 
   ];
 
   it("rattache le dossier 34 sans supprimer automatiquement le pré-dossier 7", async () => {
-    // lectures : compte, preuve de paiement du compte (aucune), paiement en ligne validé, pré-dossier agence existant (34) ; puis détection ; puis re-détection à l'archivage
-    state.reads = [[candidate(validatedEvaluation)], [], [onlinePaymentValidated], [{ id: 34 }], ...duplicateWorld(), ...duplicateWorld()];
+    // lectures : compte, preuve de paiement du compte (aucune), paiement en ligne validé, pré-dossier agence existant (34) ; puis détection ; puis re-détection à l’archivage
+    state.reads = [[candidate(validatedEvaluation)], [], [onlinePaymentValidated], [{ id: 34 }], [], ...duplicateWorld(), ...duplicateWorld()];
     const result = await caller().activatePreDossierAccount({ ...base, candidateId: 42, destination: "luxembourg", visaType: "Études" });
     expect(result).toMatchObject({ dossierReference: "3M-AGN-0034", archivedDuplicates: [] });
     expect(state.updates.some((values) => values.deletedAt)).toBe(false);
@@ -367,7 +367,7 @@ describe("activation : les doublons et dossiers frères restent conservés", () 
       [{ id: 40, fullName: "Candidat Test", email: "candidat@example.com", phone: null, status: "en_cours" }, { id: 34, fullName: "Candidat Test", email: "candidat@example.com", phone: null, status: "en_cours" }],
       [], [{ email: "candidat@example.com" }], [],
     ];
-    state.reads = [[candidate(validatedEvaluation)], [], [onlinePaymentValidated], [{ id: 34 }], ...otherActiveWorld(), ...otherActiveWorld()];
+    state.reads = [[candidate(validatedEvaluation)], [], [onlinePaymentValidated], [{ id: 34 }], [], ...otherActiveWorld(), ...otherActiveWorld()];
     const result = await caller().activatePreDossierAccount({ ...base, candidateId: 42, destination: "luxembourg", visaType: "Études" });
     expect(result.archivedDuplicates).toEqual([]);
     expect(state.updates.some((values) => values.deletedAt)).toBe(false);
@@ -375,7 +375,7 @@ describe("activation : les doublons et dossiers frères restent conservés", () 
 
   it("un échec du nettoyage ne défait pas l'activation", async () => {
     state.failTrash = true;
-    state.reads = [[candidate(validatedEvaluation)], [], [onlinePaymentValidated], [{ id: 34 }], ...duplicateWorld(), ...duplicateWorld()];
+    state.reads = [[candidate(validatedEvaluation)], [], [onlinePaymentValidated], [{ id: 34 }], [], ...duplicateWorld(), ...duplicateWorld()];
     const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const result = await caller().activatePreDossierAccount({ ...base, candidateId: 42, destination: "luxembourg", visaType: "Études" });
     expect(result).toMatchObject({ success: true, dossierReference: "3M-AGN-0034", archivedDuplicates: [] });
