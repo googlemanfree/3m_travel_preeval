@@ -49,6 +49,38 @@ export function recordFailedAttempt(identifier: string): void {
 }
 
 /**
+ * Ralentissement progressif (sans jamais bloquer) : à partir de la 3e erreur récente sur un identifiant, chaque nouvelle tentative
+ * attend 1 s de plus, jusqu'à 5 s. Un usage normal ne le voit pas ; tester des milliers de mots de passe devient impraticable.
+ */
+const recentFailures: Map<string, { count: number; lastAt: number }> = new Map();
+const SLOWDOWN_WINDOW_MS = 15 * 60 * 1000;
+const SLOWDOWN_START = 3;
+const SLOWDOWN_STEP_MS = 1000;
+const SLOWDOWN_MAX_MS = 5000;
+
+export function recordSlowdownFailure(identifier: string, now: number = Date.now()): void {
+  const current = recentFailures.get(identifier);
+  const count = current && now - current.lastAt < SLOWDOWN_WINDOW_MS ? current.count + 1 : 1;
+  recentFailures.set(identifier, { count, lastAt: now });
+  // Borne la mémoire : on oublie les identifiants inactifs.
+  if (recentFailures.size > 5000) {
+    Array.from(recentFailures.entries()).forEach(([key, value]) => { if (now - value.lastAt >= SLOWDOWN_WINDOW_MS) recentFailures.delete(key); });
+  }
+}
+
+export function resetSlowdown(identifier: string): void {
+  recentFailures.delete(identifier);
+}
+
+/** Attente (en millisecondes) à appliquer avant de traiter la prochaine tentative. */
+export function slowdownDelayMs(identifier: string, now: number = Date.now()): number {
+  const current = recentFailures.get(identifier);
+  if (!current || now - current.lastAt >= SLOWDOWN_WINDOW_MS) return 0;
+  if (current.count < SLOWDOWN_START) return 0;
+  return Math.min(SLOWDOWN_MAX_MS, (current.count - SLOWDOWN_START + 1) * SLOWDOWN_STEP_MS);
+}
+
+/**
  * Réinitialise les tentatives après une connexion réussie
  */
 export function resetLoginAttempts(identifier: string): void {

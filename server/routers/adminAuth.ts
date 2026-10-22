@@ -15,7 +15,7 @@ import { and, count, desc, eq, gte, inArray } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { getPasswordChangedEmailTemplate, getPasswordChangeFailedEmailTemplate } from "../_core/emailTemplates";
 import { randomBytes, randomInt } from "node:crypto";
-import { checkLoginAttempts, getLoginAttemptStatus, recordExemptLoginAttempt, recordFailedAttempt, resetExemptLoginAttempts, resetLoginAttempts, scopedLoginIdentifier } from "../loginAttemptsService";
+import { checkLoginAttempts, getLoginAttemptStatus, recordExemptLoginAttempt, recordFailedAttempt, recordSlowdownFailure, resetExemptLoginAttempts, resetLoginAttempts, resetSlowdown, scopedLoginIdentifier, slowdownDelayMs } from "../loginAttemptsService";
 function esc(v: string | undefined | null): string { return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 import { beginTwoFactorEnrollment, confirmTwoFactorEnrollment, getTwoFactorStatus, verifyTwoFactor } from "../twoFactor";
 
@@ -168,6 +168,9 @@ export const adminAuthRouter = router({
       // verrouillé par une erreur de saisie ; les autres admins restent protégés.
       const lockoutExempt = isLockoutExempt(input.email);
       if (!lockoutExempt) checkLoginAttempts(loginIdentifier);
+      // Sans verrouillage, le ralentissement progressif rend impraticable l'essai massif de mots de passe.
+      const slowdown = slowdownDelayMs(loginIdentifier);
+      if (slowdown > 0) await new Promise((resolve) => setTimeout(resolve, slowdown));
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -179,6 +182,7 @@ export const adminAuthRouter = router({
         .limit(1);
 
       if (rows.length === 0) {
+        recordSlowdownFailure(loginIdentifier);
         if (!lockoutExempt) recordFailedAttempt(loginIdentifier);
         else await notifyExemptLoginAttempts(input.email, "identifiants incorrects");
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
@@ -187,6 +191,7 @@ export const adminAuthRouter = router({
       const admin = rows[0];
 
       if (admin.status !== "active") {
+        recordSlowdownFailure(loginIdentifier);
         if (!lockoutExempt) recordFailedAttempt(loginIdentifier);
         else await notifyExemptLoginAttempts(input.email, "compte administrateur désactivé");
         await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login_blocked", expiresAt: null });
@@ -194,6 +199,7 @@ export const adminAuthRouter = router({
       }
 
       if (!admin.passwordHash) {
+        recordSlowdownFailure(loginIdentifier);
         if (!lockoutExempt) recordFailedAttempt(loginIdentifier);
         else await notifyExemptLoginAttempts(input.email, "mot de passe non configuré");
         await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login_failed", expiresAt: null });
@@ -202,6 +208,7 @@ export const adminAuthRouter = router({
 
       const valid = await bcrypt.compare(input.password, admin.passwordHash);
       if (!valid) {
+        recordSlowdownFailure(loginIdentifier);
         if (!lockoutExempt) recordFailedAttempt(loginIdentifier);
         else await notifyExemptLoginAttempts(input.email, "mot de passe incorrect");
         await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login_failed", expiresAt: null });
@@ -210,6 +217,7 @@ export const adminAuthRouter = router({
 
       const twoFactor = await verifyTwoFactor("admin", admin.id, input.twoFactorCode ?? "");
       if (twoFactor.required && !twoFactor.valid) {
+        if (input.twoFactorCode) recordSlowdownFailure(loginIdentifier);
         if (input.twoFactorCode && !lockoutExempt) recordFailedAttempt(loginIdentifier);
         if (input.twoFactorCode && lockoutExempt) await notifyExemptLoginAttempts(input.email, "code MFA invalide");
         // Un code non renseigné (TOTP_REQUIRED) n'est pas une tentative échouée : le client va simplement redemander le code.
@@ -218,6 +226,7 @@ export const adminAuthRouter = router({
       }
 
       resetLoginAttempts(loginIdentifier);
+      resetSlowdown(loginIdentifier);
       if (lockoutExempt) resetExemptLoginAttempts(loginIdentifier);
       const sessionToken = generateSessionToken();
       const sessionExpiresAt = new Date(Date.now() + ADMIN_SESSION_DURATION_MS);

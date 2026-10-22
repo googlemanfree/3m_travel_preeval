@@ -62,6 +62,9 @@ vi.mock("./loginAttemptsService", () => ({
   recordFailedAttempt: () => { state.failedAttempts += 1; },
   resetExemptLoginAttempts: () => undefined,
   resetLoginAttempts: () => undefined,
+  recordSlowdownFailure: () => undefined,
+  resetSlowdown: () => undefined,
+  slowdownDelayMs: () => 0,
   getLoginAttemptStatus: () => ({ remainingAttempts: 2, maxAttempts: 3, lockedUntil: null }),
   scopedLoginIdentifier: (scope: string, identifier: string) => `${scope}:${identifier.trim().toLowerCase()}`,
 }));
