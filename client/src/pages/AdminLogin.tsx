@@ -154,7 +154,7 @@ export default function AdminLogin() {
                 {hasValidEmail && attemptStatusQuery.data && (
                   <p className="mt-2 text-xs text-slate-600" aria-live="polite" data-testid="login-attempt-status">
                     {attemptStatusQuery.data.exempt
-                      ? "Ce compte de direction n’est pas soumis au verrouillage automatique."
+                      ? "Le verrouillage automatique de la connexion est désactivé."
                       : attemptStatusQuery.data.locked
                         ? "Compte temporairement verrouillé. Réessayez après la période de sécurité."
                         : `Tentatives restantes avant verrouillage : ${attemptStatusQuery.data.remainingAttempts}/${attemptStatusQuery.data.maxAttempts}.`}

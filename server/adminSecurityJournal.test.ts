@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const state = vi.hoisted(() => ({
+  exemptCount: 0,
   admins: [] as any[],
   lookupEmail: null as string | null,
   updates: [] as Array<{ table: any; values: any }>,
@@ -54,13 +55,10 @@ vi.mock("./twoFactor", () => ({
 }));
 vi.mock("./loginAttemptsService", () => ({
   checkLoginAttempts: () => undefined,
-  recordExemptLoginAttempt: (() => {
-    let count = 0;
-    return () => {
-      count += 1;
-      return count === 3;
-    };
-  })(),
+  recordExemptLoginAttempt: () => {
+    state.exemptCount += 1;
+    return state.exemptCount === 3;
+  },
   recordFailedAttempt: () => { state.failedAttempts += 1; },
   resetExemptLoginAttempts: () => undefined,
   resetLoginAttempts: () => undefined,
@@ -77,6 +75,7 @@ const caller = () => adminAuthRouter.createCaller({ req: { headers: {} }, res: f
 const admin = (overrides: Record<string, unknown> = {}) => ({ id: 7, email: "agent@3mtravelagency.com", fullName: "Agent 3M", passwordHash: "hash", status: "active", adminType: "accompagnement", requiresPasswordChange: false, sessionToken: "tok-agent", sessionExpiresAt: new Date(Date.now() + 3_600_000), ...overrides });
 
 beforeEach(() => {
+  state.exemptCount = 0;
   state.admins = [admin()];
   state.lookupEmail = null;
   state.updates = [];
@@ -125,7 +124,7 @@ describe("connexion admin : journal des échecs", () => {
     expect(source).toContain("if (input.twoFactorCode && !lockoutExempt) recordFailedAttempt(loginIdentifier);");
   });
 
-  it("exempte uniquement le super administrateur du verrouillage anti-tentatives", async () => {
+  it("ne verrouille plus aucun administrateur (verrouillage désactivé à la demande de la direction)", async () => {
     state.admins = [admin({ email: "aureoldonfack@gmail.com" })];
     await expect(caller().login({ email: "aureoldonfack@gmail.com", password: "faux" })).rejects.toThrow(/incorrect/);
     await expect(caller().login({ email: "aureoldonfack@gmail.com", password: "faux" })).rejects.toThrow(/incorrect/);
@@ -133,14 +132,15 @@ describe("connexion admin : journal des échecs", () => {
 
     state.admins = [admin()];
     await expect(caller().login({ email: "agent@3mtravelagency.com", password: "faux" })).rejects.toThrow(/incorrect/);
-    expect(state.failedAttempts).toBe(1);
+    await expect(caller().login({ email: "agent@3mtravelagency.com", password: "faux" })).rejects.toThrow(/incorrect/);
+    expect(state.failedAttempts).toBe(0);
   });
 
   it("expose un compteur non sensible et masque la limite du super administrateur", async () => {
     await expect(caller().loginAttemptStatus({ email: "agent@3mtravelagency.com" })).resolves.toMatchObject({
-      exempt: false,
-      remainingAttempts: 2,
-      maxAttempts: 3,
+      exempt: true,
+      remainingAttempts: null,
+      maxAttempts: null,
       locked: false,
     });
     await expect(caller().loginAttemptStatus({ email: "aureoldonfack@gmail.com" })).resolves.toMatchObject({

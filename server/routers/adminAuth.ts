@@ -79,9 +79,17 @@ export function isSuperAdminEmail(email: string | null | undefined) {
   return email?.trim().toLowerCase() === SUPER_ADMIN_EMAIL;
 }
 
+/**
+ * Verrouillage automatique de la connexion administrateur (« Trop de tentatives… ») : désactivé à la demande de la direction.
+ * Les échecs restent journalisés (tableau de sécurité) et une alerte e-mail part après trois échecs ; le 2FA reste exigé selon la configuration.
+ * Remettre à true pour rétablir le verrouillage de 15 minutes après 3 échecs.
+ */
+export const ADMIN_LOGIN_LOCKOUT_ENABLED = false;
+const isLockoutExempt = (email: string | null | undefined) => !ADMIN_LOGIN_LOCKOUT_ENABLED || isSuperAdminEmail(email);
+
 async function notifyExemptLoginAttempts(email: string, reason: string) {
   const identifier = scopedLoginIdentifier("admin", email);
-  if (!isSuperAdminEmail(email) || !recordExemptLoginAttempt(identifier)) return;
+  if (!recordExemptLoginAttempt(identifier)) return;
 
   try {
     const timestamp = new Date().toLocaleString("fr-FR", { timeZone: "Africa/Douala" });
@@ -158,7 +166,7 @@ export const adminAuthRouter = router({
       const loginIdentifier = scopedLoginIdentifier("admin", input.email);
       // Le compte de direction doit pouvoir récupérer son accès sans être
       // verrouillé par une erreur de saisie ; les autres admins restent protégés.
-      const lockoutExempt = isSuperAdminEmail(input.email);
+      const lockoutExempt = isLockoutExempt(input.email);
       if (!lockoutExempt) checkLoginAttempts(loginIdentifier);
 
       const db = await getDb();
@@ -248,7 +256,7 @@ export const adminAuthRouter = router({
   loginAttemptStatus: publicProcedure
     .input(z.object({ email: z.string().email().max(320) }))
     .query(({ input }) => {
-      if (isSuperAdminEmail(input.email)) {
+      if (isLockoutExempt(input.email)) {
         return { exempt: true, remainingAttempts: null, maxAttempts: null, locked: false } as const;
       }
       const status = getLoginAttemptStatus(scopedLoginIdentifier("admin", input.email));
