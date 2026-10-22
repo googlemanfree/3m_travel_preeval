@@ -68,6 +68,24 @@ export function recordSlowdownFailure(identifier: string, now: number = Date.now
   }
 }
 
+const attemptsInFlight: Set<string> = new Set();
+
+/**
+ * Une seule tentative de connexion à la fois par identifiant : sans cela, des tentatives lancées en parallèle contourneraient le
+ * ralentissement. Un humain ne déclenche jamais ce refus ; il ne vise que les essais automatisés simultanés.
+ */
+export async function runExclusiveLogin<T>(identifier: string, attempt: () => Promise<T>): Promise<T> {
+  if (attemptsInFlight.has(identifier)) {
+    throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Une tentative de connexion est déjà en cours pour ce compte. Patientez quelques secondes." });
+  }
+  attemptsInFlight.add(identifier);
+  try {
+    return await attempt();
+  } finally {
+    attemptsInFlight.delete(identifier);
+  }
+}
+
 export function resetSlowdown(identifier: string): void {
   recentFailures.delete(identifier);
 }

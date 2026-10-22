@@ -65,6 +65,7 @@ vi.mock("./loginAttemptsService", () => ({
   recordSlowdownFailure: () => undefined,
   resetSlowdown: () => undefined,
   slowdownDelayMs: () => 0,
+  runExclusiveLogin: (_identifier: string, attempt: () => Promise<unknown>) => attempt(),
   getLoginAttemptStatus: () => ({ remainingAttempts: 2, maxAttempts: 3, lockedUntil: null }),
   scopedLoginIdentifier: (scope: string, identifier: string) => `${scope}:${identifier.trim().toLowerCase()}`,
 }));

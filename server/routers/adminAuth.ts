@@ -15,7 +15,7 @@ import { and, count, desc, eq, gte, inArray } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { getPasswordChangedEmailTemplate, getPasswordChangeFailedEmailTemplate } from "../_core/emailTemplates";
 import { randomBytes, randomInt } from "node:crypto";
-import { checkLoginAttempts, getLoginAttemptStatus, recordExemptLoginAttempt, recordFailedAttempt, recordSlowdownFailure, resetExemptLoginAttempts, resetLoginAttempts, resetSlowdown, scopedLoginIdentifier, slowdownDelayMs } from "../loginAttemptsService";
+import { checkLoginAttempts, getLoginAttemptStatus, recordExemptLoginAttempt, recordFailedAttempt, recordSlowdownFailure, resetExemptLoginAttempts, resetLoginAttempts, resetSlowdown, runExclusiveLogin, scopedLoginIdentifier, slowdownDelayMs } from "../loginAttemptsService";
 function esc(v: string | undefined | null): string { return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 import { beginTwoFactorEnrollment, confirmTwoFactorEnrollment, getTwoFactorStatus, verifyTwoFactor } from "../twoFactor";
 
@@ -162,7 +162,7 @@ export const adminAuthRouter = router({
       password: z.string().min(1).max(128),
       twoFactorCode: z.string().trim().min(6).max(32).optional(),
     }))
-    .mutation(async ({ input, ctx }) => {
+    .mutation(async ({ input, ctx }) => runExclusiveLogin(scopedLoginIdentifier("admin", input.email), async () => {
       const loginIdentifier = scopedLoginIdentifier("admin", input.email);
       // Le compte de direction doit pouvoir récupérer son accès sans être
       // verrouillé par une erreur de saisie ; les autres admins restent protégés.
@@ -259,7 +259,7 @@ export const adminAuthRouter = router({
         email: admin.email,
         requiresPasswordChange: admin.requiresPasswordChange || false,  // Indique si le changement de mot de passe est obligatoire
       };
-    }),
+    })),
 
   /** État non sensible affichable avant soumission, sans révéler l’existence du compte. */
   loginAttemptStatus: publicProcedure
