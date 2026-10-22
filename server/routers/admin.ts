@@ -60,6 +60,8 @@ import { buildCountryProcedureDocumentChecklist, summarizeCountryProcedureCheckl
 import { evaluateAdminStageTransition } from "../../shared/transitionGuards";
 import { buildJourneyStepSla, suggestedDueAtForAdminStage } from "../../shared/journeyStepSla";
 import { latestProgramContext, pickProgramContext, programContextsByEmail } from "../services/evaluationProgramContext";
+import { assessAccountPurge, purgeCandidateAccount } from "../services/purgeCandidateAccount";
+import { recordPrivacyEvent } from "../services/privacyAudit";
 import { describeSecondProtocolState, dualOpportunityHandoffMessage } from "../../shared/secondAgreementProtocol";
 import { ADMIN_STAGE_CATALOG, ADMIN_STAGE_SEQUENCE, resolveGuidedNextAdminAction } from "../../shared/adminStageCatalog";
 import {
@@ -5279,6 +5281,38 @@ export const adminRouter = router({
       else if (source === "online") await db.update(applications).set({ deletedAt: null, deletedBy: null, deletionReason: null }).where(eq(applications.id, id));
       else await db.update(agencyDossiers).set({ deletedAt: null, deletedBy: null, deletionReason: null }).where(eq(agencyDossiers.id, id));
       return { success: true, source, id, message: "Enregistrement restauré dans la liste active." };
+    }),
+
+  /**
+   * Suppression DÉFINITIVE d'un compte candidat depuis la corbeille, pour libérer son adresse e-mail et lui permettre de se réinscrire.
+   * Super administrateur uniquement ; compte déjà en corbeille, adresse e-mail saisie à l'identique, jamais si un paiement est validé.
+   * Les dossiers, évaluations et pièces comptables ne sont pas touchés. Action irréversible, tracée dans le journal de confidentialité.
+   */
+  purgeArchivedAccount: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      candidateId: z.string().regex(/^account_\d+$/, "Seuls les comptes candidats peuvent être supprimés définitivement."),
+      emailConfirmation: z.string().trim().min(3).max(320),
+      confirmation: z.literal("SUPPRIMER DEFINITIVEMENT"),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireSuperAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const id = Number(input.candidateId.slice("account_".length));
+      const assessment = await assessAccountPurge(db, id, input.emailConfirmation);
+      if (assessment.ok === false) throw new TRPCError({ code: assessment.code === "not_found" ? "NOT_FOUND" : "PRECONDITION_FAILED", message: assessment.message });
+      const { clearedTables } = await purgeCandidateAccount(db, id);
+      await recordPrivacyEvent(db, {
+        actorType: "admin",
+        actorId: admin.id,
+        actorLabel: admin.email,
+        action: "candidate.account_purged",
+        resourceType: "candidate",
+        resourceId: id,
+        details: `Compte supprimé définitivement depuis la corbeille ; adresse libérée pour une nouvelle inscription (${clearedTables.length} tables nettoyées).`,
+      });
+      return { success: true as const, reference: `COMPTE-${String(id).padStart(5, "0")}`, message: "Compte supprimé définitivement : la personne peut s'inscrire de nouveau avec la même adresse e-mail." };
     }),
 
   listArchivedRecords: publicProcedure

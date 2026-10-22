@@ -1830,6 +1830,18 @@ export default function AdminDashboard() {
   const [archiveDialogItems, setArchiveDialogItems] = useState<Array<{ id: string; folderCode?: string; fullName?: string; email?: string; source?: string }> | null>(null);
   const [archiveReasonInput, setArchiveReasonInput] = useState("Doublon à vérifier");
   const [restoreDialogRecord, setRestoreDialogRecord] = useState<{ candidateId: string; reference: string } | null>(null);
+  const [purgeDialogRecord, setPurgeDialogRecord] = useState<{ candidateId: string; reference: string; email: string } | null>(null);
+  const [purgeEmailInput, setPurgeEmailInput] = useState("");
+  const purgeArchivedMutation = trpc.admin.purgeArchivedAccount.useMutation({
+    onSuccess: (result) => {
+      toast({ title: "Compte supprimé définitivement", description: result.message });
+      setPurgeDialogRecord(null);
+      setPurgeEmailInput("");
+      void archivedRecordsQuery.refetch();
+      void trpcUtils.admin.listCandidates.invalidate();
+    },
+    onError: (error) => toast({ title: "Suppression impossible", description: error.message, variant: "destructive" }),
+  });
 
   const archiveCandidateFromTable = useCallback((candidate: { id?: string; folderCode?: string; fullName?: string; email?: string; source?: string }) => {
     if (!candidate.id) return;
@@ -3292,10 +3304,38 @@ export default function AdminDashboard() {
             <div className="max-h-[55vh] space-y-2 overflow-y-auto">
               {archivedRecordsQuery.isLoading && <p className="text-sm text-slate-500">Chargement des archives…</p>}
               {!archivedRecordsQuery.isLoading && !(archivedRecordsQuery.data?.length) && <p className="text-sm text-slate-500">Aucune archive dans la corbeille.</p>}
-              {(archivedRecordsQuery.data ?? []).map((record) => <div key={record.candidateId} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-3"><div><p className="font-semibold text-slate-800">{record.reference} — {record.fullName}</p><p className="text-xs text-slate-500">{record.email} · {record.source} · {record.reason || "Motif non renseigné"}</p><p className="text-xs text-slate-400">Archivé le {record.deletedAt ? new Date(record.deletedAt).toLocaleString("fr-FR") : "—"} par {record.deletedBy || "—"}</p></div><Button type="button" variant="outline" disabled={restoreArchivedMutation.isPending} onClick={() => setRestoreDialogRecord({ candidateId: record.candidateId, reference: record.reference })}>Restaurer</Button></div>)}
+              {(archivedRecordsQuery.data ?? []).map((record) => <div key={record.candidateId} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-3"><div><p className="font-semibold text-slate-800">{record.reference} — {record.fullName}</p><p className="text-xs text-slate-500">{record.email} · {record.source} · {record.reason || "Motif non renseigné"}</p><p className="text-xs text-slate-400">Archivé le {record.deletedAt ? new Date(record.deletedAt).toLocaleString("fr-FR") : "—"} par {record.deletedBy || "—"}</p></div><Button type="button" variant="outline" disabled={restoreArchivedMutation.isPending} onClick={() => setRestoreDialogRecord({ candidateId: record.candidateId, reference: record.reference })}>Restaurer</Button>{record.source === "account" && <Button type="button" variant="destructive" disabled={purgeArchivedMutation.isPending} onClick={() => { setPurgeEmailInput(""); setPurgeDialogRecord({ candidateId: record.candidateId, reference: record.reference, email: record.email }); }}>Supprimer définitivement</Button>}</div>)}
             </div>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={Boolean(purgeDialogRecord)} onOpenChange={(open) => { if (!open) { setPurgeDialogRecord(null); setPurgeEmailInput(""); } }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer définitivement {purgeDialogRecord?.reference} ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Action irréversible : le compte et ses données personnelles (messages, pièces déposées, notifications, consentements, fiches de placement) sont effacés, et l’adresse e-mail est libérée pour une nouvelle inscription. Les dossiers, évaluations et pièces comptables ne sont pas touchés. Impossible si un paiement est validé.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-2">
+              <Label htmlFor="purge-email-confirmation">Pour confirmer, saisissez l’adresse e-mail du compte : <strong>{purgeDialogRecord?.email}</strong></Label>
+              <Input id="purge-email-confirmation" value={purgeEmailInput} onChange={(event) => setPurgeEmailInput(event.target.value)} autoComplete="off" maxLength={320} />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={!purgeDialogRecord || purgeArchivedMutation.isPending || purgeEmailInput.trim().toLowerCase() !== (purgeDialogRecord?.email ?? "").trim().toLowerCase()}
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (!purgeDialogRecord) return;
+                  purgeArchivedMutation.mutate({ sessionToken, candidateId: purgeDialogRecord.candidateId, emailConfirmation: purgeEmailInput, confirmation: "SUPPRIMER DEFINITIVEMENT" });
+                }}
+              >
+                Supprimer définitivement
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <AlertDialog open={Boolean(restoreDialogRecord)} onOpenChange={(open) => { if (!open) setRestoreDialogRecord(null); }}>
           <AlertDialogContent>
