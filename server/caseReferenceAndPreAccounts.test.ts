@@ -12,6 +12,7 @@ import {
   referenceKind,
   resolveClientReference,
   agencyDossierIsActivated,
+  isUnspecifiedDestination,
 } from "../shared/caseReference";
 import { findRedundantPreAccounts, samePhone } from "./services/redundantPreAccounts";
 import { archiveRedundantPreAccounts, loadRedundantPreAccounts } from "./services/redundantPreAccountsStore";
@@ -214,5 +215,12 @@ describe("mise en corbeille : comportement avec une base simulée", () => {
     expect((calls.updates[0] as any).deletionReason).toContain("3M-AGN-0034");
     expect(calls.logs).toHaveLength(1);
     expect(JSON.parse(calls.logs[0].details).activeDossierReference).toBe("3M-AGN-0034");
+  });
+});
+
+describe("destination non précisée", () => {
+  it("« autre » ou « general » ne s'affichent jamais comme un pays", () => {
+    for (const value of ["autre", " Autre ", "general", "À préciser", "", null, undefined]) expect(isUnspecifiedDestination(value as string | null | undefined), String(value)).toBe(true);
+    for (const value of ["Canada", "Allemagne"]) expect(isUnspecifiedDestination(value)).toBe(false);
   });
 });

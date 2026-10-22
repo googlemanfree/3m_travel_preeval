@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { assembleChecklistRequirements, buildRequirementOptions, customRequirementKind, dueInfo, documentsForRequirement, getRequirements, kindFromMatches, normalize, resolveProcedure, summarizeChecklist, MAX_CHECKLIST_DOCUMENTS, type ChecklistDocument, type ChecklistScope, type CustomRequirement, type Requirement } from "@/lib/documentChecklist";
 import RequirementQuickUpload from "@/components/RequirementQuickUpload";
+import { isUnspecifiedDestination } from "@shared/caseReference";
 
 type DocumentClarification = {
   id?: number;
@@ -90,7 +91,7 @@ export default function DossierDocumentChecklist({
   const verifiedCount = allStates.filter(({ state }) => state.kind === "verified").length;
   const pendingCount = allStates.filter(({ state }) => state.kind === "missing" || state.kind === "replace").length;
   const pendingClarificationCount = clarifications.filter((item) => item.status === "pending" && item.documentLabel?.trim()).length;
-  const destinationLabel = resolveProcedure(destination)?.name ?? destination ?? "votre destination";
+  const destinationLabel = isUnspecifiedDestination(destination) ? "votre destination (à préciser dans votre évaluation)" : (resolveProcedure(destination)?.name ?? destination ?? "votre destination");
 
   return (
     <Card className="mb-8 border-indigo-100 bg-white shadow-sm" aria-labelledby="document-checklist-title">

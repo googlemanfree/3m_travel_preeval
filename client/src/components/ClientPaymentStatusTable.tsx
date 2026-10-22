@@ -56,7 +56,7 @@ export default function ClientPaymentStatusTable({ dossiers, selectedDossierNumb
         <table className="min-w-full text-left text-sm">
           <caption className="sr-only">Statut du paiement de chaque dossier actif</caption>
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
-            <tr><th scope="col" className="px-3 py-3 font-black">Dossier</th><th scope="col" className="px-3 py-3 font-black">Référence unique</th><th scope="col" className="px-3 py-3 font-black">Statut paiement</th><th scope="col" className="px-3 py-3 font-black">Progression</th></tr>
+            <tr><th scope="col" className="px-3 py-3 font-black">Dossier</th><th scope="col" className="px-3 py-3 font-black">Référence de paiement</th><th scope="col" className="px-3 py-3 font-black">Statut paiement</th><th scope="col" className="px-3 py-3 font-black">Progression</th></tr>
           </thead>
           <tbody className="divide-y divide-slate-100 bg-white">
             {dossiers.map((dossier) => {

@@ -94,3 +94,9 @@ export function resolveClientReference(input: ReferenceSources): ReferenceStage 
   }
   return currentReference({ candidateId: input.candidateId });
 }
+
+/** Destination non précisée dans le dossier (« autre », « general »…) : à ne jamais afficher comme un pays. */
+export const isUnspecifiedDestination = (value: string | null | undefined): boolean => {
+  const folded = (value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  return !folded || ["autre", "other", "general", "generale", "non precise", "a preciser", "n/a"].includes(folded);
+};

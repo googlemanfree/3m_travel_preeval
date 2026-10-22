@@ -41,7 +41,7 @@ import DossierProgressTimeline from "@/components/DossierProgressTimeline";
 import AgencyDocumentsPanel, { type AgencyDocumentView } from "@/components/AgencyDocumentsPanel";
 import { clientStatusLabel, describeDossierProgress } from "@shared/dossierProgress";
 import ClientPhaseGauge from "@/components/ClientPhaseGauge";
-import { accountReference } from "@shared/caseReference";
+import { accountReference, isUnspecifiedDestination } from "@shared/caseReference";
 import DossierDocumentChecklist, { buildRequirementOptions, summarizeChecklist } from "@/components/DossierDocumentChecklist";
 import { DocumentClarificationHistoryPanel } from "@/components/DocumentClarificationHistoryPanel";
 import { DocumentUploader } from "@/components/DocumentUploader";
@@ -1121,7 +1121,7 @@ export default function EvaluationSpace() {
                   </div>
                   <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-white/15 pt-4 text-sm text-blue-100">
                     <span><strong className="text-white">{formerAccountReference ? "Numéro de dossier :" : "Référence de compte :"}</strong> {displayReference || "En attribution"}{formerAccountReference ? <span className="ml-2 text-xs opacity-70">(ancienne référence de compte : {formerAccountReference})</span> : null}</span>
-                    <span><strong className="text-white">Destination{preferredDestinationsList.length > 1 ? "s" : ""} :</strong> {preferredDestinationsList.length > 0 ? preferredDestinationsList.join(", ") : cProfile.destination || "À préciser"}</span>
+                    <span><strong className="text-white">Destination{preferredDestinationsList.length > 1 ? "s" : ""} :</strong> {preferredDestinationsList.filter((item) => !isUnspecifiedDestination(item)).length > 0 ? preferredDestinationsList.filter((item) => !isUnspecifiedDestination(item)).join(", ") : (isUnspecifiedDestination(cProfile.destination) ? "À préciser" : cProfile.destination)}</span>
                   </div>
                   <Button type="button" onClick={() => switchToSection("dossier")} className="mt-5 bg-white text-blue-950 hover:bg-blue-50"><FolderOpen className="mr-2 h-4 w-4" />Voir les étapes</Button>
                   <div className="mt-5 border-t border-white/15 pt-4" aria-label="Historique simplifié des étapes validées"><p className="text-xs font-black uppercase tracking-[0.14em] text-blue-200">Étapes validées récemment</p>{validatedSteps.length === 0 ? <p className="mt-2 text-xs text-blue-100">Aucune étape validée n’est encore enregistrée.</p> : <ol className="mt-3 space-y-2">{validatedSteps.map((entry: any) => <li key={entry.id} className="flex items-start gap-2 text-xs text-blue-50"><span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-400 text-[10px] font-black text-blue-950">✓</span><span><strong className="text-white">{String(entry.newStatus).replaceAll("_", " ")}</strong><span className="ml-2 text-blue-200">{new Date(entry.createdAt).toLocaleDateString("fr-FR")}</span></span></li>)}</ol>}</div>
