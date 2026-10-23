@@ -3,9 +3,10 @@ import { motion } from "framer-motion";
 import { Download, Check, Calendar, DollarSign, FileText, Share2, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
+import { applyLetterhead, letterheadLayout, serviceFocusLabel, type LetterheadOptions } from "@shared/brandLetterhead";
+import { loadClientBrandLogo } from "@/lib/brandLogo";
 
 interface PaymentReceiptProps {
   dossierNumber: string;
@@ -66,32 +67,72 @@ export default function PaymentReceipt({
   }, [dossierNumber, transactionId, amount, currency, paymentDate]);
 
   const downloadPDF = async () => {
-    if (!receiptRef.current) return;
-
     setIsDownloading(true);
     try {
-      // Capturer le reçu en tant qu'image
-      const canvas = await html2canvas(receiptRef.current, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        logging: false,
+      // Reçu produit directement sur le papier à en-tête officiel (texte net, imprimable, mêmes mentions que le reçu envoyé par e-mail).
+      const logo = await loadClientBrandLogo();
+      const letterhead: LetterheadOptions = {
+        logoDataUri: logo?.dataUri,
+        logoFormat: logo?.format,
+        documentKind: "Reçu de paiement",
+        reference: dossierNumber,
+        dateLabel: paymentDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }),
+        recipient: candidateName,
+        serviceFocus: serviceFocusLabel("visa", destination),
+      };
+      const layout = letterheadLayout(letterhead);
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const left = layout.marginLeft;
+      let y = layout.firstPageTop + 4;
+
+      pdf.setFillColor(243, 246, 251);
+      pdf.roundedRect(left, y - 5, layout.contentWidth, 46, 3, 3, "F");
+      const rows: Array<[string, string]> = [
+        ["Dossier", dossierNumber],
+        ["Client", candidateName],
+        ["E-mail", email],
+        ["Destination", destination],
+        ["Transaction", transactionId],
+      ];
+      pdf.setFontSize(10);
+      rows.forEach(([label, value]) => {
+        pdf.setFont("helvetica", "bold");
+        pdf.setTextColor(30, 41, 59);
+        pdf.text(label, left + 6, y + 2);
+        pdf.setFont("helvetica", "normal");
+        pdf.text(String(value), left + 40, y + 2, { maxWidth: 100 });
+        y += 8;
+      });
+      if (qrCode) {
+        try {
+          pdf.addImage(qrCode, "PNG", left + layout.contentWidth - 38, layout.firstPageTop + 1, 32, 32);
+        } catch {
+          /* le QR est un complément : jamais bloquant */
+        }
+      }
+
+      y += 8;
+      pdf.setFillColor(236, 253, 245);
+      pdf.setDrawColor(16, 185, 129);
+      pdf.roundedRect(left, y, layout.contentWidth, 24, 3, 3, "FD");
+      pdf.setTextColor(6, 95, 70);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(15);
+      pdf.text(`Paiement confirmé : ${new Intl.NumberFormat("fr-FR").format(amount).replace(/[  ]/g, " ")} ${currency}`, left + 6, y + 10);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(9);
+      pdf.text(`Le ${paymentDate.toLocaleString("fr-FR")} · ${paymentMethod}`, left + 6, y + 18);
+
+      y += 34;
+      pdf.setTextColor(71, 85, 105);
+      pdf.setFontSize(9);
+      const notice = "Ce reçu est une preuve officielle de votre paiement. Conservez-le avec les échanges et justificatifs du dossier. Les décisions d’employeurs, d’agences partenaires et d’autorités restent indépendantes de 3M TRAVEL AGENCY.";
+      (pdf.splitTextToSize(notice, layout.contentWidth) as string[]).forEach((line) => {
+        pdf.text(line, left, y);
+        y += 4.6;
       });
 
-      // Créer un PDF
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-      const imgWidth = 210; // Largeur A4 en mm
-      const pageHeight = 297; // Hauteur A4 en mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-
-      // Télécharger le PDF
+      applyLetterhead(pdf, letterhead);
       pdf.save(`Reçu_Paiement_${dossierNumber}.pdf`);
     } catch (err) {
       console.error("Error generating PDF:", err);
@@ -283,7 +324,7 @@ export default function PaymentReceipt({
             Ce reçu est une preuve officielle de votre paiement. Conservez-le précieusement.
           </p>
           <p className="text-gray-400 text-xs mt-2">
-            © 2026 3M TRAVEL AGENCY. Tous droits réservés.
+            © {new Date().getFullYear()} 3M TRAVEL AGENCY. Tous droits réservés.
           </p>
           <p className="text-gray-400 text-xs mt-1">
             Reçu généré le {new Date().toLocaleDateString("fr-FR")}

@@ -37,3 +37,23 @@ export async function loadBrandLogo(): Promise<BrandLogo | null> {
   cached = null;
   return null;
 }
+
+/** Variante synchrone (lecture du fichier local uniquement) pour les générateurs de PDF qui ne sont pas asynchrones. */
+export function loadBrandLogoSync(): BrandLogo | null {
+  if (cached) return cached;
+  for (const path of [
+    resolve(import.meta.dirname, "../../client/public/logo-3m-travel-agency-hd.png"),
+    resolve(import.meta.dirname, "../public/logo-3m-travel-agency-hd.png"),
+    resolve(process.cwd(), "client/public/logo-3m-travel-agency-hd.png"),
+    resolve(process.cwd(), "dist/public/logo-3m-travel-agency-hd.png"),
+  ]) {
+    try {
+      if (!existsSync(path)) continue;
+      cached = { dataUri: `data:image/png;base64,${readFileSync(path).toString("base64")}`, format: "PNG" };
+      return cached;
+    } catch {
+      /* essai suivant */
+    }
+  }
+  return null;
+}
