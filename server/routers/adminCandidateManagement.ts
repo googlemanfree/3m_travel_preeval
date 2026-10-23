@@ -2639,6 +2639,7 @@ export const adminCandidateManagementRouter = router({
         dossierNumber,
         fullName,
         destination,
+        visaType,
         variables: protocolVariables,
         content: protocolText,
       });

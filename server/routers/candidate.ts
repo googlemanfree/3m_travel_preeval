@@ -1663,6 +1663,7 @@ export const candidateRouter = router({
           dossierNumber,
           fullName: dossier.fullName,
           destination: dossier.destination,
+          visaType: dossier.visaType,
           variables: protocolVariables,
           content: protocolText,
           signature: {

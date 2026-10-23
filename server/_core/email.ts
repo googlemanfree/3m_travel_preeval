@@ -1,6 +1,7 @@
 import { getDb } from "../db";
 import { emailDeliveryLogs } from "../../drizzle/schema";
 import nodemailer from "nodemailer";
+import { frameLegacyEmailHtml } from "../../shared/brandLetterhead";
 
 const smtpHost = process.env.SMTP_HOST;
 const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
@@ -49,6 +50,16 @@ export interface SendEmailOptions {
   html: string;
   replyTo?: string;
   attachments?: Array<{ filename: string; content: Buffer | string; contentType?: string }>;
+  /** false : message interne ou technique, envoyé sans le papier à en-tête (par défaut, tout message adressé hors de l'agence est habillé). */
+  brand?: boolean;
+}
+
+/** Les messages adressés à l'équipe elle-même (alertes, journaux) ne sont pas habillés ; tous les autres le sont. */
+export function shouldBrandEmail(options: Pick<SendEmailOptions, "to" | "brand">): boolean {
+  if (options.brand === false) return false;
+  const recipient = String(options.to ?? "").trim().toLowerCase();
+  const internal = (process.env.ADMIN_EMAIL || "admin@3mtravelagency.com").trim().toLowerCase();
+  return Boolean(recipient) && recipient !== internal && !recipient.endsWith("@3mtravelagency.com");
 }
 
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
@@ -74,7 +85,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
       from: smtpFrom,
       to: options.to,
       subject: options.subject,
-      html: options.html,
+      html: shouldBrandEmail(options) ? frameLegacyEmailHtml(options.html) : options.html,
       replyTo: options.replyTo,
       attachments: options.attachments,
     });

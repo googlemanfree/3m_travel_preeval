@@ -1,6 +1,6 @@
-import fs from "node:fs";
-import path from "node:path";
 import { jsPDF } from "jspdf";
+import { applyLetterhead, letterheadLayout, serviceFocusLabel, type LetterheadOptions } from "../shared/brandLetterhead";
+import { loadBrandLogo } from "./utils/brandLogo";
 import { storagePut } from "./storage";
 import { buildProtocolOneRichText, type ProtocolOneVariables } from "../shared/agreementProtocolCountryTemplates";
 
@@ -8,60 +8,19 @@ function safeText(value: unknown): string {
   return String(value ?? "").replace(/[\u0000-\u001F]/g, " ").trim();
 }
 
+const LAYOUT = letterheadLayout({ documentKind: "x" });
+
 function writeParagraph(doc: jsPDF, text: string, x: number, y: number, width: number, lineHeight = 5.5): number {
   const lines = doc.splitTextToSize(text, width) as string[];
   lines.forEach((line) => {
-    if (y > 268) {
+    if (y > LAYOUT.contentBottom) {
       doc.addPage();
-      y = 22;
+      y = LAYOUT.nextPageTop;
     }
     doc.text(line, x, y);
     y += lineHeight;
   });
   return y;
-}
-
-function addLogo(doc: jsPDF) {
-  const logoCandidates = [
-    path.resolve(import.meta.dirname, "../client/public/favicon.png"),
-    path.resolve(import.meta.dirname, "public/favicon.png"),
-  ];
-  const logoPath = logoCandidates.find((candidate) => fs.existsSync(candidate));
-  if (!logoPath) return;
-  try {
-    const logoData = `data:image/png;base64,${fs.readFileSync(logoPath).toString("base64")}`;
-    doc.addImage(logoData, "PNG", 18, 5, 23, 23);
-  } catch (error) {
-    console.warn("[Agreement PDF] Logo unavailable:", error);
-  }
-}
-
-function drawAgencyHeader(doc: jsPDF, subtitle: string) {
-  doc.setFillColor(15, 36, 96);
-  doc.rect(0, 0, 210, 34, "F");
-  addLogo(doc);
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.text("3M TRAVEL AGENCY", 48, 16);
-  doc.setFontSize(10);
-  doc.text(subtitle, 48, 25);
-}
-
-function drawAgencyFooter(doc: jsPDF) {
-  const pageCount = doc.getNumberOfPages();
-  for (let page = 1; page <= pageCount; page += 1) {
-    doc.setPage(page);
-    doc.setDrawColor(201, 151, 43);
-    doc.setLineWidth(0.4);
-    doc.line(18, 282, 192, 282);
-    doc.setTextColor(100, 116, 139);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.text("3M TRAVEL AGENCY — RC/YAO/2019/A/2567 | NIU : M112417203369H", 18, 287);
-    doc.text("Yaoundé, Cameroun • hello@3mtravelagency.com • +237 698 104 832", 18, 291);
-    doc.text(`Page ${page}/${pageCount}`, 192, 291, { align: "right" });
-  }
 }
 
 export type AgreementProtocolSignature = {
@@ -76,6 +35,8 @@ export async function createAgreementProtocolOnePdf(input: {
   fullName: string;
   destination: string | null;
   variables: ProtocolOneVariables;
+  /** Type de visa du dossier : adapte le service affiché en en-tête. */
+  visaType?: string | null;
   content?: string;
   /** Titre d’en-tête PDF (ex. Protocole N°02). */
   documentTitle?: string;
@@ -91,13 +52,20 @@ export async function createAgreementProtocolOnePdf(input: {
   const defaultTitle = signed
     ? "Protocole d’accord N°01 — exemplaire signé"
     : "Protocole d’accord N°01 — accompagnement administratif";
-  drawAgencyHeader(doc, input.documentTitle?.trim() || defaultTitle);
+  const logo = await loadBrandLogo();
+  const letterhead: LetterheadOptions = {
+    logoDataUri: logo?.dataUri,
+    logoFormat: logo?.format,
+    documentKind: input.documentTitle?.trim() || defaultTitle,
+    reference: safeText(input.dossierNumber),
+    recipient: safeText(input.fullName),
+    serviceFocus: serviceFocusLabel(input.visaType, input.destination),
+  };
+  const layout = letterheadLayout(letterhead);
   doc.setTextColor(31, 41, 55);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  let y = 48;
-  doc.text(`Dossier : ${safeText(input.dossierNumber)}`, 18, y); y += 6;
-  doc.text(`Candidat : ${safeText(input.fullName)}`, 18, y); y += 6;
+  let y = layout.firstPageTop + 2;
   doc.text(`Destination : ${safeText(destination)}`, 18, y); y += 6;
   doc.text(`Généré le : ${new Date().toLocaleString("fr-FR", { timeZone: "Africa/Douala" })}`, 18, y); y += 12;
   doc.setDrawColor(201, 151, 43);
@@ -106,7 +74,7 @@ export async function createAgreementProtocolOnePdf(input: {
   richText.split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean).forEach((paragraph) => {
     if (y > 250) {
       doc.addPage();
-      y = 22;
+      y = layout.nextPageTop;
     }
     const heading = /^(Article\s+\d+[^:]*):?$/i.test(paragraph.trim());
     if (heading) {
@@ -123,7 +91,7 @@ export async function createAgreementProtocolOnePdf(input: {
   if (signed && input.signature) {
     if (y > 210) {
       doc.addPage();
-      y = 22;
+      y = layout.nextPageTop;
     }
     doc.setDrawColor(203, 213, 225);
     doc.line(18, y, 192, y);
@@ -147,7 +115,7 @@ export async function createAgreementProtocolOnePdf(input: {
         const dataUrl = `data:image/png;base64,${input.signature.pngBytes.toString("base64")}`;
         if (y > 230) {
           doc.addPage();
-          y = 22;
+          y = layout.nextPageTop;
         }
         doc.addImage(dataUrl, "PNG", 18, y, 70, 28);
         y += 32;
@@ -169,7 +137,7 @@ export async function createAgreementProtocolOnePdf(input: {
   } else {
     if (y > 258) {
       doc.addPage();
-      y = 22;
+      y = layout.nextPageTop;
     }
     doc.setDrawColor(203, 213, 225);
     doc.line(18, y, 192, y);
@@ -186,7 +154,7 @@ export async function createAgreementProtocolOnePdf(input: {
     );
   }
 
-  drawAgencyFooter(doc);
+  applyLetterhead(doc, letterhead);
   const bytes = Buffer.from(doc.output("arraybuffer"));
   const reference = safeText(input.dossierNumber || "dossier").replace(/[^a-zA-Z0-9_-]/g, "-");
   const fileName = signed ? "protocole-01-signe.pdf" : "protocole-01.pdf";

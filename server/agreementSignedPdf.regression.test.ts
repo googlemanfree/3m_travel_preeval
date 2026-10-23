@@ -20,8 +20,9 @@ describe("protocole d’accord — signature espace client → PDF mail", () => 
   it("embarque la signature dans le PDF et dessine pied de page agence", () => {
     const pdf = read("server/agreementProtocolPdfService.ts");
     expect(pdf).toContain("AgreementProtocolSignature");
-    expect(pdf).toContain("drawAgencyFooter");
-    expect(pdf).toContain("RC/YAO/2019/A/2567");
+    // Papier à en-tête officiel partagé : en-tête, pied de page et mentions légales (RC/NIU) viennent de shared/brandLetterhead.
+    expect(pdf).toContain("applyLetterhead(doc, letterhead)");
+    expect(read("shared/brandLetterhead.ts")).toContain("RC/YAO/2019/A/2567");
     expect(pdf).toContain("exemplaire signé");
     expect(pdf).toContain("addImage(dataUrl, \"PNG\"");
     expect(pdf).toContain("protocole-01-signe.pdf");

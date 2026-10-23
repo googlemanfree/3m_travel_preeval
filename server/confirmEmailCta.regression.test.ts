@@ -5,6 +5,15 @@ import { resolve } from "node:path";
 const root = resolve(import.meta.dirname, "..");
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
 
+/** Mise en page partagée : bouton en tableau, couleur solide (pas de dégradé), texte blanc forcé — lisible dans Gmail et Outlook. */
+function expectBulletproofShell() {
+  const shell = read("shared/brandLetterhead.ts");
+  expect(shell).toContain('bgcolor="${navy}"');
+  expect(shell).toContain("background-color:${navy}");
+  expect(shell).toContain("color:#ffffff !important");
+  expect(shell).not.toContain("linear-gradient");
+}
+
 describe("confirm email CTA visible", () => {
   it("candidat : sendVerificationLink — bouton table, couleur solide, lien texte de secours", () => {
     const email = read("server/emailService.ts");
@@ -12,9 +21,8 @@ describe("confirm email CTA visible", () => {
       email.indexOf("export async function sendVerificationLink"),
       email.indexOf("export async function sendVerificationOtp"),
     );
-    expect(fn).toContain('bgcolor="#1E3A8A"');
-    expect(fn).toContain("background-color: #1E3A8A");
-    expect(fn).toContain("color: #ffffff !important");
+    expectBulletproofShell();
+    expect(fn).toContain("renderBrandedEmailHtml");
     expect(fn).toContain("Confirmer mon email");
     expect(fn).toContain("Si le bouton n’apparaît pas, copiez-collez ce lien");
     expect(fn).toContain("/verify-email-link?token=");
@@ -28,9 +36,7 @@ describe("confirm email CTA visible", () => {
       email.indexOf("export async function sendEmailChangeConfirmation"),
       email.indexOf("export async function sendWelcomeEmail"),
     );
-    expect(fn).toContain('bgcolor="#1E3A8A"');
-    expect(fn).toContain("background-color: #1E3A8A");
-    expect(fn).toContain("color: #ffffff !important");
+    expectBulletproofShell();
     expect(fn).toContain("Confirmer l’adresse");
     expect(fn).toContain("Si le bouton n’apparaît pas, copiez-collez ce lien");
     expect(fn).not.toContain("background:#B98932;color:#172033");
@@ -57,8 +63,7 @@ describe("confirm email CTA visible", () => {
       email.indexOf("export async function sendVerificationOtp"),
       email.indexOf("export async function sendPasswordResetEmail"),
     );
-    expect(fn).toContain("background-color: #1E3A8A");
-    expect(fn).toContain("color: #ffffff");
+    expectBulletproofShell();
     expect(fn).toContain("Ce code expire dans 15 minutes");
     expect(fn).not.toContain("linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%)");
     expect(fn).not.toContain("🔐");

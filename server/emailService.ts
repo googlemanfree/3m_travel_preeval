@@ -1,5 +1,6 @@
 import { sendEmail as sendGenericEmail } from "./_core/email";
 import { getCandidateDestinationOption } from "../shared/candidateDestinationOptions";
+import { BRAND, renderBrandedEmailHtml, serviceFocusLabel } from "../shared/brandLetterhead";
 
 import { getDb } from "./db";
 import { candidates } from "../drizzle/schema";
@@ -7,6 +8,19 @@ import { eq } from "drizzle-orm";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@3mtravelagency.com";
 const SITE_URL = process.env.SITE_URL || "https://www.3mtravelagency.com";
+
+/** Blocs communs des e-mails clients : la mise en page vient de shared/brandLetterhead (même identité que les documents PDF). */
+function referenceCard(label: string, value: string, hint: string): string {
+  return `<div style="background:#f0fdf4;border-left:4px solid #16a34a;padding:18px 20px;margin:20px 0;border-radius:8px"><div style="font-size:12px;color:#6b7280;margin-bottom:6px;text-transform:uppercase">${escapeEmailHtml(label)}</div><div style="font-size:28px;font-weight:bold;color:#15803d;letter-spacing:3px">${escapeEmailHtml(value)}</div><div style="font-size:12px;color:#6b7280;margin-top:6px">${escapeEmailHtml(hint)}</div></div>`;
+}
+
+function detailsTable(rows: Array<[string, string]>): string {
+  return `<table style="width:100%;border-collapse:collapse;margin:18px 0">${rows.map(([label, value], index) => `<tr><td style="padding:10px 12px;font-weight:600;background:${index % 2 === 0 ? "#f3f4f6" : "#ffffff"}">${escapeEmailHtml(label)}</td><td style="padding:10px 12px;background:${index % 2 === 0 ? "#f3f4f6" : "#ffffff"}">${escapeEmailHtml(value)}</td></tr>`).join("")}</table>`;
+}
+
+function contactNote(): string {
+  return `Une question ? Écrivez-nous sur <a href="https://wa.me/237698104832" style="color:#2b6cb8">WhatsApp</a> ou à <a href="mailto:${BRAND.email}" style="color:#2b6cb8">${BRAND.email}</a>.`;
+}
 
 export async function sendClientDossierConfirmationEmail(
   to: string,
@@ -20,54 +34,25 @@ export async function sendClientDossierConfirmationEmail(
     await sendGenericEmail({
       to,
       subject: `Confirmation de votre demande e-Visa - Dossier #${dossierNumber}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 40px; text-align: center; color: white;">
-            <h1 style="margin: 0;">Demande e-Visa Confirmée</h1>
-          </div>
-          <div style="padding: 40px; background: #f9fafb;">
-            <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
-            <p>✅ Votre demande e-Visa a été <strong>soumise avec succès</strong> !</p>
-            
-            <div style="background: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; margin: 20px 0; border-radius: 8px;">
-              <div style="font-size: 13px; color: #6b7280; margin-bottom: 6px;">NUMÉRO DE DOSSIER</div>
-              <div style="font-size: 32px; font-weight: bold; color: #15803d; letter-spacing: 4px;">${escapeEmailHtml(dossierNumber)}</div>
-              <div style="font-size: 12px; color: #6b7280; margin-top: 6px;">Conservez ce numéro précieusement</div>
-            </div>
-
-            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-              <tr>
-                <td style="padding: 12px; background: #f3f4f6; font-weight: 600;">Destination</td>
-                <td style="padding: 12px; background: #f3f4f6;">${escapeEmailHtml(countryName)}</td>
-              </tr>
-              <tr>
-                <td style="padding: 12px; font-weight: 600;">Montant</td>
-                <td style="padding: 12px;">${totalCost.toLocaleString("fr-FR")} ${escapeEmailHtml(currency)}</td>
-              </tr>
-            </table>
-            
-            <h3 style="color: #1E3A8A; margin-top: 30px;">Prochaines étapes :</h3>
-            <ol style="color: #374151; line-height: 2;">
-              <li>Un conseiller vous contactera sur WhatsApp</li>
-              <li>Préparez vos documents : passeport, CV, diplômes</li>
-              <li>Uploadez vos documents dans votre espace candidat</li>
-            </ol>
-            
-            <p style="text-align: center; margin-top: 30px;">
-              <a href="${SITE_URL}/dashboard" style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; display: inline-block;">
-                📁 Accéder à mon espace
-              </a>
-            </p>
-            
-            <p style="font-size: 13px; color: #6b7280; margin-top: 20px;">
-              Si vous avez des questions, contactez-nous sur <a href="https://wa.me/237698104832" style="color: #2563EB;">WhatsApp</a> ou par email à <a href="mailto:contact@3mtravelagency.com" style="color: #2563EB;">contact@3mtravelagency.com</a>
-            </p>
-          </div>
-          <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 12px; color: #6b7280;">
-            <p>© ${new Date().getFullYear()} 3M TRAVEL AGENCY. Tous droits réservés.</p>
-          </div>
-        </div>
-      `,
+      html: renderBrandedEmailHtml({
+        title: "Demande e-Visa confirmée",
+        preheader: `Votre demande e-Visa pour ${countryName} a été soumise`,
+        reference: dossierNumber,
+        serviceFocus: serviceFocusLabel("e-visa", countryName),
+        bodyHtml: `
+          <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
+          <p>Votre demande e-Visa a été <strong>soumise avec succès</strong>.</p>
+          ${referenceCard("Numéro de dossier", dossierNumber, "Conservez ce numéro précieusement")}
+          ${detailsTable([["Destination", countryName], ["Montant", `${totalCost.toLocaleString("fr-FR")} ${currency}`]])}
+          <h3 style="color:#17375e;margin:22px 0 6px;font-size:16px">Prochaines étapes</h3>
+          <ol style="margin:0;padding-left:20px;line-height:1.9">
+            <li>Un conseiller vous contactera sur WhatsApp</li>
+            <li>Préparez vos documents : passeport, CV, diplômes</li>
+            <li>Déposez vos documents dans votre espace candidat</li>
+          </ol>`,
+        cta: { label: "Accéder à mon espace", url: `${SITE_URL}/dashboard` },
+        noteHtml: contactNote(),
+      }),
     });
   } catch (error) {
     console.error("Failed to send client confirmation email:", error);
@@ -131,33 +116,18 @@ export async function sendEvisaStatusUpdateEmail(
     await sendGenericEmail({
       to,
       subject: `Mise à jour de votre demande e-Visa - Dossier #${dossierNumber}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 40px; text-align: center; color: white;">
-            <h1 style="margin: 0;">Mise à jour de votre demande</h1>
-          </div>
-          <div style="padding: 40px; background: #f9fafb;">
-            <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
-            <p>Votre demande e-Visa pour <strong>${escapeEmailHtml(countryName)}</strong> a été mise à jour.</p>
-
-            <div style="background: #e0f2fe; border-left: 4px solid #0284c7; padding: 20px; margin: 20px 0; border-radius: 8px;">
-              <p style="margin: 0;"><strong>Dossier :</strong> #${escapeEmailHtml(dossierNumber)}</p>
-              <p style="margin: 10px 0 0;"><strong>Statut :</strong> ${escapeEmailHtml(statusLabel)}</p>
-            </div>
-
-            ${adminNotes ? `<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 20px 0; border-radius: 8px;">
-              <p style="margin: 0;"><strong>Message de notre équipe :</strong></p>
-              <p style="margin: 10px 0 0;">${escapeEmailHtml(adminNotes)}</p>
-            </div>` : ""}
-            
-            <p style="text-align: center; margin-top: 30px;">
-              <a href="${SITE_URL}/dashboard" style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; display: inline-block;">
-                Voir mon dossier
-              </a>
-            </p>
-          </div>
-        </div>
-      `,
+      html: renderBrandedEmailHtml({
+        title: "Mise à jour de votre demande",
+        preheader: `Statut de votre dossier ${dossierNumber} : ${statusLabel}`,
+        reference: dossierNumber,
+        serviceFocus: serviceFocusLabel("e-visa", countryName),
+        bodyHtml: `
+          <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
+          <p>Votre demande e-Visa pour <strong>${escapeEmailHtml(countryName)}</strong> a été mise à jour.</p>
+          ${detailsTable([["Dossier", `#${dossierNumber}`], ["Statut", statusLabel]])}
+          ${adminNotes ? `<div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:14px 18px;margin:18px 0;border-radius:8px"><strong>Message de notre équipe :</strong><br>${escapeEmailHtml(adminNotes)}</div>` : ""}`,
+        cta: { label: "Voir mon dossier", url: `${SITE_URL}/dashboard` },
+      }),
     });
   } catch (error) {
     console.error("Failed to send status update email:", error);
@@ -175,30 +145,17 @@ export async function sendPaymentConfirmationEmail(
     await sendGenericEmail({
       to,
       subject: `Confirmation de paiement - Dossier #${dossierNumber}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 40px; text-align: center; color: white;">
-            <h1 style="margin: 0;">✅ Paiement Reçu</h1>
-          </div>
-          <div style="padding: 40px; background: #f9fafb;">
-            <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
-            <p>Votre paiement a été <strong>reçu et confirmé</strong>.</p>
-            
-            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-              <tr>
-                <td style="padding: 12px; background: #f3f4f6; font-weight: 600;">Dossier</td>
-                <td style="padding: 12px; background: #f3f4f6;">#${escapeEmailHtml(dossierNumber)}</td>
-              </tr>
-              <tr>
-                <td style="padding: 12px; font-weight: 600;">Montant</td>
-                <td style="padding: 12px;">${amount.toLocaleString("fr-FR")} ${escapeEmailHtml(currency)}</td>
-              </tr>
-            </table>
-            
-            <p>Votre dossier est maintenant <strong>activé</strong>. Un conseiller vous contactera pour les prochaines étapes.</p>
-          </div>
-        </div>
-      `,
+      html: renderBrandedEmailHtml({
+        title: "Paiement reçu",
+        preheader: `Votre paiement pour le dossier ${dossierNumber} est confirmé`,
+        reference: dossierNumber,
+        bodyHtml: `
+          <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
+          <p>Votre paiement a été <strong>reçu et confirmé</strong>.</p>
+          ${detailsTable([["Dossier", `#${dossierNumber}`], ["Montant", `${amount.toLocaleString("fr-FR")} ${currency}`]])}
+          <p>Votre dossier est maintenant <strong>activé</strong>. Un conseiller vous contactera pour les prochaines étapes.</p>`,
+        cta: { label: "Accéder à mon espace", url: `${SITE_URL}/mon-espace` },
+      }),
     });
   } catch (error) {
     console.error("Failed to send payment confirmation email:", error);
@@ -219,47 +176,23 @@ export async function sendVerificationLink(
   const safeName = escapeEmailHtml(fullName);
   const safeVerifyUrl = escapeEmailHtml(verifyUrl);
   const priorEvaluationNotice = options.priorEvaluationRecognized
-    ? `<p style="margin: 0 0 16px; color: #111827;">Votre évaluation déjà transmise par notre équipe a été reconnue. Après confirmation de cette adresse, vous accéderez directement à votre espace pour déposer les pièces justificatives indiquées dans votre communication.</p>`
+    ? `<p>Votre évaluation déjà transmise par notre équipe a été reconnue. Après confirmation de cette adresse, vous accéderez directement à votre espace pour la suite de votre dossier.</p>`
     : "";
   try {
     await sendGenericEmail({
       to,
       subject: "Confirmez votre email — 3M TRAVEL AGENCY",
-      html: `
-        <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
-          <div style="background-color: #1E3A8A; padding: 32px 24px; text-align: center;">
-            <h1 style="margin: 0; color: #ffffff; font-size: 22px; line-height: 1.3;">Confirmez votre email</h1>
-          </div>
-          <div style="padding: 32px 24px; background-color: #f9fafb; color: #111827;">
-            <p style="margin: 0 0 16px; color: #111827;">Bonjour <strong>${safeName}</strong>,</p>
-            <p style="margin: 0 0 16px; color: #111827;">Bienvenue dans votre <strong>Espace Candidat 3M TRAVEL AGENCY</strong>.</p>
-            <p style="margin: 0 0 24px; color: #111827;">Pour finaliser votre inscription et activer votre compte, confirmez votre adresse email en cliquant sur le bouton ci-dessous :</p>
-            ${priorEvaluationNotice}
-
-            <!-- Bouton table : couleurs solides (les dégradés + color:white sont souvent retirés par Gmail/Outlook) -->
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 0 auto 24px;">
-              <tr>
-                <td align="center" bgcolor="#1E3A8A" style="background-color: #1E3A8A; border-radius: 8px;">
-                  <a href="${verifyUrl}" target="_blank" rel="noopener noreferrer"
-                     style="display: inline-block; background-color: #1E3A8A; color: #ffffff !important; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 700; line-height: 1.25; text-decoration: none; padding: 14px 28px; border-radius: 8px; border: 1px solid #1E3A8A;">
-                    <span style="color: #ffffff !important; text-decoration: none;">Confirmer mon email</span>
-                  </a>
-                </td>
-              </tr>
-            </table>
-
-            <p style="margin: 0 0 8px; font-size: 13px; color: #374151;">Si le bouton n’apparaît pas, copiez-collez ce lien dans votre navigateur :</p>
-            <p style="margin: 0 0 20px; font-size: 13px; word-break: break-all;">
-              <a href="${verifyUrl}" target="_blank" rel="noopener noreferrer" style="color: #1E3A8A; text-decoration: underline;">${safeVerifyUrl}</a>
-            </p>
-
-            <p style="margin: 0; font-size: 13px; color: #4b5563;">Ce lien est personnel et valable <strong>24 heures</strong>. Ne le partagez avec personne.</p>
-          </div>
-          <div style="padding: 16px 24px; background-color: #e5e7eb; text-align: center; font-size: 12px; color: #4b5563;">
-            3M TRAVEL AGENCY — Espace client
-          </div>
-        </div>
-      `,
+      html: renderBrandedEmailHtml({
+        title: "Confirmez votre email",
+        preheader: "Confirmez votre adresse pour activer votre espace candidat",
+        bodyHtml: `
+          <p>Bonjour <strong>${safeName}</strong>,</p>
+          <p>Bienvenue dans votre <strong>Espace Candidat 3M TRAVEL AGENCY</strong>.</p>
+          <p>Pour finaliser votre inscription et activer votre compte, confirmez votre adresse email en cliquant sur le bouton ci-dessous :</p>
+          ${priorEvaluationNotice}`,
+        cta: { label: "Confirmer mon email", url: verifyUrl },
+        noteHtml: `Si le bouton n’apparaît pas, copiez-collez ce lien dans votre navigateur :<br><a href="${safeVerifyUrl}" style="color:#2b6cb8;word-break:break-all">${safeVerifyUrl}</a><br><br>Ce lien est personnel et valable <strong>24 heures</strong>. Ne le partagez avec personne.`,
+      }),
     });
   } catch (error) {
     console.error("Failed to send verification link email:", error);
@@ -272,25 +205,18 @@ export async function sendVerificationOtp(to: string, fullName: string, otp: str
     await sendGenericEmail({
       to,
       subject: "Votre code de vérification 3M TRAVEL AGENCY",
-      html: `
-        <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
-          <div style="background-color: #1E3A8A; padding: 32px 24px; text-align: center;">
-            <h1 style="margin: 0; color: #ffffff; font-size: 22px; line-height: 1.3;">Vérification de votre email</h1>
-          </div>
-          <div style="padding: 32px 24px; background-color: #f9fafb; color: #111827;">
-            <p style="margin: 0 0 16px; color: #111827;">Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
-            <p style="margin: 0 0 16px; color: #111827;">Voici votre code de vérification :</p>
-            <div style="background-color: #f3f4f6; padding: 20px; text-align: center; border-radius: 8px; margin: 0 0 20px; border: 1px solid #e5e7eb;">
-              <div style="font-size: 32px; font-weight: bold; color: #1E3A8A; letter-spacing: 4px;">${escapeEmailHtml(otp)}</div>
-              <div style="font-size: 12px; color: #6b7280; margin-top: 10px;">Ce code expire dans 15 minutes</div>
-            </div>
-            <p style="margin: 0; font-size: 13px; color: #4b5563;">Pour votre sécurité, ne partagez jamais ce code avec qui que ce soit.</p>
-          </div>
-          <div style="padding: 16px 24px; background-color: #e5e7eb; text-align: center; font-size: 12px; color: #4b5563;">
-            3M TRAVEL AGENCY — Espace client
-          </div>
-        </div>
-      `,
+      html: renderBrandedEmailHtml({
+        title: "Vérification de votre email",
+        preheader: "Votre code de vérification (valable 15 minutes)",
+        bodyHtml: `
+          <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
+          <p>Voici votre code de vérification :</p>
+          <div style="background:#f3f4f6;padding:20px;text-align:center;border-radius:8px;margin:0 0 20px;border:1px solid #e5e7eb">
+            <div style="font-size:32px;font-weight:bold;color:#17375e;letter-spacing:4px">${escapeEmailHtml(otp)}</div>
+            <div style="font-size:12px;color:#6b7280;margin-top:10px">Ce code expire dans 15 minutes</div>
+          </div>`,
+        noteHtml: "Pour votre sécurité, ne partagez jamais ce code avec qui que ce soit.",
+      }),
     });
   } catch (error) {
     console.error("Failed to send verification OTP email:", error);
@@ -306,40 +232,15 @@ export async function sendPasswordResetEmail(to: string, fullName: string, reset
     await sendGenericEmail({
       to,
       subject: "Réinitialisation de votre mot de passe — 3M TRAVEL AGENCY",
-      html: `
-        <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
-          <div style="background-color: #1E3A8A; padding: 32px 24px; text-align: center;">
-            <h1 style="margin: 0; color: #ffffff; font-size: 22px; line-height: 1.3;">Réinitialisation de votre mot de passe</h1>
-          </div>
-          <div style="padding: 32px 24px; background-color: #f9fafb; color: #111827;">
-            <p style="margin: 0 0 16px; color: #111827;">Bonjour <strong>${safeName}</strong>,</p>
-            <p style="margin: 0 0 24px; color: #111827;">Vous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le bouton ci-dessous pour le réinitialiser :</p>
-
-            <!-- Bouton table : couleurs solides (les dégradés + color:white sont souvent retirés par Gmail/Outlook) -->
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 0 auto 24px;">
-              <tr>
-                <td align="center" bgcolor="#1E3A8A" style="background-color: #1E3A8A; border-radius: 8px;">
-                  <a href="${resetUrl}" target="_blank" rel="noopener noreferrer"
-                     style="display: inline-block; background-color: #1E3A8A; color: #ffffff !important; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 700; line-height: 1.25; text-decoration: none; padding: 14px 28px; border-radius: 8px; border: 1px solid #1E3A8A;">
-                    <span style="color: #ffffff !important; text-decoration: none;">Réinitialiser mon mot de passe</span>
-                  </a>
-                </td>
-              </tr>
-            </table>
-
-            <p style="margin: 0 0 8px; font-size: 13px; color: #374151;">Si le bouton n’apparaît pas, copiez-collez ce lien dans votre navigateur :</p>
-            <p style="margin: 0 0 20px; font-size: 13px; word-break: break-all;">
-              <a href="${resetUrl}" target="_blank" rel="noopener noreferrer" style="color: #1E3A8A; text-decoration: underline;">${safeResetUrl}</a>
-            </p>
-
-            <p style="margin: 0 0 12px; font-size: 13px; color: #4b5563;">Ce lien est valable <strong>1 heure</strong>. Après ce délai, vous devrez faire une nouvelle demande.</p>
-            <p style="margin: 0; font-size: 13px; color: #4b5563;">Si vous n’avez pas demandé cette réinitialisation, ignorez cet e-mail — votre mot de passe reste inchangé.</p>
-          </div>
-          <div style="padding: 16px 24px; background-color: #e5e7eb; text-align: center; font-size: 12px; color: #4b5563;">
-            3M TRAVEL AGENCY — Espace client
-          </div>
-        </div>
-      `,
+      html: renderBrandedEmailHtml({
+        title: "Réinitialisation de votre mot de passe",
+        preheader: "Lien valable 1 heure",
+        bodyHtml: `
+          <p>Bonjour <strong>${safeName}</strong>,</p>
+          <p>Vous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le bouton ci-dessous pour le réinitialiser :</p>`,
+        cta: { label: "Réinitialiser mon mot de passe", url: resetUrl },
+        noteHtml: `Si le bouton n’apparaît pas, copiez-collez ce lien dans votre navigateur :<br><a href="${safeResetUrl}" style="color:#2b6cb8;word-break:break-all">${safeResetUrl}</a><br><br>Ce lien est valable <strong>1 heure</strong>. Après ce délai, vous devrez faire une nouvelle demande.<br>Si vous n’avez pas demandé cette réinitialisation, ignorez cet e-mail — votre mot de passe reste inchangé.`,
+      }),
     });
   } catch (error) {
     console.error("Failed to send password reset email:", error);
@@ -370,41 +271,13 @@ export async function sendEmailChangeConfirmation(input: EmailChangeConfirmation
   await sendGenericEmail({
     to: input.to,
     subject: `3M TRAVEL AGENCY — ${title}`,
-    html: `
-      <div style="font-family: Arial, Helvetica, sans-serif; max-width: 620px; margin: 0 auto; background: #ffffff; color: #172033;">
-        <div style="background-color: #0B2A52; padding: 28px 32px;">
-          <p style="margin: 0 0 8px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #ffffff; opacity: .85;">3M TRAVEL AGENCY</p>
-          <h1 style="margin: 0; font-size: 24px; color: #ffffff; line-height: 1.3;">${title}</h1>
-        </div>
-        <div style="padding: 28px 32px; background-color: #f8fafc; color: #172033;">
-          <p style="margin: 0 0 16px;">Bonjour <strong>${safeName}</strong>,</p>
-          <p style="margin: 0 0 24px;">${explanation}</p>
-
-          <!-- Bouton table : couleurs solides (les dégradés + color:white sont souvent retirés par Gmail/Outlook) -->
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 0 auto 24px;">
-            <tr>
-              <td align="center" bgcolor="#1E3A8A" style="background-color: #1E3A8A; border-radius: 8px;">
-                <a href="${input.confirmationUrl}" target="_blank" rel="noopener noreferrer"
-                   style="display: inline-block; background-color: #1E3A8A; color: #ffffff !important; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 700; line-height: 1.25; text-decoration: none; padding: 14px 28px; border-radius: 8px; border: 1px solid #1E3A8A;">
-                  <span style="color: #ffffff !important; text-decoration: none;">Confirmer l’adresse</span>
-                </a>
-              </td>
-            </tr>
-          </table>
-
-          <p style="margin: 0 0 8px; font-size: 13px; color: #374151;">Si le bouton n’apparaît pas, copiez-collez ce lien dans votre navigateur :</p>
-          <p style="margin: 0 0 20px; font-size: 13px; word-break: break-all;">
-            <a href="${input.confirmationUrl}" target="_blank" rel="noopener noreferrer" style="color: #1E3A8A; text-decoration: underline;">${safeConfirmUrl}</a>
-          </p>
-
-          <p style="margin: 0 0 12px; font-size: 13px; line-height: 1.6; color: #475569;">Le lien expire dans une heure. Pour finaliser le changement, la confirmation de l’autre adresse est également requise.</p>
-          <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #475569;">Si vous n’avez pas demandé ce changement, ne cliquez pas sur le lien et contactez l’agence par les coordonnées officielles.</p>
-        </div>
-        <div style="padding: 16px 24px; background-color: #e5e7eb; text-align: center; font-size: 12px; color: #4b5563;">
-          3M TRAVEL AGENCY — Espace client
-        </div>
-      </div>
-    `,
+    html: renderBrandedEmailHtml({
+      title,
+      preheader: "Lien valable une heure",
+      bodyHtml: `<p>Bonjour <strong>${safeName}</strong>,</p><p>${escapeEmailHtml(explanation)}</p>`,
+      cta: { label: "Confirmer l’adresse", url: input.confirmationUrl },
+      noteHtml: `Si le bouton n’apparaît pas, copiez-collez ce lien dans votre navigateur :<br><a href="${safeConfirmUrl}" style="color:#2b6cb8;word-break:break-all">${safeConfirmUrl}</a><br><br>Le lien expire dans une heure. Pour finaliser le changement, la confirmation de l’autre adresse est également requise.<br>Si vous n’avez pas demandé ce changement, ne cliquez pas sur le lien et contactez l’agence par les coordonnées officielles.`,
+    }),
   });
 }
 
@@ -425,30 +298,15 @@ export async function sendWelcomeEmail(to: string, fullName: string, destination
     await sendGenericEmail({
       to,
       subject: `Bienvenue chez 3M TRAVEL AGENCY - Votre voyage vers ${destLabel} commence !`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 40px; text-align: center; color: white;">
-            <h1 style="margin: 0;">Bienvenue, ${escapeEmailHtml(fullName)} !</h1>
-          </div>
-          <div style="padding: 40px; background: #f9fafb;">
-            <p>Nous sommes ravis de vous accueillir chez <strong>3M TRAVEL AGENCY</strong>. Votre intérêt pour ${destLabel} est le premier pas vers une nouvelle aventure !</p>
-            <p>Notre équipe est prête à vous accompagner à chaque étape de votre projet. Vous pouvez dès maintenant accéder à votre tableau de bord pour suivre l'avancement de votre dossier et gérer vos informations.</p>
-            
-            <p style="text-align: center; margin-top: 30px;">
-              <a href="${dashboardUrl}" style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; display: inline-block;">
-                🚀 Accéder à mon tableau de bord
-              </a>
-            </p>
-            
-            <p style="font-size: 13px; color: #6b7280; margin-top: 20px;">
-              Si vous avez des questions, n'hésitez pas à nous contacter sur <a href="https://wa.me/237698104832" style="color: #2563EB;">WhatsApp</a> ou par email à <a href="mailto:contact@3mtravelagency.com" style="color: #2563EB;">contact@3mtravelagency.com</a>
-            </p>
-          </div>
-          <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 12px; color: #6b7280;">
-            <p>© ${new Date().getFullYear()} 3M TRAVEL AGENCY. Tous droits réservés.</p>
-          </div>
-        </div>
-      `,
+      html: renderBrandedEmailHtml({
+        title: `Bienvenue, ${fullName} !`,
+        preheader: `Votre projet vers ${destLabel} commence`,
+        bodyHtml: `
+          <p>Nous sommes ravis de vous accueillir chez <strong>3M TRAVEL AGENCY</strong>. Votre intérêt pour ${destLabel} est le premier pas vers une nouvelle aventure !</p>
+          <p>Notre équipe est prête à vous accompagner à chaque étape de votre projet. Vous pouvez dès maintenant accéder à votre tableau de bord pour suivre l'avancement de votre dossier et gérer vos informations.</p>`,
+        cta: { label: "Accéder à mon tableau de bord", url: dashboardUrl },
+        noteHtml: contactNote(),
+      }),
     });
   } catch (error) {
     console.error("Failed to send welcome email:", error);
@@ -466,14 +324,14 @@ export async function sendDossierConfirmationEmail(
 ): Promise<boolean> {
   const dashboardUrl = `${SITE_URL}/mon-espace`;
   const whatsappUrl = `https://wa.me/237698104832?text=${encodeURIComponent(`Bonjour 3M TRAVEL AGENCY, je confirme l'ouverture de mon dossier ${dossierNumber}.`)}`;
-  
+
   let avatarHtml = "";
   try {
     const db = await getDb();
     if (db) {
       const [cand] = await db.select().from(candidates).where(eq(candidates.email, to)).limit(1);
       if (cand?.avatarUrl) {
-        avatarHtml = `<div style="text-align: center; margin-bottom: 20px;"><img src="${cand.avatarUrl}" alt="${escapeEmailHtml(fullName)}" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 3px solid #16a34a; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" /></div>`;
+        avatarHtml = `<div style="text-align:center;margin-bottom:20px"><img src="${cand.avatarUrl}" alt="${escapeEmailHtml(fullName)}" style="width:70px;height:70px;border-radius:50%;object-fit:cover;border:3px solid #2b6cb8"></div>`;
       }
     }
   } catch {}
@@ -482,56 +340,27 @@ export async function sendDossierConfirmationEmail(
     await sendGenericEmail({
       to,
       subject: `✅ Votre dossier ${dossierNumber} est ouvert !`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 40px; text-align: center; color: white;">
-            <h1 style="margin: 0;">✅ Dossier Créé</h1>
-          </div>
-          <div style="padding: 40px; background: #f9fafb;">
-            ${avatarHtml}
-            <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
-            <p>✅ Votre dossier d'immigration a été <strong>créé avec succès</strong> !</p>
-            
-            <div style="background: #f0fdf4; border-left: 4px solid #16a34a; padding: 20px; margin: 20px 0; border-radius: 8px;">
-              <div style="font-size: 13px; color: #6b7280; margin-bottom: 6px;">NUMÉRO DE DOSSIER</div>
-              <div style="font-size: 32px; font-weight: bold; color: #15803d; letter-spacing: 4px;">${escapeEmailHtml(dossierNumber)}</div>
-              <div style="font-size: 12px; color: #6b7280; margin-top: 6px;">Conservez ce numéro précieusement</div>
-            </div>
-            ${previousAccountReference ? `<p style="background: #eff6ff; border-left: 4px solid #2563eb; padding: 12px 16px; border-radius: 8px; font-size: 14px; color: #1e3a8a;">Votre référence de compte <strong>${escapeEmailHtml(previousAccountReference)}</strong> est remplacée par votre numéro de dossier <strong>${escapeEmailHtml(dossierNumber)}</strong>. Utilisez désormais ce numéro dans tous vos échanges avec l’agence.</p>` : ""}
-
-            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-              <tr>
-                <td style="padding: 12px; background: #f3f4f6; font-weight: 600;">Destination</td>
-                <td style="padding: 12px; background: #f3f4f6;">${escapeEmailHtml(destination.toUpperCase())}</td>
-              </tr>
-              ${amount > 0 ? `<tr>
-                <td style="padding: 12px; font-weight: 600;">Montant</td>
-                <td style="padding: 12px;">${amount.toLocaleString("fr-FR")} FCFA</td>
-              </tr>` : ""}
-            </table>
-
-            <h3 style="color: #1E3A8A; margin-top: 30px;">Prochaines étapes :</h3>
-            <ol style="color: #374151; line-height: 2; font-size: 14px;">
-              <li>Un conseiller prend en charge votre dossier et vous contacte sur WhatsApp</li>
-              <li>Préparez vos documents : passeport, CV, diplômes</li>
-              <li>Uploadez vos documents dans votre espace candidat</li>
-            </ol>
-            
-            <p style="text-align: center; margin-top: 30px;">
-              <a href="${dashboardUrl}" style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; display: inline-block; margin-right: 8px;">
-                📁 Mon espace candidat
-              </a>
-              <a href="${whatsappUrl}" style="background: #25D366; color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; display: inline-block;">
-                💬 Contacter par WhatsApp
-              </a>
-            </p>
-          </div>
-          <div style="background: #f8faff; padding: 20px 28px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb;">
-            <p style="margin: 0 0 4px;">3M TRAVEL AGENCY — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
-            <p style="margin: 0;">Yaoundé, Cameroun | +237 620-996-045 | hello@3mtravelagency.com</p>
-          </div>
-        </div>
-            `,
+      html: renderBrandedEmailHtml({
+        title: "Dossier créé",
+        preheader: `Votre dossier ${dossierNumber} est ouvert`,
+        reference: dossierNumber,
+        serviceFocus: serviceFocusLabel("visa", destination),
+        bodyHtml: `
+          ${avatarHtml}
+          <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
+          <p>Votre dossier d'immigration a été <strong>créé avec succès</strong>.</p>
+          ${referenceCard("Numéro de dossier", dossierNumber, "Conservez ce numéro précieusement")}
+          ${previousAccountReference ? `<p style="background:#eff6ff;border-left:4px solid #2b6cb8;padding:12px 16px;border-radius:8px;font-size:14px;color:#1e3a8a">Votre référence de compte <strong>${escapeEmailHtml(previousAccountReference)}</strong> est remplacée par votre numéro de dossier <strong>${escapeEmailHtml(dossierNumber)}</strong>. Utilisez désormais ${escapeEmailHtml(dossierNumber)} dans tous vos échanges avec l’agence.</p>` : ""}
+          ${detailsTable([["Destination", destination.toUpperCase()], ...(amount > 0 ? [["Montant", `${amount.toLocaleString("fr-FR")} FCFA`] as [string, string]] : [])])}
+          <h3 style="color:#17375e;margin:22px 0 6px;font-size:16px">Prochaines étapes</h3>
+          <ol style="margin:0;padding-left:20px;line-height:1.9;font-size:14px">
+            <li>Un conseiller prend en charge votre dossier et vous contacte sur WhatsApp</li>
+            <li>Préparez vos documents : passeport, CV, diplômes</li>
+            <li>Déposez vos documents dans votre espace candidat</li>
+          </ol>
+          <p style="text-align:center;margin:8px 0 0"><a href="${whatsappUrl}" style="color:#15803d;font-weight:bold;text-decoration:none">Contacter mon conseiller sur WhatsApp</a></p>`,
+        cta: { label: "Mon espace candidat", url: dashboardUrl },
+      }),
     });
     return true;
   } catch (error) {
@@ -608,7 +437,6 @@ export async function sendClientNotificationEmail(input: ClientNotificationEmail
   if (!recipient) return false;
   const baseUrl = SITE_URL.replace(/\/+$/, "");
   const safeName = escapeEmailHtml(input.fullName?.trim() || "Candidat");
-  const safeTitle = escapeEmailHtml(input.title);
   const safeBody = escapeEmailHtml(input.body).replace(/\n/g, "<br />");
   const safeSource = escapeEmailHtml(input.sourceLabel);
   const safeActionUrl = input.actionUrl && input.actionUrl.startsWith("/") && !input.actionUrl.startsWith("//")
@@ -619,26 +447,19 @@ export async function sendClientNotificationEmail(input: ClientNotificationEmail
     await sendGenericEmail({
       to: recipient,
       subject: `${input.sourceLabel} — ${input.title}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; color: #172033;">
-          <div style="background: linear-gradient(135deg, #123b70 0%, #2563eb 100%); padding: 28px 32px; color: white;">
-            <p style="margin: 0 0 8px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; opacity: .85;">3M TRAVEL AGENCY</p>
-            <h1 style="margin: 0; font-size: 24px;">${safeTitle}</h1>
-          </div>
-          <div style="padding: 28px 32px; background: #f8fafc;">
-            <p>Bonjour <strong>${safeName}</strong>,</p>
-            <p>Une nouvelle information est disponible dans votre espace client.</p>
-            <div style="background: white; border-left: 4px solid #2563eb; padding: 18px 20px; margin: 22px 0;">
-              <p style="margin: 0 0 8px; color: #475569; font-size: 13px;"><strong>Source :</strong> ${safeSource}</p>
-              <p style="margin: 0; line-height: 1.65;">${safeBody}</p>
-            </div>
-            <p style="text-align: center; margin: 28px 0 12px;">
-              <a href="${safeActionUrl}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 7px; display: inline-block;">Consulter mon espace client</a>
-            </p>
-            <p style="font-size: 12px; color: #64748b;">Vous pouvez gérer vos préférences de notification depuis votre espace client. Ne répondez pas directement à cet e-mail si votre dossier contient des informations sensibles.</p>
-          </div>
-        </div>
-      `,
+      html: renderBrandedEmailHtml({
+        title: input.title,
+        preheader: input.title,
+        bodyHtml: `
+          <p>Bonjour <strong>${safeName}</strong>,</p>
+          <p>Une nouvelle information est disponible dans votre espace client.</p>
+          <div style="background:#f8fafc;border-left:4px solid #2b6cb8;padding:16px 20px;margin:20px 0">
+            <p style="margin:0 0 8px;color:#475569;font-size:13px"><strong>Source :</strong> ${safeSource}</p>
+            <p style="margin:0;line-height:1.65">${safeBody}</p>
+          </div>`,
+        cta: { label: "Consulter mon espace client", url: safeActionUrl },
+        noteHtml: "Vous pouvez gérer vos préférences de notification depuis votre espace client. Ne répondez pas directement à cet e-mail si votre dossier contient des informations sensibles.",
+      }),
     });
     return true;
   } catch (error) {

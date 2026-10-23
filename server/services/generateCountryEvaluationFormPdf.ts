@@ -1,195 +1,184 @@
 /**
  * PDF d’évaluation préliminaire — structure alignée sur Formulaire_evaluation_Canada_3M
- * (5 sections) avec champs adaptés au profil pays (langues, reconnaissance, liens locaux).
+ * (5 parties) avec champs adaptés au profil pays (langues, reconnaissance, liens locaux).
+ * Mis en page sur le papier à en-tête officiel : la pagination est automatique (aucun champ n'est coupé en bas de page).
  */
 
 import { jsPDF } from "jspdf";
 import type { CountryEvaluationFormTemplate } from "../../shared/countryEvaluationForms";
+import { applyLetterhead, letterheadLayout, serviceFocusLabel, type LetterheadOptions } from "../../shared/brandLetterhead";
 
-function header(doc: jsPDF, template: CountryEvaluationFormTemplate, pageLabel: string, pageNum: number, total: number) {
-  doc.setFillColor(15, 45, 91);
-  doc.rect(0, 0, 210, 26, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text("3M TRAVEL AGENCY", 14, 10);
-  doc.setFontSize(10);
-  doc.text(`ÉVALUATION PRÉLIMINAIRE — ${template.countryLabel.toUpperCase()}`, 14, 17);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.text(pageLabel, 14, 23);
-  doc.text(`${pageNum} / ${total}`, 190, 23, { align: "right" });
-  doc.setTextColor(100, 116, 139);
-  doc.setFontSize(7);
-  doc.text("À compléter clairement. Indiquez « Sans objet » si nécessaire. | www.3mtravelagency.com | Confidentiel", 14, 32);
+type Cursor = { y: number };
+const LAYOUT = letterheadLayout({ documentKind: "x" });
+
+/** Passe à la page suivante quand il ne reste pas assez de place ; l'en-tête compact est peint à la fin par applyLetterhead. */
+function room(doc: jsPDF, cursor: Cursor, needed: number): void {
+  if (cursor.y + needed <= LAYOUT.contentBottom) return;
+  doc.addPage();
+  cursor.y = LAYOUT.nextPageTop;
 }
 
-function footer(doc: jsPDF) {
-  doc.setFontSize(7);
-  doc.setTextColor(100, 116, 139);
-  doc.text(
-    "Évaluation indicative 3M TRAVEL AGENCY — Yaoundé · Ottawa — sans garantie d’admissibilité, d’invitation ou de visa.",
-    14,
-    290,
-  );
+function partTitle(doc: jsPDF, cursor: Cursor, title: string): void {
+  room(doc, cursor, 40);
+  doc.setTextColor(23, 55, 94);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11.5);
+  doc.text(title, 18, cursor.y);
+  doc.setDrawColor(43, 108, 184);
+  doc.setLineWidth(0.6);
+  doc.line(18, cursor.y + 2, 46, cursor.y + 2);
+  cursor.y += 9;
 }
 
-function boxField(doc: jsPDF, label: string, y: number, height = 14): number {
+function boxField(doc: jsPDF, cursor: Cursor, label: string, height = 14): void {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
+  const lines = doc.splitTextToSize(label, 170) as string[];
+  room(doc, cursor, lines.length * 3.6 + height + 6);
   doc.setTextColor(30, 41, 59);
-  doc.text(label, 16, y);
+  doc.text(lines, 19, cursor.y);
+  const top = cursor.y + (lines.length - 1) * 3.6 + 2;
   doc.setDrawColor(203, 213, 225);
   doc.setFillColor(248, 250, 252);
-  doc.roundedRect(14, y + 2, 182, height, 1.5, 1.5, "FD");
-  return y + height + 8;
+  doc.roundedRect(18, top, 174, height, 1.5, 1.5, "FD");
+  cursor.y = top + height + 6;
 }
 
-function sectionBanner(doc: jsPDF, title: string, y: number): number {
-  doc.setFillColor(30, 64, 175);
-  doc.roundedRect(14, y, 182, 9, 1.5, 1.5, "F");
+function sectionBanner(doc: jsPDF, cursor: Cursor, title: string): void {
+  room(doc, cursor, 32);
+  doc.setFillColor(43, 108, 184);
+  doc.roundedRect(18, cursor.y, 174, 8, 1.5, 1.5, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.text(title, 18, y + 6);
-  return y + 14;
+  doc.setFontSize(9.5);
+  doc.text(title, 22, cursor.y + 5.6);
+  cursor.y += 13;
 }
 
-export function generateCountryEvaluationFormPdf(template: CountryEvaluationFormTemplate): Buffer {
+function paragraph(doc: jsPDF, cursor: Cursor, text: string, options: { x?: number; width?: number; lineHeight?: number; gap?: number } = {}): void {
+  const x = options.x ?? 18;
+  const lineHeight = options.lineHeight ?? 4;
+  const lines = doc.splitTextToSize(text, options.width ?? 174) as string[];
+  for (const line of lines) {
+    room(doc, cursor, lineHeight);
+    doc.text(line, x, cursor.y);
+    cursor.y += lineHeight;
+  }
+  cursor.y += options.gap ?? 1.5;
+}
+
+export function generateCountryEvaluationFormPdf(template: CountryEvaluationFormTemplate, logo?: { dataUri: string; format: "PNG" | "JPEG" } | null): Buffer {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const profile = template.profile;
-  const totalPages = 5;
+  const letterhead: LetterheadOptions = {
+    logoDataUri: logo?.dataUri,
+    logoFormat: logo?.format,
+    documentKind: `Évaluation préliminaire — ${template.countryLabel}`,
+    subject: "Formulaire à compléter · Confidentiel",
+    serviceFocus: serviceFocusLabel("visa", template.countryLabel),
+  };
+  const cursor: Cursor = { y: letterheadLayout(letterhead).firstPageTop + 2 };
 
-  // ── Page 1 : Identité, famille, études ──
-  header(doc, template, "1. IDENTITÉ, FAMILLE ET ÉTUDES", 1, totalPages);
-  let y = 38;
   doc.setFontSize(8);
   doc.setTextColor(51, 65, 85);
   doc.setFont("helvetica", "normal");
-  const purpose = doc.splitTextToSize(template.purpose, 182);
-  doc.text(purpose, 14, y);
-  y += purpose.length * 3.8 + 4;
+  paragraph(doc, cursor, template.purpose);
+  paragraph(doc, cursor, "À compléter clairement. Indiquez « Sans objet » si nécessaire.", { gap: 2 });
   if (profile) {
     doc.setFont("helvetica", "italic");
     doc.setTextColor(30, 64, 175);
-    doc.text(doc.splitTextToSize(`Cadre de référence : ${profile.authorityHint}`, 182), 14, y);
-    y += 8;
+    paragraph(doc, cursor, `Cadre de référence : ${profile.authorityHint}`, { gap: 4 });
   }
 
-  y = sectionBanner(doc, "IDENTITÉ", y);
-  y = boxField(doc, "Nom de référence ou initiales du client :", y, 10);
-  y = boxField(doc, "Nom complet :", y, 10);
-  y = boxField(doc, "Date de naissance (JJ/MM/AAAA) et âge :", y, 10);
-  y = boxField(doc, "Nationalité(s) et pays de résidence :", y, 10);
-  y = boxField(doc, "E-mail / WhatsApp :", y, 10);
+  // ── 1. Identité, famille, études ──
+  partTitle(doc, cursor, "1. IDENTITÉ, FAMILLE ET ÉTUDES");
+  sectionBanner(doc, cursor, "IDENTITÉ");
+  boxField(doc, cursor, "Nom de référence ou initiales du client :", 10);
+  boxField(doc, cursor, "Nom complet :", 10);
+  boxField(doc, cursor, "Date de naissance (JJ/MM/AAAA) et âge :", 10);
+  boxField(doc, cursor, "Nationalité(s) et pays de résidence :", 10);
+  boxField(doc, cursor, "E-mail / WhatsApp :", 10);
 
-  y = sectionBanner(doc, "SITUATION FAMILIALE", y);
-  y = boxField(doc, "Situation : célibataire / marié(e) / conjoint(e) de fait / autre :", y, 10);
-  y = boxField(doc, "Nombre d’enfants et âges :", y, 10);
-  y = boxField(doc, "Le conjoint et les enfants accompagneront-ils le candidat ? Précisez :", y, 12);
+  sectionBanner(doc, cursor, "SITUATION FAMILIALE");
+  boxField(doc, cursor, "Situation : célibataire / marié(e) / conjoint(e) de fait / autre :", 10);
+  boxField(doc, cursor, "Nombre d’enfants et âges :", 10);
+  boxField(doc, cursor, "Le conjoint et les enfants accompagneront-ils le candidat ? Précisez :", 12);
 
-  y = sectionBanner(doc, "ÉTUDES", y);
-  y = boxField(doc, "Diplôme le plus élevé et spécialité :", y, 10);
-  y = boxField(doc, "Pays, établissement, année d’obtention et durée des études :", y, 10);
-  y = boxField(
+  sectionBanner(doc, cursor, "ÉTUDES");
+  boxField(doc, cursor, "Diplôme le plus élevé et spécialité :", 10);
+  boxField(doc, cursor, "Pays, établissement, année d’obtention et durée des études :", 10);
+  boxField(
     doc,
+    cursor,
     profile
       ? `Évaluation / reconnaissance déjà réalisée ? (${profile.diplomaRecognitionHint})`
       : "Évaluation déjà réalisée ? Organisme, date et résultat exact :",
-    y,
     16,
   );
-  y = boxField(doc, "Autres diplômes pertinents (intitulé, durée, année) :", y, 12);
-  footer(doc);
+  boxField(doc, cursor, "Autres diplômes pertinents (intitulé, durée, année) :", 12);
 
-  // ── Page 2 : Expérience ──
-  doc.addPage();
-  header(doc, template, "2. EXPÉRIENCE PROFESSIONNELLE", 2, totalPages);
-  y = 38;
+  // ── 2. Expérience ──
+  partTitle(doc, cursor, "2. EXPÉRIENCE PROFESSIONNELLE");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(71, 85, 105);
-  doc.text("Du plus récent au plus ancien. Indiquez salarié / indépendant et si le poste était rémunéré.", 14, y);
-  y += 8;
+  paragraph(doc, cursor, "Du plus récent au plus ancien. Indiquez salarié / indépendant et si le poste était rémunéré.", { gap: 3 });
   for (let i = 1; i <= 3; i += 1) {
-    y = sectionBanner(doc, `EMPLOI ${i}`, y);
-    y = boxField(doc, "Intitulé du poste, employeur et pays :", y, 10);
-    y = boxField(doc, "Dates début / fin ; heures par semaine ; salarié ou indépendant ; rémunéré ?", y, 10);
-    y = boxField(doc, "Principales tâches réellement exercées :", y, 22);
+    sectionBanner(doc, cursor, `EMPLOI ${i}`);
+    boxField(doc, cursor, "Intitulé du poste, employeur et pays :", 10);
+    boxField(doc, cursor, "Dates début / fin ; heures par semaine ; salarié ou indépendant ; rémunéré ?", 10);
+    boxField(doc, cursor, "Principales tâches réellement exercées :", 22);
   }
-  footer(doc);
 
-  // ── Page 3 : Langues et liens ──
-  doc.addPage();
-  header(doc, template, `3. LANGUES ET LIENS AVEC ${template.countryLabel.toUpperCase()}`, 3, totalPages);
-  y = 38;
-  y = sectionBanner(doc, "LANGUES", y);
-  y = boxField(
+  // ── 3. Langues et liens ──
+  partTitle(doc, cursor, `3. LANGUES ET LIENS AVEC ${template.countryLabel.toUpperCase()}`);
+  sectionBanner(doc, cursor, "LANGUES");
+  boxField(doc, cursor, profile ? `Niveau estimé : ${profile.languageFocus} :` : "Niveau estimé — langues du pays / anglais / français :", 10);
+  boxField(
     doc,
-    profile ? `Niveau estimé : ${profile.languageFocus} :` : "Niveau estimé — langues du pays / anglais / français :",
-    y,
-    10,
-  );
-  y = boxField(
-    doc,
+    cursor,
     profile ? `Tests officiels (ex. ${profile.languageTestsHint}) — nom, date, n° de rapport :` : "Tests officiels — nom, date, numéro de rapport :",
-    y,
     14,
   );
-  y = boxField(doc, "Résultats par compétence : compréhension orale / écrite ; expression orale / écrite :", y, 16);
+  boxField(doc, cursor, "Résultats par compétence : compréhension orale / écrite ; expression orale / écrite :", 16);
 
-  y = sectionBanner(doc, `LIENS AVEC ${template.countryLabel.toUpperCase()}`, y);
+  sectionBanner(doc, cursor, `LIENS AVEC ${template.countryLabel.toUpperCase()}`);
   const linkHints = profile?.localLinksHints ?? [
     "Études ou travail déjà effectués dans ce pays",
     "Famille ou réseau sur place",
     "Offre d’emploi, admission, ou hébergement",
     "Zone / région souhaitée",
   ];
-  for (const hint of linkHints) {
-    y = boxField(doc, `${hint} :`, y, 12);
-  }
-  footer(doc);
+  for (const hint of linkHints) boxField(doc, cursor, `${hint} :`, 12);
 
-  // ── Page 4 : Budget, historique, conjoint ──
-  doc.addPage();
-  header(doc, template, "4. BUDGET, HISTORIQUE ET CONJOINT", 4, totalPages);
-  y = 38;
-  y = sectionBanner(doc, "BUDGET ET HISTORIQUE", y);
-  y = boxField(
+  // ── 4. Budget, historique, conjoint ──
+  partTitle(doc, cursor, "4. BUDGET, HISTORIQUE ET CONJOINT");
+  sectionBanner(doc, cursor, "BUDGET ET HISTORIQUE");
+  boxField(
     doc,
-    profile
-      ? `Fonds disponibles, devise (${profile.fundsCurrencyHint}) et origine des fonds :`
-      : "Fonds disponibles, devise et origine des fonds :",
-    y,
+    cursor,
+    profile ? `Fonds disponibles, devise (${profile.fundsCurrencyHint}) et origine des fonds :` : "Fonds disponibles, devise et origine des fonds :",
     12,
   );
-  y = boxField(doc, "Refus de visa : pays, date et motif (ou aucun) :", y, 12);
-  y = boxField(doc, `Demandes en cours pour ${template.countryLabel} : type, date et état (ou aucun) :`, y, 12);
-  y = boxField(doc, "Éléments particuliers à signaler :", y, 14);
+  boxField(doc, cursor, "Refus de visa : pays, date et motif (ou aucun) :", 12);
+  boxField(doc, cursor, `Demandes en cours pour ${template.countryLabel} : type, date et état (ou aucun) :`, 12);
+  boxField(doc, cursor, "Éléments particuliers à signaler :", 14);
 
-  y = sectionBanner(doc, "CONJOINT — remplir si applicable", y);
-  y = boxField(doc, "Âge, nationalité et profession du conjoint :", y, 10);
-  y = boxField(doc, "Diplômes : intitulés, durée et pays d’obtention :", y, 10);
-  y = boxField(doc, "Expérience professionnelle : postes, pays et durées :", y, 12);
-  y = boxField(doc, "Langues : niveaux ; tests, dates et résultats :", y, 12);
-  y = boxField(doc, "Évaluation / reconnaissance des diplômes du conjoint :", y, 12);
-  footer(doc);
+  sectionBanner(doc, cursor, "CONJOINT — remplir si applicable");
+  boxField(doc, cursor, "Âge, nationalité et profession du conjoint :", 10);
+  boxField(doc, cursor, "Diplômes : intitulés, durée et pays d’obtention :", 10);
+  boxField(doc, cursor, "Expérience professionnelle : postes, pays et durées :", 12);
+  boxField(doc, cursor, "Langues : niveaux ; tests, dates et résultats :", 12);
+  boxField(doc, cursor, "Évaluation / reconnaissance des diplômes du conjoint :", 12);
 
-  // ── Page 5 : Objectif, documents, déclaration ──
-  doc.addPage();
-  header(doc, template, "5. OBJECTIF ET VALIDATION DES INFORMATIONS", 5, totalPages);
-  y = 38;
-  y = sectionBanner(doc, "OBJECTIF", y);
-  y = boxField(
-    doc,
-    profile ? `Objectif : ${profile.objectiveOptions} :` : "Objectif : résidence / travail / études / autre :",
-    y,
-    12,
-  );
-  y = boxField(doc, "Autres options à examiner et délai souhaité :", y, 12);
-  y = boxField(doc, "Informations complémentaires ou précisions utiles :", y, 14);
+  // ── 5. Objectif, documents, déclaration ──
+  partTitle(doc, cursor, "5. OBJECTIF ET VALIDATION DES INFORMATIONS");
+  sectionBanner(doc, cursor, "OBJECTIF");
+  boxField(doc, cursor, profile ? `Objectif : ${profile.objectiveOptions} :` : "Objectif : résidence / travail / études / autre :", 12);
+  boxField(doc, cursor, "Autres options à examiner et délai souhaité :", 12);
+  boxField(doc, cursor, "Informations complémentaires ou précisions utiles :", 14);
 
-  y = sectionBanner(doc, "DOCUMENTS À TRANSMETTRE SI DISPONIBLES", y);
+  sectionBanner(doc, cursor, "DOCUMENTS À TRANSMETTRE SI DISPONIBLES");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(30, 41, 59);
@@ -198,40 +187,34 @@ export function generateCountryEvaluationFormPdf(template: CountryEvaluationForm
     "Résultats des tests linguistiques ; attestations d’emploi détaillées",
     "Décisions de refus antérieures et documents utiles au projet",
   ];
-  for (const item of docs) {
-    doc.text(`• ${item}`, 16, y, { maxWidth: 178 });
-    y += 6;
-  }
-  y += 4;
+  for (const item of docs) paragraph(doc, cursor, `• ${item}`, { x: 19, width: 170, lineHeight: 4.2, gap: 1.2 });
+  cursor.y += 3;
 
-  y = sectionBanner(doc, "DÉCLARATION DU CLIENT", y);
+  sectionBanner(doc, cursor, "DÉCLARATION DU CLIENT");
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(51, 65, 85);
-  const declaration = [
+  for (const line of [
     "Je confirme que les renseignements fournis sont exacts à ma connaissance.",
     "J’autorise 3M Travel Agency à les examiner pour cette évaluation préliminaire.",
     "Ne pas inscrire de numéro de passeport ni de données bancaires sur ce formulaire.",
-  ];
-  for (const line of declaration) {
-    doc.text(line, 16, y);
-    y += 5;
-  }
-  y += 4;
-  y = boxField(doc, "Je confirme la déclaration ci-dessus (oui) :", y, 10);
-  y = boxField(doc, "Nom du déclarant :", y, 10);
-  y = boxField(doc, "Date (JJ/MM/AAAA) :", y, 10);
+  ]) paragraph(doc, cursor, line, { x: 19, lineHeight: 4.4, gap: 0.8 });
+  cursor.y += 3;
+  boxField(doc, cursor, "Je confirme la déclaration ci-dessus (oui) :", 10);
+  boxField(doc, cursor, "Nom du déclarant :", 10);
+  boxField(doc, cursor, "Date (JJ/MM/AAAA) :", 10);
 
-  y += 2;
-  y = sectionBanner(doc, "INSTRUCTIONS", y);
+  cursor.y += 2;
+  sectionBanner(doc, cursor, "INSTRUCTIONS");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(30, 41, 59);
-  for (const step of template.instructions) {
-    const lines = doc.splitTextToSize(`• ${step}`, 178);
-    doc.text(lines, 16, y);
-    y += lines.length * 4 + 2;
-  }
-  footer(doc);
+  for (const step of template.instructions) paragraph(doc, cursor, `• ${step}`, { x: 19, width: 170, lineHeight: 4.2, gap: 1.6 });
 
+  doc.setFontSize(7);
+  doc.setTextColor(100, 116, 139);
+  paragraph(doc, cursor, "Évaluation indicative 3M TRAVEL AGENCY — sans garantie d’admissibilité, d’invitation ou de visa.", { gap: 0 });
+
+  applyLetterhead(doc, letterhead);
   return Buffer.from(doc.output("arraybuffer"));
 }
