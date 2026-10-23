@@ -12,13 +12,13 @@ import {
   RISK_LEVELS,
   RISK_LEVEL_LABELS,
   ROUTE_KEYS,
-  ROUTE_LABELS,
-  SCORE_CRITERIA,
   SUGGESTED_STATUSES,
   SUGGESTED_STATUS_LABELS,
+  normalizeScoreBreakdown,
   resolveScore,
   type AdminEvaluationVersion,
 } from "@shared/evaluationValidation";
+import { EVALUATION_PROFILES, PROFILE_DEFS, criteriaFor, type EvaluationProfile } from "@shared/evaluationProfiles";
 
 const selectClass = "mt-1 h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900 disabled:bg-slate-100";
 
@@ -59,15 +59,38 @@ function Section({ title, children, description }: { title: string; description?
   );
 }
 
-type Props = { value: AdminEvaluationVersion; onChange: (next: AdminEvaluationVersion) => void; readOnly: boolean; candidateCountry: string };
+type Props = { value: AdminEvaluationVersion; onChange: (next: AdminEvaluationVersion) => void; readOnly: boolean; candidateCountry: string; /** Profil que suggère la demande du candidat (études, travail, e-Visa…). */ suggestedProfile?: EvaluationProfile };
 
-export default function EvaluationVersionForm({ value, onChange, readOnly, candidateCountry }: Props) {
+export default function EvaluationVersionForm({ value, onChange, readOnly, candidateCountry, suggestedProfile }: Props) {
   const set = <K extends keyof AdminEvaluationVersion>(key: K, next: AdminEvaluationVersion[K]) => onChange({ ...value, [key]: next });
-  const resolution = resolveScore({ scores: value.scores, totalOverride: value.totalOverride, finalStatus: value.finalStatus });
+  // Le bilan suit le projet du candidat : grille, voies et vocabulaire changent avec le profil (l'administrateur peut le corriger).
+  const profile: EvaluationProfile = value.profile ?? suggestedProfile ?? "travail";
+  const profileDef = PROFILE_DEFS[profile];
+  const criteria = criteriaFor(profile);
+  const changeProfile = (next: EvaluationProfile) => onChange({ ...value, profile: next, scores: normalizeScoreBreakdown(value.scores, next) });
+  const resolution = resolveScore({ scores: value.scores, totalOverride: value.totalOverride, finalStatus: value.finalStatus, profile });
   const countryDiffers = candidateCountry.trim() !== "" && candidateCountry.trim().toLowerCase() !== value.priorityCountry.trim().toLowerCase();
 
   return (
     <fieldset disabled={readOnly} className="space-y-4 disabled:opacity-90" aria-label="Version administrateur">
+      <Section title="Type de bilan" description={`Le bilan suit le projet du candidat : ${profileDef.focus}`}>
+        <label className="block text-xs font-medium text-slate-700">
+          Profil du bilan
+          <select value={profile} onChange={(event) => changeProfile(event.target.value as EvaluationProfile)} className={selectClass} data-testid="profile-select">
+            {EVALUATION_PROFILES.map((key) => (
+              <option key={key} value={key}>
+                {PROFILE_DEFS[key].label}
+              </option>
+            ))}
+          </select>
+        </label>
+        {suggestedProfile && suggestedProfile !== profile && (
+          <p className="text-xs font-semibold text-amber-800" data-testid="profile-differs">
+            Le candidat a demandé un bilan « {PROFILE_DEFS[suggestedProfile].label} ». Les notes sont ramenées au barème du profil choisi ; relisez-les avant de publier.
+          </p>
+        )}
+      </Section>
+
       <Section title="Pays prioritaire" description="Le pays choisi par le candidat est toujours le pays prioritaire ; toute modification est tracée.">
         <label className="block text-xs font-medium text-slate-700">
           Pays prioritaire
@@ -78,8 +101,8 @@ export default function EvaluationVersionForm({ value, onChange, readOnly, candi
 
       <Section title="Score sur 100" description="Le total est recalculé après chaque modification des notes. Un score global ou un statut fixés à la main ne sont jamais remplacés automatiquement.">
         <div className="grid gap-3 sm:grid-cols-2">
-          {SCORE_CRITERIA.map((criterion) => (
-            <label key={criterion.key} className="block text-xs font-medium text-slate-700">
+          {criteria.map((criterion) => (
+            <label key={criterion.key} className="block text-xs font-medium text-slate-700" title={criterion.hint}>
               {criterion.label} <span className="font-normal text-slate-500">(0 à {criterion.max})</span>
               <Input
                 type="number"
@@ -129,7 +152,7 @@ export default function EvaluationVersionForm({ value, onChange, readOnly, candi
               <option value="">— À choisir —</option>
               {ROUTE_KEYS.map((key) => (
                 <option key={key} value={key}>
-                  {key} — {ROUTE_LABELS[key]}
+                  {key} — {profileDef.routes[key]}
                 </option>
               ))}
             </select>
@@ -157,8 +180,8 @@ export default function EvaluationVersionForm({ value, onChange, readOnly, candi
           <LinesField label="Atouts" hint="un par ligne" value={value.strengths} onChange={(next) => set("strengths", next)} />
           <LinesField label="Points à renforcer" hint="un par ligne" value={value.improvements} onChange={(next) => set("improvements", next)} />
           <LinesField label="Obstacles bloquants" hint="affichés au candidat parmi les points à renforcer" value={value.blockers} onChange={(next) => set("blockers", next)} />
-          <LinesField label="Métiers ciblés" hint="un par ligne" value={value.targetJobs} onChange={(next) => set("targetJobs", next)} />
-          <LinesField label="Secteurs ciblés" hint="un par ligne" value={value.targetSectors} onChange={(next) => set("targetSectors", next)} />
+          {profileDef.targets.jobs && <LinesField label={profileDef.targets.jobs} hint="un par ligne" value={value.targetJobs} onChange={(next) => set("targetJobs", next)} />}
+          {profileDef.targets.sectors && <LinesField label={profileDef.targets.sectors} hint="un par ligne" value={value.targetSectors} onChange={(next) => set("targetSectors", next)} />}
         </div>
       </Section>
 

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { EVALUATION_PROFILES, GLOBAL_CRITERION_MAX, PROFILE_DEFS, SCORE_KEYS, criteriaFor, maxForCriterion, type EvaluationProfile, type ScoreKey } from "./evaluationProfiles";
 
 /**
  * Règles de l'évaluation IA avec validation administrateur OBLIGATOIRE avant tout envoi au client.
@@ -30,18 +31,10 @@ export const EMAIL_DISCLAIMER =
 
 // ── Grille de score sur 100 ───────────────────────────────────────────────────
 
-export const SCORE_CRITERIA = [
-  { key: "identity", label: "Identité et conformité", max: 10 },
-  { key: "qualification", label: "Formation et qualification", max: 15 },
-  { key: "languages", label: "Langues vérifiables", max: 15 },
-  { key: "experience", label: "Expérience et compétences", max: 20 },
-  { key: "employability", label: "Employabilité dans le pays choisi", max: 15 },
-  { key: "finances", label: "Capacité financière", max: 10 },
-  { key: "documents", label: "Dossier documentaire", max: 10 },
-  { key: "coherence", label: "Cohérence du projet", max: 5 },
-] as const;
+/** Grille du profil « travail » (par défaut) ; `criteriaFor(profil)` donne celle du profil réellement évalué. */
+export const SCORE_CRITERIA = criteriaFor("travail");
 
-export type ScoreCriterionKey = (typeof SCORE_CRITERIA)[number]["key"];
+export type ScoreCriterionKey = ScoreKey;
 export type ScoreBreakdown = Record<ScoreCriterionKey, number>;
 export const SCORE_MAX_TOTAL = SCORE_CRITERIA.reduce((sum, criterion) => sum + criterion.max, 0);
 
@@ -57,24 +50,30 @@ export const SUGGESTED_STATUS_LABELS: Record<SuggestedStatus, string> = {
 };
 
 /** Note d'un critère : entier borné à [0, max] ; toute valeur illisible vaut 0. */
-export function normalizeCriterionScore(key: ScoreCriterionKey, value: unknown): number {
-  const criterion = SCORE_CRITERIA.find((item) => item.key === key);
-  const max = criterion?.max ?? 0;
+export function normalizeCriterionScore(key: ScoreCriterionKey, value: unknown, profile: EvaluationProfile = "travail"): number {
+  const max = SCORE_KEYS.includes(key) ? maxForCriterion(profile, key) : 0;
   const number = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(number)) return 0;
   return Math.min(max, Math.max(0, Math.round(number)));
 }
 
-export function normalizeScoreBreakdown(scores: Partial<Record<ScoreCriterionKey, unknown>> | null | undefined): ScoreBreakdown {
+export function normalizeScoreBreakdown(scores: Partial<Record<ScoreCriterionKey, unknown>> | null | undefined, profile: EvaluationProfile = "travail"): ScoreBreakdown {
   const result = {} as ScoreBreakdown;
-  for (const criterion of SCORE_CRITERIA) result[criterion.key] = normalizeCriterionScore(criterion.key, scores?.[criterion.key]);
+  for (const key of SCORE_KEYS) result[key] = normalizeCriterionScore(key, scores?.[key], profile);
   return result;
 }
 
 /** Total calculé à partir des notes par critère (recalculé après chaque modification). */
-export function computeScoreTotal(scores: Partial<Record<ScoreCriterionKey, unknown>> | null | undefined): number {
-  const breakdown = normalizeScoreBreakdown(scores);
-  return SCORE_CRITERIA.reduce((sum, criterion) => sum + breakdown[criterion.key], 0);
+export function computeScoreTotal(scores: Partial<Record<ScoreCriterionKey, unknown>> | null | undefined, profile: EvaluationProfile = "travail"): number {
+  const breakdown = normalizeScoreBreakdown(scores, profile);
+  return SCORE_KEYS.reduce((sum, key) => sum + breakdown[key], 0);
+}
+
+/** Critères dont la note dépasse le barème du profil (le formulaire les bloque ; le calcul, lui, borne toujours). */
+export function scoresAboveProfileMax(scores: Partial<Record<ScoreCriterionKey, unknown>> | null | undefined, profile: EvaluationProfile): Array<{ key: ScoreCriterionKey; label: string; max: number; value: number }> {
+  return criteriaFor(profile)
+    .map((criterion) => ({ key: criterion.key, label: criterion.label, max: criterion.max, value: Number(scores?.[criterion.key] ?? 0) }))
+    .filter((entry) => Number.isFinite(entry.value) && entry.value > entry.max);
 }
 
 export function suggestedStatusForScore(total: number): SuggestedStatus {
@@ -111,9 +110,12 @@ export function resolveScore(input: {
   scores?: Partial<Record<ScoreCriterionKey, unknown>> | null;
   totalOverride?: number | null;
   finalStatus?: SuggestedStatus | null;
+  /** Profil évalué (études, e-Visa…) : détermine le barème de chaque critère. Travail par défaut. */
+  profile?: EvaluationProfile | null;
 }): ScoreResolution {
-  const breakdown = normalizeScoreBreakdown(input.scores);
-  const computedTotal = computeScoreTotal(breakdown);
+  const profile = input.profile ?? "travail";
+  const breakdown = normalizeScoreBreakdown(input.scores, profile);
+  const computedTotal = computeScoreTotal(breakdown, profile);
   const override = typeof input.totalOverride === "number" && Number.isFinite(input.totalOverride) ? Math.min(SCORE_MAX_TOTAL, Math.max(0, Math.round(input.totalOverride))) : null;
   const effectiveTotal = override ?? computedTotal;
   const suggestedStatus = suggestedStatusForScore(effectiveTotal);
@@ -366,9 +368,12 @@ export const RISK_LEVEL_LABELS: Record<RiskLevel, string> = { faible: "Faible", 
 const shortText = z.string().trim().min(1).max(600);
 const longText = z.string().trim().max(4000);
 
-const scoreShape = Object.fromEntries(SCORE_CRITERIA.map((criterion) => [criterion.key, z.number().int().min(0).max(criterion.max)])) as Record<ScoreCriterionKey, z.ZodNumber>;
+// Borne générique (toutes grilles confondues) ; le barème exact du profil est contrôlé à l'enregistrement (scoresAboveProfileMax).
+const scoreShape = Object.fromEntries(SCORE_KEYS.map((key) => [key, z.number().int().min(0).max(GLOBAL_CRITERION_MAX[key])])) as Record<ScoreCriterionKey, z.ZodNumber>;
 
-export const AdminEvaluationVersionSchema = z.object({
+const AdminEvaluationVersionObject = z.object({
+  /** Profil du bilan (travail, études, séjour, e-Visa, immigration) ; absent = déduit de la demande, travail pour les anciennes versions. */
+  profile: z.enum(EVALUATION_PROFILES).nullable().optional(),
   priorityCountry: z.string().trim().min(2).max(100),
   scores: z.object(scoreShape),
   /** Score global fixé à la main (sinon calculé). */
@@ -394,10 +399,16 @@ export const AdminEvaluationVersionSchema = z.object({
   /** Jamais visible du candidat. */
   internalComment: longText,
 });
+/** Les notes doivent respecter le barème du profil du bilan (travail par défaut) : un 6/5 reste refusé, un 18/20 en études est accepté. */
+export const AdminEvaluationVersionSchema = AdminEvaluationVersionObject.superRefine((value, ctx) => {
+  for (const entry of scoresAboveProfileMax(value.scores, value.profile ?? "travail")) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["scores", entry.key], message: `la note de « ${entry.label} » dépasse ${entry.max}` });
+  }
+});
 export type AdminEvaluationVersion = z.infer<typeof AdminEvaluationVersionSchema>;
 
 /** Champs suivis dans l'historique des modifications (ancienne et nouvelle valeur, auteur, date). */
-export const AUDITED_VERSION_FIELDS = Object.keys(AdminEvaluationVersionSchema.shape) as Array<keyof AdminEvaluationVersion>;
+export const AUDITED_VERSION_FIELDS = Object.keys(AdminEvaluationVersionObject.shape) as Array<keyof AdminEvaluationVersion>;
 
 export type FieldChange = { field: keyof AdminEvaluationVersion | `scores.${ScoreCriterionKey}`; oldValue: unknown; newValue: unknown };
 
@@ -408,10 +419,10 @@ export function diffEvaluationVersions(previous: AdminEvaluationVersion | null, 
   const changes: FieldChange[] = [];
   for (const field of AUDITED_VERSION_FIELDS) {
     if (field === "scores") {
-      for (const criterion of SCORE_CRITERIA) {
-        const before = previous?.scores?.[criterion.key] ?? null;
-        const after = next.scores[criterion.key];
-        if (!same(before, after)) changes.push({ field: `scores.${criterion.key}`, oldValue: before, newValue: after });
+      for (const key of SCORE_KEYS) {
+        const before = previous?.scores?.[key] ?? null;
+        const after = next.scores[key];
+        if (!same(before, after)) changes.push({ field: `scores.${key}`, oldValue: before, newValue: after });
       }
       continue;
     }
@@ -423,6 +434,10 @@ export function diffEvaluationVersions(previous: AdminEvaluationVersion | null, 
 // ── Rapport client (généré UNIQUEMENT depuis la version administrateur validée) ──
 
 export type ClientReport = {
+  /** Profil du bilan : le rapport parle d'études, de travail, d'e-Visa… selon la demande. */
+  profile?: EvaluationProfile;
+  profileLabel?: string;
+  reportTitle?: string;
   candidateName: string;
   validatedAt: string;
   priorityCountry: string;
@@ -451,8 +466,13 @@ export type ClientReport = {
  */
 export function buildClientReport(version: AdminEvaluationVersion, meta: { candidateName: string; validatedAt: string }): ClientReport {
   const parsed = AdminEvaluationVersionSchema.parse(version);
-  const resolution = resolveScore({ scores: parsed.scores, totalOverride: parsed.totalOverride, finalStatus: parsed.finalStatus });
+  const profile: EvaluationProfile = parsed.profile ?? "travail";
+  const profileDef = PROFILE_DEFS[profile];
+  const resolution = resolveScore({ scores: parsed.scores, totalOverride: parsed.totalOverride, finalStatus: parsed.finalStatus, profile });
   const report: ClientReport = {
+    profile,
+    profileLabel: profileDef.label,
+    reportTitle: profileDef.reportTitle,
     candidateName: meta.candidateName,
     validatedAt: meta.validatedAt,
     priorityCountry: parsed.priorityCountry,
@@ -460,9 +480,9 @@ export function buildClientReport(version: AdminEvaluationVersion, meta: { candi
     scoreMax: SCORE_MAX_TOTAL,
     status: resolution.effectiveStatus,
     statusLabel: SUGGESTED_STATUS_LABELS[resolution.effectiveStatus],
-    route: parsed.route ? { key: parsed.route, label: ROUTE_LABELS[parsed.route] } : null,
+    route: parsed.route ? { key: parsed.route, label: profileDef.routes[parsed.route] } : null,
     profileSummary: parsed.profileSummary,
-    scoreBreakdown: SCORE_CRITERIA.map((criterion) => ({ key: criterion.key, label: criterion.label, score: resolution.breakdown[criterion.key], max: criterion.max })),
+    scoreBreakdown: criteriaFor(profile).map((criterion) => ({ key: criterion.key, label: criterion.label, score: resolution.breakdown[criterion.key], max: criterion.max })),
     strengths: parsed.strengths,
     improvements: [...parsed.improvements, ...parsed.blockers],
     riskLevel: parsed.riskLevel,
@@ -510,11 +530,21 @@ export const NOTIFICATION_EMAIL_SIGNATURE = [
 ].join("\n");
 
 /** Objet et corps par défaut (modifiables par l'administrateur avant envoi). */
-export function defaultNotificationEmail(input: { candidateName: string; priorityCountry: string }): { subject: string; body: string } {
+const PROJECT_PHRASE: Record<EvaluationProfile, string> = {
+  travail: "votre projet de travail",
+  etudes: "votre projet d’études",
+  tourisme: "votre projet de séjour",
+  evisa: "votre demande d’e-Visa",
+  immigration: "votre projet d’installation",
+};
+
+export function defaultNotificationEmail(input: { candidateName: string; priorityCountry: string; profile?: EvaluationProfile | null }): { subject: string; body: string } {
+  const profile = input.profile ?? null;
+  const projectPhrase = profile ? PROJECT_PHRASE[profile] : "votre projet de mobilité";
   const body = [
     `Bonjour ${input.candidateName},`,
     "",
-    `Votre préévaluation professionnelle pour votre projet de mobilité vers ${input.priorityCountry} a été examinée et validée par notre équipe.`,
+    `Votre préévaluation pour ${projectPhrase} vers ${input.priorityCountry} a été examinée et validée par notre équipe.`,
     "",
     "Votre rapport personnel est désormais disponible dans votre espace sécurisé.",
     "",
@@ -527,7 +557,7 @@ export function defaultNotificationEmail(input: { candidateName: string; priorit
     "",
     EMAIL_DISCLAIMER,
   ].join("\n");
-  return { subject: NOTIFICATION_EMAIL_SUBJECT, body };
+  return { subject: profile ? `Votre bilan d’évaluation (${PROFILE_DEFS[profile].label}) est disponible — 3M TRAVEL AGENCY` : NOTIFICATION_EMAIL_SUBJECT, body };
 }
 
 const escapeHtml = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -563,7 +593,7 @@ export function renderNotificationEmail(input: { subject: string; body: string; 
 
 // ── Brouillon IA (sortie validée par schéma ; jamais visible du candidat) ─────
 
-export const PROJECT_TYPES = ["travail", "etudes", "residence_permanente", "formation", "reconnaissance", "autre"] as const;
+export const PROJECT_TYPES = ["travail", "etudes", "tourisme", "evisa", "residence_permanente", "formation", "reconnaissance", "autre"] as const;
 
 const gapItem = z.object({ label: shortText, detail: longText.optional() });
 const nullableText = z.string().trim().max(300).nullable();
@@ -604,10 +634,12 @@ export const AiEvaluationDraftSchema = z.object({
 export type AiEvaluationDraft = z.infer<typeof AiEvaluationDraftSchema>;
 
 /** Point de départ de la version administrateur : une COPIE du brouillon IA (l'original reste intact). */
-export function versionFromAiDraft(draft: AiEvaluationDraft, meta: { evaluationDate: string }): AdminEvaluationVersion {
-  const resolution = resolveScore({ scores: draft.scores });
-  const email = defaultNotificationEmail({ candidateName: draft.extracted.fullName ?? "", priorityCountry: draft.priorityCountry });
+export function versionFromAiDraft(draft: AiEvaluationDraft, meta: { evaluationDate: string; profile?: EvaluationProfile | null }): AdminEvaluationVersion {
+  const profile = meta.profile ?? null;
+  const resolution = resolveScore({ scores: draft.scores, profile });
+  const email = defaultNotificationEmail({ candidateName: draft.extracted.fullName ?? "", priorityCountry: draft.priorityCountry, profile });
   return {
+    profile,
     priorityCountry: draft.priorityCountry,
     scores: resolution.breakdown,
     totalOverride: null,
@@ -652,11 +684,13 @@ export function auditAiDraftWording(draft: AiEvaluationDraft): Array<{ field: st
 }
 
 /** Version administrateur vierge (IA indisponible ou évaluation saisie à la main) : rien n'est inventé. */
-export function blankAdminVersion(meta: { priorityCountry: string; candidateName: string; evaluationDate: string }): AdminEvaluationVersion {
-  const email = defaultNotificationEmail({ candidateName: meta.candidateName, priorityCountry: meta.priorityCountry });
+export function blankAdminVersion(meta: { priorityCountry: string; candidateName: string; evaluationDate: string; profile?: EvaluationProfile | null }): AdminEvaluationVersion {
+  const profile = meta.profile ?? null;
+  const email = defaultNotificationEmail({ candidateName: meta.candidateName, priorityCountry: meta.priorityCountry, profile });
   return {
+    profile,
     priorityCountry: meta.priorityCountry,
-    scores: normalizeScoreBreakdown({}),
+    scores: normalizeScoreBreakdown({}, profile ?? "travail"),
     totalOverride: null,
     finalStatus: null,
     route: null,
@@ -668,7 +702,7 @@ export function blankAdminVersion(meta: { priorityCountry: string; candidateName
     blockers: [],
     riskLevel: null,
     actionPlan: [],
-    requiredDocuments: [],
+    requiredDocuments: profile ? PROFILE_DEFS[profile].defaultDocuments.map((label) => ({ label, status: "a_fournir" as const })) : [],
     alternatives: [],
     clientRemarks: "",
     evaluationDate: meta.evaluationDate,
@@ -683,7 +717,7 @@ export function blankAdminVersion(meta: { priorityCountry: string; candidateName
 /** Rendu texte du rapport client (compatibilité avec les écrans qui affichent un texte de réponse). */
 export function clientReportToPlainText(report: ClientReport): string {
   const lines: string[] = [
-    `Évaluation validée le ${report.validatedAt} — pays prioritaire : ${report.priorityCountry}`,
+    `${report.reportTitle ?? "Évaluation"} — validé le ${report.validatedAt} — pays prioritaire : ${report.priorityCountry}`,
     `Score validé : ${report.score}/${report.scoreMax} — ${report.statusLabel}`,
   ];
   if (report.route) lines.push(`Voie principale recommandée : ${report.route.label}`);

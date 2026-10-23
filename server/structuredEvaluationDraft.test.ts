@@ -90,8 +90,9 @@ describe("pays prioritaire et type de projet", () => {
     [null, "canada_etude", "etudes"],
     [null, "schengen_travail", "travail"],
     [null, "canada_rp", "residence_permanente"],
-    [null, "schengen_tourisme", "autre"],
-    ["tourisme", null, "autre"],
+    [null, "schengen_tourisme", "tourisme"],
+    ["tourisme", null, "tourisme"],
+    ["e-visa touristique", null, "evisa"],
   ])("normalise « %s » / « %s » en %s", (projectType, visaType, expected) => {
     expect(normalizeProjectType(projectType, visaType)).toBe(expected);
   });

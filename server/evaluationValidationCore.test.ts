@@ -84,7 +84,9 @@ describe("ouverture du dossier et brouillon IA", () => {
     expect(record.aiDraft?.scores).toEqual(GOOD_SCORES);
     expect(record.aiDraftModel).toBe("gemini-test");
     expect(record.adminVersion?.priorityCountry).toBe("Canada");
-    expect(record.adminVersion?.emailSubject).toBe(NOTIFICATION_EMAIL_SUBJECT);
+    // le bilan parle du projet du candidat (ici : travail)
+    expect(record.adminVersion?.emailSubject).toBe("Votre bilan d’évaluation (Travail) est disponible — 3M TRAVEL AGENCY");
+    expect(record.adminVersion?.profile).toBe("travail");
     expect(record.adminVersion?.emailBody).toContain("Bonjour Aïcha Nkolo");
     expect(record.adminVersion?.sendEmail).toBe(false);
     expect(record.adminVersionUpdatedBy).toBeNull();
@@ -401,7 +403,7 @@ describe("publication : ordre, e-mail et concurrence", () => {
     expect(record.emailSentAt).not.toBeNull();
     expect(s.mailer.sent).toHaveLength(1);
     const mail = s.mailer.sent[0];
-    expect(mail).toMatchObject({ to: "aicha@example.com", subject: NOTIFICATION_EMAIL_SUBJECT });
+    expect(mail).toMatchObject({ to: "aicha@example.com", subject: "Votre bilan d’évaluation (Travail) est disponible — 3M TRAVEL AGENCY" });
     expect(mail.text).toContain(PORTAL_URL);
     expect(mail.text).not.toContain("[LIEN_PORTAIL_CLIENT]");
     expect(mail.text).not.toContain("[BOUTON");

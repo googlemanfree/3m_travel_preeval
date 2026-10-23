@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 import type { Application } from "../drizzle/schema";
+import { PROFILE_DEFS, resolveEvaluationProfile } from "../shared/evaluationProfiles";
 import { applyLetterhead, letterheadLayout, serviceFocusLabel, type LetterheadOptions } from "../shared/brandLetterhead";
 import { loadBrandLogo } from "./utils/brandLogo";
 import { storagePut } from "./storage";
@@ -70,7 +71,8 @@ export async function createFinalEvaluationPdf(application: Application, version
   const letterhead: LetterheadOptions = {
     logoDataUri: logo?.dataUri,
     logoFormat: logo?.format,
-    documentKind: "Résultat d’évaluation",
+    // le bilan parle du projet du candidat : études, travail, séjour, e-Visa ou installation
+    documentKind: `Résultat d’évaluation — ${PROFILE_DEFS[resolveEvaluationProfile({ visaType: application.visaType, projectType: application.visaType })].label}`,
     reference: safeText(application.dossierNumber),
     recipient: safeText(application.fullName),
     subject: "Bilan d’évaluation préliminaire — document finalisé",
