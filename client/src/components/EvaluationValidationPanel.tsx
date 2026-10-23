@@ -375,6 +375,9 @@ export default function EvaluationValidationPanel({ evaluationId, sessionToken }
           )}
         </div>
         {blockers.length > 0 && !published && <ul className="space-y-0.5 text-xs text-amber-800">{blockers.map((text) => <li key={text}>{text}</li>)}</ul>}
+        {/* Un bouton grisé sans explication ressemble à une panne : on dit toujours pourquoi. */}
+        {!published && availability.canEdit && !dirty && <p className="text-xs text-slate-500" data-testid="why-save-disabled">« Enregistrer le brouillon » se réactive dès qu’un champ est modifié.</p>}
+        {!published && !availability.canEdit && <p className="text-xs text-slate-500" data-testid="why-edit-disabled">Cette évaluation n’est pas modifiable dans son état actuel ; utilisez « Réévaluer » pour ouvrir une nouvelle version.</p>}
         {view.needsSecondValidation && availability.canPublish && <p className="text-xs text-amber-800">Ce résultat (« Préparation recommandée ») exige deux administrateurs : votre publication sera enregistrée comme première validation.</p>}
       </div>
 

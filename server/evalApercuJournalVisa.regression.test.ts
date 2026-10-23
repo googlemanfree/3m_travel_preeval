@@ -22,7 +22,7 @@ describe("aperçu obligatoire + journal visa à l’envoi", () => {
     expect(editor).toContain("bilan-preview-gate");
     expect(editor).toContain("J’ai contrôlé l’aperçu du bilan avant envoi");
     expect(editor).toContain("previewConfirmed: true");
-    expect(editor).toContain("Aperçu requis avant envoi");
+    expect(editor).toContain("Valider et envoyer (cochez le contrôle d’aperçu)");
     expect(editor).toContain("evaluation-send-journal");
     expect(editor).toContain("Type de visa journalisé");
   });

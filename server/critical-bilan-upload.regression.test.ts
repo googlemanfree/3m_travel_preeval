@@ -33,8 +33,10 @@ describe("correctifs critiques upload et préparation du bilan", () => {
     expect(unifiedRouter).toContain("eq(applications.email, agencyDossier.email)");
   });
 
-  it("refuse la génération PDF tant que le conseiller n’a pas validé le brouillon", () => {
-    expect(unifiedRouter).toContain("draft.advisorValidated !== true");
-    expect(unifiedRouter).toContain("Validez explicitement le bilan en tant qu’administrateur avant de générer le PDF.");
+  it("ne diffuse rien au candidat tant que le conseiller n’a pas validé le brouillon", () => {
+    // Le PDF d'un brouillon n'existe plus qu'en aperçu interne filigrané ; l'envoi et la programmation exigent toujours la validation.
+    expect(unifiedRouter).toContain("const isDraftPreview = draft.advisorValidated !== true");
+    expect(unifiedRouter).toContain("canDeliverEvaluation(application.evaluationRequiresSecondApproval, application.evaluationApprovalStatus, deliveryDraft.advisorValidated === true)");
+    expect(unifiedRouter).toContain("canDeliverEvaluation(application.evaluationRequiresSecondApproval, application.evaluationApprovalStatus, scheduledDraft.advisorValidated === true)");
   });
 });

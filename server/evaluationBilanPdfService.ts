@@ -3,9 +3,12 @@ import type { Application } from "../drizzle/schema";
 import { PROFILE_DEFS, resolveEvaluationProfile } from "../shared/evaluationProfiles";
 import { applyLetterhead, letterheadLayout, serviceFocusLabel, type LetterheadOptions } from "../shared/brandLetterhead";
 import { loadBrandLogo } from "./utils/brandLogo";
+import { drawBilanBlocks, parsePdfBlocks } from "./services/bilanPdfRichText";
 import { storagePut } from "./storage";
 
 type BilanDraft = {
+  /** Bilan libre collé par l'administrateur (HTML déjà nettoyé) : remplace la structure verdict / points forts / recommandations. */
+  bilanHtml?: string;
   finalScore?: number;
   verdict?: string;
   strengths?: string[];
@@ -64,7 +67,7 @@ function writeParagraph(doc: jsPDF, text: string, x: number, y: number, width: n
   return y;
 }
 
-export async function createFinalEvaluationPdf(application: Application, versionNumber: number, auditTrail: EvaluationPdfAuditEntry[] = []): Promise<{ key: string; url: string; bytes: Buffer }> {
+export async function createFinalEvaluationPdf(application: Application, versionNumber: number, auditTrail: EvaluationPdfAuditEntry[] = [], options: { preview?: boolean } = {}): Promise<{ key: string; url: string; bytes: Buffer }> {
   const draft = readDraft(application);
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const logo = await loadBrandLogo();
@@ -75,7 +78,7 @@ export async function createFinalEvaluationPdf(application: Application, version
     documentKind: `Résultat d’évaluation — ${PROFILE_DEFS[resolveEvaluationProfile({ visaType: application.visaType, projectType: application.visaType })].label}`,
     reference: safeText(application.dossierNumber),
     recipient: safeText(application.fullName),
-    subject: "Bilan d’évaluation préliminaire — document finalisé",
+    subject: options.preview ? "APERÇU INTERNE — bilan non encore validé" : "Bilan d’évaluation préliminaire — document finalisé",
     serviceFocus: serviceFocusLabel(application.visaType, application.destination),
   };
   const layout = letterheadLayout(letterhead);
@@ -84,7 +87,17 @@ export async function createFinalEvaluationPdf(application: Application, version
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.text(`Destination : ${safeText(application.destination || "À définir")}`, 18, y); y += 7;
-  doc.text(`Version : ${versionNumber} — Finalisée le ${new Date().toLocaleString("fr-FR")}`, 18, y); y += 12;
+  doc.text(`Version : ${versionNumber} — ${options.preview ? "Aperçu du" : "Finalisée le"} ${new Date().toLocaleString("fr-FR")}`, 18, y); y += 12;
+  const freeBilan = typeof draft.bilanHtml === "string" && draft.bilanHtml.trim().length > 0;
+  if (freeBilan) {
+    // Bilan libre : le contenu rédigé par l'administrateur est repris tel quel (titres, listes, tableaux), sans structure imposée.
+    if (typeof draft.finalScore === "number" && draft.finalScore > 0) {
+      doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+      doc.text(`Indice de préparation (IFP 3M) : ${draft.finalScore}/100`, 18, y); y += 8;
+    }
+    y = drawBilanBlocks(doc, parsePdfBlocks(draft.bilanHtml as string), { left: layout.marginLeft, width: layout.contentWidth, nextTop: layout.nextPageTop, bottom: layout.contentBottom }, y) + 4;
+    doc.setTextColor(31, 41, 55);
+  } else {
   doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.text("Synthèse de l’évaluation", 18, y); y += 8;
   doc.setFont("helvetica", "normal"); doc.setFontSize(10);
   doc.text(`Indice de faisabilité préliminaire (IFP 3M) : ${draft.finalScore ?? application.scoringTotal ?? "—"}/100`, 18, y); y += 8;
@@ -97,6 +110,7 @@ export async function createFinalEvaluationPdf(application: Application, version
     items.forEach((item) => { y = writeParagraph(doc, `• ${safeText(item)}`, 21, y, 171) + 2; });
     y += 4;
   });
+  }
   const auditLines = buildEvaluationPdfAuditLines(draft, auditTrail);
   if (auditLines.length) {
     if (y > 225) { doc.addPage(); y = 34; }
@@ -111,6 +125,7 @@ export async function createFinalEvaluationPdf(application: Application, version
   applyLetterhead(doc, letterhead);
   const bytes = Buffer.from(doc.output("arraybuffer"));
   const reference = safeText(application.dossierNumber || application.id).replace(/[^a-zA-Z0-9_-]/g, "-");
-  const stored = await storagePut(`evaluation-bilans/${reference}/bilan-final-v${versionNumber}.pdf`, bytes, "application/pdf");
+  // L'aperçu ne remplace jamais le PDF final : fichier distinct.
+  const stored = await storagePut(`evaluation-bilans/${reference}/bilan-${options.preview ? "apercu" : "final"}-v${versionNumber}.pdf`, bytes, "application/pdf");
   return { ...stored, bytes };
 }

@@ -4,6 +4,7 @@
  */
 import React, { lazy, Suspense, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
 import { trpc } from "@/lib/trpc";
+import { evaluationSourceTypeOf } from "@/lib/evaluationSourceType";
 
 function AdminNavGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -464,7 +465,7 @@ export function CandidateDetailModal({
   const evaluationBlocksActivation = isPreDossierAccount
     && candidate?.evaluationDeclarationStatus !== "not_declared"
     && candidate?.evaluationDeclarationStatus !== "validated";
-  const evaluationEditorSourceType = candidate?.source === "ACCOUNT_ONLY" ? "candidate" : candidate?.folderCode?.startsWith("EVAL-AG-") || candidate?.source === "AGENCY_PHYSICAL" ? "agency" : "application";
+  const evaluationEditorSourceType = evaluationSourceTypeOf(candidate);
   const preDossierCvUrl = (() => {
     const fromDoc = (data as { cvDocument?: { documentUrl?: string | null } } | undefined)?.cvDocument?.documentUrl;
     const fromEval = (data as { evaluationContext?: { cvFileUrl?: string | null } } | undefined)?.evaluationContext?.cvFileUrl;

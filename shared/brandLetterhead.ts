@@ -385,3 +385,6 @@ export function frameLegacyEmailHtml(html: string, options: { serviceFocus?: str
   const body = /<body[^>]*>([\s\S]*)<\/body>/i.exec(html)?.[1] ?? html;
   return renderBrandedEmailHtml({ title: "", bodyHtml: `<div style="margin:0 -8px">${body}</div>`, serviceFocus: options.serviceFocus, preheader: options.preheader });
 }
+
+/** Document complet à l'identité de l'agence (aperçu, lecture dans l'espace candidat) : mêmes en-tête et pied de page que les e-mails. */
+export const frameBrandedDocument = (fragmentHtml: string): string => frameLegacyEmailHtml(fragmentHtml);

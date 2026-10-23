@@ -48,7 +48,9 @@ describe("Correctifs urgents upload et navigation", () => {
 
   it("branche les comptes ACCOUNT_ONLY sur le bootstrap candidat", () => {
     const source = read("client/src/pages/AdminDashboard.tsx");
-    expect(source).toContain('candidate?.source === "ACCOUNT_ONLY" ? "candidate"');
+    expect(source).toContain("evaluationSourceTypeOf(candidate)");
+    expect(read("client/src/lib/evaluationSourceType.ts")).toContain('candidate.source === "ACCOUNT_ONLY"');
+    expect(read("client/src/components/Candidate360Workspace.tsx")).toContain("sourceType={evaluationSourceTypeOf(candidate)}");
     const editorSource = read("client/src/components/EvaluationDeliveryEditor.tsx");
     expect(editorSource).toContain('initializeEvaluationDelivery.mutate({ sessionToken, candidateId: sourceRecordId, sourceType: "candidate" })');
   });

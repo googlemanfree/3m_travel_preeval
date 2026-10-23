@@ -74,6 +74,7 @@ import CaseDocumentsPanel, { agencyDepositedDocuments, allCaseDocuments } from "
 import ClientNotificationsInbox from "@/components/ClientNotificationsInbox";
 import { checklistLines, pickActiveCaseRequirements } from "@/lib/documentChecklist";
 import { EVALUATION_ANCHOR_ID, computeNextStep, type NextStep } from "@/lib/nextStep";
+import { SentBilanViewer } from "@/components/SentBilanViewer";
 import { CLIENT_SPACE_SUMMARY_POLL_MS, buildClientSpaceSnapshot, clientSpacePolling, diffClientSpace, limitAnnouncements, mergeClientSpaceSnapshots, type ClientSpaceSnapshot } from "@/lib/clientSpaceSync";
 import { SECONDARY_PROJECT_OPTIONS, procedureLabelForDossier, secondaryDossierEvaluationPath, type SecondaryProjectType } from "@shared/clientMultiDossier";
 
@@ -1094,6 +1095,7 @@ export default function EvaluationSpace() {
                   <CandidateEvaluationStatus evaluationId={structuredEvaluation.evaluationId} view={structuredEvaluation.view} onChanged={() => { void structuredEvaluationQuery.refetch(); }} />
                 </div>
               )}
+              <SentBilanViewer enabled={isAuthenticated} />
               {agreementAfterPaymentRequired && (
                 <Card className="border-2 border-amber-300 bg-gradient-to-r from-amber-50 via-white to-blue-50 p-6 shadow-md" role="region" aria-labelledby="agreement-after-payment-title">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

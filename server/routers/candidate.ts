@@ -2361,6 +2361,33 @@ export const candidateRouter = router({
       return { success: true, activeDossierNumber: input.dossierNumber };
     }),
 
+  /**
+   * Le bilan d'évaluation ENVOYÉ au candidat, tel que dans son e-mail (même mise en forme). Uniquement un bilan que l'administrateur a validé puis
+   * envoyé (evaluationDeliveryStatus = sent), et uniquement le sien : jamais un brouillon.
+   */
+  getMyEvaluationBilan: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const { applications: applicationsTable } = await import("../../drizzle/schema");
+    const [application] = await db
+      .select()
+      .from(applicationsTable)
+      .where(and(eq(applicationsTable.evaluationDeliveryStatus, "sent"), or(eq(applicationsTable.candidateId, ctx.candidate.id), sql`LOWER(${applicationsTable.email}) = LOWER(${ctx.candidate.email})`)))
+      .orderBy(desc(applicationsTable.evaluationCompletedAt), desc(applicationsTable.updatedAt))
+      .limit(1);
+    if (!application) return null;
+    const { generateEvaluationReportHTML } = await import("../evaluationService");
+    const { frameBrandedDocument } = await import("../../shared/brandLetterhead");
+    const pdfUrl = application.evaluationReportPdfKey ? await storageGetSignedUrl(application.evaluationReportPdfKey).catch(() => null) : null;
+    return {
+      dossierNumber: application.dossierNumber,
+      subject: application.evaluationDeliverySubject ?? null,
+      sentAt: application.evaluationCompletedAt ?? null,
+      html: frameBrandedDocument(generateEvaluationReportHTML(application)),
+      pdfUrl,
+    };
+  }),
+
   getMyDossierData: candidateProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });

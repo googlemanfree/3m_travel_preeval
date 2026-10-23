@@ -23,10 +23,11 @@ describe("préparation manuelle du bilan", () => {
     expect(router).toContain("previewConfirmed: z.literal(true)");
   });
 
-  it("bloque proprement la prévisualisation et l’enregistrement d’un brouillon sans recommandations", () => {
-    expect(editor).toContain("if (payload.recommendations.length < 1)");
-    expect(editor).toContain("Ajoutez au moins une recommandation avant d’enregistrer le brouillon.");
-    expect(editor).toContain("Recommandations requises");
+  it("bloque proprement la prévisualisation et l’enregistrement d’un brouillon sans aucun contenu de bilan", () => {
+    // Plus de recommandation obligatoire : un bilan collé (ou un simple message) suffit.
+    expect(editor).toContain("if (!hasBilanContent)");
+    expect(editor).toContain("Collez ou rédigez le bilan avant d’enregistrer le brouillon.");
+    expect(editor).toContain("Bilan requis");
     expect(editor).toContain("Préparation impossible");
     expect(editor).toContain("Brouillon non enregistré");
     expect(editor).toContain("catch {");

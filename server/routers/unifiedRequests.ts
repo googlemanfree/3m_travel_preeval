@@ -26,6 +26,8 @@ import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
 import { generateEvaluationReportHTML } from "../evaluationService";
+import { inspectBilan, toBilanHtml } from "../../shared/bilanContent";
+import { frameBrandedDocument } from "../../shared/brandLetterhead";
 import { sendEmail } from "../_core/email";
 import { createFinalEvaluationPdf } from "../evaluationBilanPdfService";
 import { storageGetSignedUrl } from "../storage";
@@ -66,10 +68,12 @@ const evaluationDraftSchema = z.object({
   destination: z.enum(evaluationDestinations),
   finalScore: z.number().int().min(0).max(100),
   verdict: z.string().trim().max(500),
-  strengths: z.array(z.string().trim().min(2).max(500)).max(6),
-  weaknesses: z.array(z.string().trim().min(2).max(500)).max(6),
-  recommendations: z.array(z.string().trim().min(2).max(800)).max(8),
-  message: z.string().trim().max(12000).optional(),
+  strengths: z.array(z.string().trim().min(2).max(500)).max(30),
+  weaknesses: z.array(z.string().trim().min(2).max(500)).max(30),
+  recommendations: z.array(z.string().trim().min(2).max(800)).max(40),
+  message: z.string().trim().max(60000).optional(),
+  /** Bilan complet collé par l'administrateur (HTML, texte, Markdown…) : nettoyé et mis en forme côté serveur. */
+  bilanHtml: z.string().max(400_000).optional(),
   subject: z.string().trim().min(4).max(255).optional(),
   requiresSecondApproval: z.boolean().default(false),
   language: z.enum(["fr", "en"]).default("fr"),
@@ -766,6 +770,7 @@ initializeEvaluationDelivery: publicProcedure
           finalScore: Number.isFinite(Number(adminDraft.finalScore)) ? Number(adminDraft.finalScore) : (application.scoringTotal ?? 0),
           verdict: String(adminDraft.verdict ?? ""),
           profileSummary: String(adminDraft.profileSummary ?? ""),
+          bilanHtml: typeof adminDraft.bilanHtml === "string" ? adminDraft.bilanHtml : "",
           strengths: Array.isArray(adminDraft.strengths) ? adminDraft.strengths.map(String) : [],
           weaknesses: Array.isArray(adminDraft.weaknesses) ? adminDraft.weaknesses.map(String) : [],
           recommendations: Array.isArray(adminDraft.recommendations) ? adminDraft.recommendations.map(String) : [],
@@ -813,12 +818,14 @@ initializeEvaluationDelivery: publicProcedure
       let details: Record<string, any> = {};
       try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
       const draft = details.adminDraft ?? {};
-      if (!draft.verdict || !Array.isArray(draft.recommendations) || !draft.recommendations.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Enregistrez un bilan complet avant de générer l’aperçu PDF." });
-      if (draft.advisorValidated !== true) throw new TRPCError({ code: "BAD_REQUEST", message: "Validez explicitement le bilan en tant qu’administrateur avant de générer le PDF." });
+      const hasFreeBilan = typeof draft.bilanHtml === "string" && draft.bilanHtml.length > 0;
+      if (!hasFreeBilan && (!draft.verdict || !Array.isArray(draft.recommendations) || !draft.recommendations.length)) throw new TRPCError({ code: "BAD_REQUEST", message: "Enregistrez un bilan complet avant de générer l’aperçu PDF." });
+      // L'aperçu PDF est possible dès le brouillon (il est alors marqué « aperçu interne ») ; le PDF final n'est produit qu'à l'envoi, après validation.
+      const isDraftPreview = draft.advisorValidated !== true;
       const versions = await db.select({ versionNumber: evaluationBilanVersions.versionNumber, createdAt: evaluationBilanVersions.createdAt, createdByAdminAccountId: evaluationBilanVersions.createdByAdminAccountId, approvalStatus: evaluationBilanVersions.approvalStatus }).from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, application.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(30);
       const versionNumber = versions[0]?.versionNumber ?? 1;
-      const pdf = await createFinalEvaluationPdf(application, versionNumber, versions);
-      return { url: pdf.url, key: pdf.key, fileName: `bilan-${application.dossierNumber}-v${versionNumber}.pdf`, versionNumber, requiresManualValidation: true };
+      const pdf = await createFinalEvaluationPdf(application, versionNumber, versions, { preview: isDraftPreview });
+      return { url: pdf.url, key: pdf.key, fileName: `bilan-${isDraftPreview ? "apercu-" : ""}${application.dossierNumber}-v${versionNumber}.pdf`, versionNumber, requiresManualValidation: true, preview: isDraftPreview };
     }),
 
   sendEvaluationTestEmail: publicProcedure
@@ -883,7 +890,9 @@ initializeEvaluationDelivery: publicProcedure
       let details: Record<string, unknown> = {};
       try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
       const previousDraft = (details.adminDraft && typeof details.adminDraft === "object" ? details.adminDraft : {}) as Record<string, unknown>;
-      const nextDraft = { ...previousDraft, destination: input.destination, finalScore: input.finalScore, verdict: input.verdict, strengths: input.strengths, weaknesses: input.weaknesses, recommendations: input.recommendations, language: input.language, advisorValidated: false, advisorValidatedAt: null, advisorValidatedByAdminId: null };
+      const pastedBilanHtml = typeof input.bilanHtml === "string" ? toBilanHtml(input.bilanHtml) : undefined;
+      if (pastedBilanHtml && inspectBilan(pastedBilanHtml).empty) throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan collé est vide ou trop court : collez le texte complet du bilan." });
+      const nextDraft = { ...previousDraft, ...(pastedBilanHtml !== undefined ? { bilanHtml: pastedBilanHtml || undefined, bilanMode: pastedBilanHtml ? "libre" : "structure" } : {}), destination: input.destination, finalScore: input.finalScore, verdict: input.verdict, strengths: input.strengths, weaknesses: input.weaknesses, recommendations: input.recommendations, language: input.language, advisorValidated: false, advisorValidatedAt: null, advisorValidatedByAdminId: null };
       const nextDetails = { ...details, adminDraft: nextDraft };
       const messageHtml = input.message ? normalizeAdminMessage(input.message) : null;
       const messagePlainText = messageHtml ? richTextToPlainText(messageHtml) : "";
@@ -898,7 +907,8 @@ initializeEvaluationDelivery: publicProcedure
       await db.insert(evaluationBilanVersions).values({ applicationId: application.id, versionNumber, contentJson: JSON.stringify({ adminDraft: nextDraft, subject: input.subject || null, message: messageHtml || null, messagePlainText: messagePlainText || null }), reportHtml, createdByAdminAccountId: admin.id, requiresSecondApproval: input.requiresSecondApproval, approvalStatus: input.requiresSecondApproval ? "pending" : "draft" });
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
       if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_draft_saved", comment: `Version ${versionNumber} du bilan enregistrée${input.requiresSecondApproval ? " et soumise à une seconde approbation" : ""}.`, actorAdminAccountId: admin.id }); }
-      return { success: true, reportHtml, versionNumber, approvalStatus, message: input.requiresSecondApproval ? "Brouillon enregistré et transmis au second approbateur." : "Brouillon enregistré et prévisualisation mise à jour." };
+      const bilanInspection = typeof nextDraft.bilanHtml === "string" && nextDraft.bilanHtml ? inspectBilan(nextDraft.bilanHtml) : null;
+      return { success: true, reportHtml: frameBrandedDocument(reportHtml), bilanInspection, versionNumber, approvalStatus, message: input.requiresSecondApproval ? "Brouillon enregistré et transmis au second approbateur." : "Brouillon enregistré et prévisualisation mise à jour." };
     }),
 
   validateEvaluationDraft: publicProcedure
@@ -914,7 +924,14 @@ initializeEvaluationDelivery: publicProcedure
       try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
       const previousDraft = (details.adminDraft && typeof details.adminDraft === "object" ? details.adminDraft : {}) as Record<string, unknown>;
       const verdict = typeof previousDraft.verdict === "string" ? previousDraft.verdict.trim() : "";
-      if (verdict.length < 3) throw new TRPCError({ code: "BAD_REQUEST", message: "Saisissez au moins trois caractères dans le bilan avant validation." });
+      const freeBilan = typeof previousDraft.bilanHtml === "string" ? previousDraft.bilanHtml : "";
+      if (freeBilan) {
+        // Bilan libre : le même contrôle que le rapport structuré. Une promesse de résultat ou une donnée sensible bloque la validation (jamais supprimée en silence).
+        const inspection = inspectBilan(freeBilan);
+        if (inspection.empty) throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan est vide ou trop court pour être validé." });
+        if (inspection.forbiddenTerms.length > 0) throw new TRPCError({ code: "BAD_REQUEST", message: `Formulation à revoir avant validation (promesse de résultat) : ${inspection.forbiddenTerms.join(", ")}.` });
+        if (inspection.sensitiveData.length > 0) throw new TRPCError({ code: "BAD_REQUEST", message: `Donnée sensible à retirer avant validation : ${inspection.sensitiveData.join(", ")}.` });
+      } else if (verdict.length < 3) throw new TRPCError({ code: "BAD_REQUEST", message: "Saisissez au moins trois caractères dans le bilan avant validation." });
       const now = new Date();
       const finalDossierNumber = await issueFinalDossierNumber(db, application);
       const nextDraft = { ...previousDraft, advisorValidated: true, advisorValidatedAt: now.toISOString(), advisorValidatedByAdminId: admin.id };
