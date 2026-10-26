@@ -308,7 +308,7 @@ export default function EvaluationValidationPanel({ evaluationId, sessionToken }
 
         <TabsContent value="admin" className="mt-3">
           {draft ? (
-            <EvaluationVersionForm value={draft} onChange={setDraft} readOnly={!availability.canEdit} candidateCountry={view.evaluation.candidateCountry} suggestedProfile={view.suggestedProfile} />
+            <EvaluationVersionForm value={draft} onChange={setDraft} readOnly={!availability.canEdit} candidateCountry={view.evaluation.candidateCountry} candidateName={view.evaluation.candidateName} suggestedProfile={view.suggestedProfile} />
           ) : (
             <p className="text-sm text-slate-600">Aucune version administrateur : générez le brouillon IA ou ouvrez le dossier pour saisir à la main.</p>
           )}

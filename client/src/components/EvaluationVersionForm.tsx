@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { ClipboardCopy, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,8 +17,10 @@ import {
   SUGGESTED_STATUS_LABELS,
   normalizeScoreBreakdown,
   resolveScore,
+  defaultNotificationEmail,
   type AdminEvaluationVersion,
 } from "@shared/evaluationValidation";
+import { completeMailForClipboard, composeCompleteEvaluationMail } from "@shared/evaluationCompleteMail";
 import { EVALUATION_PROFILES, PROFILE_DEFS, criteriaFor, type EvaluationProfile } from "@shared/evaluationProfiles";
 
 const selectClass = "mt-1 h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900 disabled:bg-slate-100";
@@ -59,9 +62,9 @@ function Section({ title, children, description }: { title: string; description?
   );
 }
 
-type Props = { value: AdminEvaluationVersion; onChange: (next: AdminEvaluationVersion) => void; readOnly: boolean; candidateCountry: string; /** Profil que suggère la demande du candidat (études, travail, e-Visa…). */ suggestedProfile?: EvaluationProfile };
+type Props = { value: AdminEvaluationVersion; onChange: (next: AdminEvaluationVersion) => void; readOnly: boolean; candidateCountry: string; /** Nom du candidat, pour composer le mail complet. */ candidateName?: string; /** Profil que suggère la demande du candidat (études, travail, e-Visa…). */ suggestedProfile?: EvaluationProfile };
 
-export default function EvaluationVersionForm({ value, onChange, readOnly, candidateCountry, suggestedProfile }: Props) {
+export default function EvaluationVersionForm({ value, onChange, readOnly, candidateCountry, candidateName = "", suggestedProfile }: Props) {
   const set = <K extends keyof AdminEvaluationVersion>(key: K, next: AdminEvaluationVersion[K]) => onChange({ ...value, [key]: next });
   // Le bilan suit le projet du candidat : grille, voies et vocabulaire changent avec le profil (l'administrateur peut le corriger).
   const profile: EvaluationProfile = value.profile ?? suggestedProfile ?? "travail";
@@ -70,6 +73,28 @@ export default function EvaluationVersionForm({ value, onChange, readOnly, candi
   const changeProfile = (next: EvaluationProfile) => onChange({ ...value, profile: next, scores: normalizeScoreBreakdown(value.scores, next) });
   const resolution = resolveScore({ scores: value.scores, totalOverride: value.totalOverride, finalStatus: value.finalStatus, profile });
   const countryDiffers = candidateCountry.trim() !== "" && candidateCountry.trim().toLowerCase() !== value.priorityCountry.trim().toLowerCase();
+  const statusDiffers = value.finalStatus !== null && value.finalStatus !== resolution.suggestedStatus;
+  const complete = composeCompleteEvaluationMail(value, { candidateName: candidateName || "Madame, Monsieur" });
+  const useCompleteModel = () => {
+    if (complete.ok === false) { toast.error(complete.error); return; }
+    onChange({ ...value, emailSubject: complete.subject, emailBody: complete.text });
+    toast.success("Modèle complet appliqué : relisez-le avant l’envoi.");
+  };
+  const useShortModel = () => {
+    const short = defaultNotificationEmail({ candidateName: candidateName || "Madame, Monsieur", priorityCountry: value.priorityCountry, profile: value.profile ?? suggestedProfile ?? null });
+    onChange({ ...value, emailSubject: short.subject, emailBody: short.body });
+    toast.success("Modèle court (notification + lien sécurisé) rétabli.");
+  };
+  const copyCompleteMail = async () => {
+    if (complete.ok === false) { toast.error(complete.error); return; }
+    const full = `Objet : ${complete.subject}\n\n${completeMailForClipboard(complete.text)}`;
+    try {
+      await navigator.clipboard.writeText(full);
+      toast.success("Mail complet copié dans le presse-papiers.");
+    } catch {
+      toast.error("Copie impossible : sélectionnez le texte du bloc ci-dessous et copiez-le manuellement.");
+    }
+  };
 
   return (
     <fieldset disabled={readOnly} className="space-y-4 disabled:opacity-90" aria-label="Version administrateur">
@@ -97,6 +122,12 @@ export default function EvaluationVersionForm({ value, onChange, readOnly, candi
           <Input value={value.priorityCountry} onChange={(event) => set("priorityCountry", event.target.value)} maxLength={100} className="mt-1 bg-white" />
         </label>
         {countryDiffers && <p className="text-xs font-semibold text-amber-800">Le candidat a choisi : {candidateCountry}. Confirmez ce changement dans la checklist avant de publier.</p>}
+        {countryDiffers && (
+          <label className="block text-xs font-medium text-slate-700">
+            Justification du pays évalué <span className="font-normal text-rose-700">(obligatoire pour publier · interne, jamais visible du candidat)</span>
+            <Textarea aria-label="Justification du pays évalué" value={value.countryJustification ?? ""} onChange={(event) => set("countryJustification", event.target.value)} rows={2} maxLength={1000} className="mt-1 bg-rose-50/50 text-sm" />
+          </label>
+        )}
       </Section>
 
       <Section title="Score sur 100" description="Le total est recalculé après chaque modification des notes. Un score global ou un statut fixés à la main ne sont jamais remplacés automatiquement.">
@@ -142,6 +173,12 @@ export default function EvaluationVersionForm({ value, onChange, readOnly, candi
             </select>
           </label>
         </div>
+        {statusDiffers && (
+          <label className="block text-xs font-medium text-slate-700">
+            Justification du statut final <span className="font-normal text-rose-700">(obligatoire : le statut choisi diffère de « {SUGGESTED_STATUS_LABELS[resolution.suggestedStatus]} » suggéré par le score · interne)</span>
+            <Textarea aria-label="Justification du statut final" value={value.statusJustification ?? ""} onChange={(event) => set("statusJustification", event.target.value)} rows={2} maxLength={1000} className="mt-1 bg-rose-50/50 text-sm" />
+          </label>
+        )}
       </Section>
 
       <Section title="Voie principale et niveau de risque">
@@ -254,7 +291,18 @@ export default function EvaluationVersionForm({ value, onChange, readOnly, candi
         </label>
       </Section>
 
-      <Section title="E-mail de notification" description="Envoyé seulement si vous choisissez « Publier et envoyer l’e-mail », après la publication. Il ne contient ni score détaillé ni donnée sensible.">
+      <Section title="Frais et prestations incluses" description="Optionnel. Indiquez les frais tels que vous les confirmez pour CE dossier (le montant varie selon le profil) ; ce bloc est repris dans le mail complet.">
+        <Textarea aria-label="Frais et prestations incluses" value={value.feesNote ?? ""} onChange={(event) => set("feesNote", event.target.value)} rows={3} maxLength={1500} className="bg-white text-sm" placeholder="Ex. Frais d’ouverture de dossier : montant confirmé par écrit avant tout paiement. Inclus : analyse du dossier, suivi des démarches, accompagnement…" />
+      </Section>
+
+      <Section title="E-mail au candidat" description="Envoyé seulement si vous choisissez « Publier et envoyer l’e-mail », après la publication. Deux modèles : court (notification + lien sécurisé) ou complet (tout le bilan dans le message).">
+        <div className="flex flex-wrap gap-2" data-testid="email-models">
+          <Button type="button" size="sm" variant="outline" onClick={useShortModel} disabled={readOnly}>Modèle court (notification)</Button>
+          <Button type="button" size="sm" variant="outline" onClick={useCompleteModel} disabled={readOnly || !complete.ok}>Modèle complet (bilan en un bloc)</Button>
+          <Button type="button" size="sm" variant="outline" className="gap-1" onClick={() => void copyCompleteMail()} disabled={!complete.ok}><ClipboardCopy className="h-3.5 w-3.5" />Copier le mail complet</Button>
+        </div>
+        {complete.ok === false && <p className="text-xs text-amber-800" data-testid="complete-mail-unavailable">Le mail complet sera disponible quand le bilan sera prêt : {complete.error}</p>}
+        {complete.ok && complete.warnings.map((warning) => <p key={warning} className="text-xs font-semibold text-rose-700" role="alert">{warning}</p>)}
         <label className="block text-xs font-medium text-slate-700">
           Objet
           <Input value={value.emailSubject} onChange={(event) => set("emailSubject", event.target.value)} maxLength={200} className="mt-1 bg-white" />

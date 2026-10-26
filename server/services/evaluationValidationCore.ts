@@ -260,11 +260,22 @@ function buildReport(version: AdminEvaluationVersion, meta: { candidateName: str
 }
 
 /** Éléments sans lesquels un rapport client n'aurait pas de sens (aucune valeur n'est inventée pour les combler). */
-export function missingPublishableFields(version: AdminEvaluationVersion): string[] {
+export function missingPublishableFields(version: AdminEvaluationVersion, requestedCountry?: string | null): string[] {
   const missing: string[] = [];
   if (!version.priorityCountry.trim() || sameCountry(version.priorityCountry, PLACEHOLDER_COUNTRY)) missing.push("Pays prioritaire");
   if (!version.profileSummary.trim()) missing.push("Résumé du profil");
   if (!version.route) missing.push("Voie principale recommandée");
+  // Écarts assumés : possibles, mais jamais sans motif écrit (interne, jamais montré au candidat).
+  const requested = (requestedCountry ?? "").trim();
+  if (requested && !sameCountry(version.priorityCountry, requested) && !(version.countryJustification ?? "").trim()) {
+    missing.push(`Justification du pays évalué (le candidat a demandé « ${requested} »)`);
+  }
+  if (version.finalStatus) {
+    const resolution = resolveScore({ scores: version.scores, totalOverride: version.totalOverride, finalStatus: version.finalStatus, profile: version.profile ?? "travail" });
+    if (version.finalStatus !== resolution.suggestedStatus && !(version.statusJustification ?? "").trim()) {
+      missing.push("Justification interne du statut final (différent du statut suggéré par le score)");
+    }
+  }
   return missing;
 }
 
@@ -580,10 +591,10 @@ export async function publishEvaluation(deps: ValidationDeps, admin: Actor, eval
   }
   const missing = missingChecklistItems(input.checklist, { sendEmail: input.sendEmail });
   if (missing.length > 0) throw new ValidationFlowError("CHECKLIST_INCOMPLETE", "Cochez toute la checklist avant de publier.", { missing });
-  const incomplete = missingPublishableFields(version);
+  const context = await requireContext(deps.store, evaluationId);
+  const incomplete = missingPublishableFields(version, context.candidateCountry);
   if (incomplete.length > 0) throw new ValidationFlowError("INCOMPLETE_VERSION", `Complétez avant de publier : ${incomplete.join(", ")}.`, { missing: incomplete });
 
-  const context = await requireContext(deps.store, evaluationId);
   // Visa travail : CV obligatoire. Autres visas : évaluation intelligente sans bloquer sur le CV.
   if (evaluationRequiresCv(context.visaType, context.projectType, context.programId) && !context.cvOnFile) {
     throw new ValidationFlowError("CV_REQUIRED", `CV manquant : ${CV_MISSING_FOR_PUBLICATION}`);
@@ -815,7 +826,7 @@ async function assembleAdminView(deps: ValidationDeps, context: EvaluationContex
     adminScore,
     clientPreview,
     previewError,
-    incompleteFields: version ? missingPublishableFields(version) : ["Version administrateur"],
+    incompleteFields: version ? missingPublishableFields(version, context.candidateCountry) : ["Version administrateur"],
     needsSecondValidation: adminScore ? policy.requireSecondValidationFor.includes(adminScore.effectiveStatus) : false,
     versions: cases.map((entry) => ({ versionNumber: entry.versionNumber, workflowStatus: entry.workflowStatus, publishedAt: iso(entry.publishedAt), publishedBy: entry.publishedBy, createdAt: entry.createdAt.toISOString() })),
     changes: changes.map((change) => ({ versionNumber: change.versionNumber, adminEmail: change.adminEmail, field: change.field, oldValue: change.oldValue, newValue: change.newValue, createdAt: change.createdAt.toISOString() })),

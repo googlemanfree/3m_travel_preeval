@@ -394,8 +394,15 @@ const AdminEvaluationVersionObject = z.object({
   evaluationDate: z.string().trim().max(40),
   validUntil: z.string().trim().max(40).nullable(),
   emailSubject: z.string().trim().max(200),
-  emailBody: z.string().trim().max(6000),
+  /** Le modèle complet (bilan en un bloc) dépasse volontiers 6 000 caractères. */
+  emailBody: z.string().trim().max(20000),
   sendEmail: z.boolean(),
+  /** Frais et prestations incluses, tels que l'administrateur les confirme pour CE dossier (jamais un montant imposé par défaut). Repris dans le mail complet. */
+  feesNote: z.string().trim().max(1500).optional(),
+  /** Obligatoire à la publication quand le pays évalué diffère du pays demandé par le candidat. Interne. */
+  countryJustification: z.string().trim().max(1000).optional(),
+  /** Obligatoire à la publication quand le statut final diffère du statut suggéré par le score. Interne. */
+  statusJustification: z.string().trim().max(1000).optional(),
   /** Jamais visible du candidat. */
   internalComment: longText,
 });
