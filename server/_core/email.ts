@@ -108,7 +108,8 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
       to: options.to,
       subject: options.subject,
       html: shouldBrandEmail(options) ? frameLegacyEmailHtml(options.html) : options.html,
-      replyTo: options.replyTo ?? sender.address,
+      // Les réponses vont toujours vers la boîte lue par l'équipe (hello@), même si l'envoi se fait depuis une boîte technique (noreply@).
+      replyTo: options.replyTo ?? OFFICIAL_SENDER_ADDRESS,
       attachments: options.attachments,
     });
 
