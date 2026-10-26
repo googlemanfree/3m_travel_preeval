@@ -12,7 +12,7 @@ import { z } from "zod";
 import { getDb } from "../db";
 import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, agencySettings, bilans, adminActivityLogs, emailDeliveryLogs, advisorAlertThresholds, emailDeliveryIncidents, incidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, evaluationEmails, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions, documentClarificationEvents, documentClarificationRequests, agencyDossierDocuments, agencyDossierHistory, paymentAuditLogs, paymentReceiptApprovals, placementCandidateProfiles, placementProfileSubmissions, placementOrganizations, candidatePlacementConsents } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
-import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
+import { sendEmail as sendGenericEmail, SendEmailOptions, OFFICIAL_SENDER_ADDRESS } from "../_core/email";
 import { createEvisaCommunicationSnapshot } from "../services/evisaCommunicationSnapshot";
 import { listDestinationDocuments, addDestinationDocument, deleteDestinationDocument } from "../destinationDocumentService";
 import { storagePut } from "../storage";
@@ -4196,7 +4196,7 @@ export const adminRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
       const existing = (await db.select().from(emailDeliveryLogs).where(and(like(emailDeliveryLogs.subject, "%3M-DEMO-90001%"), eq(emailDeliveryLogs.status, "prepared"))).limit(1))[0];
       if (existing) return { folderCode: "3M-DEMO-90001", created: false };
-      await db.insert(emailDeliveryLogs).values({ recipientEmail: process.env.SMTP_FROM ?? "3mtravelandservices@gmail.com", subject: "3M-DEMO-90001 · Remise interne à tester", status: "prepared", errorDetails: `Préparé par ${admin.email}` });
+      await db.insert(emailDeliveryLogs).values({ recipientEmail: OFFICIAL_SENDER_ADDRESS, subject: "3M-DEMO-90001 · Remise interne à tester", status: "prepared", errorDetails: `Préparé par ${admin.email}` });
       return { folderCode: "3M-DEMO-90001", created: true };
     }),
 
@@ -4208,7 +4208,7 @@ export const adminRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
       const demo = (await db.select().from(emailDeliveryLogs).where(and(like(emailDeliveryLogs.subject, "%3M-DEMO-90001%"), eq(emailDeliveryLogs.status, "prepared"))).orderBy(desc(emailDeliveryLogs.createdAt)).limit(1))[0];
       if (!demo) throw new TRPCError({ code: "NOT_FOUND", message: "Préparez d’abord le dossier de démonstration." });
-      const recipientEmail = process.env.SMTP_FROM ?? "3mtravelandservices@gmail.com";
+      const recipientEmail = OFFICIAL_SENDER_ADDRESS;
       try {
         await sendGenericEmail({ to: recipientEmail, subject: demo.subject, html: `<p>Test interne de remise 3M TRAVEL AGENCY préparé par ${esc(admin.email)}. Aucun client n’est concerné.</p>` });
         await db.update(emailDeliveryLogs).set({ status: "sent", errorDetails: `Remise interne déclenchée par ${admin.email}` }).where(eq(emailDeliveryLogs.id, demo.id));
