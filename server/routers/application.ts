@@ -258,7 +258,7 @@ export const applicationRouter = router({
         formulaChosen: input.formulaChosen,
         paymentStatus: "PENDING",
         paymentTransactionId: transactionId,
-        paymentAmount: 65000,
+        paymentAmount: DEFAULT_OPENING_FEE_XAF,
         paymentCurrency: "XAF",
         dossierStatus: "nouveau",
         // Documents uploadés
@@ -316,7 +316,7 @@ export const applicationRouter = router({
         input.fullName,
         dossierNumber,
         input.destination,
-        65000, // Montant en FCFA
+        DEFAULT_OPENING_FEE_XAF, // montant proposé ; le montant du dossier est confirmé par écrit avant paiement
         "XAF"
       )).catch(err => console.error("[Email] Dossier confirmation error:", err));
 
@@ -325,7 +325,7 @@ export const applicationRouter = router({
         dossierNumber,
         input.fullName,
         input.destination,
-        65000,
+        DEFAULT_OPENING_FEE_XAF,
         "XAF"
       )).catch(err => console.error("[Email] Admin alert error:", err));
 
@@ -503,7 +503,7 @@ export const applicationRouter = router({
       try {
         const result = await initCinetPayTransaction({
           transactionId: app.paymentTransactionId ?? "",
-          amount: 65000,
+          amount: app.paymentAmount ?? DEFAULT_OPENING_FEE_XAF,
           currency: "XAF",
           description: `Ouverture dossier immigration 3M TRAVEL AGENCY — ${input.dossierNumber}`,
           customerName: app.fullName,
