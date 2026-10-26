@@ -141,7 +141,7 @@ export const luxembourgProcedure: CountryProcedure = {
   paymentOptions: [
     { name: "Paiement complet", amount: "2 300 000 FCFA", conditions: "Meilleur tarif, traitement prioritaire, paiement à la signature." },
     { name: "Par tranches (+15%)", amount: "2 645 000 FCFA", conditions: "Paiement flexible, échéancier par contrat, frais d'ouverture (selon profil) dus à la signature." },
-    { name: "Sortie de Visa Garanti (+25%)", amount: "2 875 000 FCFA", conditions: "Solde à l'obtention du visa, garanti par contrat, frais d'ouverture (selon profil) dus à la signature." },
+    { name: "Paiement à l'obtention du visa (+25%)", amount: "2 875 000 FCFA", conditions: "Solde exigible uniquement après l'obtention du visa (aucun résultat n'est garanti), frais d'ouverture (selon profil) dus à la signature." },
   ],
   paymentNote: "Dans tous les cas, les frais d'ouverture de dossier (montant selon votre profil, confirmé par écrit avant paiement) sont exigibles à la signature du mandat et non remboursables. Aucun autre frais d'agence n'est exigé avant signature écrite.",
   faq: [

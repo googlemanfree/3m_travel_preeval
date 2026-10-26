@@ -53,7 +53,7 @@ export const COUNTRY_PROTOCOL_PROFILES: Record<string, CountryProtocolProfile> =
     secondProtocolFormulas: [
       { label: "Règlement Intégral", amount: "2 300 000 FCFA", detail: "Règlement unique à la souscription du présent protocole. Tarif le plus avantageux, traitement prioritaire continu, gestionnaire de compte dédié." },
       { label: "Règlement Échelonné par Tranches (+15%)", amount: "2 645 000 FCFA", detail: "Tranche 1 (à la signature du Protocole N° 02) : 1 000 000 FCFA. Tranche 2 (à l'approbation du Permis de Travail) : 1 000 000 FCFA. Tranche 3 (au dépôt du dossier Visa D) : 645 000 FCFA." },
-      { label: "Sortie de Visa Garanti (+25%)", amount: "2 875 000 FCFA", detail: "Acompte d'engagement (à la signature) : 1 000 000 FCFA. Solde de garantie de 1 875 000 FCFA exigible UNIQUEMENT après apposition effective du visa dans le passeport du candidat." },
+      { label: "Paiement à l'obtention du visa (+25%)", amount: "2 875 000 FCFA", detail: "Acompte d'engagement (à la signature) : 1 000 000 FCFA. Solde de 1 875 000 FCFA exigible UNIQUEMENT après apposition effective du visa dans le passeport du candidat." },
     ],
     consularFeesEstimate: "environ 131 000 FCFA (Ambassade de Belgique / prestataire biométrique)",
   },
