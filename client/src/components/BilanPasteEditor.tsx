@@ -31,7 +31,8 @@ export function BilanPasteEditor({ value, onChange, disabled = false, label = "B
   useEffect(() => {
     if (!editorRef.current || focused || mode !== "visuel") return;
     if (editorRef.current.dataset.last !== value) {
-      editorRef.current.innerHTML = styleBilanHtml(value);
+      // Défense en profondeur : la valeur est re-nettoyée avant d'atteindre innerHTML, même si elle vient d'un brouillon ancien.
+      editorRef.current.innerHTML = styleBilanHtml(sanitizeBilanHtml(value));
       editorRef.current.dataset.last = value;
     }
   }, [value, focused, mode, styled]);

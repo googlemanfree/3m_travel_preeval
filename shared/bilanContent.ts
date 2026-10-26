@@ -16,7 +16,11 @@ const TAG_ALIASES: Record<string, string> = {
 };
 const BLOCKS_INSIDE_P = /<p>\s*(?=<(?:ul|ol|table|h[2-4]|blockquote|hr)\b)/g;
 const DROP_WITH_CONTENT = /<(script|style|head|title|iframe|object|embed|svg|math|template|noscript|xml|form|select|textarea|button)\b[\s\S]*?<\/\1\s*>/gi;
-const DROP_SELF_CLOSING = /<(?:meta|link|base|input|img|video|audio|source|picture|canvas|col|colgroup)\b[^>]*>/gi;
+const CANONICAL_TAG_OR_LT = new RegExp(
+  "(</?(?:p|strong|em|u|del|sup|sub|ul|ol|li|h2|h3|h4|blockquote|table|thead|tbody|tfoot|tr)>|<(?:br|hr)>|<a(?: href=\"[^\"<>]*\" target=\"_blank\" rel=\"noopener noreferrer\")?>|</a>|<t[dh](?: colspan=\"\\d{1,2}\")?(?: rowspan=\"\\d{1,2}\")?>|</t[dh]>)|<",
+  "g",
+);
+const DROP_SELF_CLOSING =/<(?:meta|link|base|input|img|video|audio|source|picture|canvas|col|colgroup)\b[^>]*>/gi;
 
 const decodeBasicEntities = (value: string) =>
   value
@@ -64,8 +68,9 @@ export function sanitizeBilanHtml(raw: string): string {
     }
     return `<${tag}>`;
   });
-  // un « < » qui ne forme pas une balise autorisée reste du texte
-  html = html.replace(/<(?!\/?(?:p|br|hr|strong|em|u|del|sup|sub|ul|ol|li|h2|h3|h4|blockquote|table|thead|tbody|tfoot|tr|td|th|a)\b)/g, "&lt;");
+  // Liste fermée : seules les balises telles que CE code vient de les réécrire survivent ; tout autre « < » (balise non fermée, attributs
+  // glissés avant un « < » suivant, noms approchants…) devient du texte. Un simple test sur le nom de balise laissait passer `<a onmouseover=… <b>`.
+  html = html.replace(CANONICAL_TAG_OR_LT, (match, tag: string | undefined) => (tag ? tag : "&lt;"));
   html = html
     .replace(/<p>\s*(?:&nbsp;|\s|<br>)*<\/p>/g, "")
     .replace(BLOCKS_INSIDE_P, "")
