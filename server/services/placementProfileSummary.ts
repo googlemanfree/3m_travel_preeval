@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 import { jsPDF } from "jspdf";
+import { applyLetterhead, letterheadLayout, type LetterheadOptions } from "../../shared/brandLetterhead";
+import { loadBrandLogoSync } from "../utils/brandLogo";
 import { z } from "zod";
 import type { CvDraft } from "../../shared/cvDraft";
 
@@ -233,16 +235,25 @@ export type SummaryPdfOptions = {
   generatedAt?: Date;
 };
 
-const NAVY: [number, number, number] = [15, 36, 96];
-const BLUE: [number, number, number] = [29, 78, 216];
+const NAVY: [number, number, number] = [23, 55, 94];
+const BLUE: [number, number, number] = [43, 108, 184];
 const INK: [number, number, number] = [30, 41, 59];
 const MUTED: [number, number, number] = [100, 116, 139];
 
 export function buildPlacementSummaryPdf(draft: PlacementSummaryDraft, options: SummaryPdfOptions = {}): Buffer {
   const pdf = new jsPDF({ unit: "mm", format: "a4" });
   const pageWidth = 210;
-  const margin = 16;
-  const bottom = 280;
+  const logo = loadBrandLogoSync();
+  const letterhead: LetterheadOptions = {
+    logoDataUri: logo?.dataUri,
+    logoFormat: logo?.format,
+    documentKind: "Fiche de synthèse candidat",
+    reference: options.reference ?? null,
+    dateLabel: (options.generatedAt ?? new Date()).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Douala" }),
+  };
+  const layout = letterheadLayout(letterhead);
+  const margin = layout.marginLeft;
+  const bottom = layout.contentBottom;
   const portrait = options.portrait && detectPortrait(options.portrait.data) ? options.portrait : null;
   const textWidthFull = pageWidth - margin * 2;
   const portraitWidth = 38;
@@ -255,7 +266,7 @@ export function buildPlacementSummaryPdf(draft: PlacementSummaryDraft, options: 
     if (y + needed <= bottom) return;
     pdf.addPage();
     page += 1;
-    y = 20;
+    y = layout.nextPageTop;
   };
   const write = (text: string, x: number, size: number, style: "normal" | "bold", color: [number, number, number]) => {
     pdf.setFont("helvetica", style);
@@ -283,16 +294,8 @@ export function buildPlacementSummaryPdf(draft: PlacementSummaryDraft, options: 
     y += 6.5;
   };
 
-  // Bandeau
-  pdf.setFillColor(...NAVY);
-  pdf.rect(0, 0, pageWidth, 26, "F");
-  y = 12;
-  write("3M TRAVEL AGENCY", margin, 15, "bold", [255, 255, 255]);
-  y = 19;
-  write("Fiche de synthèse candidat", margin, 9.5, "normal", [191, 219, 254]);
-
   // Identité (+ portrait à droite si autorisé)
-  const identityTop = 38;
+  const identityTop = layout.firstPageTop + 4;
   if (portrait) {
     const x = pageWidth - margin - portraitWidth;
     try {
@@ -341,18 +344,9 @@ export function buildPlacementSummaryPdf(draft: PlacementSummaryDraft, options: 
     }
   }
 
-  // Pied de page sur toutes les pages
-  const generated = (options.generatedAt ?? new Date()).toLocaleDateString("fr-FR");
-  for (let current = 1; current <= page; current++) {
-    pdf.setPage(current);
-    pdf.setDrawColor(203, 213, 225);
-    pdf.line(margin, 284, pageWidth - margin, 284);
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(8);
-    pdf.setTextColor(...MUTED);
-    pdf.text(pdfSafe("Contact : 3M TRAVEL AGENCY uniquement. Les coordonnées du candidat sont transmises par l'agence."), margin, 289);
-    pdf.text(pdfSafe(`Fiche établie par 3M TRAVEL AGENCY${options.reference ? ` - Réf. ${options.reference}` : ""} - ${generated} - page ${current}/${page}`), margin, 293);
-  }
+  y += 8;
+  paragraph("Contact : 3M TRAVEL AGENCY uniquement. Les coordonnées du candidat sont transmises par l'agence.", 8.5, textWidthFull, 4, MUTED);
+  applyLetterhead(pdf, letterhead);
 
   return Buffer.from(pdf.output("arraybuffer"));
 }

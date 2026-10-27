@@ -1,4 +1,5 @@
 import { deflateSync } from "node:zlib";
+import { imageCount, letterheadImageBaseline } from "./testUtils/pdfImages";
 import { describe, expect, it } from "vitest";
 import type { CvDraft } from "../shared/cvDraft";
 import {
@@ -149,14 +150,15 @@ describe("fiche de synthèse : PDF", () => {
   });
 
   it("sans portrait : aucune image dans le PDF ; avec portrait : une image est incrustée", () => {
-    expect(text(buildPlacementSummaryPdf(draft))).not.toContain("/Subtype /Image");
+    const baseline = letterheadImageBaseline();
+    expect(imageCount(text(buildPlacementSummaryPdf(draft)))).toBe(baseline);
     const withPortrait = buildPlacementSummaryPdf(draft, { portrait: { data: png(), mime: "image/png" } });
-    expect(text(withPortrait)).toContain("/Subtype /Image");
+    expect(imageCount(text(withPortrait))).toBe(baseline + 1);
   });
 
   it("une image corrompue ou déguisée n'est jamais incrustée : la fiche reste complète", () => {
     const fake = buildPlacementSummaryPdf(draft, { portrait: { data: Buffer.from("<script>alert(1)</script>"), mime: "image/png" } });
-    expect(text(fake)).not.toContain("/Subtype /Image");
+    expect(imageCount(text(fake))).toBe(letterheadImageBaseline());
     expect(text(fake)).toContain("Contact : 3M TRAVEL AGENCY uniquement");
   });
 
