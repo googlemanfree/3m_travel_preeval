@@ -48,6 +48,8 @@ export function stripUrls(text: string | null | undefined): string | null {
   if (!text) return null;
   const cleaned = text
     .replace(/\(?\s*(?:source\s*:?\s*)?(?:https?:\/\/|www\.)[^\s)]+\s*\)?/gi, " ")
+    // Phrases qui renvoient le lecteur vers un site officiel (« Consulter la source officielle avant toute démarche. »).
+    .replace(/(^|[.!?]\s+)(?:consulter|vérifier|voir)\s+(?:la|le|les)\s+(?:sources?|portail|sites?)\s+officiel(?:le|s|les)?[^.!?]*[.!?]?/gi, "$1")
     .replace(/\s{2,}/g, " ")
     .replace(/\s+([.,;:])/g, "$1")
     .trim();

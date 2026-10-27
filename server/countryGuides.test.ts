@@ -116,6 +116,9 @@ describe("aucun lien officiel côté public", () => {
     expect(stripUrls("https://exemple.org/page")).toBeNull();
     expect(stripUrls(null)).toBeNull();
     expect(stripUrls("Texte sans adresse.")).toBe("Texte sans adresse.");
+    // Les renvois vers « la source officielle » sont retirés eux aussi : la suite se lance avec l'agence.
+    expect(stripUrls("Consulter la source officielle avant toute démarche.")).toBeNull();
+    expect(stripUrls("Délai indicatif. Consulter le portail officiel avant le dépôt. Frais selon le profil.")).toBe("Délai indicatif. Frais selon le profil.");
   });
 
   it("n'expose ni source ni lien d'étape, mais donne tous les détails du dispositif", () => {
