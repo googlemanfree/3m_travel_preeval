@@ -13,6 +13,7 @@ export * from "./recruitmentSchema";
 export * from "./evaluationFormSchema";
 export * from "./placementPortalSchema";
 export * from "./securityMfaSchema";
+export * from "./countryCatalogSchema";
 
 /**
  * Core user table backing auth flow.
