@@ -8,6 +8,8 @@
  * Les coordonnées légales proviennent d'ici et d'ici seulement : une modification se répercute partout.
  */
 
+import { LETTERHEAD_COMPACT_JPEG, LETTERHEAD_FOOTER_JPEG, LETTERHEAD_HEADER_FOCUS_JPEG, LETTERHEAD_HEADER_JPEG } from "./brandLetterheadAssets";
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export type PdfLike = any;
 
@@ -103,86 +105,33 @@ export type LetterheadLayout = {
 };
 
 export function letterheadLayout(options: LetterheadOptions = {}): LetterheadLayout {
-  let firstPageTop = options.documentKind ? 60 : 46;
+  let firstPageTop = options.documentKind ? 66 : 50;
   if (options.recipient) firstPageTop += 6;
   if (options.subject) firstPageTop += 6;
-  return { marginLeft: MARGIN_LEFT, marginRight: MARGIN_RIGHT, contentWidth: MARGIN_RIGHT - MARGIN_LEFT, firstPageTop, nextPageTop: 34, contentBottom: 257 };
+  return { marginLeft: MARGIN_LEFT, marginRight: MARGIN_RIGHT, contentWidth: MARGIN_RIGHT - MARGIN_LEFT, firstPageTop, nextPageTop: 34, contentBottom: 250 };
 }
 
 export function frenchDateLabel(date: Date = new Date()): string {
   return date.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Douala" });
 }
 
-type Segment = { l: [number, number] } | { c: [number, number, number, number, number, number] };
-
-/** Trace une forme pleine à partir de points absolus (droites et courbes de Bézier) ; jsPDF attend des déplacements relatifs. */
-function fillShape(doc: PdfLike, start: [number, number], segments: Segment[], color: readonly number[]) {
-  let [cx, cy] = start;
-  const relative = segments.map((segment) => {
-    if ("l" in segment) {
-      const out = [segment.l[0] - cx, segment.l[1] - cy];
-      [cx, cy] = segment.l;
-      return out;
-    }
-    const [x1, y1, x2, y2, x3, y3] = segment.c;
-    const out = [x1 - cx, y1 - cy, x2 - cx, y2 - cy, x3 - cx, y3 - cy];
-    [cx, cy] = [x3, y3];
-    return out;
-  });
-  doc.setFillColor(color[0], color[1], color[2]);
-  doc.lines(relative, start[0], start[1], [1, 1], "F", true);
-}
-
-function drawTopWaves(doc: PdfLike, scale = 1) {
-  const s = (value: number) => value * scale;
-  const right = PAGE_W;
-  const layers: Array<{ from: number; drop: number; mid: number; color: readonly number[] }> = [
-    { from: 110, drop: 17, mid: 12, color: BRAND_COLORS.pale },
-    { from: 135, drop: 12, mid: 8.5, color: BRAND_COLORS.light },
-    { from: 150, drop: 8, mid: 5.5, color: BRAND_COLORS.blue },
-    { from: 172, drop: 4.5, mid: 3, color: BRAND_COLORS.navy },
-  ];
-  for (const layer of layers) {
-    const from = right - (right - layer.from) * scale;
-    fillShape(doc, [from, 0], [{ l: [right, 0] }, { l: [right, s(layer.drop)] }, { c: [right - (right - from) * 0.55, s(layer.mid), right - (right - from) * 0.25, s(layer.mid * 0.45), from, 0] }], layer.color);
+/**
+ * Bandeaux du papier à en-tête v3 (logo, nom, services, vagues, pied de page) : images générées par docs/brand/v3/build-assets.py
+ * à partir du même dessin que le papier vierge (PDF/Word). Seul le texte variable est écrit ici.
+ */
+function drawBand(doc: PdfLike, dataUri: string, alias: string, y: number, height: number) {
+  try {
+    doc.addImage(dataUri, "JPEG", 0, y, PAGE_W, height, alias, "FAST");
+  } catch {
+    /* le décor ne doit jamais empêcher la production du document */
   }
-}
-
-function drawBottomWaves(doc: PdfLike) {
-  const layers: Array<{ top: number; mid: number; color: readonly number[] }> = [
-    { top: 290.5, mid: 292.5, color: BRAND_COLORS.pale },
-    { top: 292.5, mid: 294, color: BRAND_COLORS.light },
-    { top: 294, mid: 295, color: BRAND_COLORS.blue },
-    { top: 295.6, mid: 296.2, color: BRAND_COLORS.navy },
-  ];
-  for (const layer of layers) {
-    fillShape(doc, [0, PAGE_H], [{ l: [0, layer.top + 3] }, { c: [60, layer.mid + 3.5, 140, layer.mid + 1, PAGE_W, layer.top - 3] }, { l: [PAGE_W, PAGE_H] }], layer.color);
-  }
-}
-
-function drawLogo(doc: PdfLike, options: LetterheadOptions, x: number, y: number, size: number) {
-  if (options.logoDataUri) {
-    try {
-      doc.addImage(options.logoDataUri, options.logoFormat ?? "PNG", x, y, size, size, "brand-logo", "FAST");
-      return;
-    } catch {
-      /* repli : monogramme */
-    }
-  }
-  doc.setDrawColor(NR, NG, NB);
-  doc.setLineWidth(0.9);
-  doc.circle(x + size / 2, y + size / 2, size / 2 - 0.5, "S");
-  doc.setTextColor(BRAND_COLORS.blue[0], BRAND_COLORS.blue[1], BRAND_COLORS.blue[2]);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(size * 0.8);
-  doc.text("3M", x + size / 2, y + size / 2 + size * 0.14, { align: "center" });
 }
 
 function drawWatermark(doc: PdfLike, options: LetterheadOptions) {
   if (!options.logoDataUri || options.watermark === false || typeof doc.GState !== "function" || typeof doc.setGState !== "function") return;
   try {
-    doc.setGState(new doc.GState({ opacity: 0.05 }));
-    doc.addImage(options.logoDataUri, options.logoFormat ?? "PNG", 45, 95, 120, 120, "brand-logo", "FAST");
+    doc.setGState(new doc.GState({ opacity: 0.065 }));
+    doc.addImage(options.logoDataUri, options.logoFormat ?? "PNG", 38, 88, 134, 134, "brand-logo", "FAST");
   } catch {
     /* le filigrane est un décor : jamais bloquant */
   } finally {
@@ -191,37 +140,29 @@ function drawWatermark(doc: PdfLike, options: LetterheadOptions) {
 }
 
 function drawFirstPageHeader(doc: PdfLike, options: LetterheadOptions) {
-  drawTopWaves(doc);
-  drawLogo(doc, options, MARGIN_LEFT, 8, 25);
-  doc.setTextColor(NR, NG, NB);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(23);
-  doc.text(BRAND.commercialName, 47, 20);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.2);
-  const [servicesLine, focusLine] = headerServices(options);
-  doc.text(servicesLine, 47, 26.5);
-  if (options.serviceFocus?.trim()) doc.setFont("helvetica", "bold");
-  doc.text(focusLine, 47, 31);
-  doc.setFont("helvetica", "normal");
-  doc.setDrawColor(BRAND_COLORS.light[0], BRAND_COLORS.light[1], BRAND_COLORS.light[2]);
-  doc.setLineWidth(0.4);
-  doc.line(MARGIN_LEFT, 37, MARGIN_RIGHT, 37);
+  const focus = options.serviceFocus?.trim();
+  drawBand(doc, focus ? LETTERHEAD_HEADER_FOCUS_JPEG : LETTERHEAD_HEADER_JPEG, focus ? "3m-letterhead-header-focus" : "3m-letterhead-header", 0, 44);
+  if (focus) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(NR, NG, NB);
+    doc.text(focus, 48.3, 31.6);
+  }
 
   if (!options.documentKind) return;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
   doc.setTextColor(NR, NG, NB);
-  doc.text(options.documentKind.toUpperCase(), MARGIN_LEFT, 47);
+  doc.text(options.documentKind.toUpperCase(), MARGIN_LEFT, 54);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(BRAND_COLORS.muted[0], BRAND_COLORS.muted[1], BRAND_COLORS.muted[2]);
-  if (options.reference) doc.text(`Réf. : ${options.reference}`, MARGIN_RIGHT, 44.5, { align: "right" });
-  doc.text(`Yaoundé, le ${options.dateLabel || frenchDateLabel()}`, MARGIN_RIGHT, 49, { align: "right" });
+  if (options.reference) doc.text(`Réf. : ${options.reference}`, MARGIN_RIGHT, 51.5, { align: "right" });
+  doc.text(`Yaoundé, le ${options.dateLabel || frenchDateLabel()}`, MARGIN_RIGHT, 56, { align: "right" });
   doc.setDrawColor(BRAND_COLORS.blue[0], BRAND_COLORS.blue[1], BRAND_COLORS.blue[2]);
   doc.setLineWidth(0.6);
-  doc.line(MARGIN_LEFT, 53, MARGIN_LEFT + 28, 53);
-  let y = 59;
+  doc.line(MARGIN_LEFT, 60, MARGIN_LEFT + 28, 60);
+  let y = 66;
   doc.setFontSize(9.5);
   doc.setTextColor(BRAND_COLORS.ink[0], BRAND_COLORS.ink[1], BRAND_COLORS.ink[2]);
   if (options.recipient) {
@@ -240,61 +181,20 @@ function drawFirstPageHeader(doc: PdfLike, options: LetterheadOptions) {
 }
 
 function drawCompactHeader(doc: PdfLike, options: LetterheadOptions) {
-  drawTopWaves(doc, 0.6);
-  drawLogo(doc, options, MARGIN_LEFT, 8, 13);
-  doc.setTextColor(NR, NG, NB);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text(BRAND.commercialName, 34, 15.5);
+  drawBand(doc, LETTERHEAD_COMPACT_JPEG, "3m-letterhead-compact", 0, 28);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(BRAND_COLORS.muted[0], BRAND_COLORS.muted[1], BRAND_COLORS.muted[2]);
   const right = [options.documentKind ? options.documentKind.toUpperCase() : "", options.reference ? `Réf. : ${options.reference}` : ""].filter(Boolean).join("  ·  ");
-  if (right) doc.text(right, MARGIN_RIGHT, 25, { align: "right" });
-  doc.setDrawColor(BRAND_COLORS.light[0], BRAND_COLORS.light[1], BRAND_COLORS.light[2]);
-  doc.setLineWidth(0.4);
-  doc.line(MARGIN_LEFT, 27, MARGIN_RIGHT, 27);
+  if (right) doc.text(right, MARGIN_RIGHT, 23.6, { align: "right" });
 }
 
 function drawFooter(doc: PdfLike, page: number, total: number) {
-  drawBottomWaves(doc);
-  doc.setDrawColor(BRAND_COLORS.light[0], BRAND_COLORS.light[1], BRAND_COLORS.light[2]);
-  doc.setLineWidth(0.4);
-  doc.line(MARGIN_LEFT, 261.5, MARGIN_RIGHT, 261.5);
-  const columns: Array<{ x: number; block: { title: string; lines: readonly string[] } }> = [
-    { x: MARGIN_LEFT, block: BRAND.cameroon },
-    { x: 112, block: BRAND.canada },
-  ];
-  for (const { x, block } of columns) {
-    doc.setTextColor(NR, NG, NB);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.text(block.title, x, 266);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
-    doc.setTextColor(BRAND_COLORS.ink[0], BRAND_COLORS.ink[1], BRAND_COLORS.ink[2]);
-    let y = 270;
-    for (const line of block.lines) {
-      const wrapped = doc.splitTextToSize(line, 80) as string[];
-      for (const part of wrapped) {
-        doc.text(part, x, y);
-        y += 3.3;
-      }
-    }
-  }
+  drawBand(doc, LETTERHEAD_FOOTER_JPEG, "3m-letterhead-footer", 252, 45);
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(6.6);
   doc.setTextColor(BRAND_COLORS.muted[0], BRAND_COLORS.muted[1], BRAND_COLORS.muted[2]);
-  doc.text(`${BRAND.legalName}  ·  RC : ${BRAND.rc}  ·  NIU : ${BRAND.niu}`, PAGE_W / 2, 279.2, { align: "center" });
-  doc.setFillColor(NR, NG, NB);
-  doc.roundedRect(PAGE_W / 2 - 32, 281.4, 64, 5.6, 2.8, 2.8, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.text(BRAND.website, PAGE_W / 2, 285.2, { align: "center" });
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(BRAND_COLORS.muted[0], BRAND_COLORS.muted[1], BRAND_COLORS.muted[2]);
-  doc.text(`Page ${page} / ${total}`, MARGIN_RIGHT, 279.2, { align: "right" });
+  doc.text(`Page ${page} / ${total}`, MARGIN_RIGHT, 277.6, { align: "right" });
 }
 
 /** À appeler une fois tout le contenu écrit : peint le papier à en-tête sur chaque page. */
@@ -357,7 +257,7 @@ export function renderBrandedEmailHtml(input: BrandedEmailInput): string {
 <tr><td style="padding:22px 28px 14px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
 <td width="64" style="vertical-align:middle"><img src="${escapeBrandHtml(BRAND.logoUrl)}" width="56" height="56" alt="${escapeBrandHtml(BRAND.commercialName)}" style="display:block;border:0"></td>
-<td style="vertical-align:middle;padding-left:12px"><div style="font:bold 22px Arial,Helvetica,sans-serif;color:${navy};letter-spacing:.5px">${escapeBrandHtml(BRAND.commercialName)}</div>
+<td style="vertical-align:middle;padding-left:12px"><div style="font:bold 22px Arial,Helvetica,sans-serif;color:${navy};letter-spacing:.5px">3M TRAVEL <span style="color:${blue}">AGENCY</span></div>
 <div style="font:11px/1.45 Arial,Helvetica,sans-serif;color:${muted}">${escapeBrandHtml(headerServices(input)[0])}<br>${input.serviceFocus?.trim() ? `<strong style="color:${navy}">${escapeBrandHtml(headerServices(input)[1])}</strong>` : escapeBrandHtml(headerServices(input)[1])}</div></td>
 </tr></table></td></tr>
 <tr><td style="padding:0 28px"><div style="height:1px;background:${light}"></div></td></tr>
