@@ -54,6 +54,7 @@ import { CandidateCountryJourney } from "@/components/CandidateCountryJourney";
 import { ClientProgramPlan } from "@/components/ClientProgramPlan";
 import CandidateEvaluationStatus from "@/components/CandidateEvaluationStatus";
 import { SignableDocumentsPanel } from "@/components/SignableDocumentsPanel";
+import { ClientOpportunities } from "@/components/ClientOpportunities";
 import NextStepCard from "@/components/NextStepCard";
 import DossierPaymentCard from "@/components/DossierPaymentCard";
 import ClientPaymentStatusTable from "@/components/ClientPaymentStatusTable";
@@ -1096,6 +1097,7 @@ export default function EvaluationSpace() {
                 </div>
               )}
               <SentBilanViewer enabled={isAuthenticated} />
+              <ClientOpportunities destination={primaryDestination} projectType={latestEvaluation?.projectType} visaType={latestEvaluation?.visaType ?? activeDossier?.visaType ?? activeAgencyDossier?.visaType} />
               {agreementAfterPaymentRequired && (
                 <Card className="border border-amber-300 bg-gradient-to-r from-amber-50 via-white to-blue-50 p-4 shadow-sm sm:p-5" role="region" aria-labelledby="agreement-after-payment-title">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

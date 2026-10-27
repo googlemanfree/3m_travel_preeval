@@ -30,5 +30,11 @@ export function guideCountryName(code: string): string | null {
   return CODE_TO_ROW.get(code)?.[1] ?? null;
 }
 
+/** Adresse du guide pour un nom de destination saisi librement (« Allemagne », « allemagne », « Côte d'Ivoire »), ou null. */
+export function guideSlugForDestinationName(name: string | null | undefined): string | null {
+  const slug = countrySlug(String(name ?? ""));
+  return slug && guideCodeForSlug(slug) ? slug : null;
+}
+
 export const GUIDES_INDEX_PATH = "/pays";
 export const guidePath = (slug: string) => `${GUIDES_INDEX_PATH}/${slug}`;

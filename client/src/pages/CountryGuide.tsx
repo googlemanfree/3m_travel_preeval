@@ -5,7 +5,9 @@ import { OFFER_REQUIREMENT_LABELS, PATHWAYS, PATHWAY_LABELS, ROUTE_TYPE_LABELS, 
 import { guideCodeForSlug, guideCountryName } from "@shared/countryGuides";
 import { trpc } from "@/lib/trpc";
 import { setPageSeo } from "@/lib/pageSeo";
+import { trackEvent } from "@/lib/analytics";
 import { ServicePageShell } from "@/components/ServicePageShell";
+import { SocialShareButtons } from "@/components/SocialShareButtons";
 import NotFound from "./NotFound";
 
 const dateLabel = (value: string | null) => (value ? new Date(value).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : null);
@@ -21,6 +23,10 @@ export default function CountryGuide() {
 
   const data = guide.data ?? null;
   const current = useMemo(() => data?.pathways.find((item) => item.pathway === (pathway ?? data.pathways[0]?.pathway)) ?? null, [data, pathway]);
+
+  useEffect(() => {
+    if (name && data) trackEvent("country_guide_view", { country: name, pathways: data.pathways.map((item) => item.pathway).join(",") });
+  }, [name, data]);
 
   useEffect(() => {
     if (!name) return;
@@ -58,7 +64,7 @@ export default function CountryGuide() {
           <>
             <div className="flex flex-wrap gap-2" role="tablist" aria-label="Parcours">
               {PATHWAYS.filter((item) => data.pathways.some((entry) => entry.pathway === item)).map((item) => (
-                <button key={item} type="button" role="tab" aria-selected={current?.pathway === item} onClick={() => setPathway(item)} className={`rounded-lg border px-4 py-2 text-sm font-bold ${current?.pathway === item ? "border-blue-800 bg-blue-800 text-white" : "border-slate-300 bg-white text-slate-800 hover:border-blue-400"}`}>{PATHWAY_LABELS[item]}</button>
+                <button key={item} type="button" role="tab" aria-selected={current?.pathway === item} onClick={() => { setPathway(item); trackEvent("country_guide_pathway", { country: name, pathway: item }); }} className={`rounded-lg border px-4 py-2 text-sm font-bold ${current?.pathway === item ? "border-blue-800 bg-blue-800 text-white" : "border-slate-300 bg-white text-slate-800 hover:border-blue-400"}`}>{PATHWAY_LABELS[item]}</button>
               ))}
             </div>
             {current ? (
@@ -97,13 +103,14 @@ export default function CountryGuide() {
                     <h3 className="text-lg font-black text-slate-950">Sources officielles</h3>
                     <ul className="mt-2 space-y-1 text-sm">
                       {current.sources.map((source) => (
-                        <li key={source.url}><a href={source.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-blue-800 underline">{source.label}<ExternalLink className="h-3 w-3" aria-hidden="true" /></a>{source.checkedAt ? <span className="text-slate-500"> · vérifié le {dateLabel(source.checkedAt)}</span> : null}</li>
+                        <li key={source.url}><a href={source.url} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent("country_guide_source_click", { country: name, pathway: current.pathway })} className="inline-flex items-center gap-1 font-semibold text-blue-800 underline">{source.label}<ExternalLink className="h-3 w-3" aria-hidden="true" /></a>{source.checkedAt ? <span className="text-slate-500"> · vérifié le {dateLabel(source.checkedAt)}</span> : null}</li>
                       ))}
                     </ul>
                   </section>
                 ) : null}
               </div>
             ) : null}
+            <SocialShareButtons title={`Visa ${name} : procédures vérifiées`} className="mt-8" />
           </>
         ) : null}
       </section>

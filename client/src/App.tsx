@@ -75,6 +75,7 @@ const Ressources = lazyWithTimeout(() => import("./pages/Ressources"));
 const ResourceCountryPage = lazyWithTimeout(() => import("./pages/ResourceCountryPage"));
 const CountryGuides = lazyWithTimeout(() => import("./pages/CountryGuides"));
 const CountryGuide = lazyWithTimeout(() => import("./pages/CountryGuide"));
+const DocumentChecklistTool = lazyWithTimeout(() => import("./pages/DocumentChecklistTool"));
 const ProcedureResourceGuide = lazyWithTimeout(() => import("./pages/ProcedureResourceGuide"));
 const Fiches = lazyWithTimeout(() => import("./pages/Fiches"));
 const TranslationOrder = lazyWithTimeout(() => import("./pages/TranslationOrder"));
@@ -362,6 +363,7 @@ function Router() {
       {/* Guides par pays issus du catalogue des parcours : publiés seulement après relecture des sources officielles. */}
       <Route path={"/pays"} component={CountryGuides} />
       <Route path={"/pays/:slug"} component={CountryGuide} />
+      <Route path={"/outils/liste-de-pieces"} component={DocumentChecklistTool} />
       <Route path={"/guide-procedures"} component={ProcedureResourceGuide} />
 
       {/* Fiches détaillées par pays */}
