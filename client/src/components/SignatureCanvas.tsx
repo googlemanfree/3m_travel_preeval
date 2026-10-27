@@ -31,7 +31,11 @@ export default function SignatureCanvas({ onSignatureChange }: Props) {
   const getPosition = (event: React.PointerEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current!;
     const rect = canvas.getBoundingClientRect();
-    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    // Le tracé vit dans une image de 500×160 affichée à la largeur de l'écran : sans cette mise à l'échelle,
+    // le trait apparaît décalé du doigt dès que la zone n'est pas affichée à 500 px (téléphone, tablette).
+    const scaleX = rect.width ? canvas.width / rect.width : 1;
+    const scaleY = rect.height ? canvas.height / rect.height : 1;
+    return { x: (event.clientX - rect.left) * scaleX, y: (event.clientY - rect.top) * scaleY };
   };
 
   const startDrawing = (event: React.PointerEvent<HTMLCanvasElement>) => {
@@ -103,12 +107,12 @@ export default function SignatureCanvas({ onSignatureChange }: Props) {
 
   return (
     <div>
-      <div className="relative rounded-lg border-2 border-dashed border-gray-300 bg-white">
+      <div className={`relative rounded-lg border-2 bg-white transition-colors ${hasDrawn ? "border-solid border-emerald-300" : "border-dashed border-gray-300"}`}>
         <canvas
           ref={canvasRef}
           width={500}
           height={160}
-          className="h-40 w-full touch-none cursor-crosshair rounded-lg"
+          className="h-40 w-full touch-none cursor-crosshair select-none rounded-lg"
           onPointerDown={startDrawing}
           onPointerMove={draw}
           onPointerUp={stopDrawing}
@@ -116,7 +120,7 @@ export default function SignatureCanvas({ onSignatureChange }: Props) {
           onPointerLeave={stopDrawing}
           aria-label="Zone de signature manuscrite"
         />
-        {!hasDrawn && <p className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-gray-300">Signez ici avec la souris ou le doigt</p>}
+        {!hasDrawn && <p className="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-gray-400">Signez ici avec la souris ou le doigt</p>}
       </div>
       <Button type="button" variant="ghost" onClick={clear} className="mt-2 h-auto px-0 text-xs text-gray-500 hover:text-red-600">
         <Eraser className="mr-1 h-3 w-3" /> Effacer et recommencer
