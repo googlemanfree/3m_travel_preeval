@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>3M Travel Agency — Papier à en-tête</title>
+<style>
+@import url(fonts-local.css);
+@page { size: 210mm 297mm; margin: 0; }
+:root {
+  --navy: #17375e; --blue: #2b6cb8; --sky: #bbd9ea; --pale: #e4eef5; --ink: #1f2937; --muted: #64748b;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 210mm; height: 297mm; background: #fff; }
+body { position: relative; overflow: hidden; font-family: 'Manrope', Arial, sans-serif; color: var(--ink); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.abs { position: absolute; }
+svg.ic { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---- Vagues ---- */
+.wave-top { left: 0; top: 0; width: 210mm; height: 40mm; }
+.wave-bottom { left: 0; bottom: 0; width: 210mm; height: 20mm; }
+
+/* ---- En-tête ---- */
+.logo { left: 15mm; top: 9mm; width: 29mm; height: 29mm; }
+.brand { left: 48mm; top: 11.2mm; font-family: 'Sora', sans-serif; font-weight: 800; font-size: 25pt; letter-spacing: .01em; color: var(--navy); line-height: 1; white-space: nowrap; }
+.brand span { color: var(--blue); }
+.tagline { left: 48.3mm; top: 22.2mm; font-weight: 700; font-size: 6.9pt; letter-spacing: .21em; text-transform: uppercase; color: var(--blue); white-space: nowrap; }
+.services { left: 48mm; top: 28.6mm; display: flex; gap: 4.6mm; align-items: center; }
+.services .s { display: flex; align-items: center; gap: 1.5mm; font-weight: 600; font-size: 7.4pt; color: var(--navy); white-space: nowrap; }
+.services .s i { display: block; width: 4mm; height: 4mm; color: var(--blue); }
+.rule-top { left: 15mm; top: 42.5mm; width: 180mm; height: .5mm; background: linear-gradient(90deg, var(--navy) 0%, var(--blue) 38%, var(--sky) 78%, rgba(187,217,234,0) 100%); border-radius: 1mm; }
+
+/* ---- Champs ---- */
+.field { left: 15mm; }
+.label { font-family: 'Sora', sans-serif; font-weight: 600; font-size: 6.2pt; letter-spacing: .2em; text-transform: uppercase; color: var(--navy); }
+.line { height: 0; border-bottom: .25mm solid var(--sky); }
+.dot { display: inline-block; width: 1.4mm; height: 1.4mm; border-radius: 50%; background: var(--blue); margin-right: 1.6mm; vertical-align: .1mm; }
+
+/* ---- Filigrane ---- */
+.watermark { left: 38mm; top: 88mm; width: 134mm; height: 134mm; opacity: .065; filter: saturate(.8); }
+.wm-ring { left: 22mm; top: 76mm; width: 166mm; height: 166mm; }
+
+/* ---- Pied de page ---- */
+.rule-bottom { left: 15mm; top: 250.5mm; width: 180mm; height: .5mm; background: linear-gradient(90deg, rgba(187,217,234,0) 0%, var(--sky) 22%, var(--blue) 62%, var(--navy) 100%); border-radius: 1mm; }
+.col { top: 254.2mm; font-size: 6.7pt; line-height: 1.5; color: var(--ink); }
+.col h4 { font-family: 'Sora', sans-serif; font-weight: 800; font-size: 6.9pt; letter-spacing: .18em; color: var(--navy); margin-bottom: 1mm; }
+.col .r { display: flex; gap: 1.6mm; align-items: flex-start; }
+.col .r i { display: block; flex: none; width: 2.8mm; height: 2.8mm; margin-top: .45mm; color: var(--blue); }
+.legal { left: 0; width: 210mm; top: 273.4mm; text-align: center; font-size: 6.1pt; color: var(--muted); letter-spacing: .02em; }
+.legal b { color: var(--navy); font-weight: 700; }
+.pill { left: 72mm; top: 278.4mm; width: 66mm; height: 6.2mm; border-radius: 3.1mm; background: linear-gradient(90deg, var(--navy), #1f4a82); color: #fff; font-family: 'Sora', sans-serif; font-weight: 600; font-size: 7.4pt; letter-spacing: .03em; display: flex; align-items: center; justify-content: center; gap: 1.6mm; }
+.pill i { display: block; width: 3.2mm; height: 3.2mm; color: var(--sky); }
+</style>
+</head>
+<body>
+
+<!-- Filigrane : emblème du logo, très pâle, centré dans la zone de rédaction -->
+<img class="abs watermark" src="logo.png" alt="">
+
+<!-- Vague du haut (dégradé en couches, côté droit) -->
+<svg class="abs wave-top" viewBox="0 0 210 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#e4eef5" stop-opacity="0"/><stop offset=".45" stop-color="#e4eef5"/><stop offset="1" stop-color="#d3e6f1"/></linearGradient>
+    <linearGradient id="g2" x1="0" x2="1"><stop offset="0" stop-color="#bbd9ea" stop-opacity="0"/><stop offset=".5" stop-color="#bbd9ea"/><stop offset="1" stop-color="#9cc6e0"/></linearGradient>
+    <linearGradient id="g3" x1="0" x2="1"><stop offset="0" stop-color="#2b6cb8" stop-opacity="0"/><stop offset=".55" stop-color="#2b6cb8"/><stop offset="1" stop-color="#245a9c"/></linearGradient>
+    <linearGradient id="g4" x1="0" x2="1"><stop offset="0" stop-color="#17375e" stop-opacity="0"/><stop offset=".6" stop-color="#17375e"/><stop offset="1" stop-color="#102a49"/></linearGradient>
+  </defs>
+  <path d="M96 0 H210 V20 C176 24 140 15 96 0 Z" fill="url(#g1)"/>
+  <path d="M122 0 H210 V14.5 C180 18 150 11 122 0 Z" fill="url(#g2)"/>
+  <path d="M146 0 H210 V9 C186 12 164 7 146 0 Z" fill="url(#g3)"/>
+  <path d="M170 0 H210 V4.6 C196 6.4 182 3.6 170 0 Z" fill="url(#g4)"/>
+</svg>
+
+<!-- Logo + nom -->
+<img class="abs logo" src="logo.png" alt="3M Travel Agency">
+<div class="abs brand">3M TRAVEL <span>AGENCY</span></div>
+<div class="abs tagline">Accompagnement visa &amp; mobilité internationale</div>
+<div class="abs services">
+  <div class="s"><i><svg class="ic" viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg></i>Voyages</div>
+  <div class="s"><i><svg class="ic" viewBox="0 0 24 24"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg></i>Études</div>
+  <div class="s"><i><svg class="ic" viewBox="0 0 24 24"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg></i>Travail</div>
+  <div class="s"><i><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></i>Visas &amp; e-Visa</div>
+  <div class="s"><i><svg class="ic" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></i>Assurance voyage</div>
+</div>
+<div class="abs rule-top"></div>
+
+<!-- Zone d'identification du courrier -->
+<div class="abs field" style="top:49mm;width:104mm"><div class="label"><span class="dot"></span>Référence</div><div class="line" style="margin-top:5.2mm"></div></div>
+<div class="abs field" style="left:128mm;top:49mm;width:67mm"><div class="label"><span class="dot"></span>Yaoundé, le</div><div class="line" style="margin-top:5.2mm"></div></div>
+<div class="abs field" style="top:63mm;width:180mm"><div class="label"><span class="dot"></span>Destinataire</div><div class="line" style="margin-top:5.2mm"></div></div>
+<div class="abs field" style="top:77mm;width:180mm"><div class="label"><span class="dot"></span>Objet</div><div class="line" style="margin-top:5.2mm"></div></div>
+
+<!-- Pied de page -->
+<div class="abs rule-bottom"></div>
+<div class="abs col" style="left:15mm;width:60mm">
+  <h4>CAMEROUN</h4>
+  <div class="r"><i><svg class="ic" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></i><span>Yaoundé — Biyem-Assi,<br>Montée Chapelle Obili,<br>à 10 m de EHS</span></div>
+  <div class="r"><i><svg class="ic" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.62a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.46-1.19a2 2 0 0 1 2.11-.45c.84.29 1.72.5 2.62.62A2 2 0 0 1 22 16.92z"/></svg></i><span>+237 698 104 832 (WhatsApp)<br>+237 620 996 045 (appels)</span></div>
+</div>
+<div class="abs col" style="left:84mm;width:56mm">
+  <h4>CANADA</h4>
+  <div class="r"><i><svg class="ic" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></i><span>Ottawa — Sur rendez-vous</span></div>
+  <div class="r"><i><svg class="ic" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.62a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.46-1.19a2 2 0 0 1 2.11-.45c.84.29 1.72.5 2.62.62A2 2 0 0 1 22 16.92z"/></svg></i><span>+1 672 897 2999 (WhatsApp)</span></div>
+</div>
+<div class="abs col" style="left:146mm;width:49mm">
+  <h4>CONTACT</h4>
+  <div class="r"><i><svg class="ic" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></i><span>hello@3mtravelagency.com</span></div>
+  <div class="r"><i><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></i><span>www.3mtravelagency.com</span></div>
+</div>
+<div class="abs legal"><b>3M Travel Agency SARL</b> &nbsp;·&nbsp; RC : RC/YAO/2019/A/2567 &nbsp;·&nbsp; NIU : M112417203369H</div>
+<div class="abs pill"><i><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></i>www.3mtravelagency.com</div>
+
+<!-- Vague du bas -->
+<svg class="abs wave-bottom" viewBox="0 0 210 20" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M0 20 V10.5 C46 15.6 128 17.4 210 6.2 V20 Z" fill="#e4eef5"/>
+  <path d="M0 20 V13 C52 17.8 132 18.6 210 9.4 V20 Z" fill="#bbd9ea"/>
+  <path d="M0 20 V15.4 C56 19.4 136 19.8 210 12.6 V20 Z" fill="#2b6cb8"/>
+  <path d="M0 20 V17.7 C60 20.4 140 20.6 210 15.6 V20 Z" fill="#17375e"/>
+</svg>
+</body>
+</html>
