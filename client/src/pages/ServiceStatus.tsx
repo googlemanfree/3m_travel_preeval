@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
-import { AlertTriangle, CheckCircle2, Clock3, HelpCircle, Loader2, RefreshCw, ShieldCheck } from "lucide-react";
+import { Activity, AlertTriangle, CheckCircle2, Clock3, Database, HelpCircle, Loader2, RefreshCw, ShieldCheck } from "lucide-react";
 import { Link } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 type HealthState = "checking" | "ok" | "degraded" | "unreachable";
 type Health = { state: HealthState; checkedAt: Date | null };
+type RouteProbe = { path: string; status: number | null };
+type DeploymentHealth = { buildMarker?: string; database?: "ok" | "down"; catalog?: { migration: string; tables: Record<string, number> } };
+const PUBLIC_ROUTES = ["/", "/mon-espace", "/evaluation", "/employeurs", "/login", "/admin", "/pays", "/pays/canada", "/outils/liste-de-pieces"];
 
 const copy = {
   fr: {
@@ -28,6 +31,13 @@ const copy = {
     contact: "Contacter l’agence",
     home: "Retour à l’accueil",
     trust: "Informations publiques, sans données de dossier",
+    deploymentTitle: "Synthèse du déploiement",
+    build: "Build servi",
+    routes: "Routes HTTP contrôlées",
+    routesChecking: "Contrôle des routes en cours…",
+    tables: "Tables catalogue 0087",
+    migration: "Migration",
+    noData: "Non disponible",
     coversTitle: "Ce que couvre cette page",
     covers: [
       "Le site public : si cette page s’affiche, il répond.",
@@ -62,6 +72,13 @@ const copy = {
     contact: "Contact the agency",
     home: "Back to home",
     trust: "Public information, no case data",
+    deploymentTitle: "Deployment summary",
+    build: "Served build",
+    routes: "Checked HTTP routes",
+    routesChecking: "Checking routes…",
+    tables: "0087 catalogue tables",
+    migration: "Migration",
+    noData: "Unavailable",
     coversTitle: "What this page covers",
     covers: [
       "The public website: if this page displays, it is responding.",
@@ -109,6 +126,22 @@ export default function ServiceStatus() {
   const { language } = useLanguage();
   const t = copy[language];
   const { state, checkedAt, refresh } = usePublicHealth();
+  const [deployment, setDeployment] = useState<DeploymentHealth | null>(null);
+  const [routeProbes, setRouteProbes] = useState<RouteProbe[]>([]);
+  const [deploymentChecking, setDeploymentChecking] = useState(true);
+
+  const refreshDeployment = useCallback(async () => {
+    setDeploymentChecking(true);
+    const [deploymentResponse, ...routeResponses] = await Promise.all([
+      fetch("/api/public/deployment-health", { cache: "no-store" }).catch(() => null),
+      ...PUBLIC_ROUTES.map((path) => fetch(path, { method: "HEAD", cache: "no-store" }).catch(() => null)),
+    ]);
+    setDeployment(deploymentResponse ? await deploymentResponse.json().catch(() => null) : null);
+    setRouteProbes(routeResponses.map((response, index) => ({ path: PUBLIC_ROUTES[index], status: response?.status ?? null })));
+    setDeploymentChecking(false);
+  }, []);
+
+  useEffect(() => { void refreshDeployment(); }, [refreshDeployment]);
 
   const stateLabel = state === "ok" ? t.operational : state === "degraded" ? t.degraded : state === "checking" ? t.checking : t.unreachable;
   const dotClass = (live: boolean) => {
@@ -187,6 +220,34 @@ export default function ServiceStatus() {
         <div className="rounded-2xl border border-[#d7e3f5] bg-white p-5 sm:p-7">
           <h2 className="text-lg font-bold text-[#071b3d]">{t.problemTitle}</h2>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-700">{t.problem.map((item) => <li key={item}>{item}</li>)}</ul>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-4 pb-10 sm:px-6" data-testid="deployment-summary">
+        <div className="rounded-2xl border border-[#d7e3f5] bg-white p-5 shadow-[0_16px_45px_rgba(7,27,61,.06)] sm:p-7">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-5">
+            <div>
+              <p className="text-xs font-bold tracking-[0.18em] text-[#bd7a00]">{t.deploymentTitle.toUpperCase()}</p>
+              <h2 className="mt-2 text-xl font-bold text-[#071b3d]">{t.routes}</h2>
+            </div>
+            <button type="button" onClick={refreshDeployment} disabled={deploymentChecking} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#0b2f6f] px-4 py-2 text-sm font-bold text-[#0b2f6f] transition-colors hover:bg-[#eaf1ff] disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0b2f6f] focus-visible:ring-offset-2">
+              <Activity className="h-4 w-4" aria-hidden="true" />{t.recheck}
+            </button>
+          </div>
+          <div className="mt-5 grid gap-4 lg:grid-cols-[.8fr_1.2fr]">
+            <div className="space-y-3 rounded-xl bg-[#f4f8ff] p-4 text-sm text-slate-700">
+              <div className="flex items-center gap-2 font-semibold text-[#071b3d]"><Activity className="h-4 w-4 text-[#0b2f6f]" aria-hidden="true" />{t.build}</div>
+              <code className="block break-all rounded-lg bg-white px-3 py-2 text-xs text-[#0b2f6f]">{deployment?.buildMarker ?? t.noData}</code>
+              <div className="flex items-center gap-2 font-semibold text-[#071b3d]"><Database className="h-4 w-4 text-[#0b2f6f]" aria-hidden="true" />Base de données : {deployment?.database === "ok" ? t.operational : deployment?.database === "down" ? t.degraded : t.checking}</div>
+              <p className="text-xs text-slate-500">{t.migration} : {deployment?.catalog?.migration ?? t.noData}</p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {Object.entries(deployment?.catalog?.tables ?? {}).map(([name, count]) => <div key={name} className="rounded-lg border border-[#d7e3f5] bg-white px-3 py-2"><span className="block truncate text-slate-500">{name}</span><strong className="text-base text-[#071b3d]">{count}</strong></div>)}
+              </div>
+            </div>
+            <div>
+              {deploymentChecking && routeProbes.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">{t.routesChecking}</p> : <ul className="grid gap-2 sm:grid-cols-2">{routeProbes.map((route) => { const ok = route.status !== null && route.status >= 200 && route.status < 400; return <li key={route.path} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 px-3 py-2 text-sm"><code className="truncate text-slate-700">{route.path}</code><span className={`shrink-0 rounded-full px-2 py-1 text-xs font-bold ${ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>{route.status ?? "—"}</span></li>; })}</ul>}
+            </div>
+          </div>
         </div>
       </section>
 

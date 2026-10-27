@@ -8,12 +8,14 @@ const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 5
 const smtpUser = process.env.SMTP_USER;
 const smtpPass = process.env.SMTP_PASS;
 
-/** Adresse d'expédition unique, vue par les candidats, partenaires, agences et tous les destinataires externes. */
-export const OFFICIAL_SENDER_ADDRESS = "hello@3mtravelagency.com";
+/** Adresse d'expédition technique unique, vue par les destinataires externes. */
+export const OFFICIAL_SENDER_ADDRESS = "noreply@3mtravelagency.com";
+/** Adresse de réponse publique de l'agence. */
+export const OFFICIAL_REPLY_ADDRESS = "hello@3mtravelagency.com";
 export const OFFICIAL_SENDER_NAME = "3M TRAVEL AGENCY";
 
 /**
- * Expéditeur effectif : toujours hello@3mtravelagency.com. Une variable SMTP_FROM n'est respectée que si elle désigne une autre boîte du
+ * Expéditeur effectif : toujours noreply@3mtravelagency.com par défaut. Une variable SMTP_FROM n'est respectée que si elle désigne une autre boîte du
  * domaine de l'agence (ex. billetterie@3mtravelagency.com) ; une adresse Gmail, Resend ou d'un ancien domaine est remplacée, pour ne jamais
  * envoyer un message client depuis une adresse non professionnelle.
  */
@@ -79,7 +81,7 @@ export interface SendEmailOptions {
 export function shouldBrandEmail(options: Pick<SendEmailOptions, "to" | "brand">): boolean {
   if (options.brand === false) return false;
   const recipient = String(options.to ?? "").trim().toLowerCase();
-  const internal = (process.env.ADMIN_EMAIL || "admin@3mtravelagency.com").trim().toLowerCase();
+    const internal = (process.env.ADMIN_EMAIL || "admin@3mtravelagency.com").trim().toLowerCase();
   return Boolean(recipient) && recipient !== internal && !recipient.endsWith("@3mtravelagency.com");
 }
 
@@ -108,8 +110,8 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
       to: options.to,
       subject: options.subject,
       html: shouldBrandEmail(options) ? frameLegacyEmailHtml(options.html) : options.html,
-      // Les réponses vont toujours vers la boîte lue par l'équipe (hello@), même si l'envoi se fait depuis une boîte technique (noreply@).
-      replyTo: options.replyTo ?? OFFICIAL_SENDER_ADDRESS,
+      // Les réponses vont vers la boîte publique lue par l'équipe, même si l'envoi se fait depuis noreply@.
+      replyTo: options.replyTo ?? OFFICIAL_REPLY_ADDRESS,
       attachments: options.attachments,
     });
 

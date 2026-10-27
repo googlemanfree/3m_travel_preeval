@@ -40,7 +40,7 @@ describe("page /etat-du-service : contrôle réel de disponibilité", () => {
     expect(screen.getByTestId("status-badge").textContent).not.toMatch(/opérationnel/i);
     fireEvent.click(screen.getByTestId("status-recheck"));
     await waitFor(() => expect(screen.getByTestId("status-badge").textContent).toMatch(/opérationnel/i));
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls.filter(([input]) => input === "/api/public/health")).toHaveLength(2);
   });
 
   it("explique ce que couvre la page et que faire si un service ne répond pas", async () => {
