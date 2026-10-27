@@ -16,6 +16,8 @@ describe("widgets flottants et accès client mobile", () => {
     expect(appSource).toContain("&& !isAccessRoute");
     expect(appSource).toContain("{showFloatingTools && floatingToolsReady && (");
     expect(appSource).toContain("<FloatingToolsDock />");
+    expect(appSource).toContain('import { FloatingToolsDock } from "./components/FloatingToolsDock";');
+    expect(appSource).not.toContain('const FloatingToolsDock = lazyWithTimeout(() =>');
     expect(appSource).not.toContain("{!isHomeRoute && <AiCopilotWidgetEnhanced />}");
     expect(appSource).not.toContain("{!isHomeRoute && <SmartFlightAssistant />}");
   });

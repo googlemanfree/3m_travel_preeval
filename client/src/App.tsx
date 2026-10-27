@@ -100,9 +100,11 @@ const AdminLogin = lazyWithTimeout(() => import("./pages/AdminLogin"));
 const AdminChangePasswordRequired = lazyWithTimeout(() => import("./pages/AdminChangePasswordRequired"));
 const AdminEvaluations = lazyWithTimeout(() => import("./pages/AdminEvaluations"));
 import Tourism from "./pages/Tourism";
-const FloatingToolsDock = lazyWithTimeout(() =>
-  import("./components/FloatingToolsDock").then((module) => ({ default: module.FloatingToolsDock })),
-);
+// Le dock est un composant global affiché sur les pages publiques. Un import
+// dynamique de ce module provoquait parfois un échec de chunk sur les aperçus
+// déjà ouverts après une mise à jour ; l’import statique garde le dock fiable
+// tout en conservant son montage différé après le premier paint ci-dessous.
+import { FloatingToolsDock } from "./components/FloatingToolsDock";
 import ConfirmEmail from "./pages/ConfirmEmail";
 const SubmitDocuments = lazyWithTimeout(() => import("./pages/SubmitDocuments"));
 import HowItWorks from "./pages/HowItWorks";
