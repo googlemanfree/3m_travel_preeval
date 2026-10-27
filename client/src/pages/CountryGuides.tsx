@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 
 const dateLabel = (value: string | null) => (value ? new Date(value).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : null);
 
-/** Index des guides par pays : uniquement ceux dont la fiche a été relue sur les sources officielles. */
+/** Index des guides par pays : uniquement ceux dont la fiche a été vérifiée et publiée. */
 export default function CountryGuides() {
   const guides = trpc.countryCatalog.guideList.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
   const [search, setSearch] = useState("");
@@ -17,7 +17,7 @@ export default function CountryGuides() {
   useEffect(() => {
     setPageSeo({
       title: "Guides visa par pays | 3M TRAVEL AGENCY",
-      description: "Pour chaque pays : étapes du visa travail, études ou visiteur, pièces à préparer et liens officiels, avec la date de vérification.",
+      description: "Pour chaque pays : étapes du visa travail, études ou visiteur, pièces à préparer, délais et frais, avec la date de vérification.",
     });
   }, []);
 
@@ -28,12 +28,12 @@ export default function CountryGuides() {
     <ServicePageShell
       eyebrow="Guides vérifiés"
       title="Guides visa par pays"
-      introduction="Étapes, pièces à préparer et liens officiels pour le travail, les études et les séjours de visite. Un guide n'apparaît ici qu'après relecture des pages officielles du pays."
+      introduction="Étapes, pièces à préparer, délais et frais pour le travail, les études et les séjours de visite. Un guide n'apparaît ici qu'après vérification complète de son contenu."
       primaryHref="/#evaluation-multi"
-      primaryLabel="Évaluer mon profil"
+      primaryLabel="Lancer ma procédure"
       secondaryHref="/procedures"
       secondaryLabel="Toutes les procédures"
-      notice="Ces repères sont indicatifs : l'éligibilité, les frais et les délais se confirment toujours sur le portail officiel du pays."
+      notice="Ces repères sont indicatifs. Un conseiller 3M TRAVEL AGENCY confirme chaque exigence au moment d'instruire votre dossier."
     >
       <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6" aria-labelledby="country-guides-title" data-testid="country-guides">
         <h2 id="country-guides-title" className="text-2xl font-black text-slate-950">Pays disponibles</h2>
@@ -47,7 +47,7 @@ export default function CountryGuides() {
         {!guides.isLoading && list.length === 0 ? (
           <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5 text-slate-800" role="status" data-testid="country-guides-empty">
             <p className="font-semibold">Les premiers guides sont en cours de vérification.</p>
-            <p className="mt-1 text-sm">Nous ne publions un guide qu'après avoir relu les pages officielles. En attendant, consultez les <Link href="/procedures" className="font-semibold text-blue-800 underline">procédures détaillées</Link>, l'<Link href="/evisas" className="font-semibold text-blue-800 underline">annuaire des e-Visas</Link> et les <Link href="/ressources" className="font-semibold text-blue-800 underline">ressources par pays</Link>.</p>
+            <p className="mt-1 text-sm">Nous ne publions un guide qu'après vérification complète de son contenu. En attendant, consultez les <Link href="/procedures" className="font-semibold text-blue-800 underline">procédures détaillées</Link>, l'<Link href="/evisas" className="font-semibold text-blue-800 underline">annuaire des e-Visas</Link> et les <Link href="/ressources" className="font-semibold text-blue-800 underline">ressources par pays</Link>.</p>
           </div>
         ) : null}
         <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

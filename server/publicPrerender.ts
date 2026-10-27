@@ -320,7 +320,7 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/faq": { title: `Questions fréquentes | ${SITE}`, description: "Évaluation gratuite, frais et paiement, documents, délais, sécurité, visas et e-Visa : les réponses de 3M TRAVEL AGENCY aux questions les plus posées.", heading: "Questions fréquentes", lead: "Des réponses claires avant de lancer votre projet de mobilité internationale, sans promesse de résultat : les décisions appartiennent aux autorités, écoles et employeurs." },
   "/verifier-une-agence": { title: `Vérifier une agence avant de payer | ${SITE}`, description: "Signes d’une offre frauduleuse, vérifications à faire avant de payer une agence de visa, d’études ou d’emploi, et engagements de 3M TRAVEL AGENCY.", heading: "Vérifier une agence avant de payer", lead: "Une promesse de visa, d’emploi ou d’admission « assuré » est le signe le plus courant d’une escroquerie : voici comment vérifier avant de payer." },
   "/outils/liste-de-pieces": { title: `Liste des pièces à préparer pour un visa | ${SITE}`, description: "Choisissez un pays et un projet (travail, études, visiteur) : la liste des pièces à préparer, à cocher et à copier, gratuite et sans compte.", heading: "Liste des pièces à préparer", lead: "Outil gratuit : la liste générale des pièces par pays et par projet, à cocher sur votre appareil, sans compte.", keywords: ["liste des pièces visa", "documents visa", "checklist visa", "pièces à fournir visa", "dossier visa"] },
-  "/pays": { title: `Guides visa par pays | ${SITE}`, description: "Pour chaque pays : étapes du visa travail, études ou visiteur, pièces à préparer et liens officiels, avec la date de vérification.", heading: "Guides visa par pays", lead: "Chaque guide n'est publié qu'après relecture des pages officielles du pays, avec la date de vérification." },
+  "/pays": { title: `Guides visa par pays | ${SITE}`, description: "Pour chaque pays : étapes du visa travail, études ou visiteur, pièces à préparer, délais et frais, avec la date de vérification.", heading: "Guides visa par pays", lead: "Chaque guide est publié après vérification complète de son contenu, avec la date de vérification." },
   "/ressources": { title: `Bibliothèque de ressources | ${SITE}`, description: "Guides PDF par pays pour le travail, les études et la visite — pages destinations premium et fiches 3M TRAVEL AGENCY.", heading: "Guides par destination", lead: "Choisissez un pays pour consulter tous les guides PDF associés, avec images premium et renvoi vers les sources officielles." },
   "/guide-procedures": { title: `Guide des procédures | ${SITE}`, description: "Bibliothèque PDF des procédures 3M TRAVEL AGENCY : travail, études, visiteur, avec renvoi vers les portails officiels (IRCC, ADEM, France-Visas…).", heading: "Bibliothèque PDF des procédures de mobilité", lead: "Chaque guide publié est rattaché à sa fiche procédure et aux sources officielles à vérifier avant toute démarche." },
   "/3m-solutions": { title: "3M Solutions | 3M TRAVEL AGENCY", description: "Services numériques et accompagnement documentaire de 3M TRAVEL AGENCY : web, formation, réseaux et sécurité.", heading: "3M Solutions", lead: "Découvrez les services numériques et soumettez une demande détaillée à l’équipe." },
@@ -413,36 +413,42 @@ const guideMetaForPath = (path: string): PublicMeta | undefined => {
   if (!guide) {
     return {
       title: clampSeoTitle(`Guide ${name} : en cours de vérification | ${SITE}`),
-      description: `Le guide ${name} est en cours de vérification avec les sources officielles. Consultez nos procédures et e-Visas en attendant.`,
+      description: `Le guide ${name} est en cours de vérification. Consultez nos procédures et e-Visas en attendant.`,
       heading: `${name} : guide en cours de vérification`,
-      lead: "Nous ne publions un guide qu'après relecture des pages officielles du pays.",
+      lead: "Nous ne publions un guide qu'après vérification complète de son contenu.",
       noindex: true,
     };
   }
   const labels = guide.pathways.map((item) => PATHWAY_LABELS[item.pathway].toLowerCase()).join(", ");
   return {
     title: clampSeoTitle(`Visa ${name} : ${labels} | ${SITE}`),
-    description: clampSeoDescription(`Étapes, pièces et liens officiels pour ${labels} (${name}). Vérifié sur les sources officielles${guide.updatedAt ? ` le ${guideDateLabel(guide.updatedAt)}` : ""}.`),
+    description: clampSeoDescription(`Étapes, pièces, délais et frais pour ${labels} (${name}). Repères vérifiés${guide.updatedAt ? ` le ${guideDateLabel(guide.updatedAt)}` : ""}.`),
     heading: `${name} : visa et procédures`,
-    lead: `Repères vérifiés sur les sources officielles pour ${labels}.`,
+    lead: `Repères vérifiés pour ${labels}.`,
   };
 };
 
+const yesNo = (value: boolean | null, yes: string, no: string) => (value === null ? null : value ? yes : no);
+
+/** Détail complet pour le lecteur ; aucune adresse de source officielle : elles restent côté administration. */
 const guideBodyHtml = (guide: CountryGuide) => guide.pathways.map((item) => {
   const programs = item.programs.map((program) => {
     const facts = [
       program.routeType ? ROUTE_TYPE_LABELS[program.routeType as keyof typeof ROUTE_TYPE_LABELS] : null,
       program.offerRequired ? OFFER_REQUIREMENT_LABELS[program.offerRequired as keyof typeof OFFER_REQUIREMENT_LABELS] : null,
+      yesNo(program.sponsorLicenceRequired, "Employeur agréé exigé", "Employeur agréé non exigé"),
+      yesNo(program.labourMarketTest, "Test du marché du travail", "Sans test du marché du travail"),
+      yesNo(program.renewable, "Renouvelable", "Non renouvelable"),
+      yesNo(program.familyAllowed, "Famille admise", "Famille non admise"),
     ].filter(Boolean).join(" · ");
-    const notes = [program.salaryNote, program.durationNote, program.feesNote, program.processingNote, program.residencePathNote].filter(Boolean).map((note) => `<p>${esc(String(note))}</p>`).join("");
+    const notes = [program.legalBasis, program.salaryNote, program.durationNote, program.feesNote, program.processingNote, program.residencePathNote].filter(Boolean).map((note) => `<p>${esc(String(note))}</p>`).join("");
     const steps = program.steps.length
-      ? `<ol>${program.steps.map((step) => `<li><strong>${esc(STEP_ACTOR_LABELS[step.actor as keyof typeof STEP_ACTOR_LABELS] ?? step.actor)} :</strong> ${esc(step.title)}${step.description ? ` — ${esc(step.description)}` : ""}${step.delayNote ? ` (${esc(step.delayNote)})` : ""}</li>`).join("")}</ol>`
+      ? `<ol>${program.steps.map((step) => `<li><strong>${esc(STEP_ACTOR_LABELS[step.actor as keyof typeof STEP_ACTOR_LABELS] ?? step.actor)} :</strong> ${esc(step.title)}${step.description ? ` — ${esc(step.description)}` : ""}${step.documents.length ? ` Pièces : ${esc(step.documents.join(", "))}.` : ""}${step.delayNote ? ` Délai : ${esc(step.delayNote)}.` : ""}${step.feeNote ? ` Frais : ${esc(step.feeNote)}.` : ""}</li>`).join("")}</ol>`
       : "";
     return `<article><h3>${esc(program.nameFr || program.officialName)}</h3>${facts ? `<p>${esc(facts)}</p>` : ""}${notes}${steps}</article>`;
   }).join("");
-  const sources = item.sources.map((source) => `<li><a href="${esc(source.url)}" rel="noopener noreferrer" target="_blank">${esc(source.label)}</a>${source.checkedAt ? ` · vérifié le ${esc(guideDateLabel(source.checkedAt) ?? "")}` : ""}</li>`).join("");
-  return `<section aria-label="${esc(PATHWAY_LABELS[item.pathway])} ${esc(guide.name)}"><h2>${esc(PATHWAY_LABELS[item.pathway])} : ${esc(guide.name)}</h2>${item.summary ? `<p>${esc(item.summary)}</p>` : ""}${programs}${sources ? `<h3>Sources officielles</h3><ul>${sources}</ul>` : ""}</section>`;
-}).join("") + `<p>Ces repères sont indicatifs : l'éligibilité, les frais et les délais se confirment toujours sur le portail officiel. <a href="/#evaluation-multi">Évaluer mon profil</a></p>`;
+  return `<section aria-label="${esc(PATHWAY_LABELS[item.pathway])} ${esc(guide.name)}"><h2>${esc(PATHWAY_LABELS[item.pathway])} : ${esc(guide.name)}</h2>${item.summary ? `<p>${esc(item.summary)}</p>` : ""}${programs}${item.verifiedAt ? `<p>Repères vérifiés le ${esc(guideDateLabel(item.verifiedAt) ?? "")}.</p>` : ""}</section>`;
+}).join("") + `<section aria-label="Lancer ma procédure"><h2>Lancer ma procédure avec ${esc(SITE)}</h2><p>Ces repères sont indicatifs. Un conseiller confirme chaque exigence au moment d'instruire votre dossier, puis vous accompagne dans les démarches. <a href="/#evaluation-multi">Évaluer mon profil gratuitement</a></p></section>`;
 
 const publicNav = `<nav aria-label="Navigation publique pré-rendue"><a href="/">Accueil</a><a href="/procedures">Procédures</a><a href="/evisas">e-Visas</a><a href="/tarifs">Tarifs</a><a href="/sources-officielles">Sources officielles</a><a href="/plan-du-site">Plan du site</a></nav>`;
 const OFFICIAL_SOURCE_DESTINATIONS = [
@@ -610,14 +616,14 @@ const routeSpecificPrerender = (path: string) => {
     const guides =Array.from(getCountryGuides().values()).sort((a, b) => a.name.localeCompare(b.name, "fr"));
     const list = guides.length
       ? `<ul>${guides.map((guide) => `<li><a href="${esc(guidePath(guide.slug))}">${esc(guide.name)}</a> — ${esc(guide.pathways.map((item) => PATHWAY_LABELS[item.pathway]).join(", "))}</li>`).join("")}</ul>`
-      : `<p>Les premiers guides sont en cours de vérification avec les sources officielles. En attendant, consultez nos <a href="/procedures">procédures</a>, nos <a href="/evisas">e-Visas</a> et nos <a href="/ressources">ressources par pays</a>.</p>`;
+      : `<p>Les premiers guides sont en cours de vérification. En attendant, consultez nos <a href="/procedures">procédures</a>, nos <a href="/evisas">e-Visas</a> et nos <a href="/ressources">ressources par pays</a>.</p>`;
     return `<section aria-label="Guides par pays"><h2>Pays disponibles</h2>${list}</section>`;
   }
   const guideSlug = guideSlugFromPath(path);
   if (guideSlug) {
     const guide = getCountryGuide(guideSlug);
     if (guide) return `<section aria-label="Guide ${esc(guide.name)}">${guideBodyHtml(guide)}</section>`;
-    return `<section aria-label="Guide en cours de vérification"><p>Ce guide sera publié après relecture des pages officielles. Voir les <a href="/pays">guides déjà disponibles</a>.</p></section>`;
+    return `<section aria-label="Guide en cours de vérification"><p>Ce guide sera publié après vérification de son contenu. Voir les <a href="/pays">guides déjà disponibles</a>.</p></section>`;
   }
   const studyArticle = studyArticleForPath(path);
   if (studyArticle) {

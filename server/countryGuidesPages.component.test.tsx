@@ -31,8 +31,8 @@ import CountryGuide from "@/pages/CountryGuide";
 const guide = {
   code: "CA", name: "Canada", slug: "canada", updatedAt: "2026-10-27T00:00:00.000Z",
   pathways: [
-    { pathway: "work", summary: "Permis lié à un employeur.", checkedAt: "2026-10-27T00:00:00.000Z", sources: [{ label: "Page officielle IRCC", url: "https://www.canada.ca/exemple", authority: "immigration", checkedAt: "2026-10-27T00:00:00.000Z" }], programs: [{ officialName: "Employer-specific work permit", nameFr: "Permis de travail lié à un employeur", routeType: "employer", offerRequired: "yes", salaryNote: null, durationNote: null, feesNote: null, processingNote: null, residencePathNote: null, steps: [{ stepNo: 1, actor: "employer", title: "Déposer l'EIMT", description: null, documents: ["Offre d'emploi"], delayNote: null, feeNote: null, officialUrl: null }] }] },
-    { pathway: "study", summary: "Permis d'études.", checkedAt: null, sources: [], programs: [] },
+    { pathway: "work", summary: "Permis lié à un employeur.", verifiedAt: "2026-10-27T00:00:00.000Z", programs: [{ officialName: "Employer-specific work permit", nameFr: "Permis de travail lié à un employeur", legalBasis: null, routeType: "employer", offerRequired: "yes", sponsorLicenceRequired: true, labourMarketTest: null, renewable: true, familyAllowed: null, salaryNote: null, durationNote: "Durée liée au contrat", feesNote: null, processingNote: null, residencePathNote: null, steps: [{ stepNo: 1, actor: "employer", title: "Déposer l'EIMT", description: null, documents: ["Offre d'emploi"], delayNote: "Quelques semaines", feeNote: "Frais indicatifs" }] }] },
+    { pathway: "study", summary: "Permis d'études.", verifiedAt: null, programs: [] },
   ],
 };
 
@@ -65,8 +65,13 @@ describe("guides par pays côté public", () => {
     expect(screen.getByText("Permis de travail lié à un employeur")).toBeTruthy();
     expect(screen.getByText(/Déposer l'EIMT/)).toBeTruthy();
     expect(screen.getByText(/Offre d'emploi/)).toBeTruthy();
-    expect(screen.getByRole("link", { name: /Page officielle IRCC/ }).getAttribute("href")).toBe("https://www.canada.ca/exemple");
-    expect(screen.getByText(/vérifié le/)).toBeTruthy();
+    expect(screen.getByText(/Délai : Quelques semaines/)).toBeTruthy();
+    expect(screen.getByText(/Frais : Frais indicatifs/)).toBeTruthy();
+    expect(screen.getByText("Employeur agréé exigé")).toBeTruthy();
+    // Aucun lien sortant : la suite se lance avec l'agence.
+    expect(document.querySelectorAll('a[href^="http"]').length).toBe(0);
+    expect(screen.getByRole("link", { name: /Évaluer mon profil gratuitement/ }).getAttribute("href")).toContain("#evaluation-multi");
+    expect(screen.getByText(/Repères vérifiés le/)).toBeTruthy();
     fireEvent.click(screen.getByRole("tab", { name: "Études" }));
     expect(screen.getByText("Permis d'études.")).toBeTruthy();
   });

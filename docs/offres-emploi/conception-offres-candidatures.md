@@ -131,6 +131,14 @@ Opportunités (admin)
 - Les **29 États de l'espace Schengen** sont marqués. Le parcours visiteur y repose sur un visa Schengen de court séjour.
 - Un pays n'a pas besoin de dispositif « avec offre » pour exister dans le module. Certains dispositifs n'exigent aucune offre (Chancenkarte allemande, systèmes à points). La fiche l'indique par le type de route `jobseeker` ou `points`, et l'espace client oriente alors vers le parcours d'évaluation et non vers des offres.
 
+### 3.1 bis Décision du 27 octobre 2026 : sources officielles visibles de l'administration seulement
+
+Les guides publics (`/pays`, panneau « Opportunités », outil des pièces) donnent **tout le détail** (étapes, pièces, délais, frais, durée, famille, base légale) mais **aucun lien vers les sites officiels** : le candidat est invité à lancer sa procédure avec l'agence.
+- Les sources (adresse, libellé, date de relecture) restent enregistrées et obligatoires pour publier une fiche. Seule l'administration les voit, toutes réunies par pays.
+- L'instantané public ne contient aucune source. Les adresses saisies à la main dans les textes libres sont retirées avant affichage.
+- Le texte public affirme seulement ce qui est vrai : « repères vérifiés le … » et « un conseiller confirme chaque exigence au moment d'instruire votre dossier ».
+- Les pages plus anciennes (procédures, e-Visas, `/sources-officielles`, ressources) gardent leurs liens officiels tant que cette décision n'est pas étendue.
+
 ### 3.2 Ce que ce catalogue ne contient volontairement pas
 
 Aucun seuil de salaire, délai, frais, quota ou liste de métiers. Ces valeurs changent chaque année. Elles sont saisies en base avec **l'URL de la source officielle et la date de vérification**, et ne sont affichées au candidat qu'après publication par un administrateur. C'est la règle déjà appliquée au formulaire dynamique.

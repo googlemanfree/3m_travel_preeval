@@ -75,10 +75,10 @@ export default function DocumentChecklistTool() {
       title="Liste des pièces à préparer"
       introduction="Choisissez un pays et votre projet. Cochez les pièces que vous avez déjà : votre progression reste sur cet appareil, sans compte."
       primaryHref="/#evaluation-multi"
-      primaryLabel="Évaluer mon profil"
+      primaryLabel="Lancer ma procédure"
       secondaryHref="/pays"
       secondaryLabel="Guides par pays"
-      notice="Liste générale et indicative : l'autorité du pays peut demander d'autres pièces. Confirmez toujours sur son portail officiel."
+      notice="Liste générale et indicative : l'autorité du pays peut demander d'autres pièces. Votre conseiller 3M TRAVEL AGENCY confirme la liste exacte pour votre dossier."
     >
       <section className="mx-auto max-w-3xl px-4 py-10 sm:px-6" aria-labelledby="checklist-tool-title" data-testid="document-checklist-tool">
         <h2 id="checklist-tool-title" className="sr-only">Votre liste</h2>

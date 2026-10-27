@@ -2,6 +2,9 @@
  * Instantané en mémoire des guides par pays PUBLIÉS : le prérendu (synchrone, lu par les robots) et la page publique
  * lisent la même source. Seules les fiches publiées apparaissent, donc appuyées par une source officielle relue
  * (voir `publishBlockers` dans shared/countryCatalog.ts).
+ *
+ * Les sources officielles (adresses, libellés) servent à la relecture et restent côté administration : elles ne sont
+ * jamais placées dans l'instantané public. Le candidat voit tous les détails et la date de vérification, sans lien sortant.
  */
 import { and, asc, eq } from "drizzle-orm";
 import { countryPathways, countrySources, countryVisaPrograms, procedureSteps } from "../../drizzle/schema";
@@ -9,12 +12,17 @@ import { guideCountryName, guideSlugForCode } from "../../shared/countryGuides";
 import type { Pathway } from "../../shared/countryCatalog";
 import { logger } from "../_core/logger";
 
-export type GuideStep = { stepNo: number; actor: string; title: string; description: string | null; documents: string[]; delayNote: string | null; feeNote: string | null; officialUrl: string | null };
+export type GuideStep = { stepNo: number; actor: string; title: string; description: string | null; documents: string[]; delayNote: string | null; feeNote: string | null };
 export type GuideProgram = {
   officialName: string;
   nameFr: string | null;
+  legalBasis: string | null;
   routeType: string | null;
   offerRequired: string | null;
+  sponsorLicenceRequired: boolean | null;
+  labourMarketTest: boolean | null;
+  renewable: boolean | null;
+  familyAllowed: boolean | null;
   salaryNote: string | null;
   durationNote: string | null;
   feesNote: string | null;
@@ -22,8 +30,7 @@ export type GuideProgram = {
   residencePathNote: string | null;
   steps: GuideStep[];
 };
-export type GuideSource = { label: string; url: string; authority: string; checkedAt: string | null };
-export type GuidePathway = { pathway: Pathway; summary: string | null; checkedAt: string | null; programs: GuideProgram[]; sources: GuideSource[] };
+export type GuidePathway = { pathway: Pathway; summary: string | null; /** Dernière relecture des pages officielles (date seule, sans lien). */ verifiedAt: string | null; programs: GuideProgram[] };
 export type CountryGuide = { code: string; name: string; slug: string; pathways: GuidePathway[]; updatedAt: string | null };
 
 type Rows = {
@@ -36,7 +43,18 @@ type Rows = {
 const iso = (value: Date | string | null | undefined) => (value ? new Date(value).toISOString() : null);
 const PATHWAY_ORDER: Pathway[] = ["work", "study", "visit"];
 
-/** Pur et testable : ne retient que le publié (fiche, dispositifs, étapes) et les sources vérifiées. */
+/** Retire toute adresse web d'un texte saisi à la main (« … (source : https://… ») : aucun lien officiel ne sort côté public. */
+export function stripUrls(text: string | null | undefined): string | null {
+  if (!text) return null;
+  const cleaned = text
+    .replace(/\(?\s*(?:source\s*:?\s*)?(?:https?:\/\/|www\.)[^\s)]+\s*\)?/gi, " ")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([.,;:])/g, "$1")
+    .trim();
+  return cleaned || null;
+}
+
+/** Pur et testable : ne retient que le publié (fiche, dispositifs, étapes), sans aucune source ni adresse. */
 export function buildCountryGuides(rows: Rows): Map<string, CountryGuide> {
   const guides = new Map<string, CountryGuide>();
   const published = rows.pathways.filter((row) => row.status === "published");
@@ -49,32 +67,47 @@ export function buildCountryGuides(rows: Rows): Map<string, CountryGuide> {
       const row = published.find((item) => item.countryCode === code && item.pathway === pathway);
       if (!row) continue;
       const programs = rows.programs.filter((program) => program.countryCode === code && program.pathway === pathway && program.status === "published");
+      const sourceDates = rows.sources
+        .filter((source) => source.countryCode === code && source.pathway === pathway && source.status === "verified")
+        .map((source) => iso(source.checkedAt))
+        .filter((value): value is string => Boolean(value));
+      const dates = [iso(row.checkedAt), ...sourceDates].filter((value): value is string => Boolean(value)).sort();
       pathways.push({
         pathway,
-        summary: row.summary,
-        checkedAt: iso(row.checkedAt),
+        summary: stripUrls(row.summary),
+        verifiedAt: dates.length ? dates[dates.length - 1] : null,
         programs: programs.map((program) => ({
           officialName: program.officialName,
           nameFr: program.nameFr,
+          legalBasis: stripUrls(program.legalBasis),
           routeType: program.routeType,
           offerRequired: program.offerRequired,
-          salaryNote: program.salaryNote,
-          durationNote: program.durationNote,
-          feesNote: program.feesNote,
-          processingNote: program.processingNote,
-          residencePathNote: program.residencePathNote,
+          sponsorLicenceRequired: program.sponsorLicenceRequired ?? null,
+          labourMarketTest: program.labourMarketTest ?? null,
+          renewable: program.renewable ?? null,
+          familyAllowed: program.familyAllowed ?? null,
+          salaryNote: stripUrls(program.salaryNote),
+          durationNote: stripUrls(program.durationNote),
+          feesNote: stripUrls(program.feesNote),
+          processingNote: stripUrls(program.processingNote),
+          residencePathNote: stripUrls(program.residencePathNote),
           steps: rows.steps
             .filter((step) => step.programId === program.id && step.status === "published")
             .sort((a, b) => a.stepNo - b.stepNo)
-            .map((step) => ({ stepNo: step.stepNo, actor: step.actor, title: step.title, description: step.description, documents: step.documentsJson ?? [], delayNote: step.delayNote, feeNote: step.feeNote, officialUrl: step.officialUrl })),
+            .map((step) => ({
+              stepNo: step.stepNo,
+              actor: step.actor,
+              title: stripUrls(step.title) ?? step.title,
+              description: stripUrls(step.description),
+              documents: (step.documentsJson ?? []).map((document) => stripUrls(document)).filter((document): document is string => Boolean(document)),
+              delayNote: stripUrls(step.delayNote),
+              feeNote: stripUrls(step.feeNote),
+            })),
         })),
-        sources: rows.sources
-          .filter((source) => source.countryCode === code && source.pathway === pathway && source.status === "verified")
-          .map((source) => ({ label: source.label, url: source.url, authority: source.authority, checkedAt: iso(source.checkedAt) })),
       });
     }
     if (pathways.length === 0) continue;
-    const dates = pathways.map((item) => item.checkedAt).filter((value): value is string => Boolean(value)).sort();
+    const dates = pathways.map((item) => item.verifiedAt).filter((value): value is string => Boolean(value)).sort();
     guides.set(slug, { code, name, slug, pathways, updatedAt: dates.length ? dates[dates.length - 1] : null });
   }
   return guides;

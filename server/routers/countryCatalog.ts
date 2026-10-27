@@ -16,6 +16,7 @@ import {
   isOfficialUrl,
   publishBlockers,
 } from "../../shared/countryCatalog";
+import { guideSlugForCode } from "../../shared/countryGuides";
 import { WORLD_COUNTRY_ROWS } from "../../shared/worldCountries";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
@@ -64,42 +65,15 @@ async function audit(db: Db, admin: { id: number; email?: string | null }, actio
  * Gestion : réservée à l'administration, chaque changement est journalisé.
  */
 export const countryCatalogRouter = router({
-  published: publicProcedure.input(z.object({ countryCode, pathway: pathway.optional() })).query(({ input }) => guarded(async () => {
-    const db = await requireDb();
-    const pathwayFilter = input.pathway ? eq(countryPathways.pathway, input.pathway) : undefined;
-    const pathways = await db.select().from(countryPathways).where(and(eq(countryPathways.countryCode, input.countryCode), eq(countryPathways.status, "published"), pathwayFilter));
-    if (pathways.length === 0) return { countryCode: input.countryCode, pathways: [] };
-    const kinds = pathways.map((row) => row.pathway);
-    const programs = await db.select().from(countryVisaPrograms).where(and(eq(countryVisaPrograms.countryCode, input.countryCode), eq(countryVisaPrograms.status, "published"), inArray(countryVisaPrograms.pathway, kinds)));
-    const sources = await db.select().from(countrySources).where(and(eq(countrySources.countryCode, input.countryCode), eq(countrySources.status, "verified"), inArray(countrySources.pathway, kinds)));
-    const steps = programs.length
-      ? await db.select().from(procedureSteps).where(and(inArray(procedureSteps.programId, programs.map((program) => program.id)), eq(procedureSteps.status, "published"))).orderBy(asc(procedureSteps.stepNo))
-      : [];
-    return {
-      countryCode: input.countryCode,
-      pathways: pathways.map((row) => ({
-        pathway: row.pathway,
-        coverage: row.coverage,
-        summary: row.summary,
-        checkedAt: iso(row.checkedAt),
-        programs: programs.filter((program) => program.pathway === row.pathway).map((program) => ({
-          id: program.id,
-          officialName: program.officialName,
-          nameFr: program.nameFr,
-          routeType: program.routeType,
-          offerRequired: program.offerRequired,
-          salaryNote: program.salaryNote,
-          durationNote: program.durationNote,
-          feesNote: program.feesNote,
-          processingNote: program.processingNote,
-          residencePathNote: program.residencePathNote,
-          checkedAt: iso(program.checkedAt),
-          steps: steps.filter((step) => step.programId === program.id).map((step) => ({ stepNo: step.stepNo, actor: step.actor, title: step.title, description: step.description, documents: step.documentsJson ?? [], delayNote: step.delayNote, feeNote: step.feeNote, officialUrl: step.officialUrl })),
-        })),
-        sources: sources.filter((source) => source.pathway === row.pathway).map((source) => ({ label: source.label, url: source.url, authority: source.authority, checkedAt: iso(source.checkedAt) })),
-      })),
-    };
-  })),
+  /**
+   * Lecture publique d'un pays : le même instantané que le prérendu. Il ne contient que le publié et AUCUNE source ni adresse
+   * officielle (elles restent côté administration, voir adminCountry).
+   */
+  published: publicProcedure.input(z.object({ countryCode, pathway: pathway.optional() })).query(({ input }) => {
+    const slug = guideSlugForCode(input.countryCode);
+    const guide = slug ? getCountryGuide(slug) : undefined;
+    return { countryCode: input.countryCode, pathways: (guide?.pathways ?? []).filter((item) => !input.pathway || item.pathway === input.pathway) };
+  }),
 
   /** Guides publiés, lus dans l'instantané en mémoire (le même que le prérendu) : aucune requête, aucune fiche non publiée. */
   guideList: publicProcedure.query(() => Array.from(getCountryGuides().values())

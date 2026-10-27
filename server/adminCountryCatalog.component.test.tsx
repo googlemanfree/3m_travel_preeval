@@ -80,8 +80,24 @@ describe("catalogue des parcours côté administration", () => {
     const detail = screen.getByTestId("admin-country-catalog-detail");
     expect(within(detail).getByText("Permis lié à un employeur")).toBeTruthy();
     expect(within(detail).getByText(/Aucune source : la fiche ne peut pas être publiée/)).toBeTruthy();
+    expect(within(detail).getByText(/Aucune source enregistrée/)).toBeTruthy();
     fireEvent.click(within(detail).getByRole("button", { name: /Enregistrer la fiche/ }));
     expect(state.savePathway).toHaveBeenCalledWith(expect.objectContaining({ countryCode: "CA", pathway: "work", status: "needs_review", markChecked: false }));
+  });
+
+  it("côté administration, toutes les sources du pays sont listées avec leur adresse, tous parcours confondus", () => {
+    state.matrix = { data: [row("CA", "work")], error: null };
+    const source = (id: number, pathway: string, url: string, status = "verified") => ({ id, countryCode: "CA", pathway, label: `Page ${id}`, url, authority: "immigration", status, note: null, checkedAt: "2026-10-27T00:00:00.000Z", checkedByAdminId: 1, checkedByLabel: "admin" });
+    state.detail = {
+      data: { countryCode: "CA", pathways: [{ pathway: "work", coverage: "named", summary: null, status: "needs_review", checkedAt: null }], programs: [], sources: [source(1, "work", "https://www.canada.ca/travail"), source(2, "study", "https://www.canada.ca/etudes", "needs_review"), source(3, "visit", "https://www.canada.ca/visiteur")], steps: [] },
+      error: null, isLoading: false, refetch: vi.fn(),
+    };
+    render(<AdminCountryCatalog sessionToken={"t".repeat(30)} />);
+    fireEvent.click(screen.getByRole("button", { name: "Ouvrir la fiche Canada" }));
+    const all = screen.getByTestId("admin-country-all-sources");
+    expect(all.textContent).toMatch(/Toutes les sources officielles de ce pays \(3\)/);
+    for (const url of ["https://www.canada.ca/travail", "https://www.canada.ca/etudes", "https://www.canada.ca/visiteur"]) expect(within(all).getByRole("link", { name: url })).toBeTruthy();
+    expect(all.textContent).toMatch(/visibles uniquement ici/);
   });
 
   it("affiche le message du serveur quand la migration n'est pas appliquée", () => {

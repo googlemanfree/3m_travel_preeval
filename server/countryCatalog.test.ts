@@ -99,9 +99,10 @@ describe("catalogue des parcours : branchement serveur et migration", () => {
     expect(adminProcedures.length).toBe(10);
     expect((router.match(/requireValidAdminSession\(input\.sessionToken\)/g) ?? []).length).toBe(adminProcedures.length);
     const publicBlock = router.slice(router.indexOf("published:"), router.indexOf("adminMatrix:"));
-    expect(publicBlock).toContain('eq(countryPathways.status, "published")');
-    expect(publicBlock).toContain('eq(countryVisaPrograms.status, "published")');
-    expect(publicBlock).toContain('eq(countrySources.status, "verified")');
+    // Lecture publique = instantané des fiches publiées, sans table de sources : aucune adresse officielle ne sort côté public.
+    expect(publicBlock).toContain("getCountryGuide(slug)");
+    expect(publicBlock).not.toContain("countrySources");
+    expect(publicBlock).not.toContain("officialUrl");
     expect(publicBlock).not.toContain("sessionToken");
   });
 

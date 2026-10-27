@@ -149,6 +149,22 @@ function CountryDetail({ sessionToken, countryCode, onChanged }: { sessionToken:
       </div>
       {detail.isLoading ? <p className="mt-4 text-sm text-slate-500">Chargement…</p> : null}
       {detail.error ? <p className="mt-4 text-sm text-rose-700" role="alert">{detail.error.message}</p> : null}
+      {data ? (
+        <details className="mt-4 rounded-md border border-sky-200 bg-sky-50 p-3" open data-testid="admin-country-all-sources">
+          <summary className="cursor-pointer text-sm font-black text-sky-950">Toutes les sources officielles de ce pays ({data.sources.length}) · visibles uniquement ici</summary>
+          <p className="mt-1 text-xs text-sky-900">Les candidats ne voient aucun lien officiel : ils lisent le détail et lancent leur procédure avec l'agence.</p>
+          {data.sources.length === 0 ? <p className="mt-2 text-sm text-slate-600">Aucune source enregistrée.</p> : (
+            <ul className="mt-2 space-y-1 text-sm">
+              {data.sources.map((source) => (
+                <li key={source.id} className="break-words">
+                  <span className="font-semibold text-slate-900">{PATHWAY_LABELS[source.pathway]}</span> · {source.label} · <a className="text-blue-800 underline" href={source.url} target="_blank" rel="noreferrer">{source.url}</a>
+                  <span className="text-xs text-slate-500"> · {source.status === "verified" ? "vérifiée" : "à confirmer"} · {freshness(source.checkedAt) === "never" ? "jamais relue" : freshness(source.checkedAt) === "stale" ? "à reconfirmer" : `relue le ${new Date(source.checkedAt as unknown as string).toLocaleDateString("fr-FR")}`}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </details>
+      ) : null}
       {data ? <PathwayEditor key={pathway} sessionToken={sessionToken} data={data} pathway={pathway} onChanged={changed} fail={fail} /> : null}
     </div>
   );

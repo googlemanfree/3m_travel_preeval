@@ -15,7 +15,7 @@ const KIND_COPY: Record<string, { title: string; empty: string; icon: typeof Bri
 
 /**
  * « Opportunités pour votre projet » : ce que le candidat peut utiliser selon le visa choisi. Il reprend le guide PUBLIÉ du pays
- * (donc relu sur les sources officielles). Sans guide publié, le panneau le dit et oriente vers les pages existantes.
+ * (donc vérifié). Sans guide publié, le panneau le dit et oriente vers les pages existantes.
  */
 export function ClientOpportunities({ destination, projectType, visaType }: { destination: string | null | undefined; projectType?: string | null; visaType?: string | null }) {
   const kind = resolveEvaluationProjectKind(projectType, visaType);
@@ -48,12 +48,12 @@ export function ClientOpportunities({ destination, projectType, visaType }: { de
                   return <li key={program.officialName} className="rounded-lg bg-slate-50 p-3 text-sm"><p className="font-semibold text-slate-900">{program.nameFr || program.officialName}</p>{facts ? <p className="text-xs text-slate-600">{facts}</p> : null}</li>;
                 })}
               </ul>
-              <p className="text-xs text-slate-500">{PATHWAY_LABELS[entry.pathway]} · repères indicatifs, à confirmer sur le portail officiel{entry.checkedAt ? ` · vérifié le ${new Date(entry.checkedAt).toLocaleDateString("fr-FR")}` : ""}.</p>
-              <Link href={`/pays/${slug}`} className="inline-flex items-center gap-1 text-sm font-semibold text-blue-800 underline">Voir les étapes et les sources<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+              <p className="text-xs text-slate-500">{PATHWAY_LABELS[entry.pathway]} · repères indicatifs, confirmés par votre conseiller{entry.verifiedAt ? ` · vérifié le ${new Date(entry.verifiedAt).toLocaleDateString("fr-FR")}` : ""}.</p>
+              <Link href={`/pays/${slug}`} className="inline-flex items-center gap-1 text-sm font-semibold text-blue-800 underline">Voir toutes les étapes<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
             </div>
           ) : (
             <div className="mt-3 space-y-2 text-sm text-slate-700" data-testid="client-opportunities-pending">
-              <p>{guide.isLoading ? "Chargement…" : `Le guide ${name} est en cours de vérification avec les sources officielles.`}</p>
+              <p>{guide.isLoading ? "Chargement…" : `Le guide ${name} est en cours de vérification.`}</p>
               {!guide.isLoading ? <p className="text-slate-600">{copy.empty}</p> : null}
               <p className="flex flex-wrap gap-x-4 gap-y-1">
                 <Link href="/procedures" className="font-semibold text-blue-800 underline">Procédures détaillées</Link>

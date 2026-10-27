@@ -17,8 +17,8 @@ import { guideSlugForDestinationName } from "../shared/countryGuides";
 
 const guide = {
   pathways: [
-    { pathway: "work", summary: "Permis lié à un employeur.", checkedAt: "2026-10-27T00:00:00.000Z", sources: [], programs: [{ officialName: "Work permit", nameFr: "Permis de travail", routeType: "employer", offerRequired: "yes", steps: [] }] },
-    { pathway: "visit", summary: "Visa de visiteur ou AVE.", checkedAt: null, sources: [], programs: [{ officialName: "Visitor visa", nameFr: null, routeType: null, offerRequired: null, steps: [] }] },
+    { pathway: "work", summary: "Permis lié à un employeur.", verifiedAt: "2026-10-27T00:00:00.000Z", programs: [{ officialName: "Work permit", nameFr: "Permis de travail", routeType: "employer", offerRequired: "yes", steps: [] }] },
+    { pathway: "visit", summary: "Visa de visiteur ou AVE.", verifiedAt: null, programs: [{ officialName: "Visitor visa", nameFr: null, routeType: null, offerRequired: null, steps: [] }] },
   ],
 };
 
@@ -46,7 +46,7 @@ describe("opportunités de l'espace client selon le visa choisi", () => {
     render(<ClientOpportunities destination="Canada" projectType="travail" />);
     expect(screen.getByText("Votre projet de travail")).toBeTruthy();
     expect(screen.getByText("Permis de travail")).toBeTruthy();
-    expect(screen.getByRole("link", { name: /Voir les étapes et les sources/ }).getAttribute("href")).toBe("/pays/canada");
+    expect(screen.getByRole("link", { name: /Voir toutes les étapes/ }).getAttribute("href")).toBe("/pays/canada");
   });
 
   it("visa visiteur : montre le parcours visiteur, pas le travail", () => {
