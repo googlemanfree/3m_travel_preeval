@@ -29,6 +29,10 @@ import {
   primaryEvalProjectForPage,
 } from "@shared/countryResourceCatalog";
 import { normalizePublicEvaluationProject } from "@shared/evaluationFormRequirements";
+import { clampSeoDescription, clampSeoTitle } from "../client/src/lib/seoText";
+import { PATHWAY_LABELS, ROUTE_TYPE_LABELS, STEP_ACTOR_LABELS, OFFER_REQUIREMENT_LABELS } from "@shared/countryCatalog";
+import { guideCodeForSlug, guideCountryName, guidePath } from "@shared/countryGuides";
+import { getCountryGuide, getCountryGuides, type CountryGuide } from "./services/countryGuidesSnapshot";
 
 const LOCAL_BUSINESS_STRUCTURED_DATA = {
   "@type": "TravelAgency",
@@ -315,6 +319,7 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/accessibilite": { title: `Accessibilité | ${SITE}`, description: "Engagements et informations d’accessibilité du site 3M TRAVEL AGENCY : ce qui est déjà en place et comment signaler une difficulté.", heading: "Accessibilité", lead: "Nous cherchons à rendre le site utilisable par le plus grand nombre ; signalez-nous toute difficulté rencontrée." },
   "/faq": { title: `Questions fréquentes | ${SITE}`, description: "Évaluation gratuite, frais et paiement, documents, délais, sécurité, visas et e-Visa : les réponses de 3M TRAVEL AGENCY aux questions les plus posées.", heading: "Questions fréquentes", lead: "Des réponses claires avant de lancer votre projet de mobilité internationale, sans promesse de résultat : les décisions appartiennent aux autorités, écoles et employeurs." },
   "/verifier-une-agence": { title: `Vérifier une agence avant de payer | ${SITE}`, description: "Signes d’une offre frauduleuse, vérifications à faire avant de payer une agence de visa, d’études ou d’emploi, et engagements de 3M TRAVEL AGENCY.", heading: "Vérifier une agence avant de payer", lead: "Une promesse de visa, d’emploi ou d’admission « assuré » est le signe le plus courant d’une escroquerie : voici comment vérifier avant de payer." },
+  "/pays": { title: `Guides visa par pays | ${SITE}`, description: "Pour chaque pays : étapes du visa travail, études ou visiteur, pièces à préparer et liens officiels, avec la date de vérification.", heading: "Guides visa par pays", lead: "Chaque guide n'est publié qu'après relecture des pages officielles du pays, avec la date de vérification." },
   "/ressources": { title: `Bibliothèque de ressources | ${SITE}`, description: "Guides PDF par pays pour le travail, les études et la visite — pages destinations premium et fiches 3M TRAVEL AGENCY.", heading: "Guides par destination", lead: "Choisissez un pays pour consulter tous les guides PDF associés, avec images premium et renvoi vers les sources officielles." },
   "/guide-procedures": { title: `Guide des procédures | ${SITE}`, description: "Bibliothèque PDF des procédures 3M TRAVEL AGENCY : travail, études, visiteur, avec renvoi vers les portails officiels (IRCC, ADEM, France-Visas…).", heading: "Bibliothèque PDF des procédures de mobilité", lead: "Chaque guide publié est rattaché à sa fiche procédure et aux sources officielles à vérifier avant toute démarche." },
   "/3m-solutions": { title: "3M Solutions | 3M TRAVEL AGENCY", description: "Services numériques et accompagnement documentaire de 3M TRAVEL AGENCY : web, formation, réseaux et sécurité.", heading: "3M Solutions", lead: "Découvrez les services numériques et soumettez une demande détaillée à l’équipe." },
@@ -385,6 +390,59 @@ const publicPath = (url: string) => {
   const raw = url.split("?")[0] || "/";
   return raw === "/" ? "/" : raw.replace(/\/+$/, "");
 };
+/**
+ * Guides par pays : seules les fiches PUBLIÉES (donc sourcées et relues) sont indexables. Un pays du catalogue sans fiche
+ * publiée répond 200 avec « guide en cours de vérification » et noindex ; un nom qui n'est pas un pays reste « introuvable ».
+ */
+const guideSlugFromPath = (path: string) => {
+  const match = path.match(/^\/pays\/([^/]+)$/);
+  if (!match) return null;
+  try { return decodeURIComponent(match[1]); } catch { return null; }
+};
+
+const guideDateLabel = (value: string | null) => (value ? new Date(value).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }) : null);
+
+const guideMetaForPath = (path: string): PublicMeta | undefined => {
+  const slug = guideSlugFromPath(path);
+  if (!slug) return undefined;
+  const code = guideCodeForSlug(slug);
+  if (!code) return undefined;
+  const name = guideCountryName(code) ?? slug;
+  const guide = getCountryGuide(slug);
+  if (!guide) {
+    return {
+      title: clampSeoTitle(`Guide ${name} : en cours de vérification | ${SITE}`),
+      description: `Le guide ${name} est en cours de vérification avec les sources officielles. Consultez nos procédures et e-Visas en attendant.`,
+      heading: `${name} : guide en cours de vérification`,
+      lead: "Nous ne publions un guide qu'après relecture des pages officielles du pays.",
+      noindex: true,
+    };
+  }
+  const labels = guide.pathways.map((item) => PATHWAY_LABELS[item.pathway].toLowerCase()).join(", ");
+  return {
+    title: clampSeoTitle(`Visa ${name} : ${labels} | ${SITE}`),
+    description: clampSeoDescription(`Étapes, pièces et liens officiels pour ${labels} (${name}). Vérifié sur les sources officielles${guide.updatedAt ? ` le ${guideDateLabel(guide.updatedAt)}` : ""}.`),
+    heading: `${name} : visa et procédures`,
+    lead: `Repères vérifiés sur les sources officielles pour ${labels}.`,
+  };
+};
+
+const guideBodyHtml = (guide: CountryGuide) => guide.pathways.map((item) => {
+  const programs = item.programs.map((program) => {
+    const facts = [
+      program.routeType ? ROUTE_TYPE_LABELS[program.routeType as keyof typeof ROUTE_TYPE_LABELS] : null,
+      program.offerRequired ? OFFER_REQUIREMENT_LABELS[program.offerRequired as keyof typeof OFFER_REQUIREMENT_LABELS] : null,
+    ].filter(Boolean).join(" · ");
+    const notes = [program.salaryNote, program.durationNote, program.feesNote, program.processingNote, program.residencePathNote].filter(Boolean).map((note) => `<p>${esc(String(note))}</p>`).join("");
+    const steps = program.steps.length
+      ? `<ol>${program.steps.map((step) => `<li><strong>${esc(STEP_ACTOR_LABELS[step.actor as keyof typeof STEP_ACTOR_LABELS] ?? step.actor)} :</strong> ${esc(step.title)}${step.description ? ` — ${esc(step.description)}` : ""}${step.delayNote ? ` (${esc(step.delayNote)})` : ""}</li>`).join("")}</ol>`
+      : "";
+    return `<article><h3>${esc(program.nameFr || program.officialName)}</h3>${facts ? `<p>${esc(facts)}</p>` : ""}${notes}${steps}</article>`;
+  }).join("");
+  const sources = item.sources.map((source) => `<li><a href="${esc(source.url)}" rel="noopener noreferrer" target="_blank">${esc(source.label)}</a>${source.checkedAt ? ` · vérifié le ${esc(guideDateLabel(source.checkedAt) ?? "")}` : ""}</li>`).join("");
+  return `<section aria-label="${esc(PATHWAY_LABELS[item.pathway])} ${esc(guide.name)}"><h2>${esc(PATHWAY_LABELS[item.pathway])} : ${esc(guide.name)}</h2>${item.summary ? `<p>${esc(item.summary)}</p>` : ""}${programs}${sources ? `<h3>Sources officielles</h3><ul>${sources}</ul>` : ""}</section>`;
+}).join("") + `<p>Ces repères sont indicatifs : l'éligibilité, les frais et les délais se confirment toujours sur le portail officiel. <a href="/#evaluation-multi">Évaluer mon profil</a></p>`;
+
 const publicNav = `<nav aria-label="Navigation publique pré-rendue"><a href="/">Accueil</a><a href="/procedures">Procédures</a><a href="/evisas">e-Visas</a><a href="/tarifs">Tarifs</a><a href="/sources-officielles">Sources officielles</a><a href="/plan-du-site">Plan du site</a></nav>`;
 const OFFICIAL_SOURCE_DESTINATIONS = [
   ["canada", "Canada", "Immigration, Réfugiés et Citoyenneté Canada"],
@@ -520,7 +578,7 @@ const routeSpecificPrerender = (path: string) => {
     return `<section aria-label="Informations tarifaires"><h2>Comprendre les tarifs avant de vous engager</h2><article><h3>Fourchettes par type de service</h3><p>e-Visa / court séjour : 65 000 – 150 000 FCFA · Schengen / études Europe : 200 000 – 450 000 FCFA · Canada études ou travail : 350 000 – 800 000 FCFA. Honoraires d’agence indicatifs hors frais tiers.</p></article><article><h3>Exemple de devis — visa études France</h3><p>Ouverture 65 000 FCFA + accompagnement 180 000 FCFA + coordination dépôt 55 000 FCFA = total indicatif 300 000 FCFA. Devis écrit avant engagement.</p></article><article><h3>Ouverture de dossier — à partir de 65 000 FCFA</h3><p>Montant indicatif selon le profil ; confirmation écrite et reçu avant tout règlement.</p></article><article><h3>Services inclus</h3><p>Orientation, checklist documentaire, relecture des pièces, protocole et suivi de statut dans le périmètre écrit.</p></article><article><h3>Frais externes exclus</h3><p>Consulats, biométrie, examens médicaux, assurances, traductions, billets et frais universitaires.</p></article><article><h3>Étapes de paiement</h3><ol><li>Évaluation gratuite</li><li>Devis écrit</li><li>Protocole signé</li><li>Paiement canaux officiels + reçu</li><li>Suivi Mon espace</li></ol></article><article><h3>Annulation et remboursement — cas couverts (résumé public)</h3><ul><li>Évaluation gratuite : aucun paiement — rien à rembourser.</li><li>Avant paiement : aucun engagement financier.</li><li>Après paiement / phase engagée : frais d’ouverture et diligences déjà réalisées en principe non remboursables (protocole + reçu), sauf disposition légale impérative contraire ; situation particulière examinée selon le protocole signé.</li><li>Frais tiers déjà versés : règles des organismes concernés.</li><li>Refus de visa ou résultat négatif : pas de remboursement automatique des honoraires.</li></ul><p>Le détail figure dans le protocole signé et les <a href="/conditions-utilisation#annulation">conditions d’utilisation</a>.</p></article><p><a href="/?project=travail#evaluation-multi">Demander une orientation</a> · <a href="/conditions-utilisation#annulation">Conditions d’utilisation</a></p></section>`;
   }
   if (path === "/plan-du-site") {
-    const links = [["Accueil", "/"], ["Procédures et destinations", "/procedures"], ["e-Visas", "/evisas"], ["Tarifs", "/tarifs"], ["Contact", "/contact"], ["Sources officielles", "/sources-officielles"], ["Ressources", "/ressources"], ["Guide des procédures", "/guide-procedures"], ["Créer un compte", "/register"], ["Connexion candidat", "/login"]] as const;
+    const links = [["Accueil", "/"], ["Procédures et destinations", "/procedures"], ["e-Visas", "/evisas"], ["Tarifs", "/tarifs"], ["Contact", "/contact"], ["Sources officielles", "/sources-officielles"], ["Ressources", "/ressources"], ["Guides visa par pays", "/pays"], ["Guide des procédures", "/guide-procedures"], ["Créer un compte", "/register"], ["Connexion candidat", "/login"]] as const;
     return `<section aria-label="Navigation complète"><h2>Accéder rapidement aux services 3M TRAVEL AGENCY</h2><ul>${links.map(([label, href]) => `<li><a href="${href}">${label}</a></li>`).join("")}</ul></section>`;
   }
   if (path === "/procedures") {
@@ -543,6 +601,19 @@ const routeSpecificPrerender = (path: string) => {
       ? `<p><a href="${esc(destination.officialPortalUrl)}" target="_blank" rel="noopener noreferrer">${esc(destination.officialPortalLabel || "Consulter le portail officiel")}</a>${destination.officialVerifiedAt ? ` · Vérifié le ${esc(destination.officialVerifiedAt)}` : ""}</p>`
       : `<p>Le portail officiel doit être vérifié avant tout paiement ou dépôt de document.</p>`;
     return `<section aria-label="Détails e-Visa"><h2>${esc(destination.country)} : repères e-Visa</h2><p>${esc(destination.culture)}</p><p><strong>Type :</strong> ${esc(destination.type)} · <strong>Durée :</strong> ${esc(destination.duration)} · <strong>Délai :</strong> ${esc(destination.delay)} · <strong>Frais :</strong> ${esc(destination.fee)}</p><h2>Étapes à vérifier</h2><ol>${steps}</ol><p><strong>Documents :</strong> ${esc(destination.docs)}</p>${officialPortal}<p>Ces informations sont indicatives et à confirmer sur le portail officiel avant toute démarche, paiement ou réservation. La délivrance relève de l’autorité compétente : 3M TRAVEL AGENCY n’en garantit ni l’obtention ni les délais.</p><p><a href="/evisas">Retourner à l’annuaire e-Visa</a> · <a href="/contact">Demander une orientation</a></p></section>`;
+  }
+  if (path === "/pays") {
+    const guides = Array.from(getCountryGuides().values()).sort((a, b) => a.name.localeCompare(b.name, "fr"));
+    const list = guides.length
+      ? `<ul>${guides.map((guide) => `<li><a href="${esc(guidePath(guide.slug))}">${esc(guide.name)}</a> — ${esc(guide.pathways.map((item) => PATHWAY_LABELS[item.pathway]).join(", "))}</li>`).join("")}</ul>`
+      : `<p>Les premiers guides sont en cours de vérification avec les sources officielles. En attendant, consultez nos <a href="/procedures">procédures</a>, nos <a href="/evisas">e-Visas</a> et nos <a href="/ressources">ressources par pays</a>.</p>`;
+    return `<section aria-label="Guides par pays"><h2>Pays disponibles</h2>${list}</section>`;
+  }
+  const guideSlug = guideSlugFromPath(path);
+  if (guideSlug) {
+    const guide = getCountryGuide(guideSlug);
+    if (guide) return `<section aria-label="Guide ${esc(guide.name)}">${guideBodyHtml(guide)}</section>`;
+    return `<section aria-label="Guide en cours de vérification"><p>Ce guide sera publié après relecture des pages officielles. Voir les <a href="/pays">guides déjà disponibles</a>.</p></section>`;
   }
   const studyArticle = studyArticleForPath(path);
   if (studyArticle) {
@@ -568,7 +639,10 @@ export function getIndexablePublicPaths() {
     .map((entry) => `/en/procedures/${entry.enSlug}`);
   const evisaPaths = evisasDatabaseComplete.map((entry) => `/evisa/${entry.id}`);
   const studyArticlePaths = studyDestinationArticles.map((entry) => `/blog/etudes/${entry.slug}`);
+  // Uniquement les guides publiés : un pays sans fiche relue n'entre jamais dans le plan du site.
+  const guidePaths = Array.from(getCountryGuides().keys()).sort().map((slug) => guidePath(slug));
   return staticPaths
+    .concat(guidePaths.filter((path) => staticPaths.indexOf(path) === -1))
     .concat(destinationPaths.filter((path) => staticPaths.indexOf(path) === -1))
     .concat(englishProcedurePaths.filter((path) => staticPaths.indexOf(path) === -1))
     .concat(evisaPaths.filter((path) => staticPaths.indexOf(path) === -1))
@@ -620,7 +694,7 @@ export function composePublicPrerender(template: string, url: string) {
       };
     }
   }
-  const meta = PUBLIC_PAGES[path] ?? procedurePage ?? evisaPage ?? blogArticle ?? resourceCountryMeta;
+  const meta = PUBLIC_PAGES[path] ?? procedurePage ?? evisaPage ?? blogArticle ?? resourceCountryMeta ?? guideMetaForPath(path);
   const isStudyArticle = Boolean(studyArticle);
   const socialType = isStudyArticle ? "article" : "website";
   const privatePath = /^\/(admin|mon-espace|mon-dossier|confirm-email|verify-email-link|verify-email|verify-email-sent|verify-application-email|confirm-email-change|login|panier|document-upload|mes-vols-favoris|flights|payment\/[^/]+|flight-booking\/[^/]+)(?:\/|$)/.test(path);

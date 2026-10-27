@@ -59,6 +59,7 @@ const SITE_SECTIONS: SitemapSection[] = [
     key: "resources", title: { fr: "Ressources et procédures", en: "Resources & procedures" }, description: { fr: "Les contenus utiles pour préparer un dossier documenté et retrouver les sources institutionnelles.", en: "Useful content to prepare a documented case and find institutional sources." }, icon: BookOpen,
     links: [
       { key: "resources", label: { fr: "Ressources", en: "Resources" }, href: "/ressources", description: { fr: "Parcourir la bibliothèque pays et les PDF publiés.", en: "Browse the country library and published PDFs." } },
+      { key: "country_guides", label: { fr: "Guides visa par pays", en: "Visa guides by country" }, href: "/pays", description: { fr: "Étapes et liens officiels, publiés après relecture des sources.", en: "Steps and official links, published once sources are reviewed." } },
       ...listCountryResourcePages()
         .filter((page) => ["canada", "luxembourg", "france", "allemagne", "belgique", "emirats", "etats-unis", "royaume-uni"].includes(page.slug))
         .map((page) => ({

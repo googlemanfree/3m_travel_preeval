@@ -73,6 +73,8 @@ const EvisaRequestForm = lazyWithTimeout(() => import("./pages/EvisaRequestForm"
 const EvaluationResult = lazyWithTimeout(() => import("./pages/EvaluationResult"));
 const Ressources = lazyWithTimeout(() => import("./pages/Ressources"));
 const ResourceCountryPage = lazyWithTimeout(() => import("./pages/ResourceCountryPage"));
+const CountryGuides = lazyWithTimeout(() => import("./pages/CountryGuides"));
+const CountryGuide = lazyWithTimeout(() => import("./pages/CountryGuide"));
 const ProcedureResourceGuide = lazyWithTimeout(() => import("./pages/ProcedureResourceGuide"));
 const Fiches = lazyWithTimeout(() => import("./pages/Fiches"));
 const TranslationOrder = lazyWithTimeout(() => import("./pages/TranslationOrder"));
@@ -357,6 +359,9 @@ function Router() {
       {/* Bibliothèque de ressources PDF + pages pays */}
       <Route path={"/ressources"} component={Ressources} />
       <Route path={"/ressources/:countrySlug"} component={ResourceCountryPage} />
+      {/* Guides par pays issus du catalogue des parcours : publiés seulement après relecture des sources officielles. */}
+      <Route path={"/pays"} component={CountryGuides} />
+      <Route path={"/pays/:slug"} component={CountryGuide} />
       <Route path={"/guide-procedures"} component={ProcedureResourceGuide} />
 
       {/* Fiches détaillées par pays */}

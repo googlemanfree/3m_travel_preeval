@@ -22,6 +22,7 @@ import { getDb } from "../db";
 import { adminLabel } from "../services/partnerProfiles";
 import { recordPrivacyEvent } from "../services/privacyAudit";
 import { requireValidAdminSession } from "./adminAuth";
+import { getCountryGuide, getCountryGuides, refreshCountryGuides } from "../services/countryGuidesSnapshot";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
 const WORLD_CODES = new Set(WORLD_COUNTRY_ROWS.map((row) => row[0]));
@@ -54,6 +55,8 @@ const iso = (value: Date | null | undefined) => (value ? new Date(value).toISOSt
 /** Résumé d'une action d'administration pour le journal (sans donnée personnelle). */
 async function audit(db: Db, admin: { id: number; email?: string | null }, action: string, resourceId: string | number, details: string) {
   await recordPrivacyEvent(db, { actorType: "admin", actorId: admin.id, actorLabel: adminLabel(admin), action, resourceType: "country_catalog", resourceId, details });
+  // Chaque changement de l'administration met à jour les guides publics et le plan du site sans attendre le rafraîchissement périodique.
+  await refreshCountryGuides();
 }
 
 /**
@@ -97,6 +100,13 @@ export const countryCatalogRouter = router({
       })),
     };
   })),
+
+  /** Guides publiés, lus dans l'instantané en mémoire (le même que le prérendu) : aucune requête, aucune fiche non publiée. */
+  guideList: publicProcedure.query(() => Array.from(getCountryGuides().values())
+    .sort((a, b) => a.name.localeCompare(b.name, "fr"))
+    .map((guide) => ({ code: guide.code, name: guide.name, slug: guide.slug, pathways: guide.pathways.map((item) => item.pathway), updatedAt: guide.updatedAt }))),
+
+  guide: publicProcedure.input(z.object({ slug: z.string().trim().min(2).max(80) })).query(({ input }) => getCountryGuide(input.slug) ?? null),
 
   adminMatrix: publicProcedure.input(z.object({ sessionToken: session })).query(({ input }) => guarded(async () => {
     await requireValidAdminSession(input.sessionToken);
