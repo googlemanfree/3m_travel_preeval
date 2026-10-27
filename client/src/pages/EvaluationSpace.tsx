@@ -1331,7 +1331,7 @@ export default function EvaluationSpace() {
             </div>
           )}
 
-          {activeTab === "dossier" && (evaluationRequired ? evaluationGateCard : (
+          {activeTab === "dossier" && (evaluationRequired && !agreementAfterPaymentRequired ? evaluationGateCard : (
             <div className="space-y-6">
               <Card className="p-6 border-blue-100 bg-white shadow-sm">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Dossier d'immigration actif ({displayReference})</h3>
@@ -1627,7 +1627,14 @@ export default function EvaluationSpace() {
 
           {activeTab === "signatures" && (
             <SignableDocumentsPanel
-              activeDossier={activeDossier}
+              activeDossier={agreementDossier ? {
+                dossierNumber: agreementDossier.dossierNumber,
+                agreementSigned: agreementDossier.agreementSigned,
+                // Même règle que le bandeau « Ouvrir le protocole » : le paiement de la procédure affichée (en ligne ou agence) suffit.
+                paymentStatus: agreementAfterPaymentRequired || procedurePaymentConfirmed || String(activeDossier?.paymentStatus ?? activeAgencyDossier?.paymentStatus).toUpperCase() === "SUCCESS"
+                  ? "SUCCESS"
+                  : (activeDossier?.paymentStatus ?? activeAgencyDossier?.paymentStatus ?? null),
+              } : null}
               documents={agencyDocuments as any[]}
               onOpenProtocol={() => switchToSection("dossier")}
             />
