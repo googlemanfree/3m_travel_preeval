@@ -185,7 +185,7 @@ Les noms suivent la convention du dépôt (snake_case, MySQL / Drizzle). Les cl�
 ### 4.2 Référentiel pays (partagé par les trois parcours)
 
 **`country_pathways`** [nouveau] : une ligne par pays et par parcours.
-`id`, `country_code` (ISO alpha-2), `pathway` (`work`/`study`/`visit`), `availability` (`documented`/`to_study`/`not_offered`), `summary`, `status` (`draft`/`needs_review`/`published`/`retired`), `checked_at`, `checked_by_admin_id`, `schema_version`.
+`id`, `country_code` (ISO alpha-2), `pathway` (`work`/`study`/`visit`), `coverage` (`named`/`to_document`/`not_offered`), `summary`, `status` (`draft`/`needs_review`/`published`/`retired`), `checked_at`, `checked_by_admin_id`, `schema_version`.
 Unicité : (`country_code`, `pathway`). Amorçage : 196 × 3 = 588 lignes.
 
 **`country_visa_programs`** [nouveau] : un dispositif par ligne.
