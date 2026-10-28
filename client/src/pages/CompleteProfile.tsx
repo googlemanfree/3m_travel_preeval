@@ -9,10 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { CountrySelect } from "@/components/CountryPicker";
-import { AvatarCropperModal } from "@/components/AvatarCropperModal";
+import { PortraitCapture, type PortraitCaptureResult } from "@/components/PortraitCapture";
 import { getCandidateToken } from "@/hooks/useCandidateAuth";
 import { resolveCandidateReturnPath } from "@/lib/candidateRedirect";
-import { verifyHumanPortrait } from "@/lib/portraitVerification";
 
 
 const VISA_TYPES = [
@@ -29,9 +28,8 @@ export default function CompleteProfile() {
   const [isLoading, setIsLoading] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarCaptureMethod, setAvatarCaptureMethod] = useState<PortraitCaptureResult["method"]>("gallery");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
-  const [isCropperOpen, setIsCropperOpen] = useState(false);
   const [formData, setFormData] = useState({
     destination: "",
     visaType: "",
@@ -98,38 +96,12 @@ export default function CompleteProfile() {
     },
   });
 
-  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("La taille de l'image ne doit pas dépasser 5 Mo.");
-      return;
-    }
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      toast.error("Format non supporté. Veuillez choisir une image JPG, PNG ou WebP.");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setRawImageSrc(reader.result as string);
-      setIsCropperOpen(true);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleCropComplete = async (croppedFile: File) => {
-    const verification = await verifyHumanPortrait(croppedFile);
-    if (!verification.accepted) {
-      toast.error(verification.reason);
-      return;
-    }
-    setAvatarFile(croppedFile);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setAvatarPreview(reader.result as string);
-      toast.success("Portrait humain vérifié et ajusté avec succès !");
-    };
-    reader.readAsDataURL(croppedFile);
+  const handlePortraitVerified = (result: PortraitCaptureResult) => {
+    const { file, preview, method } = result;
+    setAvatarCaptureMethod(method);
+    setAvatarFile(file);
+    setAvatarPreview(preview);
+    toast.success("Portrait vérifié. Vous pouvez maintenant activer votre espace.");
   };
 
   const handleComplete = async () => {
@@ -149,7 +121,7 @@ export default function CompleteProfile() {
         uploadForm.append("file", avatarFile);
         uploadForm.append("fileType", "photo_identite");
         uploadForm.append("email", email.trim().toLowerCase());
-        uploadForm.append("captureMethod", "gallery");
+        uploadForm.append("captureMethod", avatarCaptureMethod);
         const response = await fetch("/api/candidate/upload-public", { method: "POST", body: uploadForm });
         const result = await response.json().catch(() => ({}));
         if (!response.ok || typeof result.fileUrl !== "string" || typeof result.portraitVerificationToken !== "string") {
@@ -381,27 +353,28 @@ export default function CompleteProfile() {
               <p className="text-gray-600 text-sm">Ajoutez votre photo pour personnaliser votre espace 3M TRAVEL AGENCY.</p>
             </div>
 
-            <div className="space-y-4">
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-500 transition-colors bg-gray-50">
-                <input
-                  id="avatar-upload"
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={handleAvatarSelect}
-                  className="hidden"
-                />
-                <label htmlFor="avatar-upload" className="cursor-pointer block">
-                  <span className="text-sm font-semibold text-blue-600 hover:text-blue-700 block mb-1">
-                    📁 Choisir une photo de profil
-                  </span>
-                  <span className="text-xs text-gray-500">JPG, PNG ou WebP (max. 5 Mo)</span>
-                </label>
-                {avatarFile && (
-                  <div className="mt-3 text-xs font-medium text-green-700 bg-green-100 py-1 px-3 rounded-md inline-block">
-                    ✓ {avatarFile.name} prêt
-                  </div>
-                )}
-              </div>
+            <div className="space-y-4" data-testid="complete-profile-portrait-action">
+              {!avatarFile && !formData.avatarUrl && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950" role="alert">
+                  <p className="font-bold">Action requise pour continuer</p>
+                  <p className="mt-1 leading-5">Prenez une photo de votre visage avec la caméra ou choisissez une image depuis votre téléphone. Le contrôle se fait avant l’envoi sécurisé.</p>
+                </div>
+              )}
+              {formData.avatarUrl && !avatarFile && (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900" role="status">
+                  <p className="font-semibold">Portrait déjà enregistré</p>
+                  <p className="mt-1 text-xs leading-5">Vous pouvez continuer ou reprendre une photo si vous souhaitez la remplacer.</p>
+                </div>
+              )}
+              <PortraitCapture
+                disabled={isLoading || isUploadingAvatar}
+                onVerified={handlePortraitVerified}
+              />
+              {avatarFile && (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800" role="status">
+                  ✓ {avatarFile.name} prêt pour l’activation
+                </div>
+              )}
             </div>
 
             <div className="flex gap-3 mt-6">
@@ -441,14 +414,6 @@ export default function CompleteProfile() {
         </div>
       </motion.div>
 
-      {rawImageSrc && (
-        <AvatarCropperModal
-          isOpen={isCropperOpen}
-          imageSrc={rawImageSrc}
-          onClose={() => setIsCropperOpen(false)}
-          onCropComplete={handleCropComplete}
-        />
-      )}
     </main>
   );
 }

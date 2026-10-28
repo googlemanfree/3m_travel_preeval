@@ -25,6 +25,13 @@ describe("« Se connecter » ne renvoie jamais vers l'inscription", () => {
     expect(complete).toContain('toast.success("Votre espace est activé.")');
   });
 
+  it("un compte précréé reçoit directement une action caméra ou galerie pour fournir son portrait", () => {
+    expect(complete).toContain('data-testid="complete-profile-portrait-action"');
+    expect(complete).toContain("<PortraitCapture");
+    expect(complete).toContain("Action requise pour continuer");
+    expect(complete).toContain("handlePortraitVerified");
+  });
+
   it("un accès partenaire en cours de vérification ne pousse pas à se réinscrire", () => {
     expect(employer).toContain('data-testid="partner-login-pending"');
     expect(employer).toContain("Inutile de vous réinscrire");
