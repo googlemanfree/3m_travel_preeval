@@ -15,6 +15,7 @@ import { ChecklistSection, CommitmentsSection, FaqSection, StepsSection } from "
 import { PartnerTeamPanel } from "@/components/PartnerTeamPanel";
 import { PartnerCvtheque } from "@/components/PartnerCvtheque";
 import { PartnerNeeds, PartnerTracking } from "@/components/PartnerRecruitment";
+import { EmployerJobOffers } from "@/components/EmployerJobOffers";
 import { EMPLOYER_COMMITMENTS, EMPLOYER_FAQ, EMPLOYER_HIDDEN, EMPLOYER_HOW_STEPS, EMPLOYER_VISIBLE } from "@/data/contentCampaignPartners";
 
 const sessionKey = "3m_placement_employer_session";
@@ -23,7 +24,7 @@ type Decision = "under_review" | "shortlisted" | "selected" | "not_selected" | "
 type CollaborationAuditAction = "all" | "favorite_shared" | "favorite_share_revoked" | "collaborator_promoted" | "collaborator_role_reader" | "collaborator_suspended" | "collaborator_reactivated" | "collaborator_suspension_reviewed";
 type CollaborationAuditRange = "7d" | "30d" | "all";
 type AuthTab = "login" | "register";
-type WorkspaceTab = "profiles" | "cvtheque" | "selection" | "needs" | "tracking" | "history" | "team" | "security";
+type WorkspaceTab = "profiles" | "cvtheque" | "selection" | "needs" | "offers" | "tracking" | "history" | "team" | "security";
 type PortalOrganization = { name: string; country: string; organizationType: PartnerOrganizationType };
 
 function readPortalDefaults(): { tab: AuthTab; organizationType: PartnerOrganizationType } {
@@ -427,11 +428,12 @@ export default function EmployerPortal() {
         ["cvtheque", t("CVthèque", "CV library"), Search],
         ["selection", t("Ma sélection", "My selection"), BookmarkCheck],
         ["needs", t("Besoins", "Needs"), ClipboardList],
+        ["offers", t("Offres", "Job offers"), BriefcaseBusiness],
         ["tracking", t("Suivi", "Follow-up"), Bell],
         ["history", t("Historique", "History"), Clock3],
         ["team", t("Équipe", "Team"), UserRoundCog],
         ["security", t("Sécurité", "Security"), LockKeyhole],
-      ] as const).map(([id, label, Icon]) => (
+      ] as const).filter(([id]) => id !== "offers" || !isAgencyPortal).map(([id, label, Icon]) => (
         <button
           key={id}
           type="button"
@@ -522,6 +524,7 @@ export default function EmployerPortal() {
     {workspaceTab === "cvtheque" && <PartnerCvtheque sessionToken={sessionToken} mode="search" />}
     {workspaceTab === "selection" && <PartnerCvtheque sessionToken={sessionToken} mode="selection" />}
     {workspaceTab === "needs" && <PartnerNeeds sessionToken={sessionToken} />}
+    {workspaceTab === "offers" && !isAgencyPortal && <EmployerJobOffers sessionToken={sessionToken} canManage={collaborators.data?.currentRole === "manager"} />}
     {workspaceTab === "tracking" && <PartnerTracking sessionToken={sessionToken} />}
     {workspaceTab === "profiles" && (profiles.isLoading ? <div role="status" aria-live="polite" data-testid="partner-profiles-loading" className="space-y-3 py-4"><span className="sr-only">{t("Chargement des profils autorisés…", "Loading authorised profiles…")}</span><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{[0, 1, 2, 3].map(index => <div key={index} className="h-16 animate-pulse rounded-xl bg-slate-200 motion-reduce:animate-none" />)}</div><div className="grid gap-4 md:grid-cols-2">{[0, 1].map(index => <div key={index} className="h-56 animate-pulse rounded-xl bg-slate-200 motion-reduce:animate-none" />)}</div></div> : profiles.error ? <p className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-800">{t("Votre session n’est plus valide. Reconnectez-vous.", "Your session is no longer valid. Please sign in again.")}</p> : <div className="space-y-4" data-testid="partner-profiles-panel">
       {availableProfiles.length > 0 && <section aria-label={t("Synthèse de vos profils", "Summary of your profiles")} className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="partner-summary">{([
