@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { ArrowRight, Briefcase, Compass, GraduationCap } from "lucide-react";
 import { OFFER_REQUIREMENT_LABELS, PATHWAY_LABELS, ROUTE_TYPE_LABELS, type Pathway } from "@shared/countryCatalog";
 import { guideCountryName, guideCodeForSlug, guideSlugForDestinationName } from "@shared/countryGuides";
+import { StudyOpportunities } from "@/components/StudyOpportunities";
 import { resolveEvaluationProjectKind } from "@shared/evaluationVisaCv";
 import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
@@ -29,7 +30,9 @@ export function ClientOpportunities({ destination, projectType, visaType }: { de
   const pathway = KIND_TO_PATHWAY[kind];
   const entry = guide.data?.pathways.find((item) => item.pathway === pathway) ?? null;
 
+  const countryCode = guideCodeForSlug(slug);
   return (
+    <>
     <Card className="border border-blue-200 bg-white p-5 shadow-sm" role="region" aria-labelledby="client-opportunities-title" data-testid="client-opportunities">
       <div className="flex items-start gap-3">
         <span className="rounded-xl bg-blue-100 p-3 text-blue-800"><Icon className="h-5 w-5" aria-hidden="true" /></span>
@@ -65,5 +68,7 @@ export function ClientOpportunities({ destination, projectType, visaType }: { de
         </div>
       </div>
     </Card>
+    {kind === "etudes" && countryCode ? <StudyOpportunities countryCode={countryCode} countryName={name} /> : null}
+    </>
   );
 }

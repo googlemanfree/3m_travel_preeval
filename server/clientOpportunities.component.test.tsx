@@ -9,7 +9,16 @@ import { resolve } from "node:path";
 
 const state = vi.hoisted(() => ({ guide: { data: null as any, isLoading: false }, enabled: [] as boolean[] }));
 vi.mock("@/lib/trpc", () => ({
-  trpc: { countryCatalog: { guide: { useQuery: (_input: unknown, options: { enabled: boolean }) => { state.enabled.push(options.enabled); return state.guide; } } } },
+  trpc: {
+    useUtils: () => ({ studyCatalog: { myApplications: { invalidate: () => undefined } } }),
+    countryCatalog: { guide: { useQuery: (_input: unknown, options: { enabled: boolean }) => { state.enabled.push(options.enabled); return state.guide; } } },
+    studyCatalog: {
+      schools: { useQuery: () => ({ data: [], isLoading: false }) },
+      myApplications: { useQuery: () => ({ data: [] }) },
+      applyToIntake: { useMutation: () => ({ mutate: () => undefined, isPending: false }) },
+      withdraw: { useMutation: () => ({ mutate: () => undefined, isPending: false }) },
+    },
+  },
 }));
 
 import { ClientOpportunities } from "@/components/ClientOpportunities";
