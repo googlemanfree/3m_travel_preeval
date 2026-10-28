@@ -24,9 +24,10 @@ const buttonVariants = cva(
         default: "h-12 px-5 py-2.5 has-[>svg]:px-4",
         sm: "h-12 gap-1.5 px-4 has-[>svg]:px-3",
         lg: "h-12 px-6 has-[>svg]:px-4",
-        icon: "size-9",
-        "icon-sm": "size-8",
-        "icon-lg": "size-10",
+        // Sur écran tactile, un bouton icône reste de 44 px au moins (cible du pouce) ; la souris garde les tailles compactes.
+        icon: "size-9 [@media(pointer:coarse)]:size-11",
+        "icon-sm": "size-8 [@media(pointer:coarse)]:size-11",
+        "icon-lg": "size-10 [@media(pointer:coarse)]:size-11",
       },
     },
     defaultVariants: {

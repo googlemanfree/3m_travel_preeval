@@ -39,7 +39,18 @@ export const FUNDS = ["ready", "partly", "none"] as const;
 export type Funds = (typeof FUNDS)[number];
 export const FUNDS_LABELS: Record<Funds, string> = { ready: "Mes fonds sont prêts et justifiables", partly: "J'en ai une partie", none: "Pas encore" };
 
-export type Answers = { goal: Goal; status: Status; language: LanguageLevel; timeline: Timeline; funds: Funds };
+/** Questions facultatives pour affiner l'orientation : l'outil fonctionne sans elles. */
+export const AGES = ["young", "adult", "mature", "senior"] as const;
+export type AgeBand = (typeof AGES)[number];
+export const AGE_LABELS: Record<AgeBand, string> = { young: "18 à 24 ans", adult: "25 à 34 ans", mature: "35 à 44 ans", senior: "45 ans et plus" };
+export const DIPLOMAS = ["secondary", "short", "long"] as const;
+export type DiplomaLevel = (typeof DIPLOMAS)[number];
+export const DIPLOMA_LABELS: Record<DiplomaLevel, string> = { secondary: "Secondaire ou formation courte", short: "Bac +2 ou +3", long: "Bac +4 et plus" };
+export const FAMILIES = ["alone", "with"] as const;
+export type FamilyMode = (typeof FAMILIES)[number];
+export const FAMILY_LABELS: Record<FamilyMode, string> = { alone: "Je pars seul(e)", with: "Je pars avec un conjoint ou des enfants" };
+
+export type Answers = { goal: Goal; status: Status; language: LanguageLevel; timeline: Timeline; funds: Funds; age?: AgeBand; diploma?: DiplomaLevel; family?: FamilyMode };
 export type Orientation = {
   route: { title: string; summary: string };
   attention: string[];
@@ -84,6 +95,12 @@ export function orient(answers: Answers): Orientation {
   if (answers.funds === "partly") attention.push("Les fonds doivent souvent rester sur un compte pendant une durée précise et être justifiés : vérifiez le montant et la durée exigés.");
   if (answers.timeline === "soon" && answers.goal !== "visit") attention.push("Les délais d'examen varient selon le pays et la période, et ils ne sont jamais garantis. Dans moins de 3 mois, il faut démarrer immédiatement et rester prêt à décaler.");
   if (answers.status === "none" && answers.goal === "work") attention.push("Méfiez-vous des offres qui demandent de l'argent pour « garantir » un contrat ou un visa : un employeur sérieux ne facture pas le candidat.");
+
+  if (answers.age && (answers.age === "mature" || answers.age === "senior") && (answers.goal === "work" || answers.goal === "settle")) attention.push("Dans les systèmes à points, l'âge fait partie du barème et les points baissent avec l'âge. Les voies liées à un employeur n'en dépendent pas : un contrat solide pèse alors davantage.");
+  if (answers.age === "young" && answers.goal === "work") attention.push("À votre âge, certains pays proposent des programmes jeunes professionnels ou vacances-travail : à vérifier selon votre nationalité, car ils reposent souvent sur des accords entre pays.");
+  if (answers.diploma && (answers.goal === "work" || answers.goal === "settle" || answers.goal === "study") && answers.diploma !== "secondary") attention.push("Un diplôme étranger doit souvent être reconnu ou évalué avant le dépôt. Cette étape prend du temps : lancez-la tôt.");
+  if (answers.diploma === "secondary" && answers.goal === "work") attention.push("Avec un diplôme court, les métiers en pénurie, la formation technique et l'expérience pèsent davantage. Les listes de métiers du pays visé sont à regarder en premier.");
+  if (answers.family === "with" && answers.goal !== "family") attention.push("Un conjoint ou des enfants changent les pièces demandées (actes de mariage et de naissance), les fonds exigés et parfois la voie : tous les permis n'autorisent pas la famille à vous suivre. Cela doit être vérifié avant de choisir le pays.");
 
   const steps = [
     "Faire l'évaluation de votre profil pour que votre conseiller connaisse votre situation.",

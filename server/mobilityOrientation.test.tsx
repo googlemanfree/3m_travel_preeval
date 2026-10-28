@@ -97,3 +97,31 @@ describe("orientation mobilité : enregistrement de la page", () => {
     expect(page).toContain("min-h-12");
   });
 });
+
+describe("orientation mobilité : questions facultatives", () => {
+  const base = answers({ status: "ready", language: "good", funds: "ready", timeline: "later" });
+
+  it("sans réponse facultative, rien ne change", () => {
+    expect(orient(base).attention).toEqual([]);
+  });
+
+  it("l'âge, le diplôme et la famille ajoutent des points d'attention sans jamais écarter le candidat", () => {
+    expect(orient({ ...base, age: "senior" }).attention.join(" ")).toMatch(/points baissent avec l'âge/);
+    expect(orient({ ...base, age: "young" }).attention.join(" ")).toMatch(/programmes jeunes professionnels/);
+    expect(orient({ ...base, diploma: "long" }).attention.join(" ")).toMatch(/reconnu ou évalué/);
+    expect(orient({ ...base, diploma: "secondary" }).attention.join(" ")).toMatch(/métiers en pénurie/);
+    expect(orient({ ...base, family: "with" }).attention.join(" ")).toMatch(/tous les permis n'autorisent pas la famille/);
+    expect(orient({ ...base, goal: "family", family: "with" }).attention.join(" ")).not.toMatch(/tous les permis/);
+    expect(orient({ ...base, age: "senior", diploma: "secondary", family: "with" }).route.title).toBe(orient(base).route.title);
+  });
+
+  it("l'écran propose d'affiner une fois les cinq réponses données et transmet les choix", () => {
+    render(<MobilityOrientationTool />);
+    expect(screen.queryByTestId("orientation-refine")).toBeNull();
+    for (const label of [/Travailler à l'étranger/, /J'ai une offre ou un contrat/, /Je maîtrise la langue/, /Plus tard ou flexible/, /Mes fonds sont prêts/]) fireEvent.click(screen.getByLabelText(label));
+    expect(screen.getByTestId("orientation-result").textContent).not.toMatch(/Points d'attention/);
+    fireEvent.click(screen.getByLabelText(/Je pars avec un conjoint ou des enfants/));
+    expect(screen.getByTestId("orientation-result").textContent).toMatch(/Points d'attention/);
+    expect(screen.getByTestId("orientation-result").textContent).toMatch(/actes de mariage et de naissance/);
+  });
+});

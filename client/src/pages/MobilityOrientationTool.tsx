@@ -2,6 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { ArrowRight, Compass } from "lucide-react";
 import {
+  AGES,
+  AGE_LABELS,
+  DIPLOMAS,
+  DIPLOMA_LABELS,
+  FAMILIES,
+  FAMILY_LABELS,
   FUNDS,
   FUNDS_LABELS,
   GOALS,
@@ -82,6 +88,15 @@ export default function MobilityOrientationTool() {
         {draft.status ? <Choice name="language" legend="3. Votre niveau dans la langue du pays visé ?" options={LANGUAGES} labels={LANGUAGE_LABELS} value={draft.language} onChange={(value) => set("language", value)} /> : null}
         {draft.language ? <Choice name="timeline" legend="4. Quand souhaitez-vous partir ?" options={TIMELINES} labels={TIMELINE_LABELS} value={draft.timeline} onChange={(value) => set("timeline", value)} /> : null}
         {draft.timeline ? <Choice name="funds" legend="5. Vos fonds pour le projet ?" options={FUNDS} labels={FUNDS_LABELS} value={draft.funds} onChange={(value) => set("funds", value)} /> : null}
+
+        {complete ? (
+          <details className="mt-6 rounded-xl border border-slate-200 bg-white p-4" data-testid="orientation-refine">
+            <summary className="min-h-11 cursor-pointer text-base font-black text-slate-950">Affiner mon orientation (facultatif)</summary>
+            <Choice name="age" legend="Votre tranche d'âge" options={AGES} labels={AGE_LABELS} value={draft.age} onChange={(value) => set("age", value)} />
+            <Choice name="diploma" legend="Votre plus haut diplôme" options={DIPLOMAS} labels={DIPLOMA_LABELS} value={draft.diploma} onChange={(value) => set("diploma", value)} />
+            <Choice name="family" legend="Voyagez-vous seul(e) ?" options={FAMILIES} labels={FAMILY_LABELS} value={draft.family} onChange={(value) => set("family", value)} />
+          </details>
+        ) : null}
 
         {result && complete ? (
           <section ref={resultRef} className="mt-8 scroll-mt-24 rounded-2xl border border-blue-200 bg-blue-50/60 p-5" aria-live="polite" aria-labelledby="orientation-result-title" data-testid="orientation-result">

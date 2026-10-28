@@ -1791,7 +1791,7 @@ export default function EvaluationSpace() {
 	        </div>
 	      </div>
       {nextStep.actionLabel ? (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 shadow-[0_-8px_30px_rgba(15,23,42,0.12)] backdrop-blur md:hidden" data-testid="client-sticky-next-step">
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_30px_rgba(15,23,42,0.12)] backdrop-blur md:hidden" data-testid="client-sticky-next-step">
           <div className="mx-auto flex max-w-7xl items-center gap-3">
             <div className="min-w-0 flex-1">
               <p className="truncate text-[11px] font-black uppercase tracking-[0.12em] text-blue-700">{nextStep.eyebrow}</p>
