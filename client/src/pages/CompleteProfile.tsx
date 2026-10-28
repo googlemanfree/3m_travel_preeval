@@ -69,7 +69,9 @@ export default function CompleteProfile() {
   };
 
   const handleContinue = () => {
-    if (step < 3) {
+    // L’étape 4 contient le portrait obligatoire : elle doit être affichée
+    // avant de tenter l’enregistrement final du profil.
+    if (step < 4) {
       setStep(step + 1);
     } else {
       handleComplete();

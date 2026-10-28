@@ -32,6 +32,11 @@ describe("« Se connecter » ne renvoie jamais vers l'inscription", () => {
     expect(complete).toContain("handlePortraitVerified");
   });
 
+  it("ne tente pas de valider le profil depuis l’étape Profession avant d’afficher la photo", () => {
+    expect(complete).toContain("if (step < 4)");
+    expect(complete).toContain("Étape 4: Photo de profil obligatoire");
+  });
+
   it("un accès partenaire en cours de vérification ne pousse pas à se réinscrire", () => {
     expect(employer).toContain('data-testid="partner-login-pending"');
     expect(employer).toContain("Inutile de vous réinscrire");
