@@ -10,8 +10,15 @@ import { resolve } from "node:path";
 const state = vi.hoisted(() => ({ guide: { data: null as any, isLoading: false }, enabled: [] as boolean[] }));
 vi.mock("@/lib/trpc", () => ({
   trpc: {
-    useUtils: () => ({ studyCatalog: { myApplications: { invalidate: () => undefined } } }),
+    useUtils: () => ({ studyCatalog: { myApplications: { invalidate: () => undefined } }, jobOffers: { myApplications: { invalidate: () => undefined }, list: { invalidate: () => undefined } } }),
     countryCatalog: { guide: { useQuery: (_input: unknown, options: { enabled: boolean }) => { state.enabled.push(options.enabled); return state.guide; } } },
+    jobOffers: {
+      list: { useQuery: () => ({ data: [], isLoading: false }) },
+      myApplications: { useQuery: () => ({ data: [] }) },
+      applyToOffer: { useMutation: () => ({ mutate: () => undefined, isPending: false }) },
+      withdrawApplication: { useMutation: () => ({ mutate: () => undefined, isPending: false }) },
+      reportOffer: { useMutation: () => ({ mutate: () => undefined, isPending: false }) },
+    },
     studyCatalog: {
       schools: { useQuery: () => ({ data: [], isLoading: false }) },
       myApplications: { useQuery: () => ({ data: [] }) },

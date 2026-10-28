@@ -15,6 +15,7 @@ export * from "./placementPortalSchema";
 export * from "./securityMfaSchema";
 export * from "./countryCatalogSchema";
 export * from "./studyCatalogSchema";
+export * from "./jobOffersSchema";
 
 /**
  * Core user table backing auth flow.

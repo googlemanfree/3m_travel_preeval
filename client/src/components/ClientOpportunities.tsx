@@ -3,6 +3,7 @@ import { ArrowRight, Briefcase, Compass, GraduationCap } from "lucide-react";
 import { OFFER_REQUIREMENT_LABELS, PATHWAY_LABELS, ROUTE_TYPE_LABELS, type Pathway } from "@shared/countryCatalog";
 import { guideCountryName, guideCodeForSlug, guideSlugForDestinationName } from "@shared/countryGuides";
 import { StudyOpportunities } from "@/components/StudyOpportunities";
+import { JobOpportunities } from "@/components/JobOpportunities";
 import { resolveEvaluationProjectKind } from "@shared/evaluationVisaCv";
 import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
@@ -68,6 +69,7 @@ export function ClientOpportunities({ destination, projectType, visaType }: { de
         </div>
       </div>
     </Card>
+    {kind === "travail" && countryCode ? <JobOpportunities countryCode={countryCode} countryName={name} /> : null}
     {kind === "etudes" && countryCode ? <StudyOpportunities countryCode={countryCode} countryName={name} /> : null}
     </>
   );
