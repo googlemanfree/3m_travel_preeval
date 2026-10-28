@@ -97,7 +97,7 @@ const DESTINATION_LINKS: FooterLink[] = [
   ["canada", "Canada", "/canada"], ["france", "France", "/procedures/france"], ["germany", "Allemagne", "/procedures/allemagne-formation"], ["luxembourg", "Luxembourg", "/procedures/luxembourg"], ["uk", "Royaume-Uni", "/procedures/royaume-uni"], ["australia", "Australie", "/procedures/australie"],
 ].map(([key, frenchLabel, href]) => ({ key: `destination_${key}`, href, label: { fr: frenchLabel, en: frenchLabel === "Allemagne" ? "Germany" : frenchLabel === "Royaume-Uni" ? "United Kingdom" : frenchLabel === "Australie" ? "Australia" : frenchLabel }, description: { fr: `Explorer les informations de procédure disponibles pour ${frenchLabel}.`, en: `Explore available procedure information for ${frenchLabel === "Allemagne" ? "Germany" : frenchLabel === "Royaume-Uni" ? "the United Kingdom" : frenchLabel === "Australie" ? "Australia" : frenchLabel}.` } }));
 
-const FOOTER_SHORTCUT_CLASS = "group inline-flex min-h-8 items-center rounded-md px-1 py-1 outline-none transition-[color,transform,background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:translate-x-1 hover:bg-white/10 hover:text-blue-100 focus-visible:translate-x-1 focus-visible:bg-white/10 focus-visible:text-blue-100 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f2460] motion-reduce:transform-none motion-reduce:transition-none";
+const FOOTER_SHORTCUT_CLASS = "group inline-flex min-h-11 items-center sm:min-h-8 rounded-md px-1 py-1 outline-none transition-[color,transform,background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:translate-x-1 hover:bg-white/10 hover:text-blue-100 focus-visible:translate-x-1 focus-visible:bg-white/10 focus-visible:text-blue-100 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f2460] motion-reduce:transform-none motion-reduce:transition-none";
 
 type FooterShortcutProps = { link: FooterLink; language: Language; onTrack: (link: FooterLink) => void };
 
@@ -278,19 +278,19 @@ export default function Footer() {
                 </div>
                 <div className="flex items-center gap-2">
                   <MessageCircle className="h-4 w-4 shrink-0 text-emerald-300" aria-hidden="true" />
-                  <a href={COMPANY_CONTACTS.yaounde.whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-block py-1 font-semibold text-emerald-100 underline-offset-2 hover:underline">
+                  <a href={COMPANY_CONTACTS.yaounde.whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center py-1 sm:min-h-0 font-semibold text-emerald-100 underline-offset-2 hover:underline">
                     {copy(footerCopy.yaoundeWhatsapp)} : {COMPANY_CONTACTS.yaounde.whatsappNumber}
                   </a>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 shrink-0 text-blue-300" aria-hidden="true" />
-                  <a href={`tel:${COMPANY_CONTACTS.yaounde.phone.replace(/\s/g, "")}`} className="inline-block py-1 font-semibold hover:text-white">
+                  <a href={`tel:${COMPANY_CONTACTS.yaounde.phone.replace(/\s/g, "")}`} className="inline-flex min-h-11 items-center py-1 sm:min-h-0 font-semibold hover:text-white">
                     {copy(footerCopy.yaoundePhone)} : {COMPANY_CONTACTS.yaounde.phone}
                   </a>
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 shrink-0 text-blue-300" aria-hidden="true" />
-                  <a href={`mailto:${COMPANY_CONTACTS.yaounde.email}`} className="inline-block py-1 hover:text-white">{COMPANY_CONTACTS.yaounde.email}</a>
+                  <a href={`mailto:${COMPANY_CONTACTS.yaounde.email}`} className="inline-flex min-h-11 items-center py-1 sm:min-h-0 hover:text-white">{COMPANY_CONTACTS.yaounde.email}</a>
                 </div>
               </div>
             </div>
@@ -303,13 +303,13 @@ export default function Footer() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 shrink-0 text-blue-300" aria-hidden="true" />
-                  <a href={`tel:+${OFFICE_CONTACTS.ottawa.whatsappNumber}`} className="inline-block py-1 font-semibold hover:text-white">
+                  <a href={`tel:+${OFFICE_CONTACTS.ottawa.whatsappNumber}`} className="inline-flex min-h-11 items-center py-1 sm:min-h-0 font-semibold hover:text-white">
                     {copy(footerCopy.ottawaOffice)} : {OFFICE_CONTACTS.ottawa.whatsappDisplay}
                   </a>
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 shrink-0 text-blue-300" aria-hidden="true" />
-                  <a href={`mailto:${COMPANY_CONTACTS.ottawa.email}`} className="inline-block py-1 hover:text-white">{COMPANY_CONTACTS.ottawa.email}</a>
+                  <a href={`mailto:${COMPANY_CONTACTS.ottawa.email}`} className="inline-flex min-h-11 items-center py-1 sm:min-h-0 hover:text-white">{COMPANY_CONTACTS.ottawa.email}</a>
                 </div>
               </div>
             </div>
