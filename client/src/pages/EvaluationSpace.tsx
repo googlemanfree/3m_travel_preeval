@@ -619,6 +619,57 @@ export default function EvaluationSpace() {
     setActiveTab(nextSection);
     setLocation(`/mon-espace?section=${nextSection}`);
   };
+  /**
+   * « Ouvrir le protocole » : ouvre la section Dossier ET amène la carte de signature à l'écran.
+   * Sans ce défilement, le client arrivait en haut du dossier sans voir le protocole et croyait que le bouton ne marchait pas.
+   */
+  const openProtocol = () => {
+    switchToSection("dossier");
+    const reveal = () => document.getElementById("client-agreement-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(reveal, 120);
+    window.setTimeout(reveal, 500);
+  };
+  const agreementProtocolCard = (
+              <Card id="client-agreement-card" className="scroll-mt-24 border-amber-200 bg-white shadow-sm" aria-labelledby="client-agreement-title">
+                <CardHeader>
+                  <CardTitle id="client-agreement-title" className="flex items-center gap-2 text-blue-950"><ShieldCheck className="h-5 w-5 text-amber-600" /> Protocole d’accord obligatoire</CardTitle>
+                  <p className="text-sm leading-6 text-slate-600">Ce protocole est requis avant le passage du dossier en traitement. Il reste visible ici jusqu’à sa signature.</p>
+                </CardHeader>
+                <CardContent>
+                  {!agreementDossier ? (
+                    <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4" role="status"><Clock className="h-5 w-5 shrink-0 text-slate-500" /><div><p className="font-semibold text-slate-800">Pas encore de dossier actif</p><p className="text-sm text-slate-600">Le protocole devient signable une fois votre dossier officiellement ouvert (après confirmation du paiement). Revenez ici à ce moment-là.</p></div></div>
+                  ) : agreementDossier.agreementSigned ? (
+                    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 duration-700 flex flex-col gap-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 sm:flex-row sm:items-center" role="status" data-testid="agreement-signature-success"><CheckCircle2 className="h-7 w-7 shrink-0 text-emerald-700" /><div className="min-w-0 flex-1"><p className="font-semibold text-emerald-900">Protocole signé et transmis</p><p className="text-sm text-emerald-800">Votre signature est enregistrée. Un exemplaire PDF signé (en-tête et pied de page 3M TRAVEL AGENCY) vous a été envoyé par e-mail et reste disponible dans vos documents.</p></div>{signedProtocolDocument?.documentUrl && <Button asChild type="button" className="shrink-0 bg-emerald-700 text-white hover:bg-emerald-800" data-testid="download-signed-agreement"><a href={signedProtocolDocument.documentUrl} target="_blank" rel="noreferrer" download><Download className="mr-2 h-4 w-4" />Télécharger le PDF signé</a></Button>}</div>
+                  ) : (
+                    <div className="space-y-4" data-testid="agency-agreement-sign-panel">
+                      <div className="max-h-64 overflow-y-auto overscroll-contain rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700 sm:max-h-80" tabIndex={0} aria-label="Texte du protocole d’accord"><p className="font-bold text-slate-950">Protocole d’accord — 3M Travel Agency SARL</p>{INITIAL_AGREEMENT_PROTOCOL.split("\n\n").map((paragraph, index) => <p key={index} className="mt-2 whitespace-pre-line">{paragraph}</p>)}</div>
+                      <p className="-mt-2 text-xs text-slate-500">Faites défiler le cadre ci-dessus pour lire l’intégralité du protocole.</p>
+                      <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950" role="note"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" /><p><strong>À savoir :</strong> les frais d’ouverture de dossier ne sont pas remboursables une fois le traitement engagé, sauf disposition légale impérative contraire.</p></div>
+                      <label className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"><input type="checkbox" className="mt-1 h-4 w-4" checked={agreementAccepted} onChange={(event) => setAgreementAccepted(event.target.checked)} disabled={signAgreementMutation.isPending} /><span>J’ai lu le protocole, compris ses limites et autorise la poursuite de l’instruction humaine de mon dossier.</span></label>
+                      <div className="grid gap-4 md:grid-cols-2"><div><label htmlFor="client-agreement-signature" className="text-sm font-semibold text-slate-800">Nom complet du signataire</label><input id="client-agreement-signature" value={agreementSignatureName} onChange={(event) => { setAgreementSignatureName(event.target.value); setAgreementPreviewConfirmed(false); }} maxLength={255} autoComplete="name" className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-base sm:text-sm" placeholder="Votre nom complet" disabled={signAgreementMutation.isPending} />{!agreementSignatureName.trim() && cProfile.fullName ? <button type="button" className="mt-1 text-xs font-semibold text-blue-800 underline underline-offset-2" onClick={() => { setAgreementSignatureName(String(cProfile.fullName)); setAgreementPreviewConfirmed(false); }}>Utiliser « {String(cProfile.fullName)} »</button> : null}</div><div><p className="text-sm font-semibold text-slate-800">Signature</p><SignatureCanvas onSignatureChange={(value) => { setAgreementSignatureDataUrl(value); setAgreementPreviewConfirmed(false); }} /></div></div>
+                      <Button type="button" variant="outline" className="w-full border-indigo-300 text-indigo-800 hover:bg-indigo-50" disabled={!agreementSignatureName.trim() || !agreementSignatureDataUrl || signAgreementMutation.isPending} onClick={() => setAgreementPreviewOpen(true)} data-testid="preview-signed-agreement"><FileText className="mr-2 h-4 w-4" />Prévisualiser le PDF signé</Button>
+                      <Button type="button" className="w-full bg-blue-800 text-white hover:bg-blue-900" aria-label="Signer le protocole d’accord" disabled={!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !agreementPreviewConfirmed || !agreementDossier.dossierNumber || signAgreementMutation.isPending} onClick={() => agreementDossier.dossierNumber && agreementSignatureDataUrl && signAgreementMutation.mutate({ dossierNumber: agreementDossier.dossierNumber, signatureName: agreementSignatureName.trim(), signatureDataUrl: agreementSignatureDataUrl })}>{signAgreementMutation.isPending ? "Signature et envoi…" : "Signer le protocole d’accord"}</Button>
+                      {!signAgreementMutation.isPending && (
+                        <ul className="grid gap-1 text-xs sm:grid-cols-2" aria-label="Étapes avant la signature">
+                          {[
+                            { done: agreementAccepted, label: "Protocole lu et case cochée" },
+                            { done: Boolean(agreementSignatureName.trim()), label: "Nom du signataire renseigné" },
+                            { done: Boolean(agreementSignatureDataUrl), label: "Signature dessinée" },
+                            { done: agreementPreviewConfirmed, label: "PDF signé prévisualisé et vérifié" },
+                          ].map((step) => (
+                            <li key={step.label} className={`flex items-center gap-1.5 ${step.done ? "text-emerald-700" : "text-slate-500"}`}>
+                              {step.done ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> : <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-slate-300" aria-hidden="true" />}
+                              <span>{step.label}<span className="sr-only">{step.done ? " : fait" : " : à faire"}</span></span>
+                            </li>
+                          ))}
+                          {!agreementDossier.dossierNumber && <li className="text-rose-700 sm:col-span-2">Aucun dossier actif n’est associé à ce compte.</li>}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+  );
   const structuredStage = structuredEvaluation?.available ? structuredEvaluation.view.stage : undefined;
   // Une seule liste de pièces pour la checklist, le parcours, la prochaine étape et les relances : pays × visa × programme × domaine.
   const checklistScope = { programId: journeyProgramId, domainId: journeyDomainId };
@@ -690,7 +741,7 @@ export default function EvaluationSpace() {
                   : CheckCircle2;
   const actOnNextStep = (step: NextStep) => {
     if (step.action.kind === "evaluation") openEvaluation();
-    else if (step.action.kind === "section") switchToSection(step.action.section);
+    else if (step.action.kind === "section") { if (step.id === "agreement") openProtocol(); else switchToSection(step.action.section); }
     else if (step.action.kind === "anchor") document.getElementById(step.action.elementId)?.scrollIntoView({ behavior: "smooth", block: "start" });
     else if (step.action.kind === "link") {
       if (/^https?:\/\//i.test(step.action.href)) window.open(step.action.href, "_blank", "noopener,noreferrer");
@@ -1102,7 +1153,7 @@ export default function EvaluationSpace() {
                 <Card className="border border-amber-300 bg-gradient-to-r from-amber-50 via-white to-blue-50 p-4 shadow-sm sm:p-5" role="region" aria-labelledby="agreement-after-payment-title">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-start gap-4"><span className="rounded-2xl bg-amber-700 p-3 text-white"><ShieldCheck className="h-6 w-6" aria-hidden="true" /></span><div><p className="text-xs font-black uppercase tracking-[0.16em] text-amber-800">Paiement confirmé · action requise</p><h2 id="agreement-after-payment-title" className="mt-1 text-lg font-black text-slate-950">Signez votre protocole d’accord</h2><p className="mt-1 max-w-2xl text-sm leading-6 text-slate-700">Votre paiement est enregistré. Une signature d’environ une minute, puis le traitement de votre dossier peut commencer.</p></div></div>
-                    <Button type="button" onClick={() => switchToSection("dossier")} className="h-11 w-full shrink-0 bg-amber-700 px-5 text-white hover:bg-amber-800 sm:w-auto"><ShieldCheck className="mr-2 h-4 w-4" />Ouvrir le protocole</Button>
+                    <Button type="button" onClick={openProtocol} className="h-11 w-full shrink-0 bg-amber-700 px-5 text-white hover:bg-amber-800 sm:w-auto"><ShieldCheck className="mr-2 h-4 w-4" />Ouvrir le protocole</Button>
                   </div>
                 </Card>
               )}
@@ -1335,6 +1386,7 @@ export default function EvaluationSpace() {
 
           {activeTab === "dossier" && (evaluationRequired && !agreementAfterPaymentRequired ? evaluationGateCard : (
             <div className="space-y-6">
+              {agreementAfterPaymentRequired ? agreementProtocolCard : null}
               <Card className="p-6 border-blue-100 bg-white shadow-sm">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Dossier d'immigration actif ({displayReference})</h3>
                 <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
@@ -1368,45 +1420,7 @@ export default function EvaluationSpace() {
                   </div>
                 </Card>
               )}
-              <Card className="border-amber-200 bg-white shadow-sm" aria-labelledby="client-agreement-title">
-                <CardHeader>
-                  <CardTitle id="client-agreement-title" className="flex items-center gap-2 text-blue-950"><ShieldCheck className="h-5 w-5 text-amber-600" /> Protocole d’accord obligatoire</CardTitle>
-                  <p className="text-sm leading-6 text-slate-600">Ce protocole est requis avant le passage du dossier en traitement. Il reste visible ici jusqu’à sa signature.</p>
-                </CardHeader>
-                <CardContent>
-                  {!agreementDossier ? (
-                    <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4" role="status"><Clock className="h-5 w-5 shrink-0 text-slate-500" /><div><p className="font-semibold text-slate-800">Pas encore de dossier actif</p><p className="text-sm text-slate-600">Le protocole devient signable une fois votre dossier officiellement ouvert (après confirmation du paiement). Revenez ici à ce moment-là.</p></div></div>
-                  ) : agreementDossier.agreementSigned ? (
-                    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 duration-700 flex flex-col gap-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 sm:flex-row sm:items-center" role="status" data-testid="agreement-signature-success"><CheckCircle2 className="h-7 w-7 shrink-0 text-emerald-700" /><div className="min-w-0 flex-1"><p className="font-semibold text-emerald-900">Protocole signé et transmis</p><p className="text-sm text-emerald-800">Votre signature est enregistrée. Un exemplaire PDF signé (en-tête et pied de page 3M TRAVEL AGENCY) vous a été envoyé par e-mail et reste disponible dans vos documents.</p></div>{signedProtocolDocument?.documentUrl && <Button asChild type="button" className="shrink-0 bg-emerald-700 text-white hover:bg-emerald-800" data-testid="download-signed-agreement"><a href={signedProtocolDocument.documentUrl} target="_blank" rel="noreferrer" download><Download className="mr-2 h-4 w-4" />Télécharger le PDF signé</a></Button>}</div>
-                  ) : (
-                    <div className="space-y-4" data-testid="agency-agreement-sign-panel">
-                      <div className="max-h-64 overflow-y-auto overscroll-contain rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700 sm:max-h-80" tabIndex={0} aria-label="Texte du protocole d’accord"><p className="font-bold text-slate-950">Protocole d’accord — 3M Travel Agency SARL</p>{INITIAL_AGREEMENT_PROTOCOL.split("\n\n").map((paragraph, index) => <p key={index} className="mt-2 whitespace-pre-line">{paragraph}</p>)}</div>
-                      <p className="-mt-2 text-xs text-slate-500">Faites défiler le cadre ci-dessus pour lire l’intégralité du protocole.</p>
-                      <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950" role="note"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" /><p><strong>À savoir :</strong> les frais d’ouverture de dossier ne sont pas remboursables une fois le traitement engagé, sauf disposition légale impérative contraire.</p></div>
-                      <label className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"><input type="checkbox" className="mt-1 h-4 w-4" checked={agreementAccepted} onChange={(event) => setAgreementAccepted(event.target.checked)} disabled={signAgreementMutation.isPending} /><span>J’ai lu le protocole, compris ses limites et autorise la poursuite de l’instruction humaine de mon dossier.</span></label>
-                      <div className="grid gap-4 md:grid-cols-2"><div><label htmlFor="client-agreement-signature" className="text-sm font-semibold text-slate-800">Nom complet du signataire</label><input id="client-agreement-signature" value={agreementSignatureName} onChange={(event) => { setAgreementSignatureName(event.target.value); setAgreementPreviewConfirmed(false); }} maxLength={255} autoComplete="name" className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-base sm:text-sm" placeholder="Votre nom complet" disabled={signAgreementMutation.isPending} />{!agreementSignatureName.trim() && cProfile.fullName ? <button type="button" className="mt-1 text-xs font-semibold text-blue-800 underline underline-offset-2" onClick={() => { setAgreementSignatureName(String(cProfile.fullName)); setAgreementPreviewConfirmed(false); }}>Utiliser « {String(cProfile.fullName)} »</button> : null}</div><div><p className="text-sm font-semibold text-slate-800">Signature</p><SignatureCanvas onSignatureChange={(value) => { setAgreementSignatureDataUrl(value); setAgreementPreviewConfirmed(false); }} /></div></div>
-                      <Button type="button" variant="outline" className="w-full border-indigo-300 text-indigo-800 hover:bg-indigo-50" disabled={!agreementSignatureName.trim() || !agreementSignatureDataUrl || signAgreementMutation.isPending} onClick={() => setAgreementPreviewOpen(true)} data-testid="preview-signed-agreement"><FileText className="mr-2 h-4 w-4" />Prévisualiser le PDF signé</Button>
-                      <Button type="button" className="w-full bg-blue-800 text-white hover:bg-blue-900" aria-label="Signer le protocole d’accord" disabled={!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !agreementPreviewConfirmed || !agreementDossier.dossierNumber || signAgreementMutation.isPending} onClick={() => agreementDossier.dossierNumber && agreementSignatureDataUrl && signAgreementMutation.mutate({ dossierNumber: agreementDossier.dossierNumber, signatureName: agreementSignatureName.trim(), signatureDataUrl: agreementSignatureDataUrl })}>{signAgreementMutation.isPending ? "Signature et envoi…" : "Signer le protocole d’accord"}</Button>
-                      {!signAgreementMutation.isPending && (
-                        <ul className="grid gap-1 text-xs sm:grid-cols-2" aria-label="Étapes avant la signature">
-                          {[
-                            { done: agreementAccepted, label: "Protocole lu et case cochée" },
-                            { done: Boolean(agreementSignatureName.trim()), label: "Nom du signataire renseigné" },
-                            { done: Boolean(agreementSignatureDataUrl), label: "Signature dessinée" },
-                            { done: agreementPreviewConfirmed, label: "PDF signé prévisualisé et vérifié" },
-                          ].map((step) => (
-                            <li key={step.label} className={`flex items-center gap-1.5 ${step.done ? "text-emerald-700" : "text-slate-500"}`}>
-                              {step.done ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> : <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-slate-300" aria-hidden="true" />}
-                              <span>{step.label}<span className="sr-only">{step.done ? " : fait" : " : à faire"}</span></span>
-                            </li>
-                          ))}
-                          {!agreementDossier.dossierNumber && <li className="text-rose-700 sm:col-span-2">Aucun dossier actif n’est associé à ce compte.</li>}
-                        </ul>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              {!agreementAfterPaymentRequired ? agreementProtocolCard : null}
 
               {officialClientDocuments.length > 0 && (
                 <Card className="border-indigo-200 bg-indigo-50/40 shadow-sm" data-testid="client-official-documents">
@@ -1638,7 +1652,7 @@ export default function EvaluationSpace() {
                   : (activeDossier?.paymentStatus ?? activeAgencyDossier?.paymentStatus ?? null),
               } : null}
               documents={agencyDocuments as any[]}
-              onOpenProtocol={() => switchToSection("dossier")}
+              onOpenProtocol={openProtocol}
             />
           )}
 
