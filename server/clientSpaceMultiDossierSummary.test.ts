@@ -13,7 +13,7 @@ describe("espace client multi-dossiers", () => {
   });
 
   it("expose un badge de statut accessible sur chaque dossier", () => {
-    expect(source).toContain("clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus)");
+    expect(source).toContain("clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus, dossier.agreementSigned)");
     expect(source).toContain("aria-label={`${dossierSwitcherLabel(dossier)} : ${status.label}${isSelected ?");
     expect(source).toContain("status.tone");
   });

@@ -1365,9 +1365,11 @@ export function journeyStepIndex(journey: CandidateJourney, dossierStatus?: stri
 
 function rawJourneyStepIndex(journey: CandidateJourney, dossierStatus: string | null | undefined, evaluationStatus: string | null | undefined, milestones: JourneyMilestones | undefined, originalLength: number) {
   const status = normalize(dossierStatus);
-  if (evaluationStatus !== "validated" && journey.steps[0]) return 0;
-  if (is(status, "nouveau", "evaluation", "en evaluation")) return 1;
-  if (is(status, "bilan")) return milestones?.evaluationClientConfirmed ? 5 : 4;
+  // Un paiement confirmé passe avant un statut interne resté à « nouveau » ou « évaluation » : le dossier a changé d'étape.
+  const paid = Boolean(milestones?.paymentConfirmed);
+  if (evaluationStatus !== "validated" && !paid && journey.steps[0]) return 0;
+  if (is(status, "nouveau", "evaluation", "en evaluation")) return paid ? 6 : 1;
+  if (is(status, "bilan")) return paid ? 6 : milestones?.evaluationClientConfirmed ? 5 : 4;
   // Les étapes avancées passent avant les jalons de paiement : un paiement confirmé ne doit jamais ramener un dossier déjà
   // soumis, avec contrat ou approuvé à l'étape des pièces justificatives (l'espace client affichait alors une étape périmée).
   if (is(status, "soumis", "en cours", "recrutement", "adem")) return 9;

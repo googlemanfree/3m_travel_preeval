@@ -34,6 +34,7 @@ import {
 } from "../../drizzle/schema";
 import {
   loadAgencyAgreementSignature,
+  loadAgencyAgreementSignaturesByIds,
   saveAgencyAgreementSignature,
 } from "../services/agencyAgreementSignature";
 import { notifyAgreementSignedWhatsApp } from "../services/clientWhatsAppNotify";
@@ -2992,6 +2993,8 @@ export const candidateRouter = router({
       .where(and(eq(agencyDossiers.email, candidate.email), isNull(agencyDossiers.deletedAt)))
       .orderBy(desc(agencyDossiers.createdAt))
       .limit(10);
+    // Protocole signé ou non pour chaque dossier agence (une requête groupée) : la carte de dossier affiche la bonne étape.
+    const agencySignedByDossierId = await loadAgencyAgreementSignaturesByIds(db, agencyDossierRows.map((dossier) => dossier.id)).catch(() => new Map<number, unknown>());
     const onlineDossiers = [
       ...appRows.map((app) => ({
         dossierNumber: app.dossierNumber,
@@ -2999,6 +3002,7 @@ export const candidateRouter = router({
         destination: app.destination,
         dossierStatus: app.dossierStatus,
         paymentStatus: app.paymentStatus,
+        agreementSigned: Boolean(app.agreementSigned),
         createdAt: app.createdAt,
         source: "online" as const,
       })),
@@ -3008,6 +3012,7 @@ export const candidateRouter = router({
         destination: dossier.destination,
         dossierStatus: dossier.status,
         paymentStatus: dossier.initialPaymentStatus === "paid" ? "SUCCESS" : dossier.initialPaymentStatus === "pending" ? "PENDING" : "NOT_PAID",
+        agreementSigned: agencySignedByDossierId.has(dossier.id),
         createdAt: dossier.createdAt,
         source: "agency" as const,
       })),

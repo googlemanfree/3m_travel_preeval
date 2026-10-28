@@ -1,10 +1,13 @@
 import { CheckCircle2, Clock3, CreditCard, CircleAlert } from "lucide-react";
+import { clientDossierStatusSummary } from "@shared/clientDossierSummary";
 import { Card } from "@/components/ui/card";
 
 export type ClientPaymentDossier = {
   dossierNumber?: string | null;
   dossierStatus?: string | null;
   paymentStatus?: string | null;
+  /** Protocole signé : fait passer un dossier payé de « Protocole à signer » à « Dossier ouvert ». */
+  agreementSigned?: boolean | null;
   visaType?: string | null;
   projectType?: string | null;
   destination?: string | null;
@@ -29,15 +32,7 @@ function paymentState(dossier: ClientPaymentDossier) {
 }
 
 function progressForDossier(dossier: ClientPaymentDossier) {
-  const status = String(dossier.dossierStatus ?? "").toLowerCase();
-  const payment = String(dossier.paymentStatus ?? "").toUpperCase();
-  if (["approuve", "visa_approuve", "approved"].includes(status)) return 100;
-  if (["soumis", "submitted"].includes(status)) return 80;
-  if (["traitement", "processing"].includes(status)) return 65;
-  if (["documents", "documents_requis"].includes(status)) return 45;
-  if (payment !== "SUCCESS") return 25;
-  if (["evaluation", "evaluation_en_cours"].includes(status)) return 20;
-  return 10;
+  return clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus, dossier.agreementSigned).progress;
 }
 
 export default function ClientPaymentStatusTable({ dossiers, selectedDossierNumber, onSelect, dossierLabel }: Props) {

@@ -79,24 +79,8 @@ import { SentBilanViewer } from "@/components/SentBilanViewer";
 import { CLIENT_SPACE_SUMMARY_POLL_MS, buildClientSpaceSnapshot, clientSpacePolling, diffClientSpace, limitAnnouncements, mergeClientSpaceSnapshots, type ClientSpaceSnapshot } from "@/lib/clientSpaceSync";
 import { SECONDARY_PROJECT_OPTIONS, procedureLabelForDossier, secondaryDossierEvaluationPath, type SecondaryProjectType } from "@shared/clientMultiDossier";
 
-export type ClientDossierStatusSummary = {
-  label: string;
-  progress: number;
-  tone: string;
-  nextAction: string;
-};
-
-export function clientDossierStatusSummary(status: string | null | undefined, paymentStatus?: string | null): ClientDossierStatusSummary {
-  const normalized = String(status ?? "evaluation").toLowerCase();
-  if (["approuve", "visa_approuve", "approved"].includes(normalized)) return { label: "Visa approuvé", progress: 100, tone: "border-emerald-200 bg-emerald-50 text-emerald-800", nextAction: "Préparer votre départ" };
-  if (["refuse", "rejected"].includes(normalized)) return { label: "Décision à revoir", progress: 100, tone: "border-rose-200 bg-rose-50 text-rose-800", nextAction: "Contacter votre conseiller" };
-  if (["soumis", "submitted"].includes(normalized)) return { label: "Dossier soumis", progress: 80, tone: "border-indigo-200 bg-indigo-50 text-indigo-800", nextAction: "Suivre la décision" };
-  if (["traitement", "processing"].includes(normalized)) return { label: "En traitement", progress: 65, tone: "border-blue-200 bg-blue-50 text-blue-800", nextAction: "Vérifier les messages" };
-  if (["documents", "documents_requis"].includes(normalized)) return { label: "Documents requis", progress: 45, tone: "border-amber-200 bg-amber-50 text-amber-800", nextAction: "Déposer les pièces demandées" };
-  if (String(paymentStatus).toUpperCase() !== "SUCCESS") return { label: "Paiement à confirmer", progress: 25, tone: "border-orange-200 bg-orange-50 text-orange-800", nextAction: "Vérifier le paiement d’ouverture" };
-  if (["evaluation", "evaluation_en_cours"].includes(normalized)) return { label: "Évaluation en cours", progress: 20, tone: "border-violet-200 bg-violet-50 text-violet-800", nextAction: "Consulter l’évaluation" };
-  return { label: "Nouveau dossier", progress: 10, tone: "border-slate-200 bg-slate-50 text-slate-800", nextAction: "Compléter votre profil" };
-}
+import { clientDossierStatusSummary, type ClientDossierStatusSummary } from "@shared/clientDossierSummary";
+export { clientDossierStatusSummary, type ClientDossierStatusSummary };
 
 export default function EvaluationSpace() {
   const [location, setLocation] = useLocation();
@@ -838,7 +822,7 @@ export default function EvaluationSpace() {
             <span className="mr-1 text-xs font-semibold text-slate-600">Mes dossiers ({onlineDossiers.length}/5) :</span>
             {onlineDossiers.map((dossier) => {
               const isSelected = dossier.dossierNumber === (selectedDossierNumber ?? activeTreatmentDossierNumber ?? activeDossier?.dossierNumber ?? activeAgencyDossier?.dossierNumber);
-              const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus);
+              const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus, dossier.agreementSigned);
               return (
                 <button
                   key={dossier.dossierNumber ?? dossierSwitcherLabel(dossier)}
@@ -896,7 +880,7 @@ export default function EvaluationSpace() {
               <h2 id="global-dossiers-summary-title" className="premium-section-title mt-1 text-lg sm:text-xl">Résumé de vos dossiers ouverts</h2>
               <p className="premium-copy mt-1 text-sm">{onlineDossiers.length} dossier{onlineDossiers.length > 1 ? "s" : ""} suivi{onlineDossiers.length > 1 ? "s" : ""} par 3M TRAVEL AGENCY{onlineDossiers.length > 1 ? " — un dossier = un paiement distinct" : " — votre dossier actif n’est pas modifié par cet écran"}. Prochaine action affichée pour chaque dossier.</p>
             </div>
-            <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-blue-800 shadow-sm">{Math.round(onlineDossiers.reduce((total, dossier) => total + clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus).progress, 0) / onlineDossiers.length)} % moyen</span>
+            <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-blue-800 shadow-sm">{Math.round(onlineDossiers.reduce((total, dossier) => total + clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus, dossier.agreementSigned).progress, 0) / onlineDossiers.length)} % moyen</span>
           </div>
           {hasSiblingUnpaidProcedure && (
             <p className="mt-3 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-950" data-testid="per-dossier-payment-reminder" role="status">
@@ -907,7 +891,7 @@ export default function EvaluationSpace() {
           <div className="mt-4"><ClientPhaseGuide /></div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {onlineDossiers.map((dossier) => {
-              const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus);
+              const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus, dossier.agreementSigned);
               return <button key={`summary-${dossier.dossierNumber ?? dossierSwitcherLabel(dossier)}`} type="button" onClick={() => activateDossier(dossier.dossierNumber)} className="rounded-2xl border border-white bg-white/90 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
                 <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-sm font-black text-slate-900">{dossierSwitcherLabel(dossier)}</p><p className="mt-1 font-mono text-[11px] text-slate-500">{dossier.dossierNumber}</p></div><span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black ${status.tone}`}>{status.label}</span></div>
                 <div className="mt-3 flex items-center gap-2"><div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600 transition-all duration-300" style={{ width: `${status.progress}%` }} /></div><span className="text-xs font-black text-blue-800">{status.progress}%</span></div>
