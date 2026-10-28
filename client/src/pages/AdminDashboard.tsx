@@ -205,6 +205,7 @@ import { AdminCandidateKanban, getNextKanbanStatus, type KanbanCandidate } from 
 import { AdminCalendarView } from "@/components/AdminCalendarView";
 import { UnifiedRequestInbox } from "@/components/UnifiedRequestInbox";
 import { Candidate360Workspace } from "@/components/Candidate360Workspace";
+import { adminLoginUrl, clearAdminSession, isAdminSessionError } from "@/lib/adminSession";
 import FlightAgentDashboard from "@/pages/FlightAgentDashboard";
 import { AdvisorEvaluationReviewQueue } from "@/components/AdvisorEvaluationReviewQueue";
 import { BilanReminderDashboard } from "@/components/BilanReminderDashboard";
@@ -1483,9 +1484,19 @@ export function CandidateDetailModal({
         ) : (
           <div className="py-12 text-center text-gray-600">
             <AlertCircle className="mx-auto mb-3 h-6 w-6 text-amber-600" />
-            <p className="font-medium">Impossible de charger cette fiche candidat</p>
-            <p className="mt-1 text-sm text-gray-500">{error?.message || "La fiche est peut-être en cours de synchronisation. Actualisez puis réessayez."}</p>
-            <Button className="mt-4" variant="outline" onClick={() => void refetch()}>Réessayer</Button>
+            {isAdminSessionError(error) ? (
+              <div data-testid="candidate-360-session-ended">
+                <p className="font-medium">Votre session administrateur a pris fin</p>
+                <p className="mx-auto mt-1 max-w-md text-sm text-gray-500">La durée de session est dépassée, ou le même compte s'est connecté ailleurs. Reconnectez-vous : vous reviendrez sur ce dossier.</p>
+                <Button className="mt-4 bg-blue-800 text-white hover:bg-blue-900" onClick={() => { clearAdminSession(); window.location.assign(adminLoginUrl(`${window.location.pathname}${window.location.search}`)); }}>Se reconnecter</Button>
+              </div>
+            ) : (
+              <>
+                <p className="font-medium">Impossible de charger cette fiche candidat</p>
+                <p className="mt-1 text-sm text-gray-500">{error?.message || "La fiche est peut-être en cours de synchronisation. Actualisez puis réessayez."}</p>
+                <Button className="mt-4" variant="outline" onClick={() => void refetch()}>Réessayer</Button>
+              </>
+            )}
           </div>
         )}
 

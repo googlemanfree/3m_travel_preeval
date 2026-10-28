@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { AlertCircle, Lock, Mail, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { safeAdminNext } from '@/lib/adminSession';
 
 export default function AdminLogin() {
   const [, navigate] = useLocation();
@@ -17,6 +18,7 @@ export default function AdminLogin() {
   const [needsTwoFactor, setNeedsTwoFactor] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string>('');
+  const sessionEnded = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('reason') === 'expired';
   const normalizedEmail = email.trim();
   const hasValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail);
   const attemptStatusQuery = trpc.adminAuth.loginAttemptStatus.useQuery(
@@ -45,7 +47,8 @@ export default function AdminLogin() {
       if (data.requiresPasswordChange) {
         navigate('/admin/change-password');
       } else {
-        navigate('/admin');
+        // Retour à la page où l'administrateur travaillait quand sa session s'est terminée.
+        navigate(safeAdminNext(new URLSearchParams(window.location.search).get('next')));
       }
     },
     onError: (err) => {
@@ -166,6 +169,13 @@ export default function AdminLogin() {
                 <Label htmlFor="admin-two-factor" className="mb-2 block font-semibold text-slate-800">Code 2FA ou récupération</Label>
                 <Input id="admin-two-factor" inputMode="numeric" autoComplete="one-time-code" value={twoFactorCode} onChange={(e) => { setTwoFactorCode(e.target.value); setLocalError(''); }} placeholder="Code à six chiffres" disabled={loginMutation.isPending} maxLength={32} />
               </div>}
+
+              {sessionEnded && !localError && (
+                <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" role="status" data-testid="admin-session-ended">
+                  <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                  <span>Votre session a pris fin (durée dépassée, ou connexion ouverte ailleurs avec le même compte). Reconnectez-vous : vous reviendrez sur la page où vous étiez.</span>
+                </div>
+              )}
 
               {localError && (
                 <div className="flex gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
