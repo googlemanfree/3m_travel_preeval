@@ -59,6 +59,7 @@ const SITE_SECTIONS: SitemapSection[] = [
     key: "resources", title: { fr: "Ressources et procédures", en: "Resources & procedures" }, description: { fr: "Les contenus utiles pour préparer un dossier documenté et retrouver les sources institutionnelles.", en: "Useful content to prepare a documented case and find institutional sources." }, icon: BookOpen,
     links: [
       { key: "resources", label: { fr: "Ressources", en: "Resources" }, href: "/ressources", description: { fr: "Parcourir la bibliothèque pays et les PDF publiés.", en: "Browse the country library and published PDFs." } },
+      { key: "mobility_orientation", label: { fr: "Quel parcours pour mon projet ?", en: "Which route for my project?" }, href: "/outils/parcours-mobilite", description: { fr: "Outil gratuit : cinq questions pour trouver la voie adaptée à votre projet.", en: "Free tool: five questions to find the route that fits your project." } },
       { key: "document_checklist", label: { fr: "Liste des pièces à préparer", en: "Document checklist" }, href: "/outils/liste-de-pieces", description: { fr: "Outil gratuit : pièces par pays et par projet, à cocher.", en: "Free tool: documents by country and project, to tick off." } },
       { key: "country_guides", label: { fr: "Guides visa par pays", en: "Visa guides by country" }, href: "/pays", description: { fr: "Étapes et liens officiels, publiés après relecture des sources.", en: "Steps and official links, published once sources are reviewed." } },
       ...listCountryResourcePages()

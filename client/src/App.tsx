@@ -76,6 +76,7 @@ const ResourceCountryPage = lazyWithTimeout(() => import("./pages/ResourceCountr
 const CountryGuides = lazyWithTimeout(() => import("./pages/CountryGuides"));
 const CountryGuide = lazyWithTimeout(() => import("./pages/CountryGuide"));
 const DocumentChecklistTool = lazyWithTimeout(() => import("./pages/DocumentChecklistTool"));
+const MobilityOrientationTool = lazyWithTimeout(() => import("./pages/MobilityOrientationTool"));
 const ProcedureResourceGuide = lazyWithTimeout(() => import("./pages/ProcedureResourceGuide"));
 const Fiches = lazyWithTimeout(() => import("./pages/Fiches"));
 const TranslationOrder = lazyWithTimeout(() => import("./pages/TranslationOrder"));
@@ -366,6 +367,7 @@ function Router() {
       <Route path={"/pays"} component={CountryGuides} />
       <Route path={"/pays/:slug"} component={CountryGuide} />
       <Route path={"/outils/liste-de-pieces"} component={DocumentChecklistTool} />
+      <Route path={"/outils/parcours-mobilite"} component={MobilityOrientationTool} />
       <Route path={"/guide-procedures"} component={ProcedureResourceGuide} />
 
       {/* Fiches détaillées par pays */}
