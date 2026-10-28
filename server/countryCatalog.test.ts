@@ -96,7 +96,7 @@ describe("catalogue des parcours : branchement serveur et migration", () => {
   it("le routeur exige une session d'administration pour toute gestion et ne lit que les fiches publiées côté public", () => {
     const router = read("server/routers/countryCatalog.ts");
     const adminProcedures = router.match(/\n  admin[A-Za-z]+:/g) ?? [];
-    expect(adminProcedures.length).toBe(10);
+    expect(adminProcedures.length).toBe(11);
     expect((router.match(/requireValidAdminSession\(input\.sessionToken\)/g) ?? []).length).toBe(adminProcedures.length);
     const publicBlock = router.slice(router.indexOf("published:"), router.indexOf("adminMatrix:"));
     // Lecture publique = instantané des fiches publiées, sans table de sources : aucune adresse officielle ne sort côté public.

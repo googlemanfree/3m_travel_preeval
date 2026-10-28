@@ -19,6 +19,7 @@ vi.mock("@/lib/trpc", () => ({
       adminMatrix: { useQuery: () => state.matrix },
       adminCountry: { useQuery: () => state.detail },
       adminSeed: { useMutation: () => ({ mutate: state.seed, isPending: false }) },
+      adminImportDrafts: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
       adminSavePathway: { useMutation: () => ({ mutate: state.savePathway, isPending: false }) },
       adminSaveProgram: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
       adminDeleteProgram: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },

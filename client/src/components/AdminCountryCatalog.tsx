@@ -62,6 +62,11 @@ export function AdminCountryCatalog({ sessionToken }: { sessionToken: string }) 
     onError: (error) => toast.error("Initialisation impossible", { description: error.message }),
   });
 
+  const importDrafts = trpc.countryCatalog.adminImportDrafts.useMutation({
+    onSuccess: (result) => { toast.success("Brouillons importés", { description: `${result.programsAdded} dispositif(s), ${result.stepsAdded} étape(s), ${result.sourcesAdded} source(s) à confirmer. ${result.skipped} fiche(s) déjà détaillée(s) conservée(s).` }); refresh(); },
+    onError: (error) => toast.error("Import impossible", { description: error.message }),
+  });
+
   const rows = (matrix.data ?? []) as MatrixRow[];
   const byCountry = useMemo(() => {
     const map = new Map<string, Partial<Record<Pathway, MatrixRow>>>();
@@ -92,7 +97,10 @@ export function AdminCountryCatalog({ sessionToken }: { sessionToken: string }) 
           <h2 id="admin-country-catalog-title" className="flex items-center gap-2 text-lg font-black text-slate-950"><BookMarked className="h-5 w-5 text-sky-700" aria-hidden="true" />Catalogue des parcours : 196 pays</h2>
           <p className="mt-1 max-w-3xl text-sm text-slate-600">Travail, études et visiteur pour chaque pays. Une fiche reste « À confirmer » tant que vous n'avez pas ouvert la page officielle et enregistré son adresse. Elle n'est alors pas visible des candidats.</p>
         </div>
-        <Button type="button" variant="outline" onClick={() => seed.mutate({ sessionToken })} disabled={seed.isPending}><Database className="mr-2 h-4 w-4" aria-hidden="true" />{rows.length === 0 ? "Initialiser les 196 pays" : "Compléter le catalogue"}</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" onClick={() => seed.mutate({ sessionToken })} disabled={seed.isPending}><Database className="mr-2 h-4 w-4" aria-hidden="true" />{rows.length === 0 ? "Initialiser les 196 pays" : "Compléter le catalogue"}</Button>
+          {rows.length > 0 ? <Button type="button" variant="outline" onClick={() => importDrafts.mutate({ sessionToken })} disabled={importDrafts.isPending} data-testid="import-wave1-drafts" title="Étapes, pièces, délais et sources de 7 pays, en « À confirmer »">Importer les brouillons de 7 pays</Button> : null}
+        </div>
       </div>
 
       {error ? <p className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900" role="alert">{error}</p> : null}

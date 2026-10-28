@@ -16,6 +16,7 @@ import {
   isOfficialUrl,
   publishBlockers,
 } from "../../shared/countryCatalog";
+import { COUNTRY_CATALOG_DRAFTS } from "../../shared/countryCatalogDrafts";
 import { guideSlugForCode } from "../../shared/countryGuides";
 import { WORLD_COUNTRY_ROWS } from "../../shared/worldCountries";
 import { publicProcedure, router } from "../_core/trpc";
@@ -140,6 +141,60 @@ export const countryCatalogRouter = router({
     for (let index = 0; index < toAdd.length; index += 200) await db.insert(countryVisaPrograms).values(toAdd.slice(index, index + 200));
     await audit(db, admin, "country_catalog.seeded", "seed", `${toAdd.length} dispositif(s) ajouté(s), ${seedPathways.length} fiches vérifiées`);
     return { pathways: seedPathways.length, pathwaysAdded, programsAdded: toAdd.length };
+  })),
+
+  /**
+   * Importe les brouillons rédigés de la vague 1 (étapes, pièces, délais, sources) en « À confirmer ».
+   * Ne touche jamais une fiche publiée ni un dispositif déjà documenté, ne marque aucune source « vérifiée » et ne publie rien.
+   */
+  adminImportDrafts: publicProcedure.input(z.object({ sessionToken: session })).mutation(({ input }) => guarded(async () => {
+    const admin = await requireValidAdminSession(input.sessionToken);
+    const db = await requireDb();
+    let programsAdded = 0;
+    let stepsAdded = 0;
+    let sourcesAdded = 0;
+    let skipped = 0;
+    for (const draft of COUNTRY_CATALOG_DRAFTS) {
+      const where = and(eq(countryVisaPrograms.countryCode, draft.countryCode), eq(countryVisaPrograms.pathway, draft.pathway));
+      const existing = await db.select().from(countryVisaPrograms).where(where);
+      const live = existing.filter((program) => program.status !== "retired");
+      const withSteps = live.length ? await db.select({ programId: procedureSteps.programId }).from(procedureSteps).where(inArray(procedureSteps.programId, live.map((program) => program.id))) : [];
+      const documented = new Set(withSteps.map((row) => row.programId));
+      // Un dispositif déjà détaillé, ou publié, est le travail d'un administrateur : on n'y touche pas.
+      if (live.some((program) => documented.has(program.id) || program.status === "published")) { skipped += 1; continue; }
+      // Les lignes de départ sans aucun détail sont remplacées (retirées, donc réversibles) par le brouillon rédigé.
+      const placeholders = live.filter((program) => !program.feesNote && !program.processingNote && !program.durationNote && !program.salaryNote && !program.residencePathNote && !program.legalBasis);
+      if (placeholders.length) await db.update(countryVisaPrograms).set({ status: "retired" }).where(inArray(countryVisaPrograms.id, placeholders.map((program) => program.id)));
+      for (const program of draft.programs) {
+        const created = await db.insert(countryVisaPrograms).values({
+          countryCode: draft.countryCode, pathway: draft.pathway, programRef: null, officialName: program.officialName, nameFr: program.nameFr, legalBasis: program.legalBasis ?? null,
+          routeType: program.routeType ?? null, offerRequired: program.offerRequired ?? null, sponsorLicenceRequired: program.sponsorLicenceRequired ?? null, labourMarketTest: program.labourMarketTest ?? null,
+          salaryNote: null, durationNote: program.durationNote ?? null, renewable: program.renewable ?? null, familyAllowed: program.familyAllowed ?? null, residencePathNote: null,
+          feesNote: program.feesNote ?? null, processingNote: program.processingNote ?? null, status: "needs_review", checkedAt: null,
+        });
+        const programId = Number((created as unknown as Array<{ insertId?: number }>)[0]?.insertId ?? 0);
+        programsAdded += 1;
+        if (!programId || !program.steps.length) continue;
+        await db.insert(procedureSteps).values(program.steps.map((step, index) => ({
+          programId, stepNo: index + 1, actor: step.actor, title: step.title, description: step.description ?? null, documentsJson: step.documents ?? [],
+          delayNote: step.delay ?? null, feeNote: step.fee ?? null, officialUrl: null, status: "needs_review" as const, checkedAt: null,
+        })));
+        stepsAdded += program.steps.length;
+      }
+      const known = new Set((await db.select({ url: countrySources.url }).from(countrySources).where(eq(countrySources.countryCode, draft.countryCode))).map((row) => row.url));
+      const newSources = draft.sources.filter((source) => !known.has(source.url) && isOfficialUrl(source.url));
+      if (newSources.length) {
+        await db.insert(countrySources).values(newSources.map((source) => ({
+          countryCode: draft.countryCode, pathway: draft.pathway, label: source.label, url: source.url, authority: source.authority, status: "needs_review" as const,
+          note: "Ajoutée avec le brouillon de la vague 1 : à ouvrir et à confirmer avant toute publication.", checkedAt: null, checkedByAdminId: null, checkedByLabel: null,
+        })));
+        sourcesAdded += newSources.length;
+      }
+      const [pathwayRow] = await db.select().from(countryPathways).where(where).limit(1);
+      if (pathwayRow && !pathwayRow.summary && pathwayRow.status !== "published") await db.update(countryPathways).set({ summary: draft.summary, coverage: "named" }).where(eq(countryPathways.id, pathwayRow.id));
+    }
+    await audit(db, admin, "country_catalog.drafts_imported", "wave1", `${programsAdded} dispositif(s), ${stepsAdded} étape(s), ${sourcesAdded} source(s) ; ${skipped} fiche(s) déjà détaillée(s) laissée(s) telle(s)`);
+    return { programsAdded, stepsAdded, sourcesAdded, skipped };
   })),
 
   adminSavePathway: publicProcedure.input(z.object({
