@@ -254,6 +254,15 @@ export const adminOpsRouter = router({
     return { assigned: plan.length };
   })),
 
+  /** Compte candidat d'une adresse e-mail (pour ouvrir l'éditeur du bilan depuis la liste des évaluations). */
+  adminCandidateByEmail: publicProcedure.input(z.object({ sessionToken: session, email: z.string().trim().email().max(320) })).query(({ input }) => guarded(async () => {
+    await requireValidAdminSession(input.sessionToken);
+    const db = await requireDb();
+    const [candidate] = await db.select({ id: candidates.id, fullName: candidates.fullName }).from(candidates)
+      .where(and(isNull(candidates.deletedAt), sql`LOWER(TRIM(${candidates.email})) = ${input.email.trim().toLowerCase()}`)).limit(1);
+    return candidate ?? null;
+  })),
+
   // ───────────── Santé du système ─────────────
   adminSystemHealth: publicProcedure.input(z.object({ sessionToken: session })).query(({ input }) => guarded(async () => {
     await requireValidAdminSession(input.sessionToken);

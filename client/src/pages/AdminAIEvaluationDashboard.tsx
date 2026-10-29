@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AIScoreGauge } from "@/components/AIScoreGauge";
 import { useToast } from "@/components/ui/use-toast";
 import EvaluationValidationPanel from "@/components/EvaluationValidationPanel";
+import { AdminFreeBilanLauncher } from "@/components/AdminFreeBilanLauncher";
 import CvDraftPanel from "@/components/CvDraftPanel";
 import EvaluationWorkQueue from "@/components/EvaluationWorkQueue";
 import ApplicationPackWorkQueue from "@/components/ApplicationPackWorkQueue";
@@ -888,6 +889,7 @@ export default function AdminAIEvaluationDashboard() {
               {item.type === "evaluation" && (
                 <div className="mt-3">
                   <div className="flex flex-wrap items-center gap-2">
+                    <AdminFreeBilanLauncher sessionToken={sessionToken} email={item.email} fullName={item.fullName} />
                     {validationStatusById.get(evaluationNumericId(item)) && <Badge className="bg-indigo-100 text-indigo-900">{validationStatusById.get(evaluationNumericId(item))?.label}</Badge>}
                     <Button type="button" size="sm" variant="outline" className="gap-1 border-violet-300 text-violet-900 hover:bg-violet-50" aria-expanded={validationOpenId === item.id} onClick={() => setValidationOpenId(validationOpenId === item.id ? null : item.id)}>
                       <Sparkles className="h-3.5 w-3.5" /> {validationOpenId === item.id ? "Masquer la validation" : "Validation structurée"}
