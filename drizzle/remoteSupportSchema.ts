@@ -116,3 +116,24 @@ export const paymentScheduleItems = mysqlTable("payment_schedule_items", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (table) => [index("idx_payment_schedule_candidate").on(table.candidateId, table.status), index("idx_payment_schedule_due").on(table.status, table.dueOn)]);
+
+/** Gouvernance du contenu (migration 0094) : relectures des pages et « Quoi de neuf ». */
+export const contentReviews = mysqlTable("content_reviews", {
+  id: int("id").autoincrement().primaryKey(),
+  pagePath: varchar("page_path", { length: 190 }).notNull(),
+  reviewedAt: timestamp("reviewed_at").defaultNow().notNull(),
+  reviewedBy: varchar("reviewed_by", { length: 160 }).notNull(),
+  note: varchar("note", { length: 300 }),
+}, (table) => [uniqueIndex("uq_content_reviews_path").on(table.pagePath)]);
+
+export const contentUpdates = mysqlTable("content_updates", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 160 }).notNull(),
+  summary: varchar("summary", { length: 600 }).notNull(),
+  pagePath: varchar("page_path", { length: 190 }),
+  published: tinyint("published").notNull().default(0),
+  publishedAt: timestamp("published_at"),
+  archivedAt: timestamp("archived_at"),
+  createdBy: varchar("created_by", { length: 160 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [index("idx_content_updates_published").on(table.published, table.archivedAt, table.publishedAt)]);

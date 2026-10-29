@@ -26,6 +26,7 @@ import {
 import { setPageSeo } from "@/lib/pageSeo";
 import { trackEvent } from "@/lib/analytics";
 import { ServicePageShell } from "@/components/ServicePageShell";
+import { PrintBrandedButton } from "@/components/PrintBrandedButton";
 
 type Draft = Partial<Answers>;
 
@@ -121,7 +122,21 @@ export default function MobilityOrientationTool() {
               <Link href="/#evaluation-multi" onClick={() => trackEvent("mobility_orientation_cta", { target: "evaluation" })} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-3 text-base font-bold text-white hover:bg-blue-800">Évaluer mon profil<ArrowRight className="h-5 w-5" aria-hidden="true" /></Link>
               <Link href="/outils/liste-de-pieces" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-blue-300 bg-white px-4 py-3 text-base font-bold text-blue-900 hover:bg-blue-50">Liste des pièces à préparer</Link>
             </div>
-            <button type="button" onClick={() => setDraft({})} className="mt-3 min-h-11 text-sm font-semibold text-blue-800 underline">Recommencer</button>
+            <div className="mt-3 flex flex-wrap items-center gap-4">
+              <PrintBrandedButton
+                label="Imprimer mon orientation"
+                build={() => ({
+                  title: "Mon orientation de mobilité",
+                  sections: [
+                    { title: result.route.title, paragraphs: [result.route.summary, READINESS_COPY[result.readiness]] },
+                    ...(result.attention.length ? [{ title: "Points d'attention", bullets: result.attention }] : []),
+                    { title: "Mes premières étapes", steps: result.steps },
+                  ],
+                  note: "Orientation générale et indicative : elle ne garantit ni l'obtention d'un visa ni un délai. Votre conseiller confirme la voie adaptée à votre dossier.",
+                })}
+              />
+              <button type="button" onClick={() => setDraft({})} className="min-h-11 text-sm font-semibold text-blue-800 underline">Recommencer</button>
+            </div>
           </section>
         ) : null}
       </section>

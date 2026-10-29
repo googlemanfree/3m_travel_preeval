@@ -8,6 +8,7 @@ import { WORLD_COUNTRY_ROWS } from "@shared/worldCountries";
 import { setPageSeo } from "@/lib/pageSeo";
 import { trackEvent } from "@/lib/analytics";
 import { ServicePageShell } from "@/components/ServicePageShell";
+import { PrintBrandedButton } from "@/components/PrintBrandedButton";
 
 const PROJECTS = [
   { value: "travail", label: "Travail avec employeur" },
@@ -93,6 +94,15 @@ export default function DocumentChecklistTool() {
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-slate-600" role="status">{checked.size} pièce{checked.size > 1 ? "s" : ""} prête{checked.size > 1 ? "s" : ""} sur {checklist.documents.length}</p>
+          <PrintBrandedButton
+            label="Imprimer la liste"
+            build={() => ({
+              title: `Pièces à préparer : ${country}`,
+              intro: PROJECTS.find((item) => item.value === project)?.label,
+              sections: [{ checks: checklist.documents.map((line) => ({ label: line.documentType, done: checked.has(line.documentType) })) }],
+              note: "Liste générale et indicative : l'autorité du pays peut demander d'autres pièces. Votre conseiller confirme la liste exacte pour votre dossier.",
+            })}
+          />
           <button type="button" onClick={copy} className="inline-flex items-center gap-2 rounded-lg border border-blue-300 bg-white px-4 py-2 text-sm font-bold text-blue-900 hover:bg-blue-50"><ClipboardCopy className="h-4 w-4" aria-hidden="true" />Copier la liste</button>
         </div>
 
