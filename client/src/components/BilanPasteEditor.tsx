@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { BILAN_MAX_HTML_LENGTH, bilanPlainText, inspectBilan, renderBilanStandalone, sanitizeBilanHtml, styleBilanHtml, toBilanHtml } from "@shared/bilanContent";
 import { BILAN_CALLOUTS, BILAN_HIGHLIGHTS, BILAN_HIGHLIGHT_LABELS, BILAN_SIZE_LABELS, BILAN_TABLE_DESIGNS, BILAN_TABLE_DESIGN_LABELS, BILAN_TEXT_COLORS, BILAN_TEXT_COLOR_LABELS } from "@shared/bilanDesign";
 import { BilanDocumentActions } from "@/components/BilanDocumentActions";
+import { reviewBilan, type ReviewContext } from "@shared/bilanReview";
 import { BILAN_VARIABLE_LABELS, BILAN_VARIABLE_NAMES, STANDARD_SCORE_CRITERIA, buildScoreText, resolveBilanVariables, scoreTotals, type BilanVariableValues, type ScoreRow } from "@shared/bilanVariables";
 import { toast } from "sonner";
 
@@ -19,6 +20,8 @@ type Props = {
   /** Identité du bilan pour l'impression, le téléchargement et la copie sur papier à en-tête. */
   /** Valeurs du dossier pour {{montant}}, {{nom}}… : remplacées à l'aperçu, à la validation, à l'envoi et à l'impression. */
   variables?: BilanVariableValues;
+  /** Dossier à confronter au texte : nom, destination et montant attendus (relecture automatique en direct). */
+  reviewContext?: ReviewContext;
   documentMeta?: { title: string; candidateName: string; reference?: string | null; projectLabel?: string | null; destination?: string | null; score?: number | null };
 };
 
@@ -28,7 +31,7 @@ type Panel = "color" | "highlight" | "size" | "callout" | "table" | "vars" | "sc
  * Zone de saisie du bilan complet : on y COLLE un bilan déjà rédigé ailleurs (Word, Google Docs, page web, ChatGPT, e-mail, texte brut, Markdown, code HTML)
  * et il est converti en une mise en forme propre — la même que verra le candidat, dans son espace comme par e-mail. Aucune limite de longueur imposée.
  */
-export function BilanPasteEditor({ value, onChange, disabled = false, label = "Bilan complet", minHeight = "22rem", documentMeta, variables }: Props) {
+export function BilanPasteEditor({ value, onChange, disabled = false, label = "Bilan complet", minHeight = "22rem", documentMeta, variables, reviewContext }: Props) {
   const editorRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [focused, setFocused] = useState(false);
@@ -37,6 +40,8 @@ export function BilanPasteEditor({ value, onChange, disabled = false, label = "B
   const [source, setSource] = useState(value);
   const variablesKey = JSON.stringify(variables ?? {});
   const inspection = useMemo(() => inspectBilan(resolveBilanVariables(value, variables ?? {})), [value, variablesKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const reviewKey = JSON.stringify(reviewContext ?? null);
+  const review = useMemo(() => (reviewContext && value.trim() ? reviewBilan(resolveBilanVariables(value, variables ?? {}), reviewContext) : []), [value, variablesKey, reviewKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const [scoreRows, setScoreRows] = useState<ScoreRow[]>(() => STANDARD_SCORE_CRITERIA.map((criterion) => ({ label: criterion.label, score: 0, max: criterion.max })));
   const styled = useMemo(() => styleBilanHtml(value), [value]);
 
@@ -295,6 +300,16 @@ export function BilanPasteEditor({ value, onChange, disabled = false, label = "B
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span><strong>Donnée sensible à retirer</strong> : {inspection.sensitiveData.join(", ")}.</span>
         </p>
+      )}
+      {review.length > 0 && (
+        <ul className="space-y-1" data-testid="bilan-review" aria-label="Relecture automatique">
+          {review.map((issue) => (
+            <li key={`${issue.code}-${issue.message}`} role={issue.level === "error" ? "alert" : undefined} className={`flex items-start gap-2 rounded-md border p-2 text-xs ${issue.level === "error" ? "border-rose-200 bg-rose-50 text-rose-900" : "border-amber-200 bg-amber-50 text-amber-950"}`}>
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span><strong>{issue.level === "error" ? "À corriger avant validation" : "À vérifier"}</strong> : {issue.message}</span>
+            </li>
+          ))}
+        </ul>
       )}
       {inspection.placeholders.length > 0 && (
         <p className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-950" role="alert" data-testid="bilan-placeholders">

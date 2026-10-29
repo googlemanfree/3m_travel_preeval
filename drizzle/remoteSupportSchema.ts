@@ -1,4 +1,4 @@
-import { date, index, int, mysqlEnum, mysqlTable, smallint, text, timestamp, tinyint, varchar, char } from "drizzle-orm/mysql-core";
+import { date, index, int, mediumtext, mysqlEnum, mysqlTable, smallint, text, timestamp, tinyint, uniqueIndex, varchar, char } from "drizzle-orm/mysql-core";
 
 /** Accompagnement à distance (migration 0091). Uniquement de nouvelles tables. */
 export const remoteSlots = mysqlTable("remote_slots", {
@@ -75,3 +75,44 @@ export const satisfactionResponses = mysqlTable("satisfaction_responses", {
   comment: varchar("comment", { length: 500 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [index("idx_satisfaction_created").on(table.createdAt)]);
+
+/** Outils d'administration (migration 0093) : modèles de bilan, résultats réels, échéanciers. */
+export const bilanTemplates = mysqlTable("bilan_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  profile: varchar("profile", { length: 40 }).notNull(),
+  name: varchar("name", { length: 120 }).notNull(),
+  version: int("version").notNull().default(1),
+  bodyHtml: mediumtext("body_html").notNull(),
+  createdBy: varchar("created_by", { length: 160 }),
+  archivedAt: timestamp("archived_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [uniqueIndex("uq_bilan_templates_version").on(table.profile, table.name, table.version), index("idx_bilan_templates_profile").on(table.profile, table.archivedAt)]);
+
+export const caseOutcomes = mysqlTable("case_outcomes", {
+  id: int("id").autoincrement().primaryKey(),
+  candidateId: int("candidate_id").notNull(),
+  destination: varchar("destination", { length: 100 }).notNull(),
+  visaType: varchar("visa_type", { length: 100 }).notNull(),
+  outcome: mysqlEnum("outcome", ["accepted", "refused", "withdrawn"]).notNull(),
+  decidedOn: date("decided_on", { mode: "string" }),
+  refusalReason: varchar("refusal_reason", { length: 300 }),
+  recordedBy: varchar("recorded_by", { length: 160 }).notNull(),
+  voidedAt: timestamp("voided_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [index("idx_case_outcomes_candidate").on(table.candidateId), index("idx_case_outcomes_stats").on(table.destination, table.visaType, table.outcome)]);
+
+export const paymentScheduleItems = mysqlTable("payment_schedule_items", {
+  id: int("id").autoincrement().primaryKey(),
+  candidateId: int("candidate_id").notNull(),
+  label: varchar("label", { length: 160 }).notNull(),
+  amount: int("amount").notNull(),
+  currency: char("currency", { length: 3 }).notNull().default("XAF"),
+  dueOn: date("due_on", { mode: "string" }).notNull(),
+  status: mysqlEnum("status", ["pending", "paid", "waived", "cancelled"]).notNull().default("pending"),
+  paidOn: date("paid_on", { mode: "string" }),
+  note: varchar("note", { length: 300 }),
+  recordedBy: varchar("recorded_by", { length: 160 }),
+  createdBy: varchar("created_by", { length: 160 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (table) => [index("idx_payment_schedule_candidate").on(table.candidateId, table.status), index("idx_payment_schedule_due").on(table.status, table.dueOn)]);

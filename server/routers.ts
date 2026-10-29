@@ -97,6 +97,7 @@ import { stayProgramsRouter } from "./routers/stayPrograms";
 import { activationSafetyRouter } from "./routers/activationSafety";
 import { remoteSupportRouter } from "./routers/remoteSupport";
 import { adminInsightsRouter } from "./routers/adminInsights";
+import { adminOpsRouter } from "./routers/adminOps";
 import { opportunitiesInboxRouter } from "./routers/opportunitiesInbox";
 import { employerOffersRouter } from "./routers/employerOffers";
 import { jobOffersRouter } from "./routers/jobOffers";
@@ -235,6 +236,7 @@ export const appRouter = router({
   activationSafety: activationSafetyRouter,
   remoteSupport: remoteSupportRouter,
   adminInsights: adminInsightsRouter,
+  adminOps: adminOpsRouter,
   opportunitiesInbox: opportunitiesInboxRouter,
   employerOffers: employerOffersRouter,
   jobOffers: jobOffersRouter,

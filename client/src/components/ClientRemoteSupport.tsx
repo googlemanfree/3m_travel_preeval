@@ -6,6 +6,7 @@ import type { AppRouter } from "../../../server/routers";
 import { trpc } from "@/lib/trpc";
 import { clientSpacePolling } from "@/lib/clientSpaceSync";
 import { PROBLEM_TOPICS, SLOT_CHANNEL_LABELS, type ProblemTopic } from "@shared/remoteSupport";
+import { formatXaf } from "@shared/openingFee";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -150,9 +151,33 @@ export function ClientRemoteSupport({ enabled = true }: { enabled?: boolean }) {
           ))}
           {days.length > 0 && <p className="text-xs text-slate-500">Heures affichées à l'heure du Cameroun (Douala). Deux rendez-vous à venir au maximum.</p>}
         </section>
+        <PaymentPlanCard enabled={enabled} />
         <SatisfactionCard enabled={enabled} />
       </div>
     </Card>
+  );
+}
+
+/** Échéancier fixé par l'agence : montants et dates à régler ; un paiement n'est marqué « reçu » que par le conseiller. */
+function PaymentPlanCard({ enabled }: { enabled: boolean }) {
+  const plan = trpc.adminOps.myPaymentPlan.useQuery(undefined, { enabled, retry: false });
+  const data = plan.data;
+  if (!data) return null;
+  const STATUS = { pending: "À régler", paid: "Reçu", waived: "Dispensé", cancelled: "Annulé" } as const;
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-4" data-testid="client-payment-plan" aria-label="Mon échéancier">
+      <h3 className="text-base font-bold text-slate-900">Mon échéancier</h3>
+      <p className="mt-1 text-sm text-slate-600">Reste à régler : <strong>{formatXaf(data.summary.remaining)}</strong>{data.summary.overdueCount > 0 && <span className="ml-2 font-bold text-rose-700">dont {data.summary.overdueCount} échéance(s) en retard</span>}</p>
+      <ul className="mt-2 divide-y divide-slate-100">
+        {data.items.map((item) => (
+          <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+            <span><strong>{item.label}</strong> · {formatXaf(item.amount, item.currency)} · avant le {new Date(item.dueOn).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}</span>
+            <span className={`rounded px-2 py-0.5 text-xs font-bold ${item.overdue ? "bg-rose-100 text-rose-800" : item.status === "paid" ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"}`}>{item.overdue ? "En retard" : STATUS[item.status]}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 text-xs text-slate-500">Après chaque règlement, envoyez la preuve de paiement depuis votre espace : l'échéance passe à « Reçu » quand votre conseiller l'a vérifiée.</p>
+    </section>
   );
 }
 

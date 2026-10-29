@@ -28,6 +28,8 @@ import { requireValidAdminSession } from "./adminAuth";
 import { generateEvaluationReportHTML } from "../evaluationService";
 import { inspectBilan, toBilanHtml } from "../../shared/bilanContent";
 import { bilanVariablesFrom, resolveBilanVariables } from "../../shared/bilanVariables";
+import { reviewBilan } from "../../shared/bilanReview";
+import { proposedOpeningFee } from "../../shared/openingFee";
 import { frameBrandedDocument } from "../../shared/brandLetterhead";
 import { sendEmail } from "../_core/email";
 import { createFinalEvaluationPdf } from "../evaluationBilanPdfService";
@@ -929,12 +931,16 @@ initializeEvaluationDelivery: publicProcedure
       if (freeBilan) {
         // Bilan libre : le même contrôle que le rapport structuré. Une promesse de résultat ou une donnée sensible bloque la validation (jamais supprimée en silence).
         // Les variables ({{montant}}, {{nom}}…) sont remplacées avant le contrôle : seule une zone réellement vide bloque la validation.
-        const inspection = inspectBilan(resolveBilanVariables(freeBilan, bilanVariablesFrom({ fullName: application.fullName, dossierNumber: application.dossierNumber, destination: application.destination, visaType: application.visaType, paymentAmount: application.paymentAmount })));
+        const resolvedBilan = resolveBilanVariables(freeBilan, bilanVariablesFrom({ fullName: application.fullName, dossierNumber: application.dossierNumber, destination: application.destination, visaType: application.visaType, paymentAmount: application.paymentAmount }));
+        const inspection = inspectBilan(resolvedBilan);
         if (inspection.empty) throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan est vide ou trop court pour être validé." });
         if (inspection.forbiddenTerms.length > 0) throw new TRPCError({ code: "BAD_REQUEST", message: `Formulation à revoir avant validation (promesse de résultat) : ${inspection.forbiddenTerms.join(", ")}.` });
         if (inspection.sensitiveData.length > 0) throw new TRPCError({ code: "BAD_REQUEST", message: `Donnée sensible à retirer avant validation : ${inspection.sensitiveData.join(", ")}.` });
         // Un montant ou un champ laissé « [À CONFIRMER] » ne doit jamais partir chez le candidat.
         if (inspection.placeholders.length > 0) throw new TRPCError({ code: "BAD_REQUEST", message: `Zone à compléter restante dans le bilan : ${inspection.placeholders.join(", ")}. Renseignez-la avant validation.` });
+        // Relecture automatique : un nom, une note globale ou un total qui ne correspondent pas au dossier bloquent la validation.
+        const reviewErrors = reviewBilan(resolvedBilan, { fullName: application.fullName, destinations: [application.destination], expectedAmount: application.paymentAmount && application.paymentAmount > 0 ? application.paymentAmount : proposedOpeningFee(application.visaType) }).filter((issue) => issue.level === "error");
+        if (reviewErrors.length > 0) throw new TRPCError({ code: "BAD_REQUEST", message: `Relecture automatique : ${reviewErrors.map((issue) => issue.message).join(" ")}` });
       } else if (verdict.length < 3) throw new TRPCError({ code: "BAD_REQUEST", message: "Saisissez au moins trois caractères dans le bilan avant validation." });
       const now = new Date();
       const finalDossierNumber = await issueFinalDossierNumber(db, application);

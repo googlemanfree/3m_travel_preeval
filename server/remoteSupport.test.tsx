@@ -36,6 +36,7 @@ vi.mock("@/lib/trpc", () => {
     trpc: {
       useUtils: () => new Proxy({}, { get: () => new Proxy({}, { get: () => ({ invalidate: vi.fn() }) }) }),
       adminInsights: { mySatisfactionPrompt: query(() => state.prompt), answerSatisfaction: mutation(vi.fn()) },
+      adminOps: { myPaymentPlan: query(() => ({ data: null })) },
       remoteSupport: {
         myOverview: query(() => state.overview),
         adminSlots: query(() => state.slots),

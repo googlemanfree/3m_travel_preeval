@@ -298,12 +298,12 @@ export const remoteSupportRouter = router({
     for (const message of recent) if (!latest.has(message.candidateId)) latest.set(message.candidateId, message);
     const waiting = Array.from(latest.values()).filter((message) => message.senderRole === "candidate");
     const ids = waiting.map((message) => message.candidateId);
-    const people = ids.length ? await db.select({ id: candidates.id, fullName: candidates.fullName, phone: candidates.phone, email: candidates.email }).from(candidates).where(and(inArray(candidates.id, ids), isNull(candidates.deletedAt))) : [];
+    const people = ids.length ? await db.select({ id: candidates.id, fullName: candidates.fullName, phone: candidates.phone, email: candidates.email, preferredLanguage: candidates.preferredLanguage }).from(candidates).where(and(inArray(candidates.id, ids), isNull(candidates.deletedAt))) : [];
     return waiting.flatMap((message) => {
       const person = people.find((item) => item.id === message.candidateId);
       if (!person) return [];
       const days = waitingDays(message.createdAt, now);
-      return [{ candidateId: person.id, fullName: person.fullName, phone: person.phone, lastMessage: message.content.slice(0, 220), lastAt: iso(message.createdAt)!, days, level: waitingLevel(days), isHelpRequest: message.content.startsWith(PROBLEM_PREFIX) }];
+      return [{ candidateId: person.id, fullName: person.fullName, phone: person.phone, language: person.preferredLanguage === "en" ? ("en" as const) : ("fr" as const), lastMessage: message.content.slice(0, 220), lastAt: iso(message.createdAt)!, days, level: waitingLevel(days), isHelpRequest: message.content.startsWith(PROBLEM_PREFIX) }];
     }).sort((a, b) => b.days - a.days).slice(0, 120);
   })),
 

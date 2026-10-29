@@ -82,7 +82,8 @@ describe("bilan : variables du dossier", () => {
   it("la livraison (e-mail, espace candidat, PDF) et la validation résolvent les variables", () => {
     expect(read("server/evaluationService.ts")).toContain("resolveBilanVariables(adminDraft.bilanHtml");
     expect(read("server/evaluationBilanPdfService.ts")).toContain("resolveBilanVariables(draft.bilanHtml");
-    expect(read("server/routers/unifiedRequests.ts")).toContain("inspectBilan(resolveBilanVariables(freeBilan");
+    expect(read("server/routers/unifiedRequests.ts")).toContain("resolveBilanVariables(freeBilan");
+    expect(read("server/routers/unifiedRequests.ts")).toContain("inspectBilan(resolvedBilan)");
   });
 });
 

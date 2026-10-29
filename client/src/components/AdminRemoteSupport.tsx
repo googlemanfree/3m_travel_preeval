@@ -7,7 +7,8 @@ import { trpc } from "@/lib/trpc";
 import {
   ACK_TEMPLATES,
   NEXT_ACTION_PRESETS,
-  REPLY_TEMPLATES,
+  replyTemplatesFor,
+  type ReplyLanguage,
   SLOT_CHANNELS,
   SLOT_CHANNEL_LABELS,
   SLOT_STATUS_LABELS,
@@ -140,6 +141,7 @@ function WaitingPanel({ sessionToken }: { sessionToken: string }) {
   const utils = trpc.useUtils();
   const waiting = trpc.remoteSupport.adminWaiting.useQuery({ sessionToken }, { enabled: Boolean(sessionToken), retry: false, refetchInterval: 60_000 });
   const [drafts, setDrafts] = useState<Record<number, string>>({});
+  const [langs, setLangs] = useState<Record<number, ReplyLanguage>>({});
   const reply = trpc.remoteSupport.adminReply.useMutation({ onSuccess: () => { toast.success("Réponse envoyée"); void utils.remoteSupport.adminWaiting.invalidate(); }, onError: (error) => toast.error(error.message) });
   const rows = (waiting.data ?? []) as Out["adminWaiting"];
   return (
@@ -149,7 +151,9 @@ function WaitingPanel({ sessionToken }: { sessionToken: string }) {
       {waiting.data && rows.length === 0 && <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-900">Aucun message en attente de réponse.</p>}
       {rows.map((row) => {
         const draft = drafts[row.candidateId] ?? "";
-        const wa = whatsappLink(row.phone, draft || fillTemplate(REPLY_TEMPLATES[0].body, row.fullName));
+        const lang: ReplyLanguage = langs[row.candidateId] ?? row.language;
+        const templates = replyTemplatesFor(lang);
+        const wa = whatsappLink(row.phone, draft || fillTemplate(templates[0].body, row.fullName));
         return (
           <article key={row.candidateId} className="rounded-lg border border-slate-200 bg-white p-3 text-sm" data-testid={`waiting-${row.candidateId}`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -160,10 +164,14 @@ function WaitingPanel({ sessionToken }: { sessionToken: string }) {
               </span>
             </div>
             <p className="mt-1 whitespace-pre-line text-slate-700">« {row.lastMessage} »</p>
+            <div className="mt-2 flex items-center gap-1 text-xs" role="group" aria-label="Langue de la réponse">
+              <span className="text-slate-500">Langue :</span>
+              {(["fr", "en"] as const).map((code) => <Button key={code} type="button" size="sm" variant={lang === code ? "default" : "outline"} className="h-7 px-2 text-xs" onClick={() => setLangs((current) => ({ ...current, [row.candidateId]: code }))} data-testid={`reply-lang-${row.candidateId}-${code}`}>{code === "fr" ? "Français" : "English"}</Button>)}
+            </div>
             <div className="mt-2 grid gap-2 sm:grid-cols-[14rem_1fr]">
-              <select className={selectClass} aria-label="Réponse type" defaultValue="" onChange={(event) => { const template = REPLY_TEMPLATES.find((item) => item.id === event.target.value); if (template) setDrafts((current) => ({ ...current, [row.candidateId]: fillTemplate(template.body, row.fullName) })); }}>
+              <select className={selectClass} aria-label="Réponse type" defaultValue="" onChange={(event) => { const template = templates.find((item) => item.id === event.target.value); if (template) setDrafts((current) => ({ ...current, [row.candidateId]: fillTemplate(template.body, row.fullName) })); }}>
                 <option value="">Réponse type…</option>
-                {REPLY_TEMPLATES.map((template) => <option key={template.id} value={template.id}>{template.label}</option>)}
+                {templates.map((template) => <option key={template.id} value={template.id}>{template.label}</option>)}
               </select>
               <Textarea value={draft} onChange={(event) => setDrafts((current) => ({ ...current, [row.candidateId]: event.target.value }))} placeholder="Votre réponse" className="min-h-16" />
             </div>

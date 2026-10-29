@@ -78,9 +78,25 @@ export const REPLY_TEMPLATES: ReadonlyArray<ReplyTemplate> = [
   { id: "thanks", label: "Remerciement et suite", body: "Bonjour {prenom}, merci pour votre retour. Nous le prenons en compte et revenons vers vous dès la prochaine étape." },
 ];
 
+export type ReplyLanguage = "fr" | "en";
+
+/** Mêmes réponses types en anglais, mêmes identifiants : la langue se choisit selon la préférence du candidat. */
+export const REPLY_TEMPLATES_EN: ReadonlyArray<ReplyTemplate> = [
+  { id: "received", label: "Message received", body: "Hello {prenom}, we have received your message. Your advisor is reviewing it and will reply as soon as possible." },
+  { id: "documents", label: "Documents to complete", body: "Hello {prenom}, to move your file forward we still need a few documents. You can upload them directly from your client area, under Documents, with a clear photo taken flat." },
+  { id: "unclear_photo", label: "Photo to retake", body: "Hello {prenom}, the document you sent is not readable enough. Could you retake it flat, in good light, without glare or cropped edges, and upload it again from your client area?" },
+  { id: "payment_proof", label: "Payment proof needed", body: "Hello {prenom}, to open your file we need the proof of your payment (a photo or video of the receipt or confirmation). You can upload it from your client area." },
+  { id: "appointment", label: "Offer an online appointment", body: "Hello {prenom}, to review your file together you can book an online appointment from your client area, under Remote support. Pick the slot that suits you." },
+  { id: "clarify", label: "Request for details", body: "Hello {prenom}, to handle your request could you tell us more about your situation (target country, type of project, preferred date)? Your answer will help us guide you properly." },
+  { id: "follow_up", label: "Polite follow-up", body: "Hello {prenom}, we are following up on your file. Could you tell us where you stand and whether you are facing any difficulty? We are here to help." },
+  { id: "thanks", label: "Thanks and next step", body: "Hello {prenom}, thank you for your reply. We have noted it and will get back to you with the next step." },
+];
+
+export const replyTemplatesFor = (language: ReplyLanguage | null | undefined): ReadonlyArray<ReplyTemplate> => (language === "en" ? REPLY_TEMPLATES_EN : REPLY_TEMPLATES);
+
 export function fillTemplate(body: string, fullName: string): string {
   const name = firstName(fullName);
-  return body.replace(/\{prenom\}/g, name || "").replace(/Bonjour ,/, "Bonjour,").replace(/\s{2,}/g, " ").trim();
+  return body.replace(/\{prenom\}/g, name || "").replace(/(Bonjour|Hello) ,/, "$1,").replace(/\s{2,}/g, " ").trim();
 }
 
 export type WaitingLevel = "normal" | "late" | "urgent";
