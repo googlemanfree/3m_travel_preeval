@@ -1,5 +1,6 @@
 import { LEGAL_DISCLAIMER, findForbiddenTerms, findSensitiveValues } from "./evaluationValidation";
 import { BRAND, escapeBrandHtml, frameBrandedDocument } from "./brandLetterhead";
+import { BILAN_CALLOUTS, alignFromAttributes, calloutFromAttributes, dropBareSpans, inlineStyleFromDesign, spanAttributesFrom, tableDesignFromAttributes, type BilanTableDesign } from "./bilanDesign";
 
 /**
  * Bilan d'évaluation « libre » : l'administrateur colle un bilan déjà rédigé ailleurs (HTML, Word, Google Docs, texte, Markdown…) ;
@@ -9,15 +10,30 @@ import { BRAND, escapeBrandHtml, frameBrandedDocument } from "./brandLetterhead"
 
 export const BILAN_MAX_HTML_LENGTH = 300_000;
 
-const ALLOWED_TAGS = new Set(["p", "br", "hr", "strong", "em", "u", "del", "sup", "sub", "ul", "ol", "li", "h2", "h3", "h4", "blockquote", "table", "thead", "tbody", "tfoot", "tr", "td", "th", "a"]);
+const ALLOWED_TAGS = new Set(["p", "br", "hr", "strong", "em", "u", "del", "sup", "sub", "ul", "ol", "li", "h2", "h3", "h4", "blockquote", "table", "thead", "tbody", "tfoot", "tr", "td", "th", "a", "span"]);
+/** Blocs qui conservent un alignement (centré, à droite, justifié). */
+const ALIGNABLE = new Set(["p", "h2", "h3", "h4", "li", "blockquote", "td", "th"]);
 const TAG_ALIASES: Record<string, string> = {
-  b: "strong", i: "em", s: "del", strike: "del", h1: "h2", h5: "h4", h6: "h4", pre: "p", dl: "ul", dt: "li", dd: "li",
+  b: "strong", i: "em", s: "del", strike: "del", font: "span", mark: "span", h1: "h2", h5: "h4", h6: "h4", pre: "p", dl: "ul", dt: "li", dd: "li",
   div: "p", section: "p", article: "p", header: "p", footer: "p", main: "p", aside: "p", nav: "p", center: "p", figure: "p", figcaption: "p", address: "p", caption: "p",
 };
 const BLOCKS_INSIDE_P = /<p>\s*(?=<(?:ul|ol|table|h[2-4]|blockquote|hr)\b)/g;
 const DROP_WITH_CONTENT = /<(script|style|head|title|iframe|object|embed|svg|math|template|noscript|xml|form|select|textarea|button)\b[\s\S]*?<\/\1\s*>/gi;
+const ALIGN_ATTRIBUTE = '(?: data-a="(?:left|center|right|justify)")?';
 const CANONICAL_TAG_OR_LT = new RegExp(
-  "(</?(?:p|strong|em|u|del|sup|sub|ul|ol|li|h2|h3|h4|blockquote|table|thead|tbody|tfoot|tr)>|<(?:br|hr)>|<a(?: href=\"[^\"<>]*\" target=\"_blank\" rel=\"noopener noreferrer\")?>|</a>|<t[dh](?: colspan=\"\\d{1,2}\")?(?: rowspan=\"\\d{1,2}\")?>|</t[dh]>)|<",
+  "(" + [
+    "</?(?:strong|em|u|del|sup|sub|ul|ol|thead|tbody|tfoot|tr)>",
+    "</(?:p|li|h2|h3|h4|blockquote|table|span)>",
+    "<(?:p|li|h2|h3|h4)" + ALIGN_ATTRIBUTE + ">",
+    "<blockquote" + ALIGN_ATTRIBUTE + '(?: data-v="(?:info|success|warning|danger)")?>',
+    '<table(?: data-d="(?:soft|plain)")?>',
+    '<span(?: data-c="[a-z]{3,8}")?(?: data-h="[a-z]{3,8}")?(?: data-s="(?:sm|lg|xl)")?(?: data-b="1")?(?: data-i="1")?(?: data-u="1")?(?: data-x="1")?>',
+    "<(?:br|hr)>",
+    '<a(?: href="[^"<>]*" target="_blank" rel="noopener noreferrer")?>',
+    "</a>",
+    '<t[dh](?: colspan="\d{1,2}")?(?: rowspan="\d{1,2}")?' + ALIGN_ATTRIBUTE + ">",
+    "</t[dh]>",
+  ].join("|") + ")|<",
   "g",
 );
 const DROP_SELF_CLOSING =/<(?:meta|link|base|input|img|video|audio|source|picture|canvas|col|colgroup)\b[^>]*>/gi;
@@ -58,19 +74,31 @@ export function sanitizeBilanHtml(raw: string): string {
       const safe = href ? safeHref(href[1] ?? href[2] ?? href[3] ?? "") : null;
       return safe ? `<a href="${escapeBrandHtml(safe)}" target="_blank" rel="noopener noreferrer">` : "<a>";
     }
+    if (tag === "span") return `<span${spanAttributesFrom(name, attributes)}>`;
+    const alignment = ALIGNABLE.has(tag) ? alignFromAttributes(attributes) : null;
+    const alignAttribute = alignment ? ` data-a="${alignment}"` : "";
     if (tag === "td" || tag === "th") {
       const span = (attribute: string) => {
         const found = new RegExp(`${attribute}\\s*=\\s*["']?(\\d{1,2})`, "i").exec(attributes);
         const value = found ? Number(found[1]) : 0;
         return value > 1 && value <= 12 ? ` ${attribute}="${value}"` : "";
       };
-      return `<${tag}${span("colspan")}${span("rowspan")}>`;
+      return `<${tag}${span("colspan")}${span("rowspan")}${alignAttribute}>`;
     }
-    return `<${tag}>`;
+    if (tag === "blockquote") {
+      const callout = calloutFromAttributes(attributes);
+      return `<blockquote${alignAttribute}${callout ? ` data-v="${callout}"` : ""}>`;
+    }
+    if (tag === "table") {
+      const design = tableDesignFromAttributes(attributes);
+      return design ? `<table data-d="${design}">` : "<table>";
+    }
+    return `<${tag}${alignAttribute}>`;
   });
   // Liste fermée : seules les balises telles que CE code vient de les réécrire survivent ; tout autre « < » (balise non fermée, attributs
   // glissés avant un « < » suivant, noms approchants…) devient du texte. Un simple test sur le nom de balise laissait passer `<a onmouseover=… <b>`.
   html = html.replace(CANONICAL_TAG_OR_LT, (match, tag: string | undefined) => (tag ? tag : "&lt;"));
+  html = dropBareSpans(html);
   html = html
     .replace(/<p>\s*(?:&nbsp;|\s|<br>)*<\/p>/g, "")
     .replace(BLOCKS_INSIDE_P, "")
@@ -97,11 +125,18 @@ function inlineMarkdown(value: string): string {
   return out;
 }
 
-const BULLET = /^\s*(?:[-*•·–—▪●■✓✔☑▸▶►→]|\d{1,2}[.)])\s+(.*\S.*)$/;
-const ORDERED = /^\s*\d{1,2}[.)]\s+/;
+const BULLET = /^\s*(?:[-*•·–—▪●■✓✔☑▸▶►→①-⑳]|\d{1,2}[.)])\s+(.*\S.*)$/;
+const ORDERED = /^\s*(?:\d{1,2}[.)]|[①-⑳])\s+/;
 const MD_HEADING = /^\s*(#{1,4})\s+(.+?)\s*#*\s*$/;
 const RULE = /^\s*(?:[-*_]\s*){3,}$|^\s*[━─═]{6,}\s*$/;
 const SECTION_MARK = /^\s*[─━═\-]*\s*[◆◇✦]\s*[─━═\-]*\s*$/;
+const HEAVY_RULE = /^\s*[━═]{6,}\s*$/;
+const THIN_RULE = /^\s*─{6,}\s*$/;
+/** « LIBELLÉ ........ valeur » : ligne à points de conduite (score, statut, montant…). */
+const LEADER = /^\s*(\S(?:.*?\S)?)\s*(?:\.{4,}|…{2,}|(?:\.\s){4,}\.?)\s*(\S.*)$/;
+const ARROW = /^\s*[↓⬇▼⇓]\s*$/;
+const SUBHEADING_MARK = /^\s*[▸▶►]\s+(.+)$/;
+const TOTAL_LABEL = /^(?:note globale|total|score global)\b/i;
 
 const looksLikeUpperTitle = (line: string) => {
   const letters = line.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ]/g, "");
@@ -110,35 +145,82 @@ const looksLikeUpperTitle = (line: string) => {
   return upper / letters.length > 0.8;
 };
 
-/** Texte brut ou Markdown → HTML : titres (#, MAJUSCULES), listes (-, •, ✓, ▸, 1.), tableaux « | a | b | », séparateurs, gras et liens. */
+/**
+ * Texte brut ou Markdown → HTML : titres (#, MAJUSCULES : section puis sous-titre), listes (-, •, ✓, ▸, 1., ①), tableaux « | a | b | »,
+ * lignes à points « LIBELLÉ ..... valeur » (tableau de scores), flèches « ↓ » (schéma centré), séparateurs (━━━, ─ ◆ ─), gras et liens.
+ */
 export function textToBilanHtml(text: string): string {
   const lines = String(text ?? "").replace(/\r\n?/g, "\n").replace(/\t/g, "  ").split("\n").map((line) => line.replace(/\s+$/, ""));
   const out: string[] = [];
   let paragraph: string[] = [];
   let list: { ordered: boolean; items: string[] } | null = null;
   let table: string[][] | null = null;
+  let scores: Array<{ label: string; value: string; total: boolean }> | null = null;
+  let totalNext = false;
+  /** Vrai au début du document et après chaque séparateur : le premier titre en majuscules est alors un titre de section, les suivants des sous-titres. */
+  let sectionStart = true;
   const flushParagraph = () => {
-    if (paragraph.length) out.push(`<p>${paragraph.map(inlineMarkdown).join("<br>")}</p>`);
+    if (paragraph.length) {
+      const flow = paragraph.some((line) => ARROW.test(line));
+      out.push(`<p${flow ? ' data-a="center"' : ""}>${paragraph.map(inlineMarkdown).join("<br>")}</p>`);
+      sectionStart = false;
+    }
     paragraph = [];
   };
   const flushList = () => {
-    if (list) out.push(`<${list.ordered ? "ol" : "ul"}>${list.items.map((item) => `<li>${inlineMarkdown(item)}</li>`).join("")}</${list.ordered ? "ol" : "ul"}>`);
+    if (list) { out.push(`<${list.ordered ? "ol" : "ul"}>${list.items.map((item) => `<li>${inlineMarkdown(item)}</li>`).join("")}</${list.ordered ? "ol" : "ul"}>`); sectionStart = false; }
     list = null;
   };
   const flushTable = () => {
     if (table && table.length) {
       const [head, ...rest] = table;
       out.push(`<table><thead><tr>${head.map((cell) => `<th>${inlineMarkdown(cell)}</th>`).join("")}</tr></thead><tbody>${rest.map((row) => `<tr>${row.map((cell) => `<td>${inlineMarkdown(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table>`);
+      sectionStart = false;
     }
     table = null;
   };
-  const flushAll = () => { flushParagraph(); flushList(); flushTable(); };
+  const flushScores = () => {
+    if (scores && scores.length) {
+      const cell = (value: string, total: boolean, align: boolean) => `<td${align ? ' data-a="right"' : ""}>${total ? `<strong>${inlineMarkdown(value)}</strong>` : inlineMarkdown(value)}</td>`;
+      out.push(`<table data-d="plain"><tbody>${scores.map((row) => `<tr>${cell(row.label, row.total, false)}${cell(row.value, true, true)}</tr>`).join("")}</tbody></table>`);
+      sectionStart = false;
+    }
+    scores = null;
+    totalNext = false;
+  };
+  const flushAll = () => { flushParagraph(); flushList(); flushTable(); flushScores(); };
+  const heading = (level: 2 | 3, value: string) => { out.push(`<h${level}>${inlineMarkdown(value.replace(/\s*:$/, ""))}</h${level}>`); sectionStart = false; };
+  const nextNonEmpty = (from: number) => {
+    for (let cursor = from + 1; cursor < lines.length; cursor += 1) if (lines[cursor].trim()) return lines[cursor];
+    return "";
+  };
 
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
     const trimmed = line.trim();
-    if (!trimmed) { flushAll(); continue; }
-    if (SECTION_MARK.test(trimmed) || RULE.test(trimmed)) { flushAll(); if (RULE.test(trimmed) && !SECTION_MARK.test(trimmed)) out.push("<hr>"); continue; }
+    if (!trimmed) {
+      // Une puce suivie d'une autre puce du même type (lignes vides entre elles) reste dans la même liste.
+      const upcoming = nextNonEmpty(index);
+      const continues = Boolean(list) && BULLET.test(upcoming) && ORDERED.test(upcoming) === list!.ordered;
+      flushParagraph(); flushTable(); flushScores();
+      if (!continues) flushList();
+      continue;
+    }
+    if (THIN_RULE.test(trimmed) && scores && LEADER.test(nextNonEmpty(index))) { totalNext = true; continue; }
+    if (SECTION_MARK.test(trimmed) || RULE.test(trimmed)) {
+      flushAll();
+      if (RULE.test(trimmed) && !SECTION_MARK.test(trimmed)) out.push("<hr>");
+      sectionStart = true;
+      continue;
+    }
+    const leader = LEADER.exec(trimmed);
+    if (leader) {
+      flushParagraph(); flushList(); flushTable();
+      (scores ??= []).push({ label: leader[1].trim(), value: leader[2].trim(), total: totalNext || TOTAL_LABEL.test(leader[1].trim()) });
+      totalNext = false;
+      continue;
+    }
+    flushScores();
     if (trimmed.startsWith("|") && trimmed.endsWith("|") && trimmed.split("|").length >= 4) {
       flushParagraph(); flushList();
       if (/^[\s|:-]+$/.test(trimmed)) continue;
@@ -146,9 +228,11 @@ export function textToBilanHtml(text: string): string {
       continue;
     }
     flushTable();
-    const heading = MD_HEADING.exec(trimmed);
-    if (heading) { flushAll(); out.push(`<h${heading[1].length <= 2 ? 2 : 3}>${inlineMarkdown(heading[2])}</h${heading[1].length <= 2 ? 2 : 3}>`); continue; }
-    if (trimmed.startsWith(">")) { flushAll(); out.push(`<blockquote><p>${inlineMarkdown(trimmed.replace(/^>\s?/, ""))}</p></blockquote>`); continue; }
+    const markdownHeading = MD_HEADING.exec(trimmed);
+    if (markdownHeading) { flushAll(); heading(markdownHeading[1].length <= 2 ? 2 : 3, markdownHeading[2]); continue; }
+    if (trimmed.startsWith(">")) { flushAll(); out.push(`<blockquote><p>${inlineMarkdown(trimmed.replace(/^>\s?/, ""))}</p></blockquote>`); sectionStart = false; continue; }
+    const subheading = SUBHEADING_MARK.exec(trimmed);
+    if (subheading && looksLikeUpperTitle(subheading[1].trim())) { flushAll(); heading(3, subheading[1].trim()); continue; }
     const bullet = BULLET.exec(line);
     if (bullet) {
       flushParagraph();
@@ -160,19 +244,72 @@ export function textToBilanHtml(text: string): string {
     if (list && /^\s{2,}\S/.test(line) && list.items.length) { list.items[list.items.length - 1] += ` ${trimmed}`; continue; }
     flushList();
     const next = lines[index + 1]?.trim() ?? "";
-    if (looksLikeUpperTitle(trimmed) && paragraph.length === 0) { out.push(`<h2>${inlineMarkdown(trimmed)}</h2>`); continue; }
-    if (/:$/.test(trimmed) && trimmed.length <= 70 && paragraph.length === 0 && next) { out.push(`<h3>${inlineMarkdown(trimmed.replace(/\s*:$/, ""))}</h3>`); continue; }
+    if (looksLikeUpperTitle(trimmed) && paragraph.length === 0) { heading(sectionStart ? 2 : 3, trimmed); continue; }
+    if (/:$/.test(trimmed) && trimmed.length <= 70 && paragraph.length === 0 && next) { heading(3, trimmed.replace(/\s*:$/, "")); continue; }
     paragraph.push(trimmed);
   }
   flushAll();
   return out.join("");
 }
 
+export type BilanFraming = { body: string; subject: string | null; removedHeader: boolean; removedFooter: boolean };
+
+const normalizeLines = (text: string) => String(text ?? "").replace(/\r\n?/g, "\n").split("\n");
+const isBlank = (line: string) => !line.trim();
+
+/**
+ * Un bilan rédigé pour l'e-mail commence souvent par « Objet : … » puis un bloc de marque encadré par des traits, et finit par un bloc de
+ * coordonnées : le papier à en-tête les fournit déjà. Ils sont retirés (jamais le corps) ; l'objet est renvoyé à part.
+ */
+export function extractBilanFraming(text: string): BilanFraming {
+  let lines = normalizeLines(text);
+  let subject: string | null = null;
+  let removedHeader = false;
+  let removedFooter = false;
+
+  let first = lines.findIndex((line) => !isBlank(line));
+  if (first >= 0) {
+    const found = /^\s*(?:objet|subject)\s*:\s*(.+)$/i.exec(lines[first]);
+    if (found) {
+      const parts = [found[1].trim()];
+      let cursor = first + 1;
+      while (cursor < lines.length && /^\s{2,}\S/.test(lines[cursor])) { parts.push(lines[cursor].trim()); cursor += 1; }
+      subject = parts.join(" ").slice(0, 300);
+      lines = lines.slice(cursor);
+      first = lines.findIndex((line) => !isBlank(line));
+    }
+  }
+  if (first >= 0 && HEAVY_RULE.test(lines[first])) {
+    const close = lines.findIndex((line, position) => position > first && HEAVY_RULE.test(line));
+    if (close > first) {
+      const block = lines.slice(first + 1, close).filter((line) => !isBlank(line));
+      if (block.length > 0 && block.length <= 8 && block.some((line) => /3M\s+TRAVEL|votre mobilité|votre réussite/i.test(line))) {
+        lines = lines.slice(close + 1);
+        removedHeader = true;
+      }
+    }
+  }
+  const rules: number[] = [];
+  lines.forEach((line, position) => { if (HEAVY_RULE.test(line)) rules.push(position); });
+  if (rules.length >= 2) {
+    const last = rules[rules.length - 1];
+    const before = rules[rules.length - 2];
+    const trailing = lines.slice(last + 1).filter((line) => !isBlank(line));
+    const block = lines.slice(before + 1, last).filter((line) => !isBlank(line));
+    if (trailing.length === 0 && block.length > 0 && block.length <= 16 && block.some((line) => /@|\+\d{2,3}\s?\d|www\.|direction de la mobilité/i.test(line))) {
+      lines = lines.slice(0, before);
+      removedFooter = true;
+    }
+  }
+  return { body: lines.join("\n").trim(), subject, removedHeader, removedFooter };
+}
+
 /** Point d'entrée unique : ce que l'administrateur a collé (HTML, texte, Markdown) → HTML propre. */
 export function toBilanHtml(input: string): string {
   const raw = String(input ?? "");
   if (!raw.trim()) return "";
-  const html = sanitizeBilanHtml(isHtmlLike(raw) ? raw : textToBilanHtml(raw));
+  // Texte brut ou Markdown : l'objet d'e-mail, le bloc de marque et le bloc de coordonnées du modèle sont retirés (le papier à en-tête les fournit).
+  const html = sanitizeBilanHtml(isHtmlLike(raw) ? raw : textToBilanHtml(extractBilanFraming(raw).body));
   return /<(?:p|ul|ol|h[2-4]|table|blockquote)\b/.test(html) ? html : html ? `<p>${html}</p>` : "";
 }
 
@@ -193,7 +330,10 @@ export function bilanPlainText(html: string): string {
     .trim();
 }
 
-export type BilanInspection = { characters: number; words: number; headings: number; forbiddenTerms: string[]; sensitiveData: string[]; empty: boolean };
+export type BilanInspection = { characters: number; words: number; headings: number; forbiddenTerms: string[]; sensitiveData: string[]; placeholders: string[]; empty: boolean };
+
+/** Zones à compléter laissées dans le texte : « [À CONFIRMER] », « [À COMPLÉTER] », « [...] », « {{…}} », « XXX ». Le bilan ne doit pas partir avec. */
+const PLACEHOLDER = /\[\s*(?:à|a)\s+(?:confirmer|compléter|completer|préciser|preciser|renseigner)[^\]]{0,40}\]|\[\s*(?:\.{3}|…|xx+)\s*\]|\{\{[^}]{1,60}\}\}|\bX{3,}\b/gi;
 
 /** Contrôle avant envoi : formulations promettant un résultat (« visa garanti »…) et données sensibles (passeport, IBAN, carte). Jamais supprimées en silence. */
 export function inspectBilan(html: string): BilanInspection {
@@ -201,9 +341,10 @@ export function inspectBilan(html: string): BilanInspection {
   return {
     characters: text.length,
     words: text ? text.split(/\s+/).length : 0,
-    headings: (html.match(/<h[2-4]>/g) ?? []).length,
+    headings: (html.match(/<h[2-4][ >]/g) ?? []).length,
     forbiddenTerms: findForbiddenTerms(text),
     sensitiveData: findSensitiveValues(text),
+    placeholders: Array.from(new Set(text.match(PLACEHOLDER) ?? [])).slice(0, 8),
     empty: text.length < 20,
   };
 }
@@ -224,9 +365,38 @@ const STYLE = {
   a: "color:#2b6cb8;text-decoration:underline",
 } as const;
 
-/** Ajoute les styles en ligne (seule mise en forme que les messageries conservent) à un HTML déjà nettoyé. */
+/** Variantes de tableau : seuls l'en-tête et les lignes changent, le reste du style est commun. */
+const TABLE_DESIGN_STYLE: Record<BilanTableDesign, { th: string; td: string }> = {
+  classic: { th: STYLE.th, td: STYLE.td },
+  soft: {
+    th: "background:#eaf2fa;color:#17375e;padding:9px 11px;border:1px solid #d5e3ee;text-align:left;vertical-align:top",
+    td: STYLE.td,
+  },
+  plain: {
+    th: "padding:8px 10px;border:0;border-bottom:2px solid #17375e;text-align:left;vertical-align:top;color:#17375e",
+    td: "padding:8px 10px;border:0;border-bottom:1px solid #e2e8f0;vertical-align:top;color:#1f2937",
+  },
+};
+
+/**
+ * Ajoute les styles en ligne (seule mise en forme que les messageries conservent) à un HTML déjà nettoyé.
+ * Les noms de la palette (couleur, surlignage, taille, alignement, encadré, style de tableau) sont convertis en styles ; le reste est inchangé.
+ */
 export function styleBilanHtml(html: string): string {
-  return html.replace(/<(h2|h3|h4|p|ul|ol|li|blockquote|hr|table|th|td|a)(\s[^>]*)?>/g, (_match, tag: keyof typeof STYLE, attributes: string | undefined) => `<${tag}${attributes ?? ""} style="${STYLE[tag]}">`);
+  const designs: BilanTableDesign[] = [];
+  return html.replace(/<(\/)?(h2|h3|h4|p|ul|ol|li|blockquote|hr|table|th|td|a|span)(\s[^>]*)?>/g, (match, closing: string | undefined, tag: string, attributes: string | undefined) => {
+    if (closing) {
+      if (tag === "table") designs.pop();
+      return match;
+    }
+    const attrs = attributes ?? "";
+    if (tag === "table") designs.push(tableDesignFromAttributes(attrs) ?? "classic");
+    const design = designs[designs.length - 1] ?? "classic";
+    const base = tag === "span" ? "" : tag === "th" ? TABLE_DESIGN_STYLE[design].th : tag === "td" ? TABLE_DESIGN_STYLE[design].td : STYLE[tag as keyof typeof STYLE];
+    const extra = inlineStyleFromDesign(tag, attrs);
+    const style = [base, extra].filter(Boolean).join(";");
+    return style ? `<${tag}${attrs} style="${style}">` : match;
+  });
 }
 
 export type BilanDocumentInput = {

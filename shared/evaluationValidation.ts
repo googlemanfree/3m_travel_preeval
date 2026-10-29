@@ -263,12 +263,14 @@ export const FORBIDDEN_TERMS: ReadonlyArray<{ label: string; pattern: RegExp }> 
 const BOILERPLATES = [LEGAL_DISCLAIMER, EMAIL_DISCLAIMER].map(fold);
 // « aucune garantie », « sans garantie de résultat », « ne constitue pas une garantie » : négations légitimes
 const NEGATED_GUARANTEE = /\b(?:aucune|nulle|sans|pas\s+(?:une|de|d'|la)|ne\s+constitue\s+pas\s+une|n'est\s+pas\s+une)\s+garantie\w*/g;
+// « ne garantit pas / ni », « ne peut garantir », « n'est garantie », « n'est pas garanti » : la négation porte sur la garantie elle-même.
+const NEGATED_GUARANTEE_VERB = /\b(?:ne|n')\s*(?:[a-z']+\s+){0,2}garanti\w*/g;
 
 /** Termes interdits présents dans un texte destiné au candidat (avertissements légaux exemptés). */
 export function findForbiddenTerms(text: string): string[] {
   let folded = fold(text);
   for (const boilerplate of BOILERPLATES) folded = folded.split(boilerplate).join(" ");
-  folded = folded.replace(NEGATED_GUARANTEE, " ");
+  folded = folded.replace(NEGATED_GUARANTEE, " ").replace(NEGATED_GUARANTEE_VERB, " ");
   return FORBIDDEN_TERMS.filter((term) => term.pattern.test(folded)).map((term) => term.label);
 }
 

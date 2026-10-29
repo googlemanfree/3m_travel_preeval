@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Download, FileText } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { FileText } from "lucide-react";
+import { BilanDocumentActions } from "@/components/BilanDocumentActions";
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { clientSpacePolling } from "@/lib/clientSpaceSync";
@@ -41,11 +41,7 @@ export function SentBilanViewer({ enabled = true }: { enabled?: boolean }) {
             </p>
           </div>
         </div>
-        {bilan.pdfUrl && (
-          <Button asChild variant="outline" className="border-emerald-300 text-emerald-900">
-            <a href={bilan.pdfUrl} target="_blank" rel="noopener noreferrer"><Download className="mr-2 h-4 w-4" aria-hidden="true" />Télécharger en PDF</a>
-          </Button>
-        )}
+        <BilanDocumentActions getDocumentHtml={() => bilan.html} title={bilan.subject ?? "Mon bilan d’évaluation"} reference={bilan.dossierNumber} pdfUrl={bilan.pdfUrl} />
       </div>
       <iframe
         ref={frameRef}

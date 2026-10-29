@@ -931,6 +931,8 @@ initializeEvaluationDelivery: publicProcedure
         if (inspection.empty) throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan est vide ou trop court pour être validé." });
         if (inspection.forbiddenTerms.length > 0) throw new TRPCError({ code: "BAD_REQUEST", message: `Formulation à revoir avant validation (promesse de résultat) : ${inspection.forbiddenTerms.join(", ")}.` });
         if (inspection.sensitiveData.length > 0) throw new TRPCError({ code: "BAD_REQUEST", message: `Donnée sensible à retirer avant validation : ${inspection.sensitiveData.join(", ")}.` });
+        // Un montant ou un champ laissé « [À CONFIRMER] » ne doit jamais partir chez le candidat.
+        if (inspection.placeholders.length > 0) throw new TRPCError({ code: "BAD_REQUEST", message: `Zone à compléter restante dans le bilan : ${inspection.placeholders.join(", ")}. Renseignez-la avant validation.` });
       } else if (verdict.length < 3) throw new TRPCError({ code: "BAD_REQUEST", message: "Saisissez au moins trois caractères dans le bilan avant validation." });
       const now = new Date();
       const finalDossierNumber = await issueFinalDossierNumber(db, application);
