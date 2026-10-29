@@ -55,6 +55,7 @@ import { ClientProgramPlan } from "@/components/ClientProgramPlan";
 import CandidateEvaluationStatus from "@/components/CandidateEvaluationStatus";
 import { SignableDocumentsPanel } from "@/components/SignableDocumentsPanel";
 import { ClientOpportunities } from "@/components/ClientOpportunities";
+import { ClientRemoteSupport } from "@/components/ClientRemoteSupport";
 import NextStepCard from "@/components/NextStepCard";
 import DossierPaymentCard from "@/components/DossierPaymentCard";
 import ClientPaymentStatusTable from "@/components/ClientPaymentStatusTable";
@@ -1131,6 +1132,7 @@ export default function EvaluationSpace() {
                   <CandidateEvaluationStatus evaluationId={structuredEvaluation.evaluationId} view={structuredEvaluation.view} onChanged={() => { void structuredEvaluationQuery.refetch(); }} />
                 </div>
               )}
+              <ClientRemoteSupport enabled={isAuthenticated} />
               <SentBilanViewer enabled={isAuthenticated} />
               <ClientOpportunities destination={primaryDestination} projectType={latestEvaluation?.projectType} visaType={latestEvaluation?.visaType ?? activeDossier?.visaType ?? activeAgencyDossier?.visaType} />
               {agreementAfterPaymentRequired && (

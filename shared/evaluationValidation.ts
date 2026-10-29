@@ -262,7 +262,7 @@ export const FORBIDDEN_TERMS: ReadonlyArray<{ label: string; pattern: RegExp }> 
 
 const BOILERPLATES = [LEGAL_DISCLAIMER, EMAIL_DISCLAIMER].map(fold);
 // « aucune garantie », « sans garantie de résultat », « ne constitue pas une garantie » : négations légitimes
-const NEGATED_GUARANTEE = /\b(?:aucune|nulle|sans|pas\s+(?:une|de|d'|la)|ne\s+constitue\s+pas\s+une|n'est\s+pas\s+une)\s+garantie\w*/g;
+const NEGATED_GUARANTEE = /\b(?:aucune|nulle|sans|(?:pas|ni)\s+(?:une|de|d'|la)|ne\s+constitue\s+pas\s+une|n'est\s+pas\s+une)\s+garantie\w*/g;
 // « ne garantit pas / ni », « ne peut garantir », « n'est garantie », « n'est pas garanti » : la négation porte sur la garantie elle-même.
 const NEGATED_GUARANTEE_VERB = /\b(?:ne|n')\s*(?:[a-z']+\s+){0,2}garanti\w*/g;
 
