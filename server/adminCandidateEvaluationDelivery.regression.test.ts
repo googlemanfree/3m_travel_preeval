@@ -30,7 +30,7 @@ describe("remise validée d’évaluation pré-dossier", () => {
     expect(router).toContain("initializeEvaluationDelivery");
     expect(router).toContain("candidate_pre_dossier");
     expect(editor).toContain('sourceType?: "application" | "candidate"');
-    expect(editor).toContain("Initialisation sécurisée du dossier d’évaluation");
+    expect(editor).toContain("Chargement du dossier…");
     expect(dashboard).toContain("sourceType={evaluationEditorSourceType}");
     expect(router).toContain("applications.dossierNumber est limité à 20 caractères");
     expect(router).toContain("randomInt(1000, 10000)");
@@ -42,9 +42,9 @@ describe("remise validée d’évaluation pré-dossier", () => {
     expect(editor).toContain("bootstrapPlatformSession.useQuery");
     expect(editor).toContain("providedSessionToken || restoredPlatformToken");
     expect(editor).toContain('localStorage.setItem("adminSessionToken", restoredPlatformToken)');
-    expect(editor).toContain("candidateBootstrapApplicationId");
-    expect(editor).toContain("effectiveSourceRecordId");
-    expect(editor).toContain("sourceRecordId: effectiveSourceRecordId");
+    expect(editor).toContain("setApplicationId");
+    expect(editor).toContain("const recordId = ");
+    expect(editor).toContain("sourceRecordId: recordId");
   });
 
   it("stabilise la recherche des pré-dossiers avant d’appeler tRPC", () => {

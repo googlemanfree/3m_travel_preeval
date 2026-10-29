@@ -21,10 +21,10 @@ describe("client communication and report previews", () => {
     expect(service).toContain("3M Travel Agency SARL");
   });
 
-  it("keeps email and PDF previews available before final send", () => {
+  it("shows a live preview of the bilan before final send", () => {
     const editor = readProjectFile("client/src/components/EvaluationDeliveryEditor.tsx");
-    expect(editor).toContain("Aperçu exact de l’e-mail d’évaluation");
-    expect(editor).toContain("PDFPreviewModal");
-    expect(editor).toContain("Valider et envoyer");
+    expect(editor).toContain("Aperçu en direct — ce que le candidat recevra");
+    expect(editor).toContain("renderBilanStandalone");
+    expect(editor).toContain("Envoyer (espace client + e-mail)");
   });
 });

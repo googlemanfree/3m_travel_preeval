@@ -17,9 +17,9 @@ describe("evaluation required flow", () => {
 
   it("keeps the admin editor manual and removes visible AI generation controls", () => {
     const editor = read("client/src/components/EvaluationDeliveryEditor.tsx");
-    expect(editor).toContain("Espace de saisie complet selon le type de visa du candidat");
-    expect(editor).toContain("Valider et envoyer (espace + e-mail)");
-    expect(editor).toContain("Ouvrir WhatsApp avec le bilan");
+    expect(editor).toContain("Saisissez le bilan, relisez l'aperçu, validez puis envoyez.");
+    expect(editor).toContain("Envoyer (espace client + e-mail)");
+    expect(editor).not.toContain("Ouvrir WhatsApp avec le bilan");
     expect(editor).not.toContain("Générer un brouillon IA");
     expect(editor).not.toContain("Assistant IA — éléments à contrôler");
   });

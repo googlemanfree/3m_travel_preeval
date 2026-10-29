@@ -19,8 +19,8 @@ describe("rattachement bilan agence multi-cas", () => {
     expect(agencyRouter).toContain("validateEvaluation: protectedProcedure");
     expect(agencyRouter).toContain("evaluationValidatedAt");
     expect(agencyRouter).toContain("evaluation_validated");
-    expect(editor).toContain("Rédigez le bilan, prévisualisez-le, puis envoyez-le en un clic");
-    expect(editor).toContain("Valider et envoyer");
+    expect(editor).toContain("Saisissez le bilan, relisez l'aperçu, validez puis envoyez.");
+    expect(editor).toContain("Envoyer (espace client + e-mail)");
   });
 
   it("privilégie le candidateId avant le fallback e-mail/nom dans Candidate360", () => {

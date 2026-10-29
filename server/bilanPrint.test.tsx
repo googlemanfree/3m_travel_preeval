@@ -57,10 +57,10 @@ describe("bilan imprimable et téléchargeable", () => {
     expect(screen.queryByTestId("bilan-pdf")).toBeNull();
   });
 
-  it("l'espace candidat et l'éditeur de l'administration utilisent les mêmes boutons", () => {
+  it("l'espace candidat garde ses boutons et l'éditeur de l'administration montre le même rendu du bilan", () => {
     expect(read("client/src/components/SentBilanViewer.tsx")).toContain("<BilanDocumentActions");
     expect(read("client/src/components/BilanPasteEditor.tsx")).toContain("<BilanDocumentActions");
-    expect(read("client/src/components/EvaluationDeliveryEditor.tsx")).toContain("documentMeta={{");
+    expect(read("client/src/components/EvaluationDeliveryEditor.tsx")).toContain("renderBilanStandalone");
   });
 });
 

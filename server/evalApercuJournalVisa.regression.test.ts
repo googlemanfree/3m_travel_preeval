@@ -17,14 +17,14 @@ describe("aperçu obligatoire + journal visa à l’envoi", () => {
     expect(router).toContain("journalVisaLabel");
   });
 
-  it("bloque l’envoi UI tant que l’aperçu n’est pas contrôlé", () => {
+  it("affiche l’aperçu en direct et demande confirmation avant l’envoi", () => {
     const editor = read("client/src/components/EvaluationDeliveryEditor.tsx");
-    expect(editor).toContain("bilan-preview-gate");
-    expect(editor).toContain("J’ai contrôlé l’aperçu du bilan avant envoi");
+    expect(editor).toContain("bilan-live-preview");
+    expect(editor).toContain("Aperçu en direct — ce que le candidat recevra");
     expect(editor).toContain("previewConfirmed: true");
-    expect(editor).toContain("Valider et envoyer (cochez le contrôle d’aperçu)");
-    expect(editor).toContain("evaluation-send-journal");
-    expect(editor).toContain("Type de visa journalisé");
+    expect(editor).toContain("window.confirm(");
+    expect(editor).toContain("bilan-validate-send");
+    expect(editor).toContain("const validateNow = ");
   });
 
   it("expose le visaType dans l’historique e-mails du cockpit 360", () => {

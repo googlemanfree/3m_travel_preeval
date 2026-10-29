@@ -156,7 +156,7 @@ describe("outils d'administration : serveur", () => {
     expect(read("server/routers.ts")).toContain("adminOps: adminOpsRouter");
     expect(read("client/src/pages/AdminDashboard.tsx")).toContain("<AdminOps sessionToken={sessionToken} />");
     expect(read("client/src/components/ClientRemoteSupport.tsx")).toContain("<PaymentPlanCard enabled={enabled} />");
-    expect(read("client/src/components/EvaluationDeliveryEditor.tsx")).toContain("<BilanTemplatesPanel");
+    expect(read("client/src/components/EvaluationDeliveryEditor.tsx")).toContain("bilan-validate-send");
   });
 });
 

@@ -77,6 +77,8 @@ const evaluationDraftSchema = z.object({
   message: z.string().trim().max(60000).optional(),
   /** Bilan complet collé par l'administrateur (HTML, texte, Markdown…) : nettoyé et mis en forme côté serveur. */
   bilanHtml: z.string().max(400_000).optional(),
+  /** Texte tel que saisi dans l'éditeur simple : renvoyé tel quel à la réouverture (le HTML est dérivé, pas rééditable sans perte). */
+  bilanSource: z.string().max(400_000).optional(),
   subject: z.string().trim().min(4).max(255).optional(),
   requiresSecondApproval: z.boolean().default(false),
   language: z.enum(["fr", "en"]).default("fr"),
@@ -774,6 +776,7 @@ initializeEvaluationDelivery: publicProcedure
           verdict: String(adminDraft.verdict ?? ""),
           profileSummary: String(adminDraft.profileSummary ?? ""),
           bilanHtml: typeof adminDraft.bilanHtml === "string" ? adminDraft.bilanHtml : "",
+          bilanSource: typeof adminDraft.bilanSource === "string" ? adminDraft.bilanSource : "",
           strengths: Array.isArray(adminDraft.strengths) ? adminDraft.strengths.map(String) : [],
           weaknesses: Array.isArray(adminDraft.weaknesses) ? adminDraft.weaknesses.map(String) : [],
           recommendations: Array.isArray(adminDraft.recommendations) ? adminDraft.recommendations.map(String) : [],
@@ -895,7 +898,7 @@ initializeEvaluationDelivery: publicProcedure
       const previousDraft = (details.adminDraft && typeof details.adminDraft === "object" ? details.adminDraft : {}) as Record<string, unknown>;
       const pastedBilanHtml = typeof input.bilanHtml === "string" ? toBilanHtml(input.bilanHtml) : undefined;
       if (pastedBilanHtml && inspectBilan(pastedBilanHtml).empty) throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan collé est vide ou trop court : collez le texte complet du bilan." });
-      const nextDraft = { ...previousDraft, ...(pastedBilanHtml !== undefined ? { bilanHtml: pastedBilanHtml || undefined, bilanMode: pastedBilanHtml ? "libre" : "structure" } : {}), destination: input.destination, finalScore: input.finalScore, verdict: input.verdict, strengths: input.strengths, weaknesses: input.weaknesses, recommendations: input.recommendations, language: input.language, advisorValidated: false, advisorValidatedAt: null, advisorValidatedByAdminId: null };
+      const nextDraft = { ...previousDraft, ...(pastedBilanHtml !== undefined ? { bilanHtml: pastedBilanHtml || undefined, bilanSource: pastedBilanHtml && typeof input.bilanSource === "string" ? input.bilanSource : undefined, bilanMode: pastedBilanHtml ? "libre" : "structure" } : {}), destination: input.destination, finalScore: input.finalScore, verdict: input.verdict, strengths: input.strengths, weaknesses: input.weaknesses, recommendations: input.recommendations, language: input.language, advisorValidated: false, advisorValidatedAt: null, advisorValidatedByAdminId: null };
       const nextDetails = { ...details, adminDraft: nextDraft };
       const messageHtml = input.message ? normalizeAdminMessage(input.message) : null;
       const messagePlainText = messageHtml ? richTextToPlainText(messageHtml) : "";

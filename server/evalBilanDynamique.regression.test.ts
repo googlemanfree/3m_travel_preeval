@@ -21,13 +21,13 @@ describe("bilan d’évaluation dynamique + envoi unique", () => {
 
   it("adapte l’éditeur admin au kind et propose un bouton unique espace + e-mail", () => {
     const editor = read("client/src/components/EvaluationDeliveryEditor.tsx");
-    expect(editor).toContain("bilanStructuresForKind");
-    expect(editor).toContain("messageTemplatesForKind");
+    expect(editor).toContain("resolveBilanProjectKind");
+    expect(editor).toContain("projectLabel");
     expect(editor).toContain("EVALUATION_KIND_LABELS");
-    expect(editor).toContain("evaluation-project-kind");
-    expect(editor).toContain("Valider et envoyer (espace + e-mail)");
+    expect(editor).toContain("bilan-actions");
+    expect(editor).toContain("Envoyer (espace client + e-mail)");
     expect(editor).toContain("Bilan envoyé (espace client + e-mail)");
-    expect(editor).toContain("Champ de saisie complet");
+    expect(editor).toContain("Aperçu en direct");
   });
 
   it("résout les modèles de réponse via resolveEvaluationProjectKind (pas un match exact)", () => {

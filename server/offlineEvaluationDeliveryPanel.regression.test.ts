@@ -12,8 +12,8 @@ describe("offline evaluation delivery panel", () => {
 
   it("renders the offline state and disables preparation actions", () => {
     const component = readFileSync(resolve(process.cwd(), "client/src/components/EvaluationDeliveryEditor.tsx"), "utf8");
-    expect(component).toContain("offlineEvaluationValidated");
-    expect(component).toContain("Évaluation déjà validée hors ligne");
-    expect(component).toContain("disabled={offlineEvaluationValidated ||");
+    expect(component).toContain("offlineValidated");
+    expect(component).toContain("validée hors ligne");
+    expect(component).toContain("disabled={locked || busy");
   });
 });
