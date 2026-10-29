@@ -13,6 +13,7 @@ import { PDFPreviewModal } from "@/components/PDFPreviewModal";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { BilanPasteEditor } from "@/components/BilanPasteEditor";
 import { inspectBilan } from "@shared/bilanContent";
+import { bilanVariablesFrom } from "@shared/bilanVariables";
 import {
   bilanStructuresForKind,
   EVALUATION_KIND_LABELS,
@@ -550,7 +551,7 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
           <div className="rounded-lg border border-violet-200 bg-violet-50/70 p-3 text-xs text-violet-950"><strong className="mr-2">Zone préparée par l’assistance IA</strong><span>Les valeurs proposées ci-dessous restent modifiables et doivent être relues par un conseiller.</span></div>
           <div className="rounded-xl border-2 border-emerald-300 bg-white p-4 shadow-sm" data-testid="bilan-complet-zone">
             <div className="mb-2 rounded-md bg-emerald-50 p-2 text-xs text-emerald-950"><strong>Copier-coller un bilan déjà saisi ailleurs.</strong> Word, Google Docs, e-mail, ChatGPT, page web, texte, Markdown ou code HTML : la mise en forme est nettoyée et reprise à l’identique dans l’espace candidat, le PDF et l’e-mail. Vous le relisez dans l’aperçu à droite, puis un seul clic le valide et l’envoie.</div>
-            <BilanPasteEditor value={bilanHtml} onChange={setBilanHtml} disabled={offlineEvaluationValidated} label={`Bilan complet — ${projectKindLabel}`} documentMeta={{ title: `Évaluation professionnelle — ${projectKindLabel}`, candidateName: data.application.fullName, reference: data.application.dossierNumber && !data.application.dossierNumber.startsWith("EVAL-DRAFT-") ? data.application.dossierNumber : null, projectLabel: projectKindLabel, destination: data.application.destination ?? null, score: Number(score) > 0 ? Number(score) : null }} />
+            <BilanPasteEditor value={bilanHtml} onChange={setBilanHtml} disabled={offlineEvaluationValidated} label={`Bilan complet — ${projectKindLabel}`} variables={bilanVariablesFrom({ fullName: data.application.fullName, dossierNumber: data.application.dossierNumber, destination: data.application.destination ?? null, visaLabel: projectKindLabel, paymentAmount: (data.application as { paymentAmount?: number | null }).paymentAmount ?? null, score: Number(score) > 0 ? Number(score) : null })} documentMeta={{ title: `Évaluation professionnelle — ${projectKindLabel}`, candidateName: data.application.fullName, reference: data.application.dossierNumber && !data.application.dossierNumber.startsWith("EVAL-DRAFT-") ? data.application.dossierNumber : null, projectLabel: projectKindLabel, destination: data.application.destination ?? null, score: Number(score) > 0 ? Number(score) : null }} />
             {hasFreeBilan && <Button type="button" variant="link" size="sm" className="mt-1 h-auto px-0 text-xs" onClick={() => setStructureOpen((open) => !open)}>{structureOpen ? "Masquer la structure facultative (verdict, points forts…)" : "Afficher la structure facultative (score, verdict, points forts, recommandations)"}</Button>}
           </div>
           {showStructure && <>

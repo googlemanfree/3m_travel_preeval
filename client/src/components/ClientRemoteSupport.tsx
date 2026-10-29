@@ -150,7 +150,34 @@ export function ClientRemoteSupport({ enabled = true }: { enabled?: boolean }) {
           ))}
           {days.length > 0 && <p className="text-xs text-slate-500">Heures affichées à l'heure du Cameroun (Douala). Deux rendez-vous à venir au maximum.</p>}
         </section>
+        <SatisfactionCard enabled={enabled} />
       </div>
     </Card>
+  );
+}
+
+const SCORES = Array.from({ length: 11 }, (_, index) => index);
+
+/** Une question courte après un rendez-vous ou l'ouverture du dossier : usage interne, jamais publié comme témoignage. */
+function SatisfactionCard({ enabled }: { enabled: boolean }) {
+  const utils = trpc.useUtils();
+  const prompt = trpc.adminInsights.mySatisfactionPrompt.useQuery(undefined, { enabled, retry: false });
+  const [score, setScore] = useState<number | null>(null);
+  const [comment, setComment] = useState("");
+  const answer = trpc.adminInsights.answerSatisfaction.useMutation({ onSuccess: () => { toast.success("Merci pour votre avis"); setScore(null); setComment(""); void utils.adminInsights.mySatisfactionPrompt.invalidate(); }, onError: (error) => toast.error(error.message) });
+  const data = prompt.data;
+  if (!data) return null;
+  return (
+    <section className="rounded-xl border border-slate-200 bg-slate-50 p-4" data-testid="client-satisfaction" aria-label="Votre avis">
+      <h3 className="text-base font-bold text-slate-900">Votre avis nous aide : {data.label}</h3>
+      <p className="mt-1 text-sm text-slate-600">Sur 10, recommanderiez-vous 3M Travel Agency à un proche ? Votre réponse reste interne.</p>
+      <div className="mt-3 flex flex-wrap gap-1.5" role="radiogroup" aria-label="Note sur 10">
+        {SCORES.map((value) => (
+          <button key={value} type="button" role="radio" aria-checked={score === value} onClick={() => setScore(value)} className={`h-11 w-11 rounded-lg border text-sm font-bold ${score === value ? "border-blue-700 bg-blue-700 text-white" : "border-slate-300 bg-white text-slate-800"}`}>{value}</button>
+        ))}
+      </div>
+      <Textarea className="mt-3 min-h-16" value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Un commentaire ? (facultatif)" aria-label="Commentaire" maxLength={500} />
+      <Button type="button" className="mt-3 min-h-11" disabled={score === null || answer.isPending} onClick={() => score !== null && answer.mutate({ milestone: data.milestone, score, comment: comment.trim() || null })} data-testid="satisfaction-send">Envoyer</Button>
+    </section>
   );
 }

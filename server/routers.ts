@@ -96,6 +96,7 @@ import { studyCatalogRouter } from "./routers/studyCatalog";
 import { stayProgramsRouter } from "./routers/stayPrograms";
 import { activationSafetyRouter } from "./routers/activationSafety";
 import { remoteSupportRouter } from "./routers/remoteSupport";
+import { adminInsightsRouter } from "./routers/adminInsights";
 import { opportunitiesInboxRouter } from "./routers/opportunitiesInbox";
 import { employerOffersRouter } from "./routers/employerOffers";
 import { jobOffersRouter } from "./routers/jobOffers";
@@ -233,6 +234,7 @@ export const appRouter = router({
   stayPrograms: stayProgramsRouter,
   activationSafety: activationSafetyRouter,
   remoteSupport: remoteSupportRouter,
+  adminInsights: adminInsightsRouter,
   opportunitiesInbox: opportunitiesInboxRouter,
   employerOffers: employerOffersRouter,
   jobOffers: jobOffersRouter,

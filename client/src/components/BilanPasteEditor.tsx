@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, CheckCircle2, Code2, Eraser, FileUp, Heading2, Heading3, Highlighter, Italic, Link2, List, ListOrdered, Minus, Palette, Quote, Redo2, Strikethrough, Table2, Trash2, Type, Underline, Undo2 } from "lucide-react";
+import { AlertTriangle, AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, Braces, Calculator, CheckCircle2, Code2, Eraser, FileUp, Heading2, Heading3, Highlighter, Italic, Link2, List, ListOrdered, Minus, Palette, Quote, Redo2, Strikethrough, Table2, Trash2, Type, Underline, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { BILAN_MAX_HTML_LENGTH, bilanPlainText, inspectBilan, renderBilanStandalone, sanitizeBilanHtml, styleBilanHtml, toBilanHtml } from "@shared/bilanContent";
 import { BILAN_CALLOUTS, BILAN_HIGHLIGHTS, BILAN_HIGHLIGHT_LABELS, BILAN_SIZE_LABELS, BILAN_TABLE_DESIGNS, BILAN_TABLE_DESIGN_LABELS, BILAN_TEXT_COLORS, BILAN_TEXT_COLOR_LABELS } from "@shared/bilanDesign";
 import { BilanDocumentActions } from "@/components/BilanDocumentActions";
+import { BILAN_VARIABLE_LABELS, BILAN_VARIABLE_NAMES, STANDARD_SCORE_CRITERIA, buildScoreText, resolveBilanVariables, scoreTotals, type BilanVariableValues, type ScoreRow } from "@shared/bilanVariables";
 import { toast } from "sonner";
 
 type Props = {
@@ -16,23 +17,27 @@ type Props = {
   label?: string;
   minHeight?: string;
   /** Identité du bilan pour l'impression, le téléchargement et la copie sur papier à en-tête. */
+  /** Valeurs du dossier pour {{montant}}, {{nom}}… : remplacées à l'aperçu, à la validation, à l'envoi et à l'impression. */
+  variables?: BilanVariableValues;
   documentMeta?: { title: string; candidateName: string; reference?: string | null; projectLabel?: string | null; destination?: string | null; score?: number | null };
 };
 
-type Panel = "color" | "highlight" | "size" | "callout" | "table" | null;
+type Panel = "color" | "highlight" | "size" | "callout" | "table" | "vars" | "scores" | null;
 
 /**
  * Zone de saisie du bilan complet : on y COLLE un bilan déjà rédigé ailleurs (Word, Google Docs, page web, ChatGPT, e-mail, texte brut, Markdown, code HTML)
  * et il est converti en une mise en forme propre — la même que verra le candidat, dans son espace comme par e-mail. Aucune limite de longueur imposée.
  */
-export function BilanPasteEditor({ value, onChange, disabled = false, label = "Bilan complet", minHeight = "22rem", documentMeta }: Props) {
+export function BilanPasteEditor({ value, onChange, disabled = false, label = "Bilan complet", minHeight = "22rem", documentMeta, variables }: Props) {
   const editorRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [focused, setFocused] = useState(false);
   const [mode, setMode] = useState<"visuel" | "source">("visuel");
   const [panel, setPanel] = useState<Panel>(null);
   const [source, setSource] = useState(value);
-  const inspection = useMemo(() => inspectBilan(value), [value]);
+  const variablesKey = JSON.stringify(variables ?? {});
+  const inspection = useMemo(() => inspectBilan(resolveBilanVariables(value, variables ?? {})), [value, variablesKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [scoreRows, setScoreRows] = useState<ScoreRow[]>(() => STANDARD_SCORE_CRITERIA.map((criterion) => ({ label: criterion.label, score: 0, max: criterion.max })));
   const styled = useMemo(() => styleBilanHtml(value), [value]);
 
   useEffect(() => {
@@ -123,12 +128,27 @@ export function BilanPasteEditor({ value, onChange, disabled = false, label = "B
     restyle();
     setPanel(null);
   };
+  const insertText = (text: string) => {
+    editorRef.current?.focus();
+    document.execCommand("insertText", false, text);
+    emit();
+    setPanel(null);
+  };
+  const insertScores = () => {
+    const html = toBilanHtml(buildScoreText(scoreRows));
+    if (!html) { toast.error("Renseignez au moins un critère."); return; }
+    editorRef.current?.focus();
+    document.execCommand("insertHTML", false, styleBilanHtml(html));
+    emit();
+    setPanel(null);
+    toast.success("Tableau de scores inséré : il se met en forme comme le modèle.");
+  };
   const Swatch = ({ label: title, color, onClick }: { label: string; color: string; onClick: () => void }) => (
     <button type="button" title={title} aria-label={title} onMouseDown={(event) => event.preventDefault()} onClick={onClick} className="h-7 w-7 rounded-full border border-slate-300 shadow-sm" style={{ background: color }} />
   );
   const documentHtml = () => {
     if (!documentMeta || !value.trim()) return "";
-    return renderBilanStandalone({ html: value, title: documentMeta.title, candidateName: documentMeta.candidateName, reference: documentMeta.reference, projectLabel: documentMeta.projectLabel, destination: documentMeta.destination, score: documentMeta.score });
+    return renderBilanStandalone({ html: resolveBilanVariables(value, variables ?? {}), title: documentMeta.title, candidateName: documentMeta.candidateName, reference: documentMeta.reference, projectLabel: documentMeta.projectLabel, destination: documentMeta.destination, score: documentMeta.score });
   };
 
   const Tool = ({ label: title, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) => (
@@ -174,6 +194,8 @@ export function BilanPasteEditor({ value, onChange, disabled = false, label = "B
             <Tool label="Taille du texte" onClick={() => setPanel(panel === "size" ? null : "size")}><Type className="h-4 w-4" /></Tool>
             <Tool label="Encadré (information, point fort, attention, alerte)" onClick={() => setPanel(panel === "callout" ? null : "callout")}><Quote className="h-4 w-4" /></Tool>
             <Tool label="Style du tableau" onClick={() => setPanel(panel === "table" ? null : "table")}><Table2 className="h-4 w-4" /><span className="ml-0.5 text-[10px] font-bold">Style</span></Tool>
+            <Tool label="Variables du dossier ({{montant}}, {{nom}}…)" onClick={() => setPanel(panel === "vars" ? null : "vars")}><Braces className="h-4 w-4" /></Tool>
+            <Tool label="Générer un tableau de scores" onClick={() => setPanel(panel === "scores" ? null : "scores")}><Calculator className="h-4 w-4" /></Tool>
             <span className="mx-1 h-5 w-px bg-slate-300" aria-hidden="true" />
             <Tool label="Annuler" onClick={() => command("undo")}><Undo2 className="h-4 w-4" /></Tool>
             <Tool label="Rétablir" onClick={() => command("redo")}><Redo2 className="h-4 w-4" /></Tool>
@@ -204,6 +226,28 @@ export function BilanPasteEditor({ value, onChange, disabled = false, label = "B
                 <span className="text-xs font-semibold text-slate-600">Style du tableau (curseur dans le tableau)</span>
                 {BILAN_TABLE_DESIGNS.map((design) => <Button key={design} type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" onMouseDown={(event) => event.preventDefault()} onClick={() => setTableDesign(design)}>{BILAN_TABLE_DESIGN_LABELS[design]}</Button>)}
               </>)}
+              {panel === "vars" && (<>
+                <span className="text-xs font-semibold text-slate-600">Insérer une variable (remplacée par les données du dossier)</span>
+                {BILAN_VARIABLE_NAMES.map((name) => (
+                  <Button key={name} type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" title={`${BILAN_VARIABLE_LABELS[name]}${variables?.[name] ? ` : ${variables[name]}` : " : sans valeur pour ce dossier"}`} onMouseDown={(event) => event.preventDefault()} onClick={() => insertText(`{{${name}}}`)} data-testid={`bilan-var-${name}`}>{`{{${name}}}`}</Button>
+                ))}
+              </>)}
+              {panel === "scores" && (
+                <div className="w-full space-y-1.5" data-testid="bilan-score-builder">
+                  <p className="text-xs text-slate-600">Notez chaque critère : la note globale est calculée, puis le tableau est inséré au format du modèle.</p>
+                  {scoreRows.map((row, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <input aria-label={`Critère ${index + 1}`} className="h-8 min-w-0 flex-1 rounded-md border border-slate-300 px-2 text-sm" value={row.label} onChange={(event) => setScoreRows((rows) => rows.map((item, position) => (position === index ? { ...item, label: event.target.value } : item)))} />
+                      <input aria-label={`Note du critère ${index + 1}`} type="number" min={0} max={row.max} className="h-8 w-16 rounded-md border border-slate-300 px-2 text-sm" value={row.score} onChange={(event) => setScoreRows((rows) => rows.map((item, position) => (position === index ? { ...item, score: Number(event.target.value) } : item)))} />
+                      <span className="w-10 text-xs text-slate-500">/ {row.max}</span>
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-3">
+                    <strong className="text-sm text-slate-900" data-testid="bilan-score-total">Note globale : {scoreTotals(scoreRows).total} / {scoreTotals(scoreRows).max}</strong>
+                    <Button type="button" size="sm" onMouseDown={(event) => event.preventDefault()} onClick={insertScores} data-testid="bilan-score-insert">Insérer le tableau</Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           <div

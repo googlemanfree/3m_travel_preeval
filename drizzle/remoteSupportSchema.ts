@@ -51,3 +51,27 @@ export const remoteAcknowledgements = mysqlTable("remote_acknowledgements", {
   createdBy: varchar("created_by", { length: 160 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [index("idx_remote_ack_candidate").on(table.candidateId, table.status)]);
+
+/** Pilotage avancé (migration 0092) : demandes d'actions sensibles et satisfaction. */
+export const sensitiveActionRequests = mysqlTable("sensitive_action_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  action: mysqlEnum("action", ["deactivate"]).notNull().default("deactivate"),
+  candidateId: int("candidate_id").notNull(),
+  reason: varchar("reason", { length: 500 }).notNull(),
+  requestedByAdminId: int("requested_by_admin_id").notNull(),
+  requestedByLabel: varchar("requested_by_label", { length: 160 }).notNull(),
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).notNull().default("pending"),
+  decidedByLabel: varchar("decided_by_label", { length: 160 }),
+  decisionNote: varchar("decision_note", { length: 500 }),
+  decidedAt: timestamp("decided_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [index("idx_sensitive_requests_status").on(table.status, table.createdAt), index("idx_sensitive_requests_candidate").on(table.candidateId, table.status)]);
+
+export const satisfactionResponses = mysqlTable("satisfaction_responses", {
+  id: int("id").autoincrement().primaryKey(),
+  candidateId: int("candidate_id").notNull(),
+  milestone: varchar("milestone", { length: 40 }).notNull(),
+  score: tinyint("score").notNull(),
+  comment: varchar("comment", { length: 500 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [index("idx_satisfaction_created").on(table.createdAt)]);

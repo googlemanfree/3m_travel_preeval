@@ -1,13 +1,15 @@
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, inArray, isNull, like, or } from "drizzle-orm";
 import { z } from "zod";
-import { candidates } from "../../drizzle/schema";
+import { adminNotifications, candidates } from "../../drizzle/schema";
+import { sensitiveActionRequests } from "../../drizzle/remoteSupportSchema";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { deactivateCandidateDossier, hasDeactivationSnapshot, reactivateCandidateDossier, scanActivationsWithoutProof, ACTIVE_CANDIDATE_STATUSES } from "../services/deactivateDossier";
 import { getOpeningPaymentEvidence } from "../services/openingPaymentEvidence";
 import { recordPrivacyEvent } from "../services/privacyAudit";
-import { requireSuperAdminSession, requireValidAdminSession } from "./adminAuth";
+import { adminLabel } from "../services/partnerProfiles";
+import { isSuperAdminEmail, requireSuperAdminSession, requireValidAdminSession } from "./adminAuth";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
 
@@ -61,12 +63,60 @@ export const activationSafetyRouter = router({
   deactivate: publicProcedure.input(z.object({ sessionToken: session, candidateId: z.number().int().positive(), reason })).mutation(async ({ input }) => {
     const admin = await requireValidAdminSession(input.sessionToken);
     const db = await requireDb();
+    // Double validation : seul le super administrateur désactive directement ; un autre administrateur dépose une demande qu'il approuve.
+    if (!isSuperAdminEmail(admin.email)) {
+      const [target] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
+      if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
+      const [open] = await db.select({ id: sensitiveActionRequests.id }).from(sensitiveActionRequests).where(and(eq(sensitiveActionRequests.candidateId, target.id), eq(sensitiveActionRequests.status, "pending"))).limit(1);
+      if (!open) {
+        await db.insert(sensitiveActionRequests).values({ action: "deactivate", candidateId: target.id, reason: input.reason, requestedByAdminId: admin.id, requestedByLabel: adminLabel(admin) });
+        try {
+          await db.insert(adminNotifications).values({ type: "new_contact_message", title: "Désactivation de dossier à valider", message: `${adminLabel(admin)} — COMPTE-${String(target.id).padStart(5, "0")} : ${input.reason}`.slice(0, 1000), relatedId: `sensitive_request:${target.id}`, targetAdminType: "accompagnement" });
+        } catch {
+          // Notification manquée : la demande reste visible dans l'onglet.
+        }
+      }
+      await recordPrivacyEvent(db, { actorType: "admin", actorId: admin.id, actorLabel: adminLabel(admin), action: "dossier.deactivation_requested", resourceType: "candidate", resourceId: input.candidateId, details: input.reason.slice(0, 300) });
+      return { ok: true as const, pending: true as const, reference: `COMPTE-${String(target.id).padStart(5, "0")}` };
+    }
     const result = await deactivateCandidateDossier(db, { candidateId: input.candidateId, actorEmail: admin.email ?? `admin #${admin.id}`, reason: input.reason });
     if (result.ok === false) {
       throw new TRPCError({ code: result.reason === "introuvable" ? "NOT_FOUND" : "CONFLICT", message: result.reason === "introuvable" ? "Compte candidat introuvable." : "Ce compte est déjà un pré-compte." });
     }
     await recordPrivacyEvent(db, { actorType: "admin", actorId: admin.id, actorLabel: admin.email ?? `admin #${admin.id}`, action: "dossier.deactivated", resourceType: "candidate", resourceId: input.candidateId, details: input.reason.slice(0, 300) });
-    return { ok: true as const, reference: result.reference };
+    return { ok: true as const, pending: false as const, reference: result.reference };
+  }),
+
+  /** Demandes de désactivation en attente (et les dernières décisions) ; `isSuper` indique si l'administrateur peut les décider. */
+  requests: publicProcedure.input(z.object({ sessionToken: session })).query(async ({ input }) => {
+    const admin = await requireValidAdminSession(input.sessionToken);
+    const db = await requireDb();
+    const rows = await db.select().from(sensitiveActionRequests).orderBy(desc(sensitiveActionRequests.createdAt)).limit(40);
+    const ids = Array.from(new Set(rows.map((row) => row.candidateId)));
+    const people = ids.length ? await db.select({ id: candidates.id, fullName: candidates.fullName, email: candidates.email }).from(candidates).where(inArray(candidates.id, ids)) : [];
+    return {
+      isSuper: isSuperAdminEmail(admin.email),
+      items: rows.map((row) => ({
+        id: row.id, candidateId: row.candidateId, candidateName: people.find((item) => item.id === row.candidateId)?.fullName ?? "Candidat", reason: row.reason, requestedBy: row.requestedByLabel,
+        status: row.status, decidedBy: row.decidedByLabel, decisionNote: row.decisionNote, createdAt: new Date(row.createdAt).toISOString(),
+      })),
+    };
+  }),
+
+  /** Le super administrateur approuve (la désactivation est alors exécutée) ou refuse une demande. */
+  decideRequest: publicProcedure.input(z.object({ sessionToken: session, id: z.number().int().positive(), decision: z.enum(["approve", "reject"]), note: z.string().trim().max(300).nullish().transform((value) => value || null) })).mutation(async ({ input }) => {
+    const admin = await requireSuperAdminSession(input.sessionToken);
+    const db = await requireDb();
+    const [request] = await db.select().from(sensitiveActionRequests).where(eq(sensitiveActionRequests.id, input.id)).limit(1);
+    if (!request || request.status !== "pending") throw new TRPCError({ code: "CONFLICT", message: "Cette demande a déjà été traitée." });
+    const actor = admin.email ?? `admin #${admin.id}`;
+    if (input.decision === "approve") {
+      const result = await deactivateCandidateDossier(db, { candidateId: request.candidateId, actorEmail: actor, reason: `${request.reason} (demandé par ${request.requestedByLabel}, approuvé par ${actor})` });
+      if (result.ok === false && result.reason === "introuvable") throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
+    }
+    await db.update(sensitiveActionRequests).set({ status: input.decision === "approve" ? "approved" : "rejected", decidedByLabel: actor, decisionNote: input.note, decidedAt: new Date() }).where(eq(sensitiveActionRequests.id, request.id));
+    await recordPrivacyEvent(db, { actorType: "admin", actorId: admin.id, actorLabel: actor, action: `dossier.deactivation_${input.decision === "approve" ? "approved" : "rejected"}`, resourceType: "candidate", resourceId: request.candidateId, details: `Demande de ${request.requestedByLabel}` });
+    return { ok: true as const };
   }),
 
   /**

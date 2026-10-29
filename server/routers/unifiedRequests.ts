@@ -27,6 +27,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
 import { generateEvaluationReportHTML } from "../evaluationService";
 import { inspectBilan, toBilanHtml } from "../../shared/bilanContent";
+import { bilanVariablesFrom, resolveBilanVariables } from "../../shared/bilanVariables";
 import { frameBrandedDocument } from "../../shared/brandLetterhead";
 import { sendEmail } from "../_core/email";
 import { createFinalEvaluationPdf } from "../evaluationBilanPdfService";
@@ -927,7 +928,8 @@ initializeEvaluationDelivery: publicProcedure
       const freeBilan = typeof previousDraft.bilanHtml === "string" ? previousDraft.bilanHtml : "";
       if (freeBilan) {
         // Bilan libre : le même contrôle que le rapport structuré. Une promesse de résultat ou une donnée sensible bloque la validation (jamais supprimée en silence).
-        const inspection = inspectBilan(freeBilan);
+        // Les variables ({{montant}}, {{nom}}…) sont remplacées avant le contrôle : seule une zone réellement vide bloque la validation.
+        const inspection = inspectBilan(resolveBilanVariables(freeBilan, bilanVariablesFrom({ fullName: application.fullName, dossierNumber: application.dossierNumber, destination: application.destination, visaType: application.visaType, paymentAmount: application.paymentAmount })));
         if (inspection.empty) throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan est vide ou trop court pour être validé." });
         if (inspection.forbiddenTerms.length > 0) throw new TRPCError({ code: "BAD_REQUEST", message: `Formulation à revoir avant validation (promesse de résultat) : ${inspection.forbiddenTerms.join(", ")}.` });
         if (inspection.sensitiveData.length > 0) throw new TRPCError({ code: "BAD_REQUEST", message: `Donnée sensible à retirer avant validation : ${inspection.sensitiveData.join(", ")}.` });

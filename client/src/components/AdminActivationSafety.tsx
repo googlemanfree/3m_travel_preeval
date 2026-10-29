@@ -38,8 +38,13 @@ export function AdminActivationSafety({ sessionToken }: { sessionToken: string }
     onError: (error) => toast.error(error.message || "Désactivation impossible."),
   });
   const one = trpc.activationSafety.deactivate.useMutation({
-    onSuccess: () => { toast.success("Dossier repassé en pré-compte"); setManualReason(""); refresh(); },
+    onSuccess: (result) => { toast.success(result.pending ? "Demande envoyée au super administrateur pour validation" : "Dossier repassé en pré-compte"); setManualReason(""); void utils.activationSafety.requests.invalidate(); refresh(); },
     onError: (error) => toast.error(error.message || "Désactivation impossible."),
+  });
+  const requests = trpc.activationSafety.requests.useQuery({ sessionToken }, { enabled: Boolean(sessionToken), retry: false });
+  const decide = trpc.activationSafety.decideRequest.useMutation({
+    onSuccess: (_result, variables) => { toast.success((variables as { decision?: string } | undefined)?.decision === "approve" ? "Désactivation approuvée et exécutée" : "Demande refusée"); void utils.activationSafety.requests.invalidate(); refresh(); },
+    onError: (error) => toast.error(error.message || "Décision impossible."),
   });
   const undo = trpc.activationSafety.reactivate.useMutation({
     onSuccess: () => { toast.success("Désactivation annulée : dossier de nouveau actif"); refresh(); },
@@ -116,6 +121,24 @@ export function AdminActivationSafety({ sessionToken }: { sessionToken: string }
             </li>
           ))}
         </ul>
+        {requests.data && requests.data.items.length > 0 && (
+          <div className="mt-4 rounded-lg border border-slate-200 p-3" data-testid="activation-requests">
+            <p className="text-sm font-semibold text-slate-900">Demandes de désactivation{requests.data.isSuper ? "" : " (vos demandes sont validées par le super administrateur)"}</p>
+            <ul className="mt-2 space-y-2">
+              {requests.data.items.map((item) => (
+                <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 text-sm" data-testid={`activation-request-${item.id}`}>
+                  <span><strong>{item.candidateName}</strong> — {item.reason} <span className="text-xs text-slate-500">· {item.requestedBy} · {item.status === "pending" ? "en attente" : item.status === "approved" ? `approuvée par ${item.decidedBy}` : `refusée par ${item.decidedBy}`}</span></span>
+                  {item.status === "pending" && requests.data.isSuper && (
+                    <span className="flex gap-2">
+                      <Button type="button" size="sm" disabled={decide.isPending} onClick={() => decide.mutate({ sessionToken, id: item.id, decision: "approve", note: null })}>Approuver</Button>
+                      <Button type="button" size="sm" variant="outline" disabled={decide.isPending} onClick={() => decide.mutate({ sessionToken, id: item.id, decision: "reject", note: null })}>Refuser</Button>
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <UndoList onUndo={(candidateId) => undo.mutate({ sessionToken, candidateId })} pending={undo.isPending} />
       </section>
     </div>

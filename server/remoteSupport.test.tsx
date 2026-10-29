@@ -26,7 +26,7 @@ import {
 const state = vi.hoisted(() => ({
   overview: { data: undefined as any },
   book: vi.fn(), cancel: vi.fn(), accept: vi.fn(), decline: vi.fn(), report: vi.fn(),
-  slots: { data: [] as any[] }, waiting: { data: [] as any[] },
+  slots: { data: [] as any[] }, waiting: { data: [] as any[] }, prompt: { data: null as any },
 }));
 vi.mock("@/lib/clientSpaceSync", () => ({ clientSpacePolling: () => ({}) }));
 vi.mock("@/lib/trpc", () => {
@@ -35,6 +35,7 @@ vi.mock("@/lib/trpc", () => {
   return {
     trpc: {
       useUtils: () => new Proxy({}, { get: () => new Proxy({}, { get: () => ({ invalidate: vi.fn() }) }) }),
+      adminInsights: { mySatisfactionPrompt: query(() => state.prompt), answerSatisfaction: mutation(vi.fn()) },
       remoteSupport: {
         myOverview: query(() => state.overview),
         adminSlots: query(() => state.slots),

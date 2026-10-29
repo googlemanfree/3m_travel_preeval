@@ -92,6 +92,6 @@ describe("désactivation, retour en pré-compte et annulations", () => {
     expect(read("server/routers.ts")).toContain("activationSafety: activationSafetyRouter");
     expect(read("client/src/pages/AdminDashboard.tsx")).toContain('<AdminActivationSafety sessionToken={sessionToken} />');
     const names = Array.from(router.matchAll(/\n  ([A-Za-z]+): publicProcedure/g), (match) => match[1]);
-    expect(names).toEqual(["scan", "searchActive", "deactivate", "deactivateMany", "reactivate"]);
+    expect(names).toEqual(["scan", "searchActive", "deactivate", "requests", "decideRequest", "deactivateMany", "reactivate"]);
   });
 });
