@@ -11,7 +11,8 @@ describe("démarrage plus léger", () => {
     expect(app).not.toMatch(/import\s+\{\s*FloatingActionMenu\s*\}\s+from/);
     expect(app).not.toMatch(/import\s+AiCopilotWidgetEnhanced\s+from/);
     expect(app).not.toMatch(/import\s+\{\s*SmartFlightAssistant\s*\}\s+from/);
-    expect(app).not.toMatch(/import\s+\{\s*FloatingToolsDock\s*\}\s+from/);
+    // Le dock global est importé statiquement (216cad32 : l'import dynamique échouait sur About) mais son montage reste différé après le premier paint.
+    expect(app).toMatch(/import\s+\{\s*FloatingToolsDock\s*\}\s+from/);
     expect(app).toContain("FloatingToolsDock");
     expect(app).toContain("lazyWithTimeout(() =>");
     expect(app).toContain("floatingToolsReady");

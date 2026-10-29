@@ -64,7 +64,7 @@ export function scheduleSummary(items: ScheduleItemLike[], today: string): { tot
   };
 }
 
-/** Tables créées par les migrations 0088 à 0093 : la santé du système signale celles qui manquent. */
+/** Tables créées par les migrations 0088 à 0095 : la santé du système signale celles qui manquent. */
 export const EXPECTED_TABLES: ReadonlyArray<{ migration: string; tables: string[] }> = [
   { migration: "0088", tables: ["study_institutions", "study_programs", "study_intakes", "study_tuition_fees", "study_applications", "study_application_events"] },
   { migration: "0089", tables: ["job_offers", "job_applications", "job_application_events", "job_offer_reports"] },
@@ -72,4 +72,6 @@ export const EXPECTED_TABLES: ReadonlyArray<{ migration: string; tables: string[
   { migration: "0091", tables: ["remote_slots", "case_next_actions", "remote_acknowledgements"] },
   { migration: "0092", tables: ["sensitive_action_requests", "satisfaction_responses"] },
   { migration: "0093", tables: ["bilan_templates", "case_outcomes", "payment_schedule_items"] },
+  { migration: "0094", tables: ["content_reviews", "content_updates"] },
+  { migration: "0095", tables: ["candidate_notification_prefs", "candidate_login_events"] },
 ];

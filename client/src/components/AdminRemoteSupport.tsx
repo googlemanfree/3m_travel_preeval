@@ -177,7 +177,8 @@ function WaitingPanel({ sessionToken }: { sessionToken: string }) {
             </div>
             <div className="mt-2 flex flex-wrap gap-2">
               <Button type="button" size="sm" disabled={!draft.trim() || reply.isPending} onClick={() => reply.mutate({ sessionToken, candidateId: row.candidateId, content: draft.trim() }, { onSuccess: () => setDrafts((current) => ({ ...current, [row.candidateId]: "" })) })}><Send className="mr-1 h-3.5 w-3.5" aria-hidden="true" />Envoyer</Button>
-              {wa && <Button asChild size="sm" variant="outline"><a href={wa} target="_blank" rel="noopener noreferrer"><MessageCircle className="mr-1 h-3.5 w-3.5" aria-hidden="true" />WhatsApp</a></Button>}
+              {wa && row.whatsappAllowed && <Button asChild size="sm" variant="outline"><a href={wa} target="_blank" rel="noopener noreferrer"><MessageCircle className="mr-1 h-3.5 w-3.5" aria-hidden="true" />WhatsApp</a></Button>}
+              {!row.whatsappAllowed && <span className="self-center text-xs font-semibold text-amber-900" data-testid={`whatsapp-refused-${row.candidateId}`}>Le candidat a refusé WhatsApp : répondez dans son espace ou par e-mail.</span>}
             </div>
           </article>
         );

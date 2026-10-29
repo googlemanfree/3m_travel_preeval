@@ -22,6 +22,7 @@ import { SCHEDULED_JOBS, resolveScheduledJobsMode } from "../cron/scheduledJobsC
 import { getDb } from "../db";
 import { sendClientNotificationEmail } from "../emailService";
 import { adminLabel } from "../services/partnerProfiles";
+import { emailAllowed } from "../services/candidateSecurity";
 import { recordPrivacyEvent } from "../services/privacyAudit";
 import { requireValidAdminSession } from "./adminAuth";
 import { candidateProcedure } from "./candidate";
@@ -57,6 +58,7 @@ async function audit(db: Db, admin: { id: number; email?: string | null }, actio
 
 async function notify(db: Db, candidate: { id: number; email: string; fullName: string }, input: { type: string; title: string; body: string }) {
   try { await db.insert(clientNotifications).values({ candidateId: candidate.id, type: input.type, title: input.title, body: input.body, actionUrl: "/mon-espace", isRead: false }); } catch { /* l'e-mail reste tenté */ }
+  if (!(await emailAllowed(db, candidate.id))) return false;
   return sendClientNotificationEmail({ to: candidate.email, fullName: candidate.fullName, title: input.title, body: input.body, actionUrl: "/mon-espace", sourceLabel: "3M TRAVEL AGENCY" }).catch(() => false);
 }
 

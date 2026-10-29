@@ -6,6 +6,7 @@ import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
 import { and, asc, desc, eq, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
 import jwt from "jsonwebtoken";
+import { getSessionCutoff, recordLoginEvent } from "../services/candidateSecurity";
 import { parse as parseCookieHeader } from "cookie";
 import { z } from "zod";
 import { createHash, randomBytes, randomInt } from "node:crypto";
@@ -163,6 +164,14 @@ async function getCandidateFromHeader(authHeader: string | undefined) {
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
   const rows = await db.select().from(candidates).where(and(eq(candidates.id, candidateId), isNull(candidates.deletedAt))).limit(1);
   if (!rows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Compte introuvable." });
+  // « Me déconnecter de tous les appareils » : un jeton émis avant la date limite n'ouvre plus rien.
+  try {
+    const issuedAt = (jwt.decode(token) as { iat?: number } | null)?.iat;
+    const cutoff = await getSessionCutoff(db, candidateId);
+    if (cutoff && issuedAt && issuedAt < cutoff) throw new TRPCError({ code: "UNAUTHORIZED", message: "Session expirée, veuillez vous reconnecter." });
+  } catch (error) {
+    if (error instanceof TRPCError) throw error;
+  }
   return rows[0];
 }
 
@@ -621,7 +630,7 @@ export const candidateRouter = router({
         password: z.string().min(1).max(128),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       checkLoginAttempts(input.email);
 
       const db = await getDb();
@@ -652,6 +661,8 @@ export const candidateRouter = router({
 
       resetLoginAttempts(input.email);
       await db.update(candidates).set({ lastLoginAt: new Date() }).where(eq(candidates.id, candidate.id));
+      // Connexions récentes et alerte « nouvel appareil » : jamais bloquant pour la connexion elle-même.
+      try { await recordLoginEvent(db, candidate.id, (ctx as { req?: { headers?: Record<string, string | string[] | undefined> } }).req); } catch { /* table non migrée ou erreur ponctuelle */ }
 
       const token = signCandidateToken(candidate.id);
       return {

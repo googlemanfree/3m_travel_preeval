@@ -99,6 +99,7 @@ import { remoteSupportRouter } from "./routers/remoteSupport";
 import { adminInsightsRouter } from "./routers/adminInsights";
 import { adminOpsRouter } from "./routers/adminOps";
 import { adminContentRouter } from "./routers/adminContent";
+import { clientSpaceRouter } from "./routers/clientSpace";
 import { opportunitiesInboxRouter } from "./routers/opportunitiesInbox";
 import { employerOffersRouter } from "./routers/employerOffers";
 import { jobOffersRouter } from "./routers/jobOffers";
@@ -239,6 +240,7 @@ export const appRouter = router({
   adminInsights: adminInsightsRouter,
   adminOps: adminOpsRouter,
   adminContent: adminContentRouter,
+  clientSpace: clientSpaceRouter,
   opportunitiesInbox: opportunitiesInboxRouter,
   employerOffers: employerOffersRouter,
   jobOffers: jobOffersRouter,

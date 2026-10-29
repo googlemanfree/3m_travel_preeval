@@ -4,7 +4,7 @@ import { and, asc, desc, eq, gte, inArray, isNull, like, lte, notInArray, or, sq
 import { z } from "zod";
 import { adminAccounts, adminNotifications, agencyDossiers, candidateMessages, candidates, documentClarificationRequests } from "../../drizzle/schema";
 import { clientNotifications, unifiedClientRequests } from "../../drizzle/caseTrackingSchema";
-import { caseNextActions, remoteAcknowledgements, remoteSlots } from "../../drizzle/remoteSupportSchema";
+import { candidateNotificationPrefs, caseNextActions, remoteAcknowledgements, remoteSlots } from "../../drizzle/remoteSupportSchema";
 import {
   BLOCKED_AFTER_DAYS,
   BOOKING_NOTICE_HOURS,
@@ -31,6 +31,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { sendClientNotificationEmail } from "../emailService";
 import { getOpeningPaymentEvidence } from "../services/openingPaymentEvidence";
+import { emailAllowed } from "../services/candidateSecurity";
 import { adminLabel } from "../services/partnerProfiles";
 import { recordPrivacyEvent } from "../services/privacyAudit";
 import { requireValidAdminSession } from "./adminAuth";
@@ -74,6 +75,8 @@ async function notifyCandidate(db: Db, candidate: { id: number; email: string; f
     // Notification interne manquée : l'e-mail ci-dessous reste tenté.
   }
   try {
+    // Préférences du candidat : e-mail refusé ou heures de silence → la notification reste dans son espace, sans e-mail.
+    if (!(await emailAllowed(db, candidate.id))) return false;
     return await sendClientNotificationEmail({ to: candidate.email, fullName: candidate.fullName, title: input.title, body: input.body, actionUrl: "/mon-espace", sourceLabel: "3M TRAVEL AGENCY" });
   } catch {
     return false;
@@ -299,11 +302,19 @@ export const remoteSupportRouter = router({
     const waiting = Array.from(latest.values()).filter((message) => message.senderRole === "candidate");
     const ids = waiting.map((message) => message.candidateId);
     const people = ids.length ? await db.select({ id: candidates.id, fullName: candidates.fullName, phone: candidates.phone, email: candidates.email, preferredLanguage: candidates.preferredLanguage }).from(candidates).where(and(inArray(candidates.id, ids), isNull(candidates.deletedAt))) : [];
+    // Un refus explicite de WhatsApp (espace client > Mon compte) masque le bouton ; sans choix exprimé, l'agence écrit comme avant.
+    let refusedWhatsapp = new Set<number>();
+    try {
+      const prefs = ids.length ? await db.select({ candidateId: candidateNotificationPrefs.candidateId, optIn: candidateNotificationPrefs.whatsappOptIn }).from(candidateNotificationPrefs).where(inArray(candidateNotificationPrefs.candidateId, ids)) : [];
+      refusedWhatsapp = new Set(prefs.filter((row) => row.optIn === 0).map((row) => row.candidateId));
+    } catch {
+      refusedWhatsapp = new Set();
+    }
     return waiting.flatMap((message) => {
       const person = people.find((item) => item.id === message.candidateId);
       if (!person) return [];
       const days = waitingDays(message.createdAt, now);
-      return [{ candidateId: person.id, fullName: person.fullName, phone: person.phone, language: person.preferredLanguage === "en" ? ("en" as const) : ("fr" as const), lastMessage: message.content.slice(0, 220), lastAt: iso(message.createdAt)!, days, level: waitingLevel(days), isHelpRequest: message.content.startsWith(PROBLEM_PREFIX) }];
+      return [{ candidateId: person.id, fullName: person.fullName, phone: person.phone, language: person.preferredLanguage === "en" ? ("en" as const) : ("fr" as const), whatsappAllowed: !refusedWhatsapp.has(person.id), lastMessage: message.content.slice(0, 220), lastAt: iso(message.createdAt)!, days, level: waitingLevel(days), isHelpRequest: message.content.startsWith(PROBLEM_PREFIX) }];
     }).sort((a, b) => b.days - a.days).slice(0, 120);
   })),
 

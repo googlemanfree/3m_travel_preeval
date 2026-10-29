@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { MessageCircle, Send, UserRound, Headphones, Loader2 } from "lucide-react";
+import { MessageCircle, Search, Send, UserRound, Headphones, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { MESSAGE_STATUS_LABELS, candidateMessageStatus, replyTimeSentence } from "@shared/clientCase";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
@@ -10,6 +12,7 @@ import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 export default function ClientMessagesPanel() {
   const { candidate, isAuthenticated } = useCandidateAuth();
   const [content, setContent] = useState("");
+  const [search, setSearch] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const utils = trpc.useUtils();
 
@@ -21,6 +24,7 @@ export default function ClientMessagesPanel() {
     staleTime: 20_000,
     retry: 1,
   });
+  const replyQuery = trpc.clientSpace.replyTime.useQuery(undefined, { enabled: isAuthenticated && Boolean(candidate), staleTime: 10 * 60 * 1000, retry: false, refetchOnWindowFocus: false });
   const unreadQuery = trpc.candidate.unreadCount.useQuery(undefined, {
     enabled: isAuthenticated && Boolean(candidate),
     refetchInterval: 45_000,
@@ -52,7 +56,9 @@ export default function ClientMessagesPanel() {
     sendMutation.mutate({ content: trimmed });
   };
 
-  const messages = messagesQuery.data ?? [];
+  const allMessages = messagesQuery.data ?? [];
+  const needle = search.trim().toLowerCase();
+  const messages = needle ? allMessages.filter((message) => `${message.content} ${message.attachmentName ?? ""}`.toLowerCase().includes(needle)) : allMessages;
 
   return (
     <Card className="premium-surface border-blue-100/80 p-5 sm:p-6" aria-labelledby="client-messages-title">
@@ -74,6 +80,12 @@ export default function ClientMessagesPanel() {
         )}
       </div>
 
+      {allMessages.length > 4 && (
+        <div className="relative mt-4">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+          <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher dans mes messages et pièces jointes" aria-label="Rechercher dans mes messages" className="h-11 pl-9" data-testid="messages-search" />
+        </div>
+      )}
       <div className="mt-5 max-h-[28rem] space-y-3 overflow-y-auto pr-1" aria-live="polite">
         {messagesQuery.isLoading ? (
           <div className="flex items-center justify-center gap-2 py-12 text-sm text-slate-600">
@@ -103,6 +115,7 @@ export default function ClientMessagesPanel() {
                   <p className={`mt-2 flex items-center gap-1 text-[11px] ${isCandidate ? "text-blue-100" : "text-slate-600"}`}>
                     {isCandidate ? <UserRound className="h-3 w-3" aria-hidden="true" /> : <Headphones className="h-3 w-3" aria-hidden="true" />}
                     {isCandidate ? "Vous" : "Équipe 3M TRAVEL AGENCY"} · {new Date(message.createdAt).toLocaleString("fr-FR")}
+                    {isCandidate && (() => { const status = candidateMessageStatus(message, allMessages); return status ? <span className="ml-1 font-bold" data-testid="message-status">· {MESSAGE_STATUS_LABELS[status].fr}</span> : null; })()}
                   </p>
                 </div>
               </div>
@@ -130,7 +143,7 @@ export default function ClientMessagesPanel() {
             Envoyer
           </Button>
         </div>
-        <p className="mt-2 text-sm text-slate-600">Réponse habituelle de l’équipe : sous 24 heures ouvrées.</p>
+        <p className="mt-2 text-sm text-slate-600" data-testid="reply-time">{replyTimeSentence(replyQuery.data?.median ?? null, replyQuery.data?.answered ?? 0, "fr")}</p>
       </form>
     </Card>
   );

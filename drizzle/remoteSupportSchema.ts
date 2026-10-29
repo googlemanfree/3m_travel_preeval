@@ -137,3 +137,24 @@ export const contentUpdates = mysqlTable("content_updates", {
   createdBy: varchar("created_by", { length: 160 }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [index("idx_content_updates_published").on(table.published, table.archivedAt, table.publishedAt)]);
+
+/** Espace client (migration 0095) : préférences de notification et connexions récentes. */
+export const candidateNotificationPrefs = mysqlTable("candidate_notification_prefs", {
+  id: int("id").autoincrement().primaryKey(),
+  candidateId: int("candidate_id").notNull(),
+  emailEnabled: tinyint("email_enabled").notNull().default(1),
+  /** null = pas de choix exprimé (l'agence peut écrire comme avant) ; 0 = refus ; 1 = accord. */
+  whatsappOptIn: tinyint("whatsapp_opt_in"),
+  whatsappConsentedAt: timestamp("whatsapp_consented_at"),
+  quietFrom: tinyint("quiet_from"),
+  quietTo: tinyint("quiet_to"),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (table) => [uniqueIndex("uq_candidate_notification_prefs").on(table.candidateId)]);
+
+export const candidateLoginEvents = mysqlTable("candidate_login_events", {
+  id: int("id").autoincrement().primaryKey(),
+  candidateId: int("candidate_id").notNull(),
+  deviceHash: char("device_hash", { length: 64 }).notNull(),
+  deviceLabel: varchar("device_label", { length: 120 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [index("idx_candidate_login_events").on(table.candidateId, table.createdAt)]);

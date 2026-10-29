@@ -118,9 +118,9 @@ describe("outils d'administration : calculs", () => {
     expect(fillTemplate("Hello {prenom}, thanks.", "")).toBe("Hello, thanks.");
   });
 
-  it("la liste des tables attendues couvre chaque CREATE TABLE des migrations 0088 à 0093", () => {
+  it("la liste des tables attendues couvre chaque CREATE TABLE des migrations 0088 à 0095", () => {
     const declared = new Set(EXPECTED_TABLES.flatMap((entry) => entry.tables));
-    for (const file of ["0088_study_catalog", "0089_job_offers", "0090_stay_programs", "0091_remote_support", "0092_admin_insights", "0093_admin_ops"]) {
+    for (const file of ["0088_study_catalog", "0089_job_offers", "0090_stay_programs", "0091_remote_support", "0092_admin_insights", "0093_admin_ops", "0094_content_governance", "0095_client_space"]) {
       for (const match of Array.from(read(`drizzle/${file}.sql`).matchAll(/CREATE TABLE IF NOT EXISTS (\w+)/g))) expect(declared.has(match[1]), `${file} : ${match[1]}`).toBe(true);
     }
   });
