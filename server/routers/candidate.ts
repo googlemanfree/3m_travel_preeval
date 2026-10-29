@@ -500,7 +500,8 @@ export const candidateRouter = router({
       const priorEvaluationFields = input.evaluationAlreadyCompleted
         ? priorDeliveredEvaluation
           ? {
-              dossierStatus: "documents" as const,
+              // Évaluation déjà validée, mais le dossier ne s'ouvre qu'après preuve de paiement : le compte reste un pré-compte.
+              dossierStatus: "nouveau" as const,
               evaluationDeclarationStatus: "validated" as const,
               evaluationDeclaredAt: new Date(),
               evaluationReviewedAt: priorDeliveredEvaluation.reviewedAt,

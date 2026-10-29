@@ -9,6 +9,7 @@ import { caseActivityLogs, caseStatusHistory, cases, clientNotifications } from 
 import { getDb } from "../db";
 import { requireAdminSessionFromCookie, requireSuperAdminSession, requireValidAdminSession } from "./adminAuth";
 import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../emailService";
+import { PAYMENT_PROOF_REQUIRED_MESSAGE } from "../services/openingPaymentEvidence";
 import { describeDossierProgress, progressText } from "../../shared/dossierProgress";
 import { sendReceiptAndProtocol } from "../services/paymentPackage";
 import { runOpeningPaymentAutomation } from "../services/openingPaymentAutomation";
@@ -1333,12 +1334,13 @@ export const adminCandidateManagementRouter = router({
       // Preuve saisie directement sur ce compte (sans dossier) ; consultée en premier pour éviter d'interroger
       // dossiers en ligne/agence quand elle suffit déjà, et exposée telle quelle à l'écran d'activation.
       const openingPayment = alreadyActive ? null : await getOpeningPaymentRecord(db, candidate.id);
-      const paymentValidated = alreadyActive ? true : Boolean(openingPayment) || (await isOpeningPaymentValidated(db, candidate));
+      // Une confirmation sans preuve jointe ne débloque rien : la preuve (ou un paiement en ligne / agence confirmé) est exigée.
+      const paymentValidated = alreadyActive ? true : Boolean(openingPayment?.proofFileUrl?.trim()) || (await isOpeningPaymentValidated(db, candidate));
       const blockers: Array<{ code: "already_active" | "evaluation" | "payment"; message: string }> = [];
       if (alreadyActive) blockers.push({ code: "already_active", message: ACTIVATION_MESSAGES.alreadyActive });
       else {
         if (!evaluationValidated) blockers.push({ code: "evaluation", message: ACTIVATION_MESSAGES.evaluation });
-        if (!paymentValidated) blockers.push({ code: "payment", message: ACTIVATION_MESSAGES.payment });
+        if (!paymentValidated) blockers.push({ code: "payment", message: openingPayment ? PAYMENT_PROOF_REQUIRED_MESSAGE : ACTIVATION_MESSAGES.payment });
       }
       return { candidateId: candidate.id, accountReference: accountReference(candidate.id), alreadyActive, evaluationValidated, paymentValidated, openingPayment, canActivate: blockers.length === 0, blockers };
     }),
@@ -1382,8 +1384,8 @@ export const adminCandidateManagementRouter = router({
       confirmedAmount: z.number().int().positive().max(100000000).optional(),
       additionalPaymentReference: z.string().trim().max(255).optional(),
       additionalConfirmedAmount: z.number().int().positive().max(100000000).optional(),
-    }).refine((value) => Boolean(value.paymentReference?.trim()) || Boolean(value.proofFileUrl?.trim()), {
-      message: "Indiquez une référence de transaction ou joignez une preuve (photo ou vidéo de la facture).",
+    }).refine((value) => Boolean(value.proofFileUrl?.trim()) || Boolean(value.additionalPaymentReference?.trim()), {
+      message: "Joignez la preuve de paiement (photo ou vidéo de la facture) : une simple référence ne suffit plus pour ouvrir un dossier.",
     }))
     .mutation(async ({ input, ctx }) => {
       const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
@@ -1476,8 +1478,10 @@ export const adminCandidateManagementRouter = router({
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: ACTIVATION_MESSAGES.evaluation });
       }
       const openingPayment = await getOpeningPaymentRecord(db, candidate.id);
-      if (!openingPayment && !(await isOpeningPaymentValidated(db, candidate))) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: ACTIVATION_MESSAGES.payment });
+      // Une confirmation sans preuve (simple référence) ne suffit plus : il faut la preuve jointe, un paiement en ligne validé
+      // ou un paiement agence confirmé au journal.
+      if (!openingPayment?.proofFileUrl?.trim() && !(await isOpeningPaymentValidated(db, candidate))) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: openingPayment ? PAYMENT_PROOF_REQUIRED_MESSAGE : ACTIVATION_MESSAGES.payment });
       }
       if (input.additionalProcedure && !openingPayment?.additionalPayment) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le second paiement d'ouverture doit être validé avant d'ajouter la seconde procédure." });

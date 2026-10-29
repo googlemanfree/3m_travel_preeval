@@ -61,6 +61,7 @@ import { evaluateAdminStageTransition } from "../../shared/transitionGuards";
 import { buildJourneyStepSla, suggestedDueAtForAdminStage } from "../../shared/journeyStepSla";
 import { latestProgramContext, pickProgramContext, programContextsByEmail } from "../services/evaluationProgramContext";
 import { assessAccountPurge, purgeCandidateAccount } from "../services/purgeCandidateAccount";
+import { deactivateCandidateDossier, revertToPreAccountAfterDossierRemoval } from "../services/deactivateDossier";
 import { recordPrivacyEvent } from "../services/privacyAudit";
 import { describeSecondProtocolState, dualOpportunityHandoffMessage } from "../../shared/secondAgreementProtocol";
 import { ADMIN_STAGE_CATALOG, ADMIN_STAGE_SEQUENCE, resolveGuidedNextAdminAction } from "../../shared/adminStageCatalog";
@@ -5250,21 +5251,28 @@ export const adminRouter = router({
       const source = parsed[1];
       const id = Number(parsed[2]);
       if (source === "account") {
-        const [record] = await db.select({ id: candidates.id, fullName: candidates.fullName, email: candidates.email }).from(candidates).where(and(eq(candidates.id, id), isNull(candidates.deletedAt))).limit(1);
+        const [record] = await db.select({ id: candidates.id, fullName: candidates.fullName, email: candidates.email, dossierStatus: candidates.dossierStatus }).from(candidates).where(and(eq(candidates.id, id), isNull(candidates.deletedAt))).limit(1);
         if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat actif introuvable." });
+        // Supprimer un compte activé le fait d'abord basculer en pré-compte : rien n'est perdu, et une seconde suppression l'envoie à la corbeille.
+        if (record.dossierStatus !== "nouveau") {
+          const reverted = await deactivateCandidateDossier(db, { candidateId: id, actorEmail: admin.email ?? "admin", reason: input.reason });
+          if (reverted.ok) return { success: true, source, id, reference: reverted.reference, message: "Compte activé : il est repassé en pré-compte, rien n'est supprimé. Supprimez-le de nouveau pour le placer dans la corbeille." };
+        }
         await db.update(candidates).set({ deletedAt: new Date(), deletedBy: admin.email, deletionReason: input.reason }).where(eq(candidates.id, id));
         return { success: true, source, id, reference: `COMPTE-${String(id).padStart(5, "0")}`, message: "Compte placé dans la corbeille réversible." };
       }
       if (source === "online") {
-        const [record] = await db.select({ id: applications.id, dossierNumber: applications.dossierNumber }).from(applications).where(and(eq(applications.id, id), isNull(applications.deletedAt))).limit(1);
+        const [record] = await db.select({ id: applications.id, dossierNumber: applications.dossierNumber, email: applications.email }).from(applications).where(and(eq(applications.id, id), isNull(applications.deletedAt))).limit(1);
         if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne actif introuvable." });
         await db.update(applications).set({ deletedAt: new Date(), deletedBy: admin.email, deletionReason: input.reason }).where(eq(applications.id, id));
-        return { success: true, source, id, reference: record.dossierNumber, message: "Dossier placé dans la corbeille réversible." };
+        const revertedOnline = await revertToPreAccountAfterDossierRemoval(db, { email: record.email, actorEmail: admin.email ?? "admin", reason: input.reason });
+        return { success: true, source, id, reference: record.dossierNumber, message: revertedOnline ? "Dossier placé dans la corbeille réversible ; le compte est repassé en pré-compte." : "Dossier placé dans la corbeille réversible." };
       }
-      const [record] = await db.select({ id: agencyDossiers.id }).from(agencyDossiers).where(and(eq(agencyDossiers.id, id), isNull(agencyDossiers.deletedAt))).limit(1);
+      const [record] = await db.select({ id: agencyDossiers.id, email: agencyDossiers.email }).from(agencyDossiers).where(and(eq(agencyDossiers.id, id), isNull(agencyDossiers.deletedAt))).limit(1);
       if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence actif introuvable." });
       await db.update(agencyDossiers).set({ deletedAt: new Date(), deletedBy: admin.email, deletionReason: input.reason }).where(eq(agencyDossiers.id, id));
-      return { success: true, source, id, reference: `3M-AGN-${String(id).padStart(4, "0")}`, message: "Dossier placé dans la corbeille réversible." };
+      const revertedAgency = await revertToPreAccountAfterDossierRemoval(db, { email: record.email, actorEmail: admin.email ?? "admin", reason: input.reason });
+      return { success: true, source, id, reference: `3M-AGN-${String(id).padStart(4, "0")}`, message: revertedAgency ? "Dossier placé dans la corbeille réversible ; le compte est repassé en pré-compte." : "Dossier placé dans la corbeille réversible." };
     }),
 
   restoreArchivedRecord: publicProcedure

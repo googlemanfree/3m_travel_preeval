@@ -98,7 +98,7 @@ export const SERVICES_FAQ = [
   },
   {
     question: "Que coûte l’accompagnement ?",
-    answer: "Le montant des frais d’ouverture de dossier dépend de votre profil ; il vous est confirmé par écrit avant tout paiement. Les frais payés à des tiers (autorités, centres de visa, assurances, traductions) sont distincts : votre conseiller vous les indique dès que le dossier est structuré.",
+    answer: "Le montant des frais d’ouverture de dossier dépend de votre profil ; il vous est confirmé par écrit avant tout paiement. Pour un visa travail, ces frais couvrent l’ouverture, la collecte, le traitement et la traduction de votre dossier, puis sa soumission aux agences de placement et aux employeurs directs. Les frais payés à des tiers (autorités, centres de visa, assurances) sont distincts : votre conseiller vous les indique dès que le dossier est structuré.",
   },
   {
     question: "3M peut-elle garantir l’obtention d’un visa ?",

@@ -17,6 +17,7 @@ import type { getDb } from "../db";
 import { ensureAgencyActiveReference } from "./canonicalizeActiveDossier";
 import { seedCountryProcedureChecklist } from "./seedCountryProcedureCase";
 import { loadPilotageQueue } from "./pilotageQueueStore";
+import { getOpeningPaymentEvidence } from "./openingPaymentEvidence";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
 
@@ -52,6 +53,9 @@ export async function activateReadyPreDossier(
   if (candidate.evaluationDeclarationStatus !== "validated" || !candidate.evaluationReviewedAt) {
     return { ok: false, reason: "evaluation_incomplete" };
   }
+  // Jamais d'activation sans preuve de paiement : ni l'automatisme du pilotage, ni une évaluation validée ne suffisent.
+  const paymentEvidence = await getOpeningPaymentEvidence(db, { id: candidate.id, email: candidate.email });
+  if (!paymentEvidence.ok) return { ok: false, reason: "paiement_non_justifie" };
 
   const destinationHint = parsePreferredDestination(candidate.preferredDestinations) || String(candidate.destination || "").trim();
   const visaType = String(candidate.visaType || "").trim();

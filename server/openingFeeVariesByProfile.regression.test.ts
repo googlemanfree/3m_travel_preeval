@@ -49,7 +49,7 @@ describe("frais d'ouverture : le montant dépend du profil", () => {
 
   it("le paiement en ligne ouvert après vérification de l'e-mail utilise le montant du dossier, pas une constante", () => {
     const application = read("server/routers/application.ts");
-    expect(application).toContain("amount: app.paymentAmount ?? DEFAULT_OPENING_FEE_XAF,");
+    expect(application).toContain("amount: app.paymentAmount ?? proposedOpeningFee(app.visaType),");
     expect(application).not.toMatch(/amount:\s*65000\s*,/);
   });
 

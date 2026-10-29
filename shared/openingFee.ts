@@ -2,12 +2,29 @@
  * Frais d'ouverture de dossier.
  *
  * Le montant dépend du type de profil : il est fixé par dossier (applications.paymentAmount) par un
- * administrateur et confirmé par écrit au candidat avant tout paiement. 65 000 XAF n'est que la valeur
- * proposée par défaut à la création d'un dossier ; aucun contrôle de paiement ne doit l'imposer.
+ * administrateur et confirmé par écrit au candidat avant tout paiement. Les valeurs ci-dessous ne sont que
+ * celles proposées à la création d'un dossier ; aucun contrôle de paiement ne doit les imposer.
+ *
+ * Visa travail (tous pays) : les frais couvrent l'ouverture, la collecte, le traitement et la traduction du dossier,
+ * puis sa soumission aux agences de placement et aux employeurs directs. Proposition : 100 000 XAF, modifiable par profil.
  */
 export const DEFAULT_OPENING_FEE_XAF = 65000;
+export const WORK_VISA_OPENING_FEE_XAF = 100000;
 export const MIN_OPENING_FEE_XAF = 1000;
 export const MAX_OPENING_FEE_XAF = 5_000_000;
+
+/** Visa travail : mêmes mots que le reste du site (étude, visite et famille ne sont jamais des visas travail). */
+export function isWorkVisaType(visaOrProject?: string | null): boolean {
+  const value = String(visaOrProject ?? "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+  if (!value) return false;
+  if (/(etude|study|scolaire|touris|visitor|visiteur|sejour|famille|family)/.test(value)) return false;
+  return /(travail|work|emploi|job|qualified|qualifie|professionnel)/.test(value);
+}
+
+/** Montant proposé à la création d'un dossier selon le visa ; l'administrateur l'ajuste ensuite selon le profil. */
+export function proposedOpeningFee(visaOrProject?: string | null): number {
+  return isWorkVisaType(visaOrProject) ? WORK_VISA_OPENING_FEE_XAF : DEFAULT_OPENING_FEE_XAF;
+}
 
 /** Pour les écrans qui ne connaissent pas encore le dossier. */
 export const OPENING_FEE_UNKNOWN_LABEL = "Montant confirmé par votre conseiller";

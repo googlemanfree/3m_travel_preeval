@@ -83,7 +83,8 @@ describe("candidate.register — déclaration d’évaluation préalable", () =>
     expect(state.inserted[0]).toMatchObject({
       email: "candidate.declaree@example.test",
       evaluationDeclarationStatus: "validated",
-      dossierStatus: "documents",
+      // Évaluation déjà remise : validée, mais le compte reste un pré-compte tant que la preuve de paiement n'est pas enregistrée.
+      dossierStatus: "nouveau",
       evaluationReviewedAt: reviewedAt,
     });
   });

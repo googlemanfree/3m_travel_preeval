@@ -30,7 +30,7 @@ import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/p
 import { sendReceiptAndProtocol } from "../services/paymentPackage";
 import { normalizeAfterOpeningPayment } from "../services/normalizeAfterOpeningPayment";
 import { MAX_CLIENT_DOSSIERS, MAX_CLIENT_DOSSIERS_MESSAGE } from "../../shared/clientDossierLimits";
-import { DEFAULT_OPENING_FEE_XAF, MAX_OPENING_FEE_XAF, MIN_OPENING_FEE_XAF, formatXaf } from "../../shared/openingFee";
+import { MAX_OPENING_FEE_XAF, MIN_OPENING_FEE_XAF, formatXaf, proposedOpeningFee } from "../../shared/openingFee";
 import { storedUploadUrlSchema } from "../../shared/storedFileUrl";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -258,7 +258,7 @@ export const applicationRouter = router({
         formulaChosen: input.formulaChosen,
         paymentStatus: "PENDING",
         paymentTransactionId: transactionId,
-        paymentAmount: DEFAULT_OPENING_FEE_XAF,
+        paymentAmount: proposedOpeningFee(input.visaType),
         paymentCurrency: "XAF",
         dossierStatus: "nouveau",
         // Documents uploadés
@@ -316,7 +316,7 @@ export const applicationRouter = router({
         input.fullName,
         dossierNumber,
         input.destination,
-        DEFAULT_OPENING_FEE_XAF, // montant proposé ; le montant du dossier est confirmé par écrit avant paiement
+        proposedOpeningFee(input.visaType), // montant proposé ; le montant du dossier est confirmé par écrit avant paiement
         "XAF"
       )).catch(err => console.error("[Email] Dossier confirmation error:", err));
 
@@ -325,7 +325,7 @@ export const applicationRouter = router({
         dossierNumber,
         input.fullName,
         input.destination,
-        DEFAULT_OPENING_FEE_XAF,
+        proposedOpeningFee(input.visaType),
         "XAF"
       )).catch(err => console.error("[Email] Admin alert error:", err));
 
@@ -503,7 +503,7 @@ export const applicationRouter = router({
       try {
         const result = await initCinetPayTransaction({
           transactionId: app.paymentTransactionId ?? "",
-          amount: app.paymentAmount ?? DEFAULT_OPENING_FEE_XAF,
+          amount: app.paymentAmount ?? proposedOpeningFee(app.visaType),
           currency: "XAF",
           description: `Ouverture dossier immigration 3M TRAVEL AGENCY — ${input.dossierNumber}`,
           customerName: app.fullName,
@@ -798,7 +798,7 @@ export const applicationRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Le paiement de ce dossier est déjà validé : le montant ne peut plus être modifié. Annulez d’abord la validation si une correction est nécessaire." });
       }
 
-      const previous = application.paymentAmount ?? DEFAULT_OPENING_FEE_XAF;
+      const previous = application.paymentAmount ?? proposedOpeningFee(application.visaType);
       if (previous === input.amount && application.paymentExpectedAmount === input.amount) {
         return { id: application.id, amount: input.amount, previousAmount: previous, changed: false as const };
       }
@@ -854,7 +854,7 @@ export const applicationRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "La correction du reçu n’est disponible qu’après validation du paiement. Pour un dossier en attente, utilisez « Modifier le montant » ou validez le paiement avec la bonne référence." });
       }
 
-      const previousAmount = application.paymentConfirmedAmount ?? application.paymentAmount ?? DEFAULT_OPENING_FEE_XAF;
+      const previousAmount = application.paymentConfirmedAmount ?? application.paymentAmount ?? proposedOpeningFee(application.visaType);
       const previousReference = application.paymentTransactionId ?? "";
       const nextAmount = input.confirmedAmount ?? previousAmount;
       const nextReference = input.paymentReference?.trim() || previousReference;

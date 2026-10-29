@@ -14,7 +14,7 @@ describe("official dossier evaluation and payment gate", () => {
     // vérifie d'abord cette preuve de compte, puis retombe sur isOpeningPaymentValidated (dossier en ligne/agence) :
     // aucune des deux voies n'est jamais contournée.
     expect(source).toContain("const openingPayment = await getOpeningPaymentRecord(db, candidate.id);");
-    expect(source).toContain("if (!openingPayment && !(await isOpeningPaymentValidated(db, candidate))) {");
+    expect(source).toContain("if (!openingPayment?.proofFileUrl?.trim() && !(await isOpeningPaymentValidated(db, candidate))) {");
     expect(source).toContain('latestApplication?.paymentStatus === "SUCCESS"');
     expect(source).toContain('eq(agencyDossiers.initialPaymentStatus, "paid")');
     expect(source).toContain("async function getOpeningPaymentRecord");

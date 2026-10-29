@@ -94,6 +94,7 @@ import { evaluationFormsRouter } from "./routers/evaluationForms";
 import { countryCatalogRouter } from "./routers/countryCatalog";
 import { studyCatalogRouter } from "./routers/studyCatalog";
 import { stayProgramsRouter } from "./routers/stayPrograms";
+import { activationSafetyRouter } from "./routers/activationSafety";
 import { opportunitiesInboxRouter } from "./routers/opportunitiesInbox";
 import { employerOffersRouter } from "./routers/employerOffers";
 import { jobOffersRouter } from "./routers/jobOffers";
@@ -229,6 +230,7 @@ export const appRouter = router({
   countryCatalog: countryCatalogRouter,
   studyCatalog: studyCatalogRouter,
   stayPrograms: stayProgramsRouter,
+  activationSafety: activationSafetyRouter,
   opportunitiesInbox: opportunitiesInboxRouter,
   employerOffers: employerOffersRouter,
   jobOffers: jobOffersRouter,
