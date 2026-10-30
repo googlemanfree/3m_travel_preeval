@@ -103,9 +103,9 @@ const ORIGIN = OFFICIAL_SITE_ORIGIN;
 const SITE = BRAND_PUBLIC_NAME;
 const LEGAL = "RC/YAO/2019/A/2567 · NIU M112417203369H";
 const SOCIAL_IMAGE_ALT = `Aperçu ${BRAND_PUBLIC_NAME}`;
-/** Titre et description de l'accueil, fixés par l'agence ; le titre dépasse volontairement les 60 caractères usuels. */
-const HOME_TITLE = `${BRAND_PUBLIC_NAME} | Voyages, Visas, Études & Mobilité Internationale`;
-const HOME_DESCRIPTION = `${BRAND_PUBLIC_NAME} accompagne candidats africains : visas, études, voyages et suivi à distance — bureaux Yaoundé et Ottawa.`;
+/** Métadonnées d'accueil courtes, descriptives et alignées sur les recherches locales et internationales. */
+const HOME_TITLE = `${BRAND_PUBLIC_NAME} | Agence de voyage, visas et mobilité`;
+const HOME_DESCRIPTION = `Agence de voyage à Yaoundé et Ottawa : billets, hôtels, visas, études à l’étranger et préparation de dossiers de mobilité internationale.`;
 /** Logo stable (image carrée du site) : le logo des données structurées ne doit pas être l'image de partage, qui change à chaque page. */
 const LOGO_URL = `${OFFICIAL_SITE_ORIGIN}/icon-512.png`;
 /** Portrait SEO du fondateur — Meta / Google doivent identifier Aureol DONFACK ↔ 3M Group SARL. */
@@ -263,7 +263,7 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
     heading: "Your international mobility project, prepared with method",
     lead: "3M TRAVEL AGENCY supports candidates across Africa with remote follow-up. Decisions by authorities, employers and external partners remain independent of the agency.",
   },
-  "/": { title: HOME_TITLE, description: HOME_DESCRIPTION, keywords: ["voyages", "visas", "études à l'étranger", "mobilité internationale", "Afrique", "suivi à distance", "3M TRAVEL AGENCY"], heading: "3M TRAVEL AGENCY : de l’Afrique vers le monde — visas, études et mobilité internationale", lead: "Évaluation gratuite, accompagnement à distance pour candidats africains, bureaux Yaoundé et Ottawa, joignable par WhatsApp — agence enregistrée depuis 2019." },
+  "/": { title: HOME_TITLE, description: HOME_DESCRIPTION, keywords: ["agence de voyage Yaoundé", "visas Cameroun", "études à l'étranger", "mobilité internationale", "billets d'avion", "hôtels", "3M TRAVEL AGENCY"], heading: "3M TRAVEL AGENCY : agence de voyage, visas et mobilité internationale", lead: "Billets, hôtels, visas et préparation de dossiers pour les études et la mobilité internationale, depuis Yaoundé et Ottawa — avec une évaluation claire et un suivi traçable." },
   "/canada": { title: `Visa et immigration Canada | ${SITE}`, description: "Préparez votre projet Canada avec des informations officielles et un accompagnement administratif documenté, sans promesse de résultat.", keywords: ["visa Canada", "immigration Canada", "permis de travail", "études au Canada", "3M TRAVEL AGENCY"], heading: "Démarches Canada", lead: "Préparez votre projet avec des informations vérifiables, sans promesse d’admission, d’emploi ou de résidence." },
   "/canada/crs": { title: `Calculatrice CRS Canada | ${SITE}`, description: "Calculez votre score indicatif du Système de classement global pour Entrée express, avec les quatre compétences linguistiques et les repères officiels IRCC.", keywords: ["calculatrice CRS", "score CRS Canada", "Entrée express", "CLB", "NCLC", "IRCC"], heading: "Calculatrice CRS Canada", lead: "Saisissez votre profil et vos résultats linguistiques pour obtenir une estimation indicative du score CRS. Le résultat officiel dépend d’IRCC et de votre profil Entrée express." },
   "/schengen": { title: `Espace Schengen | ${SITE}`, description: "Repères administratifs pour les projets de visa et de mobilité vers l’espace Schengen.", heading: "Démarches Schengen", lead: "Les exigences varient selon le pays et la situation individuelle ; les liens institutionnels sont prioritaires." },

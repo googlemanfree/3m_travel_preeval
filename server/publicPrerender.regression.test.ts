@@ -21,10 +21,10 @@ describe("pré-rendu public indexable", () => {
     const description = decode(rendered.html.match(/<meta name="description" content="([^"]*)"/)?.[1] ?? "");
     const keywords = rendered.html.match(/<meta name="keywords" content="([^"]*)"/)?.[1].split(", ") ?? [];
     const heading = rendered.html.match(/<h2>([^<]*)<\/h2>/)?.[1] ?? "";
-    // Titre et description fixés par l'agence : exactement ces textes, dans des bornes raisonnables.
-    expect(title).toBe("3M TRAVEL AGENCY | Voyages, Visas, Études & Mobilité Internationale");
-    expect(description).toContain("candidats africains");
-    expect(description).toContain("suivi à distance");
+    // Métadonnées d'accueil courtes, locales et alignées sur l'offre réelle.
+    expect(title).toBe("3M TRAVEL AGENCY | Agence de voyage, visas et mobilité");
+    expect(description).toContain("Agence de voyage à Yaoundé et Ottawa");
+    expect(description).toContain("préparation de dossiers de mobilité internationale");
     expect(description).toContain("Yaoundé et Ottawa");
     expect(title.length).toBeGreaterThanOrEqual(30);
     expect(title.length).toBeLessThanOrEqual(75);
@@ -33,7 +33,7 @@ describe("pré-rendu public indexable", () => {
     expect(keywords.length).toBeGreaterThanOrEqual(3);
     expect(keywords.length).toBeLessThanOrEqual(8);
     expect(heading.length).toBeLessThanOrEqual(80);
-    expect(rendered.html).toContain("<h1>3M TRAVEL AGENCY : de l’Afrique vers le monde — visas, études et mobilité internationale</h1>");
+    expect(rendered.html).toContain("<h1>3M TRAVEL AGENCY : agence de voyage, visas et mobilité internationale</h1>");
     expect(rendered.html).toContain("<h2>Informations vérifiables avant toute démarche</h2>");
     expect(rendered.html).toContain('<script type="application/ld+json">');
     expect(rendered.html).toContain('"@type":"Organization"');
