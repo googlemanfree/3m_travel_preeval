@@ -2,6 +2,7 @@
  * Routeur tRPC — Espace Candidat
  * Gère l'inscription, la connexion, le profil, le dossier, les documents et la messagerie.
  */
+import { isActivatedStatus } from "../../shared/candidateStatus";
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
 import { and, asc, desc, eq, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
@@ -715,7 +716,7 @@ export const candidateRouter = router({
     const { requiresPassportPhotoUpload } = await import("../../shared/passportPhotoRequirement");
     const passportPhotoRequired = requiresPassportPhotoUpload({
       dossierStatus: c.dossierStatus,
-      hasAgencyDossier: c.dossierStatus !== "nouveau",
+      hasAgencyDossier: isActivatedStatus(c.dossierStatus),
       visaType: c.visaType,
       avatarVerificationReason: c.avatarVerificationReason,
     });
@@ -959,7 +960,7 @@ export const candidateRouter = router({
       const replacesPassportRequest = isPassportPhotoRequestReason(ctx.candidate.avatarVerificationReason)
         || requiresPassportPhotoUpload({
           dossierStatus: ctx.candidate.dossierStatus,
-          hasAgencyDossier: ctx.candidate.dossierStatus !== "nouveau",
+          hasAgencyDossier: isActivatedStatus(ctx.candidate.dossierStatus),
           visaType: ctx.candidate.visaType,
           avatarVerificationReason: ctx.candidate.avatarVerificationReason,
         });
@@ -3143,7 +3144,7 @@ export const candidateRouter = router({
     const { requiresPassportPhotoUpload } = await import("../../shared/passportPhotoRequirement");
     const passportPhotoRequired = requiresPassportPhotoUpload({
       dossierStatus: candidate.dossierStatus,
-      hasAgencyDossier: Boolean(activeAgencyDossier) || candidate.dossierStatus !== "nouveau",
+      hasAgencyDossier: Boolean(activeAgencyDossier) || isActivatedStatus(candidate.dossierStatus),
       visaType: visaForPassport,
       projectType: clientEvaluations[0]?.projectType ?? null,
       avatarVerificationReason: refreshedReason?.avatarVerificationReason ?? candidate.avatarVerificationReason,

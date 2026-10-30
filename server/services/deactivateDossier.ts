@@ -5,6 +5,7 @@
  * pré-compte au lieu de disparaître) et l'annulation d'une activation par erreur. L'état précédent est conservé dans
  * agency_settings (clé dossier_deactivation:<id>) pour permettre « Annuler la désactivation ».
  */
+import { isActivatedStatus, isPreDossierStatus } from "../../shared/candidateStatus";
 import { and, desc, eq, inArray, isNull, ne, sql } from "drizzle-orm";
 import { agencyDossierHistory, agencyDossiers, agencySettings, candidates } from "../../drizzle/schema";
 import { clientNotifications } from "../../drizzle/caseTrackingSchema";
@@ -64,7 +65,7 @@ export async function deactivateCandidateDossier(
 ): Promise<DeactivationResult> {
   const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
   if (!candidate) return { ok: false, reason: "introuvable" };
-  if (candidate.dossierStatus === "nouveau") return { ok: false, reason: "deja_pre_compte" };
+  if (isPreDossierStatus(candidate.dossierStatus)) return { ok: false, reason: "deja_pre_compte" };
 
   const linked = await db.select({ id: agencyDossiers.id, status: agencyDossiers.status, initialPaymentStatus: agencyDossiers.initialPaymentStatus })
     .from(agencyDossiers)
@@ -129,7 +130,7 @@ export async function revertToPreAccountAfterDossierRemoval(db: Db, input: { ema
   const [candidate] = await db.select({ id: candidates.id, dossierStatus: candidates.dossierStatus }).from(candidates)
     .where(and(isNull(candidates.deletedAt), sql`LOWER(TRIM(${candidates.email})) = ${email}`))
     .limit(1);
-  if (!candidate || candidate.dossierStatus === "nouveau") return false;
+  if (!candidate || isPreDossierStatus(candidate.dossierStatus)) return false;
   const [remaining] = await db.select({ id: agencyDossiers.id }).from(agencyDossiers)
     .where(and(isNull(agencyDossiers.deletedAt), sql`LOWER(TRIM(${agencyDossiers.email})) = ${email}`))
     .limit(1);
@@ -144,7 +145,7 @@ export async function reactivateCandidateDossier(db: Db, input: { candidateId: n
   if (!snapshot) return { ok: false, reason: "aucune_desactivation" };
   const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
   if (!candidate) return { ok: false, reason: "compte_introuvable" };
-  if (candidate.dossierStatus !== "nouveau") return { ok: false, reason: "deja_actif" };
+  if (isActivatedStatus(candidate.dossierStatus)) return { ok: false, reason: "deja_actif" };
   const evidence = await getOpeningPaymentEvidence(db, { id: candidate.id, email: candidate.email });
   if (!evidence.ok) return { ok: false, reason: "preuve_manquante" };
 

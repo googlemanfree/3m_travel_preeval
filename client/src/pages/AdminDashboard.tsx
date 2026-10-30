@@ -2,6 +2,7 @@
  * Dashboard Administrateur — 3M TRAVEL AGENCY
  * Gestion unifiée des candidats (dossiers en ligne + dossiers agence)
  */
+import { isPreDossierStatus } from "@shared/candidateStatus";
 import React, { lazy, Suspense, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
 import { trpc } from "@/lib/trpc";
 import { evaluationSourceTypeOf } from "@/lib/evaluationSourceType";
@@ -1167,7 +1168,7 @@ export function CandidateDetailModal({
                   isOfflineValidating={offlineEvaluationMutation.isPending}
                 />
                 </div>
-                {candidate?.internalStatus === "nouveau" ? (
+                {isPreDossierStatus(candidate?.internalStatus) ? (
                   <section id="predossier-treatment-panel" className="scroll-mt-24 rounded-xl border border-blue-200 bg-white p-5 shadow-sm" aria-label="Actions de traitement du compte pré-dossier">
                     <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
                       <div>

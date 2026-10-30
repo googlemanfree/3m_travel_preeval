@@ -149,7 +149,7 @@ describe("pilotage avancé : serveur", () => {
 
   it("valider une preuve : pré-compte seulement, une fois, avec motif obligatoire en cas d'écart de montant, et tout est journalisé", () => {
     const validate = router.slice(router.indexOf("adminValidateProof"), router.indexOf("adminFunnel"));
-    expect(validate).toContain('candidate.dossierStatus !== "nouveau"');
+    expect(validate).toContain('isActivatedStatus(candidate.dossierStatus)');
     expect(validate).toContain("Le paiement de ce compte est déjà confirmé");
     expect(validate).toContain("input.confirmedAmount !== expected && (input.reason ?? \"\").length < 5");
     expect(validate).toContain("paymentAuditLogs");

@@ -3,6 +3,7 @@
  * Permet de gérer les 3 types d'admins : Évaluation, Accompagnement, Procédures
  */
 
+import { isActivatedStatus } from "../../shared/candidateStatus";
 import { publicProcedure, router } from "../_core/trpc";
 import { requireAdminSessionFromCookie, requireSuperAdminSession, requireValidAdminSession } from "./adminAuth";
 import { richTextToPlainText, sanitizeRichTextHtml } from "../services/richText";
@@ -3197,7 +3198,7 @@ export const adminRouter = router({
           let linkedAgencyDossierId: number | null = null;
           let linkedAgencyDossierStatus: string | null = null;
           let linkedAgencyDossierPayment: string | null = null;
-          if (account.dossierStatus !== "nouveau") {
+          if (isActivatedStatus(account.dossierStatus)) {
             const [linkedDossier] = await db.select({ id: agencyDossiers.id, destination: agencyDossiers.destination, status: agencyDossiers.status, initialPaymentStatus: agencyDossiers.initialPaymentStatus }).from(agencyDossiers)
               .where(and(isNull(agencyDossiers.deletedAt), sql`LOWER(${agencyDossiers.email}) = LOWER(${account.email})`))
               .orderBy(desc(agencyDossiers.createdAt))
@@ -3233,7 +3234,7 @@ export const adminRouter = router({
             .where(eq(agencySettings.settingKey, `opening_payment:${account.id}`))
             .limit(1);
           const pendingDocuments = docs.filter((doc) => doc.status === "uploaded").length;
-          const dossierActivated = account.dossierStatus !== "nouveau" || Boolean(linkedAgencyDossierId);
+          const dossierActivated = isActivatedStatus(account.dossierStatus) || Boolean(linkedAgencyDossierId);
           // Paiement d’ouverture uniquement — l’activation ne doit pas faux-valider le protocole.
           const paymentConfirmed = Boolean(openingPaymentRow);
           const mappedDocuments = docs.map((doc) => ({
@@ -5254,7 +5255,7 @@ export const adminRouter = router({
         const [record] = await db.select({ id: candidates.id, fullName: candidates.fullName, email: candidates.email, dossierStatus: candidates.dossierStatus }).from(candidates).where(and(eq(candidates.id, id), isNull(candidates.deletedAt))).limit(1);
         if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat actif introuvable." });
         // Supprimer un compte activé le fait d'abord basculer en pré-compte : rien n'est perdu, et une seconde suppression l'envoie à la corbeille.
-        if (record.dossierStatus !== "nouveau") {
+        if (isActivatedStatus(record.dossierStatus)) {
           const reverted = await deactivateCandidateDossier(db, { candidateId: id, actorEmail: admin.email ?? "admin", reason: input.reason });
           if (reverted.ok) return { success: true, source, id, reference: reverted.reference, message: "Compte activé : il est repassé en pré-compte, rien n'est supprimé. Supprimez-le de nouveau pour le placer dans la corbeille." };
         }

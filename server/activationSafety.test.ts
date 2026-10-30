@@ -83,7 +83,7 @@ describe("désactivation, retour en pré-compte et annulations", () => {
 
   it("supprimer un compte activé le fait basculer en pré-compte ; supprimer son dossier aussi si plus aucun dossier ne reste", () => {
     const admin = read("server/routers/admin.ts");
-    expect(admin).toContain('if (record.dossierStatus !== "nouveau") {\n          const reverted = await deactivateCandidateDossier(');
+    expect(admin).toContain('if (isActivatedStatus(record.dossierStatus)) {\n          const reverted = await deactivateCandidateDossier(');
     expect(admin).toContain("revertToPreAccountAfterDossierRemoval(db, { email: record.email");
     expect((admin.match(/revertToPreAccountAfterDossierRemoval\(db/g) ?? []).length).toBe(2);
   });

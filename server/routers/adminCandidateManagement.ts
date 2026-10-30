@@ -1,4 +1,5 @@
 ﻿import { publicProcedure, router } from "../_core/trpc";
+import { isActivatedStatus } from "../../shared/candidateStatus";
 import { TRPCError } from "@trpc/server";
 import crypto from "node:crypto";
 import { z } from "zod";
@@ -454,7 +455,7 @@ export const adminCandidateManagementRouter = router({
 
       for (const account of accountRows) {
         const emailKey = account.email.trim().toLowerCase();
-        const paymentConfirmed = account.dossierStatus !== "nouveau" || openingPaidIds.has(account.id);
+        const paymentConfirmed = isActivatedStatus(account.dossierStatus) || openingPaidIds.has(account.id);
         const cockpit = buildCandidateCockpit({
           emailVerified: account.emailVerified,
           evaluationStatus: account.evaluationDeclarationStatus,
@@ -462,7 +463,7 @@ export const adminCandidateManagementRouter = router({
           paymentConfirmed,
           receiptApproved: receiptByEmail.has(emailKey),
           protocolSigned: false,
-          dossierActivated: account.dossierStatus !== "nouveau" || activeEmails.has(emailKey),
+          dossierActivated: isActivatedStatus(account.dossierStatus) || activeEmails.has(emailKey),
           pendingDocuments: pendingDocCount.get(account.id) ?? 0,
           destination: account.destination,
           visaType: account.visaType,
@@ -1329,7 +1330,7 @@ export const adminCandidateManagementRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
       if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
-      const alreadyActive = candidate.dossierStatus !== "nouveau";
+      const alreadyActive = isActivatedStatus(candidate.dossierStatus);
       const evaluationValidated = candidate.evaluationDeclarationStatus === "validated" && Boolean(candidate.evaluationReviewedAt);
       // Preuve saisie directement sur ce compte (sans dossier) ; consultée en premier pour éviter d'interroger
       // dossiers en ligne/agence quand elle suffit déjà, et exposée telle quelle à l'écran d'activation.
@@ -1393,7 +1394,7 @@ export const adminCandidateManagementRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
       if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
-      if (candidate.dossierStatus !== "nouveau") throw new TRPCError({ code: "CONFLICT", message: ACTIVATION_MESSAGES.alreadyActive });
+      if (isActivatedStatus(candidate.dossierStatus)) throw new TRPCError({ code: "CONFLICT", message: ACTIVATION_MESSAGES.alreadyActive });
       const existing = await getOpeningPaymentRecord(db, candidate.id);
       if (existing && !input.additionalPaymentReference?.trim()) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Le paiement a déjà été confirmé par ${existing.validatedBy} le ${new Date(existing.validatedAt).toLocaleString("fr-FR")}. Aucune seconde validation n'est nécessaire.` });
@@ -1473,7 +1474,7 @@ export const adminCandidateManagementRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
       if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
-      if (candidate.dossierStatus !== "nouveau") throw new TRPCError({ code: "CONFLICT", message: ACTIVATION_MESSAGES.alreadyActive });
+      if (isActivatedStatus(candidate.dossierStatus)) throw new TRPCError({ code: "CONFLICT", message: ACTIVATION_MESSAGES.alreadyActive });
       if (candidate.evaluationDeclarationStatus !== "validated" || !candidate.evaluationReviewedAt) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: ACTIVATION_MESSAGES.evaluation });
       }

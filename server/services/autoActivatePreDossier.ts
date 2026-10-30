@@ -3,6 +3,7 @@
  * et que destination / visa sont déjà connus sur le compte.
  */
 
+import { isActivatedStatus } from "../../shared/candidateStatus";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import {
   agencyDossierHistory,
@@ -49,7 +50,7 @@ export async function activateReadyPreDossier(
   const actor = (options?.actorEmail || AUTO_ACTIVATE_ACTOR).trim() || AUTO_ACTIVATE_ACTOR;
   const [candidate] = await db.select().from(candidates).where(and(eq(candidates.id, candidateId), isNull(candidates.deletedAt))).limit(1);
   if (!candidate) return { ok: false, reason: "compte_introuvable" };
-  if (candidate.dossierStatus !== "nouveau") return { ok: false, reason: "deja_actif" };
+  if (isActivatedStatus(candidate.dossierStatus)) return { ok: false, reason: "deja_actif" };
   if (candidate.evaluationDeclarationStatus !== "validated" || !candidate.evaluationReviewedAt) {
     return { ok: false, reason: "evaluation_incomplete" };
   }

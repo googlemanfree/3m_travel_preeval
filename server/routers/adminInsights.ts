@@ -1,3 +1,4 @@
+import { isActivatedStatus } from "../../shared/candidateStatus";
 import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, like, lte, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -79,7 +80,7 @@ async function loadProofQueue(db: Db): Promise<ProofRow[]> {
     queue.push({
       fileId: row.id, candidateId: row.candidateId, fullName: row.fullName, email: row.email, dossierStatus: row.dossierStatus, fileName: row.fileName, mimeType: row.mimeType,
       uploadedAt: iso(row.uploadedAt)!, ageDays: Math.floor((Date.now() - new Date(row.uploadedAt).getTime()) / DAY), expectedAmount: await expectedFeeFor(db, row),
-      alreadyActive: row.dossierStatus !== "nouveau", duplicateOf: Array.from(new Set((bySignature.get(`${row.fileName}|${row.size}`) ?? []).filter((id) => id !== row.candidateId))), fileKey: row.fileKey,
+      alreadyActive: isActivatedStatus(row.dossierStatus), duplicateOf: Array.from(new Set((bySignature.get(`${row.fileName}|${row.size}`) ?? []).filter((id) => id !== row.candidateId))), fileKey: row.fileKey,
     });
   }
   return queue;
@@ -165,7 +166,7 @@ export const adminInsightsRouter = router({
     if (!file || !file.fileName.startsWith(PROOF_NAME_PREFIX)) throw new TRPCError({ code: "NOT_FOUND", message: "Preuve introuvable." });
     const [candidate] = await db.select().from(candidates).where(eq(candidates.id, file.candidateId)).limit(1);
     if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
-    if (candidate.dossierStatus !== "nouveau") throw new TRPCError({ code: "CONFLICT", message: "Ce compte a déjà un dossier actif : contrôlez-le dans « Activations à contrôler »." });
+    if (isActivatedStatus(candidate.dossierStatus)) throw new TRPCError({ code: "CONFLICT", message: "Ce compte a déjà un dossier actif : contrôlez-le dans « Activations à contrôler »." });
     const [existing] = await db.select({ id: agencySettings.id }).from(agencySettings).where(eq(agencySettings.settingKey, `${OPENING_PAYMENT_KEY_PREFIX}${candidate.id}`)).limit(1);
     if (existing) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le paiement de ce compte est déjà confirmé." });
     const expected = await expectedFeeFor(db, candidate);
