@@ -28,7 +28,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
 import { generateEvaluationReportHTML } from "../evaluationService";
 import { inspectBilan, toBilanHtml } from "../../shared/bilanContent";
-import { bilanVariablesFrom, resolveBilanVariables } from "../../shared/bilanVariables";
+import { bilanVariablesFrom, draftExtras, resolveBilanVariables } from "../../shared/bilanVariables";
 import { reviewBilan } from "../../shared/bilanReview";
 import { proposedOpeningFee } from "../../shared/openingFee";
 import { frameBrandedDocument, renderBrandedEmailHtml } from "../../shared/brandLetterhead";
@@ -43,6 +43,18 @@ import { buildEvaluationReminderEmailHtml, buildEvaluationReminderEmailSubject, 
 import { resolveEvaluationProjectKind } from "../../shared/evaluationVisaCv";
 import { EVALUATION_KIND_LABELS } from "../../shared/evaluationBilanTemplates";
 import { maybeSendJustificatifsAfterBilan } from "../services/autoJustificatifsAfterBilan";
+
+/** Bilans en cours d'envoi : un double clic ou une requête rejouée ne peut jamais envoyer deux e-mails pour le même dossier. */
+const evaluationSendsInProgress = new Set<number>();
+export async function exclusiveEvaluationSend<T>(key: number, work: () => Promise<T>): Promise<T> {
+  if (evaluationSendsInProgress.has(key)) throw new TRPCError({ code: "CONFLICT", message: "L’envoi de ce bilan est déjà en cours : patientez quelques secondes." });
+  evaluationSendsInProgress.add(key);
+  try {
+    return await work();
+  } finally {
+    evaluationSendsInProgress.delete(key);
+  }
+}
 
 function resolveDeliveryVisaJournal(application: { visaType?: string | null; scoringDetails?: string | null }) {
   let scoringProject: string | null = null;
@@ -80,6 +92,10 @@ const evaluationDraftSchema = z.object({
   bilanHtml: z.string().max(400_000).optional(),
   /** Texte tel que saisi dans l'éditeur simple : renvoyé tel quel à la réouverture (le HTML est dérivé, pas rééditable sans perte). */
   bilanSource: z.string().max(400_000).optional(),
+  /** Frais d'ouverture choisis par l'administrateur pour ce profil (XAF) ; date limite et conseiller facultatifs, repris par {{montant}}, {{date_limite}}, {{conseiller}}. */
+  openingFeeXaf: z.number().int().min(1000).max(5_000_000).optional(),
+  openingDeadline: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
+  advisorName: z.string().trim().max(120).optional(),
   subject: z.string().trim().min(4).max(255).optional(),
   requiresSecondApproval: z.boolean().default(false),
   language: z.enum(["fr", "en"]).default("fr"),
@@ -778,6 +794,9 @@ initializeEvaluationDelivery: publicProcedure
           profileSummary: String(adminDraft.profileSummary ?? ""),
           bilanHtml: typeof adminDraft.bilanHtml === "string" ? adminDraft.bilanHtml : "",
           bilanSource: typeof adminDraft.bilanSource === "string" ? adminDraft.bilanSource : "",
+          openingFeeXaf: typeof adminDraft.openingFeeXaf === "number" ? adminDraft.openingFeeXaf : null,
+          openingDeadline: typeof adminDraft.openingDeadline === "string" ? adminDraft.openingDeadline : "",
+          advisorName: typeof adminDraft.advisorName === "string" ? adminDraft.advisorName : "",
           strengths: Array.isArray(adminDraft.strengths) ? adminDraft.strengths.map(String) : [],
           weaknesses: Array.isArray(adminDraft.weaknesses) ? adminDraft.weaknesses.map(String) : [],
           recommendations: Array.isArray(adminDraft.recommendations) ? adminDraft.recommendations.map(String) : [],
@@ -899,18 +918,19 @@ initializeEvaluationDelivery: publicProcedure
       const previousDraft = (details.adminDraft && typeof details.adminDraft === "object" ? details.adminDraft : {}) as Record<string, unknown>;
       const pastedBilanHtml = typeof input.bilanHtml === "string" ? toBilanHtml(input.bilanHtml) : undefined;
       if (pastedBilanHtml && inspectBilan(pastedBilanHtml).empty) throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan collé est vide ou trop court : collez le texte complet du bilan." });
-      const nextDraft = { ...previousDraft, ...(pastedBilanHtml !== undefined ? { bilanHtml: pastedBilanHtml || undefined, bilanSource: pastedBilanHtml && typeof input.bilanSource === "string" ? input.bilanSource : undefined, bilanMode: pastedBilanHtml ? "libre" : "structure" } : {}), destination: input.destination, finalScore: input.finalScore, verdict: input.verdict, strengths: input.strengths, weaknesses: input.weaknesses, recommendations: input.recommendations, language: input.language, advisorValidated: false, advisorValidatedAt: null, advisorValidatedByAdminId: null };
+      const nextDraft = { ...previousDraft, ...(pastedBilanHtml !== undefined ? { bilanHtml: pastedBilanHtml || undefined, bilanSource: pastedBilanHtml && typeof input.bilanSource === "string" ? input.bilanSource : undefined, bilanMode: pastedBilanHtml ? "libre" : "structure" } : {}), destination: input.destination, finalScore: input.finalScore, verdict: input.verdict, strengths: input.strengths, weaknesses: input.weaknesses, recommendations: input.recommendations, language: input.language, ...(input.openingFeeXaf !== undefined ? { openingFeeXaf: input.openingFeeXaf } : {}), ...(input.openingDeadline !== undefined ? { openingDeadline: input.openingDeadline || undefined } : {}), ...(input.advisorName !== undefined ? { advisorName: input.advisorName || undefined } : {}), advisorValidated: false, advisorValidatedAt: null, advisorValidatedByAdminId: null };
       const nextDetails = { ...details, adminDraft: nextDraft };
       const messageHtml = input.message ? normalizeAdminMessage(input.message) : null;
       const messagePlainText = messageHtml ? richTextToPlainText(messageHtml) : "";
       if (input.message && messagePlainText.length < 3) throw new TRPCError({ code: "BAD_REQUEST", message: "Le message d’accompagnement doit contenir au moins trois caractères lisibles." });
-      const updatedApplication = { ...application, destination: input.destination, scoringDetails: JSON.stringify(nextDetails), scoringTotal: input.finalScore, evaluationDeliveryMessage: messageHtml || null, evaluationDeliverySubject: input.subject || null };
+      const feeToApply = input.openingFeeXaf !== undefined && application.paymentStatus !== "SUCCESS" ? input.openingFeeXaf : undefined;
+      const updatedApplication = { ...application, ...(feeToApply !== undefined ? { paymentAmount: feeToApply } : {}), destination: input.destination, scoringDetails: JSON.stringify(nextDetails), scoringTotal: input.finalScore, evaluationDeliveryMessage: messageHtml || null, evaluationDeliverySubject: input.subject || null };
       const scoreBadge = input.finalScore >= 80 ? "eligible" : input.finalScore >= 60 ? "admissible" : "faible";
       const latestVersion = (await db.select({ versionNumber: evaluationBilanVersions.versionNumber }).from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, application.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(1))[0];
       const versionNumber = (latestVersion?.versionNumber ?? 0) + 1;
       const approvalStatus = input.requiresSecondApproval ? "pending" : "not_required" as const;
       const reportHtml = generateEvaluationReportHTML(updatedApplication);
-      await db.update(applications).set({ destination: input.destination, scoringDetails: updatedApplication.scoringDetails, scoringTotal: input.finalScore, scoringBadge: scoreBadge, evaluationDeliveryMessage: messageHtml || null, evaluationDeliverySubject: input.subject || null, evaluationDeliveryStatus: "draft", evaluationScheduledAt: null, evaluationRequiresSecondApproval: input.requiresSecondApproval, evaluationApprovalStatus: approvalStatus, evaluationApprovedAt: null, evaluationApprovedByAdminId: null, updatedAt: new Date() }).where(eq(applications.id, application.id));
+      await db.update(applications).set({ ...(feeToApply !== undefined ? { paymentAmount: feeToApply } : {}), destination: input.destination, scoringDetails: updatedApplication.scoringDetails, scoringTotal: input.finalScore, scoringBadge: scoreBadge, evaluationDeliveryMessage: messageHtml || null, evaluationDeliverySubject: input.subject || null, evaluationDeliveryStatus: "draft", evaluationScheduledAt: null, evaluationRequiresSecondApproval: input.requiresSecondApproval, evaluationApprovalStatus: approvalStatus, evaluationApprovedAt: null, evaluationApprovedByAdminId: null, updatedAt: new Date() }).where(eq(applications.id, application.id));
       await db.insert(evaluationBilanVersions).values({ applicationId: application.id, versionNumber, contentJson: JSON.stringify({ adminDraft: nextDraft, subject: input.subject || null, message: messageHtml || null, messagePlainText: messagePlainText || null }), reportHtml, createdByAdminAccountId: admin.id, requiresSecondApproval: input.requiresSecondApproval, approvalStatus: input.requiresSecondApproval ? "pending" : "draft" });
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
       if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_draft_saved", comment: `Version ${versionNumber} du bilan enregistrée${input.requiresSecondApproval ? " et soumise à une seconde approbation" : ""}.`, actorAdminAccountId: admin.id }); }
@@ -935,7 +955,7 @@ initializeEvaluationDelivery: publicProcedure
       if (freeBilan) {
         // Bilan libre : le même contrôle que le rapport structuré. Une promesse de résultat ou une donnée sensible bloque la validation (jamais supprimée en silence).
         // Les variables ({{montant}}, {{nom}}…) sont remplacées avant le contrôle : seule une zone réellement vide bloque la validation.
-        const resolvedBilan = resolveBilanVariables(freeBilan, bilanVariablesFrom({ fullName: application.fullName, dossierNumber: application.dossierNumber, destination: application.destination, visaType: application.visaType, paymentAmount: application.paymentAmount }));
+        const resolvedBilan = resolveBilanVariables(freeBilan, bilanVariablesFrom({ fullName: application.fullName, dossierNumber: application.dossierNumber, destination: application.destination, visaType: application.visaType, paymentAmount: application.paymentAmount, ...draftExtras(previousDraft) }));
         const inspection = inspectBilan(resolvedBilan);
         if (inspection.empty) throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan est vide ou trop court pour être validé." });
         if (inspection.forbiddenTerms.length > 0) throw new TRPCError({ code: "BAD_REQUEST", message: `Formulation à revoir avant validation (promesse de résultat) : ${inspection.forbiddenTerms.join(", ")}.` });
@@ -1002,7 +1022,7 @@ initializeEvaluationDelivery: publicProcedure
       previewConfirmed: z.literal(true),
       attachments: z.array(z.object({ name: z.string().trim().min(1).max(255), mimeType: z.enum(["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/jpeg", "image/png"]), contentBase64: z.string().min(1).max(8_000_000), size: z.number().int().positive().max(5 * 1024 * 1024) })).max(3).default([]),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(({ input }) => exclusiveEvaluationSend(input.sourceRecordId, async () => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
@@ -1093,7 +1113,7 @@ initializeEvaluationDelivery: publicProcedure
         justificatifsAuto,
         message: `Bilan ${visaJournal.kindLabel} validé et envoyé immédiatement dans l’espace client et par e-mail.`,
       };
-    }),
+    })),
   listEvaluationDeliveryHistory: publicProcedure
     .input(sessionInput.extend({ sourceRecordId: z.number().int().positive() }))
     .query(async ({ input }) => {

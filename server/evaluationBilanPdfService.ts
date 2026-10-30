@@ -4,7 +4,7 @@ import { PROFILE_DEFS, resolveEvaluationProfile } from "../shared/evaluationProf
 import { applyLetterhead, letterheadLayout, serviceFocusLabel, type LetterheadOptions } from "../shared/brandLetterhead";
 import { loadBrandLogo } from "./utils/brandLogo";
 import { drawBilanBlocks, parsePdfBlocks } from "./services/bilanPdfRichText";
-import { bilanVariablesFrom, resolveBilanVariables } from "../shared/bilanVariables";
+import { bilanVariablesFrom, draftExtras, resolveBilanVariables } from "../shared/bilanVariables";
 import { storagePut } from "./storage";
 
 type BilanDraft = {
@@ -96,7 +96,7 @@ export async function createFinalEvaluationPdf(application: Application, version
       doc.setFont("helvetica", "bold"); doc.setFontSize(10);
       doc.text(`Indice de préparation (IFP 3M) : ${draft.finalScore}/100`, 18, y); y += 8;
     }
-    y = drawBilanBlocks(doc, parsePdfBlocks(resolveBilanVariables(draft.bilanHtml as string, bilanVariablesFrom({ fullName: application.fullName, dossierNumber: application.dossierNumber, destination: application.destination, visaType: application.visaType, paymentAmount: application.paymentAmount, score: typeof draft.finalScore === "number" ? draft.finalScore : null }))), { left: layout.marginLeft, width: layout.contentWidth, nextTop: layout.nextPageTop, bottom: layout.contentBottom }, y) + 4;
+    y = drawBilanBlocks(doc, parsePdfBlocks(resolveBilanVariables(draft.bilanHtml as string, bilanVariablesFrom({ fullName: application.fullName, dossierNumber: application.dossierNumber, destination: application.destination, visaType: application.visaType, paymentAmount: application.paymentAmount, score: typeof draft.finalScore === "number" ? draft.finalScore : null, ...draftExtras(draft) }))), { left: layout.marginLeft, width: layout.contentWidth, nextTop: layout.nextPageTop, bottom: layout.contentBottom }, y) + 4;
     doc.setTextColor(31, 41, 55);
   } else {
   doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.text("Synthèse de l’évaluation", 18, y); y += 8;

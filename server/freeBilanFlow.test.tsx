@@ -69,7 +69,7 @@ beforeAll(() => {
   (window.HTMLElement.prototype as any).hasPointerCapture = vi.fn();
   (window as any).ResizeObserver = class { observe() {} unobserve() {} disconnect() {} };
 });
-afterEach(() => { cleanup(); vi.restoreAllMocks(); state.calls = []; state.results = {}; state.queries = {}; state.fetches = {}; });
+afterEach(() => { cleanup(); vi.restoreAllMocks(); try { localStorage.clear(); } catch { /* ignoré */ } state.calls = []; state.results = {}; state.queries = {}; state.fetches = {}; });
 
 const loaded = (overrides?: Overrides) => ({ data: deliveryData(overrides), isLoading: false, isFetching: false, isError: false, error: null, refetch: async () => ({ data: deliveryData(overrides) }) });
 const callbacks = { done: vi.fn(), close: vi.fn() };
@@ -173,6 +173,7 @@ describe("saisie, validation et envoi du bilan côté administration", () => {
     expect(confirm).toHaveBeenCalledTimes(1);
     expect(confirm.mock.calls[0][0]).toContain("Aïcha Diallo");
     expect(state.calls).toHaveLength(0);
+    await new Promise((done) => setTimeout(done, 0));
 
     fireEvent.click(screen.getByTestId("bilan-validate-send"));
     await waitFor(() => expect(callsOf(SEND)).toHaveLength(1));

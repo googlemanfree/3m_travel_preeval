@@ -7,7 +7,7 @@
 import { proposedOpeningFee } from "./openingFee";
 import { firstName } from "./remoteSupport";
 
-export const BILAN_VARIABLE_NAMES = ["nom", "prenom", "reference", "destination", "visa", "montant", "date", "score"] as const;
+export const BILAN_VARIABLE_NAMES = ["nom", "prenom", "reference", "destination", "visa", "montant", "date", "score", "date_limite", "conseiller"] as const;
 export type BilanVariableName = (typeof BILAN_VARIABLE_NAMES)[number];
 export type BilanVariableValues = Partial<Record<BilanVariableName, string | number | null | undefined>>;
 
@@ -20,10 +20,27 @@ export const BILAN_VARIABLE_LABELS: Record<BilanVariableName, string> = {
   montant: "Frais d'ouverture du dossier (selon le profil)",
   date: "Date du jour",
   score: "Score global",
+  date_limite: "Date limite pour ouvrir le dossier (choisie par l'administrateur)",
+  conseiller: "Conseiller référent (choisi par l'administrateur)",
 };
 
+/** Date limite et conseiller choisis par l'administrateur, lus dans le brouillon enregistré. */
+export const draftExtras = (draft: unknown): { openingDeadline: string | null; advisorName: string | null } => {
+  const source = (draft && typeof draft === "object" ? draft : {}) as Record<string, unknown>;
+  return { openingDeadline: typeof source.openingDeadline === "string" ? source.openingDeadline : null, advisorName: typeof source.advisorName === "string" ? source.advisorName : null };
+};
+
+/** « 2026-11-20 » → « 20 novembre 2026 » ; une date illisible donne null (la variable reste alors « à compléter »). */
+export function formatDeadline(value: string | null | undefined): string | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value ?? "").trim());
+  if (!match) return null;
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+  if (Number.isNaN(date.getTime()) || date.getUTCDate() !== Number(match[3])) return null;
+  return date.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+}
+
 /** Valeurs d'un dossier. Le montant est celui du dossier ; à défaut, le montant proposé pour ce type de visa (jamais un 0). */
-export function bilanVariablesFrom(input: { fullName: string; dossierNumber?: string | null; destination?: string | null; visaLabel?: string | null; visaType?: string | null; paymentAmount?: number | null; score?: number | null; now?: Date }): BilanVariableValues {
+export function bilanVariablesFrom(input: { fullName: string; dossierNumber?: string | null; destination?: string | null; visaLabel?: string | null; visaType?: string | null; paymentAmount?: number | null; score?: number | null; now?: Date; openingDeadline?: string | null; advisorName?: string | null }): BilanVariableValues {
   const amount = typeof input.paymentAmount === "number" && input.paymentAmount > 0 ? input.paymentAmount : proposedOpeningFee(input.visaLabel ?? input.visaType);
   const reference = input.dossierNumber && !input.dossierNumber.startsWith("EVAL-DRAFT-") ? input.dossierNumber : null;
   return {
@@ -35,6 +52,8 @@ export function bilanVariablesFrom(input: { fullName: string; dossierNumber?: st
     montant: formatAmount(amount),
     date: (input.now ?? new Date()).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }),
     score: typeof input.score === "number" && input.score > 0 ? `${Math.round(input.score)} / 100` : null,
+    date_limite: formatDeadline(input.openingDeadline),
+    conseiller: input.advisorName?.trim() || null,
   };
 }
 
