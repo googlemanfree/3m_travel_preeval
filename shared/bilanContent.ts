@@ -350,12 +350,13 @@ export function inspectBilan(html: string): BilanInspection {
 }
 
 const STYLE = {
-  h2: "font:700 19px/1.3 Arial,Helvetica,sans-serif;color:#17375e;margin:28px 0 12px;padding-bottom:7px;border-bottom:2px solid #bbd9ea",
+  h2: "font:700 20px/1.3 'Segoe UI',Calibri,Arial,Helvetica,sans-serif;color:#17375e;margin:30px 0 14px;padding:0 0 8px 12px;border-bottom:2px solid #bbd9ea;border-left:5px solid #2b6cb8;letter-spacing:.2px",
   h3: "font:700 15.5px/1.35 Arial,Helvetica,sans-serif;color:#2b6cb8;margin:22px 0 8px",
   h4: "font:700 12.5px/1.4 Arial,Helvetica,sans-serif;color:#17375e;margin:16px 0 6px;text-transform:uppercase;letter-spacing:.5px",
-  p: "margin:0 0 12px;line-height:1.7;color:#1f2937;font-size:14.5px",
-  ul: "margin:0 0 14px;padding-left:24px;color:#1f2937;font-size:14.5px;line-height:1.7",
-  ol: "margin:0 0 14px;padding-left:26px;color:#1f2937;font-size:14.5px;line-height:1.7",
+  p: "margin:0 0 13px;line-height:1.75;color:#1f2937;font-size:14.5px;font-family:'Segoe UI',Calibri,Arial,Helvetica,sans-serif;text-align:justify;text-justify:inter-word;hyphens:auto",
+  strong: "font-weight:700;color:#17375e",
+  ul: "margin:0 0 14px;padding-left:24px;color:#1f2937;font-size:14.5px;line-height:1.75;font-family:'Segoe UI',Calibri,Arial,Helvetica,sans-serif;text-align:justify",
+  ol: "margin:0 0 14px;padding-left:26px;color:#1f2937;font-size:14.5px;line-height:1.75;font-family:'Segoe UI',Calibri,Arial,Helvetica,sans-serif;text-align:justify",
   li: "margin:0 0 6px",
   blockquote: "margin:16px 0;padding:10px 18px;border-left:4px solid #2b6cb8;background:#f3f8fc;color:#334155",
   hr: "border:0;border-top:1px solid #bbd9ea;margin:22px 0",
@@ -384,7 +385,7 @@ const TABLE_DESIGN_STYLE: Record<BilanTableDesign, { th: string; td: string }> =
  */
 export function styleBilanHtml(html: string): string {
   const designs: BilanTableDesign[] = [];
-  return html.replace(/<(\/)?(h2|h3|h4|p|ul|ol|li|blockquote|hr|table|th|td|a|span)(\s[^>]*)?>/g, (match, closing: string | undefined, tag: string, attributes: string | undefined) => {
+  return html.replace(/<(\/)?(h2|h3|h4|p|ul|ol|li|blockquote|hr|table|th|td|a|span|strong)(\s[^>]*)?>/g, (match, closing: string | undefined, tag: string, attributes: string | undefined) => {
     if (closing) {
       if (tag === "table") designs.pop();
       return match;

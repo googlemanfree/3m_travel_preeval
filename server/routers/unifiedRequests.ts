@@ -20,6 +20,7 @@ import {
   profileEvaluations,
   translationRequests,
   tourismServiceRequests,
+  adminNotifications,
 } from "../../drizzle/schema";
 import { cases, caseActivityLogs, clientNotifications, evaluationBilanVersions, unifiedClientRequestHistory, unifiedClientRequests } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
@@ -30,7 +31,7 @@ import { inspectBilan, toBilanHtml } from "../../shared/bilanContent";
 import { bilanVariablesFrom, resolveBilanVariables } from "../../shared/bilanVariables";
 import { reviewBilan } from "../../shared/bilanReview";
 import { proposedOpeningFee } from "../../shared/openingFee";
-import { frameBrandedDocument } from "../../shared/brandLetterhead";
+import { frameBrandedDocument, renderBrandedEmailHtml } from "../../shared/brandLetterhead";
 import { sendEmail } from "../_core/email";
 import { createFinalEvaluationPdf } from "../evaluationBilanPdfService";
 import { storageGetSignedUrl } from "../storage";
@@ -1021,7 +1022,15 @@ initializeEvaluationDelivery: publicProcedure
       const extraAttachments = input.attachments.map((attachment) => ({ filename: attachment.name.replace(/[\\/]/g, "_"), content: Buffer.from(attachment.contentBase64, "base64"), contentType: attachment.mimeType }));
       const candidateSpaceUrl = buildCandidateSpaceAccessUrl(application.dossierNumber);
       const messageHtml = application.evaluationDeliveryMessage ? sanitizeRichTextHtml(application.evaluationDeliveryMessage) : "";
-      const emailBaseHtml = `${messageHtml ? `<section style="margin-bottom:24px">${messageHtml}</section>` : ""}${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Votre bilan finalisé est également disponible au format PDF dans votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p><p style="font-size:13px;color:#64748b">Connectez-vous avec l’adresse e-mail associée à votre dossier pour consulter les pièces demandées, les échanges et les prochaines étapes.</p>${buildAdvisorSignatureHtml(application.adminAssignedTo || admin.fullName)}`;
+      const plainEmailBaseHtml = `${messageHtml ? `<section style="margin-bottom:24px">${messageHtml}</section>` : ""}${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Votre bilan finalisé est également disponible au format PDF dans votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p><p style="font-size:13px;color:#64748b">Connectez-vous avec l’adresse e-mail associée à votre dossier pour consulter les pièces demandées, les échanges et les prochaines étapes.</p>${buildAdvisorSignatureHtml(application.adminAssignedTo || admin.fullName)}`;
+      // E-mail à l'identité de l'agence (en-tête, coordonnées, mentions légales) avec un bouton vers l'espace client : la suite du parcours est à un clic.
+      const emailBaseHtml = renderBrandedEmailHtml({
+        title: "Votre bilan d’évaluation",
+        reference: application.dossierNumber && !application.dossierNumber.startsWith("EVAL-DRAFT-") ? application.dossierNumber : null,
+        preheader: "Votre bilan est prêt : consultez-le, puis ouvrez votre dossier pour avancer.",
+        bodyHtml: `${plainEmailBaseHtml}<p style="margin:22px 0 0;font:14px/1.7 'Segoe UI',Calibri,Arial,Helvetica,sans-serif;color:#1f2937;text-align:justify"><strong style="color:#17375e">Et maintenant ?</strong> Si ce bilan vous convient, cliquez sur « Je valide et j’ouvre mon dossier » dans votre espace client. Réunir et vérifier les pièces demande souvent plusieurs semaines : commencer tôt laisse de la marge pour les rendez-vous et les délais de dépôt. Les frais d’ouverture sont confirmés par votre conseiller selon votre profil. Ce bilan évalue la préparation de votre dossier : il ne garantit aucune décision des autorités.</p>`,
+        cta: { label: "Je valide et j’ouvre mon dossier", url: candidateSpaceUrl },
+      });
       const insertedTracking = await db.insert(evaluationEmails).values({ evaluationId: application.id, candidateEmail: application.email, candidateName: application.fullName, destinationCountry: application.destination || "Mobilité internationale", visaType: visaJournal.journalVisaLabel.slice(0, 100), emailType: "admissibility_report", language: deliveryDraft.language === "en" ? "en" : "fr", scheduledAt: new Date(), status: "pending", reportContent: emailBaseHtml, secureLink: candidateSpaceUrl });
       const trackingEmailId = Number((insertedTracking as any)[0]?.insertId ?? 0);
       const availabilityHtml = trackingEmailId > 0 ? appendEvaluationOpenTrackingPixel(emailBaseHtml, trackingEmailId) : emailBaseHtml;
@@ -1053,11 +1062,16 @@ initializeEvaluationDelivery: publicProcedure
       } catch (error) {
         console.warn("[sendEvaluationNow] justificatifs auto après bilan:", error);
       }
+      // Alerte interne systématique : l'évaluation est effectuée (le bilan est parti), la suite dépend de la réponse du candidat.
+      try { await db.insert(adminNotifications).values({ type: "new_evaluation", title: "Évaluation effectuée : bilan envoyé", message: `${application.fullName} (${application.dossierNumber}) — bilan ${visaJournal.kindLabel} envoyé dans l'espace client et par e-mail. Étape suivante : le candidat valide son bilan et ouvre son dossier.`.slice(0, 1000), relatedId: `evaluation_sent:${application.id}`, targetAdminType: null, isRead: false }); } catch { /* l'alerte ne bloque jamais l'envoi déjà effectué */ }
       const journalComment = `Bilan ${visaJournal.kindLabel} validé et envoyé (espace client + e-mail) après contrôle d’aperçu. Type de visa utilisé : ${visaJournal.journalVisaLabel}.`;
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
       if (source) {
         const request = await ensureManagedRequest(source);
         await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_sent", comment: journalComment, actorAdminAccountId: admin.id });
+        // Étape suivante automatique : la balle passe au candidat (valider et ouvrir son dossier) ; l'équipe est prévenue que l'évaluation est faite.
+        await db.update(unifiedClientRequests).set({ workflowStatus: "waiting_customer" }).where(eq(unifiedClientRequests.id, request.id));
+        await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "next_step_auto", previousValue: null, newValue: "waiting_customer", comment: "Étape suivante : en attente de la réponse du candidat (valider son bilan et ouvrir son dossier).", actorAdminAccountId: admin.id });
       }
       const linkedCase = (await db.select({ id: cases.id }).from(cases).where(eq(cases.legacyApplicationId, application.id)).orderBy(desc(cases.id)).limit(1))[0];
       if (linkedCase) {

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FileText } from "lucide-react";
 import { BilanDocumentActions } from "@/components/BilanDocumentActions";
+import { ClientBilanDecision } from "@/components/ClientBilanDecision";
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { clientSpacePolling } from "@/lib/clientSpaceSync";
@@ -51,6 +52,7 @@ export function SentBilanViewer({ enabled = true }: { enabled?: boolean }) {
         className="w-full border-0 bg-white"
         style={{ height }}
       />
+      <ClientBilanDecision enabled={enabled} />
     </Card>
   );
 }
