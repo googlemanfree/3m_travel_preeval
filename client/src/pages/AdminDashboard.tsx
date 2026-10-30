@@ -235,6 +235,7 @@ import { BilanReminderDashboard } from "@/components/BilanReminderDashboard";
 import { EvaluationDeclarationBadge } from "@/components/EvaluationDeclarationBadge";
 import { AdminPreDossierEvaluationPanel } from "@/components/AdminPreDossierEvaluationPanel";
 import { isBilanSent } from "@/lib/bilanSent";
+import { AdminProfileUndo } from "@/components/AdminProfileUndo";
 import type { EvaluationDeclarationStatus } from "@shared/evaluationDeclaration";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -1130,6 +1131,7 @@ export function CandidateDetailModal({
                       );
                     })}
                   </div>
+                  <AdminProfileUndo sessionToken={sessionToken} candidateId={Number(candidate.internalId)} />
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Button
                       type="button"

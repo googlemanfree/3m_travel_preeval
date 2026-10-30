@@ -1,3 +1,4 @@
+import React from "react";
 import { DECLINE_REASONS, type DeclineReason } from "@shared/evaluationDecision";
 import { Badge } from "@/components/ui/badge";
 
