@@ -1,3 +1,4 @@
+import { evaluationDisplayReference } from "../../shared/evaluationReference";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
@@ -61,7 +62,7 @@ export const bilanFollowUpRouter = router({
       candidateId: row.candidateId ?? null,
       fullName: row.fullName,
       email: row.email,
-      dossierNumber: row.dossierNumber,
+      dossierNumber: evaluationDisplayReference(row) ?? "sans référence",
       destination: row.destination ?? null,
       visaType: row.visaType ?? null,
       paymentAmount: Number(row.paymentAmount) || 0,

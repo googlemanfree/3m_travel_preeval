@@ -33,6 +33,9 @@ export const BRAND = {
   },
   /** Logo hébergé (e-mails) ; les PDF reçoivent le logo en base64 pour rester autonomes. */
   logoUrl: "https://www.3mtravelagency.com/logo-3m-travel-agency-hd.png",
+  /** Papier à en-tête officiel (bandeaux haut et bas) : images publiées avec le site, utilisées par les e-mails, les aperçus et l'espace client. */
+  headerImageUrl: "https://www.3mtravelagency.com/brand/entete-haut.jpg",
+  footerImageUrl: "https://www.3mtravelagency.com/brand/entete-bas.jpg",
 } as const;
 
 export const BRAND_COLORS = {
@@ -251,28 +254,15 @@ export function renderBrandedEmailHtml(input: BrandedEmailInput): string {
 <span style="display:none;max-height:0;overflow:hidden;opacity:0">${escapeBrandHtml(input.preheader ?? "")}</span>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${pale};padding:18px 8px"><tr><td align="center">
 <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden">
-<tr><td style="height:5px;background:${navy};font-size:0;line-height:0">&nbsp;</td></tr>
-<tr><td style="height:3px;background:${blue};font-size:0;line-height:0">&nbsp;</td></tr>
-<tr><td style="height:3px;background:${light};font-size:0;line-height:0">&nbsp;</td></tr>
-<tr><td style="padding:22px 28px 14px">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-<td width="64" style="vertical-align:middle"><img src="${escapeBrandHtml(BRAND.logoUrl)}" width="56" height="56" alt="${escapeBrandHtml(BRAND.commercialName)}" style="display:block;border:0"></td>
-<td style="vertical-align:middle;padding-left:12px"><div style="font:bold 22px Arial,Helvetica,sans-serif;color:${navy};letter-spacing:.5px">3M TRAVEL <span style="color:${blue}">AGENCY</span></div>
-<div style="font:11px/1.45 Arial,Helvetica,sans-serif;color:${muted}">${escapeBrandHtml(headerServices(input)[0])}<br>${input.serviceFocus?.trim() ? `<strong style="color:${navy}">${escapeBrandHtml(headerServices(input)[1])}</strong>` : escapeBrandHtml(headerServices(input)[1])}</div></td>
-</tr></table></td></tr>
-<tr><td style="padding:0 28px"><div style="height:1px;background:${light}"></div></td></tr>
+<tr><td style="padding:0;line-height:0;font-size:0"><img src="${escapeBrandHtml(BRAND.headerImageUrl)}" width="640" alt="${escapeBrandHtml(`${BRAND.commercialName} — ${headerServices(input)[0]} — ${headerServices(input)[1]}`)}" style="display:block;width:100%;height:auto;border:0"></td></tr>${input.serviceFocus?.trim() ? `<tr><td style="padding:10px 28px 0;font:12px Arial,Helvetica,sans-serif;color:${muted}">Service : <strong style="color:${navy}">${escapeBrandHtml(headerServices(input)[1])}</strong></td></tr>` : ""}
 <tr><td style="padding:22px 28px 6px;font:15px/1.65 Arial,Helvetica,sans-serif;color:${ink}">
 ${input.title ? `<h1 style="margin:0 0 6px;font:bold 20px Arial,Helvetica,sans-serif;color:${navy}">${escapeBrandHtml(input.title)}</h1>` : ""}
 ${input.reference ? `<p style="margin:0 0 14px;font:12px Arial,Helvetica,sans-serif;color:${muted}">Réf. : <strong style="color:${navy}">${escapeBrandHtml(input.reference)}</strong></p>` : ""}
 ${input.bodyHtml}${cta}
 ${input.noteHtml ? `<p style="margin:18px 0 0;font:12px/1.55 Arial,Helvetica,sans-serif;color:${muted}">${input.noteHtml}</p>` : ""}
 </td></tr>
-<tr><td style="padding:18px 28px 0"><div style="height:1px;background:${light}"></div></td></tr>
-<tr><td style="padding:14px 28px 6px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>${block(BRAND.cameroon)}${block(BRAND.canada)}</tr></table></td></tr>
-<tr><td style="padding:6px 28px 16px;font:11px/1.5 Arial,Helvetica,sans-serif;color:${muted};text-align:center">${escapeBrandHtml(BRAND.legalName)} · RC : ${escapeBrandHtml(BRAND.rc)} · NIU : ${escapeBrandHtml(BRAND.niu)}<br><a href="${escapeBrandHtml(BRAND.siteUrl)}" style="color:${blue};text-decoration:none;font-weight:bold">${escapeBrandHtml(BRAND.website)}</a><br>© ${new Date().getFullYear()} ${escapeBrandHtml(BRAND.commercialName)}</td></tr>
-<tr><td style="height:3px;background:${light};font-size:0;line-height:0">&nbsp;</td></tr>
-<tr><td style="height:3px;background:${blue};font-size:0;line-height:0">&nbsp;</td></tr>
-<tr><td style="height:5px;background:${navy};font-size:0;line-height:0">&nbsp;</td></tr>
+<tr><td style="padding:14px 0 0;line-height:0;font-size:0"><img src="${escapeBrandHtml(BRAND.footerImageUrl)}" width="640" alt="${escapeBrandHtml([BRAND.legalName, `RC : ${BRAND.rc}`, `NIU : ${BRAND.niu}`, ...BRAND.cameroon.lines, ...BRAND.canada.lines, BRAND.email, BRAND.website].join(" · "))}" style="display:block;width:100%;height:auto;border:0"></td></tr>
+<tr><td style="padding:4px 28px 12px;font:11px/1.5 Arial,Helvetica,sans-serif;color:${muted};text-align:center">© ${new Date().getFullYear()} ${escapeBrandHtml(BRAND.legalName)}</td></tr>
 </table></td></tr></table></body></html>`;
 }
 

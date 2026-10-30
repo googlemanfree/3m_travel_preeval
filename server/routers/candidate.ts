@@ -2,6 +2,7 @@
  * Routeur tRPC — Espace Candidat
  * Gère l'inscription, la connexion, le profil, le dossier, les documents et la messagerie.
  */
+import { evaluationDisplayReference } from "../../shared/evaluationReference";
 import { isActivatedStatus } from "../../shared/candidateStatus";
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
@@ -2396,7 +2397,7 @@ export const candidateRouter = router({
     // Première consultation : alerte dans l'administration et e-mail à l'agence (une seule fois, sans bloquer l'affichage).
     if (!application.evaluationReportViewedAt) void import("../services/bilanReceipts").then((module) => module.recordBilanViewed(db, application.id, "espace client")).catch(() => undefined);
     return {
-      dossierNumber: application.dossierNumber,
+      dossierNumber: evaluationDisplayReference(application) ?? "",
       subject: application.evaluationDeliverySubject ?? null,
       sentAt: application.evaluationCompletedAt ?? null,
       html: frameBrandedDocument(generateEvaluationReportHTML(application)),

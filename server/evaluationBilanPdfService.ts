@@ -1,3 +1,4 @@
+import { evaluationDisplayReference } from "../shared/evaluationReference";
 import { jsPDF } from "jspdf";
 import type { Application } from "../drizzle/schema";
 import { PROFILE_DEFS, resolveEvaluationProfile } from "../shared/evaluationProfiles";
@@ -77,7 +78,7 @@ export async function createFinalEvaluationPdf(application: Application, version
     logoFormat: logo?.format,
     // le bilan parle du projet du candidat : études, travail, séjour, e-Visa ou installation
     documentKind: `Résultat d’évaluation — ${PROFILE_DEFS[resolveEvaluationProfile({ visaType: application.visaType, projectType: application.visaType })].label}`,
-    reference: safeText(application.dossierNumber),
+    reference: safeText(evaluationDisplayReference(application) ?? ""),
     recipient: safeText(application.fullName),
     subject: options.preview ? "APERÇU INTERNE — bilan non encore validé" : "Bilan d’évaluation préliminaire — document finalisé",
     serviceFocus: serviceFocusLabel(application.visaType, application.destination),
@@ -125,7 +126,7 @@ export async function createFinalEvaluationPdf(application: Application, version
   writeParagraph(doc, "Ce bilan est une évaluation indicative établie par 3M TRAVEL AGENCY. Il ne constitue ni une décision ni une garantie d’immigration délivrée par une autorité publique.", 18, y, 174);
   applyLetterhead(doc, letterhead);
   const bytes = Buffer.from(doc.output("arraybuffer"));
-  const reference = safeText(application.dossierNumber || application.id).replace(/[^a-zA-Z0-9_-]/g, "-");
+  const reference = safeText(evaluationDisplayReference(application) || application.id).replace(/[^a-zA-Z0-9_-]/g, "-");
   // L'aperçu ne remplace jamais le PDF final : fichier distinct.
   const stored = await storagePut(`evaluation-bilans/${reference}/bilan-${options.preview ? "apercu" : "final"}-v${versionNumber}.pdf`, bytes, "application/pdf");
   return { ...stored, bytes };

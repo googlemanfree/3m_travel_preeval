@@ -310,7 +310,7 @@ export const placementPortalRouter = router({
     };
   }),
 
-  adminReviewCandidateSummary: publicProcedure.input(z.object({ sessionToken: z.string().min(20), profileId: z.number().int().positive(), action: z.enum(["approve", "reject"]), draft: z.string().trim().min(50).max(6000), note: z.string().trim().max(1500).optional() })).mutation(async ({ input }) => {
+  adminReviewCandidateSummary: publicProcedure.input(z.object({ sessionToken: z.string().min(20), profileId: z.number().int().positive(), action: z.enum(["approve", "reject"]), draft: z.string().trim().min(50).max(16000), note: z.string().trim().max(1500).optional() })).mutation(async ({ input }) => {
     const admin = await requireValidAdminSession(input.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
@@ -363,7 +363,7 @@ export const placementPortalRouter = router({
   }),
 
   /** Aperçu du PDF avec les corrections en cours : rien n'est enregistré. */
-  adminPreviewCandidateSummary: publicProcedure.input(z.object({ sessionToken: z.string().min(20), candidateId: z.number().int().positive(), draft: z.string().trim().min(50).max(6000) })).mutation(async ({ input }) => {
+  adminPreviewCandidateSummary: publicProcedure.input(z.object({ sessionToken: z.string().min(20), candidateId: z.number().int().positive(), draft: z.string().trim().min(50).max(16000) })).mutation(async ({ input }) => {
     await requireValidAdminSession(input.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });

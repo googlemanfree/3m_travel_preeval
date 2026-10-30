@@ -1,4 +1,5 @@
 ﻿import { TRPCError } from "@trpc/server";
+import { evaluationDisplayReference } from "../../shared/evaluationReference";
 import { randomInt } from "node:crypto";
 import { and, asc, desc, eq, inArray, isNull, like } from "drizzle-orm";
 import { z } from "zod";
@@ -144,6 +145,8 @@ function serializeEvaluationDeliveryApplication(application: {
   return {
     id: application.id,
     dossierNumber: application.dossierNumber,
+    /** Référence à afficher : COMPTE-… tant que rien n'est payé, 3M-… après paiement (dossierNumber reste la clé technique). */
+    displayReference: evaluationDisplayReference(application),
     fullName: application.fullName,
     email: application.email,
     whatsappNumber: application.whatsappNumber ?? null,
@@ -807,7 +810,7 @@ initializeEvaluationDelivery: publicProcedure
           nextAdminAction: String(adminDraft.nextAdminAction ?? ""),
           message: application.evaluationDeliveryMessage ?? "",
           language: adminDraft.language === "en" ? "en" : "fr",
-          subject: application.evaluationDeliverySubject ?? (isProvisionalEvaluationReference(application.dossierNumber) ? "Votre bilan d'évaluation 3M TRAVEL AGENCY" : `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`),
+          subject: application.evaluationDeliverySubject ?? (isProvisionalEvaluationReference(application.dossierNumber) ? "Votre bilan d'évaluation 3M TRAVEL AGENCY" : `Votre Bilan d'Évaluation - Dossier N° ${evaluationDisplayReference(application) ?? application.dossierNumber}`),
           requiresSecondApproval: Boolean(application.evaluationRequiresSecondApproval),
           advisorValidated: adminDraft.advisorValidated === true,
           advisorValidatedAt,
@@ -829,9 +832,9 @@ initializeEvaluationDelivery: publicProcedure
       const html = `${messageHtml ? `<section style="margin-bottom:24px">${messageHtml}</section>` : ""}${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Votre bilan finalisé est également disponible au format PDF dans votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p><p style="font-size:13px;color:#64748b">Connectez-vous avec l’adresse e-mail associée à votre dossier pour consulter les pièces demandées, les échanges et les prochaines étapes.</p>${buildAdvisorSignatureHtml(application.adminAssignedTo || admin.fullName)}`;
       return {
         recipient: application.email,
-        subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`,
+        subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${evaluationDisplayReference(application) ?? application.dossierNumber}`,
         html,
-        attachmentLabel: `Bilan d’évaluation — dossier ${application.dossierNumber}.pdf`,
+        attachmentLabel: `Bilan d’évaluation — dossier ${evaluationDisplayReference(application) ?? application.dossierNumber}.pdf`,
         requiresManualValidation: true,
       };
     }),
@@ -873,7 +876,7 @@ initializeEvaluationDelivery: publicProcedure
       const candidateSpaceUrl = buildCandidateSpaceAccessUrl(application.dossierNumber);
       const messageHtml = application.evaluationDeliveryMessage ? sanitizeRichTextHtml(application.evaluationDeliveryMessage) : "";
       const html = `<div style="border:2px solid #f59e0b;background:#fffbeb;padding:12px;margin-bottom:20px;font-family:Arial,sans-serif"><strong>TEST INTERNE — NE PAS DIFFUSER AU CLIENT</strong><br/>Prévisualisation du bilan destiné à ${escapeHtmlText(application.fullName)} (${escapeHtmlText(application.email)}).</div>${messageHtml ? `<section style="margin-bottom:24px">${messageHtml}</section>` : ""}${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Le bilan final sera disponible dans l’<a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p>${buildAdvisorSignatureHtml(application.adminAssignedTo || admin.fullName)}`;
-      await sendEmail({ to: input.testEmail, subject: `[TEST INTERNE] ${application.evaluationDeliverySubject || `Bilan d’évaluation — Dossier ${application.dossierNumber}`}`, html });
+      await sendEmail({ to: input.testEmail, subject: `[TEST INTERNE] ${application.evaluationDeliverySubject || `Bilan d’évaluation — Dossier ${evaluationDisplayReference(application) ?? application.dossierNumber}`}`, html });
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
       if (source) {
         const request = await ensureManagedRequest(source);
@@ -975,7 +978,7 @@ initializeEvaluationDelivery: publicProcedure
       await db.update(applications).set({ scoringDetails: JSON.stringify({ ...details, adminDraft: nextDraft, dossierIssuedAt: now.toISOString(), dossierIssuedByAdminId: admin.id }), updatedAt: now }).where(eq(applications.id, application.id));
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
       if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_advisor_validated", comment: `${input.validationComment || "Bilan relu et validé par le conseiller avant diffusion."} Numéro de dossier attribué : ${finalDossierNumber}.`, actorAdminAccountId: admin.id }); }
-      return { success: true, dossierNumber: finalDossierNumber, message: `Validation conseiller enregistrée. Le numéro de dossier ${finalDossierNumber} est maintenant attribué ; le bilan peut être envoyé ou planifié après les approbations requises.` };
+      return { success: true, dossierNumber: finalDossierNumber, message: "Validation conseiller enregistrée. Le bilan peut être envoyé ou planifié après les approbations requises. La référence « 3M-… » n'apparaît qu'une fois les frais d'ouverture payés." };
     }),
 
   approveSensitiveEvaluation: publicProcedure
@@ -1049,7 +1052,7 @@ initializeEvaluationDelivery: publicProcedure
       // E-mail à l'identité de l'agence (en-tête, coordonnées, mentions légales) avec un bouton vers l'espace client : la suite du parcours est à un clic.
       const emailBaseHtml = renderBrandedEmailHtml({
         title: "Votre bilan d’évaluation",
-        reference: application.dossierNumber && !application.dossierNumber.startsWith("EVAL-DRAFT-") ? application.dossierNumber : null,
+        reference: evaluationDisplayReference(application),
         preheader: "Votre bilan est prêt : consultez-le, puis ouvrez votre dossier pour avancer.",
         bodyHtml: `${plainEmailBaseHtml}<p style="margin:22px 0 0;font:14px/1.7 'Segoe UI',Calibri,Arial,Helvetica,sans-serif;color:#1f2937;text-align:justify"><strong style="color:#17375e">Et maintenant ?</strong> Si ce bilan vous convient, cliquez sur « Je valide et j’ouvre mon dossier » dans votre espace client. Réunir et vérifier les pièces demande souvent plusieurs semaines : commencer tôt laisse de la marge pour les rendez-vous et les délais de dépôt. Les frais d’ouverture sont confirmés par votre conseiller selon votre profil. Ce bilan évalue la préparation de votre dossier : il ne garantit aucune décision des autorités.</p>`,
         cta: { label: "Je valide et j’ouvre mon dossier", url: candidateSpaceUrl },
@@ -1060,9 +1063,9 @@ initializeEvaluationDelivery: publicProcedure
       try {
         await sendEmail({
           to: application.email,
-          subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`,
+          subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${evaluationDisplayReference(application) ?? application.dossierNumber}`,
           html: availabilityHtml,
-          attachments: [{ filename: `bilan-${application.dossierNumber}-v${versionNumber}.pdf`, content: finalPdf.bytes, contentType: "application/pdf" }, ...extraAttachments],
+          attachments: [{ filename: `bilan-${evaluationDisplayReference(application) ?? application.id}-v${versionNumber}.pdf`, content: finalPdf.bytes, contentType: "application/pdf" }, ...extraAttachments],
         });
         if (trackingEmailId > 0) await db.update(evaluationEmails).set({ status: "sent", sentAt: new Date(), reportContent: availabilityHtml }).where(eq(evaluationEmails.id, trackingEmailId));
       } catch (error) {
@@ -1077,7 +1080,7 @@ initializeEvaluationDelivery: publicProcedure
         await db.insert(evaluationBilanVersions).values({ applicationId: application.id, versionNumber, contentJson: JSON.stringify({ systemGenerated: true }), reportHtml: generateEvaluationReportHTML(application), createdByAdminAccountId: admin.id, requiresSecondApproval: false, approvalStatus: "sent", pdfKey: finalPdf.key, pdfUrl: finalPdf.url, sentAt: now });
       }
       if (application.candidateId) {
-        await db.insert(clientNotifications).values({ candidateId: application.candidateId, type: "evaluation_available", title: "Votre bilan d’évaluation est disponible", body: `Votre bilan finalisé pour le dossier ${application.dossierNumber} est prêt. Consultez-le et téléchargez votre PDF depuis votre espace client.`, actionUrl: "/mon-espace", isRead: false, emailSentAt: now });
+        await db.insert(clientNotifications).values({ candidateId: application.candidateId, type: "evaluation_available", title: "Votre bilan d’évaluation est disponible", body: `Votre bilan finalisé pour le dossier ${evaluationDisplayReference(application) ?? ""} est prêt. Consultez-le et téléchargez votre PDF depuis votre espace client.`, actionUrl: "/mon-espace", isRead: false, emailSentAt: now });
       }
       let justificatifsAuto: Awaited<ReturnType<typeof maybeSendJustificatifsAfterBilan>> | null = null;
       try {
@@ -1086,8 +1089,8 @@ initializeEvaluationDelivery: publicProcedure
         console.warn("[sendEvaluationNow] justificatifs auto après bilan:", error);
       }
       // Alerte interne systématique : l'évaluation est effectuée (le bilan est parti), la suite dépend de la réponse du candidat.
-      try { await db.insert(adminNotifications).values({ type: "new_evaluation", title: "Évaluation effectuée : bilan envoyé", message: `${application.fullName} (${application.dossierNumber}) — bilan ${visaJournal.kindLabel} envoyé dans l'espace client et par e-mail. Étape suivante : le candidat valide son bilan et ouvre son dossier.`.slice(0, 1000), relatedId: `evaluation_sent:${application.id}`, targetAdminType: null, isRead: false }); } catch { /* l'alerte ne bloque jamais l'envoi déjà effectué */ }
-      void acknowledgeBilanSent({ fullName: application.fullName, email: application.email, dossierNumber: application.dossierNumber, destination: application.destination, kindLabel: visaJournal.kindLabel, sentBy: admin.fullName || admin.email || "un administrateur" });
+      try { await db.insert(adminNotifications).values({ type: "new_evaluation", title: "Évaluation effectuée : bilan envoyé", message: `${application.fullName} (${evaluationDisplayReference(application) ?? "sans référence"}) — bilan ${visaJournal.kindLabel} envoyé dans l'espace client et par e-mail. Étape suivante : le candidat valide son bilan et ouvre son dossier.`.slice(0, 1000), relatedId: `evaluation_sent:${application.id}`, targetAdminType: null, isRead: false }); } catch { /* l'alerte ne bloque jamais l'envoi déjà effectué */ }
+      void acknowledgeBilanSent({ fullName: application.fullName, email: application.email, dossierNumber: evaluationDisplayReference(application) ?? "sans référence", destination: application.destination, kindLabel: visaJournal.kindLabel, sentBy: admin.fullName || admin.email || "un administrateur" });
       const journalComment = `Bilan ${visaJournal.kindLabel} validé et envoyé (espace client + e-mail) après contrôle d’aperçu. Type de visa utilisé : ${visaJournal.journalVisaLabel}.`;
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
       if (source) {
@@ -1111,7 +1114,7 @@ initializeEvaluationDelivery: publicProcedure
       }
       return {
         success: true,
-        dossierNumber: application.dossierNumber,
+        dossierNumber: evaluationDisplayReference(application) ?? application.dossierNumber,
         projectKind: visaJournal.projectKind,
         visaType: visaJournal.journalVisaLabel,
         justificatifsAuto,

@@ -163,7 +163,7 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
   const previewDocument = useMemo(() => {
     if (!application || !deferredResolved.trim()) return "";
     const score = scoreFromBilanText(deferredResolved);
-    return renderBilanStandalone({ html: toBilanHtml(deferredResolved), title: `Évaluation professionnelle — ${projectLabel}`, candidateName: application.fullName, reference: application.dossierNumber && !application.dossierNumber.startsWith("EVAL-DRAFT-") ? application.dossierNumber : null, projectLabel, destination: application.destination ?? null, score, identity: bilanIdentityFrom({ candidateId: (application as { candidateId?: number | null }).candidateId, email: (application as { email?: string }).email, phone: (application as { whatsappNumber?: string | null }).whatsappNumber, advisor: advisor.trim() || (application as { adminAssignedTo?: string | null }).adminAssignedTo }) });
+    return renderBilanStandalone({ html: toBilanHtml(deferredResolved), title: `Évaluation professionnelle — ${projectLabel}`, candidateName: application.fullName, reference: (application as { displayReference?: string | null }).displayReference ?? null, projectLabel, destination: application.destination ?? null, score, identity: bilanIdentityFrom({ candidateId: (application as { candidateId?: number | null }).candidateId, email: (application as { email?: string }).email, phone: (application as { whatsappNumber?: string | null }).whatsappNumber, advisor: advisor.trim() || (application as { adminAssignedTo?: string | null }).adminAssignedTo }) });
   }, [deferredResolved, application, projectLabel, advisor]);
 
   const alreadySent = application?.evaluationDeliveryStatus === "sent" || sentHere;
@@ -341,7 +341,7 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
         <DialogHeader className="shrink-0 space-y-1 rounded-xl border border-slate-200 bg-white px-4 py-3">
           <DialogTitle>Bilan d'évaluation{application ? ` — ${application.fullName}` : ""}</DialogTitle>
           <DialogDescription>
-            {application ? `${application.dossierNumber.startsWith("EVAL-DRAFT-") ? "Numéro de dossier attribué à la validation" : `Dossier ${application.dossierNumber}`} · ${application.destination || "destination à préciser"} · ${projectLabel}` : "Saisissez le bilan, relisez l'aperçu, validez puis envoyez."}
+            {application ? `${(application as { displayReference?: string | null }).displayReference ? `Référence ${(application as { displayReference?: string | null }).displayReference}` : "Sans référence de compte"} · ${application.destination || "destination à préciser"} · ${projectLabel}` : "Saisissez le bilan, relisez l'aperçu, validez puis envoyez."}
           </DialogDescription>
         </DialogHeader>
 
@@ -396,7 +396,7 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
                     : <div className="flex flex-1 items-center justify-center rounded border border-dashed p-6 text-center text-sm text-slate-500" data-testid="bilan-live-preview-empty">L'aperçu apparaît ici dès les premiers mots saisis.</div>}
                   {previewDocument && application && (
                     <div className="mt-2" data-testid="bilan-print-zone">
-                      <BilanDocumentActions getDocumentHtml={() => previewDocument} title={`Évaluation professionnelle — ${projectLabel}`} candidateName={application.fullName} reference={application.dossierNumber && !application.dossierNumber.startsWith("EVAL-DRAFT-") ? application.dossierNumber : null} />
+                      <BilanDocumentActions getDocumentHtml={() => previewDocument} title={`Évaluation professionnelle — ${projectLabel}`} candidateName={application.fullName} reference={(application as { displayReference?: string | null }).displayReference ?? null} />
                     </div>
                   )}
                 </div>

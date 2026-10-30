@@ -104,8 +104,10 @@ describe("fiche de synthèse : résumé tiré du CV", () => {
       "Formation : Licence en logistique, Université de Douala (2017)",
       "Compétences : Gestion des stocks, Excel, SAGE, Transport routier, Douane, Planification",
     ]);
-    expect(JSON.stringify(fields)).not.toContain("QUATRIÈME");
-    expect(JSON.stringify(fields)).not.toContain("Septième");
+    // Points clés : trois expériences au plus. La synthèse complète (parcours détaillé) peut en reprendre jusqu'à six.
+    expect(JSON.stringify(fields.highlights)).not.toContain("QUATRIÈME");
+    expect(JSON.stringify(fields.highlights)).not.toContain("Septième");
+    expect(fields.experiences?.some((line) => line.includes("QUATRIÈME"))).toBe(true);
     expect(fields.languages).toBe("Français (natif), Anglais (B2)");
   });
 

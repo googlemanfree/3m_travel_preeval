@@ -1,9 +1,9 @@
 ﻿import { publicProcedure, router } from "../_core/trpc";
-import { isActivatedStatus } from "../../shared/candidateStatus";
+import { PRE_DOSSIER_STATUSES, isActivatedStatus } from "../../shared/candidateStatus";
 import { TRPCError } from "@trpc/server";
 import crypto from "node:crypto";
 import { z } from "zod";
-import { and, desc, eq, isNull, isNotNull, like, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, isNotNull, like, or, sql } from "drizzle-orm";
 import { declaredProjectWarnings } from "../../shared/declaredConsistency";
 import { applications, agencyDossiers, agencyDossierDocuments, agencyDossierHistory, agencySettings, clientDocuments, candidateFiles, candidateMessages, candidates, evaluations, paymentAuditLogs, paymentReceiptApprovals } from "../../drizzle/schema";
 import { caseActivityLogs, caseStatusHistory, cases, clientNotifications } from "../../drizzle/caseTrackingSchema";
@@ -582,7 +582,7 @@ export const adminCandidateManagementRouter = router({
       // Un pré-compte déjà mis en corbeille n'est plus à ouvrir, et celui dont la personne a déjà un dossier actif non plus :
       // il n'est ni supprimé ni modifié, seulement retiré de cette liste (le nombre masqué est annoncé à l'administrateur).
       const [allAccounts, files, evaluationRows, activeEmails] = await Promise.all([
-        db.select().from(candidates).where(and(eq(candidates.dossierStatus, "nouveau"), isNull(candidates.deletedAt))).orderBy(desc(candidates.createdAt)).limit(500),
+        db.select().from(candidates).where(and(inArray(candidates.dossierStatus, [...PRE_DOSSIER_STATUSES]), isNull(candidates.deletedAt))).orderBy(desc(candidates.createdAt)).limit(500),
         db.select({
           candidateId: candidateFiles.candidateId,
           fileType: candidateFiles.fileType,
@@ -631,6 +631,32 @@ export const adminCandidateManagementRouter = router({
       await Promise.all(filtered.map(async (account) => {
         openingPaymentByCandidate.set(account.id, await getOpeningPaymentRecord(db, account.id));
       }));
+      // Suivi du bilan : dernier dossier d'évaluation de chaque compte (par compte, à défaut par e-mail) et réponse du candidat.
+      const filteredIds = filtered.map((account) => account.id);
+      const filteredEmails = filtered.map((account) => account.email.trim().toLowerCase());
+      const appRows = filtered.length === 0 ? [] : await db.select({
+        id: applications.id,
+        candidateId: applications.candidateId,
+        email: applications.email,
+        evaluationDeliveryStatus: applications.evaluationDeliveryStatus,
+        evaluationCompletedAt: applications.evaluationCompletedAt,
+        evaluationReportViewedAt: applications.evaluationReportViewedAt,
+        activationRequestedAt: applications.activationRequestedAt,
+        paymentAmount: applications.paymentAmount,
+        paymentStatus: applications.paymentStatus,
+      }).from(applications).where(or(inArray(applications.candidateId, filteredIds), inArray(sql<string>`LOWER(${applications.email})`, filteredEmails))).orderBy(desc(applications.createdAt)).limit(2000);
+      const latestAppByCandidate = new Map<number, (typeof appRows)[number]>();
+      const latestAppByEmail = new Map<string, (typeof appRows)[number]>();
+      for (const row of appRows) {
+        if (row.candidateId && !latestAppByCandidate.has(row.candidateId)) latestAppByCandidate.set(row.candidateId, row);
+        const key = row.email.trim().toLowerCase();
+        if (!latestAppByEmail.has(key)) latestAppByEmail.set(key, row);
+      }
+      const decisionRows = appRows.length === 0 ? [] : await db.select({ settingKey: agencySettings.settingKey, settingValue: agencySettings.settingValue }).from(agencySettings).where(inArray(agencySettings.settingKey, appRows.slice(0, 1000).map((row) => `evaluation_decision:${row.id}`)));
+      const decisionByApplication = new Map<number, { decision?: string; reason?: string | null }>();
+      for (const row of decisionRows) {
+        try { decisionByApplication.set(Number(String(row.settingKey).split(":")[1]), JSON.parse(row.settingValue ?? "{}")); } catch { /* décision illisible : ignorée */ }
+      }
       return {
         total: filtered.length,
         coveredByActiveDossier,
@@ -678,6 +704,22 @@ export const adminCandidateManagementRouter = router({
               }
             })(),
             visaType: account.visaType,
+            bilan: (() => {
+              const app = latestAppByCandidate.get(account.id) ?? latestAppByEmail.get(emailKey);
+              if (!app) return null;
+              const decision = decisionByApplication.get(app.id);
+              const sent = app.evaluationDeliveryStatus === "sent";
+              return {
+                sent,
+                sentAt: sent ? app.evaluationCompletedAt ?? null : null,
+                viewedAt: sent ? app.evaluationReportViewedAt ?? null : null,
+                decision: sent && (decision?.decision === "accepted" || decision?.decision === "declined") ? decision.decision : null,
+                declineReason: sent && decision?.decision === "declined" ? decision.reason ?? null : null,
+                openingRequested: Boolean(app.activationRequestedAt),
+                feeXaf: Number(app.paymentAmount) > 0 ? Number(app.paymentAmount) : null,
+                paid: app.paymentStatus === "SUCCESS",
+              };
+            })(),
           };
         }),
       };

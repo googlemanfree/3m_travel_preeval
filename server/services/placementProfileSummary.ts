@@ -46,6 +46,11 @@ export type PlacementSummaryDraft = {
   headline?: string;
   /** Points clés (3 à 5) : expériences, formation, compétences. */
   highlights?: string[];
+  /** Synthèse complète pour les employeurs (tous facultatifs) : parcours détaillé, formation, compétences, disponibilité. */
+  experiences?: string[];
+  education?: string[];
+  skills?: string[];
+  availability?: string;
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -59,6 +64,9 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export const MAX_HIGHLIGHTS = 5;
+export const MAX_EXPERIENCES = 6;
+export const MAX_EDUCATION = 4;
+export const MAX_SKILLS = 12;
 
 export function identityFromName(fullName: string) {
   const parts = fullName.trim().split(/\s+/).filter(Boolean);
@@ -119,6 +127,10 @@ export const PlacementSummaryDraftSchema = z.object({
   profileSummary: z.string().trim().min(10).max(900),
   headline: shortText(160),
   highlights: z.array(z.string().trim().max(240)).max(MAX_HIGHLIGHTS).optional(),
+  experiences: z.array(z.string().trim().max(420)).max(MAX_EXPERIENCES).optional(),
+  education: z.array(z.string().trim().max(240)).max(MAX_EDUCATION).optional(),
+  skills: z.array(z.string().trim().max(60)).max(MAX_SKILLS).optional(),
+  availability: shortText(160),
 });
 
 /**
@@ -132,6 +144,11 @@ export function normalizePlacementSummaryDraft(
   const parsed = PlacementSummaryDraftSchema.parse(edited);
   const highlights = (parsed.highlights ?? []).map((line) => sanitizeSummaryText(line, "", 240)).filter(Boolean);
   const headline = parsed.headline ? sanitizeSummaryText(parsed.headline, "", 160) : "";
+  const clean = (lines: string[] | undefined, max: number) => (lines ?? []).map((line) => sanitizeSummaryText(line, "", max)).filter(Boolean);
+  const experiences = clean(parsed.experiences, 420);
+  const education = clean(parsed.education, 240);
+  const skills = clean(parsed.skills, 60);
+  const availability = parsed.availability ? sanitizeSummaryText(parsed.availability, "", 160) : "";
   return {
     firstName: base.firstName,
     identity: base.identity,
@@ -143,6 +160,10 @@ export function normalizePlacementSummaryDraft(
     profileSummary: sanitizeSummaryText(parsed.profileSummary, "Profil préparé et suivi par 3M."),
     ...(headline ? { headline } : {}),
     ...(highlights.length ? { highlights } : {}),
+    ...(experiences.length ? { experiences } : {}),
+    ...(education.length ? { education } : {}),
+    ...(skills.length ? { skills } : {}),
+    ...(availability ? { availability } : {}),
     documents: base.documents,
   };
 }
@@ -173,7 +194,7 @@ export function fingerprintPlacementSources(input: { draft: PlacementSummaryDraf
 
 // ---- Résumé tiré du CV -----------------------------------------------------------------------------------------------
 
-export type SummaryFieldsFromCv = Pick<PlacementSummaryDraft, "headline" | "profileSummary" | "highlights" | "languages">;
+export type SummaryFieldsFromCv = Pick<PlacementSummaryDraft, "headline" | "profileSummary" | "highlights" | "languages" | "experiences" | "education" | "skills">;
 
 /**
  * Transforme le brouillon de CV (déjà généré à partir du CV du candidat, avec ses consentements) en champs de fiche.
@@ -195,12 +216,29 @@ export function summaryFieldsFromCvDraft(cv: CvDraft): SummaryFieldsFromCv {
     .filter((item) => item.language?.trim())
     .map((item) => `${item.language.trim()}${item.level?.trim() ? ` (${item.level.trim()})` : ""}`)
     .join(", ");
+  // Synthèse complète : parcours détaillé (poste, employeur, période, deux réalisations au plus), formation et compétences, tels que dans le CV.
+  const fullExperiences = cv.experiences
+    .filter((item) => item.role?.trim() || item.employer?.trim())
+    .slice(0, MAX_EXPERIENCES)
+    .map((item) => {
+      const head = `${[item.role?.trim(), item.employer?.trim()].filter(Boolean).join(" — ")}${period(item.start, item.end)}`;
+      const bullets = (item.bullets ?? []).map((bullet) => bullet.trim()).filter(Boolean).slice(0, 2);
+      return sanitizeSummaryText(bullets.length ? `${head} : ${bullets.join(" ; ")}` : head, "", 420);
+    });
+  const fullEducation = cv.education
+    .filter((item) => item.degree?.trim())
+    .slice(0, MAX_EDUCATION)
+    .map((item) => sanitizeSummaryText(`${item.degree.trim()}${item.institution?.trim() ? `, ${item.institution.trim()}` : ""}${item.year ? ` (${item.year})` : ""}`, "", 240));
+  const allSkills = cv.skills.map((skill) => sanitizeSummaryText(skill, "", 60)).filter(Boolean).slice(0, MAX_SKILLS);
   const headline = cv.headline?.trim() || cv.experiences[0]?.role?.trim() || "";
   return {
     headline: headline ? sanitizeSummaryText(headline, "", 160) : undefined,
     profileSummary: sanitizeSummaryText(cv.summary, "Profil préparé et suivi par 3M."),
     highlights: highlights.length ? highlights : undefined,
     languages: languages ? sanitizeSummaryText(languages, "", 300) : "",
+    experiences: fullExperiences.length ? fullExperiences : undefined,
+    education: fullEducation.length ? fullEducation : undefined,
+    skills: allSkills.length ? allSkills : undefined,
   };
 }
 
@@ -315,6 +353,19 @@ export function buildPlacementSummaryPdf(draft: PlacementSummaryDraft, options: 
   paragraph([draft.destination, draft.procedure, draft.sector].filter(Boolean).join("  |  "), 9.5, identityWidth, 4.8, MUTED);
   y = Math.max(y, portrait ? identityTop - 4 + portraitHeight + 2 : y);
 
+  // Bandeau d'état du dossier : calculé depuis les pièces réelles (jamais saisi à la main).
+  const totalDocuments = draft.documents.length;
+  const validatedDocuments = draft.documents.filter((document) => document.status === "Validé").length;
+  const complete = totalDocuments > 0 && validatedDocuments === totalDocuments;
+  y += 2;
+  ensureRoom(12);
+  const bannerTop = y;
+  pdf.setFillColor(...(complete ? ([220, 252, 231] as [number, number, number]) : ([254, 243, 199] as [number, number, number])));
+  pdf.roundedRect(margin, bannerTop, textWidthFull, 9, 1.5, 1.5, "F");
+  y = bannerTop + 6;
+  write(complete ? `Dossier complet : ${totalDocuments} pièce(s) validée(s) par 3M, prêt pour présentation` : totalDocuments > 0 ? `Dossier en cours : ${validatedDocuments} pièce(s) validée(s) sur ${totalDocuments}` : "Pièces en cours de collecte", margin + 3, 9.5, "bold", complete ? [21, 128, 61] : [180, 83, 9]);
+  y = bannerTop + 12;
+
   sectionTitle("Profil");
   paragraph(draft.profileSummary, 10, textWidthFull, 5, INK);
 
@@ -326,6 +377,27 @@ export function buildPlacementSummaryPdf(draft: PlacementSummaryDraft, options: 
       paragraph(line, 10, textWidthFull, 5, INK, 4);
       y += 0.8;
     }
+  }
+
+  const listSection = (title: string, lines: string[] | undefined) => {
+    if (!lines?.length) return;
+    sectionTitle(title);
+    for (const line of lines) {
+      ensureRoom(6);
+      write("-", margin, 10, "bold", BLUE);
+      paragraph(line, 10, textWidthFull, 5, INK, 4);
+      y += 0.8;
+    }
+  };
+  listSection("Parcours professionnel", draft.experiences);
+  listSection("Formation", draft.education);
+  if (draft.skills?.length) {
+    sectionTitle("Compétences");
+    paragraph(draft.skills.join("  |  "), 10, textWidthFull, 5, INK);
+  }
+  if (draft.availability) {
+    sectionTitle("Disponibilité");
+    paragraph(draft.availability, 10, textWidthFull, 5, INK);
   }
 
   sectionTitle("Expérience et langues");

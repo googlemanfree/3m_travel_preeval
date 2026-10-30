@@ -1,3 +1,4 @@
+import { evaluationDisplayReference } from "../../shared/evaluationReference";
 import { and, eq, isNull } from "drizzle-orm";
 import { adminNotifications, applications } from "../../drizzle/schema";
 import { BRAND, escapeBrandHtml, renderBrandedEmailHtml } from "../../shared/brandLetterhead";
@@ -55,25 +56,26 @@ export async function recordBilanViewed(db: Db, applicationId: number, via: "e-m
   const result = await db.update(applications).set({ evaluationReportViewedAt: now, updatedAt: now }).where(and(eq(applications.id, applicationId), isNull(applications.evaluationReportViewedAt)));
   const header = Array.isArray(result) ? result[0] : result;
   if (Number((header as { affectedRows?: number } | undefined)?.affectedRows ?? 0) < 1) return false;
-  const [application] = await db.select({ fullName: applications.fullName, email: applications.email, dossierNumber: applications.dossierNumber, destination: applications.destination }).from(applications).where(eq(applications.id, applicationId)).limit(1);
+  const [application] = await db.select({ fullName: applications.fullName, email: applications.email, dossierNumber: applications.dossierNumber, destination: applications.destination, candidateId: applications.candidateId, paymentStatus: applications.paymentStatus, dossierStatus: applications.dossierStatus }).from(applications).where(eq(applications.id, applicationId)).limit(1);
   if (!application) return true;
+  const reference = evaluationDisplayReference(application) ?? "sans référence";
   try {
     await db.insert(adminNotifications).values({
       type: "new_evaluation",
       title: "Bilan consulté par le candidat",
-      message: `${application.fullName} (${application.dossierNumber}) a consulté son bilan le ${when(now)} (${via === "e-mail" ? "ouverture de l'e-mail : peut aussi être un aperçu automatique de la messagerie" : "lecture dans l'espace client"}).`.slice(0, 1000),
+      message: `${application.fullName} (${reference}) a consulté son bilan le ${when(now)} (${via === "e-mail" ? "ouverture de l'e-mail : peut aussi être un aperçu automatique de la messagerie" : "lecture dans l'espace client"}).`.slice(0, 1000),
       relatedId: `evaluation_viewed:${applicationId}`,
       targetAdminType: null,
       isRead: false,
     });
   } catch { /* l'e-mail agence reste tenté */ }
   await mailAgency({
-    subject: `Bilan consulté — ${application.fullName} (${application.dossierNumber})`,
+    subject: `Bilan consulté — ${application.fullName} (${reference})`,
     title: "Le candidat a consulté son bilan",
-    reference: application.dossierNumber,
+    reference,
     lines: [
       ["Candidat", application.fullName],
-      ["Dossier", application.dossierNumber],
+      ["Référence", reference],
       ["Destination", application.destination || "Non précisée"],
       ["Consulté le", when(now)],
       ["Par", via === "e-mail" ? "Ouverture de l'e-mail (peut être un aperçu automatique)" : "Lecture dans l'espace client"],

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import {
   Camera,
   Check,
@@ -48,6 +48,9 @@ import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from 
 import { getCandidateDestinationOption } from "@shared/candidateDestinationOptions";
 import { ADMIN_PROCEDURE_TYPES } from "@shared/dossierProcedureSelection";
 import { CountrySelect } from "@/components/CountryPicker";
+import { BilanStatusChips, type AccountBilanStatus } from "@/components/BilanStatusChips";
+import { AccountOrderingBar, SortHeader, useAccountView } from "@/components/AccountOrderingBar";
+import { arrangeAccounts } from "@shared/accountOrdering";
 
 type PreDossierAccount = {
   id: number;
@@ -72,6 +75,7 @@ type PreDossierAccount = {
   paymentValidatedAt?: string | null;
   accountReference?: string;
   referenceView?: { label: string; secondaryLabel: string | null; activated: boolean };
+  bilan?: AccountBilanStatus | null;
   preferredDestinations?: string[];
   visaType?: string | null;
 };
@@ -110,6 +114,7 @@ export default function AdminPreDossierAccountsPanel({
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [listFilter, setListFilter] = useState<PreDossierListFilter>("all");
+  const [accountView, setAccountView] = useAccountView();
   const [selected, setSelected] = useState<PreDossierAccount | null>(null);
   const [paymentPreview, setPaymentPreview] = useState<PreDossierAccount | null>(null);
   useEffect(() => {
@@ -482,6 +487,8 @@ export default function AdminPreDossierAccountsPanel({
     without_cv: allAccounts.filter((account) => Boolean(account.evaluationWithoutCv)).length,
   };
   const visibleAccounts = allAccounts.filter((account) => matchesListFilter(account as PreDossierAccount, listFilter));
+  // Rangée et classée selon le choix de l'administrateur (tri, regroupement par étape ou destination).
+  const { rows: orderedRows, starts: groupStarts } = arrangeAccounts(visibleAccounts as unknown as PreDossierAccount[], accountView);
 
   useEffect(() => {
     if (!activateAccountId || query.isLoading) return;
@@ -657,6 +664,7 @@ export default function AdminPreDossierAccountsPanel({
             ))}
           </div>
         </div>
+        <AccountOrderingBar view={accountView} onChange={setAccountView} total={visibleAccounts.length} />
         {query.isLoading ? (
           <p className="py-10 text-center text-sm text-slate-500">
             Chargement des comptes…
@@ -674,15 +682,15 @@ export default function AdminPreDossierAccountsPanel({
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-4 py-3">Compte client</th>
+                  <SortHeader label="Compte client" sort="name" view={accountView} onChange={setAccountView} />
                   <th className="px-4 py-3">Préférence</th>
-                  <th className="px-4 py-3">Pièces & activité</th>
-                  <th className="px-4 py-3">Créé le</th>
+                  <SortHeader label="Pièces & activité" sort="documents" view={accountView} onChange={setAccountView} defaultDir="desc" />
+                  <SortHeader label="Créé le" sort="created" view={accountView} onChange={setAccountView} defaultDir="desc" />
                   <th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y bg-white">
-                {visibleAccounts.map(account => {
+                {orderedRows.map(account => {
                   const validationRequired = Boolean(
                     account.pendingEvaluationReference &&
                     !account.evaluationValidated
@@ -690,8 +698,13 @@ export default function AdminPreDossierAccountsPanel({
                   const openId = `account_${account.id}`;
                   const openFiche = () => onOpenCandidate?.(openId);
                   return (
+                    <Fragment key={account.id}>
+                    {groupStarts.get(account.id) ? (
+                      <tr className="bg-slate-100" data-testid="account-group-header">
+                        <td colSpan={5} className="px-4 py-2 text-xs font-black uppercase tracking-wide text-slate-700">{groupStarts.get(account.id)!.label} <span className="font-semibold text-slate-500">({groupStarts.get(account.id)!.count})</span></td>
+                      </tr>
+                    ) : null}
                     <tr
-                      key={account.id}
                       className="cursor-pointer hover:bg-slate-50 focus-visible:bg-blue-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500"
                       onClick={openFiche}
                       onKeyDown={event => {
@@ -739,6 +752,7 @@ export default function AdminPreDossierAccountsPanel({
                             <Mail className="mr-1 h-3 w-3" /> À confirmer
                           </Badge>
                         )}
+                        <BilanStatusChips accountId={account.id} bilan={account.bilan} documentsCount={account.documentsCount} lastLoginAt={account.lastLoginAt} />
                         {account.pendingEvaluationReference && (
                           <Badge
                             variant="outline"
@@ -849,6 +863,7 @@ export default function AdminPreDossierAccountsPanel({
                         </div>
                       </td>
                     </tr>
+                    </Fragment>
                   );
                 })}
               </tbody>

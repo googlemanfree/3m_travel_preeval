@@ -204,7 +204,8 @@ export function buildCandidateCockpit(input: CandidateCockpitInput): CandidateCo
     { key: "email", label: "E-mail confirmé", done: emailVerified },
     { key: "evaluation", label: "Évaluation validée", done: evaluationValidated },
     { key: "payment", label: "Paiement validé", done: paymentConfirmed },
-    { key: "activation", label: "Dossier activé (3M-)", done: dossierActivated },
+    // Un dossier n'est « activé » que si les frais d'ouverture sont payés : jamais de vert sur un dossier non payé.
+    { key: "activation", label: "Dossier activé (3M-)", done: dossierActivated && paymentConfirmed },
     {
       key: "receipt",
       label: "Reçu approuvé",
@@ -220,8 +221,8 @@ export function buildCandidateCockpit(input: CandidateCockpitInput): CandidateCo
     {
       key: "documents",
       label: "Documents à jour",
-      // Précompte sans pièce : pas « à jour ». Après activation, 0 pièce en attente = OK.
-      done: pendingDocuments === 0 && (dossierActivated || hasAnyDocuments),
+      // « À jour » exige au moins une pièce déposée ET aucune pièce en attente : aucun document envoyé = pas « à jour », même après activation.
+      done: pendingDocuments === 0 && hasAnyDocuments,
     },
   ];
   const applicableChecklist = checklist.filter((item) => !item.lockedUntilPayment);
