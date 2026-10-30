@@ -33,6 +33,7 @@ import { reviewBilan } from "../../shared/bilanReview";
 import { proposedOpeningFee } from "../../shared/openingFee";
 import { frameBrandedDocument, renderBrandedEmailHtml } from "../../shared/brandLetterhead";
 import { sendEmail } from "../_core/email";
+import { acknowledgeBilanSent } from "../services/bilanReceipts";
 import { createFinalEvaluationPdf } from "../evaluationBilanPdfService";
 import { storageGetSignedUrl } from "../storage";
 import { evaluationDestinations, generateDestinationEvaluationDraft } from "../services/destinationEvaluationDraft";
@@ -146,6 +147,8 @@ function serializeEvaluationDeliveryApplication(application: {
     fullName: application.fullName,
     email: application.email,
     whatsappNumber: application.whatsappNumber ?? null,
+    candidateId: (application as { candidateId?: number | null }).candidateId ?? null,
+    adminAssignedTo: (application as { adminAssignedTo?: string | null }).adminAssignedTo ?? null,
     destination: application.destination ?? null,
     visaType: application.visaType ?? null,
     scoringTotal: application.scoringTotal ?? 0,
@@ -1084,6 +1087,7 @@ initializeEvaluationDelivery: publicProcedure
       }
       // Alerte interne systématique : l'évaluation est effectuée (le bilan est parti), la suite dépend de la réponse du candidat.
       try { await db.insert(adminNotifications).values({ type: "new_evaluation", title: "Évaluation effectuée : bilan envoyé", message: `${application.fullName} (${application.dossierNumber}) — bilan ${visaJournal.kindLabel} envoyé dans l'espace client et par e-mail. Étape suivante : le candidat valide son bilan et ouvre son dossier.`.slice(0, 1000), relatedId: `evaluation_sent:${application.id}`, targetAdminType: null, isRead: false }); } catch { /* l'alerte ne bloque jamais l'envoi déjà effectué */ }
+      void acknowledgeBilanSent({ fullName: application.fullName, email: application.email, dossierNumber: application.dossierNumber, destination: application.destination, kindLabel: visaJournal.kindLabel, sentBy: admin.fullName || admin.email || "un administrateur" });
       const journalComment = `Bilan ${visaJournal.kindLabel} validé et envoyé (espace client + e-mail) après contrôle d’aperçu. Type de visa utilisé : ${visaJournal.journalVisaLabel}.`;
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
       if (source) {

@@ -7,10 +7,12 @@ import { OUTCOME_LABELS, MIN_OUTCOME_SAMPLE, type OutcomeKind } from "@shared/ad
 import { formatXaf } from "@shared/openingFee";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AdminBilanFollowUp } from "@/components/AdminBilanFollowUp";
 
 type Out = inferRouterOutputs<AppRouter>["adminOps"];
-type Section = "checks" | "schedule" | "outcomes" | "assign" | "health";
+type Section = "followup" | "checks" | "schedule" | "outcomes" | "assign" | "health";
 const SECTIONS: Array<{ id: Section; label: string }> = [
+  { id: "followup", label: "Bilans à relancer" },
   { id: "checks", label: "Pièces et échéances" },
   { id: "schedule", label: "Échéancier de paiement" },
   { id: "outcomes", label: "Résultats réels" },
@@ -230,6 +232,7 @@ export function AdminOps({ sessionToken }: { sessionToken: string }) {
       {section === "outcomes" && <OutcomesPanel sessionToken={sessionToken} />}
       {section === "assign" && <AssignPanel sessionToken={sessionToken} />}
       {section === "health" && <HealthPanel sessionToken={sessionToken} />}
+      {section === "followup" && <AdminBilanFollowUp sessionToken={sessionToken} />}
     </div>
   );
 }

@@ -10,7 +10,7 @@ import { BilanDocumentActions } from "@/components/BilanDocumentActions";
 import { hasStructure, htmlToStructuredText, insertAtSelection, locatePassage } from "@/lib/bilanPaste";
 import { bilanSkeleton, type SkeletonKind } from "@shared/bilanSkeleton";
 import { useToast } from "@/components/ui/use-toast";
-import { inspectBilan, renderBilanStandalone, toBilanHtml } from "@shared/bilanContent";
+import { bilanIdentityFrom, inspectBilan, renderBilanStandalone, toBilanHtml } from "@shared/bilanContent";
 import { bilanVariablesFrom, resolveBilanVariables } from "@shared/bilanVariables";
 import { reviewBilan } from "@shared/bilanReview";
 import { proposedOpeningFee } from "@shared/openingFee";
@@ -163,8 +163,8 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
   const previewDocument = useMemo(() => {
     if (!application || !deferredResolved.trim()) return "";
     const score = scoreFromBilanText(deferredResolved);
-    return renderBilanStandalone({ html: toBilanHtml(deferredResolved), title: `Évaluation professionnelle — ${projectLabel}`, candidateName: application.fullName, reference: application.dossierNumber && !application.dossierNumber.startsWith("EVAL-DRAFT-") ? application.dossierNumber : null, projectLabel, destination: application.destination ?? null, score });
-  }, [deferredResolved, application, projectLabel]);
+    return renderBilanStandalone({ html: toBilanHtml(deferredResolved), title: `Évaluation professionnelle — ${projectLabel}`, candidateName: application.fullName, reference: application.dossierNumber && !application.dossierNumber.startsWith("EVAL-DRAFT-") ? application.dossierNumber : null, projectLabel, destination: application.destination ?? null, score, identity: bilanIdentityFrom({ candidateId: (application as { candidateId?: number | null }).candidateId, email: (application as { email?: string }).email, phone: (application as { whatsappNumber?: string | null }).whatsappNumber, advisor: advisor.trim() || (application as { adminAssignedTo?: string | null }).adminAssignedTo }) });
+  }, [deferredResolved, application, projectLabel, advisor]);
 
   const alreadySent = application?.evaluationDeliveryStatus === "sent" || sentHere;
   const offlineValidated = (data as { offlineEvaluation?: { validated?: boolean } } | undefined)?.offlineEvaluation?.validated === true;
@@ -289,6 +289,17 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
     }
   };
 
+  // E-mail de test : le vrai message, envoyé à l'administrateur connecté seulement (jamais au candidat), à partir du brouillon enregistré.
+  const sendTest = trpc.bilanFollowUp.sendTest.useMutation();
+  const handleTest = async () => {
+    if (dirty && !(await persist())) return;
+    try {
+      const result = await sendTest.mutateAsync({ sessionToken, sourceRecordId: recordId });
+      toast({ title: "Test envoyé à votre adresse", description: result.message });
+    } catch (caught) {
+      fail("Test non envoyé", caught);
+    }
+  };
   const requestClose = (next: boolean) => {
     if (!next && dirty && !locked && !window.confirm("Fermer sans enregistrer ? Vos modifications seront perdues (une copie reste sur cet appareil).")) return;
     onOpenChange(next);
@@ -405,6 +416,7 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
                 <div className="flex flex-wrap gap-2">
                   <Button type="button" variant="outline" disabled={locked || busy || !text.trim() || !dirty} onClick={() => void handleSave()} data-testid="bilan-save-draft">{saveDraft.isPending && !validateDraft.isPending && !sendNow.isPending ? "Enregistrement…" : "Enregistrer"}</Button>
                   <Button type="button" variant="outline" className="border-amber-400 bg-amber-50 text-amber-950 hover:bg-amber-100" disabled={locked || busy || blockers.length > 0 || validated} onClick={() => void validateNow()} data-testid="bilan-validate">{validateDraft.isPending ? "Validation…" : validated ? "Validé" : "Valider"}</Button>
+                  <Button type="button" variant="outline" disabled={locked || busy || sendTest.isPending || !text.trim()} onClick={() => void handleTest()} data-testid="bilan-test-email">{sendTest.isPending ? "Envoi du test…" : "M'envoyer un test"}</Button>
                   <Button type="button" className="bg-blue-700 hover:bg-blue-800" disabled={locked || busy || blockers.length > 0} onClick={() => void handleSend()} data-testid="bilan-validate-send">{alreadySent ? "Bilan déjà envoyé" : sendNow.isPending ? "Envoi…" : "Envoyer (espace client + e-mail)"}</Button>
                 </div>
               </div>

@@ -6,7 +6,7 @@
 import { Application } from "../drizzle/schema";
 import { sanitizeClientCommunicationText } from "./clientCommunication";
 import { resolveEvaluationProjectKind, type EvaluationProjectKind } from "../shared/evaluationVisaCv";
-import { renderBilanFragment } from "../shared/bilanContent";
+import { bilanIdentityFrom, renderBilanFragment } from "../shared/bilanContent";
 import { bilanVariablesFrom, draftExtras, resolveBilanVariables } from "../shared/bilanVariables";
 import { sanitizeRichTextHtml } from "./services/richText";
 import { PROFILE_DEFS, resolveEvaluationProfile } from "../shared/evaluationProfiles";
@@ -455,6 +455,7 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
       destination: app.destination,
       score: Number.isFinite(Number(adminDraft.finalScore)) ? Number(adminDraft.finalScore) : null,
       introHtml: customIntro ? sanitizeRichTextHtml(customIntro) : null,
+      identity: bilanIdentityFrom({ candidateId: (app as { candidateId?: number | null }).candidateId, email: app.email, phone: (app as { whatsappNumber?: string | null }).whatsappNumber, advisor: draftExtras(adminDraft).advisorName || app.adminAssignedTo }),
     });
   }
   const clientText = (value: string) => sanitizeClientCommunicationText(value);

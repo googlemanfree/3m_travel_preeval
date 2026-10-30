@@ -233,6 +233,7 @@ import { AdvisorEvaluationReviewQueue } from "@/components/AdvisorEvaluationRevi
 import { BilanReminderDashboard } from "@/components/BilanReminderDashboard";
 import { EvaluationDeclarationBadge } from "@/components/EvaluationDeclarationBadge";
 import { AdminPreDossierEvaluationPanel } from "@/components/AdminPreDossierEvaluationPanel";
+import { isBilanSent } from "@/lib/bilanSent";
 import type { EvaluationDeclarationStatus } from "@shared/evaluationDeclaration";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -1136,7 +1137,7 @@ export function CandidateDetailModal({
                       onClick={() => setEvaluationEditorOpen(true)}
                       data-testid="predossier-open-eval-editor"
                     >
-                      <FileText className="mr-1.5 h-3.5 w-3.5" />Préparer / envoyer le bilan
+                      <FileText className="mr-1.5 h-3.5 w-3.5" />{isBilanSent(candidate, data) ? "Modifier le bilan" : "Préparer / envoyer le bilan"}
                     </Button>
                     {preDossierCvUrl ? (
                       <a
@@ -1153,6 +1154,7 @@ export function CandidateDetailModal({
                 </section>
                 <div id="predossier-evaluation-panel" className="scroll-mt-24">
                 <AdminPreDossierEvaluationPanel
+                  evaluationDone={isBilanSent(candidate, data)}
                   status={candidate.evaluationDeclarationStatus}
                   declaredAt={candidate.evaluationDeclaredAt}
                   reviewedAt={candidate.evaluationReviewedAt}

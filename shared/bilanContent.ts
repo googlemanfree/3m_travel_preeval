@@ -400,6 +400,41 @@ export function styleBilanHtml(html: string): string {
   });
 }
 
+/** Identification du candidat reprise automatiquement dans le bilan : numéro de compte, e-mail, téléphone, conseiller, date d'émission. */
+export type BilanIdentity = { accountNumber?: string | null; email?: string | null; phone?: string | null; advisor?: string | null; issuedAt?: string | null };
+
+export function bilanIdentityFrom(input: { candidateId?: number | null; email?: string | null; phone?: string | null; advisor?: string | null; now?: Date }): BilanIdentity {
+  const clean = (value: string | null | undefined) => {
+    const text = String(value ?? "").trim();
+    return text && !/^non renseign/i.test(text) ? text : null;
+  };
+  return {
+    accountNumber: input.candidateId && input.candidateId > 0 ? `COMPTE-${String(input.candidateId).padStart(5, "0")}` : null,
+    email: clean(input.email),
+    phone: clean(input.phone),
+    advisor: clean(input.advisor),
+    issuedAt: (input.now ?? new Date()).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }),
+  };
+}
+
+function renderIdentityBlock(identity: BilanIdentity | null | undefined, reference: string | null | undefined): string {
+  if (!identity) return "";
+  const cells = [
+    ["N° de compte", identity.accountNumber],
+    ["Référence du dossier", reference],
+    ["E-mail", identity.email],
+    ["Téléphone", identity.phone],
+    ["Conseiller référent", identity.advisor],
+    ["Date d’émission", identity.issuedAt],
+  ].filter((cell): cell is [string, string] => Boolean(cell[1]));
+  if (cells.length === 0) return "";
+  const cell = ([label, value]: [string, string]) =>
+    `<td width="50%" style="padding:7px 12px;border-top:1px solid #e3edf5;vertical-align:top"><span style="font:11px Arial,Helvetica,sans-serif;color:#64748b;text-transform:uppercase;letter-spacing:.4px">${escapeBrandHtml(label)}</span><br><strong style="font:600 13px 'Segoe UI',Calibri,Arial,Helvetica,sans-serif;color:#17375e">${escapeBrandHtml(value)}</strong></td>`;
+  const rows: string[] = [];
+  for (let index = 0; index < cells.length; index += 2) rows.push(`<tr>${cell(cells[index])}${cells[index + 1] ? cell(cells[index + 1]) : "<td></td>"}</tr>`);
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin:0 0 20px;border:1px solid #d5e3ee;background:#ffffff"><tr><td colspan="2" style="background:#eaf2fa;padding:7px 12px;font:700 11px Arial,Helvetica,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#17375e">Fiche d’identification du dossier</td></tr>${rows.join("")}</table>`;
+}
+
 export type BilanDocumentInput = {
   html: string;
   title: string;
@@ -411,6 +446,8 @@ export type BilanDocumentInput = {
   score?: number | null;
   validatedLabel?: string | null;
   introHtml?: string | null;
+  /** Fiche d'identification (compte, e-mail, téléphone, conseiller, date) : absente si non fournie. */
+  identity?: BilanIdentity | null;
 };
 
 /** Fragment du bilan prêt à l'emploi (espace candidat, aperçu, e-mail) : en-tête de document, contenu mis en forme, mention légale. */
@@ -425,7 +462,7 @@ export function renderBilanFragment(input: BilanDocumentInput): string {
 <div style="font:700 21px/1.3 Arial,Helvetica,sans-serif;color:#17375e;margin-top:4px">${escapeBrandHtml(input.title)}</div>
 <div style="font:14px/1.5 Arial,Helvetica,sans-serif;color:#334155;margin-top:6px"><strong>${escapeBrandHtml(input.candidateName)}</strong>${meta ? ` — ${meta}` : ""}</div>${input.validatedLabel ? `<div style="font:12px Arial,Helvetica,sans-serif;color:#64748b;margin-top:4px">${escapeBrandHtml(input.validatedLabel)}</div>` : ""}${score}
 </div>
-${input.introHtml ? `<div style="margin:0 0 18px">${input.introHtml}</div>` : ""}
+${renderIdentityBlock(input.identity, input.reference)}${input.introHtml ? `<div style="margin:0 0 18px">${input.introHtml}</div>` : ""}
 <div>${styleBilanHtml(input.html)}</div>
 <p style="margin:26px 0 0;padding-top:14px;border-top:1px solid #bbd9ea;font:12px/1.6 Arial,Helvetica,sans-serif;color:#64748b">${escapeBrandHtml(LEGAL_DISCLAIMER)}</p>
 </div>`;

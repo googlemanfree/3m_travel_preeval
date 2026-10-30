@@ -97,7 +97,7 @@ describe("saisie, validation et envoi du bilan côté administration", () => {
     expect(screen.getByTestId("bilan-input")).toBeTruthy();
     expect(screen.getByTestId("bilan-live-preview-empty")).toBeTruthy();
     const buttons = screen.getAllByRole("button").map((button) => button.getAttribute("data-testid"));
-    expect(buttons.filter(Boolean)).toEqual(["bilan-save-draft", "bilan-validate", "bilan-validate-send"]);
+    expect(buttons.filter(Boolean)).toEqual(["bilan-save-draft", "bilan-validate", "bilan-test-email", "bilan-validate-send"]);
     expect(screen.getByTestId("bilan-blockers").textContent).toMatch(/Saisissez le bilan/);
     expect((screen.getByTestId("bilan-validate") as HTMLButtonElement).disabled).toBe(true);
     expect((screen.getByTestId("bilan-validate-send") as HTMLButtonElement).disabled).toBe(true);

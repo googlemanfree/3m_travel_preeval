@@ -35,6 +35,8 @@ import { getDb } from "../db";
 import { applications, evaluationEmails } from "../../drizzle/schema";
 import { and, eq, isNull } from "drizzle-orm";
 import { verifyEvaluationEmailTrackingToken } from "../services/evaluationEmailCommunication";
+import { startActivationGuard } from "../services/activationGuard";
+import { recordBilanViewed } from "../services/bilanReceipts";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -150,7 +152,8 @@ async function startServer() {
           if (tracked) {
             const openedAt = new Date();
             await db.update(evaluationEmails).set({ openedAt }).where(and(eq(evaluationEmails.id, emailId), isNull(evaluationEmails.openedAt)));
-            await db.update(applications).set({ evaluationReportViewedAt: openedAt, updatedAt: openedAt }).where(and(eq(applications.id, tracked.evaluationId), isNull(applications.evaluationReportViewedAt)));
+            // Première ouverture seulement : alerte dans l'administration et e-mail à l'agence.
+            await recordBilanViewed(db, tracked.evaluationId, "e-mail");
           }
         }
       } catch (error) {
@@ -208,6 +211,7 @@ async function startServer() {
     console.log(`Server running on http://localhost:${port}/`);
     initScheduledJobsCron(port);
     startCountryGuidesRefresh();
+    startActivationGuard();
   });
 }
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle2, FolderOpen, MessageCircleQuestion } from "lucide-react";
+import { CheckCircle2, FolderOpen, MessageCircleQuestion, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { clientSpacePolling } from "@/lib/clientSpaceSync";
@@ -27,6 +27,12 @@ export function ClientBilanDecision({ enabled = true }: { enabled?: boolean }) {
     onSuccess: () => { toast.success("Votre réponse est transmise.", { description: "Un conseiller reviendra vers vous. Vous pouvez valider votre bilan à tout moment." }); setDeclining(false); refresh(); },
     onError: (error) => toast.error(error.message),
   });
+  // Une question avant de valider : on amène le candidat à la prise de rendez-vous en ligne de la même page, sinon au formulaire de contact.
+  const talkToAdvisor = () => {
+    const target = document.querySelector('[data-testid="client-remote-support"]');
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    else window.location.assign("/contact");
+  };
   const data = query.data;
   if (!enabled || !data || !data.sent) return null;
   const busy = accept.isPending || decline.isPending;
@@ -57,6 +63,9 @@ export function ClientBilanDecision({ enabled = true }: { enabled?: boolean }) {
       <div className="flex flex-wrap items-center gap-3">
         <Button type="button" size="lg" className="min-h-12 bg-blue-700 px-6 text-base font-bold hover:bg-blue-800" disabled={busy} onClick={() => accept.mutate()} data-testid="bilan-accept">
           <FolderOpen className="mr-2 h-5 w-5" aria-hidden="true" />{accept.isPending ? "Ouverture en cours…" : "Je valide et j'ouvre mon dossier"}
+        </Button>
+        <Button type="button" variant="ghost" className="min-h-12 text-blue-800" onClick={talkToAdvisor} data-testid="bilan-talk">
+          <Phone className="mr-2 h-4 w-4" aria-hidden="true" />Parler à mon conseiller
         </Button>
         {!declining && (
           <Button type="button" variant="outline" className="min-h-12" disabled={busy} onClick={() => setDeclining(true)} data-testid="bilan-decline-open">

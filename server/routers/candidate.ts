@@ -2392,6 +2392,8 @@ export const candidateRouter = router({
     const { generateEvaluationReportHTML } = await import("../evaluationService");
     const { frameBrandedDocument } = await import("../../shared/brandLetterhead");
     const pdfUrl = application.evaluationReportPdfKey ? await storageGetSignedUrl(application.evaluationReportPdfKey).catch(() => null) : null;
+    // Première consultation : alerte dans l'administration et e-mail à l'agence (une seule fois, sans bloquer l'affichage).
+    if (!application.evaluationReportViewedAt) void import("../services/bilanReceipts").then((module) => module.recordBilanViewed(db, application.id, "espace client")).catch(() => undefined);
     return {
       dossierNumber: application.dossierNumber,
       subject: application.evaluationDeliverySubject ?? null,
@@ -2822,7 +2824,8 @@ export const candidateRouter = router({
       throw new TRPCError({ code: "NOT_FOUND", message: "Aucun bilan finalisé n’est disponible." });
     }
     if (!application.evaluationReportViewedAt) {
-      await db.update(applications).set({ evaluationReportViewedAt: new Date(), updatedAt: new Date() }).where(eq(applications.id, application.id));
+      const { recordBilanViewed } = await import("../services/bilanReceipts");
+      await recordBilanViewed(db, application.id, "espace client");
     }
     return { success: true, firstViewedAt: application.evaluationReportViewedAt ?? new Date() };
   }),
