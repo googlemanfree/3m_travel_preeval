@@ -104,6 +104,7 @@ import { evaluationDecisionRouter } from "./routers/evaluationDecision";
 import { bilanFollowUpRouter } from "./routers/bilanFollowUp";
 import { profileUndoRouter } from "./routers/profileUndo";
 import { consistencyRouter } from "./routers/consistency";
+import { bilanAiRouter } from "./routers/bilanAi";
 import { opportunitiesInboxRouter } from "./routers/opportunitiesInbox";
 import { employerOffersRouter } from "./routers/employerOffers";
 import { jobOffersRouter } from "./routers/jobOffers";
@@ -249,6 +250,7 @@ export const appRouter = router({
   bilanFollowUp: bilanFollowUpRouter,
   profileUndo: profileUndoRouter,
   consistency: consistencyRouter,
+  bilanAi: bilanAiRouter,
   opportunitiesInbox: opportunitiesInboxRouter,
   employerOffers: employerOffersRouter,
   jobOffers: jobOffersRouter,

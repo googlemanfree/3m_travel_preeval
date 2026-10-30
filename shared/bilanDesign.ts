@@ -156,9 +156,29 @@ export function alignFromAttributes(attributes: string): BilanAlign | null {
   return normalized === "center" || normalized === "right" || normalized === "justify" ? normalized : null;
 }
 
+/** Couleur d'une bordure CSS : « 4px solid #16a34a » → « #16a34a ». */
+function colorOfBorder(value: string | null): string | null {
+  if (!value) return null;
+  const found = /#[0-9a-f]{3,8}\b|rgba?\([^)]*\)|\b[a-z]{3,20}\s*$/i.exec(value);
+  return found ? found[0].trim() : null;
+}
+
+const TONE_TO_CALLOUT: Record<string, BilanCallout> = { green: "success", teal: "success", red: "danger", pink: "danger", amber: "warning", orange: "warning", blue: "info", indigo: "info", purple: "info" };
+const HIGHLIGHT_TO_CALLOUT: Record<string, BilanCallout> = { green: "success", pink: "danger", yellow: "warning", orange: "warning", blue: "info" };
+
+/**
+ * Encadré d'une citation : choix explicite (data-v) ou, pour un HTML collé, déduit de la couleur de la bordure gauche puis du fond
+ * (vert → point fort, rouge → alerte, ocre → point d'attention, bleu → information). Gris ou sans couleur : citation simple.
+ */
 export function calloutFromAttributes(attributes: string): BilanCallout | null {
   const name = attributeValue(attributes, "data-v");
-  return has(BILAN_CALLOUTS, name) ? (name as BilanCallout) : null;
+  if (has(BILAN_CALLOUTS, name)) return name as BilanCallout;
+  const style = attributeValue(attributes, "style");
+  if (!style) return null;
+  const borderTone = cssColorToTextName(cssProperty(style, "border-left-color") ?? colorOfBorder(cssProperty(style, "border-left")) ?? colorOfBorder(cssProperty(style, "border")));
+  if (borderTone && TONE_TO_CALLOUT[borderTone]) return TONE_TO_CALLOUT[borderTone];
+  const backgroundTone = cssColorToHighlightName(cssProperty(style, "background-color") ?? cssProperty(style, "background"));
+  return backgroundTone && HIGHLIGHT_TO_CALLOUT[backgroundTone] ? HIGHLIGHT_TO_CALLOUT[backgroundTone] : null;
 }
 
 export function tableDesignFromAttributes(attributes: string): BilanTableDesign | null {

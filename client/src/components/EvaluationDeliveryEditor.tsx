@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { BilanAiAssistant } from "@/components/BilanAiAssistant";
 import { BilanDocumentActions } from "@/components/BilanDocumentActions";
 import { hasStructure, htmlToStructuredText, insertAtSelection, locatePassage } from "@/lib/bilanPaste";
 import { bilanSkeleton, type SkeletonKind } from "@shared/bilanSkeleton";
@@ -388,6 +389,7 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
                   <Label htmlFor="bilan-input" className="mb-1 text-sm font-semibold text-slate-900">Bilan</Label>
                   <Textarea id="bilan-input" data-testid="bilan-input" value={text} onChange={(event) => setText(event.target.value)} placeholder={PLACEHOLDER} disabled={locked} spellCheck onPaste={onPasteBilan} className="min-h-0 flex-1 resize-none font-sans text-sm leading-6" />
                   <p className="mt-1 text-xs text-slate-500" data-testid="bilan-status" role="status" aria-live="polite">{status} · {inspection.words} mot{inspection.words > 1 ? "s" : ""}</p>
+                  <BilanAiAssistant sessionToken={sessionToken} text={text} fullName={application.fullName} disabled={locked} onApply={setText} />
                 </div>
                 <div className={`${tab === "input" ? "hidden lg:flex" : "flex"} min-h-[420px] flex-col rounded-xl border border-slate-200 bg-white p-3 lg:min-h-0`}>
                   <p className="mb-1 text-sm font-semibold text-slate-900">Aperçu en direct — ce que le candidat recevra</p>
