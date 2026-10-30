@@ -70,6 +70,15 @@ export function agencyDossierIsActivated(agency: { status?: string | null; initi
   return Boolean(agency.status) && agency.status !== "nouveau";
 }
 
+/**
+ * Référence à AFFICHER pour un dossier agence : « 3M-AGN-… » seulement une fois les frais payés (ou le dossier réellement avancé) ;
+ * avant, la référence de compte « COMPTE-… » du candidat (à défaut de compte lié, la référence agence reste la seule disponible).
+ */
+export function agencyDisplayReference(agency: { id: number; status?: string | null; initialPaymentStatus?: string | null }, linkedCandidateId?: number | null): string {
+  if (agencyDossierIsActivated(agency) || !linkedCandidateId || linkedCandidateId <= 0) return agencyDossierReference(agency.id);
+  return accountReference(linkedCandidateId);
+}
+
 export type ReferenceSources = {
   candidateId: number;
   /** Dossier agence rattaché au compte (par e-mail). Un pré-dossier « nouveau » n'est pas un dossier activé. */

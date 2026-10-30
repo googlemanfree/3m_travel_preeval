@@ -103,6 +103,7 @@ import { clientSpaceRouter } from "./routers/clientSpace";
 import { evaluationDecisionRouter } from "./routers/evaluationDecision";
 import { bilanFollowUpRouter } from "./routers/bilanFollowUp";
 import { profileUndoRouter } from "./routers/profileUndo";
+import { consistencyRouter } from "./routers/consistency";
 import { opportunitiesInboxRouter } from "./routers/opportunitiesInbox";
 import { employerOffersRouter } from "./routers/employerOffers";
 import { jobOffersRouter } from "./routers/jobOffers";
@@ -247,6 +248,7 @@ export const appRouter = router({
   evaluationDecision: evaluationDecisionRouter,
   bilanFollowUp: bilanFollowUpRouter,
   profileUndo: profileUndoRouter,
+  consistency: consistencyRouter,
   opportunitiesInbox: opportunitiesInboxRouter,
   employerOffers: employerOffersRouter,
   jobOffers: jobOffersRouter,

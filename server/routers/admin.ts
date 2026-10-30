@@ -27,7 +27,7 @@ import { pickVisaContextForJourney } from "../../shared/evaluationVisaCv";
 import { ADMIN_STAGE_TO_AGENCY_STATUS, ADMIN_STAGE_TO_ONLINE_STATUS, describeDossierProgress } from "../../shared/dossierProgress";
 import { buildProcedureUpdateEmail } from "../services/procedureProgressEmail";
 import { destinationLabelForStaff, parsePreferredDestinations } from "../../shared/candidateDestinationOptions";
-import { accountReference, agencyDossierReference, resolveClientReference } from "../../shared/caseReference";
+import { accountReference, agencyDisplayReference, agencyDossierReference, resolveClientReference } from "../../shared/caseReference";
 import {
   collapseEvalAgencyShellRows,
   parseEvalAgencyShellId,
@@ -3556,7 +3556,7 @@ export const adminRouter = router({
             candidate: {
               id: `agency_${dossier.id}`,
               internalId: dossier.id,
-              folderCode: agencyDossierReference(dossier.id),
+              folderCode: agencyDisplayReference(dossier, candRec?.id),
               formerFolderCodes: [`EVAL-AG-${dossier.id}`],
               fullName: dossier.fullName,
               email: dossier.email,
@@ -5012,7 +5012,7 @@ export const adminRouter = router({
         evalShellPurged,
         evalShellFolderCode: evalShellId != null && !evalShellPurged ? `EVAL-AG-${evalShellId}` : null,
         canonicalFolderCode: reference.source === "agency"
-          ? canonicalAgencyFolderCode(reference.id)
+          ? agencyDisplayReference(sourceRecord as typeof agencyDossiers.$inferSelect, candidateRecord?.id)
           : (evalShellId != null ? canonicalAgencyFolderCode(evalShellId) : null),
         placementSummary: candidateRecord ? await safeCollection((async () => {
           const profile = (await db.select({

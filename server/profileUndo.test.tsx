@@ -37,6 +37,20 @@ describe("annuler une étape, réinitialiser un profil", () => {
     expect(availableUndos(facts({ activated: true, paid: true })).find((option) => option.action === "undo_activation")!.superAdminOnly).toBe(true);
   });
 
+  it("un bilan envoyé non payé peut être rouvert pour correction : brouillon à revalider, réponse du candidat effacée, versions conservées", () => {
+    expect(actions({ bilanSent: true, reopenable: true })).toEqual(["reopen_bilan", "reset_profile"]);
+    expect(actions({ bilanSent: true, reopenable: true, hasClientDecision: true })).toEqual(["undo_client_decision", "reopen_bilan", "reset_profile"]);
+    expect(actions({ bilanSent: true, reopenable: false, paid: true })).toEqual(["reset_profile"]);
+    expect(availableUndos(facts({ bilanSent: true, reopenable: true })).find((option) => option.action === "reopen_bilan")!.superAdminOnly).toBe(false);
+    const router = read("server/routers/profileUndo.ts");
+    expect(router).toContain('reopenable: application?.evaluationDeliveryStatus === "sent" && application.paymentStatus !== "SUCCESS"');
+    expect(router).toContain('evaluationDeliveryStatus: "draft"');
+    expect(router).toContain("advisorValidated: false");
+    expect(router).toContain('else if (action === "reopen_bilan") await reopenBilan();');
+    expect(router).not.toMatch(/evaluationBilanVersions/);
+    expect(read("client/src/components/EvaluationDeliveryEditor.tsx")).toContain("Rouvrir le bilan pour le corriger");
+  });
+
   it("un motif d'au moins huit caractères est obligatoire ; la réinitialisation exige de taper REINITIALISER", () => {
     expect(validateUndoRequest({ reason: "court", action: "undo_activation" })).toMatch(/motif/);
     expect(validateUndoRequest({ reason: "Erreur de saisie", action: "undo_activation" })).toBeNull();

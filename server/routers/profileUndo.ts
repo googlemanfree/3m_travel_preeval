@@ -38,6 +38,7 @@ async function loadState(db: Db, candidateId: number) {
     activated: isActivatedStatus(candidate.dossierStatus),
     paid: application?.paymentStatus === "SUCCESS" || Boolean((evidence as { ok?: boolean }).ok),
     evaluationDeclared: candidate.evaluationDeclarationStatus !== "not_declared",
+    reopenable: application?.evaluationDeliveryStatus === "sent" && application.paymentStatus !== "SUCCESS" && ["bilan_envoye", "en_attente_paiement"].includes(application.dossierStatus),
   };
   return { candidate, application: application ?? null, facts, decisionId: decisionRow?.id ?? null };
 }
@@ -84,6 +85,17 @@ export const profileUndoRouter = router({
         }
       } catch { /* brouillon illisible : rien à annuler */ }
     };
+    const reopenBilan = async () => {
+      if (!application || !facts.reopenable) return;
+      let scoringDetails = application.scoringDetails;
+      try {
+        const details = JSON.parse(application.scoringDetails || "{}");
+        if (details.adminDraft) scoringDetails = JSON.stringify({ ...details, adminDraft: { ...details.adminDraft, advisorValidated: false, advisorValidatedAt: null, advisorValidatedByAdminId: null } });
+      } catch { /* brouillon illisible : conservé tel quel */ }
+      if (decisionId) await db.delete(agencySettings).where(eq(agencySettings.id, decisionId));
+      await db.update(applications).set({ evaluationDeliveryStatus: "draft", evaluationReportViewedAt: null, evaluationClientConfirmedAt: null, activationRequestedAt: null, paymentOpeningRequestedAt: null, dossierStatus: "en_evaluation", scoringDetails, updatedAt: new Date() }).where(eq(applications.id, application.id));
+      done.push("bilan rouvert pour correction (versions précédentes conservées)");
+    };
     const undoActivation = async () => {
       const result = await deactivateCandidateDossier(db, { candidateId: candidate.id, actorEmail, reason: input.reason });
       if (result.ok) done.push("activation annulée (compte repassé en pré-compte)");
@@ -91,6 +103,7 @@ export const profileUndoRouter = router({
 
     if (action === "undo_client_decision") await undoDecision();
     else if (action === "undo_advisor_validation") await undoValidation();
+    else if (action === "reopen_bilan") await reopenBilan();
     else if (action === "undo_activation") await undoActivation();
     else {
       if (facts.activated) await undoActivation();

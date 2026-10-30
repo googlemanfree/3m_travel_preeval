@@ -2,7 +2,7 @@
  * Annuler une étape et réinitialiser un profil : ce qui est possible selon l'état réel du compte.
  * Jamais effacés : bilan déjà envoyé, pièces déposées, messages, preuves et paiements confirmés. On défait des décisions, pas des faits.
  */
-export const UNDO_ACTIONS_FOR_ROUTER = ["undo_client_decision", "undo_advisor_validation", "undo_activation", "reset_profile"] as const;
+export const UNDO_ACTIONS_FOR_ROUTER = ["undo_client_decision", "undo_advisor_validation", "reopen_bilan", "undo_activation", "reset_profile"] as const;
 export type UndoAction = (typeof UNDO_ACTIONS_FOR_ROUTER)[number];
 
 export type ProfileFacts = {
@@ -13,6 +13,8 @@ export type ProfileFacts = {
   activated: boolean;
   paid: boolean;
   evaluationDeclared: boolean;
+  /** Bilan envoyé, non payé, dossier encore à l'étape bilan : il peut être rouvert pour correction. */
+  reopenable?: boolean;
 };
 
 export type UndoOption = { action: UndoAction; label: string; description: string; danger: boolean; superAdminOnly: boolean };
@@ -27,6 +29,9 @@ export function availableUndos(facts: ProfileFacts): UndoOption[] {
   }
   if (facts.advisorValidated && !facts.bilanSent) {
     options.push({ action: "undo_advisor_validation", label: "Annuler la validation du bilan", description: "Le bilan redevient un brouillon à valider avant envoi.", danger: false, superAdminOnly: false });
+  }
+  if (facts.reopenable) {
+    options.push({ action: "reopen_bilan", label: "Rouvrir le bilan pour le corriger", description: "Le bilan envoyé redevient un brouillon modifiable ; il devra être validé puis renvoyé (le candidat recevra la version corrigée et pourra répondre de nouveau). Les versions précédentes sont conservées.", danger: false, superAdminOnly: false });
   }
   if (facts.activated) {
     options.push({ action: "undo_activation", label: "Annuler l'activation du dossier", description: "Le compte repasse en pré-compte (réactivable depuis « Activations à contrôler »). Pièces et paiements sont conservés.", danger: true, superAdminOnly: facts.paid });

@@ -8,10 +8,12 @@ import { formatXaf } from "@shared/openingFee";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AdminBilanFollowUp } from "@/components/AdminBilanFollowUp";
+import { AdminConsistency } from "@/components/AdminConsistency";
 
 type Out = inferRouterOutputs<AppRouter>["adminOps"];
-type Section = "followup" | "checks" | "schedule" | "outcomes" | "assign" | "health";
+type Section = "consistency" | "followup" | "checks" | "schedule" | "outcomes" | "assign" | "health";
 const SECTIONS: Array<{ id: Section; label: string }> = [
+  { id: "consistency", label: "Incohérences" },
   { id: "followup", label: "Bilans à relancer" },
   { id: "checks", label: "Pièces et échéances" },
   { id: "schedule", label: "Échéancier de paiement" },
@@ -233,6 +235,7 @@ export function AdminOps({ sessionToken }: { sessionToken: string }) {
       {section === "assign" && <AssignPanel sessionToken={sessionToken} />}
       {section === "health" && <HealthPanel sessionToken={sessionToken} />}
       {section === "followup" && <AdminBilanFollowUp sessionToken={sessionToken} />}
+      {section === "consistency" && <AdminConsistency sessionToken={sessionToken} />}
     </div>
   );
 }
