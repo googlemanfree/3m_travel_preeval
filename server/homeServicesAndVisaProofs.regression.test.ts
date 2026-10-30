@@ -40,12 +40,12 @@ describe("page d'accueil : « Nos services » et preuves de visas Schengen", () 
     expect(section).toContain("formatCatalogueFichesLabel");
     expect(section).toContain("DESTINATION_COUNT");
     expect(section).toContain("FICHE_COUNT");
-    expect(section).toContain("centre de préparation et de suivi de dossiers");
+    expect(section).toContain("agence de voyage et un centre de préparation et de suivi de dossiers");
     expect(section).toContain("{CATALOGUE_LABEL}");
     expect(section).toContain("{CATALOGUE_COMPOSITION}");
     expect(section).toContain("Une fiche = une procédure");
     expect(section).toContain("canaux autorisés");
-    expect(section).toContain("Une seule ambition : transformer votre projet international en une démarche claire, préparée et crédible.");
+    expect(section).toContain("Notre ambition : figurer parmi les 5 agences les plus recommandées à Yaoundé");
   });
 
   it("est affichée sur l'accueil, avant les procédures les plus demandées, après les preuves sociales", () => {
