@@ -92,6 +92,20 @@ describe("désactivation, retour en pré-compte et annulations", () => {
     expect(read("server/routers.ts")).toContain("activationSafety: activationSafetyRouter");
     expect(read("client/src/pages/AdminDashboard.tsx")).toContain('<AdminActivationSafety sessionToken={sessionToken} />');
     const names = Array.from(router.matchAll(/\n  ([A-Za-z]+): publicProcedure/g), (match) => match[1]);
-    expect(names).toEqual(["scan", "searchActive", "deactivate", "requests", "decideRequest", "deactivateMany", "reactivate"]);
+    expect(names).toEqual(["status", "scan", "searchActive", "deactivate", "requests", "decideRequest", "deactivateMany", "reactivate"]);
+  });
+
+  it("expose un état agrégé du contrôle sans SQL ni données personnelles dans l'interface", () => {
+    expect(read("server/routers/activationSafety.ts")).toContain("getActivationGuardStatus()");
+    expect(read("server/services/activationGuard.ts")).toContain("Le contrôle automatique n'a pas pu interroger la base de données.");
+    const panel = read("client/src/components/AdminActivationSafety.tsx");
+    expect(panel).toContain('data-testid="activation-guard-status"');
+    expect(panel).toContain("Supervision automatique");
+  });
+
+  it("protège le contrôle périodique contre une connexion MySQL inactive", () => {
+    expect(read("server/db.ts")).toContain("enableKeepAlive: true");
+    expect(read("server/db.ts")).toContain("supportBigNumbers: true");
+    expect(read("server/services/deactivateDossier.ts")).toContain("Laisser le pool reprendre une connexion");
   });
 });

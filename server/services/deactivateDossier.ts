@@ -186,9 +186,8 @@ export type ActivationReviewRow = {
   suggested: boolean;
 };
 
-/** Comptes activés dont la preuve de paiement est introuvable. Lecture seule : rien n'est modifié. */
-export async function scanActivationsWithoutProof(db: Db, limit = 500): Promise<{ scanned: number; rows: ActivationReviewRow[] }> {
-  const active = await db.select({
+async function readActiveCandidates(db: Db) {
+  const query = () => db.select({
     id: candidates.id,
     fullName: candidates.fullName,
     email: candidates.email,
@@ -199,6 +198,25 @@ export async function scanActivationsWithoutProof(db: Db, limit = 500): Promise<
     .where(and(isNull(candidates.deletedAt), inArray(candidates.dossierStatus, [...ACTIVE_CANDIDATE_STATUSES]), ne(candidates.email, "")))
     .orderBy(desc(candidates.id))
     .limit(2000);
+
+  try {
+    return await query();
+  } catch (firstError) {
+    // Une connexion peut être coupée par l'infrastructure entre deux passages
+    // du garde. Laisser le pool reprendre une connexion avant de déclarer le
+    // contrôle indisponible ; une seconde erreur reste propagée au journal.
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    try {
+      return await query();
+    } catch {
+      throw firstError;
+    }
+  }
+}
+
+/** Comptes activés dont la preuve de paiement est introuvable. Lecture seule : rien n'est modifié. */
+export async function scanActivationsWithoutProof(db: Db, limit = 500): Promise<{ scanned: number; rows: ActivationReviewRow[] }> {
+  const active = await readActiveCandidates(db);
 
   const rows: ActivationReviewRow[] = [];
   for (const candidate of active) {

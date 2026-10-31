@@ -17,13 +17,50 @@ const STATE_KEY = "activation_guard:last_review_count";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
 export type GuardReport = { enabled: boolean; scanned: number; removed: number; review: number; failures: number };
+export type ActivationGuardStatus = {
+  enabled: boolean;
+  state: "not_run" | "operational" | "degraded" | "unavailable" | "disabled";
+  checkedAt: string | null;
+  scanned: number;
+  removed: number;
+  review: number;
+  failures: number;
+  lastError: string | null;
+};
+
+let lastStatus: ActivationGuardStatus = {
+  enabled: true,
+  state: "not_run",
+  checkedAt: null,
+  scanned: 0,
+  removed: 0,
+  review: 0,
+  failures: 0,
+  lastError: null,
+};
+
+function markStatus(status: Partial<Omit<ActivationGuardStatus, "enabled">> & { enabled?: boolean }) {
+  lastStatus = { ...lastStatus, ...status, enabled: status.enabled ?? activationGuardEnabled() };
+}
+
+function markUnavailable() {
+  markStatus({ state: "unavailable", checkedAt: new Date().toISOString(), lastError: "Le contrôle automatique n'a pas pu interroger la base de données." });
+}
+
+export function getActivationGuardStatus(): ActivationGuardStatus {
+  return { ...lastStatus, enabled: activationGuardEnabled() };
+}
 
 export function activationGuardEnabled(value: string | undefined = process.env.ACTIVATION_GUARD): boolean {
   return String(value ?? "").trim().toLowerCase() !== "off";
 }
 
 export async function enforceActivationInvariant(db: Db, options: { limit?: number } = {}): Promise<GuardReport> {
-  if (!activationGuardEnabled()) return { enabled: false, scanned: 0, removed: 0, review: 0, failures: 0 };
+  if (!activationGuardEnabled()) {
+    const report = { enabled: false, scanned: 0, removed: 0, review: 0, failures: 0 } as const;
+    markStatus({ ...report, state: "disabled", checkedAt: new Date().toISOString(), lastError: null });
+    return report;
+  }
   const { scanned, rows } = await scanActivationsWithoutProof(db, 500);
   const toRemove = rows.filter((row) => row.suggested).slice(0, options.limit ?? ACTIVATION_GUARD_BATCH);
   const toReview = rows.filter((row) => !row.suggested);
@@ -38,7 +75,9 @@ export async function enforceActivationInvariant(db: Db, options: { limit?: numb
     }
   }
   await announce(db, { removed, review: toReview.length, failures });
-  return { enabled: true, scanned, removed, review: toReview.length, failures };
+  const report = { enabled: true, scanned, removed, review: toReview.length, failures } as const;
+  markStatus({ ...report, state: failures > 0 ? "degraded" : "operational", checkedAt: new Date().toISOString(), lastError: null });
+  return report;
 }
 
 /** Alerte interne seulement quand il y a du nouveau : des retraits, ou un nombre de dossiers à vérifier différent du dernier contrôle (pas de rappel quotidien identique). */
@@ -66,10 +105,14 @@ export function startActivationGuard(): void {
   const run = async () => {
     try {
       const db = await getDb();
-      if (!db) return;
+      if (!db) {
+        markUnavailable();
+        return;
+      }
       const report = await enforceActivationInvariant(db);
       if (report.removed > 0 || report.failures > 0) console.log(`[activation-guard] ${report.removed} retrait(s), ${report.review} à vérifier, ${report.failures} échec(s)`);
     } catch (error) {
+      markUnavailable();
       console.warn("[activation-guard] contrôle impossible :", error instanceof Error ? error.message : error);
     }
   };

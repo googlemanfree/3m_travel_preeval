@@ -6,6 +6,7 @@ import { sensitiveActionRequests } from "../../drizzle/remoteSupportSchema";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { deactivateCandidateDossier, hasDeactivationSnapshot, reactivateCandidateDossier, scanActivationsWithoutProof, ACTIVE_CANDIDATE_STATUSES } from "../services/deactivateDossier";
+import { getActivationGuardStatus } from "../services/activationGuard";
 import { getOpeningPaymentEvidence } from "../services/openingPaymentEvidence";
 import { recordPrivacyEvent } from "../services/privacyAudit";
 import { adminLabel } from "../services/partnerProfiles";
@@ -34,6 +35,12 @@ const REACTIVATION_MESSAGES = {
  * pré-compte, rien n'est supprimé) et annuler une désactivation si la preuve existe.
  */
 export const activationSafetyRouter = router({
+  /** État agrégé du contrôle permanent, sans exposer SQL, secrets ou données candidat. */
+  status: publicProcedure.input(z.object({ sessionToken: session })).query(async ({ input }) => {
+    await requireValidAdminSession(input.sessionToken);
+    return getActivationGuardStatus();
+  }),
+
   /** Lecture seule. */
   scan: publicProcedure.input(z.object({ sessionToken: session })).query(async ({ input }) => {
     await requireValidAdminSession(input.sessionToken);

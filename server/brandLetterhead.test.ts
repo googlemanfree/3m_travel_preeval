@@ -1,9 +1,16 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { jsPDF } from "jspdf";
 import { describe, expect, it } from "vitest";
 import { applyLetterhead, BRAND, letterheadLayout, renderBrandedEmailHtml, serviceFocusLabel } from "../shared/brandLetterhead";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "./utils/paymentReceipt";
 
 describe("papier à en-tête officiel", () => {
+  it("conserve les deux bandeaux dans le dossier public Vite", () => {
+    expect(existsSync(resolve(process.cwd(), "client/public/brand/entete-haut.jpg"))).toBe(true);
+    expect(existsSync(resolve(process.cwd(), "client/public/brand/entete-bas.jpg"))).toBe(true);
+  });
+
   it("l'en-tête ne présente que l'accompagnement visa et mobilité internationale", () => {
     const header = BRAND.tagline.join(" ");
     expect(header).toMatch(/visa et mobilité internationale/i);

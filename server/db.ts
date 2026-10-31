@@ -9,7 +9,23 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      // Le serveur reste actif entre deux contrôles espacés de 30 minutes. Un
+      // pool sans keep-alive peut conserver une connexion MySQL coupée par le
+      // proxy après une période d'inactivité, puis faire échouer la première
+      // requête suivante. Ces options laissent mysql2 reprendre une connexion
+      // saine sans exposer ni journaliser la chaîne DATABASE_URL.
+      _db = drizzle({
+        connection: {
+          uri: process.env.DATABASE_URL,
+          supportBigNumbers: true,
+          enableKeepAlive: true,
+          keepAliveInitialDelay: 0,
+          waitForConnections: true,
+          connectionLimit: 10,
+          maxIdle: 10,
+          idleTimeout: 60_000,
+        },
+      });
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;

@@ -18,6 +18,7 @@ const STATUS_LABELS: Record<string, string> = { documents: "Documents", traiteme
  */
 export function AdminActivationSafety({ sessionToken }: { sessionToken: string }) {
   const utils = trpc.useUtils();
+  const guardStatus = trpc.activationSafety.status.useQuery({ sessionToken }, { enabled: Boolean(sessionToken), retry: false, refetchInterval: 30_000 });
   const scan = trpc.activationSafety.scan.useQuery({ sessionToken }, { enabled: Boolean(sessionToken), retry: false });
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [reason, setReason] = useState("Activation sans preuve de paiement");
@@ -26,7 +27,7 @@ export function AdminActivationSafety({ sessionToken }: { sessionToken: string }
   const [manualReason, setManualReason] = useState("");
   const rows = (scan.data?.rows ?? []) as ScanRows;
   const found = trpc.activationSafety.searchActive.useQuery({ sessionToken, search }, { enabled: Boolean(sessionToken) && search.trim().length >= 2, retry: false });
-  const refresh = () => { void utils.activationSafety.scan.invalidate(); void utils.activationSafety.searchActive.invalidate(); };
+  const refresh = () => { void utils.activationSafety.scan.invalidate(); void utils.activationSafety.searchActive.invalidate(); void utils.activationSafety.status.invalidate(); };
 
   useEffect(() => {
     setSelected(new Set(rows.filter((row) => row.suggested).map((row) => row.candidateId)));
@@ -53,9 +54,42 @@ export function AdminActivationSafety({ sessionToken }: { sessionToken: string }
 
   const toggle = (id: number) => setSelected((current) => { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   const canBulk = selected.size > 0 && reason.trim().length >= 5 && confirmation === "DESACTIVER" && !bulk.isPending;
+  const guardState = guardStatus.data?.state ?? (guardStatus.isLoading ? "not_run" : "unavailable");
+  const guardStateLabel = {
+    not_run: "En attente du premier contrôle",
+    operational: "Opérationnel",
+    degraded: "À surveiller",
+    unavailable: "Connexion indisponible",
+    disabled: "Désactivé par configuration",
+  }[guardState];
+  const guardStateClass = {
+    not_run: "bg-slate-100 text-slate-700",
+    operational: "bg-emerald-100 text-emerald-800",
+    degraded: "bg-amber-100 text-amber-900",
+    unavailable: "bg-rose-100 text-rose-800",
+    disabled: "bg-slate-200 text-slate-700",
+  }[guardState];
 
   return (
     <div className="space-y-6" data-testid="admin-activation-safety">
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm" data-testid="activation-guard-status">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Supervision automatique</p>
+            <h2 className="mt-1 text-base font-black text-slate-950">Contrôle des activations sans preuve</h2>
+            <p className="mt-1 text-sm text-slate-600">Le contrôle est lancé au démarrage puis régulièrement. Il remet un dossier en pré-compte seulement selon les règles de preuve existantes.</p>
+          </div>
+          <span className={`rounded-full px-3 py-1 text-xs font-bold ${guardStateClass}`}>{guardStateLabel}</span>
+        </div>
+        <div className="mt-4 grid gap-3 text-sm sm:grid-cols-4">
+          <div className="rounded-lg bg-slate-50 p-3"><p className="text-xs text-slate-500">Dernier passage</p><p className="mt-1 font-semibold text-slate-900">{guardStatus.data?.checkedAt ? new Date(guardStatus.data.checkedAt).toLocaleString("fr-FR") : "Pas encore exécuté"}</p></div>
+          <div className="rounded-lg bg-slate-50 p-3"><p className="text-xs text-slate-500">Comptes contrôlés</p><p className="mt-1 font-semibold text-slate-900">{guardStatus.data?.scanned ?? "—"}</p></div>
+          <div className="rounded-lg bg-slate-50 p-3"><p className="text-xs text-slate-500">À vérifier</p><p className="mt-1 font-semibold text-amber-800">{guardStatus.data?.review ?? "—"}</p></div>
+          <div className="rounded-lg bg-slate-50 p-3"><p className="text-xs text-slate-500">Repassés en pré-compte</p><p className="mt-1 font-semibold text-slate-900">{guardStatus.data?.removed ?? "—"}</p></div>
+        </div>
+        {guardStatus.data?.lastError && <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800" role="alert">{guardStatus.data.lastError} Réessayez après le rétablissement de la connexion.</p>}
+        {guardStatus.error && <p className="mt-3 text-sm text-rose-700" role="alert">Le statut de supervision est momentanément indisponible.</p>}
+      </section>
       <section className="rounded-xl border border-amber-300 bg-amber-50 p-4">
         <h2 className="flex items-center gap-2 text-base font-black text-amber-950"><ShieldAlert className="h-5 w-5" aria-hidden="true" />Dossiers activés sans preuve de paiement</h2>
         <p className="mt-1 text-sm text-amber-950">
