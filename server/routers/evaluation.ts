@@ -20,6 +20,7 @@ import { and, count, desc, eq } from "drizzle-orm";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { candidateProcedure } from "./candidate";
 import { requireValidAdminSession } from "./adminAuth";
+import { loadStoredCvBuffer } from "../services/cvTextLoader";
 
 /** Freine l'envoi en rafale et l'usage des formulaires publics pour écrire à des tiers (e-mail de réception). */
 export const evaluationSubmissionGuard = createSubmissionGuard(EVALUATION_SUBMISSION_LIMITS);
@@ -725,6 +726,42 @@ export const evaluationRouter = router({
         if (error instanceof TRPCError) throw error;
         logger.error("evaluation.cv_prefill.failed", {}, error);
         return { success: false, fields: {}, prefilledCount: 0, message: "L’analyse automatique n’est pas disponible. Vous pouvez compléter le formulaire manuellement." };
+      }
+    }),
+
+  /**
+   * Extraction depuis le CV DÉJÀ enregistré d'un dossier, pour l'équipe : le serveur lit lui-même le fichier.
+   * (Le navigateur ne le peut pas : l'adresse du site redirige vers un lien signé d'un autre domaine, refusé avec les cookies.)
+   * L'adresse n'est acceptée que si elle vient de notre stockage ou d'un https public ; rien n'est enregistré.
+   */
+  extractFromStoredCV: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1).max(512), documentUrl: z.string().trim().min(1).max(1000) }))
+    .mutation(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const buffer = await loadStoredCvBuffer(input.documentUrl);
+      if (!buffer) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Le CV est introuvable ou trop volumineux (5 Mo maximum). Rouvrez le dossier ou demandez un nouveau dépôt." });
+      }
+      const mimeType = buffer.subarray(0, 4).toString() === "%PDF" ? "application/pdf"
+        : buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) ? "image/png"
+        : buffer.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff])) ? "image/jpeg"
+        : null;
+      if (!mimeType) throw new TRPCError({ code: "BAD_REQUEST", message: "Le fichier n'est ni un PDF, ni une image JPG ou PNG : il ne peut pas être lu automatiquement." });
+      try {
+        if (mimeType === "application/pdf") {
+          const totalPages = await getPdfPageCount(buffer);
+          const cvText = await extractTextFromPDF(buffer);
+          if (cvText.trim().length < 20) {
+            return { success: false as const, fields: {}, prefilledCount: 0, message: "Le texte du CV n’a pas pu être lu (PDF scanné ?). Complétez le dossier manuellement." };
+          }
+          const fields = (await extractCVFieldsForForm(cvText)) ?? {};
+          return { success: true as const, source: "pdf" as const, totalPages, fields, prefilledCount: Object.keys(fields).length };
+        }
+        const fields = (await extractCVFieldsFromImage(`data:${mimeType};base64,${buffer.toString("base64")}`)) ?? {};
+        return { success: true as const, source: "image" as const, fields, prefilledCount: Object.keys(fields).length };
+      } catch (error) {
+        logger.error("evaluation.cv_stored_extraction.failed", {}, error);
+        return { success: false as const, fields: {}, prefilledCount: 0, message: "L’analyse automatique n’est pas disponible pour le moment. Réessayez dans quelques instants ou complétez le dossier manuellement." };
       }
     }),
 
