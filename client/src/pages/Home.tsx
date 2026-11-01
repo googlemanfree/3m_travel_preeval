@@ -63,7 +63,8 @@ export default function Home() {
   const lang = language === "en" ? "en" : "fr";
 
   useEffect(() => {
-    document.title = "3M TRAVEL AGENCY | Voyages, Visas, Études & Mobilité Internationale";
+    // Identique au titre prérendu (HOME_TITLE dans server/publicPrerender.ts) : il ne change plus après le chargement.
+    document.title = "3M TRAVEL AGENCY | Agence de voyage, visas et mobilité";
   }, []);
 
   useEffect(() => {

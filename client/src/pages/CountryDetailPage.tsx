@@ -96,7 +96,8 @@ export default function CountryDetailPage() {
     if (locale === 'en') {
       document.documentElement.lang = 'en';
       setPageSeo({
-        title: `${displayTitle} — ${visaLabelEn} visa guide | 3M TRAVEL AGENCY`,
+        // Même titre que le prérendu serveur (publicPrerender.ts) : il ne change plus après le chargement.
+        title: `${displayTitle} | 3M TRAVEL AGENCY`,
         description: verifiedFee
           ? `${displayTitle}: official fees about ${verifiedFee.costLabel}, timelines ${verifiedFee.delayLabel}. Steps, documents and FAQ with 3M TRAVEL AGENCY support from Yaoundé.`
           : `Steps, required documents, official portal and FAQ for your ${visaLabelEn} project to ${country.name} — prepared with 3M TRAVEL AGENCY from Yaoundé.`,
@@ -106,7 +107,7 @@ export default function CountryDetailPage() {
     } else {
       document.documentElement.lang = 'fr';
       setPageSeo({
-        title: `${displayTitle} — visa ${visaLabelFr} | 3M TRAVEL AGENCY`,
+        title: `${displayTitle} | 3M TRAVEL AGENCY`,
         description: verifiedFee
           ? `${displayTitle} : frais ${verifiedFee.costLabel}, délais ${verifiedFee.delayLabel}. Étapes, documents, portail officiel et FAQ — accompagnement 3M TRAVEL AGENCY depuis Yaoundé.`
           : `Étapes, documents exigés, portail officiel et FAQ pour votre projet ${visaLabelFr} vers ${country.name} — accompagnement 3M TRAVEL AGENCY depuis Yaoundé.`,

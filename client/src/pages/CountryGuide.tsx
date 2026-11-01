@@ -5,6 +5,7 @@ import { OFFER_REQUIREMENT_LABELS, PATHWAYS, PATHWAY_LABELS, ROUTE_TYPE_LABELS, 
 import { guideCodeForSlug, guideCountryName } from "@shared/countryGuides";
 import { trpc } from "@/lib/trpc";
 import { setPageSeo } from "@/lib/pageSeo";
+import { clampSeoTitle } from "@/lib/seoText";
 import { trackEvent } from "@/lib/analytics";
 import { ServicePageShell } from "@/components/ServicePageShell";
 import { SocialShareButtons } from "@/components/SocialShareButtons";
@@ -33,12 +34,15 @@ export default function CountryGuide() {
   }, [name, data]);
 
   useEffect(() => {
-    if (!name) return;
+    // Tant que le guide charge, on garde le titre prérendu : « en cours de vérification » ne doit pas s'afficher à tort.
+    if (!name || guide.isLoading) return;
+    // Même titre que le prérendu serveur (server/publicPrerender.ts) : il ne change plus après le chargement.
+    const labels = data ? data.pathways.map((item) => PATHWAY_LABELS[item.pathway].toLowerCase()).join(", ") : "";
     setPageSeo({
-      title: data ? `Visa ${name} : procédures détaillées | 3M TRAVEL AGENCY` : `Guide ${name} : en cours de vérification | 3M TRAVEL AGENCY`,
-      description: data ? `Étapes, pièces, délais et frais pour ${data.pathways.map((item) => PATHWAY_LABELS[item.pathway].toLowerCase()).join(", ")} (${name}).` : `Le guide ${name} est en cours de vérification.`,
+      title: clampSeoTitle(data ? `Visa ${name} : ${labels} | 3M TRAVEL AGENCY` : `Guide ${name} : en cours de vérification | 3M TRAVEL AGENCY`),
+      description: data ? `Étapes, pièces, délais et frais pour ${labels} (${name}).` : `Le guide ${name} est en cours de vérification.`,
     });
-  }, [name, data]);
+  }, [name, data, guide.isLoading]);
 
   if (!code || !name) return <NotFound />;
 
