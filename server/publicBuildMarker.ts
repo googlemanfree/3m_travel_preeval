@@ -1,4 +1,8 @@
+import fs from "node:fs";
+import path from "node:path";
+
 const FALLBACK_BUILD_MARKER = "3m-travel-current";
+let compiledMarker: string | undefined;
 
 /**
  * Stable, non-sensitive identifier used only to diagnose which server build
@@ -6,8 +10,28 @@ const FALLBACK_BUILD_MARKER = "3m-travel-current";
  */
 export function getPublicBuildMarker() {
   const marker = process.env.PUBLIC_BUILD_MARKER?.trim();
-  if (!marker) return FALLBACK_BUILD_MARKER;
-  return marker.slice(0, 64).replace(/[^a-zA-Z0-9._-]/g, "-");
+  if (marker) return sanitizeBuildMarker(marker);
+  if (process.env.NODE_ENV !== "test" && compiledMarker) return compiledMarker;
+  // Le serveur peut démarrer sans git en production. Dans ce cas, relire la
+  // balise déjà injectée dans l’index compilé garantit que l’API et les
+  // en-têtes annoncent exactement le même build que le HTML public.
+  if (process.env.NODE_ENV === "test") return FALLBACK_BUILD_MARKER;
+  for (const candidate of [
+    path.resolve(process.cwd(), "dist/public/index.html"),
+    path.resolve(process.cwd(), "public/index.html"),
+  ]) {
+    try {
+      const html = fs.readFileSync(candidate, "utf8");
+      const value = extractBuildMarker(html);
+      if (value) {
+        compiledMarker = sanitizeBuildMarker(value);
+        return compiledMarker;
+      }
+    } catch {
+      // Un chemin absent est normal selon le mode (Vite ou production).
+    }
+  }
+  return FALLBACK_BUILD_MARKER;
 }
 
 // Balise posée dans client/index.html et donc présente dans toutes les pages servies,
