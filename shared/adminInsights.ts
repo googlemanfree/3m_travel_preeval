@@ -77,9 +77,13 @@ export type FunnelStats = { days: number; stages: FunnelStage[]; sources: Array<
 
 export const SOURCE_LABELS: Record<string, string> = { facebook: "Facebook", whatsapp: "WhatsApp", direct: "Accès direct", other: "Autre" };
 
-/** Taux de passage d'une étape à la suivante (null si l'étape précédente est vide). */
+/**
+ * Taux de passage d'une étape à la suivante (null si l'étape précédente est vide).
+ * Les étapes comptent des événements DE LA PÉRIODE, pas une même cohorte : un client peut payer avant d'ouvrir son bilan.
+ * Un taux supérieur à 100 % n'a pas de sens, il est donc masqué plutôt qu'affiché.
+ */
 export function conversionRates(stages: FunnelStage[]): Array<number | null> {
-  return stages.map((stage, index) => (index === 0 || stages[index - 1].count === 0 ? null : Math.round((stage.count / stages[index - 1].count) * 100)));
+  return stages.map((stage, index) => (index === 0 || stages[index - 1].count === 0 || stage.count > stages[index - 1].count ? null : Math.round((stage.count / stages[index - 1].count) * 100)));
 }
 
 export function buildWeeklyReportText(input: { generatedOn: Date; funnel: FunnelStats; blocked: number; openRequests: number; waitingUrgent: number; proofsToCheck: number; activationsWithoutProof: number; satisfaction: { responses: number; nps: number | null } }): string {

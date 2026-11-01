@@ -18,6 +18,7 @@ import { caseApplicants, caseStatusHistory, cases, clientNotifications, document
 import { dossierReferenceCandidates, normalizeDossierReference, parseAgencyDossierReference } from "../utils/dossierReference";
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 import { requireValidAdminSession } from "./adminAuth";
+import { evaluationDisplayReference } from "../../shared/evaluationReference";
 import { clientKeyOf, createFixedWindowLimiter } from "../_core/publicRateLimit";
 
 // Plafonds des codes de vérification d'e-mail d'un dossier : 6 essais et 3 renvois par dossier et par quart
@@ -762,6 +763,8 @@ export const applicationRouter = router({
       const openingFeeSetIds = new Set(feeSetRows.map((row) => row.paymentId));
       return filtered.map((application) => ({
         ...application,
+        // Référence à AFFICHER (COMPTE-… avant paiement, 3M-… après) ; `dossierNumber` reste la clé technique.
+        displayReference: evaluationDisplayReference(application) ?? application.dossierNumber,
         destination: application.destination,
         visaType: application.visaType,
         openingFeeConfirmed: openingFeeSetIds.has(application.id),

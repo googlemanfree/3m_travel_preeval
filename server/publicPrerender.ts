@@ -1,6 +1,7 @@
 import { OFFICIAL_SITE_ORIGIN } from "./canonicalDomain";
 import { PUBLIC_FAQ_ITEMS } from "@shared/publicFaq";
-import { getProcedureDisplayTitle, getProcedureFaqItems } from "@shared/procedureSeo";
+import { getProcedureDisplayTitle, getProcedureFaqItems, getProcedureSeoDescription } from "@shared/procedureSeo";
+import { getVerifiedProcedureFee } from "../client/src/data/verifiedProcedureFees";
 import { getPublicDestinationDetail, PUBLIC_DESTINATION_DETAILS } from "../client/src/lib/publicDestinationCatalog";
 import { getInstitutionalProcedureSource } from "../client/src/data/institutionalProcedureSources";
 import {
@@ -159,10 +160,10 @@ const procedureMetaForPath = (path: string): PublicMeta | undefined => {
   const projectLabel = procedure.visaType === "etudes" ? "études" : procedure.visaType === "visiteur" ? "visiteur" : "travail";
   const displayTitle = getProcedureDisplayTitle(procedure);
   const fullTitle = `${displayTitle} | ${SITE}`;
-  const fullDescription = `Étapes, documents et ressources de préparation pour votre projet ${projectLabel} vers ${procedure.name}, avec accompagnement à distance 3M TRAVEL AGENCY — à vérifier auprès des autorités compétentes.`;
   return {
-    title: fullTitle.length <= 65 ? fullTitle : `${displayTitle} | ${SITE}`,
-    description: fullDescription.length <= 175 ? fullDescription : `Étapes et documents pour votre projet ${projectLabel} vers ${procedure.name}, accompagnement à distance ; à vérifier auprès des autorités.`,
+    title: fullTitle,
+    // Même description que la page affichée (source unique dans shared/procedureSeo.ts), frais vérifiés compris.
+    description: clampSeoDescription(getProcedureSeoDescription(procedure, "fr", getVerifiedProcedureFee(procedure.id))),
     heading: displayTitle,
     lead: `Consultez les étapes de préparation, les documents à prévoir et les ressources associées à votre projet ${projectLabel} vers ${procedure.name}, avec un accompagnement 3M TRAVEL AGENCY à distance.`,
     keywords: [`visa ${procedure.name}`, `${projectLabel} ${procedure.name}`, `procédure ${procedure.name}`, projectLabel, "mobilité internationale", "Afrique", "3M TRAVEL AGENCY"],
@@ -188,7 +189,7 @@ const procedureMetaForPathEn = (path: string): PublicMeta | undefined => {
   const projectLabelEn = procedure.visaType === "etudes" ? "study" : procedure.visaType === "visiteur" ? "visitor" : "work";
   return {
     title: `${displayTitle} | ${SITE}`,
-    description: `Steps, documents and preparation for your ${projectLabelEn} project to ${englishContent.name}, with remote support from 3M TRAVEL AGENCY. Verify with the authorities.`,
+    description: clampSeoDescription(getProcedureSeoDescription({ name: englishContent.name, visaType: procedure.visaType }, "en", getVerifiedProcedureFee(procedure.id))),
     heading: displayTitle,
     lead: `Review the preparation steps, documents to gather, and related resources for your ${projectLabelEn} project to ${englishContent.name}, with remote support from 3M TRAVEL AGENCY.`,
     keywords: [`${englishContent.name} visa`, `${projectLabelEn} visa ${englishContent.name}`, `${englishContent.name} procedure`, projectLabelEn, "international mobility", "Africa", "3M TRAVEL AGENCY"],

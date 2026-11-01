@@ -513,6 +513,11 @@ export function CandidateDetailModal({
   const [paymentConfirmedOptimistically, setPaymentConfirmedOptimistically] = useState(false);
   const [evaluationEditorOpen, setEvaluationEditorOpen] = useState(false);
   const [candidate360Tab, setCandidate360Tab] = useState<"overview" | "evaluation" | "documents" | "payments" | "messages" | "history">("overview");
+  // Ouvre un onglet de la fiche 360° depuis le panneau latéral et y amène l'écran : la fiche est plus bas que les boutons.
+  const open360Tab = (tab: typeof candidate360Tab) => {
+    setCandidate360Tab(tab);
+    window.setTimeout(() => document.getElementById("candidate-360-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+  };
   const [rollbackDialogOpen, setRollbackDialogOpen] = useState(false);
   const [rollbackReason, setRollbackReason] = useState("");
   const [portraitPreviewOpen, setPortraitPreviewOpen] = useState(false);
@@ -1291,6 +1296,7 @@ export function CandidateDetailModal({
                   onStatusUpdated();
                 }}
                 initialTab={candidate360Tab}
+                onTabChange={setCandidate360Tab}
               />
             )}
 
@@ -1400,7 +1406,7 @@ export function CandidateDetailModal({
                     ) : guidedNext.code === "employer_selection" || guidedNext.code === "protocol_two" ? (
                       <Button
                         type="button"
-                        onClick={() => setCandidate360Tab(guidedNext.focusTab || "evaluation")}
+                        onClick={() => open360Tab(guidedNext.focusTab || "evaluation")}
                         className="mt-2 w-full bg-amber-700 text-white hover:bg-amber-800"
                         data-testid="guided-employer-selection"
                       >
@@ -1450,16 +1456,16 @@ export function CandidateDetailModal({
                       compact
                       triggerClassName="justify-start border-indigo-300 bg-indigo-50 text-indigo-950 hover:bg-indigo-100"
                     />
-                    <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("documents")} data-testid="open-360-documents">
+                    <Button variant="outline" className="justify-start" onClick={() => open360Tab("documents")} data-testid="open-360-documents">
                       <FileCheck className="mr-2 h-4 w-4 text-violet-700" />Documents du dossier 360°
                     </Button>
-                    <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("payments")} data-testid="open-cancel-validated-payment">
+                    <Button variant="outline" className="justify-start" onClick={() => open360Tab("payments")} data-testid="open-cancel-validated-payment">
                       <FileText className="mr-2 h-4 w-4 text-amber-700" />Paiements et annulation
                     </Button>
-                    <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("overview")} data-testid="open-360-summary">
+                    <Button variant="outline" className="justify-start" onClick={() => open360Tab("overview")} data-testid="open-360-summary">
                       <FileText className="mr-2 h-4 w-4 text-indigo-700" />Synthèse & vue d’ensemble
                     </Button>
-                    <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("messages")}>
+                    <Button variant="outline" className="justify-start" onClick={() => open360Tab("messages")}>
                       <Mail className="mr-2 h-4 w-4 text-blue-700" />Échanges candidat
                     </Button>
                   </div>

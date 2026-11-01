@@ -13,7 +13,7 @@ import { DestinationComparisonDialog } from '@/components/DestinationComparisonD
 import { PublicProcedurePdfButton } from '@/components/PublicProcedurePdfButton';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
-import { getProcedureDisplayTitle, getProcedureFaqItems } from '@shared/procedureSeo';
+import { getProcedureDisplayTitle, getProcedureFaqItems, getProcedureSeoDescription } from '@shared/procedureSeo';
 import { getProcedureRegionBadges, getProcedureVisualSources } from '@/data/procedureVisuals';
 import { getInstitutionalProcedureSource } from '@/data/institutionalProcedureSources';
 import { getVerifiedProcedureFee } from '@/data/verifiedProcedureFees';
@@ -88,19 +88,14 @@ export default function CountryDetailPage() {
     const displayTitle = getProcedureDisplayTitle(country, locale);
     const procedureVisual = getProcedureVisualSources(country);
     const seoImage = destinationMedia?.imageUrl ?? procedureVisual.desktop;
-    const visaLabelFr =
-      country.visaType === 'etudes' ? 'études' : country.visaType === 'visiteur' ? 'visite / court séjour' : 'travail';
-    const visaLabelEn =
-      country.visaType === 'etudes' ? 'studies' : country.visaType === 'visiteur' ? 'visitor / short stay' : 'work';
     const verifiedFee = getVerifiedProcedureFee(country.id);
     if (locale === 'en') {
       document.documentElement.lang = 'en';
       setPageSeo({
         // Même titre que le prérendu serveur (publicPrerender.ts) : il ne change plus après le chargement.
         title: `${displayTitle} | 3M TRAVEL AGENCY`,
-        description: verifiedFee
-          ? `${displayTitle}: official fees about ${verifiedFee.costLabel}, timelines ${verifiedFee.delayLabel}. Steps, documents and FAQ with 3M TRAVEL AGENCY support from Yaoundé.`
-          : `Steps, required documents, official portal and FAQ for your ${visaLabelEn} project to ${country.name} — prepared with 3M TRAVEL AGENCY from Yaoundé.`,
+        // Même description que le prérendu serveur : source unique dans shared/procedureSeo.ts.
+        description: getProcedureSeoDescription({ name: country.name, visaType: country.visaType }, 'en', verifiedFee),
         image: seoImage,
         imageAlt: `International mobility illustration for ${country.name}`,
       });
@@ -108,9 +103,7 @@ export default function CountryDetailPage() {
       document.documentElement.lang = 'fr';
       setPageSeo({
         title: `${displayTitle} | 3M TRAVEL AGENCY`,
-        description: verifiedFee
-          ? `${displayTitle} : frais ${verifiedFee.costLabel}, délais ${verifiedFee.delayLabel}. Étapes, documents, portail officiel et FAQ — accompagnement 3M TRAVEL AGENCY depuis Yaoundé.`
-          : `Étapes, documents exigés, portail officiel et FAQ pour votre projet ${visaLabelFr} vers ${country.name} — accompagnement 3M TRAVEL AGENCY depuis Yaoundé.`,
+        description: getProcedureSeoDescription({ name: country.name, visaType: country.visaType }, 'fr', verifiedFee),
         image: seoImage,
         imageAlt: `Illustration mobilité internationale pour ${country.name}`,
       });

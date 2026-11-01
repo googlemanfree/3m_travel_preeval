@@ -120,7 +120,7 @@ export default function AdminUsersManagement() {
           u.email,
           u.name || "N/A",
           u.applicationCount,
-          u.lastApplication?.dossierNumber || "N/A",
+          u.lastApplication?.displayReference || u.lastApplication?.dossierNumber || "N/A",
           getLastApplicationStatus(u),
           new Date(u.createdAt).toLocaleDateString("fr-FR"),
         ].join(",")
@@ -275,7 +275,7 @@ export default function AdminUsersManagement() {
                         </td>
                         <td className="px-6 py-4">
                           <span className="text-sm text-gray-600">
-                            {user.lastApplication?.dossierNumber || "—"}
+                            {user.lastApplication?.displayReference || user.lastApplication?.dossierNumber || "—"}
                           </span>
                         </td>
                         <td className="px-6 py-4">

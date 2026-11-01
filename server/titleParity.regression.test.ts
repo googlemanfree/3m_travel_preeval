@@ -34,6 +34,23 @@ describe("titres de page : prérendu serveur = affichage final", () => {
     expect(prerender).toContain("const fullTitle = `${displayTitle} | ${SITE}`");
   });
 
+  it("fiches procédure : la description vient d'une source unique, serveur et page affichée", () => {
+    const detail = read("client/src/pages/CountryDetailPage.tsx");
+    expect(detail).toContain("getProcedureSeoDescription({ name: country.name, visaType: country.visaType }, 'fr', verifiedFee)");
+    expect(detail).toContain("getProcedureSeoDescription({ name: country.name, visaType: country.visaType }, 'en', verifiedFee)");
+    // Le client coupe via setPageSeo (clampSeoDescription) : le serveur coupe de la même façon, donc les deux textes restent identiques.
+    expect(prerender).toContain('clampSeoDescription(getProcedureSeoDescription(procedure, "fr", getVerifiedProcedureFee(procedure.id)))');
+    expect(prerender).toContain('clampSeoDescription(getProcedureSeoDescription({ name: englishContent.name, visaType: procedure.visaType }, "en", getVerifiedProcedureFee(procedure.id)))');
+  });
+
+  it("description d'une fiche : frais cités seulement s'ils sont vérifiés", async () => {
+    const { getProcedureSeoDescription } = await import("../shared/procedureSeo");
+    const canada = { name: "Canada", visaType: "travail" as const };
+    expect(getProcedureSeoDescription(canada, "fr")).toBe("Étapes, documents exigés, portail officiel et FAQ pour votre projet travail vers Canada — accompagnement 3M TRAVEL AGENCY depuis Yaoundé.");
+    expect(getProcedureSeoDescription(canada, "fr", { costLabel: "155 CAD", delayLabel: "8 semaines" })).toContain("frais 155 CAD, délais 8 semaines");
+    expect(getProcedureSeoDescription({ name: "France", visaType: "etudes" }, "en")).toContain("your studies project to France");
+  });
+
   it("guide pays : même titre que le prérendu, et jamais « en cours de vérification » pendant le chargement", () => {
     const guide = read("client/src/pages/CountryGuide.tsx");
     expect(guide).toContain("clampSeoTitle(data ? `Visa ${name} : ${labels} | 3M TRAVEL AGENCY`");

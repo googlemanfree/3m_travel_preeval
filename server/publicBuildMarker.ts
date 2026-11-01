@@ -50,7 +50,51 @@ export function resolveBuildMarker(
   return `${label}.${formatBuildStamp(now)}`;
 }
 
-export type ParsedBuildMarker = { commit?: string; builtAt?: Date };
+const FULL_SHA = /^[0-9a-f]{40}$/;
+
+/**
+ * Commit lu directement dans le dossier .git, sans exécutable git : un déploiement construit
+ * dans un conteneur sans git donnait « nogit » alors que le dépôt était bien là.
+ * Gère HEAD détaché, branche (fichier de référence puis packed-refs) et worktree (.git = fichier).
+ */
+export function readCommitFromGitFiles(root: string, fsApi: { existsSync(p: string): boolean; readFileSync(p: string, enc: "utf8"): string; statSync(p: string): { isDirectory(): boolean } }, join: (...parts: string[]) => string): string | undefined {
+  try {
+    let gitDir = join(root, ".git");
+    if (!fsApi.existsSync(gitDir)) return undefined;
+    if (!fsApi.statSync(gitDir).isDirectory()) {
+      const pointer = fsApi.readFileSync(gitDir, "utf8").match(/^gitdir:\s*(.+)$/m)?.[1]?.trim();
+      if (!pointer) return undefined;
+      gitDir = /^([a-zA-Z]:|\/)/.test(pointer) ? pointer : join(root, pointer);
+    }
+    const head = fsApi.readFileSync(join(gitDir, "HEAD"), "utf8").trim();
+    if (FULL_SHA.test(head)) return head.slice(0, 8);
+    const ref = head.match(/^ref:\s*(\S+)$/)?.[1];
+    if (!ref || ref.includes("..")) return undefined;
+    const refFile = join(gitDir, ref);
+    if (fsApi.existsSync(refFile)) {
+      const sha = fsApi.readFileSync(refFile, "utf8").trim();
+      return FULL_SHA.test(sha) ? sha.slice(0, 8) : undefined;
+    }
+    const packed = join(gitDir, "packed-refs");
+    if (!fsApi.existsSync(packed)) return undefined;
+    const line = fsApi.readFileSync(packed, "utf8").split(/\r?\n/).find((item) => item.endsWith(` ${ref}`));
+    const sha = line?.split(" ")[0];
+    return sha && FULL_SHA.test(sha) ? sha.slice(0, 8) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Commit fourni par la plateforme de déploiement, quand elle l'expose dans l'environnement. */
+export function commitFromEnv(env: Record<string, string | undefined>): string | undefined {
+  for (const key of ["GIT_COMMIT", "SOURCE_COMMIT", "COMMIT_SHA", "GITHUB_SHA", "VERCEL_GIT_COMMIT_SHA", "RENDER_GIT_COMMIT"]) {
+    const value = env[key]?.trim();
+    if (value && COMMIT_ONLY.test(value)) return value.slice(0, 8);
+  }
+  return undefined;
+}
+
+export type ParsedBuildMarker ={ commit?: string; builtAt?: Date };
 
 /** Décompose une balise : commit (si git était disponible) et date de build UTC. */
 export function parseBuildMarker(marker: string | undefined): ParsedBuildMarker {

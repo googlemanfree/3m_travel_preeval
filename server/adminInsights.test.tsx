@@ -116,6 +116,8 @@ describe("pilotage avancé : calculs", () => {
   it("taux de passage, indice de recommandation et rapport hebdomadaire", () => {
     expect(conversionRates([{ key: "a", label: "A", count: 100 }, { key: "b", label: "B", count: 40 }, { key: "c", label: "C", count: 0 }])).toEqual([null, 40, 0]);
     expect(conversionRates([{ key: "a", label: "A", count: 0 }, { key: "b", label: "B", count: 5 }])).toEqual([null, null]);
+    // Étapes de cohortes différentes : une étape plus grande que la précédente n'a pas de taux (pas de « 150 % »).
+    expect(conversionRates([{ key: "a", label: "A", count: 4 }, { key: "b", label: "B", count: 6 }])).toEqual([null, null]);
     expect(computeNps([10, 9, 8, 6, 3])).toBe(0);
     expect(computeNps([10, 10, 9])).toBe(100);
     expect(computeNps([])).toBeNull();

@@ -96,9 +96,13 @@ async function countUrgentWaiting(db: Db, now: Date): Promise<number> {
 async function buildFunnel(db: Db, days: number): Promise<FunnelStats> {
   const since = new Date(Date.now() - days * DAY);
   const count = async (query: Promise<Array<{ total: number }>>) => Number((await query)[0]?.total ?? 0);
-  const [accounts, evaluationCount, confirmed, activated, sources, destinations] = await Promise.all([
+  // Bilans réellement envoyés au client (donc validés par l'administration) pendant la période, et parmi eux ceux déjà ouverts.
+  const sentInPeriod = and(eq(applications.evaluationDeliveryStatus, "sent"), isNotNull(applications.evaluationReportPdfUrl), gte(applications.evaluationCompletedAt, since));
+  const [accounts, evaluationCount, bilansSent, bilansViewed, confirmed, activated, sources, destinations] = await Promise.all([
     count(db.select({ total: sql<number>`count(*)` }).from(candidates).where(and(isNull(candidates.deletedAt), gte(candidates.createdAt, since)))),
     count(db.select({ total: sql<number>`count(*)` }).from(evaluations).where(gte(evaluations.createdAt, since))),
+    count(db.select({ total: sql<number>`count(*)` }).from(applications).where(sentInPeriod)),
+    count(db.select({ total: sql<number>`count(*)` }).from(applications).where(and(sentInPeriod, isNotNull(applications.evaluationReportViewedAt)))),
     count(db.select({ total: sql<number>`count(distinct ${paymentAuditLogs.candidateEmail})` }).from(paymentAuditLogs).where(and(eq(paymentAuditLogs.action, "confirmed"), gte(paymentAuditLogs.createdAt, since)))),
     count(db.select({ total: sql<number>`count(*)` }).from(candidates).where(and(isNull(candidates.deletedAt), isNotNull(candidates.activeDossierSetAt), gte(candidates.activeDossierSetAt, since)))),
     db.select({ source: candidates.acquisitionSource, accounts: sql<number>`count(*)` }).from(candidates).where(and(isNull(candidates.deletedAt), gte(candidates.createdAt, since))).groupBy(candidates.acquisitionSource),
@@ -109,6 +113,8 @@ async function buildFunnel(db: Db, days: number): Promise<FunnelStats> {
     stages: [
       { key: "accounts", label: "Nouveaux comptes", count: accounts },
       { key: "evaluations", label: "Évaluations demandées", count: evaluationCount },
+      { key: "bilansSent", label: "Bilans envoyés", count: bilansSent },
+      { key: "bilansViewed", label: "Bilans consultés", count: bilansViewed },
       { key: "payments", label: "Paiements confirmés", count: confirmed },
       { key: "activations", label: "Dossiers activés", count: activated },
     ],

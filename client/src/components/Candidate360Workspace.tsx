@@ -95,6 +95,8 @@ type Props = {
   candidate: CandidateSummary;
   onRefresh: () => void;
   initialTab?: "overview" | "evaluation" | "documents" | "payments" | "messages" | "history";
+  /** Prévient le parent quand l'onglet change depuis la fiche : sans cela, un bouton du panneau latéral qui vise l'onglet déjà mémorisé n'a aucun effet. */
+  onTabChange?: (tab: NonNullable<Props["initialTab"]>) => void;
   /** Procédures liées (même client) pour bascule multi-dossiers dans le 360°. */
   siblingProcedures?: SiblingProcedureTab[];
   onSelectSibling?: (siblingId: string) => void;
@@ -156,7 +158,7 @@ function PaymentHistoryStatusBadge({ status }: { status: string }) {
   return <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800"><CheckCircle2 className="mr-1 h-3 w-3" />Validé</Badge>;
 }
 
-export function Candidate360Workspace({ sessionToken, candidate, onRefresh, initialTab = "overview", siblingProcedures = [], onSelectSibling }: Props) {
+export function Candidate360Workspace({ sessionToken, candidate, onRefresh, initialTab = "overview", onTabChange, siblingProcedures = [], onSelectSibling }: Props) {
   const utils = trpc.useUtils();
   const [evaluationOpen, setEvaluationOpen] = useState(false);
   const [protocolTwoEmployer, setProtocolTwoEmployer] = useState("");
@@ -1362,7 +1364,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
       </section>
 
       {openingPaymentHistory?.pendingProof ? <div role="status" className="flex items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950"><CircleAlert className="h-5 w-5 shrink-0 text-amber-700" /><span><strong>Preuve de paiement en attente :</strong> une nouvelle pièce doit être validée par un administrateur.</span><Button type="button" size="sm" variant="outline" className="ml-auto border-amber-400 bg-white text-amber-900" onClick={() => setActiveTab("payments")}>Voir</Button></div> : null}
-      <Tabs id="candidate-360-tabs" value={activeTab} onValueChange={(value) => setActiveTab(value as Props["initialTab"])} className="w-full scroll-mt-24">
+      <Tabs id="candidate-360-tabs" value={activeTab} onValueChange={(value) => { setActiveTab(value as Props["initialTab"]); onTabChange?.(value as NonNullable<Props["initialTab"]>); }} className="w-full scroll-mt-24">
         <TabsList className="grid h-auto w-full grid-cols-3 gap-1 bg-slate-100 p-1 sm:grid-cols-6">
           <TabsTrigger value="overview" className="text-xs">Vue d’ensemble</TabsTrigger>
           <TabsTrigger value="evaluation" className="text-xs">Évaluation</TabsTrigger>

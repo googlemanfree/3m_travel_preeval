@@ -21,6 +21,7 @@ import { ADMIN_DOCUMENT_TYPES, suggestAdminDocumentMetadata } from "../services/
 import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray, gte, sql, count } from "drizzle-orm";
 import { buildDocumentClarificationAnsweredNotification, buildDocumentClarificationHistory, classifyDocumentClarificationDeadline } from "../../shared/documentClarification";
 import { passportPhotoAdminStatus } from "../../shared/passportPhotoRequirement";
+import { evaluationDisplayReference } from "../../shared/evaluationReference";
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
 import { pickVisaContextForJourney } from "../../shared/evaluationVisaCv";
@@ -1149,7 +1150,9 @@ export const adminRouter = router({
               ...user,
               applications: userApps,
               applicationCount: userApps.length,
-              lastApplication: userApps.length > 0 ? userApps[0] : null,
+              lastApplication: userApps.length > 0
+                ? { ...userApps[0], displayReference: evaluationDisplayReference(userApps[0]) ?? userApps[0].dossierNumber }
+                : null,
               email: user.email || "",
             };
           })
@@ -1209,9 +1212,12 @@ export const adminRouter = router({
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      return db.select({
+      const rows = await db.select({
         applicationId: applications.id,
         dossierNumber: applications.dossierNumber,
+        candidateId: applications.candidateId,
+        paymentStatus: applications.paymentStatus,
+        dossierStatus: applications.dossierStatus,
         candidateName: applications.fullName,
         candidateEmail: applications.email,
         sentAt: applications.evaluationCompletedAt,
@@ -1222,6 +1228,11 @@ export const adminRouter = router({
         .where(and(eq(applications.evaluationDeliveryStatus, "sent"), isNotNull(applications.evaluationReportPdfUrl)))
         .orderBy(desc(applications.evaluationCompletedAt))
         .limit(100);
+      // Référence à AFFICHER : COMPTE-… tant que rien n'est payé, 3M-… ensuite (dossierNumber reste la clé technique).
+      return rows.map(({ candidateId, paymentStatus, dossierStatus, ...row }) => ({
+        ...row,
+        displayReference: evaluationDisplayReference({ dossierNumber: row.dossierNumber, candidateId, paymentStatus, dossierStatus }) ?? row.dossierNumber,
+      }));
     }),
 
   /**
