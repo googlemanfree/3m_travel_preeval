@@ -6,7 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
-import { commitFromEnv, injectBuildMarker, readCommitFromGitFiles, resolveBuildMarker } from "./server/publicBuildMarker";
+import { commitFromEnv, injectBuildMarker, readCommitFromBuildMetadata, readCommitFromGitFiles, resolveBuildMarker } from "./server/publicBuildMarker";
 
 // =============================================================================
 // Manus Debug Collector - Vite Plugin
@@ -162,7 +162,12 @@ function buildMarkerPlugin(): Plugin {
     try {
       return execFileSync("git", ["rev-parse", "--short=8", "HEAD"], { cwd: PROJECT_ROOT, stdio: ["ignore", "pipe", "ignore"], timeout: 5000 }).toString();
     } catch {
-      return readCommitFromGitFiles(PROJECT_ROOT, fs, path.join) ?? commitFromEnv(process.env) ?? "";
+      return (
+        commitFromEnv(process.env) ??
+        readCommitFromGitFiles(PROJECT_ROOT, fs, path.join) ??
+        readCommitFromBuildMetadata(PROJECT_ROOT, fs, path.join) ??
+        ""
+      );
     }
   };
   return {

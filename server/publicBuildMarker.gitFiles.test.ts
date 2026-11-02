@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { commitFromEnv, readCommitFromGitFiles, resolveBuildMarker } from "./publicBuildMarker";
+import { commitFromEnv, readCommitFromBuildMetadata, readCommitFromGitFiles, resolveBuildMarker } from "./publicBuildMarker";
 
 const SHA = "7aa6649f0123456789abcdef0123456789abcdef";
 const created: string[] = [];
@@ -57,5 +57,11 @@ describe("commit du build lu sans l'exécutable git", () => {
 
   it("le marqueur final porte le commit retrouvé", () => {
     expect(resolveBuildMarker({}, () => "7aa6649f", new Date(Date.UTC(2026, 10, 1, 12, 5)))).toBe("7aa6649f.202611011205");
+  });
+
+  it("relit le commit préparé dans l’artefact public quand .git est absent", () => {
+    const root = repo({ "client/public/build-commit.json": JSON.stringify({ commit: SHA }) });
+    expect(readCommitFromBuildMetadata(root, fs, path.join)).toBe("7aa6649f");
+    expect(readCommitFromBuildMetadata(repo({ "client/public/build-commit.json": JSON.stringify({ commit: "not-a-commit" }) }), fs, path.join)).toBeUndefined();
   });
 });

@@ -118,6 +118,21 @@ export function commitFromEnv(env: Record<string, string | undefined>): string |
   return undefined;
 }
 
+/** Commit préparé avant Vite quand le build WebDev ne fournit pas .git. */
+export function readCommitFromBuildMetadata(
+  root: string,
+  fsApi: { readFileSync(p: string, enc: "utf8"): string },
+  join: (...parts: string[]) => string,
+): string | undefined {
+  try {
+    const raw = JSON.parse(fsApi.readFileSync(join(root, "client", "public", "build-commit.json"), "utf8"));
+    const commit = typeof raw?.commit === "string" ? raw.commit.trim() : "";
+    return COMMIT_ONLY.test(commit) ? commit.slice(0, 8) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export type ParsedBuildMarker ={ commit?: string; builtAt?: Date };
 
 /** Décompose une balise : commit (si git était disponible) et date de build UTC. */
