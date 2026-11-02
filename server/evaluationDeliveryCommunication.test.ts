@@ -20,15 +20,15 @@ describe("communication de bilan contrôlée", () => {
     expect(templatesSource).toContain("Canada — bilan et prochaines étapes");
     expect(templatesSource).toContain("Luxembourg — bilan et pièces à préparer");
     expect(templatesSource).toContain("Europe — orientation et plan d’action");
-    expect(editorSource).toContain("Aperçu exact de l’e-mail");
+    expect(editorSource).toContain("Aperçu en direct");
   });
 
-  it("expose des modèles français et anglais et une impression sans envoi", () => {
+  it("garde les modèles français et anglais dans le module partagé ; l’éditeur simple n’a plus d’impression d’aperçu", () => {
     const editorSource = readProjectFile("client/src/components/EvaluationDeliveryEditor.tsx");
     expect(readProjectFile("shared/evaluationBilanTemplates.ts")).toContain("English — Standard assessment");
-    expect(editorSource).toContain("Langue du candidat");
-    expect(editorSource).toContain("printEmailPreview");
-    expect(editorSource).toContain("printWindow.print()");
+    expect(editorSource).not.toContain("Langue du candidat");
+    expect(editorSource).not.toContain("printEmailPreview");
+    expect(editorSource).not.toContain("printWindow.print()");
   });
 
   it("expose dans la fiche seulement les métadonnées nécessaires à l’historique", () => {
@@ -45,7 +45,7 @@ describe("communication de bilan contrôlée", () => {
     expect(previewBlock).toContain("requiresManualValidation: true");
     expect(previewBlock).toContain("recipient: application.email");
     expect(previewBlock).not.toContain("sendEmail(");
-    expect(readProjectFile("client/src/components/EvaluationDeliveryEditor.tsx")).toContain("Aperçu exact de l’e-mail");
+    expect(readProjectFile("client/src/components/EvaluationDeliveryEditor.tsx")).toContain("Aperçu en direct");
   });
 
   it("n’autorise une livraison planifiée qu’après validation humaine explicite", () => {

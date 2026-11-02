@@ -110,12 +110,12 @@ describe("admin agency document upload", () => {
     expect(adminSource).toContain('target: "agency_dossier"');
   });
 
-  it("provides recovery, autosave and origin cues in the evaluation editor", () => {
+  it("provides recovery and status cues in the evaluation editor", () => {
     const source = readFileSync(resolve(process.cwd(), "client/src/components/EvaluationDeliveryEditor.tsx"), "utf8");
-    expect(source).toContain("Signaler au support technique");
-    expect(source).toContain("Sauvegarde automatique");
-    expect(source).toContain("Zone préparée par l’assistance IA");
-    expect(source).toContain("proposition IA à relire");
+    expect(source).toContain("Réessayer");
+    expect(source).toContain("Aucun blocage : vous pouvez valider et envoyer.");
+    expect(source).not.toContain("Générer un brouillon IA");
+    expect(source).toContain("Modifications non enregistrées");
   });
 
 

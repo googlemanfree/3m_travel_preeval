@@ -41,7 +41,7 @@ import DossierProgressTimeline from "@/components/DossierProgressTimeline";
 import AgencyDocumentsPanel, { type AgencyDocumentView } from "@/components/AgencyDocumentsPanel";
 import { clientStatusLabel, describeDossierProgress } from "@shared/dossierProgress";
 import ClientPhaseGauge from "@/components/ClientPhaseGauge";
-import { accountReference } from "@shared/caseReference";
+import { accountReference, isUnspecifiedDestination } from "@shared/caseReference";
 import DossierDocumentChecklist, { buildRequirementOptions, summarizeChecklist } from "@/components/DossierDocumentChecklist";
 import { DocumentClarificationHistoryPanel } from "@/components/DocumentClarificationHistoryPanel";
 import { DocumentUploader } from "@/components/DocumentUploader";
@@ -51,8 +51,15 @@ import EvaluationHistoryPanel from "@/components/EvaluationHistoryPanel";
 import ClientAppointmentRequest from "@/components/ClientAppointmentRequest";
 import SignatureCanvas from "@/components/SignatureCanvas";
 import { CandidateCountryJourney } from "@/components/CandidateCountryJourney";
+import { ClientProgramPlan } from "@/components/ClientProgramPlan";
 import CandidateEvaluationStatus from "@/components/CandidateEvaluationStatus";
 import { SignableDocumentsPanel } from "@/components/SignableDocumentsPanel";
+import { ClientOpportunities } from "@/components/ClientOpportunities";
+import { ClientRemoteSupport } from "@/components/ClientRemoteSupport";
+import { ClientCaseHero } from "@/components/ClientCaseHero";
+import { ClientAgenda } from "@/components/ClientAgenda";
+import { ClientTimeline } from "@/components/ClientTimeline";
+import { ClientAccount } from "@/components/ClientAccount";
 import NextStepCard from "@/components/NextStepCard";
 import DossierPaymentCard from "@/components/DossierPaymentCard";
 import ClientPaymentStatusTable from "@/components/ClientPaymentStatusTable";
@@ -63,34 +70,22 @@ import WelcomeJourneyCard from "@/components/WelcomeJourneyCard";
 import MyFlightRequestsCard from "@/components/MyFlightRequestsCard";
 import PrivacyDataCard from "@/components/PrivacyDataCard";
 import FlightAfterVisaCard from "@/components/FlightAfterVisaCard";
+import { ReviewInviteCard } from "@/components/ReviewInviteCard";
 import { PlacementConsentCard } from "@/components/PlacementConsentCard";
+import { CvthequePresenceCard } from "@/components/CvthequePresenceCard";
+import { CandidateOpportunitiesCard } from "@/components/CandidateOpportunitiesCard";
 import { SelectableProfileCard } from "@/components/SelectableProfileCard";
 import SubmitReview from "@/pages/SubmitReview";
 import CaseDocumentsPanel, { agencyDepositedDocuments, allCaseDocuments } from "@/components/CaseDocumentsPanel";
 import ClientNotificationsInbox from "@/components/ClientNotificationsInbox";
-import { pickActiveCaseRequirements } from "@/lib/documentChecklist";
+import { checklistLines, pickActiveCaseRequirements } from "@/lib/documentChecklist";
 import { EVALUATION_ANCHOR_ID, computeNextStep, type NextStep } from "@/lib/nextStep";
+import { SentBilanViewer } from "@/components/SentBilanViewer";
 import { CLIENT_SPACE_SUMMARY_POLL_MS, buildClientSpaceSnapshot, clientSpacePolling, diffClientSpace, limitAnnouncements, mergeClientSpaceSnapshots, type ClientSpaceSnapshot } from "@/lib/clientSpaceSync";
 import { SECONDARY_PROJECT_OPTIONS, procedureLabelForDossier, secondaryDossierEvaluationPath, type SecondaryProjectType } from "@shared/clientMultiDossier";
 
-export type ClientDossierStatusSummary = {
-  label: string;
-  progress: number;
-  tone: string;
-  nextAction: string;
-};
-
-export function clientDossierStatusSummary(status: string | null | undefined, paymentStatus?: string | null): ClientDossierStatusSummary {
-  const normalized = String(status ?? "evaluation").toLowerCase();
-  if (["approuve", "visa_approuve", "approved"].includes(normalized)) return { label: "Visa approuvé", progress: 100, tone: "border-emerald-200 bg-emerald-50 text-emerald-800", nextAction: "Préparer votre départ" };
-  if (["refuse", "rejected"].includes(normalized)) return { label: "Décision à revoir", progress: 100, tone: "border-rose-200 bg-rose-50 text-rose-800", nextAction: "Contacter votre conseiller" };
-  if (["soumis", "submitted"].includes(normalized)) return { label: "Dossier soumis", progress: 80, tone: "border-indigo-200 bg-indigo-50 text-indigo-800", nextAction: "Suivre la décision" };
-  if (["traitement", "processing"].includes(normalized)) return { label: "En traitement", progress: 65, tone: "border-blue-200 bg-blue-50 text-blue-800", nextAction: "Vérifier les messages" };
-  if (["documents", "documents_requis"].includes(normalized)) return { label: "Documents requis", progress: 45, tone: "border-amber-200 bg-amber-50 text-amber-800", nextAction: "Déposer les pièces demandées" };
-  if (String(paymentStatus).toUpperCase() !== "SUCCESS") return { label: "Paiement à confirmer", progress: 25, tone: "border-orange-200 bg-orange-50 text-orange-800", nextAction: "Vérifier le paiement d’ouverture" };
-  if (["evaluation", "evaluation_en_cours"].includes(normalized)) return { label: "Évaluation en cours", progress: 20, tone: "border-violet-200 bg-violet-50 text-violet-800", nextAction: "Consulter l’évaluation" };
-  return { label: "Nouveau dossier", progress: 10, tone: "border-slate-200 bg-slate-50 text-slate-800", nextAction: "Compléter votre profil" };
-}
+import { clientDossierStatusSummary, type ClientDossierStatusSummary } from "@shared/clientDossierSummary";
+export { clientDossierStatusSummary, type ClientDossierStatusSummary };
 
 export default function EvaluationSpace() {
   const [location, setLocation] = useLocation();
@@ -532,7 +527,7 @@ export default function EvaluationSpace() {
   } : null);
   const candidateCase = (caseTrackingData?.cases?.[0] ?? null) as any;
   const validatedSteps = (candidateCase?.history ?? []).filter((entry: any) => entry.changedByRole === "admin" || entry.changedByRole === "system").slice(0, 5);
-  const evaluationCaseNumber = latestEvaluation?.referenceCode ? String(latestEvaluation.referenceCode) : latestEvaluation?.id ? `EVAL-${latestEvaluation.id}` : null;
+  const evaluationCaseNumber = latestEvaluation?.referenceCode ? String(latestEvaluation.referenceCode) : latestEvaluation?.id ? `Demande n° ${latestEvaluation.id}` : null;
   // Checklist dynamique du dossier actif (3M-AGN / en ligne), pas seulement l’ancienne EVAL-…
   const customRequirements = pickActiveCaseRequirements(caseTrackingData?.cases as any, [
     selectedDossierNumber,
@@ -574,12 +569,17 @@ export default function EvaluationSpace() {
       ?? "",
   );
   const journeyProcedureLabel = String(
-    latestEvaluation?.projectDetails?.procedureLabel
+    latestEvaluation?.projectDetails?.selectedProcedure
+      ?? latestEvaluation?.projectDetails?.programLabel
+      ?? latestEvaluation?.projectDetails?.procedureLabel
       ?? latestEvaluation?.projectDetails?.procedureName
       ?? latestEvaluation?.projectType
       ?? latestEvaluation?.visaType
       ?? "",
   );
+  // Visa ou programme et domaine choisis dans l'évaluation : étapes, pièces et prochaines actions s'y adaptent partout de la même façon.
+  const journeyProgramId: string | null = typeof latestEvaluation?.projectDetails?.programId === "string" && latestEvaluation.projectDetails.programId ? latestEvaluation.projectDetails.programId : null;
+  const journeyDomainId: string | null = typeof latestEvaluation?.projectDetails?.domainId === "string" && latestEvaluation.projectDetails.domainId ? latestEvaluation.projectDetails.domainId : null;
   const openEvaluation = () => {
     const project =
       normalizePublicEvaluationProject(
@@ -608,8 +608,63 @@ export default function EvaluationSpace() {
     setActiveTab(nextSection);
     setLocation(`/mon-espace?section=${nextSection}`);
   };
+  /**
+   * « Ouvrir le protocole » : ouvre la section Dossier ET amène la carte de signature à l'écran.
+   * Sans ce défilement, le client arrivait en haut du dossier sans voir le protocole et croyait que le bouton ne marchait pas.
+   */
+  const openProtocol = () => {
+    switchToSection("dossier");
+    const reveal = () => document.getElementById("client-agreement-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(reveal, 120);
+    window.setTimeout(reveal, 500);
+  };
+  const agreementProtocolCard = (
+              <Card id="client-agreement-card" className="scroll-mt-24 border-amber-200 bg-white shadow-sm" aria-labelledby="client-agreement-title">
+                <CardHeader>
+                  <CardTitle id="client-agreement-title" className="flex items-center gap-2 text-blue-950"><ShieldCheck className="h-5 w-5 text-amber-600" /> Protocole d’accord obligatoire</CardTitle>
+                  <p className="text-sm leading-6 text-slate-600">Ce protocole est requis avant le passage du dossier en traitement. Il reste visible ici jusqu’à sa signature.</p>
+                </CardHeader>
+                <CardContent>
+                  {!agreementDossier ? (
+                    <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4" role="status"><Clock className="h-5 w-5 shrink-0 text-slate-500" /><div><p className="font-semibold text-slate-800">Pas encore de dossier actif</p><p className="text-sm text-slate-600">Le protocole devient signable une fois votre dossier officiellement ouvert (après confirmation du paiement). Revenez ici à ce moment-là.</p></div></div>
+                  ) : agreementDossier.agreementSigned ? (
+                    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 duration-700 flex flex-col gap-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 sm:flex-row sm:items-center" role="status" data-testid="agreement-signature-success"><CheckCircle2 className="h-7 w-7 shrink-0 text-emerald-700" /><div className="min-w-0 flex-1"><p className="font-semibold text-emerald-900">Protocole signé et transmis</p><p className="text-sm text-emerald-800">Votre signature est enregistrée. Un exemplaire PDF signé (en-tête et pied de page 3M TRAVEL AGENCY) vous a été envoyé par e-mail et reste disponible dans vos documents.</p></div>{signedProtocolDocument?.documentUrl && <Button asChild type="button" className="shrink-0 bg-emerald-700 text-white hover:bg-emerald-800" data-testid="download-signed-agreement"><a href={signedProtocolDocument.documentUrl} target="_blank" rel="noreferrer" download><Download className="mr-2 h-4 w-4" />Télécharger le PDF signé</a></Button>}</div>
+                  ) : (
+                    <div className="space-y-4" data-testid="agency-agreement-sign-panel">
+                      <div className="max-h-64 overflow-y-auto overscroll-contain rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700 sm:max-h-80" tabIndex={0} aria-label="Texte du protocole d’accord"><p className="font-bold text-slate-950">Protocole d’accord — 3M Travel Agency SARL</p>{INITIAL_AGREEMENT_PROTOCOL.split("\n\n").map((paragraph, index) => <p key={index} className="mt-2 whitespace-pre-line">{paragraph}</p>)}</div>
+                      <p className="-mt-2 text-xs text-slate-500">Faites défiler le cadre ci-dessus pour lire l’intégralité du protocole.</p>
+                      <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950" role="note"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" /><p><strong>À savoir :</strong> les frais d’ouverture de dossier ne sont pas remboursables une fois le traitement engagé, sauf disposition légale impérative contraire.</p></div>
+                      <label className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"><input type="checkbox" className="mt-1 h-4 w-4" checked={agreementAccepted} onChange={(event) => setAgreementAccepted(event.target.checked)} disabled={signAgreementMutation.isPending} /><span>J’ai lu le protocole, compris ses limites et autorise la poursuite de l’instruction humaine de mon dossier.</span></label>
+                      <div className="grid gap-4 md:grid-cols-2"><div><label htmlFor="client-agreement-signature" className="text-sm font-semibold text-slate-800">Nom complet du signataire</label><input id="client-agreement-signature" value={agreementSignatureName} onChange={(event) => { setAgreementSignatureName(event.target.value); setAgreementPreviewConfirmed(false); }} maxLength={255} autoComplete="name" className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-base sm:text-sm" placeholder="Votre nom complet" disabled={signAgreementMutation.isPending} />{!agreementSignatureName.trim() && cProfile.fullName ? <button type="button" className="mt-1 text-xs font-semibold text-blue-800 underline underline-offset-2" onClick={() => { setAgreementSignatureName(String(cProfile.fullName)); setAgreementPreviewConfirmed(false); }}>Utiliser « {String(cProfile.fullName)} »</button> : null}</div><div><p className="text-sm font-semibold text-slate-800">Signature</p><SignatureCanvas onSignatureChange={(value) => { setAgreementSignatureDataUrl(value); setAgreementPreviewConfirmed(false); }} /></div></div>
+                      <Button type="button" variant="outline" className="w-full border-indigo-300 text-indigo-800 hover:bg-indigo-50" disabled={!agreementSignatureName.trim() || !agreementSignatureDataUrl || signAgreementMutation.isPending} onClick={() => setAgreementPreviewOpen(true)} data-testid="preview-signed-agreement"><FileText className="mr-2 h-4 w-4" />Prévisualiser le PDF signé</Button>
+                      <Button type="button" className="w-full bg-blue-800 text-white hover:bg-blue-900" aria-label="Signer le protocole d’accord" disabled={!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !agreementPreviewConfirmed || !agreementDossier.dossierNumber || signAgreementMutation.isPending} onClick={() => agreementDossier.dossierNumber && agreementSignatureDataUrl && signAgreementMutation.mutate({ dossierNumber: agreementDossier.dossierNumber, signatureName: agreementSignatureName.trim(), signatureDataUrl: agreementSignatureDataUrl })}>{signAgreementMutation.isPending ? "Signature et envoi…" : "Signer le protocole d’accord"}</Button>
+                      {!signAgreementMutation.isPending && (
+                        <ul className="grid gap-1 text-xs sm:grid-cols-2" aria-label="Étapes avant la signature">
+                          {[
+                            { done: agreementAccepted, label: "Protocole lu et case cochée" },
+                            { done: Boolean(agreementSignatureName.trim()), label: "Nom du signataire renseigné" },
+                            { done: Boolean(agreementSignatureDataUrl), label: "Signature dessinée" },
+                            { done: agreementPreviewConfirmed, label: "PDF signé prévisualisé et vérifié" },
+                          ].map((step) => (
+                            <li key={step.label} className={`flex items-center gap-1.5 ${step.done ? "text-emerald-700" : "text-slate-500"}`}>
+                              {step.done ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> : <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-slate-300" aria-hidden="true" />}
+                              <span>{step.label}<span className="sr-only">{step.done ? " : fait" : " : à faire"}</span></span>
+                            </li>
+                          ))}
+                          {!agreementDossier.dossierNumber && <li className="text-rose-700 sm:col-span-2">Aucun dossier actif n’est associé à ce compte.</li>}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+  );
   const structuredStage = structuredEvaluation?.available ? structuredEvaluation.view.stage : undefined;
-  const checklistSummary = summarizeChecklist(primaryDestination, latestEvaluation?.projectType, checklistDocuments, customRequirements);
+  // Une seule liste de pièces pour la checklist, le parcours, la prochaine étape et les relances : pays × visa × programme × domaine.
+  const checklistScope = { programId: journeyProgramId, domainId: journeyDomainId };
+  const checklistSummary = summarizeChecklist(primaryDestination, latestEvaluation?.projectType, checklistDocuments, customRequirements, checklistScope);
+  const planDocumentLines = checklistLines(primaryDestination, latestEvaluation?.projectType, checklistDocuments, customRequirements, checklistScope)
+    .map((line) => ({ label: line.label, received: line.kind === "received" || line.kind === "verified", replace: line.kind === "replace" }));
   const checklistReceived = Math.max(0, checklistSummary.total - checklistSummary.missing - checklistSummary.replace);
   const documentsActionCount = checklistSummary.missing + checklistSummary.replace;
   const unreadNotificationsCount = Math.max(0, Number(caseTrackingData?.unreadNotifications) || 0);
@@ -622,6 +677,8 @@ export default function EvaluationSpace() {
   const advisorWhatsAppUrl = clientAdvisorWhatsAppHref(paymentDossierNumber || displayReference, cProfile.fullName);
   // « Étape N sur M » : même calcul (et mêmes jalons) que le parcours affiché plus bas et que les e-mails de l'agence.
   const journeyProgress = describeDossierProgress({
+    programId: journeyProgramId,
+    domainId: journeyDomainId,
     destination: primaryDestination,
     visaType: journeyVisaType,
     procedureLabel: journeyProcedureLabel,
@@ -673,7 +730,7 @@ export default function EvaluationSpace() {
                   : CheckCircle2;
   const actOnNextStep = (step: NextStep) => {
     if (step.action.kind === "evaluation") openEvaluation();
-    else if (step.action.kind === "section") switchToSection(step.action.section);
+    else if (step.action.kind === "section") { if (step.id === "agreement") openProtocol(); else switchToSection(step.action.section); }
     else if (step.action.kind === "anchor") document.getElementById(step.action.elementId)?.scrollIntoView({ behavior: "smooth", block: "start" });
     else if (step.action.kind === "link") {
       if (/^https?:\/\//i.test(step.action.href)) window.open(step.action.href, "_blank", "noopener,noreferrer");
@@ -770,7 +827,7 @@ export default function EvaluationSpace() {
             <span className="mr-1 text-xs font-semibold text-slate-600">Mes dossiers ({onlineDossiers.length}/5) :</span>
             {onlineDossiers.map((dossier) => {
               const isSelected = dossier.dossierNumber === (selectedDossierNumber ?? activeTreatmentDossierNumber ?? activeDossier?.dossierNumber ?? activeAgencyDossier?.dossierNumber);
-              const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus);
+              const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus, dossier.agreementSigned);
               return (
                 <button
                   key={dossier.dossierNumber ?? dossierSwitcherLabel(dossier)}
@@ -828,7 +885,7 @@ export default function EvaluationSpace() {
               <h2 id="global-dossiers-summary-title" className="premium-section-title mt-1 text-lg sm:text-xl">Résumé de vos dossiers ouverts</h2>
               <p className="premium-copy mt-1 text-sm">{onlineDossiers.length} dossier{onlineDossiers.length > 1 ? "s" : ""} suivi{onlineDossiers.length > 1 ? "s" : ""} par 3M TRAVEL AGENCY{onlineDossiers.length > 1 ? " — un dossier = un paiement distinct" : " — votre dossier actif n’est pas modifié par cet écran"}. Prochaine action affichée pour chaque dossier.</p>
             </div>
-            <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-blue-800 shadow-sm">{Math.round(onlineDossiers.reduce((total, dossier) => total + clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus).progress, 0) / onlineDossiers.length)} % moyen</span>
+            <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-blue-800 shadow-sm">{Math.round(onlineDossiers.reduce((total, dossier) => total + clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus, dossier.agreementSigned).progress, 0) / onlineDossiers.length)} % moyen</span>
           </div>
           {hasSiblingUnpaidProcedure && (
             <p className="mt-3 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-950" data-testid="per-dossier-payment-reminder" role="status">
@@ -839,7 +896,7 @@ export default function EvaluationSpace() {
           <div className="mt-4"><ClientPhaseGuide /></div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {onlineDossiers.map((dossier) => {
-              const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus);
+              const status = clientDossierStatusSummary(dossier.dossierStatus, dossier.paymentStatus, dossier.agreementSigned);
               return <button key={`summary-${dossier.dossierNumber ?? dossierSwitcherLabel(dossier)}`} type="button" onClick={() => activateDossier(dossier.dossierNumber)} className="rounded-2xl border border-white bg-white/90 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
                 <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-sm font-black text-slate-900">{dossierSwitcherLabel(dossier)}</p><p className="mt-1 font-mono text-[11px] text-slate-500">{dossier.dossierNumber}</p></div><span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black ${status.tone}`}>{status.label}</span></div>
                 <div className="mt-3 flex items-center gap-2"><div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600 transition-all duration-300" style={{ width: `${status.progress}%` }} /></div><span className="text-xs font-black text-blue-800">{status.progress}%</span></div>
@@ -953,8 +1010,19 @@ export default function EvaluationSpace() {
                 receiptApprovedAt={(workflow as any)?.paymentReceiptApprovedAt ?? null}
                 receiptAmountLabel={(workflow as any)?.paymentReceiptAmount ?? null}
               />
+              <ReviewInviteCard approved={["approuve", "visa_approuve"].includes(String(cProfile.dossierStatus))} destination={primaryDestination} visaType={(cProfile as any).visaType} />
               <FlightAfterVisaCard approved={["approuve", "visa_approuve"].includes(String(cProfile.dossierStatus)) || ["approuve", "visa_approuve"].includes(String((activeDossier as any)?.status ?? (activeDossier as any)?.dossierStatus))} destination={primaryDestination} />
               <MyFlightRequestsCard />
+              <Card className="border-2 border-blue-200 bg-blue-50/60 p-5 shadow-sm" data-testid="client-appointment-cta">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Besoin d’un échange ?</p>
+                    <h3 className="mt-1 text-lg font-bold text-slate-950">Prendre rendez-vous avec un conseiller</h3>
+                    <p className="mt-1 text-sm text-slate-600">Certains éléments se vérifient mieux de vive voix ou en agence (visa visiteur, pièces originales, questions sur votre dossier). Choisissez un créneau, votre dossier sera préparé pour l’entretien.</p>
+                  </div>
+                  <a href="/consultation" className="inline-flex h-11 items-center rounded-md bg-blue-700 px-5 text-sm font-semibold text-white hover:bg-blue-800">Prendre rendez-vous</a>
+                </div>
+              </Card>
               <Card className="border-slate-200 bg-white p-5 shadow-sm" data-testid="client-online-services-sync">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
@@ -1024,6 +1092,8 @@ export default function EvaluationSpace() {
               <Card className="border-blue-100 bg-white p-5 shadow-sm"><SubmitReview embedded initialFullName={cProfile.fullName} initialEmail={cProfile.email} /></Card>
               <SelectableProfileCard />
               <PlacementConsentCard />
+              <CvthequePresenceCard />
+              <CandidateOpportunitiesCard />
               {passportPhotoRequired ? (
                 <Card className="border-amber-300 bg-amber-50 p-5" data-testid="passport-photo-required-overview" role="region" aria-labelledby="passport-photo-required-title">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1076,11 +1146,18 @@ export default function EvaluationSpace() {
                   <CandidateEvaluationStatus evaluationId={structuredEvaluation.evaluationId} view={structuredEvaluation.view} onChanged={() => { void structuredEvaluationQuery.refetch(); }} />
                 </div>
               )}
+              <ClientCaseHero enabled={isAuthenticated} />
+              <ClientRemoteSupport enabled={isAuthenticated} />
+              <ClientAgenda enabled={isAuthenticated} />
+              <ClientTimeline enabled={isAuthenticated} />
+              <ClientAccount enabled={isAuthenticated} />
+              <SentBilanViewer enabled={isAuthenticated} />
+              <ClientOpportunities destination={primaryDestination} projectType={latestEvaluation?.projectType} visaType={latestEvaluation?.visaType ?? activeDossier?.visaType ?? activeAgencyDossier?.visaType} />
               {agreementAfterPaymentRequired && (
-                <Card className="border-2 border-amber-300 bg-gradient-to-r from-amber-50 via-white to-blue-50 p-6 shadow-md" role="region" aria-labelledby="agreement-after-payment-title">
+                <Card className="border border-amber-300 bg-gradient-to-r from-amber-50 via-white to-blue-50 p-4 shadow-sm sm:p-5" role="region" aria-labelledby="agreement-after-payment-title">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-start gap-4"><span className="rounded-2xl bg-amber-700 p-3 text-white"><ShieldCheck className="h-6 w-6" aria-hidden="true" /></span><div><p className="text-xs font-black uppercase tracking-[0.16em] text-amber-800">Paiement confirmé · action requise</p><h2 id="agreement-after-payment-title" className="mt-1 text-xl font-black text-slate-950">Signez votre protocole d’accord</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-700">Votre paiement est enregistré. La signature du protocole est la prochaine étape avant le traitement humain de votre dossier.</p></div></div>
-                    <Button type="button" onClick={() => switchToSection("dossier")} className="h-12 shrink-0 bg-amber-700 px-5 text-white hover:bg-amber-800"><ShieldCheck className="mr-2 h-4 w-4" />Ouvrir le protocole</Button>
+                    <div className="flex items-start gap-4"><span className="rounded-2xl bg-amber-700 p-3 text-white"><ShieldCheck className="h-6 w-6" aria-hidden="true" /></span><div><p className="text-xs font-black uppercase tracking-[0.16em] text-amber-800">Paiement confirmé · action requise</p><h2 id="agreement-after-payment-title" className="mt-1 text-lg font-black text-slate-950">Signez votre protocole d’accord</h2><p className="mt-1 max-w-2xl text-sm leading-6 text-slate-700">Votre paiement est enregistré. Une signature d’environ une minute, puis le traitement de votre dossier peut commencer.</p></div></div>
+                    <Button type="button" onClick={openProtocol} className="h-11 w-full shrink-0 bg-amber-700 px-5 text-white hover:bg-amber-800 sm:w-auto"><ShieldCheck className="mr-2 h-4 w-4" />Ouvrir le protocole</Button>
                   </div>
                 </Card>
               )}
@@ -1103,7 +1180,7 @@ export default function EvaluationSpace() {
                   </div>
                   <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-white/15 pt-4 text-sm text-blue-100">
                     <span><strong className="text-white">{formerAccountReference ? "Numéro de dossier :" : "Référence de compte :"}</strong> {displayReference || "En attribution"}{formerAccountReference ? <span className="ml-2 text-xs opacity-70">(ancienne référence de compte : {formerAccountReference})</span> : null}</span>
-                    <span><strong className="text-white">Destination{preferredDestinationsList.length > 1 ? "s" : ""} :</strong> {preferredDestinationsList.length > 0 ? preferredDestinationsList.join(", ") : cProfile.destination || "À préciser"}</span>
+                    <span><strong className="text-white">Destination{preferredDestinationsList.length > 1 ? "s" : ""} :</strong> {preferredDestinationsList.filter((item) => !isUnspecifiedDestination(item)).length > 0 ? preferredDestinationsList.filter((item) => !isUnspecifiedDestination(item)).join(", ") : (isUnspecifiedDestination(cProfile.destination) ? "À préciser" : cProfile.destination)}</span>
                   </div>
                   <Button type="button" onClick={() => switchToSection("dossier")} className="mt-5 bg-white text-blue-950 hover:bg-blue-50"><FolderOpen className="mr-2 h-4 w-4" />Voir les étapes</Button>
                   <div className="mt-5 border-t border-white/15 pt-4" aria-label="Historique simplifié des étapes validées"><p className="text-xs font-black uppercase tracking-[0.14em] text-blue-200">Étapes validées récemment</p>{validatedSteps.length === 0 ? <p className="mt-2 text-xs text-blue-100">Aucune étape validée n’est encore enregistrée.</p> : <ol className="mt-3 space-y-2">{validatedSteps.map((entry: any) => <li key={entry.id} className="flex items-start gap-2 text-xs text-blue-50"><span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-400 text-[10px] font-black text-blue-950">✓</span><span><strong className="text-white">{String(entry.newStatus).replaceAll("_", " ")}</strong><span className="ml-2 text-blue-200">{new Date(entry.createdAt).toLocaleDateString("fr-FR")}</span></span></li>)}</ol>}</div>
@@ -1193,6 +1270,8 @@ export default function EvaluationSpace() {
                   </p>
                 </div>
                 <ClientPhaseGauge
+                  programId={journeyProgramId}
+                  domainId={journeyDomainId}
                   dossierStatus={cProfile.dossierStatus}
                   destination={primaryDestination}
                   visaType={journeyVisaType}
@@ -1204,6 +1283,8 @@ export default function EvaluationSpace() {
                   Voir le parcours détaillé<ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
               </Card>
+
+              <ClientProgramPlan projectType={latestEvaluation?.projectType} country={latestEvaluation?.destinationCountry ?? primaryDestination} projectDetails={latestEvaluation?.projectDetails} columns={latestEvaluation?.declaredColumns} uploadedDocuments={checklistDocuments} documentLines={planDocumentLines} onOpenDocuments={() => switchToSection("documents")} onEditEvaluation={openEvaluation} />
 
               <section aria-labelledby="client-priority-title">
                 <Card className={`border p-5 shadow-sm ${priorityTone}`} data-testid="client-priority-mirror">
@@ -1251,7 +1332,7 @@ export default function EvaluationSpace() {
                   <div><h3 className="text-lg font-bold text-gray-900">Documents à compléter</h3><p className="text-sm text-gray-600">Les pièces complémentaires dépendent de votre destination et restent à confirmer par l’agence.</p></div>
                   <Button type="button" variant="outline" onClick={() => { setActiveTab("documents"); setLocation("/mon-espace?section=documents"); }}><FileText className="mr-2 h-4 w-4" />Ajouter mes documents</Button>
                 </div>
-                <DossierDocumentChecklist destination={primaryDestination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} clarifications={documentClarifications} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} onUploaded={refreshDocuments} />
+                <DossierDocumentChecklist scope={checklistScope} destination={primaryDestination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} clarifications={documentClarifications} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} onUploaded={refreshDocuments} />
               </section>
 
               {/* Résumé des dernières activités */}
@@ -1307,13 +1388,17 @@ export default function EvaluationSpace() {
             </div>
           )}
 
-          {activeTab === "dossier" && (evaluationRequired ? evaluationGateCard : (
+          {activeTab === "dossier" && (evaluationRequired && !agreementAfterPaymentRequired ? evaluationGateCard : (
             <div className="space-y-6">
+              {agreementAfterPaymentRequired ? agreementProtocolCard : null}
               <Card className="p-6 border-blue-100 bg-white shadow-sm">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Dossier d'immigration actif ({displayReference})</h3>
                 <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
               </Card>
+              <ClientProgramPlan projectType={latestEvaluation?.projectType} country={latestEvaluation?.destinationCountry ?? primaryDestination} projectDetails={latestEvaluation?.projectDetails} columns={latestEvaluation?.declaredColumns} uploadedDocuments={checklistDocuments} documentLines={planDocumentLines} onOpenDocuments={() => switchToSection("documents")} onEditEvaluation={openEvaluation} />
               <CandidateCountryJourney
+                programId={journeyProgramId}
+                domainId={journeyDomainId}
                 destination={primaryDestination}
                 visaType={journeyVisaType}
                 procedureLabel={journeyProcedureLabel}
@@ -1339,39 +1424,7 @@ export default function EvaluationSpace() {
                   </div>
                 </Card>
               )}
-              <Card className="border-amber-200 bg-white shadow-sm" aria-labelledby="client-agreement-title">
-                <CardHeader>
-                  <CardTitle id="client-agreement-title" className="flex items-center gap-2 text-blue-950"><ShieldCheck className="h-5 w-5 text-amber-600" /> Protocole d’accord obligatoire</CardTitle>
-                  <p className="text-sm leading-6 text-slate-600">Ce protocole est requis avant le passage du dossier en traitement. Il reste visible ici jusqu’à sa signature.</p>
-                </CardHeader>
-                <CardContent>
-                  {!agreementDossier ? (
-                    <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4" role="status"><Clock className="h-5 w-5 shrink-0 text-slate-500" /><div><p className="font-semibold text-slate-800">Pas encore de dossier actif</p><p className="text-sm text-slate-600">Le protocole devient signable une fois votre dossier officiellement ouvert (après confirmation du paiement). Revenez ici à ce moment-là.</p></div></div>
-                  ) : agreementDossier.agreementSigned ? (
-                    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 duration-700 flex flex-col gap-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 sm:flex-row sm:items-center" role="status" data-testid="agreement-signature-success"><CheckCircle2 className="h-7 w-7 shrink-0 text-emerald-700" /><div className="min-w-0 flex-1"><p className="font-semibold text-emerald-900">Protocole signé et transmis</p><p className="text-sm text-emerald-800">Votre signature est enregistrée. Un exemplaire PDF signé (en-tête et pied de page 3M TRAVEL AGENCY) vous a été envoyé par e-mail et reste disponible dans vos documents.</p></div>{signedProtocolDocument?.documentUrl && <Button asChild type="button" className="shrink-0 bg-emerald-700 text-white hover:bg-emerald-800" data-testid="download-signed-agreement"><a href={signedProtocolDocument.documentUrl} target="_blank" rel="noreferrer" download><Download className="mr-2 h-4 w-4" />Télécharger le PDF signé</a></Button>}</div>
-                  ) : (
-                    <div className="space-y-4" data-testid="agency-agreement-sign-panel">
-                      <div className="max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700" tabIndex={0} aria-label="Texte du protocole d’accord"><p className="font-bold text-slate-950">Protocole d’accord — 3M Travel Agency SARL</p>{INITIAL_AGREEMENT_PROTOCOL.split("\n\n").map((paragraph, index) => <p key={index} className="mt-2 whitespace-pre-line">{paragraph}</p>)}</div>
-                      <div className="flex items-start gap-3 rounded-lg border-2 border-rose-300 bg-rose-50 p-3 text-sm text-rose-950" role="alert"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-rose-700" /><p><strong>Important :</strong> les frais d’ouverture de dossier ne sont pas remboursables une fois le traitement engagé, sauf disposition légale impérative contraire. Lisez le protocole ci-dessus avant de signer.</p></div>
-                      <label className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"><input type="checkbox" className="mt-1 h-4 w-4" checked={agreementAccepted} onChange={(event) => setAgreementAccepted(event.target.checked)} disabled={signAgreementMutation.isPending} /><span>J’ai lu le protocole, compris ses limites et autorise la poursuite de l’instruction humaine de mon dossier.</span></label>
-                      <div className="grid gap-4 md:grid-cols-2"><div><label htmlFor="client-agreement-signature" className="text-sm font-semibold text-slate-800">Nom complet du signataire</label><input id="client-agreement-signature" value={agreementSignatureName} onChange={(event) => { setAgreementSignatureName(event.target.value); setAgreementPreviewConfirmed(false); }} maxLength={255} className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Votre nom complet" disabled={signAgreementMutation.isPending} /></div><div><p className="text-sm font-semibold text-slate-800">Signature</p><SignatureCanvas onSignatureChange={(value) => { setAgreementSignatureDataUrl(value); setAgreementPreviewConfirmed(false); }} /></div></div>
-                      <Button type="button" variant="outline" className="w-full border-indigo-300 text-indigo-800 hover:bg-indigo-50" disabled={!agreementSignatureName.trim() || !agreementSignatureDataUrl || signAgreementMutation.isPending} onClick={() => setAgreementPreviewOpen(true)} data-testid="preview-signed-agreement"><FileText className="mr-2 h-4 w-4" />Prévisualiser le PDF signé</Button>
-                      <Button type="button" className="w-full bg-blue-800 text-white hover:bg-blue-900" aria-label="Signer le protocole d’accord" disabled={!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !agreementPreviewConfirmed || !agreementDossier.dossierNumber || signAgreementMutation.isPending} onClick={() => agreementDossier.dossierNumber && agreementSignatureDataUrl && signAgreementMutation.mutate({ dossierNumber: agreementDossier.dossierNumber, signatureName: agreementSignatureName.trim(), signatureDataUrl: agreementSignatureDataUrl })}>{signAgreementMutation.isPending ? "Signature et envoi…" : "Signer le protocole d’accord"}</Button>
-                      {!signAgreementMutation.isPending && (!agreementAccepted || !agreementSignatureName.trim() || !agreementSignatureDataUrl || !agreementPreviewConfirmed || !agreementDossier.dossierNumber) && (
-                        <p className="text-xs text-slate-500" role="status">
-                          Bouton inactif tant que : {[
-                            !agreementAccepted && "la case à cocher n’est pas validée",
-                            !agreementSignatureName.trim() && "le nom du signataire n’est pas renseigné",
-                            !agreementSignatureDataUrl && "aucune signature n’a été dessinée ci-dessus",
-                            !agreementPreviewConfirmed && "la prévisualisation du PDF signé n’est pas confirmée",
-                            !agreementDossier.dossierNumber && "aucun dossier actif n’est associé à ce compte",
-                          ].filter(Boolean).join(" · ")}.
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              {!agreementAfterPaymentRequired ? agreementProtocolCard : null}
 
               {officialClientDocuments.length > 0 && (
                 <Card className="border-indigo-200 bg-indigo-50/40 shadow-sm" data-testid="client-official-documents">
@@ -1594,9 +1647,16 @@ export default function EvaluationSpace() {
 
           {activeTab === "signatures" && (
             <SignableDocumentsPanel
-              activeDossier={activeDossier}
+              activeDossier={agreementDossier ? {
+                dossierNumber: agreementDossier.dossierNumber,
+                agreementSigned: agreementDossier.agreementSigned,
+                // Même règle que le bandeau « Ouvrir le protocole » : le paiement de la procédure affichée (en ligne ou agence) suffit.
+                paymentStatus: agreementAfterPaymentRequired || procedurePaymentConfirmed || String(activeDossier?.paymentStatus ?? activeAgencyDossier?.paymentStatus).toUpperCase() === "SUCCESS"
+                  ? "SUCCESS"
+                  : (activeDossier?.paymentStatus ?? activeAgencyDossier?.paymentStatus ?? null),
+              } : null}
               documents={agencyDocuments as any[]}
-              onOpenProtocol={() => switchToSection("dossier")}
+              onOpenProtocol={openProtocol}
             />
           )}
 
@@ -1660,7 +1720,7 @@ export default function EvaluationSpace() {
               </Card>
 
               <section aria-label="Checklist documentaire à préparer">
-                <DossierDocumentChecklist destination={primaryDestination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} clarifications={documentClarifications} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} onUploadClarification={setUploadClarification} onUploaded={refreshDocuments} />
+                <DossierDocumentChecklist scope={checklistScope} destination={primaryDestination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} clarifications={documentClarifications} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} onUploadClarification={setUploadClarification} onUploaded={refreshDocuments} />
               </section>
 
               <section aria-label="Statut de vos dépôts">
@@ -1688,7 +1748,7 @@ export default function EvaluationSpace() {
                 </p>
                 <DocumentUploader
                   dossierNumber={cProfile.dossierNumber}
-                  requirementOptions={buildRequirementOptions(primaryDestination, latestEvaluation?.projectType, customRequirements)}
+                  requirementOptions={buildRequirementOptions(primaryDestination, latestEvaluation?.projectType, customRequirements, checklistScope)}
                   onUploadSuccess={() => {
                     void trpcUtils.candidate.getMyAgencyDocuments.invalidate();
                     void refetchCaseTracking();
@@ -1751,7 +1811,7 @@ export default function EvaluationSpace() {
 	        </div>
 	      </div>
       {nextStep.actionLabel ? (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 shadow-[0_-8px_30px_rgba(15,23,42,0.12)] backdrop-blur md:hidden" data-testid="client-sticky-next-step">
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_30px_rgba(15,23,42,0.12)] backdrop-blur md:hidden" data-testid="client-sticky-next-step">
           <div className="mx-auto flex max-w-7xl items-center gap-3">
             <div className="min-w-0 flex-1">
               <p className="truncate text-[11px] font-black uppercase tracking-[0.12em] text-blue-700">{nextStep.eyebrow}</p>

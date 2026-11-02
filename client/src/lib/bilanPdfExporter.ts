@@ -1,4 +1,6 @@
 import jsPDF from "jspdf";
+import { applyLetterhead, letterheadLayout, type LetterheadOptions } from "@shared/brandLetterhead";
+import { loadClientBrandLogo } from "./brandLogo";
 
 interface BilanData {
   dossierNumber: string;
@@ -8,6 +10,8 @@ interface BilanData {
   strengths?: string[];
   weaknesses?: string[];
   recommendations?: string[];
+  /** Visa / destination du dossier : adaptent le service affiché en en-tête. */
+  serviceFocus?: string | null;
 }
 
 export async function exportBilanToPDF(bilanData: BilanData) {
@@ -19,9 +23,18 @@ export async function exportBilanToPDF(bilanData: BilanData) {
       format: "a4",
     });
 
-    let yPosition = 20;
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 15;
+    const logo = await loadClientBrandLogo();
+    const letterhead: LetterheadOptions = {
+      logoDataUri: logo?.dataUri,
+      logoFormat: logo?.format,
+      documentKind: "Bilan d’admissibilité",
+      reference: bilanData.dossierNumber,
+      recipient: bilanData.fullName,
+      serviceFocus: bilanData.serviceFocus,
+    };
+    const layout = letterheadLayout(letterhead);
+    let yPosition = layout.firstPageTop + 2;
+    const margin = layout.marginLeft;
     const maxWidth = pdf.internal.pageSize.getWidth() - 2 * margin;
 
     // Helper function to add text with word wrapping
@@ -44,17 +57,17 @@ export async function exportBilanToPDF(bilanData: BilanData) {
       yPosition += lines.length * (fontSize / 2.5) + 2;
 
       // Check if we need a new page
-      if (yPosition > pageHeight - 20) {
+      if (yPosition > layout.contentBottom) {
         pdf.addPage();
-        yPosition = 20;
+        yPosition = layout.nextPageTop;
       }
     };
 
     // Helper function to add a section
     const addSection = (title: string) => {
-      if (yPosition > pageHeight - 40) {
+      if (yPosition > layout.contentBottom - 20) {
         pdf.addPage();
-        yPosition = 20;
+        yPosition = layout.nextPageTop;
       }
       pdf.setDrawColor(59, 130, 246); // Blue color
       pdf.setLineWidth(0.5);
@@ -62,18 +75,13 @@ export async function exportBilanToPDF(bilanData: BilanData) {
       addText(title, 14, true, [59, 130, 246]);
     };
 
-    // Header
-    addText("3M TRAVEL AGENCY", 16, true, [25, 55, 109]);
-    addText("Bilan d'Admissibilité", 12, true);
-    addText(`Généré le ${new Date().toLocaleDateString("fr-FR")}`, 9, false, [100, 100, 100]);
-    yPosition += 5;
-
     // ─── INFORMATIONS DU DOSSIER ───
     addSection("Informations du Dossier");
     addText(`Numéro de dossier: ${bilanData.dossierNumber}`, 11);
     if (bilanData.fullName) {
       addText(`Candidat: ${bilanData.fullName}`, 11);
     }
+    addText(`Généré le ${new Date().toLocaleDateString("fr-FR")}`, 9, false, [100, 100, 100]);
     yPosition += 3;
 
     // ─── SCORE ET VERDICT ───
@@ -104,7 +112,7 @@ export async function exportBilanToPDF(bilanData: BilanData) {
     if (bilanData.strengths && bilanData.strengths.length > 0) {
       addSection("Points Forts");
       bilanData.strengths.forEach((strength) => {
-        addText(`✓ ${strength}`, 10, false, [76, 175, 80]);
+        addText(`+ ${strength}`, 10, false, [76, 175, 80]);
       });
       yPosition += 3;
     }
@@ -127,15 +135,7 @@ export async function exportBilanToPDF(bilanData: BilanData) {
       yPosition += 3;
     }
 
-    // ─── FOOTER ───
-    yPosition = pageHeight - 15;
-    pdf.setFontSize(8);
-    pdf.setTextColor(150, 150, 150);
-    pdf.text(
-      `© 2026 3M TRAVEL AGENCY | Dossier: ${bilanData.dossierNumber}`,
-      margin,
-      yPosition
-    );
+    applyLetterhead(pdf, letterhead);
 
     // Save the PDF
     const filename = `Bilan_${bilanData.dossierNumber}_${new Date().toISOString().split("T")[0]}.pdf`;

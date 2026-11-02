@@ -18,7 +18,8 @@ describe("centre de pilotage admin synchronisé", () => {
   it("conserve des points d’entrée explicites vers les dossiers, le placement et l’état système", () => {
     const source = readFileSync(resolve(process.cwd(), "client/src/components/AdminOperationsControlCenter.tsx"), "utf8");
     expect(source).toContain('onNavigate("candidates")');
-    expect(source).toContain('getElementById("admin-placement-pipeline")');
+    // Le placement vit dans son onglet « Partenaires & placement » : un clic l'ouvre directement, sans descendre dans la page.
+    expect(source).toContain('onNavigate("partners")');
     expect(source).toContain('onNavigate("system-status")');
   });
 });

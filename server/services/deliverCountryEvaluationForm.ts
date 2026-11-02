@@ -19,6 +19,7 @@ import { sendEmail } from "../_core/email";
 import type { getDb } from "../db";
 import { storagePut } from "../storage";
 import { generateCountryEvaluationFormPdf } from "./generateCountryEvaluationFormPdf";
+import { loadBrandLogo } from "../utils/brandLogo";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
 
@@ -76,7 +77,7 @@ async function loadFormPdfBytes(template: CountryEvaluationFormTemplate): Promis
       }
     }
   }
-  return generateCountryEvaluationFormPdf(template);
+  return generateCountryEvaluationFormPdf(template, await loadBrandLogo());
 }
 
 function buildInstructionEmailHtml(input: {

@@ -61,6 +61,7 @@ describe("SCHEDULED_JOBS", () => {
       "/api/scheduled/evaluation-job",
       "/api/scheduled/passport-pending-weekly-alert",
       "/api/scheduled/pilotage-automation",
+      "/api/scheduled/signature-confirmation-reminders",
     ]);
     for (const job of SCHEDULED_JOBS) {
       // Construire une CronJob valide la syntaxe sans jamais la démarrer (4e argument = false).
@@ -75,11 +76,12 @@ describe("SCHEDULED_JOBS", () => {
     }
   });
 
-  it("marque document-reminders et pilotage-automation comme tâches avec aperçu sans effet de bord", () => {
+  it("marque les relances et le pilotage comme tâches avec aperçu sans effet de bord", () => {
     const supportingDryRun = SCHEDULED_JOBS.filter((job) => job.supportsDryRun).map((job) => job.path).sort();
     expect(supportingDryRun).toEqual([
       "/api/scheduled/document-reminders",
       "/api/scheduled/pilotage-automation",
+      "/api/scheduled/signature-confirmation-reminders",
     ]);
   });
 
@@ -90,6 +92,7 @@ describe("SCHEDULED_JOBS", () => {
       "/api/scheduled/evaluation-bilan-job",
       "/api/scheduled/evaluation-job",
       "/api/scheduled/pilotage-automation",
+      "/api/scheduled/signature-confirmation-reminders",
     ]);
   });
 });
@@ -134,11 +137,12 @@ describe("initScheduledJobsCron", () => {
     const jobs = initScheduledJobsCron(4242);
     try {
       await Promise.all(jobs.map((job) => job.fireOnTick()));
-      expect(fetchSpy).toHaveBeenCalledTimes(2);
+      expect(fetchSpy).toHaveBeenCalledTimes(3);
       const urls = fetchSpy.mock.calls.map((call: unknown[]) => call[0]).sort();
       expect(urls).toEqual([
         "http://127.0.0.1:4242/api/scheduled/document-reminders",
         "http://127.0.0.1:4242/api/scheduled/pilotage-automation",
+        "http://127.0.0.1:4242/api/scheduled/signature-confirmation-reminders",
       ]);
       for (const call of fetchSpy.mock.calls) {
         const init = call[1] as { method: string; headers: { Authorization: string }; body: string };

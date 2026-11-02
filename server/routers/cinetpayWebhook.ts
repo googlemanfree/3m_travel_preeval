@@ -12,6 +12,7 @@ import { clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { and, eq } from "drizzle-orm";
 import { sendPaymentConfirmationEmail } from "../emailService";
 import { CINETPAY_VALIDATOR, finalizeOnlineOpeningPaymentAfterCinetPay } from "../services/openingPaymentAutomation";
+import { proposedOpeningFee } from "../../shared/openingFee";
 import { confirmFlightOnlinePaymentByTransactionId } from "./cinetpayFlightPayment";
 
 interface CinetPayWebhookBody {
@@ -146,7 +147,7 @@ export function registerCinetPayWebhook(app: Express): void {
 
       const verification = await verifyCinetPayTransaction(transactionId, siteId, apiKey);
       if (verification.status === "ACCEPTED") {
-        const expectedAmount = application.paymentAmount ?? 65000;
+        const expectedAmount = application.paymentAmount ?? proposedOpeningFee(application.visaType);
         if (verification.amount !== undefined && verification.amount !== expectedAmount) {
           console.error(`[CinetPay Webhook] Montant incohérent pour ${transactionId}`);
           res.status(400).json({ error: "Payment amount mismatch" });
@@ -180,11 +181,11 @@ export function registerCinetPayWebhook(app: Express): void {
           paymentValidatedBy: validatedBy,
           paymentConfirmedAmount:
             paymentStatus === "SUCCESS"
-              ? (application.paymentConfirmedAmount ?? application.paymentAmount ?? 65000)
+              ? (application.paymentConfirmedAmount ?? application.paymentAmount ?? proposedOpeningFee(application.visaType))
               : application.paymentConfirmedAmount,
           paymentExpectedAmount:
             paymentStatus === "SUCCESS"
-              ? (application.paymentExpectedAmount ?? application.paymentAmount ?? 65000)
+              ? (application.paymentExpectedAmount ?? application.paymentAmount ?? proposedOpeningFee(application.visaType))
               : application.paymentExpectedAmount,
         })
         .where(and(eq(applications.id, application.id), eq(applications.paymentTransactionId, transactionId)));
@@ -196,7 +197,7 @@ export function registerCinetPayWebhook(app: Express): void {
             application.email,
             application.fullName,
             application.dossierNumber,
-            application.paymentAmount ?? 65000,
+            application.paymentAmount ?? proposedOpeningFee(application.visaType),
             application.paymentCurrency ?? "XAF"
           );
         } catch (emailErr) {
@@ -208,7 +209,7 @@ export function registerCinetPayWebhook(app: Express): void {
               candidateId: application.candidateId,
               type: "payment_confirmed",
               title: "Votre paiement a été confirmé",
-              body: `Votre paiement de ${(application.paymentAmount ?? 65000).toLocaleString("fr-FR")} XAF a été reçu. Votre dossier ${application.dossierNumber} est maintenant débloqué pour le dépôt de documents.`,
+              body: `Votre paiement de ${(application.paymentAmount ?? proposedOpeningFee(application.visaType)).toLocaleString("fr-FR")} XAF a été reçu. Votre dossier ${application.dossierNumber} est maintenant débloqué pour le dépôt de documents.`,
               actionUrl: "/mon-espace?section=documents",
             });
           } catch (notifErr) {

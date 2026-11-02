@@ -5,7 +5,10 @@ import {
   ArrowRight, CircleAlert, Gauge, LockKeyhole, RefreshCw, Sparkles, TimerReset, Trash2, UserRoundCheck, Zap, Download, FileSpreadsheet, X,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { isEvalAgencyShell } from "@shared/evalAgencyShell";
 import { Badge } from "@/components/ui/badge";
+import { AdminDeclaredAnswersPanel } from "@/components/AdminDeclaredAnswersPanel";
+import { CountrySelect } from "@/components/CountryPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,6 +54,7 @@ import {
   luxembourgProgressTaskPresets,
 } from "@shared/luxembourgJobPlatforms";
 import { PASSPORT_PHOTO_ADMIN_STATUS_LABEL, passportPhotoAdminStatus } from "@shared/passportPhotoRequirement";
+import { evaluationSourceTypeOf } from "@/lib/evaluationSourceType";
 
 type CandidateSummary = {
   id: string;
@@ -92,6 +96,8 @@ type Props = {
   candidate: CandidateSummary;
   onRefresh: () => void;
   initialTab?: "overview" | "evaluation" | "documents" | "payments" | "messages" | "history";
+  /** Prévient le parent quand l'onglet change depuis la fiche : sans cela, un bouton du panneau latéral qui vise l'onglet déjà mémorisé n'a aucun effet. */
+  onTabChange?: (tab: NonNullable<Props["initialTab"]>) => void;
   /** Procédures liées (même client) pour bascule multi-dossiers dans le 360°. */
   siblingProcedures?: SiblingProcedureTab[];
   onSelectSibling?: (siblingId: string) => void;
@@ -153,7 +159,23 @@ function PaymentHistoryStatusBadge({ status }: { status: string }) {
   return <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800"><CheckCircle2 className="mr-1 h-3 w-3" />Validé</Badge>;
 }
 
-export function Candidate360Workspace({ sessionToken, candidate, onRefresh, initialTab = "overview", siblingProcedures = [], onSelectSibling }: Props) {
+/** Libellés lisibles des champs proposés par la lecture du CV (la clé technique ne doit pas s'afficher). */
+const CV_FIELD_LABELS: Record<string, string> = {
+  educationLevel: "Niveau d’études",
+  diplomaTitle: "Diplôme",
+  graduationYear: "Année d’obtention",
+  fieldOfStudy: "Domaine d’études",
+  employmentStatus: "Situation professionnelle",
+  currentJobTitle: "Poste actuel",
+  yearsOfExperience: "Années d’expérience",
+  industrySector: "Secteur d’activité",
+  mainTasks: "Principales missions",
+  frenchLevel: "Niveau de français",
+  englishLevel: "Niveau d’anglais",
+  languageTestsTaken: "Tests de langue passés",
+};
+
+export function Candidate360Workspace({ sessionToken, candidate, onRefresh, initialTab = "overview", onTabChange, siblingProcedures = [], onSelectSibling }: Props) {
   const utils = trpc.useUtils();
   const [evaluationOpen, setEvaluationOpen] = useState(false);
   const [protocolTwoEmployer, setProtocolTwoEmployer] = useState("");
@@ -170,7 +192,6 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   const [checklistCountry, setChecklistCountry] = useState(candidate.destinationCountry || "");
   const [destinationDraft, setDestinationDraft] = useState(candidate.destinationCountry || "");
   const [visaTypeDraft, setVisaTypeDraft] = useState(candidate.projectType || "");
-  const [isFetchingCv, setIsFetchingCv] = useState(false);
   const [forceStepDialog, setForceStepDialog] = useState<{ stepIndex: number; checked: boolean; label: string; confirmOnBehalf?: boolean } | null>(null);
   const [forceStepReason, setForceStepReason] = useState("");
   const [bilanConfirmDialogOpen, setBilanConfirmDialogOpen] = useState(false);
@@ -618,16 +639,23 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
 
   const pendingRequirements = useMemo(() => (data?.requirements ?? []).filter((item: any) => item.status !== "approved" && item.status !== "waived"), [data]);
   const [cvAiFields, setCvAiFields] = useState<Record<string, string | null> | null>(null);
-  const cvExtractionMutation = trpc.evaluation.extractFromCV.useMutation({
+  // Le serveur lit lui-même le CV enregistré : le navigateur ne pouvait pas le télécharger (redirection vers un lien signé d'un autre domaine).
+  const cvExtractionMutation = trpc.evaluation.extractFromStoredCV.useMutation({
     onSuccess: (result) => {
       if (!result.success) {
+        setCvAiFields(null);
         toast.error("Extraction CV incomplète", { description: ("message" in result ? result.message : undefined) || "Vérifiez le CV manuellement avant toute décision." });
         return;
       }
-      setCvAiFields(result.fields as Record<string, string | null>);
+      const proposed = result.fields as Record<string, string | null>;
+      setCvAiFields(proposed);
+      if (result.prefilledCount === 0) {
+        toast.warning("Aucune information claire dans ce CV", { description: "Le CV a été lu, mais aucun champ n’est indiqué explicitement. Vérifiez-le à l’écran." });
+        return;
+      }
       toast.success("Informations CV extraites", { description: `${result.prefilledCount} champ(s) proposé(s) pour vérification humaine.` });
     },
-    onError: (mutationError) => toast.error("Extraction IA indisponible", { description: mutationError.message }),
+    onError: (mutationError) => toast.error("Lecture du CV impossible", { description: mutationError.message }),
   });
   const candidateCv: any = useMemo(() => {
     if (data?.cvDocument?.documentUrl) return data.cvDocument;
@@ -728,41 +756,13 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   // Tout candidat affiché dans le centre 360° peut recevoir une première évaluation ;
   // l’identifiant interne est la seule condition nécessaire côté UI.
   const canPrepareEvaluation = Number.isInteger(candidate.internalId) && candidate.internalId > 0;
-  const extractCandidateCv = async () => {
-    if (cvExtractionMutation.isPending || isFetchingCv) return;
+  const extractCandidateCv = () => {
+    if (cvExtractionMutation.isPending) return;
     if (!candidateCv?.documentUrl) {
       toast.error("CV introuvable", { description: "Aucun CV exploitable n’est rattaché à ce dossier." });
       return;
     }
-    setIsFetchingCv(true);
-    try {
-      const documentUrl = new URL(String(candidateCv.documentUrl), window.location.origin).toString();
-      const maxAttempts = 3;
-      let response: Response | null = null;
-      let lastStatus = 0;
-      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-        response = await fetch(documentUrl, { credentials: "include", headers: { Accept: "application/pdf,image/png,image/jpeg,application/octet-stream" }, cache: "no-store" });
-        if (response.ok) break;
-        lastStatus = response.status;
-        // Le stockage peut renvoyer une erreur transitoire (redémarrage, backend temporairement indisponible) : on retente avant d’abandonner.
-        if (attempt < maxAttempts && (response.status >= 500 || response.status === 429)) {
-          await new Promise((resolve) => setTimeout(resolve, 800 * attempt));
-          continue;
-        }
-        break;
-      }
-      if (!response || !response.ok) throw new Error(`Le CV n’est pas accessible depuis le dossier (${lastStatus || response?.status}). Réessayez dans quelques instants.`);
-      const blob = await response.blob();
-      if (blob.size > 5 * 1024 * 1024) throw new Error("Le CV dépasse la taille maximale d’analyse de 5 Mo.");
-      const bytes = new Uint8Array(await blob.arrayBuffer());
-      let binary = "";
-      for (let index = 0; index < bytes.length; index += 0x8000) binary += String.fromCharCode(...Array.from(bytes.subarray(index, index + 0x8000)));
-      cvExtractionMutation.mutate({ cvBase64: btoa(binary), cvMimeType: blob.type === "image/jpg" ? "image/jpeg" : (blob.type || "application/pdf") as "application/pdf" | "image/png" | "image/jpeg" });
-    } catch (error) {
-      toast.error("Lecture du CV impossible", { description: error instanceof Error ? error.message : "Réessayez depuis le dossier." });
-    } finally {
-      setIsFetchingCv(false);
-    }
+    cvExtractionMutation.mutate({ sessionToken, documentUrl: String(candidateCv.documentUrl) });
   };
 
   const saveOperationalState = () => {
@@ -1134,7 +1134,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
         <div className="flex flex-wrap gap-2" data-testid="candidate360-reference-actions">
           {(() => {
             const evalShell = String((data as any)?.evalShellFolderCode || "").trim();
-            const hasEvalShell = /^EVAL-AG-\d+$/i.test(evalShell) || /^EVAL-AG-\d+$/i.test(String(candidate.folderCode || ""));
+            const hasEvalShell = isEvalAgencyShell(evalShell) || isEvalAgencyShell(String(candidate.folderCode || ""));
             const canNormalize = paymentConfirmed && hasEvalShell;
             if (!paymentConfirmed) {
               return (
@@ -1266,7 +1266,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             procedureLabel?: string | null;
           }>)
           : siblingProcedures;
-        const siblings = rawSiblings.filter((sibling) => !/^EVAL-AG-\d+$/i.test(sibling.folderCode || ""));
+        const siblings = rawSiblings.filter((sibling) => !isEvalAgencyShell(sibling.folderCode));
         if (!siblings.length) return null;
         return (
           <AdminSimultaneousProceduresBoard
@@ -1359,7 +1359,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
       </section>
 
       {openingPaymentHistory?.pendingProof ? <div role="status" className="flex items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950"><CircleAlert className="h-5 w-5 shrink-0 text-amber-700" /><span><strong>Preuve de paiement en attente :</strong> une nouvelle pièce doit être validée par un administrateur.</span><Button type="button" size="sm" variant="outline" className="ml-auto border-amber-400 bg-white text-amber-900" onClick={() => setActiveTab("payments")}>Voir</Button></div> : null}
-      <Tabs id="candidate-360-tabs" value={activeTab} onValueChange={(value) => setActiveTab(value as Props["initialTab"])} className="w-full scroll-mt-24">
+      <Tabs id="candidate-360-tabs" value={activeTab} onValueChange={(value) => { setActiveTab(value as Props["initialTab"]); onTabChange?.(value as NonNullable<Props["initialTab"]>); }} className="w-full scroll-mt-24">
         <TabsList className="grid h-auto w-full grid-cols-3 gap-1 bg-slate-100 p-1 sm:grid-cols-6">
           <TabsTrigger value="overview" className="text-xs">Vue d’ensemble</TabsTrigger>
           <TabsTrigger value="evaluation" className="text-xs">Évaluation</TabsTrigger>
@@ -1391,12 +1391,13 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
               <div className="mt-3 flex items-center justify-between text-xs text-slate-500"><span>{dossierProgress.documentsLabel}</span><span>{data.metrics.openTasks} action(s) ouverte(s)</span></div>
             </div>
           </section>
+          <AdminDeclaredAnswersPanel projectType={data.evaluationContext?.projectType} country={data.evaluationContext?.destinationCountry} details={data.evaluationContext?.details as Record<string, unknown> | undefined} columns={(data.evaluationContext as { declaredColumns?: Record<string, string> } | undefined)?.declaredColumns} />
           {(() => {
             const rawSiblings = ((data as any).siblingProcedures as SiblingProcedureTab[] | undefined)?.length
               ? ((data as any).siblingProcedures as SiblingProcedureTab[])
               : siblingProcedures;
             // Ne pas afficher un miroir EVAL-AG comme seconde procédure du même dossier 3M.
-            const siblings = rawSiblings.filter((sibling) => !/^EVAL-AG-\d+$/i.test(sibling.folderCode || ""));
+            const siblings = rawSiblings.filter((sibling) => !isEvalAgencyShell(sibling.folderCode));
             if (!siblings.length) return null;
             return (
               <section className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4" data-testid="candidate360-procedure-tabs" aria-label="Procédures liées du client">
@@ -1967,9 +1968,9 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
           <details className="rounded-xl border bg-white" data-testid="dossier-tools">
             <summary className="cursor-pointer select-none p-4 text-sm font-semibold text-slate-800">Outils avancés : checklist pays, CV, extraction</summary>
             <div className="space-y-4 border-t p-4">
-          <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4"><div className="flex flex-col gap-3"><div><div className="flex flex-wrap items-center gap-2"><h4 className="font-semibold text-slate-900">Créer une checklist pays et procédure</h4>{data.evaluationContext && <Badge className="border-blue-200 bg-white text-blue-800">Préremplie depuis l’évaluation</Badge>}</div><p className="mt-1 text-sm text-slate-600">Les pièces déjà présentes sont conservées. La destination et la procédure sont reprises automatiquement depuis l’évaluation, puis restent modifiables pour le contrôle humain.</p></div>{data.evaluationContext && <div className="rounded-lg border border-blue-100 bg-white px-3 py-2 text-xs text-slate-600"><strong className="text-blue-800">Contexte récupéré :</strong> {data.evaluationContext.destinationCountry || "Destination à préciser"} · {data.evaluationContext.procedureLabel || data.evaluationContext.projectType || "Procédure à qualifier"}</div>}<div className="grid gap-2 sm:grid-cols-2"><Select value={checklistCountry} onValueChange={setChecklistCountry}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Canada">Canada</SelectItem><SelectItem value="Luxembourg">Luxembourg</SelectItem><SelectItem value="Autre destination">Autre destination</SelectItem></SelectContent></Select><Select value={checklistProcedure} onValueChange={setChecklistProcedure}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="permanent_residence">Résidence permanente</SelectItem><SelectItem value="work_permit">Visa / permis de travail</SelectItem><SelectItem value="study_permit">Études</SelectItem><SelectItem value="visitor_visa">Visite / tourisme</SelectItem><SelectItem value="family_reunification">Regroupement familial</SelectItem><SelectItem value="evisa">e‑Visa / autorisation électronique</SelectItem></SelectContent></Select></div><Textarea value={customChecklistDocuments} onChange={(event) => setCustomChecklistDocuments(event.target.value)} placeholder="Pièces supplémentaires propres à ce dossier, une par ligne (facultatif)" maxLength={2000} /><Button className="w-full sm:w-auto sm:self-end" disabled={countryChecklistMutation.isPending} onClick={() => countryChecklistMutation.mutate({ sessionToken, candidateId: candidate.id, destination: checklistCountry, procedureType: checklistProcedure as any, customDocuments: customChecklistDocuments.split("\n").map((item) => item.trim()).filter(Boolean) })}><Plus className="mr-1 h-4 w-4" />{countryChecklistMutation.isPending ? "Création…" : "Créer la checklist"}</Button></div></div>
-          <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4" data-testid="candidate360-evaluation-cv"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><h4 className="flex items-center gap-2 font-semibold text-indigo-950"><FileText className="h-4 w-4 text-indigo-700" />CV utilisé pour l’évaluation</h4><p className="mt-1 text-sm text-indigo-900">Le conseiller peut vérifier le contenu du CV dans la fiche avant de préparer le bilan.</p></div>{candidateCv?.documentUrl ? <div className="flex flex-wrap gap-2"><Button type="button" size="sm" className="bg-indigo-700 hover:bg-indigo-800" onClick={() => setPreviewDocument({ documentTitle: candidateCv.fileName || "CV du candidat", documentUrl: candidateCv.documentUrl, fileType: candidateCv.mimeType })} data-testid="candidate360-cv-preview"><FileText className="mr-2 h-4 w-4" />Aperçu lisible</Button><a href={candidateCv.documentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-9 items-center rounded-md border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-800 hover:bg-indigo-50" data-testid="candidate360-cv-open">Ouvrir</a><a href={candidateCv.documentUrl} download className="inline-flex h-9 items-center rounded-md border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-800 hover:bg-indigo-50">Télécharger</a><Button type="button" size="sm" variant="outline" onClick={extractCandidateCv} disabled={cvExtractionMutation.isPending || isFetchingCv} className="border-indigo-300 text-indigo-800 hover:bg-indigo-100"><Sparkles className="mr-2 h-4 w-4" />{isFetchingCv ? "Lecture du CV…" : cvExtractionMutation.isPending ? "Extraction…" : "Extraire les informations"}</Button></div> : <Badge className="border-amber-200 bg-amber-50 text-amber-900">CV non disponible</Badge>}</div>{candidateCv?.documentUrl ? <div className="mt-4 grid gap-3 sm:grid-cols-3"><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Fichier</p><p className="mt-1 truncate text-sm font-semibold text-slate-900">{candidateCv.fileName}</p></div><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Origine</p><p className="mt-1 text-sm font-semibold text-slate-900">{candidateCv.source === "evaluation" ? "Soumis à l’évaluation" : candidateCv.source === "online" ? "Envoyé par le candidat" : "Déposé en agence"}</p></div><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">État</p><p className="mt-1 text-sm font-semibold text-slate-900">{candidateCv.reviewStatus === "approved" ? "Vérifié" : "À vérifier"}</p></div></div> : <p className="mt-3 text-sm text-amber-900">Le dossier ne contient pas encore de CV exploitable. Demandez au candidat de le déposer avant l’évaluation.</p>}</div>
-          {cvAiFields && <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4" aria-live="polite"><div className="flex flex-wrap items-start justify-between gap-3"><div><h4 className="flex items-center gap-2 font-semibold text-emerald-950"><Sparkles className="h-4 w-4 text-emerald-700" />Préremplissage IA proposé</h4><p className="mt-1 text-sm text-emerald-900">Ces informations sont des suggestions extraites du CV. Le conseiller doit les vérifier avant toute décision ou enregistrement.</p></div><Badge className="bg-white text-emerald-800">Validation humaine requise</Badge></div><div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{Object.entries(cvAiFields).filter(([, value]) => value).map(([key, value]) => <div key={key} className="rounded-lg border border-emerald-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{key}</p><p className="mt-1 text-sm font-semibold text-slate-900">{value}</p></div>)}</div></div>}
+          <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4"><div className="flex flex-col gap-3"><div><div className="flex flex-wrap items-center gap-2"><h4 className="font-semibold text-slate-900">Créer une checklist pays et procédure</h4>{data.evaluationContext && <Badge className="border-blue-200 bg-white text-blue-800">Préremplie depuis l’évaluation</Badge>}</div><p className="mt-1 text-sm text-slate-600">Les pièces déjà présentes sont conservées. La destination et la procédure sont reprises automatiquement depuis l’évaluation, puis restent modifiables pour le contrôle humain.</p></div>{typeof (data.evaluationContext?.details as Record<string, unknown> | undefined)?.programLabel === "string" && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-950" data-testid="checklist-program-hint"><strong>Parcours choisi par le candidat :</strong> {String((data.evaluationContext?.details as Record<string, unknown>).programLabel)}{typeof (data.evaluationContext?.details as Record<string, unknown>).domainLabel === "string" ? ` · ${String((data.evaluationContext?.details as Record<string, unknown>).domainLabel)}` : ""}. Les pièces propres à ce parcours sont ajoutées à la checklist.</div>}{data.evaluationContext && <div className="rounded-lg border border-blue-100 bg-white px-3 py-2 text-xs text-slate-600"><strong className="text-blue-800">Contexte récupéré :</strong> {data.evaluationContext.destinationCountry || "Destination à préciser"} · {data.evaluationContext.procedureLabel || data.evaluationContext.projectType || "Procédure à qualifier"}</div>}<div className="grid gap-2 sm:grid-cols-2"><CountrySelect id="candidate360-checklist-country" ariaLabel="Pays de la checklist" placeholder="Pays de destination" value={checklistCountry === "Autre destination" ? "" : checklistCountry} onChange={setChecklistCountry} /><Select value={checklistProcedure} onValueChange={setChecklistProcedure}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="permanent_residence">Résidence permanente</SelectItem><SelectItem value="work_permit">Visa / permis de travail</SelectItem><SelectItem value="study_permit">Études</SelectItem><SelectItem value="visitor_visa">Visite / tourisme</SelectItem><SelectItem value="family_reunification">Regroupement familial</SelectItem><SelectItem value="evisa">e‑Visa / autorisation électronique</SelectItem></SelectContent></Select></div><Textarea value={customChecklistDocuments} onChange={(event) => setCustomChecklistDocuments(event.target.value)} placeholder="Pièces supplémentaires propres à ce dossier, une par ligne (facultatif)" maxLength={2000} /><Button className="w-full sm:w-auto sm:self-end" disabled={countryChecklistMutation.isPending} onClick={() => countryChecklistMutation.mutate({ sessionToken, candidateId: candidate.id, destination: checklistCountry, procedureType: checklistProcedure as any, programId: typeof (data.evaluationContext?.details as Record<string, unknown> | undefined)?.programId === "string" ? String((data.evaluationContext?.details as Record<string, unknown>).programId) : undefined, domainId: typeof (data.evaluationContext?.details as Record<string, unknown> | undefined)?.domainId === "string" ? String((data.evaluationContext?.details as Record<string, unknown>).domainId) : undefined, customDocuments: customChecklistDocuments.split("\n").map((item) => item.trim()).filter(Boolean) })}><Plus className="mr-1 h-4 w-4" />{countryChecklistMutation.isPending ? "Création…" : "Créer la checklist"}</Button></div></div>
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4" data-testid="candidate360-evaluation-cv"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><h4 className="flex items-center gap-2 font-semibold text-indigo-950"><FileText className="h-4 w-4 text-indigo-700" />CV utilisé pour l’évaluation</h4><p className="mt-1 text-sm text-indigo-900">Le conseiller peut vérifier le contenu du CV dans la fiche avant de préparer le bilan.</p></div>{candidateCv?.documentUrl ? <div className="flex flex-wrap gap-2"><Button type="button" size="sm" className="bg-indigo-700 hover:bg-indigo-800" onClick={() => setPreviewDocument({ documentTitle: candidateCv.fileName || "CV du candidat", documentUrl: candidateCv.documentUrl, fileType: candidateCv.mimeType })} data-testid="candidate360-cv-preview"><FileText className="mr-2 h-4 w-4" />Aperçu lisible</Button><a href={candidateCv.documentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-9 items-center rounded-md border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-800 hover:bg-indigo-50" data-testid="candidate360-cv-open">Ouvrir</a><a href={candidateCv.documentUrl} download className="inline-flex h-9 items-center rounded-md border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-800 hover:bg-indigo-50">Télécharger</a><Button type="button" size="sm" variant="outline" onClick={extractCandidateCv} disabled={cvExtractionMutation.isPending} className="border-indigo-300 text-indigo-800 hover:bg-indigo-100" data-testid="candidate360-cv-extract"><Sparkles className="mr-2 h-4 w-4" />{cvExtractionMutation.isPending ? "Lecture du CV…" : "Extraire les informations"}</Button></div> : <Badge className="border-amber-200 bg-amber-50 text-amber-900">CV non disponible</Badge>}</div>{candidateCv?.documentUrl ? <div className="mt-4 grid gap-3 sm:grid-cols-3"><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Fichier</p><p className="mt-1 truncate text-sm font-semibold text-slate-900">{candidateCv.fileName}</p></div><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Origine</p><p className="mt-1 text-sm font-semibold text-slate-900">{candidateCv.source === "evaluation" ? "Soumis à l’évaluation" : candidateCv.source === "online" ? "Envoyé par le candidat" : "Déposé en agence"}</p></div><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">État</p><p className="mt-1 text-sm font-semibold text-slate-900">{candidateCv.reviewStatus === "approved" ? "Vérifié" : "À vérifier"}</p></div></div> : <p className="mt-3 text-sm text-amber-900">Le dossier ne contient pas encore de CV exploitable. Demandez au candidat de le déposer avant l’évaluation.</p>}</div>
+          {cvAiFields && <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4" aria-live="polite"><div className="flex flex-wrap items-start justify-between gap-3"><div><h4 className="flex items-center gap-2 font-semibold text-emerald-950"><Sparkles className="h-4 w-4 text-emerald-700" />Préremplissage IA proposé</h4><p className="mt-1 text-sm text-emerald-900">Ces informations sont des suggestions extraites du CV. Le conseiller doit les vérifier avant toute décision ou enregistrement.</p></div><Badge className="bg-white text-emerald-800">Validation humaine requise</Badge></div><div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{Object.entries(cvAiFields).filter(([, value]) => value).map(([key, value]) => <div key={key} className="rounded-lg border border-emerald-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{CV_FIELD_LABELS[key] ?? key}</p><p className="mt-1 text-sm font-semibold text-slate-900">{value}</p></div>)}</div></div>}
           <div className="rounded-xl border p-4"><h4 className="font-semibold text-slate-900">Documents centralisés</h4><div className="mt-3 space-y-2">{data.documents.length ? data.documents.map((document: any) => {
             const documentUrl = document.documentUrl || document.fileUrl || null;
             const documentType = document.documentType || document.fileType || "autre";
@@ -2413,7 +2414,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
 
       <Dialog open={offlineEvaluationOpen} onOpenChange={setOfflineEvaluationOpen}><DialogContent><DialogHeader><DialogTitle>Valider l’évaluation hors ligne</DialogTitle><DialogDescription>Utilisez cette action si le conseiller a évalué le candidat par appel, en agence ou par e-mail. Aucun envoi de bilan n’est déclenché.</DialogDescription></DialogHeader><div className="space-y-4"><div><Label htmlFor="offline-evaluation-channel">Canal utilisé</Label><Select value={offlineEvaluationChannel} onValueChange={(value) => setOfflineEvaluationChannel(value as "appel" | "agence" | "email")}><SelectTrigger id="offline-evaluation-channel" className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="appel">Appel téléphonique</SelectItem><SelectItem value="agence">Bureau en agence</SelectItem><SelectItem value="email">E-mail</SelectItem></SelectContent></Select></div><div><Label htmlFor="offline-evaluation-note">Note du conseiller (facultatif)</Label><Textarea id="offline-evaluation-note" value={offlineEvaluationNote} onChange={(event) => setOfflineEvaluationNote(event.target.value)} maxLength={1000} rows={5} placeholder="Ex. Évaluation menée par téléphone le 05/09/2026." /></div></div><DialogFooter><Button variant="outline" onClick={() => setOfflineEvaluationOpen(false)}>Annuler</Button>{evaluationAlreadyValidated ? <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800"><CheckCircle2 className="h-4 w-4" /><span>Évaluation déjà validée par {evaluationValidatedBy} le {formatDate(evaluationValidatedAt)}.</span></div> : <Button disabled={offlineEvaluationMutation.isPending || actionLocks.offlineEvaluation} onClick={() => { lockAction("offlineEvaluation"); offlineEvaluationMutation.mutate({ sessionToken, candidateId: candidate.id, channel: offlineEvaluationChannel, note: offlineEvaluationNote.trim() || undefined }); }}>{offlineEvaluationMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Validation…</> : "Valider l’évaluation hors ligne"}</Button>}</DialogFooter></DialogContent></Dialog>
       <Dialog open={resendDialogOpen} onOpenChange={setResendDialogOpen}><DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>Renvoyer le bilan d’évaluation</DialogTitle><DialogDescription>Personnalisez le message d’accompagnement. Le lien sécurisé et le bilan restent générés par le serveur.</DialogDescription></DialogHeader><div className="space-y-2"><Label htmlFor="resend-evaluation-message">Message d’accompagnement</Label><Textarea id="resend-evaluation-message" value={resendMessage} onChange={(event) => setResendMessage(event.target.value)} maxLength={3000} rows={8} /><p className="text-right text-xs text-slate-500">{resendMessage.length}/3000</p></div><DialogFooter><Button variant="outline" onClick={() => setResendDialogOpen(false)}>Annuler</Button><Button disabled={evaluationReminderMutation.isPending || actionLocks.evaluationReminder || resendMessage.trim().length < 3} onClick={() => { lockAction("evaluationReminder"); evaluationReminderMutation.mutate({ sessionToken, applicationId: candidate.internalId, language: "fr", customMessage: resendMessage.trim() }); setResendDialogOpen(false); }}><Mail className="mr-2 h-4 w-4" />{evaluationReminderMutation.isPending ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" />Envoi…</> : "Envoyer la relance"}</Button></DialogFooter></DialogContent></Dialog>
-      {canPrepareEvaluation && <Suspense fallback={<div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-blue-900">Chargement de l’espace de préparation…</div>}><EvaluationDeliveryEditor sessionToken={sessionToken} sourceRecordId={candidate.internalId} open={evaluationOpen} onOpenChange={setEvaluationOpen} onCompleted={() => void refresh()} /></Suspense>}
+      {canPrepareEvaluation && <Suspense fallback={<div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-blue-900">Chargement de l’espace de préparation…</div>}><EvaluationDeliveryEditor sessionToken={sessionToken} sourceRecordId={candidate.internalId} sourceType={evaluationSourceTypeOf(candidate)} open={evaluationOpen} onOpenChange={setEvaluationOpen} onCompleted={() => void refresh()} /></Suspense>}
     </div>
   );
 }

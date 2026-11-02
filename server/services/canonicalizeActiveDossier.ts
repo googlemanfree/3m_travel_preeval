@@ -1,7 +1,7 @@
-import { and, eq, isNull, like, sql } from "drizzle-orm";
+import { and, eq, isNull, like, or, sql } from "drizzle-orm";
 import { agencyDossierHistory, agencyDossiers, applications, candidates } from "../../drizzle/schema";
 import { agencyDossierReference, isActiveDossierReference } from "../../shared/caseReference";
-import { parseEvalAgencyShellId } from "../../shared/evalAgencyShell";
+import { agencyMirrorKey, parseEvalAgencyShellId } from "../../shared/evalAgencyShell";
 
 type Db = NonNullable<Awaited<ReturnType<typeof import("../db").getDb>>>;
 
@@ -33,7 +33,10 @@ export async function purgeEvalAgencyShell(
       dossierNumber: applications.dossierNumber,
     })
     .from(applications)
-    .where(and(eq(applications.dossierNumber, evalCode), isNull(applications.deletedAt)))
+    .where(and(
+      or(eq(applications.dossierNumber, evalCode), eq(applications.dossierNumber, agencyMirrorKey(agencyDossierId)), like(applications.dossierNumber, `${agencyMirrorKey(agencyDossierId)}-%`)),
+      isNull(applications.deletedAt),
+    ))
     .limit(20);
 
   const purgedApplicationIds: number[] = [];
@@ -102,7 +105,7 @@ export async function purgeAllOrphanEvalAgencyShells(
       email: applications.email,
     })
     .from(applications)
-    .where(and(like(applications.dossierNumber, "EVAL-AG-%"), isNull(applications.deletedAt)))
+    .where(and(or(like(applications.dossierNumber, "EVAL-AG-%"), like(applications.dossierNumber, "COMPTE-AG-%")), isNull(applications.deletedAt)))
     .limit(limit);
 
   let purged = 0;

@@ -3,6 +3,7 @@
  * et que destination / visa sont déjà connus sur le compte.
  */
 
+import { isActivatedStatus } from "../../shared/candidateStatus";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import {
   agencyDossierHistory,
@@ -17,6 +18,7 @@ import type { getDb } from "../db";
 import { ensureAgencyActiveReference } from "./canonicalizeActiveDossier";
 import { seedCountryProcedureChecklist } from "./seedCountryProcedureCase";
 import { loadPilotageQueue } from "./pilotageQueueStore";
+import { getOpeningPaymentEvidence } from "./openingPaymentEvidence";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
 
@@ -48,10 +50,13 @@ export async function activateReadyPreDossier(
   const actor = (options?.actorEmail || AUTO_ACTIVATE_ACTOR).trim() || AUTO_ACTIVATE_ACTOR;
   const [candidate] = await db.select().from(candidates).where(and(eq(candidates.id, candidateId), isNull(candidates.deletedAt))).limit(1);
   if (!candidate) return { ok: false, reason: "compte_introuvable" };
-  if (candidate.dossierStatus !== "nouveau") return { ok: false, reason: "deja_actif" };
+  if (isActivatedStatus(candidate.dossierStatus)) return { ok: false, reason: "deja_actif" };
   if (candidate.evaluationDeclarationStatus !== "validated" || !candidate.evaluationReviewedAt) {
     return { ok: false, reason: "evaluation_incomplete" };
   }
+  // Jamais d'activation sans preuve de paiement : ni l'automatisme du pilotage, ni une évaluation validée ne suffisent.
+  const paymentEvidence = await getOpeningPaymentEvidence(db, { id: candidate.id, email: candidate.email });
+  if (!paymentEvidence.ok) return { ok: false, reason: "paiement_non_justifie" };
 
   const destinationHint = parsePreferredDestination(candidate.preferredDestinations) || String(candidate.destination || "").trim();
   const visaType = String(candidate.visaType || "").trim();

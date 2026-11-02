@@ -28,7 +28,8 @@ describe("export espace client et filtre premium admin", () => {
   it("relie le raccourci premium au statut d’activation réel", () => {
     const source = readProjectFile("client/src/pages/AdminDashboard.tsx");
     expect(source).toContain('activationFilter === "active"');
-    expect(source).toContain("Comptes premium / activés");
+    // Ce filtre porte sur l'e-mail confirmé du compte, pas sur un dossier ouvert (un dossier exige le paiement des frais d'ouverture).
+    expect(source).toContain("E-mail confirmé");
     expect(source).toContain('activationStatus: activationFilter !== "ALL" ? activationFilter : undefined');
   });
 });

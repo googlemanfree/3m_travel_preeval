@@ -9,6 +9,7 @@ import { composePublicPrerender } from "../publicPrerender";
 import { canonicalRedirectFromHosts } from "../canonicalDomain";
 import { renderOgImageSvg } from "../seoAssets";
 import { renderRobotsTxt, renderSitemapXml } from "../seoRoutes";
+import { renderSecurityTxt } from "../securityTxt";
 import { getPublicBuildMarker } from "../publicBuildMarker";
 import { registerLegacyAliasRedirects } from "../legacyPublicRedirects";
 
@@ -20,6 +21,9 @@ function registerSeoAssetRoutes(app: Express) {
   });
   app.get("/sitemap.xml", (_req, res) => {
     res.status(200).set({ "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" }).send(renderSitemapXml());
+  });
+  app.get("/.well-known/security.txt", (_req, res) => {
+    res.status(200).set({ "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=86400" }).send(renderSecurityTxt());
   });
   app.get("/robots.txt", (_req, res) => {
     res.status(200).set({ "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=3600" }).send(renderRobotsTxt());
@@ -176,13 +180,15 @@ export function serveStatic(app: Express) {
     try {
       const template = await fs.promises.readFile(path.resolve(distPath, "index.html"), "utf-8");
       const rendered = composePublicPrerender(template, req.originalUrl);
-      const cacheControl = rendered.noindex ? "private, no-store" : "public, max-age=60, s-maxage=300, stale-while-revalidate=600";
+      // Les pages publiques sont déterministes pour un build donné. Un cache CDN
+      // court évite de recalculer le prérendu lourd à chaque visite.
+      const cacheControl = rendered.noindex ? "private, no-store" : "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400";
       res.status(200).set({
         "Content-Type": "text/html",
         "Cache-Control": cacheControl,
         "X-3M-Build": getPublicBuildMarker(),
         "X-3M-Route-Source": "express-prerender",
-      }).end(rendered.html);
+      }).send(rendered.html);
     } catch (error) {
       next(error);
     }
@@ -218,8 +224,8 @@ export function serveStatic(app: Express) {
     try {
       const template = await fs.promises.readFile(path.resolve(distPath, "index.html"), "utf-8");
       const rendered = composePublicPrerender(template, req.originalUrl);
-      const cacheControl = rendered.noindex ? "private, no-store" : "public, max-age=60, s-maxage=300, stale-while-revalidate=600";
-      res.status(rendered.status).set({ "Content-Type": "text/html", "Cache-Control": cacheControl, "X-3M-Build": getPublicBuildMarker(), "X-3M-Route-Source": "express-prerender" }).end(rendered.html);
+      const cacheControl = rendered.noindex ? "private, no-store" : "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400";
+      res.status(rendered.status).set({ "Content-Type": "text/html", "Cache-Control": cacheControl, "X-3M-Build": getPublicBuildMarker(), "X-3M-Route-Source": "express-prerender" }).send(rendered.html);
     } catch (error) {
       console.error("[SEO prerender] Unable to render public shell", error);
       res.status(500).end("Erreur de rendu");

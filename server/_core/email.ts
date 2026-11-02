@@ -1,18 +1,39 @@
 import { getDb } from "../db";
 import { emailDeliveryLogs } from "../../drizzle/schema";
 import nodemailer from "nodemailer";
+import { frameLegacyEmailHtml } from "../../shared/brandLetterhead";
 
 const smtpHost = process.env.SMTP_HOST;
 const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
 const smtpUser = process.env.SMTP_USER;
 const smtpPass = process.env.SMTP_PASS;
-const smtpFrom = process.env.SMTP_FROM || "hello@3mtravelagency.com";
+
+/** Adresse d'expédition technique unique, vue par les destinataires externes. */
+export const OFFICIAL_SENDER_ADDRESS = "noreply@3mtravelagency.com";
+/** Adresse de réponse publique de l'agence. */
+export const OFFICIAL_REPLY_ADDRESS = "hello@3mtravelagency.com";
+export const OFFICIAL_SENDER_NAME = "3M TRAVEL AGENCY";
+
+/**
+ * Expéditeur effectif : toujours noreply@3mtravelagency.com par défaut. Une variable SMTP_FROM n'est respectée que si elle désigne une autre boîte du
+ * domaine de l'agence (ex. billetterie@3mtravelagency.com) ; une adresse Gmail, Resend ou d'un ancien domaine est remplacée, pour ne jamais
+ * envoyer un message client depuis une adresse non professionnelle.
+ */
+export function resolveOfficialSender(raw: string | undefined | null = process.env.SMTP_FROM): { address: string; from: string; overridden: boolean } {
+  const configured = (/<([^<>@\s]+@[^<>\s]+)>/.exec(String(raw ?? ""))?.[1] ?? String(raw ?? "")).replace(/^mailto:/i, "").trim().toLowerCase();
+  const sameDomain = /^[^\s@]+@3mtravelagency\.com$/.test(configured);
+  const address = sameDomain ? configured : OFFICIAL_SENDER_ADDRESS;
+  return { address, from: `"${OFFICIAL_SENDER_NAME}" <${address}>`, overridden: Boolean(configured) && !sameDomain };
+}
+
+const sender = resolveOfficialSender();
+if (sender.overridden) console.warn(`[Email Config] SMTP_FROM (${process.env.SMTP_FROM}) n'est pas une adresse 3mtravelagency.com : expéditeur forcé à ${sender.address}.`);
 
 /** Normalise les anciennes configurations Resend vers l’adresse officielle. */
 export function normalizeResendSender(value?: string | null): string {
   const normalized = (value || "").replace(/^mailto:/i, "").trim().toLowerCase();
   if (!normalized || normalized === "onboarding@resend.dev" || normalized.endsWith("@3mtravelagency.click")) {
-    return "hello@3mtravelagency.com";
+    return OFFICIAL_SENDER_ADDRESS;
   }
   return normalized;
 }
@@ -39,7 +60,10 @@ export function getSmtpHealth() {
     provider: "SMTP",
     host: smtpHost || null,
     port: smtpPort,
-    from: smtpFrom,
+    from: sender.address,
+    fromOverridden: sender.overridden,
+    // Si le compte SMTP n'est pas la boîte hello@, certains fournisseurs (Gmail…) réécrivent l'expéditeur : l'alias « Envoyer en tant que » doit être déclaré.
+    smtpAccountMatchesSender: (smtpUser || "").trim().toLowerCase() === sender.address,
   };
 }
 
@@ -49,6 +73,16 @@ export interface SendEmailOptions {
   html: string;
   replyTo?: string;
   attachments?: Array<{ filename: string; content: Buffer | string; contentType?: string }>;
+  /** false : message interne ou technique, envoyé sans le papier à en-tête (par défaut, tout message adressé hors de l'agence est habillé). */
+  brand?: boolean;
+}
+
+/** Les messages adressés à l'équipe elle-même (alertes, journaux) ne sont pas habillés ; tous les autres le sont. */
+export function shouldBrandEmail(options: Pick<SendEmailOptions, "to" | "brand">): boolean {
+  if (options.brand === false) return false;
+  const recipient = String(options.to ?? "").trim().toLowerCase();
+    const internal = (process.env.ADMIN_EMAIL || "admin@3mtravelagency.com").trim().toLowerCase();
+  return Boolean(recipient) && recipient !== internal && !recipient.endsWith("@3mtravelagency.com");
 }
 
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
@@ -71,11 +105,13 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
 
   try {
     const info = await transporter.sendMail({
-      from: smtpFrom,
+      from: sender.from,
+      sender: sender.address,
       to: options.to,
       subject: options.subject,
-      html: options.html,
-      replyTo: options.replyTo,
+      html: shouldBrandEmail(options) ? frameLegacyEmailHtml(options.html) : options.html,
+      // Les réponses vont vers la boîte publique lue par l'équipe, même si l'envoi se fait depuis noreply@.
+      replyTo: options.replyTo ?? OFFICIAL_REPLY_ADDRESS,
       attachments: options.attachments,
     });
 

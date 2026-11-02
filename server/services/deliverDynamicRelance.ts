@@ -12,7 +12,7 @@ import {
   paymentAuditLogs,
 } from "../../drizzle/schema";
 import { clientNotifications } from "../../drizzle/caseTrackingSchema";
-import { accountReference, agencyDossierReference } from "../../shared/caseReference";
+import { accountReference, agencyDossierReference, resolveClientReference } from "../../shared/caseReference";
 import { sendClientNotificationEmail } from "../emailService";
 import type { getDb } from "../db";
 import { composeDynamicRelance, buildWhatsAppUrlFromBody } from "./dynamicRelance";
@@ -65,7 +65,10 @@ export async function deliverDynamicRelance(
     const [row] = await db.select().from(candidates).where(and(eq(candidates.id, id), isNull(candidates.deletedAt))).limit(1);
     if (!row) return { sent: false, alreadySent: false, emailSent: false, skipped: "compte_introuvable", stage: input.stage, reference: null };
     candidateRow = row;
-    reference = accountReference(row.id);
+    // Un compte dont le dossier est activé s'adresse par son numéro « 3M-… », jamais par « COMPTE-… » (cohérence avec l'espace client).
+    const [activated] = await db.select({ id: agencyDossiers.id, status: agencyDossiers.status, initialPaymentStatus: agencyDossiers.initialPaymentStatus }).from(agencyDossiers)
+      .where(and(eq(agencyDossiers.email, row.email), isNull(agencyDossiers.deletedAt))).orderBy(desc(agencyDossiers.createdAt)).limit(1);
+    reference = resolveClientReference({ candidateId: row.id, agencyDossier: activated ?? null }).reference;
     destination = row.destination || null;
     visaType = row.visaType || null;
     phone = row.phone || null;

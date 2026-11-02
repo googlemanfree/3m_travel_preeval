@@ -208,6 +208,74 @@ L’équipe 3M TRAVEL AGENCY peut maintenant poursuivre le traitement de votre d
 `.trim();
 }
 
+export function buildSecondAgreementSignatureReminderWhatsApp(params: {
+  candidateName: string;
+  dossierNumber: string;
+  employerName?: string | null;
+}): string {
+  const employer = params.employerName?.trim()
+    ? `\nEmployeur / partenaire : *${params.employerName.trim()}*`
+    : "";
+  return `
+✍️ *Rappel — Protocole N°02 à signer*
+
+Bonjour ${params.candidateName},
+
+Le Protocole d’accord N°02 pour le dossier *${params.dossierNumber}* est prêt.${employer}
+
+Finalisez la signature ici :
+${CLIENT_SPACE_URL}?section=signatures
+
+3M TRAVEL AGENCY
+`.trim();
+}
+
+export function buildBilanConfirmationReminderWhatsApp(params: {
+  candidateName: string;
+  dossierNumber: string;
+}): string {
+  return `
+📄 *Rappel — confirmez votre bilan*
+
+Bonjour ${params.candidateName},
+
+Votre bilan d’évaluation pour le dossier *${params.dossierNumber}* est disponible.
+
+Merci de confirmer sa réception dans votre espace client :
+${CLIENT_SPACE_URL}
+
+Cette confirmation débloque la suite (paiement d’ouverture / traitement).
+
+3M TRAVEL AGENCY
+`.trim();
+}
+
+export function buildDocumentReminderWhatsApp(params: {
+  candidateName: string;
+  stage: number;
+  missing: number;
+  replace: number;
+  firstLabel?: string | null;
+}): string {
+  const toDo = params.missing + params.replace;
+  const detail = params.firstLabel?.trim()
+    ? `\nExemple : ${params.firstLabel.trim()}`
+    : "";
+  const last = params.stage >= 3 ? "\n\nC’est notre dernier rappel automatique WhatsApp pour ces pièces." : "";
+  return `
+📎 *Rappel — documents à déposer*
+
+Bonjour ${params.candidateName},
+
+Il vous reste ${toDo} pièce(s) à envoyer ou à remplacer pour votre dossier.${detail}
+
+Déposez-les ici :
+${CLIENT_SPACE_URL}?section=documents${last}
+
+3M TRAVEL AGENCY
+`.trim();
+}
+
 /**
  * Envoyer le bilan d'admissibilité par WhatsApp
  */

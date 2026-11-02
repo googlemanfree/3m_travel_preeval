@@ -15,11 +15,12 @@ import { and, count, desc, eq, gte, inArray } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { getPasswordChangedEmailTemplate, getPasswordChangeFailedEmailTemplate } from "../_core/emailTemplates";
 import { randomBytes, randomInt } from "node:crypto";
-import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../loginAttemptsService";
+import { checkLoginAttempts, getLoginAttemptStatus, recordExemptLoginAttempt, recordFailedAttempt, recordSlowdownFailure, resetExemptLoginAttempts, resetLoginAttempts, resetSlowdown, runExclusiveLogin, scopedLoginIdentifier, slowdownDelayMs } from "../loginAttemptsService";
 function esc(v: string | undefined | null): string { return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 import { beginTwoFactorEnrollment, confirmTwoFactorEnrollment, getTwoFactorStatus, verifyTwoFactor } from "../twoFactor";
 
 export const ADMIN_SESSION_COOKIE = "admin_session";
+export const SUPER_ADMIN_EMAIL = "aureoldonfack@gmail.com";
 const ADMIN_SESSION_DURATION_MS = 24 * 60 * 60 * 1000;
 
 // Générer un token de session
@@ -63,12 +64,50 @@ export async function requireValidAdminSession(sessionToken: string, options: Ad
 }
 
 /**
- * Compatibilité historique : toutes les fonctions de gestion admin utilisent
- * désormais le même rôle opérationnel. La sécurité repose toujours sur une
- * session admin HttpOnly valide et sur le statut actif du compte.
+ * Garde les opérations sensibles (réinitialisation globale et corbeille) au
+ * compte de direction identifié par son adresse, en plus de la session admin.
  */
 export async function requireSuperAdminSession(sessionToken: string) {
-  return requireValidAdminSession(sessionToken);
+  const admin = await requireValidAdminSession(sessionToken);
+  if (admin.email.trim().toLowerCase() !== SUPER_ADMIN_EMAIL) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Cette action est réservée au super administrateur." });
+  }
+  return admin;
+}
+
+export function isSuperAdminEmail(email: string | null | undefined) {
+  return email?.trim().toLowerCase() === SUPER_ADMIN_EMAIL;
+}
+
+/**
+ * Verrouillage automatique de la connexion administrateur (« Trop de tentatives… ») : désactivé à la demande de la direction.
+ * Les échecs restent journalisés (tableau de sécurité) et une alerte e-mail part après trois échecs ; le 2FA reste exigé selon la configuration.
+ * Remettre à true pour rétablir le verrouillage de 15 minutes après 3 échecs.
+ */
+export const ADMIN_LOGIN_LOCKOUT_ENABLED = false;
+const isLockoutExempt = (email: string | null | undefined) => !ADMIN_LOGIN_LOCKOUT_ENABLED || isSuperAdminEmail(email);
+
+async function notifyExemptLoginAttempts(email: string, reason: string) {
+  const identifier = scopedLoginIdentifier("admin", email);
+  if (!recordExemptLoginAttempt(identifier)) return;
+
+  try {
+    const timestamp = new Date().toLocaleString("fr-FR", { timeZone: "Africa/Douala" });
+    await sendEmail({
+      to: SUPER_ADMIN_EMAIL,
+      subject: "Alerte sécurité — tentatives répétées sur votre compte administrateur",
+      html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#172033">
+        <h2 style="color:#1e40af">Alerte sécurité 3M TRAVEL AGENCY</h2>
+        <p>Trois tentatives de connexion non abouties ont été détectées sur le compte administrateur <strong>${esc(email)}</strong>.</p>
+        <p><strong>Motif :</strong> ${esc(reason)}</p>
+        <p><strong>Date :</strong> ${esc(timestamp)} (Africa/Douala)</p>
+        <p>Aucun mot de passe ni code MFA n’est inclus dans cette alerte. Si ces tentatives ne sont pas les vôtres, vérifiez vos accès et votre appareil.</p>
+        <p style="color:#667085;font-size:12px">Notification automatique — hello@3mtravelagency.com</p>
+      </div>`,
+    });
+  } catch (error) {
+    console.error("[Admin Auth] Security alert email failed:", error);
+  }
 }
 
 /** Récupère et valide exclusivement le jeton contenu dans le cookie HttpOnly admin. */
@@ -123,8 +162,15 @@ export const adminAuthRouter = router({
       password: z.string().min(1).max(128),
       twoFactorCode: z.string().trim().min(6).max(32).optional(),
     }))
-    .mutation(async ({ input, ctx }) => {
-      checkLoginAttempts(input.email);
+    .mutation(async ({ input, ctx }) => runExclusiveLogin(scopedLoginIdentifier("admin", input.email), async () => {
+      const loginIdentifier = scopedLoginIdentifier("admin", input.email);
+      // Le compte de direction doit pouvoir récupérer son accès sans être
+      // verrouillé par une erreur de saisie ; les autres admins restent protégés.
+      const lockoutExempt = isLockoutExempt(input.email);
+      if (!lockoutExempt) checkLoginAttempts(loginIdentifier);
+      // Sans verrouillage, le ralentissement progressif rend impraticable l'essai massif de mots de passe.
+      const slowdown = slowdownDelayMs(loginIdentifier);
+      if (slowdown > 0) await new Promise((resolve) => setTimeout(resolve, slowdown));
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -136,40 +182,52 @@ export const adminAuthRouter = router({
         .limit(1);
 
       if (rows.length === 0) {
-        recordFailedAttempt(input.email);
+        recordSlowdownFailure(loginIdentifier);
+        if (!lockoutExempt) recordFailedAttempt(loginIdentifier);
+        else await notifyExemptLoginAttempts(input.email, "identifiants incorrects");
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
       const admin = rows[0];
 
       if (admin.status !== "active") {
-        recordFailedAttempt(input.email);
+        recordSlowdownFailure(loginIdentifier);
+        if (!lockoutExempt) recordFailedAttempt(loginIdentifier);
+        else await notifyExemptLoginAttempts(input.email, "compte administrateur désactivé");
         await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login_blocked", expiresAt: null });
         throw new TRPCError({ code: "FORBIDDEN", message: "Ce compte administrateur est désactivé." });
       }
 
       if (!admin.passwordHash) {
-        recordFailedAttempt(input.email);
+        recordSlowdownFailure(loginIdentifier);
+        if (!lockoutExempt) recordFailedAttempt(loginIdentifier);
+        else await notifyExemptLoginAttempts(input.email, "mot de passe non configuré");
         await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login_failed", expiresAt: null });
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
       const valid = await bcrypt.compare(input.password, admin.passwordHash);
       if (!valid) {
-        recordFailedAttempt(input.email);
+        recordSlowdownFailure(loginIdentifier);
+        if (!lockoutExempt) recordFailedAttempt(loginIdentifier);
+        else await notifyExemptLoginAttempts(input.email, "mot de passe incorrect");
         await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login_failed", expiresAt: null });
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
       const twoFactor = await verifyTwoFactor("admin", admin.id, input.twoFactorCode ?? "");
       if (twoFactor.required && !twoFactor.valid) {
-        recordFailedAttempt(input.email);
+        if (input.twoFactorCode) recordSlowdownFailure(loginIdentifier);
+        if (input.twoFactorCode && !lockoutExempt) recordFailedAttempt(loginIdentifier);
+        if (input.twoFactorCode && lockoutExempt) await notifyExemptLoginAttempts(input.email, "code MFA invalide");
         // Un code non renseigné (TOTP_REQUIRED) n'est pas une tentative échouée : le client va simplement redemander le code.
         if (input.twoFactorCode) await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "twofactor_failed", expiresAt: null });
         throw new TRPCError({ code: "UNAUTHORIZED", message: input.twoFactorCode ? "Code 2FA invalide ou déjà utilisé." : "TOTP_REQUIRED" });
       }
 
-      resetLoginAttempts(input.email);
+      resetLoginAttempts(loginIdentifier);
+      resetSlowdown(loginIdentifier);
+      if (lockoutExempt) resetExemptLoginAttempts(loginIdentifier);
       const sessionToken = generateSessionToken();
       const sessionExpiresAt = new Date(Date.now() + ADMIN_SESSION_DURATION_MS);
 
@@ -201,6 +259,22 @@ export const adminAuthRouter = router({
         email: admin.email,
         requiresPasswordChange: admin.requiresPasswordChange || false,  // Indique si le changement de mot de passe est obligatoire
       };
+    })),
+
+  /** État non sensible affichable avant soumission, sans révéler l’existence du compte. */
+  loginAttemptStatus: publicProcedure
+    .input(z.object({ email: z.string().email().max(320) }))
+    .query(({ input }) => {
+      if (isLockoutExempt(input.email)) {
+        return { exempt: true, remainingAttempts: null, maxAttempts: null, locked: false } as const;
+      }
+      const status = getLoginAttemptStatus(scopedLoginIdentifier("admin", input.email));
+      return {
+        exempt: false,
+        remainingAttempts: status.remainingAttempts,
+        maxAttempts: status.maxAttempts,
+        locked: Boolean(status.lockedUntil && status.lockedUntil.getTime() > Date.now()),
+      } as const;
     }),
 
   twoFactorStatus: publicProcedure
@@ -289,7 +363,7 @@ export const adminAuthRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
       const since = new Date(Date.now() - input.days * 86_400_000);
-      const kinds = ["login", "login_failed", "login_blocked", "twofactor_failed", "revoked_all"] as const;
+      const kinds = ["login", "login_failed", "login_blocked", "twofactor_failed", "login_attempts_reset", "revoked_all"] as const;
       const rows = await db
         .select({ id: adminSessionEvents.id, eventType: adminSessionEvents.eventType, createdAt: adminSessionEvents.createdAt, adminEmail: adminAccounts.email, adminFullName: adminAccounts.fullName })
         .from(adminSessionEvents)
@@ -458,6 +532,29 @@ export const adminAuthRouter = router({
       return { success: true, admins };
     }),
 
+  /** Remet à zéro le verrouillage mémoire d’un autre compte admin, direction uniquement. */
+  resetLoginAttemptCounter: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1).max(512),
+      adminId: z.number().int().positive(),
+    }))
+    .mutation(async ({ input }) => {
+      const actor = await requireSuperAdminSession(input.sessionToken);
+      if (actor.id === input.adminId) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Le compteur du super administrateur n’a pas besoin d’être réinitialisé." });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const rows = await db.select({ id: adminAccounts.id, email: adminAccounts.email }).from(adminAccounts).where(eq(adminAccounts.id, input.adminId)).limit(1);
+      const target = rows[0];
+      if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "Compte administrateur introuvable." });
+
+      resetLoginAttempts(scopedLoginIdentifier("admin", target.email));
+      await db.insert(adminSessionEvents).values({ adminId: target.id, eventType: "login_attempts_reset", expiresAt: null });
+      return { success: true, message: `Compteur de tentatives réinitialisé pour ${target.email}.` };
+    }),
+
   /**
    * Inviter (créer) un nouveau compte administrateur avec le rôle commun admin et un mot de passe
    * généré automatiquement, envoyé par email.
@@ -602,7 +699,7 @@ export const adminAuthRouter = router({
   resetAllPasswords: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1).max(512) }))
     .mutation(async ({ input }) => {
-      await requireValidAdminSession(input.sessionToken);
+      await requireSuperAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });

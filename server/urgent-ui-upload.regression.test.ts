@@ -21,8 +21,8 @@ describe("Correctifs urgents upload et navigation", () => {
 
   it("normalise le proxy CV et signale un CV manquant", () => {
     const source = read("client/src/components/Candidate360Workspace.tsx");
-    expect(source).toContain("new URL(String(candidateCv.documentUrl), window.location.origin)");
-    expect(source).toContain('cache: "no-store"');
+    // Le serveur lit lui-même le CV enregistré (le navigateur ne peut pas suivre la redirection vers le lien signé).
+    expect(source).toContain("cvExtractionMutation.mutate({ sessionToken, documentUrl: String(candidateCv.documentUrl) })");
     expect(source).toContain("CV introuvable");
   });
 
@@ -39,18 +39,20 @@ describe("Correctifs urgents upload et navigation", () => {
 
   it("conserve les handlers de préparation du bilan et le verrou humain avant envoi", () => {
     const source = read("client/src/components/EvaluationDeliveryEditor.tsx");
-    expect(source).toContain("const openEmailPreview = async () =>");
-    expect(source).toContain("const openPdfPreview = async () =>");
-    expect(source).toContain("const saveDraftOnly = async () =>");
-    expect(source).toContain("Valider et envoyer");
-    expect(source).toContain("if (!(await ensureDraft())) return");
+    expect(source).toContain("const persist = async (): Promise<boolean> =>");
+    expect(source).toContain("const validateNow = async (): Promise<boolean> =>");
+    expect(source).toContain("const handleSave = async () =>");
+    expect(source).toContain("Envoyer (espace client + e-mail)");
+    expect(source).toContain("if (!validated && !(await validateNow())) return;");
   });
 
   it("branche les comptes ACCOUNT_ONLY sur le bootstrap candidat", () => {
     const source = read("client/src/pages/AdminDashboard.tsx");
-    expect(source).toContain('candidate?.source === "ACCOUNT_ONLY" ? "candidate"');
+    expect(source).toContain("evaluationSourceTypeOf(candidate)");
+    expect(read("client/src/lib/evaluationSourceType.ts")).toContain('candidate.source === "ACCOUNT_ONLY"');
+    expect(read("client/src/components/Candidate360Workspace.tsx")).toContain("sourceType={evaluationSourceTypeOf(candidate)}");
     const editorSource = read("client/src/components/EvaluationDeliveryEditor.tsx");
-    expect(editorSource).toContain('initializeEvaluationDelivery.mutate({ sessionToken, candidateId: sourceRecordId, sourceType: "candidate" })');
+    expect(editorSource).toContain('initialize.mutate({ sessionToken, candidateId: sourceRecordId, sourceType: "candidate" })');
   });
 
   it("conserve l alias COMPTE dans la recherche après création d une application provisoire", () => {

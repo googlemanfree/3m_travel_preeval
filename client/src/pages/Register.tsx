@@ -53,6 +53,7 @@ export default function Register() {
   const [isFormValid, setIsFormValid] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [portrait, setPortrait] = useState<PortraitCaptureResult | null>(null);
+  const [portraitConsent, setPortraitConsent] = useState(false);
   const [isUploadingPortrait, setIsUploadingPortrait] = useState(false);
   const [duplicateConflict, setDuplicateConflict] = useState<string | null>(null);
   const [registrationCv, setRegistrationCv] = useState<File | null>(null);
@@ -96,11 +97,13 @@ export default function Register() {
   const missingRegistrationRequirements = [
     !form.fullName.trim() ? "votre nom complet" : null,
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) ? "une adresse e-mail valide" : null,
+    form.phone.trim().length < 8 ? "un numéro WhatsApp avec indicatif" : null,
     form.password.length < 8 || !/[A-Z]/.test(form.password) || !/[0-9]/.test(form.password) ? "un mot de passe conforme" : null,
     form.password !== form.confirmPassword ? "la confirmation du mot de passe" : null,
     form.preferredDestinations.length === 0 ? "au moins une destination" : null,
     workVisaRequiresCv && !registrationCv ? "votre CV (obligatoire pour visa travail)" : null,
     !portrait ? "un portrait vérifié" : null,
+    !portraitConsent ? "le consentement pour le portrait" : null,
   ].filter((value): value is string => Boolean(value));
 
   function handleGoogleRegister() {
@@ -190,8 +193,16 @@ export default function Register() {
       toast.error("Sélectionnez au moins une destination de préférence.");
       return;
     }
+    if (form.phone.trim().length < 8) {
+      toast.error("Indiquez un numéro WhatsApp avec l’indicatif pays (canal principal de suivi).");
+      return;
+    }
     if (!portrait) {
       toast.error("Un portrait humain vérifié est obligatoire pour finaliser l’inscription.");
+      return;
+    }
+    if (!portraitConsent) {
+      toast.error("Confirmez le consentement pour l’usage du portrait avant de continuer.");
       return;
     }
 
@@ -253,7 +264,7 @@ export default function Register() {
         portraitVerificationToken: result.portraitVerificationToken,
         evaluationAlreadyCompleted: form.evaluationAlreadyCompleted === "yes",
         preferredDestinations: form.preferredDestinations,
-        phone: form.phone || undefined,
+        phone: form.phone.trim(),
         nationality: form.nationality || undefined,
         ...visibleProjectFields,
         cvBase64,
@@ -407,9 +418,9 @@ export default function Register() {
               </AnimatePresence>
             </div>
 
-            {/* Téléphone WhatsApp — optionnel */}
+            {/* Téléphone WhatsApp — obligatoire (canal principal) */}
             <div>
-              <Label htmlFor="phone" className="text-sm font-semibold text-gray-700">Téléphone / WhatsApp <span className="text-gray-400 font-normal">(optionnel)</span></Label>
+              <Label htmlFor="phone" className="text-sm font-semibold text-gray-700">Téléphone / WhatsApp *</Label>
               <div className="relative mt-1">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
@@ -421,10 +432,11 @@ export default function Register() {
                   autoComplete="tel"
                   className="h-12 pl-10"
                   maxLength={50}
+                  required
                   disabled={registerMutation.isPending || showSuccessAnimation}
                 />
               </div>
-              <p className="mt-1 text-xs text-gray-400">Incluez l'indicatif pays (ex. +237 pour le Cameroun).</p>
+              <p className="mt-1 text-xs text-gray-500">WhatsApp est notre canal principal de suivi. Incluez l’indicatif pays (ex. +237).</p>
             </div>
 
             {/* Nationalité — optionnel */}
@@ -682,6 +694,24 @@ export default function Register() {
               disabled={registerMutation.isPending || isUploadingPortrait || showSuccessAnimation}
               onVerified={setPortrait}
             />
+            <label className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/70 p-3 text-sm text-slate-700" data-testid="portrait-consent">
+              <input
+                type="checkbox"
+                className="mt-1"
+                checked={portraitConsent}
+                onChange={(event) => setPortraitConsent(event.target.checked)}
+                disabled={registerMutation.isPending || isUploadingPortrait || showSuccessAnimation}
+                aria-describedby="portrait-consent-help"
+              />
+              <span id="portrait-consent-help">
+                J’accepte que mon portrait soit collecté pour vérifier mon identité, sécuriser mon espace candidat et, uniquement avec mon accord ultérieur, préparer un profil anonymisé destiné à des organisations vérifiées.
+                Conservation : pendant le traitement du dossier, puis jusqu’à 5 ans après clôture (voir la{" "}
+                <Link href="/politique-confidentialite" className="font-semibold text-blue-700 underline underline-offset-2">
+                  politique de confidentialité
+                </Link>
+                ). Le portrait n’est pas publié ni partagé automatiquement.
+              </span>
+            </label>
 
             {/* Bouton */}
             <motion.div
@@ -750,36 +780,25 @@ export default function Register() {
               <div className="flex-1 h-px bg-gray-200" />
             </div>
 
-            {/* Boutons OAuth */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="group relative">
-                <button
-                  type="button"
-                  disabled={!googleOAuthConfigured || isGoogleRedirecting}
-                  aria-describedby={!googleOAuthConfigured ? "register-google-coming-soon" : undefined}
-                  aria-busy={isGoogleRedirecting}
-                  onClick={handleGoogleRegister}
-                  className={`h-11 w-full flex items-center justify-center gap-2 px-4 border rounded-lg text-sm font-medium transition-colors ${googleOAuthConfigured ? "border-gray-300 text-gray-700 hover:bg-gray-50" : "border-gray-200 text-gray-500 opacity-60 cursor-not-allowed"}`}
-                >
-                  {isGoogleRedirecting ? <Loader className="w-4 h-4 animate-spin" aria-hidden="true" /> : <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                  </svg>}
-                  {isGoogleRedirecting ? "Redirection Google..." : "Continuer avec Google"}
-                </button>
-                {!googleOAuthConfigured && <span id="register-google-coming-soon" role="tooltip" className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">Bientôt disponible</span>}
-              </div>
-              <div className="group relative">
-                <button type="button" aria-disabled="true" aria-describedby="register-facebook-coming-soon" onClick={(event) => event.preventDefault()} className="h-11 w-full flex items-center justify-center gap-2 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-500 opacity-60 cursor-not-allowed">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#1877F2" aria-hidden="true">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                  </svg>
-                  Facebook
-                </button>
-                <span id="register-facebook-coming-soon" role="tooltip" className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">Bientôt disponible</span>
-              </div>
+            {/* Connexion Google — Facebook retiré tant qu’il n’est pas ouvert */}
+            <div className="group relative">
+              <button
+                type="button"
+                disabled={!googleOAuthConfigured || isGoogleRedirecting}
+                aria-describedby={!googleOAuthConfigured ? "register-google-coming-soon" : undefined}
+                aria-busy={isGoogleRedirecting}
+                onClick={handleGoogleRegister}
+                className={`h-11 w-full flex items-center justify-center gap-2 px-4 border rounded-lg text-sm font-medium transition-colors ${googleOAuthConfigured ? "border-gray-300 text-gray-700 hover:bg-gray-50" : "border-gray-200 text-gray-500 opacity-60 cursor-not-allowed"}`}
+              >
+                {isGoogleRedirecting ? <Loader className="w-4 h-4 animate-spin" aria-hidden="true" /> : <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>}
+                {isGoogleRedirecting ? "Redirection Google..." : "Continuer avec Google"}
+              </button>
+              {!googleOAuthConfigured && <span id="register-google-coming-soon" role="tooltip" className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">Bientôt disponible</span>}
             </div>
           </form>
 

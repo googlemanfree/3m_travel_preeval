@@ -43,6 +43,33 @@ export const getProcedureSeoTitle = (procedure: ProcedureSeoInput, siteName: str
     ? `${getProcedureDisplayTitle(procedure, "en")} from Yaoundé | ${siteName}`
     : `${getProcedureDisplayTitle(procedure)} à Yaoundé | ${siteName}`;
 
+const SEO_PROJECT_LABEL: Record<ProcedureLocale, Record<ProcedureVisaType, string>> = {
+  fr: { etudes: "études", visiteur: "visite / court séjour", travail: "travail" },
+  en: { etudes: "studies", visiteur: "visitor / short stay", travail: "work" },
+};
+
+/**
+ * Description de page d'une fiche de procédure. Source UNIQUE pour le prérendu serveur et la page affichée :
+ * Google peut retenir la première version qu'il voit, elle ne doit donc plus changer après le chargement.
+ * Les frais ne sont cités que s'ils sont vérifiés (`fee`), jamais inventés.
+ */
+export const getProcedureSeoDescription = (
+  procedure: ProcedureSeoInput,
+  locale: ProcedureLocale = "fr",
+  fee?: { costLabel: string; delayLabel: string },
+) => {
+  const title = getProcedureDisplayTitle(procedure, locale);
+  const project = SEO_PROJECT_LABEL[locale][procedure.visaType];
+  if (locale === "en") {
+    return fee
+      ? `${title}: official fees about ${fee.costLabel}, timelines ${fee.delayLabel}. Steps, documents and FAQ with 3M TRAVEL AGENCY support from Yaoundé.`
+      : `Steps, required documents, official portal and FAQ for your ${project} project to ${procedure.name} — prepared with 3M TRAVEL AGENCY from Yaoundé.`;
+  }
+  return fee
+    ? `${title} : frais ${fee.costLabel}, délais ${fee.delayLabel}. Étapes, documents, portail officiel et FAQ — accompagnement 3M TRAVEL AGENCY depuis Yaoundé.`
+    : `Étapes, documents exigés, portail officiel et FAQ pour votre projet ${project} vers ${procedure.name} — accompagnement 3M TRAVEL AGENCY depuis Yaoundé.`;
+};
+
 export type ProcedureFaqItem = { question: string; answer: string };
 
 /**

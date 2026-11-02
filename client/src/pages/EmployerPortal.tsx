@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toDataURL } from "qrcode";
-import { Bell, Building2, BriefcaseBusiness, CheckCircle2, ClipboardCheck, Clock3, Download, IdCard, LockKeyhole, LogOut, RefreshCw, Share2, ShieldCheck, Star, UserRoundCog, X } from "lucide-react";
+import { Bell, Building2, BriefcaseBusiness, CheckCircle2, ClipboardCheck, Clock3, Download, IdCard, LockKeyhole, LogOut, RefreshCw, Share2, ShieldCheck, Star, UserRoundCog, X, Eye, EyeOff, Search, BookmarkCheck, ClipboardList } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { B2bPartnerRegistrationForm, type PartnerOrganizationType } from "@/components/B2bPartnerRegistrationForm";
@@ -12,6 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { ChecklistSection, CommitmentsSection, FaqSection, StepsSection } from "@/components/PageEnrichment";
+import { PartnerTeamPanel } from "@/components/PartnerTeamPanel";
+import { PartnerCvtheque } from "@/components/PartnerCvtheque";
+import { PartnerNeeds, PartnerTracking } from "@/components/PartnerRecruitment";
+import { EmployerJobOffers } from "@/components/EmployerJobOffers";
 import { EMPLOYER_COMMITMENTS, EMPLOYER_FAQ, EMPLOYER_HIDDEN, EMPLOYER_HOW_STEPS, EMPLOYER_VISIBLE } from "@/data/contentCampaignPartners";
 
 const sessionKey = "3m_placement_employer_session";
@@ -20,7 +24,7 @@ type Decision = "under_review" | "shortlisted" | "selected" | "not_selected" | "
 type CollaborationAuditAction = "all" | "favorite_shared" | "favorite_share_revoked" | "collaborator_promoted" | "collaborator_role_reader" | "collaborator_suspended" | "collaborator_reactivated" | "collaborator_suspension_reviewed";
 type CollaborationAuditRange = "7d" | "30d" | "all";
 type AuthTab = "login" | "register";
-type WorkspaceTab = "profiles" | "history" | "team" | "security";
+type WorkspaceTab = "profiles" | "cvtheque" | "selection" | "needs" | "offers" | "tracking" | "history" | "team" | "security";
 type PortalOrganization = { name: string; country: string; organizationType: PartnerOrganizationType };
 
 function readPortalDefaults(): { tab: AuthTab; organizationType: PartnerOrganizationType } {
@@ -85,6 +89,8 @@ export default function EmployerPortal() {
   const [auditTarget, setAuditTarget] = useState("all");
   const [reviewingCollaborator, setReviewingCollaborator] = useState<{ id: number; fullName: string } | null>(null);
   const [loginDraftSaved, setLoginDraftSaved] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [query, setQuery] = useState("");
   const utils = trpc.useUtils();
   const isAgencyPortal = portalDefaults.organizationType === "placement_partner" || organization?.organizationType === "placement_partner";
   const persistOrganization = (next: PortalOrganization | null) => {
@@ -252,8 +258,25 @@ export default function EmployerPortal() {
     (country === "all" || row.profile.targetDestination === country) &&
     (language === "all" || (row.profile.languagesSummary || "").toLowerCase().includes(language.toLowerCase())) &&
     (availability === "all" || row.status === "submitted") &&
-    (!favoritesOnly || row.isFavorite || row.sharedWithMe),
+    (!favoritesOnly || row.isFavorite || row.sharedWithMe) &&
+    (!query.trim() || (row.profile.code + " " + (row.profile.sector ?? "") + " " + (row.profile.targetDestination ?? "") + " " + (row.profile.targetProcedure ?? "")).toLowerCase().includes(query.trim().toLowerCase())),
   );
+  const hasActiveFilters = sector !== "all" || language !== "all" || country !== "all" || availability !== "all" || favoritesOnly || Boolean(query.trim());
+  const resetFilters = () => { setSector("all"); setLanguage("all"); setCountry("all"); setAvailability("all"); setFavoritesOnly(false); setQuery(""); };
+  const decisionStatusLabel = (status: string) => {
+    const labels: Record<string, [string, string]> = {
+      submitted: ["À examiner", "To review"],
+      under_review: ["En revue", "Under review"],
+      shortlisted: ["Présélectionné", "Shortlisted"],
+      selected: ["Sélectionné", "Selected"],
+      not_selected: ["Non retenu", "Not selected"],
+      documents_requested: ["Pièces à demander", "Documents requested"],
+    };
+    const label = labels[status] ?? ["À examiner", "To review"];
+    return t(label[0], label[1]);
+  };
+  const decisionStatusTone = (status: string) => status === "selected" ? "bg-emerald-100 text-emerald-900" : status === "shortlisted" ? "bg-indigo-100 text-indigo-900" : status === "not_selected" ? "bg-slate-200 text-slate-800" : status === "documents_requested" ? "bg-amber-100 text-amber-900" : "bg-sky-100 text-sky-900";
+  const countByStatus = (statuses: string[]) => availableProfiles.filter(row => statuses.includes(row.status)).length;
   const suspendedCollaborators = (collaborators.data?.collaborators ?? []).filter(collaborator => collaborator.status === "suspended");
   const collaborationActionLabel = (action: string) => {
     const labels: Record<string, [string, string]> = {
@@ -284,6 +307,7 @@ export default function EmployerPortal() {
             </div>
           </div>
 
+          <div key={authTab} className="animate-in fade-in slide-in-from-right-2 duration-200 motion-reduce:animate-none" data-testid="partner-auth-transition">
           {authTab === "login" ? (
             <Card className="premium-surface overflow-hidden border-blue-100" data-testid="partner-auth-login">
               <CardHeader>
@@ -298,6 +322,12 @@ export default function EmployerPortal() {
                     ? t("Connexion réservée aux agences déjà vérifiées. Les identifiants sont remis par 3M après examen de votre inscription.", "Sign-in is reserved for already verified agencies. Credentials are issued by 3M after your registration is reviewed.")
                     : t("Connexion réservée aux organisations déjà vérifiées. Les identifiants sont remis par 3M après examen de votre inscription.", "Sign-in is reserved for already verified organisations. Credentials are issued by 3M after your registration is reviewed.")}
                 </CardDescription>
+                <p className="mt-2 text-xs font-semibold text-indigo-900" data-testid="partner-access-terms">
+                  {t(
+                    "Accès sans frais d’inscription · vérification manuelle sous quelques jours ouvrés (confirmée par écrit).",
+                    "No registration fee · manual verification within a few business days (confirmed in writing).",
+                  )}
+                </p>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="relative">
@@ -305,8 +335,9 @@ export default function EmployerPortal() {
                   {email.trim() && <CheckCircle2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" aria-label={t("E-mail renseigné", "Email entered")} />}
                 </div>
                 <div className="relative">
-                  <Input type="password" aria-label={t("Mot de passe", "Password")} value={password} onChange={event => setPassword(event.target.value)} placeholder={t("Mot de passe remis par 3M", "Password issued by 3M")} maxLength={128} autoComplete="current-password" className="pr-10" />
-                  {password && <CheckCircle2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" aria-label={t("Mot de passe renseigné", "Password entered")} />}
+                  <Input type={showPassword ? "text" : "password"} aria-label={t("Mot de passe", "Password")} value={password} onChange={event => setPassword(event.target.value)} placeholder={t("Mot de passe remis par 3M", "Password issued by 3M")} maxLength={128} autoComplete="current-password" className="pr-20" />
+                  {password && <CheckCircle2 className="absolute right-12 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" aria-label={t("Mot de passe renseigné", "Password entered")} />}
+                  <button type="button" data-testid="partner-toggle-password" onClick={() => setShowPassword(value => !value)} aria-pressed={showPassword} aria-label={showPassword ? t("Masquer le mot de passe", "Hide password") : t("Afficher le mot de passe", "Show password")} className="absolute right-0 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md text-slate-600 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600">{showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}</button>
                 </div>
                 {needsTwoFactor && <Input inputMode="numeric" aria-label={t("Code 2FA ou récupération", "2FA or recovery code")} autoComplete="one-time-code" value={twoFactorCode} onChange={event => setTwoFactorCode(event.target.value)} placeholder={t("Code 2FA ou récupération", "2FA or recovery code")} maxLength={32} />}
                 <p className="flex items-center gap-2 text-xs font-semibold text-slate-600" aria-live="polite">
@@ -321,9 +352,10 @@ export default function EmployerPortal() {
                 </p>
                 {loginDraftSaved && <p className="text-[11px] text-slate-500">{t("Brouillon de connexion sauvegardé sur cet appareil.", "Login draft saved on this device.")}</p>}
                 {login.error && <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs leading-5 text-rose-950" role="alert" data-testid="partner-login-help">
-                  <p className="font-black">{t("Connexion non aboutie — vérifiez vos identifiants ou contactez 3M.", "Sign-in was not completed — check your credentials or contact 3M.")}</p>
+                  <p className="font-black">{/non vérifié/i.test(login.error.message) ? t("Votre organisation est encore en cours de vérification.", "Your organisation is still being verified.") : t("Connexion non aboutie — vérifiez vos identifiants ou contactez 3M.", "Sign-in was not completed — check your credentials or contact 3M.")}</p>
+                  {/non vérifié/i.test(login.error.message) && <p className="mt-1" data-testid="partner-login-pending">{t("Inutile de vous réinscrire : nous vous écrivons à l’adresse professionnelle indiquée dès que l’accès est ouvert.", "No need to register again: we will write to the business address you gave as soon as access is opened.")}</p>}
                   <p className="mt-1">{isAgencyPortal ? t("Pour une agence, l’accès doit d’abord être approuvé par notre équipe. Si votre organisation est déjà vérifiée, utilisez les identifiants remis par 3M.", "For an agency, access must first be approved by our team. If your organisation is already verified, use the credentials issued by 3M.") : t("Pour un employeur, l’accès doit d’abord être approuvé par notre équipe. Si votre organisation est déjà vérifiée, utilisez les identifiants remis par 3M.", "For an employer, access must first be approved by our team. If your organisation is already verified, use the credentials issued by 3M.")}</p>
-                  <a href={isAgencyPortal ? "/agences-placement#inscription-agence" : "/employeurs?tab=register"} className="mt-2 inline-flex font-bold text-rose-900 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-700 focus-visible:ring-offset-2">{t("Demander ou vérifier un accès", "Request or verify access")}</a>
+                  <a href={/non vérifié/i.test(login.error.message) ? "/contact" : isAgencyPortal ? "/agences-placement#inscription-agence" : "/employeurs?tab=register"} className="mt-2 inline-flex font-bold text-rose-900 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-700 focus-visible:ring-offset-2">{/non vérifié/i.test(login.error.message) ? t("Écrire à l’équipe 3M", "Write to the 3M team") : t("Demander ou vérifier un accès", "Request or verify access")}</a>
                 </div>}
                 {login.isPending && <div className="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs font-bold text-blue-950" role="status" aria-live="polite" data-testid="partner-login-loading">
                   <RefreshCw className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
@@ -341,15 +373,19 @@ export default function EmployerPortal() {
               <CardContent className="p-5 sm:p-6">
                 <B2bPartnerRegistrationForm
                   defaultOrganizationType={portalDefaults.organizationType}
+                  lockOrganizationType
                   onContinueToLogin={() => selectAuthTab("login")}
                 />
-                <p className="mt-4 text-center text-xs text-slate-500">
-                  {t("Agence de placement ?", "Placement agency?")}{" "}
-                  <a href="/agences-placement#inscription-agence" className="font-semibold text-indigo-700 underline-offset-2 hover:underline">{t("Formulaire dédié agences", "Dedicated agency form")}</a>
-                </p>
+                {!isAgencyPortal && (
+                  <p className="mt-4 text-center text-xs text-slate-500">
+                    {t("Agence de placement ?", "Placement agency?")}{" "}
+                    <a href="/agences-placement#inscription-agence" className="font-semibold text-indigo-700 underline-offset-2 hover:underline">{t("Formulaire dédié agences", "Dedicated agency form")}</a>
+                  </p>
+                )}
               </CardContent>
             </Card>
           )}
+          </div>
 
           <section className="rounded-xl border border-white/25 bg-white/95 p-4 text-sm text-[#071b3d]">
             <p className="font-bold">{t("Indicateurs publics", "Public indicators")}</p>
@@ -382,17 +418,26 @@ export default function EmployerPortal() {
         <LogOut className="mr-2 h-4 w-4" />{t("Déconnexion", "Sign out")}
       </Button>
     </header>
+    <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700" data-testid="partner-help-strip">
+      <p className="min-w-0 flex-1">{t("Une question sur un profil, un retour de sélection ou votre accès ? Écrivez à l’équipe 3M en rappelant le nom de votre organisation.", "A question about a profile, selection feedback or your access? Write to the 3M team and mention your organisation’s name.")}</p>
+      <a href={`mailto:hello@3mtravelagency.com?subject=${encodeURIComponent(t("Espace partenaire — question", "Partner workspace — question"))}${organization?.name ? encodeURIComponent(` · ${organization.name}`) : ""}`} className="inline-flex h-10 items-center rounded-md bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-800">{t("Contacter l’équipe 3M", "Contact the 3M team")}</a>
+    </section>
     <section className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-950">
       <p className="flex items-center gap-2 font-bold"><ShieldCheck className="h-4 w-4" />{t("Règle de confidentialité", "Privacy rule")}</p>
       <p className="mt-1">{t("Les décisions enregistrées ici sont des retours de sélection. 3M les examine avant toute communication ou transmission de pièces au candidat.", "Decisions recorded here are selection feedback. 3M reviews them before any communication or document transfer to a candidate.")}</p>
     </section>
-    <nav className="grid grid-cols-2 gap-1 rounded-2xl border border-slate-200 bg-white p-1 sm:grid-cols-4" role="tablist" aria-label={t("Sections de l’espace partenaire", "Partner workspace sections")}>
+    <nav className="grid grid-cols-2 gap-1 rounded-2xl border border-slate-200 bg-white p-1 sm:grid-cols-4 lg:grid-cols-8" role="tablist" aria-label={t("Sections de l’espace partenaire", "Partner workspace sections")}>
       {([
         ["profiles", t("Profils", "Profiles"), BriefcaseBusiness],
+        ["cvtheque", t("CVthèque", "CV library"), Search],
+        ["selection", t("Ma sélection", "My selection"), BookmarkCheck],
+        ["needs", t("Besoins", "Needs"), ClipboardList],
+        ["offers", t("Offres", "Job offers"), BriefcaseBusiness],
+        ["tracking", t("Suivi", "Follow-up"), Bell],
         ["history", t("Historique", "History"), Clock3],
         ["team", t("Équipe", "Team"), UserRoundCog],
         ["security", t("Sécurité", "Security"), LockKeyhole],
-      ] as const).map(([id, label, Icon]) => (
+      ] as const).filter(([id]) => id !== "offers" || !isAgencyPortal).map(([id, label, Icon]) => (
         <button
           key={id}
           type="button"
@@ -418,6 +463,7 @@ export default function EmployerPortal() {
         <p className="mt-1 text-xs text-slate-500">{isManager ? t("Les gestionnaires peuvent administrer les rôles et accès. Une suspension révoque immédiatement la session sans supprimer le compte.", "Managers can administer roles and access. A suspension immediately revokes the session without deleting the account.") : t("Les lecteurs peuvent consulter les partages reçus, sans action de gestion ni accès aux notes privées.", "Readers can view received shares, without management actions or access to private notes.")}</p>
         <div className="mt-3 space-y-2">{(collaborators.data?.collaborators ?? []).map(collaborator => <div key={collaborator.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 p-2 text-sm"><span>{collaborator.fullName} <span className={collaborator.status === "active" ? "text-emerald-700" : "text-amber-700"}>· {collaborator.status === "active" ? t("Actif", "Active") : t("Suspendu", "Suspended")}</span></span><div className="flex items-center gap-2"><Select value={collaborator.collaborationRole} disabled={!isManager || collaborator.status !== "active" || setCollaboratorRole.isPending} onValueChange={value => setCollaboratorRole.mutate({ sessionToken, collaboratorId: collaborator.id, role: value as "reader" | "manager" })}><SelectTrigger className="w-32"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="reader">{t("Lecteur", "Reader")}</SelectItem><SelectItem value="manager">{t("Gestionnaire", "Manager")}</SelectItem></SelectContent></Select>{isManager && <Button size="sm" variant="outline" disabled={setCollaboratorAccess.isPending} onClick={() => setCollaboratorAccess.mutate({ sessionToken, collaboratorId: collaborator.id, active: collaborator.status !== "active" })}>{collaborator.status === "active" ? t("Suspendre", "Suspend") : t("Réactiver", "Reactivate")}</Button>}</div></div>)}</div>
       </div>
+      {isManager && <PartnerTeamPanel sessionToken={sessionToken} />}
       {isManager && <>
       <div className="rounded-xl border border-slate-200 bg-white p-4 lg:col-span-2">
         <div className="flex flex-wrap items-center justify-between gap-2"><div><p className="flex items-center gap-2 font-bold text-slate-900"><ClipboardCheck className="h-4 w-4 text-indigo-700" />{t("Révision manuelle des accès suspendus", "Manual review of suspended access")}</p><p className="mt-1 text-xs text-slate-500">{t("Chaque décision est prise par un gestionnaire, enregistrée dans le journal, et ne supprime aucun compte.", "Each decision is made by a manager, recorded in the audit log, and never deletes an account.")}</p></div><span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-900">{suspendedCollaborators.length} {t("à revoir", "to review")}</span></div>
@@ -444,7 +490,7 @@ export default function EmployerPortal() {
           </Button>
         </div>
         {submissionHistory.isLoading ? (
-          <p className="mt-4 text-sm text-slate-500">{t("Chargement de l’historique…", "Loading history…")}</p>
+          <div role="status" aria-live="polite" data-testid="partner-history-loading" className="mt-4 space-y-2"><span className="sr-only">{t("Chargement de l’historique…", "Loading history…")}</span>{[0, 1, 2].map(index => <div key={index} className="h-14 animate-pulse rounded-lg bg-slate-200 motion-reduce:animate-none" />)}</div>
         ) : submissionHistory.error ? (
           <p className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{t("Historique indisponible. Reconnectez-vous.", "History unavailable. Please sign in again.")}</p>
         ) : (submissionHistory.data ?? []).length === 0 ? (
@@ -479,12 +525,26 @@ export default function EmployerPortal() {
         )}
       </section>
     )}
-    {workspaceTab === "profiles" && (profiles.isLoading ? <p className="py-10 text-center text-slate-500">{t("Chargement des profils autorisés…", "Loading authorised profiles…")}</p> : profiles.error ? <p className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-800">{t("Votre session n’est plus valide. Reconnectez-vous.", "Your session is no longer valid. Please sign in again.")}</p> : <div className="space-y-4" data-testid="partner-profiles-panel">
-      <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-6"><Select value={sector} onValueChange={setSector}><SelectTrigger><SelectValue placeholder={t("Métier / secteur", "Role / sector")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("Tous les secteurs", "All sectors")}</SelectItem>{sectors.map(value => <SelectItem key={value} value={value!}>{value}</SelectItem>)}</SelectContent></Select><Select value={language} onValueChange={setLanguage}><SelectTrigger><SelectValue placeholder={t("Langue", "Language")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("Toutes les langues", "All languages")}</SelectItem>{languages.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select><Select value={country} onValueChange={setCountry}><SelectTrigger><SelectValue placeholder={t("Pays cible", "Target country")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("Tous les pays cibles", "All target countries")}</SelectItem>{countries.map(value => <SelectItem key={value} value={value!}>{value}</SelectItem>)}</SelectContent></Select><Select value={availability} onValueChange={setAvailability}><SelectTrigger><SelectValue placeholder={t("Disponibilité", "Availability")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("Toutes disponibilités", "All availability")}</SelectItem><SelectItem value="submitted">{t("Disponible pour examen", "Available for review")}</SelectItem></SelectContent></Select><Button variant={favoritesOnly ? "default" : "outline"} onClick={() => setFavoritesOnly(value => !value)}><Star className="mr-2 h-4 w-4" />{t("Favoris", "Favourites")}</Button><Button variant="outline" disabled={exportFavorites.isPending} onClick={() => exportFavorites.mutate({ sessionToken })}><Download className="mr-2 h-4 w-4" />{t("Exporter favoris", "Export favourites")}</Button></section>
+    {workspaceTab === "cvtheque" && <PartnerCvtheque sessionToken={sessionToken} mode="search" />}
+    {workspaceTab === "selection" && <PartnerCvtheque sessionToken={sessionToken} mode="selection" />}
+    {workspaceTab === "needs" && <PartnerNeeds sessionToken={sessionToken} />}
+    {workspaceTab === "offers" && !isAgencyPortal && <EmployerJobOffers sessionToken={sessionToken} canManage={collaborators.data?.currentRole === "manager"} />}
+    {workspaceTab === "tracking" && <PartnerTracking sessionToken={sessionToken} />}
+    {workspaceTab === "profiles" && (profiles.isLoading ? <div role="status" aria-live="polite" data-testid="partner-profiles-loading" className="space-y-3 py-4"><span className="sr-only">{t("Chargement des profils autorisés…", "Loading authorised profiles…")}</span><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{[0, 1, 2, 3].map(index => <div key={index} className="h-16 animate-pulse rounded-xl bg-slate-200 motion-reduce:animate-none" />)}</div><div className="grid gap-4 md:grid-cols-2">{[0, 1].map(index => <div key={index} className="h-56 animate-pulse rounded-xl bg-slate-200 motion-reduce:animate-none" />)}</div></div> : profiles.error ? <p className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-800">{t("Votre session n’est plus valide. Reconnectez-vous.", "Your session is no longer valid. Please sign in again.")}</p> : <div className="space-y-4" data-testid="partner-profiles-panel">
+      {availableProfiles.length > 0 && <section aria-label={t("Synthèse de vos profils", "Summary of your profiles")} className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="partner-summary">{([
+        [t("Profils reçus", "Profiles received"), availableProfiles.length],
+        [t("À examiner ou en revue", "To review or under review"), countByStatus(["submitted", "under_review"])],
+        [t("Présélectionnés ou sélectionnés", "Shortlisted or selected"), countByStatus(["shortlisted", "selected"])],
+        [t("Favoris", "Favourites"), availableProfiles.filter(row => row.isFavorite).length],
+      ] as const).map(([label, value]) => <div key={label} className="rounded-xl border border-slate-200 bg-white p-3"><p className="text-2xl font-black text-slate-950">{value}</p><p className="text-xs font-semibold text-slate-600">{label}</p></div>)}</section>}
+      {availableProfiles.length > 0 && <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden="true" /><Input type="search" data-testid="partner-profile-search" aria-label={t("Rechercher par code, secteur, pays ou procédure", "Search by code, sector, country or procedure")} placeholder={t("Rechercher par code, secteur, pays ou procédure", "Search by code, sector, country or procedure")} value={query} onChange={event => setQuery(event.target.value)} maxLength={80} className="bg-white pl-9" /></div>}
+      <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-6"><Select value={sector} onValueChange={setSector}><SelectTrigger aria-label={t("Métier / secteur", "Role / sector")}><SelectValue placeholder={t("Métier / secteur", "Role / sector")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("Tous les secteurs", "All sectors")}</SelectItem>{sectors.map(value => <SelectItem key={value} value={value!}>{value}</SelectItem>)}</SelectContent></Select><Select value={language} onValueChange={setLanguage}><SelectTrigger aria-label={t("Langue", "Language")}><SelectValue placeholder={t("Langue", "Language")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("Toutes les langues", "All languages")}</SelectItem>{languages.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select><Select value={country} onValueChange={setCountry}><SelectTrigger aria-label={t("Pays cible", "Target country")}><SelectValue placeholder={t("Pays cible", "Target country")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("Tous les pays cibles", "All target countries")}</SelectItem>{countries.map(value => <SelectItem key={value} value={value!}>{value}</SelectItem>)}</SelectContent></Select><Select value={availability} onValueChange={setAvailability}><SelectTrigger aria-label={t("Disponibilité", "Availability")}><SelectValue placeholder={t("Disponibilité", "Availability")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("Toutes disponibilités", "All availability")}</SelectItem><SelectItem value="submitted">{t("Disponible pour examen", "Available for review")}</SelectItem></SelectContent></Select><Button variant={favoritesOnly ? "default" : "outline"} onClick={() => setFavoritesOnly(value => !value)}><Star className="mr-2 h-4 w-4" />{t("Favoris", "Favourites")}</Button><Button variant="outline" disabled={exportFavorites.isPending} onClick={() => exportFavorites.mutate({ sessionToken })}><Download className="mr-2 h-4 w-4" />{t("Exporter favoris", "Export favourites")}</Button></section>
       <p className="text-sm text-slate-600">{filteredProfiles.length} {t("profil(s) autorisé(s) selon les filtres sélectionnés.", "authorised profile(s) matching the selected filters.")}</p>
-      <div className="grid gap-4 md:grid-cols-2">{filteredProfiles.map(row => <Card key={row.submissionId} className="border-slate-200"><CardHeader><div className="flex items-center justify-between gap-2"><CardTitle className="flex items-center gap-2 text-base"><BriefcaseBusiness className="h-4 w-4 text-indigo-700" />{row.profile.code}</CardTitle><Button size="icon" variant="ghost" aria-label={row.isFavorite ? t("Retirer des favoris", "Remove from favourites") : t("Ajouter aux favoris", "Add to favourites")} onClick={() => favorite.mutate({ sessionToken, submissionId: row.submissionId })}><Star className={`h-4 w-4 ${row.isFavorite ? "fill-amber-400 text-amber-500" : "text-slate-500"}`} /></Button></div><CardDescription>{row.profile.targetDestination} · {row.profile.targetProcedure}</CardDescription></CardHeader><CardContent className="space-y-3"><p className="text-sm leading-6 text-slate-700">{row.profile.summary}</p>{row.profile.summaryAvailable ? <Button type="button" size="sm" variant="outline" className="w-full border-indigo-300 text-indigo-800 hover:bg-indigo-50" onClick={() => void downloadSummary(row.submissionId)}><Download className="mr-2 h-4 w-4" />{t("Télécharger la synthèse (PDF)", "Download summary (PDF)")}</Button> : <p className="rounded bg-slate-50 p-2 text-xs text-slate-500">{t("Aucune fiche validée", "No validated summary")}</p>}<div className="grid grid-cols-2 gap-2 text-xs"><span className="rounded bg-slate-100 p-2">{t("Secteur", "Sector")} : {row.profile.sector || t("Non précisé", "Not specified")}</span><span className="rounded bg-slate-100 p-2">{t("Expérience", "Experience")} : {row.profile.yearsExperience || t("Non précisée", "Not specified")}</span><span className="col-span-2 rounded bg-slate-100 p-2">{t("Langues", "Languages")} : {row.profile.languagesSummary || t("Non précisées", "Not specified")}</span></div>
+      <div className="grid gap-4 md:grid-cols-2">{filteredProfiles.map(row => <Card key={row.submissionId} className="border-slate-200"><CardHeader><div className="flex items-center justify-between gap-2"><CardTitle className="flex items-center gap-2 text-base"><BriefcaseBusiness className="h-4 w-4 text-indigo-700" />{row.profile.code}</CardTitle><Button size="icon" variant="ghost" aria-label={row.isFavorite ? t("Retirer des favoris", "Remove from favourites") : t("Ajouter aux favoris", "Add to favourites")} onClick={() => favorite.mutate({ sessionToken, submissionId: row.submissionId })}><Star className={`h-4 w-4 ${row.isFavorite ? "fill-amber-400 text-amber-500" : "text-slate-500"}`} /></Button></div><CardDescription>{row.profile.targetDestination} · {row.profile.targetProcedure}</CardDescription></CardHeader><CardContent className="space-y-3"><span data-testid="partner-status-chip" className={"inline-flex rounded-full px-2.5 py-1 text-xs font-black " + decisionStatusTone(row.status)}>{decisionStatusLabel(row.status)}</span><p className="text-sm leading-6 text-slate-700">{row.profile.summary}</p>{row.profile.summaryAvailable ? <Button type="button" size="sm" variant="outline" className="w-full border-indigo-300 text-indigo-800 hover:bg-indigo-50" onClick={() => void downloadSummary(row.submissionId)}><Download className="mr-2 h-4 w-4" />{t("Télécharger la synthèse (PDF)", "Download summary (PDF)")}</Button> : <p className="rounded bg-slate-50 p-2 text-xs text-slate-500">{t("Aucune fiche validée", "No validated summary")}</p>}<div className="grid grid-cols-2 gap-2 text-xs"><span className="rounded bg-slate-100 p-2">{t("Secteur", "Sector")} : {row.profile.sector || t("Non précisé", "Not specified")}</span><span className="rounded bg-slate-100 p-2">{t("Expérience", "Experience")} : {row.profile.yearsExperience || t("Non précisée", "Not specified")}</span><span className="col-span-2 rounded bg-slate-100 p-2">{t("Langues", "Languages")} : {row.profile.languagesSummary || t("Non précisées", "Not specified")}</span></div>
         {row.sharedWithMe && <p className="rounded bg-indigo-50 p-2 text-xs text-indigo-800">{t(`Partagé par ${row.sharedWithMe.sharedByName}`, `Shared by ${row.sharedWithMe.sharedByName}`)}</p>}
-        {row.isFavorite && <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3"><Textarea value={favoriteNotes[row.submissionId] ?? row.privateNote ?? ""} onChange={event => setFavoriteNotes({ ...favoriteNotes, [row.submissionId]: event.target.value })} placeholder={t("Note privée de votre organisation", "Private note for your organisation")} maxLength={2000} /><Button size="sm" variant="outline" disabled={saveFavoriteNote.isPending} onClick={() => saveFavoriteNote.mutate({ sessionToken, submissionId: row.submissionId, note: favoriteNotes[row.submissionId] ?? row.privateNote ?? "" })}>{t("Enregistrer la note privée", "Save private note")}</Button>{isManager && <div className="grid gap-2 sm:grid-cols-[1fr_auto]"><Select value={shareRecipient[row.submissionId] ?? "none"} onValueChange={value => setShareRecipient({ ...shareRecipient, [row.submissionId]: value })}><SelectTrigger><SelectValue placeholder={t("Partager avec un collaborateur", "Share with a collaborator")} /></SelectTrigger><SelectContent><SelectItem value="none">{t("Choisir un collaborateur", "Choose a collaborator")}</SelectItem>{(collaborators.data?.collaborators ?? []).map(collaborator => <SelectItem key={collaborator.id} value={String(collaborator.id)}>{collaborator.fullName}</SelectItem>)}</SelectContent></Select><Button size="sm" variant="outline" disabled={shareFavorite.isPending || !shareRecipient[row.submissionId] || shareRecipient[row.submissionId] === "none"} onClick={() => shareFavorite.mutate({ sessionToken, submissionId: row.submissionId, recipientEmployerAccountId: Number(shareRecipient[row.submissionId]) })}><Share2 className="mr-2 h-4 w-4" />{t("Partager", "Share")}</Button></div>}{row.outgoingShares.map(share => <div key={share.shareId} className="flex items-center justify-between rounded bg-white px-2 py-1 text-xs text-slate-700"><span>{t(`Partagé avec ${share.recipientName}`, `Shared with ${share.recipientName}`)}</span>{isManager && <Button size="sm" variant="ghost" onClick={() => revokeShare.mutate({ sessionToken, shareId: share.shareId })}><X className="mr-1 h-3 w-3" />{t("Révoquer", "Revoke")}</Button>}</div>)}</div>}
-        <Select value={decisions[row.submissionId] ?? row.status} onValueChange={value => setDecisions({ ...decisions, [row.submissionId]: value as Decision })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="under_review">{t("En revue", "Under review")}</SelectItem><SelectItem value="shortlisted">{t("Présélectionné", "Shortlisted")}</SelectItem><SelectItem value="selected">{t("Sélectionné", "Selected")}</SelectItem><SelectItem value="not_selected">{t("Non retenu", "Not selected")}</SelectItem><SelectItem value="documents_requested">{t("Pièces à demander", "Documents requested")}</SelectItem></SelectContent></Select><Textarea value={notes[row.submissionId] ?? ""} onChange={event => setNotes({ ...notes, [row.submissionId]: event.target.value })} placeholder={t("Commentaire pour l’équipe 3M (facultatif)", "Comment for the 3M team (optional)")} maxLength={2000} /><Button className="w-full bg-indigo-700 hover:bg-indigo-800" disabled={decision.isPending} onClick={() => decision.mutate({ sessionToken, submissionId: row.submissionId, decision: decisions[row.submissionId] ?? "under_review", note: notes[row.submissionId] || undefined })}>{t("Enregistrer le retour", "Save feedback")}</Button></CardContent></Card>)}{filteredProfiles.length === 0 && <p className="col-span-2 rounded-xl border border-dashed border-slate-300 p-6 text-center text-slate-600">{t("Aucun profil autorisé ne correspond aux filtres sélectionnés. Les profils apparaissent après vérification et partage par 3M.", "No authorised profile matches the selected filters. Profiles appear after 3M verification and sharing.")}</p>}</div>
+        {row.isFavorite && <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3"><Textarea aria-label={t("Note privée de votre organisation", "Private note for your organisation")} value={favoriteNotes[row.submissionId] ?? row.privateNote ?? ""} onChange={event => setFavoriteNotes({ ...favoriteNotes, [row.submissionId]: event.target.value })} placeholder={t("Note privée de votre organisation", "Private note for your organisation")} maxLength={2000} /><Button size="sm" variant="outline" disabled={saveFavoriteNote.isPending} onClick={() => saveFavoriteNote.mutate({ sessionToken, submissionId: row.submissionId, note: favoriteNotes[row.submissionId] ?? row.privateNote ?? "" })}>{t("Enregistrer la note privée", "Save private note")}</Button>{isManager && <div className="grid gap-2 sm:grid-cols-[1fr_auto]"><Select value={shareRecipient[row.submissionId] ?? "none"} onValueChange={value => setShareRecipient({ ...shareRecipient, [row.submissionId]: value })}><SelectTrigger><SelectValue placeholder={t("Partager avec un collaborateur", "Share with a collaborator")} /></SelectTrigger><SelectContent><SelectItem value="none">{t("Choisir un collaborateur", "Choose a collaborator")}</SelectItem>{(collaborators.data?.collaborators ?? []).map(collaborator => <SelectItem key={collaborator.id} value={String(collaborator.id)}>{collaborator.fullName}</SelectItem>)}</SelectContent></Select><Button size="sm" variant="outline" disabled={shareFavorite.isPending || !shareRecipient[row.submissionId] || shareRecipient[row.submissionId] === "none"} onClick={() => shareFavorite.mutate({ sessionToken, submissionId: row.submissionId, recipientEmployerAccountId: Number(shareRecipient[row.submissionId]) })}><Share2 className="mr-2 h-4 w-4" />{t("Partager", "Share")}</Button></div>}{row.outgoingShares.map(share => <div key={share.shareId} className="flex items-center justify-between rounded bg-white px-2 py-1 text-xs text-slate-700"><span>{t(`Partagé avec ${share.recipientName}`, `Shared with ${share.recipientName}`)}</span>{isManager && <Button size="sm" variant="ghost" onClick={() => revokeShare.mutate({ sessionToken, shareId: share.shareId })}><X className="mr-1 h-3 w-3" />{t("Révoquer", "Revoke")}</Button>}</div>)}</div>}
+        <Select value={decisions[row.submissionId] ?? row.status} onValueChange={value => setDecisions({ ...decisions, [row.submissionId]: value as Decision })}><SelectTrigger aria-label={t("Décision pour ce profil", "Decision for this profile")}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="under_review">{t("En revue", "Under review")}</SelectItem><SelectItem value="shortlisted">{t("Présélectionné", "Shortlisted")}</SelectItem><SelectItem value="selected">{t("Sélectionné", "Selected")}</SelectItem><SelectItem value="not_selected">{t("Non retenu", "Not selected")}</SelectItem><SelectItem value="documents_requested">{t("Pièces à demander", "Documents requested")}</SelectItem></SelectContent></Select><Textarea aria-label={t("Commentaire pour l’équipe 3M (facultatif)", "Comment for the 3M team (optional)")} value={notes[row.submissionId] ?? ""} onChange={event => setNotes({ ...notes, [row.submissionId]: event.target.value })} placeholder={t("Commentaire pour l’équipe 3M (facultatif)", "Comment for the 3M team (optional)")} maxLength={2000} /><Button className="w-full bg-indigo-700 hover:bg-indigo-800" disabled={decision.isPending} onClick={() => decision.mutate({ sessionToken, submissionId: row.submissionId, decision: decisions[row.submissionId] ?? "under_review", note: notes[row.submissionId] || undefined })}>{t("Enregistrer le retour", "Save feedback")}</Button></CardContent></Card>)}{filteredProfiles.length === 0 && (availableProfiles.length > 0 && hasActiveFilters
+        ? <div className="col-span-2 rounded-xl border border-dashed border-slate-300 p-6 text-center text-slate-700" data-testid="partner-no-match"><p>{t("Aucun profil ne correspond à ces filtres ou à cette recherche.", "No profile matches these filters or this search.")}</p><Button type="button" variant="outline" className="mt-3" onClick={resetFilters}>{t("Réinitialiser les filtres", "Reset filters")}</Button></div>
+        : <div className="col-span-2 rounded-xl border border-dashed border-slate-300 bg-white p-6 text-slate-700" data-testid="partner-empty-onboarding"><p className="font-black text-slate-950">{t("Vos premiers profils arriveront ici.", "Your first profiles will appear here.")}</p><ol className="mt-3 list-decimal space-y-1 pl-5 text-sm leading-6"><li>{t("3M présente des profils anonymisés dont le candidat a autorisé le partage.", "3M presents anonymised profiles whose candidate authorised sharing.")}</li><li>{t("Vous consultez la fiche, ajoutez un favori ou enregistrez un retour.", "You review the summary, add a favourite or record feedback.")}</li><li>{t("3M examine chaque retour avant toute prise de contact avec le candidat.", "3M reviews each feedback before any contact with the candidate.")}</li></ol><p className="mt-3 text-sm">{t("Besoin d’orienter la sélection (métiers, pays, langues) ?", "Need to guide the selection (roles, countries, languages)?")}{" "}<a href="/contact" className="font-bold text-indigo-800 underline underline-offset-2">{t("Écrire à l’équipe 3M", "Write to the 3M team")}</a></p></div>)}</div>
     </div>)}</div></main>;
 }

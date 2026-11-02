@@ -288,7 +288,7 @@ export default function ApprovedReviewsSection() {
         sortDateDesc: "Les plus récents",
         sortDateAsc: "Les plus anciens",
         noReviewsYetTitle: "Soyez le premier à partager votre expérience",
-        noReviewsYetBody: "Aucun avis n’est encore approuvé — état transparent, préférable à des témoignages non vérifiés. Si vous êtes un client réel de 3M TRAVEL AGENCY, témoignez : chaque avis est vérifié, daté et publié seulement après contrôle. Nous n’inventons jamais de témoignages.",
+        noReviewsYetBody: "Aucun avis n’est encore approuvé sur le site — état transparent, préférable à des témoignages non vérifiés. Si vous êtes un client réel de 3M TRAVEL AGENCY, témoignez aussi sur Google ou Facebook ; chaque avis publié ici est vérifié, daté et contrôlé. Nous n’inventons jamais de témoignages.",
         noReviewsYetCta: "Laisser un avis vérifié",
       };
 

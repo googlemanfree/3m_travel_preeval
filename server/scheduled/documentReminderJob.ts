@@ -10,6 +10,7 @@ import { and, desc, eq, inArray, isNull, like } from "drizzle-orm";
 import { agencyDossierDocuments, agencyDossiers, agencySettings, applications, candidateFiles, candidates, clientDocuments, emailDeliveryLogs, evaluations } from "../../drizzle/schema";
 import { COMPANY_PROFILE } from "../../client/src/lib/companyContacts";
 import { summarizeChecklist, type ChecklistDocument } from "../../client/src/lib/documentChecklist";
+import { programContextFromDetails } from "../services/evaluationProgramContext";
 import { sendEmail } from "../_core/email";
 import { getDb } from "../db";
 import { runFlightFollowUps, type FlightFollowUpOutcome } from "./flightFollowUps";
@@ -17,10 +18,11 @@ import { runFlightPriceAlerts, type AlertRunSummary } from "./flightPriceAlerts"
 import { runReviewInviteEmails, type ReviewInviteOutcome } from "./reviewInviteEmails";
 import { fetchCheapestForAlert } from "../routers/flights";
 import { REMINDER_SUBJECT_PREFIX, buildDocumentReminderEmail, planReminder, reminderOptOutKey, signReminderStopToken, verifyReminderStopToken } from "../services/documentReminders";
+import { notifyDocumentReminderWhatsApp } from "../services/clientWhatsAppNotify";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
 
-export type ReminderOutcome = { email: string; stage: number; missing: number; replace: number; sent: boolean; error?: string };
+export type ReminderOutcome = { email: string; stage: number; missing: number; replace: number; sent: boolean; whatsappSent?: boolean; error?: string };
 
 const secret = () => process.env.JWT_SECRET || "";
 const siteUrl = () => (process.env.SITE_URL || COMPANY_PROFILE.website || "https://www.3mtravelagency.com").replace(/\/+$/, "");
@@ -62,7 +64,7 @@ export async function assessCandidate(db: Db, candidate: typeof candidates.$infe
   const agencyRows = await db.select({ id: agencyDossiers.id }).from(agencyDossiers).where(eq(agencyDossiers.email, candidate.email)).limit(5);
   const agencyDocs = agencyRows.length ? await db.select({ documentType: agencyDossierDocuments.documentType, documentName: agencyDossierDocuments.documentName, verificationStatus: agencyDossierDocuments.verificationStatus, createdAt: agencyDossierDocuments.createdAt }).from(agencyDossierDocuments).where(inArray(agencyDossierDocuments.dossierId, agencyRows.map((row) => row.id))) : [];
   const clientDocs = await db.select({ documentType: clientDocuments.documentType, documentName: clientDocuments.documentName, verificationStatus: clientDocuments.verificationStatus, uploadedAt: clientDocuments.uploadedAt }).from(clientDocuments).where(eq(clientDocuments.candidateEmail, candidate.email));
-  const [evaluation] = await db.select({ projectType: evaluations.projectType }).from(evaluations).where(eq(evaluations.email, candidate.email)).orderBy(desc(evaluations.createdAt)).limit(1);
+  const [evaluation] = await db.select({ projectType: evaluations.projectType, projectDetailsJson: evaluations.projectDetailsJson }).from(evaluations).where(eq(evaluations.email, candidate.email)).orderBy(desc(evaluations.createdAt)).limit(1);
 
   const documents: ChecklistDocument[] = [
     ...files.map((file) => ({ documentType: file.fileType, documentName: file.fileName, status: file.status })),
@@ -70,7 +72,8 @@ export async function assessCandidate(db: Db, candidate: typeof candidates.$infe
     ...clientDocs.map((doc) => ({ documentType: doc.documentType, documentName: doc.documentName, verificationStatus: doc.verificationStatus === "approved" ? "verified" : doc.verificationStatus })),
   ];
   const destination = parseDestinations(candidate.preferredDestinations)[0] || candidate.destination;
-  const summary = summarizeChecklist(destination, evaluation?.projectType, documents);
+  // Même liste que dans l'espace client : pays × visa × programme × domaine déclarés dans l'évaluation.
+  const summary = summarizeChecklist(destination, evaluation?.projectType, documents, [], programContextFromDetails(evaluation?.projectDetailsJson));
   const lastActivityAt = latest(candidate.lastLoginAt, candidate.createdAt, ...files.map((file) => file.uploadedAt), ...agencyDocs.map((doc) => doc.createdAt), ...clientDocs.map((doc) => doc.uploadedAt));
   const sentLogs = await db.select({ createdAt: emailDeliveryLogs.createdAt }).from(emailDeliveryLogs).where(and(eq(emailDeliveryLogs.recipientEmail, email), like(emailDeliveryLogs.subject, `${REMINDER_SUBJECT_PREFIX}%`), eq(emailDeliveryLogs.status, "sent"))).orderBy(desc(emailDeliveryLogs.createdAt)).limit(10);
   return { candidate, email, summary, lastActivityAt, remindersSinceActivity: sentLogs.filter((log) => log.createdAt > lastActivityAt).length, lastReminderAt: sentLogs[0]?.createdAt ?? null, optedOut: Boolean(optOut) };
@@ -102,15 +105,29 @@ export async function runDocumentReminders(db: Db, options: { now?: Date; dryRun
         stopUrl: `${siteUrl()}/api/reminders/stop?e=${encodeURIComponent(email)}&t=${signReminderStopToken(email, secret())}`,
       });
       if (options.dryRun) {
-        outcomes.push({ email, stage: decision.stage, missing: summary.missing, replace: summary.replace, sent: false });
+        outcomes.push({ email, stage: decision.stage, missing: summary.missing, replace: summary.replace, sent: false, whatsappSent: false });
         continue;
       }
       await sendEmail({ to: candidate.email, subject: message.subject, html: message.html });
       await db.insert(emailDeliveryLogs).values({ recipientEmail: email, subject: message.subject.slice(0, 255), status: "sent" });
-      outcomes.push({ email, stage: decision.stage, missing: summary.missing, replace: summary.replace, sent: true });
+      let whatsappSent = false;
+      try {
+        const wa = await notifyDocumentReminderWhatsApp({
+          phone: candidate.phone,
+          candidateName: candidate.fullName,
+          stage: decision.stage,
+          missing: summary.missing,
+          replace: summary.replace,
+          firstLabel: summary.firstReplaceLabel ?? summary.firstMissingLabel,
+        });
+        whatsappSent = wa.sent;
+      } catch (waError) {
+        console.warn("[DocumentReminders] WhatsApp skip", { candidateId: candidate.id, waError });
+      }
+      outcomes.push({ email, stage: decision.stage, missing: summary.missing, replace: summary.replace, sent: true, whatsappSent });
     } catch (error) {
       console.error("[DocumentReminders] candidate failed", { candidateId: candidate.id, error });
-      outcomes.push({ email, stage: 0, missing: 0, replace: 0, sent: false, error: "échec" });
+      outcomes.push({ email, stage: 0, missing: 0, replace: 0, sent: false, whatsappSent: false, error: "échec" });
     }
   }
   return outcomes;
@@ -146,7 +163,7 @@ export async function handleDocumentReminderJob(req: Request, res: Response): Pr
     } catch (error) {
       console.error("[ReviewInviteEmails] job failed", error);
     }
-    res.json({ alerts, reviewInvites: { sent: reviewInvites.filter((outcome) => outcome.sent).length, planned: dryRun ? reviewInvites.length : undefined, outcomes: reviewInvites.map((outcome) => ({ reason: outcome.reason, sent: outcome.sent })) }, flights: { sent: flights.filter((outcome) => outcome.sent).length, planned: dryRun ? flights.length : undefined, failed: flights.filter((outcome) => outcome.error).length, outcomes: flights.map((outcome) => ({ kind: outcome.kind, stage: outcome.stage, sent: outcome.sent })) }, dryRun, sent: outcomes.filter((outcome) => outcome.sent).length, planned: dryRun ? outcomes.length : undefined, failed: outcomes.filter((outcome) => outcome.error).length, outcomes: outcomes.map((outcome) => ({ stage: outcome.stage, missing: outcome.missing, replace: outcome.replace, sent: outcome.sent })) });
+    res.json({ alerts, reviewInvites: { sent: reviewInvites.filter((outcome) => outcome.sent).length, planned: dryRun ? reviewInvites.length : undefined, outcomes: reviewInvites.map((outcome) => ({ reason: outcome.reason, sent: outcome.sent })) }, flights: { sent: flights.filter((outcome) => outcome.sent).length, planned: dryRun ? flights.length : undefined, failed: flights.filter((outcome) => outcome.error).length, outcomes: flights.map((outcome) => ({ kind: outcome.kind, stage: outcome.stage, sent: outcome.sent })) }, dryRun, sent: outcomes.filter((outcome) => outcome.sent).length, whatsappSent: outcomes.filter((outcome) => outcome.whatsappSent).length, planned: dryRun ? outcomes.length : undefined, failed: outcomes.filter((outcome) => outcome.error).length, outcomes: outcomes.map((outcome) => ({ stage: outcome.stage, missing: outcome.missing, replace: outcome.replace, sent: outcome.sent, whatsappSent: Boolean(outcome.whatsappSent) })) });
   } catch (error) {
     console.error("[DocumentReminders] job failed", error);
     res.status(500).json({ error: "Reminder job failed" });

@@ -14,9 +14,11 @@ type Props = {
   onOpenEditor?: () => void;
   onOfflineValidate?: (channel: "appel" | "agence" | "email", note?: string) => void;
   isOfflineValidating?: boolean;
+  /** Le bilan a été envoyé : l'évaluation est effectuée, il n'y a plus de décision à prendre ici. */
+  evaluationDone?: boolean;
 };
 
-export function AdminPreDossierEvaluationPanel({ status, declaredAt, reviewedAt, reviewedBy, reviewNote, onReview, isReviewing = false, onOpenEditor, onOfflineValidate, isOfflineValidating = false }: Props) {
+export function AdminPreDossierEvaluationPanel({ evaluationDone = false, status, declaredAt, reviewedAt, reviewedBy, reviewNote, onReview, isReviewing = false, onOpenEditor, onOfflineValidate, isOfflineValidating = false }: Props) {
   const [note, setNote] = useState("");
   const [offlineOpen, setOfflineOpen] = useState(false);
   const [offlineChannel, setOfflineChannel] = useState<"appel" | "agence" | "email">("appel");
@@ -40,7 +42,13 @@ export function AdminPreDossierEvaluationPanel({ status, declaredAt, reviewedAt,
       {declaredAt && <p className="mt-3 text-xs font-medium text-violet-800">Déclaration enregistrée le {new Date(declaredAt).toLocaleString("fr-FR")}</p>}
       {reviewedAt && <p className="mt-2 text-xs font-medium text-violet-800">Dernière décision : {new Date(reviewedAt).toLocaleString("fr-FR")}{reviewedBy ? ` par ${reviewedBy}` : ""}</p>}
       {reviewNote && <p className="mt-2 rounded-lg bg-white/70 p-3 text-sm text-slate-700">Note de vérification : {reviewNote}</p>}
-      {pending && onReview && (
+      {evaluationDone && (
+        <div className="mt-4 border-t border-violet-200 pt-4">
+          <Button type="button" size="sm" disabled data-testid="evaluation-done" className="bg-emerald-100 text-emerald-900 disabled:opacity-100">✓ Évaluation effectuée</Button>
+          <p className="mt-2 text-xs text-violet-900">Le bilan est envoyé : il n’y a plus rien à valider ici.</p>
+        </div>
+      )}
+      {pending && onReview && !evaluationDone && (
         <div className="mt-4 border-t border-violet-200 pt-4">
           <label htmlFor="evaluation-review-note" className="text-sm font-semibold text-slate-800">Note de décision</label>
           <textarea id="evaluation-review-note" value={note} onChange={(event) => setNote(event.target.value)} maxLength={1000} placeholder="Obligatoire pour demander un complément ou refuser la déclaration." className="mt-2 min-h-20 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-violet-600" />

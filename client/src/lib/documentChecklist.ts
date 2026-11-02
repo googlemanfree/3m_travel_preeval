@@ -2,6 +2,7 @@ import { getCountryById, procedures107Complete, type CountryProcedureComplete } 
 import { getEvaluationDocumentRequirements, type EvaluationProjectType } from "../data/evaluationDocumentCatalogue";
 import { MAX_CHECKLIST_DOCUMENTS, capDocumentList } from "@shared/documentLimits";
 import { normalizePublicEvaluationProject } from "@shared/evaluationFormRequirements";
+import { programChecklistLines, sameExpectedPiece } from "@shared/dynamicForm/clientPlan";
 
 /**
  * Logique pure de la checklist documentaire (pièces attendues selon le pays et le type de visa, état de chaque pièce) :
@@ -95,7 +96,16 @@ export function requirementTheme(label: string): string | null {
   return null;
 }
 
-export function getRequirements(destination?: string | null, projectType?: string | null): Requirement[] {
+/** Visa ou programme et domaine choisis dans l'évaluation : ajoutent les pièces propres au parcours à la même liste. */
+export type ChecklistScope = { programId?: string | null; domainId?: string | null };
+
+/** Visa ou programme et domaine lus dans les réponses d'une évaluation (côté client comme côté serveur). */
+export function checklistScopeFromDetails(details: Record<string, unknown> | null | undefined): ChecklistScope {
+  const read = (key: string) => (typeof details?.[key] === "string" && details[key] ? String(details[key]) : null);
+  return { programId: read("programId"), domainId: read("domainId") };
+}
+
+export function getRequirements(destination?: string | null, projectType?: string | null, scope?: ChecklistScope): Requirement[] {
   const generic = destination && isProjectType(projectType) ? getEvaluationDocumentRequirements(destination, projectType) : [];
   // procedures107Complete couvre 41+ pays avec des pieces reellement propres au couple pays+type de visa,
   // contrairement a COUNTRY_REQUIREMENTS (evaluationDocumentCatalogue) qui ne detaille que 5 pays : on le
@@ -117,7 +127,14 @@ export function getRequirements(destination?: string | null, projectType?: strin
     return true;
   });
 
-  const merged = [...generic, ...filteredCountrySpecific];
+  // Pièces propres au visa ou programme choisi : une seule liste pour la checklist, le parcours, les relances et l'administration.
+  const programSpecific: Requirement[] = [];
+  for (const line of scope?.programId ? programChecklistLines(scope.programId, scope.domainId) : []) {
+    if ([...generic, ...programSpecific].some((existing) => sameExpectedPiece(existing.label, line.documentType))) continue;
+    programSpecific.push({ category: "Votre parcours", label: line.documentType, detail: "Propre à votre visa ou programme ; à confirmer par votre conseiller selon la source officielle." });
+  }
+  const countryWithoutProgramDuplicates = filteredCountrySpecific.filter((requirement) => !programSpecific.some((existing) => sameExpectedPiece(existing.label, requirement.label)));
+  const merged = [...generic, ...programSpecific, ...countryWithoutProgramDuplicates];
   const base = merged.length ? merged : FALLBACK_REQUIREMENTS;
   return capDocumentList(base, MAX_CHECKLIST_DOCUMENTS);
 }
@@ -130,12 +147,16 @@ export function assembleChecklistRequirements(
   destination?: string | null,
   projectType?: string | null,
   customRequirements: CustomRequirement[] = [],
+  scope?: ChecklistScope,
 ): { catalogue: Requirement[]; customs: CustomRequirement[]; total: number } {
   const customs = customRequirements
     .filter((requirement) => requirement.status !== "waived")
     .slice(0, MAX_CHECKLIST_DOCUMENTS);
   const catalogueBudget = Math.max(0, MAX_CHECKLIST_DOCUMENTS - customs.length);
-  const catalogue = getRequirements(destination, projectType).slice(0, catalogueBudget);
+  // Une demande du conseiller (souvent créée à l'activation depuis le même parcours) ne s'affiche pas deux fois.
+  const catalogue = getRequirements(destination, projectType, scope)
+    .filter((requirement) => !customs.some((custom) => sameExpectedPiece(custom.documentType, requirement.label)))
+    .slice(0, catalogueBudget);
   return { catalogue, customs, total: catalogue.length + customs.length };
 }
 
@@ -182,12 +203,17 @@ export function customRequirementKind(requirement: CustomRequirement, documents:
 }
 
 /** Résumé pour « Votre prochaine étape » et les relances : pièces manquantes ou à remplacer, et laquelle en premier. */
-export function summarizeChecklist(destination: string | null | undefined, projectType: string | null | undefined, documents: ChecklistDocument[], customRequirements: CustomRequirement[] = []) {
-  const assembled = assembleChecklistRequirements(destination, projectType, customRequirements);
-  const lines = [
+/** Lignes de la checklist avec leur état : la source unique des totaux affichés (checklist, parcours, relances, prochaine étape). */
+export function checklistLines(destination: string | null | undefined, projectType: string | null | undefined, documents: ChecklistDocument[], customRequirements: CustomRequirement[] = [], scope?: ChecklistScope): Array<{ label: string; kind: ChecklistStateKind }> {
+  const assembled = assembleChecklistRequirements(destination, projectType, customRequirements, scope);
+  return [
     ...assembled.catalogue.map((requirement) => ({ label: requirement.label, kind: requirementKind(requirement, documents) })),
     ...assembled.customs.map((requirement) => ({ label: requirement.documentType, kind: customRequirementKind(requirement, documents) })),
   ];
+}
+
+export function summarizeChecklist(destination: string | null | undefined, projectType: string | null | undefined, documents: ChecklistDocument[], customRequirements: CustomRequirement[] = [], scope?: ChecklistScope) {
+  const lines = checklistLines(destination, projectType, documents, customRequirements, scope);
   const missing = lines.filter((line) => line.kind === "missing");
   const replace = lines.filter((line) => line.kind === "replace");
   return { total: lines.length, missing: missing.length, replace: replace.length, firstMissingLabel: missing[0]?.label ?? null, firstReplaceLabel: replace[0]?.label ?? null };
@@ -198,7 +224,7 @@ export function summarizeChecklist(destination: string | null | undefined, proje
  * Liste des pièces que le candidat peut choisir à l'envoi : celles de son pays et de son type de visa (les mêmes que la
  * checklist), puis les demandes de son conseiller (hors pièces dispensées), sans doublon.
  */
-export function buildRequirementOptions(destination?: string | null, projectType?: string | null, customRequirements: Array<Pick<CustomRequirement, "documentType" | "status">> = []): Array<{ label: string; group: string }> {
+export function buildRequirementOptions(destination?: string | null, projectType?: string | null, customRequirements: Array<Pick<CustomRequirement, "documentType" | "status">> = [], scope?: ChecklistScope): Array<{ label: string; group: string }> {
   const seen = new Set<string>();
   const options: Array<{ label: string; group: string }> = [];
   const add = (label: string, group: string) => {
@@ -209,7 +235,7 @@ export function buildRequirementOptions(destination?: string | null, projectType
   };
   // Demandes conseiller d’abord, puis catalogue (capacité 16).
   for (const requirement of customRequirements) if (requirement.status !== "waived") add(requirement.documentType, "Demande de votre conseiller");
-  for (const requirement of getRequirements(destination, projectType)) add(requirement.label, requirement.category);
+  for (const requirement of getRequirements(destination, projectType, scope)) add(requirement.label, requirement.category);
   return options;
 }
 

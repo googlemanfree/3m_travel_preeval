@@ -3,6 +3,7 @@ import { ExternalLink } from "lucide-react";
 import { useRoute } from "wouter";
 import { FaqSection } from "@/components/PageEnrichment";
 import { ServicePageShell, ServiceSection } from "@/components/ServicePageShell";
+import { PrintBrandedButton } from "@/components/PrintBrandedButton";
 import { GUIDES, getGuide, type Guide } from "@/data/guidesData";
 import { getServiceVisual } from "@/data/premiumVisuals";
 import { setPageSeo } from "@/lib/pageSeo";
@@ -56,6 +57,17 @@ export default function GuidePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqJsonLd(guide) }} />
 
       <ServiceSection title="Dans ce guide">
+        <div className="mb-4">
+          <PrintBrandedButton
+            label="Imprimer ce guide"
+            build={() => ({
+              title: guide.title,
+              intro: guide.lead,
+              sections: guide.sections.map((section) => ({ title: section.title, paragraphs: section.paragraphs, bullets: section.bullets })),
+              note: "Guide général rédigé pour durer : vérifiez toujours les conditions, montants et délais auprès de l'autorité ou de l'établissement concerné.",
+            })}
+          />
+        </div>
         <nav aria-label="Sommaire du guide" data-testid="guide-toc">
           <ul className="flex flex-wrap gap-3">
             {guide.sections.map((section) => (

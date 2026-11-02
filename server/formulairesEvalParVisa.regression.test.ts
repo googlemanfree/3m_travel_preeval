@@ -28,7 +28,7 @@ describe("formulaires d’évaluation distincts par type de visa", () => {
 
   it("n’impose le CV sur /evaluation que pour le visa travail", () => {
     const page = read("client/src/pages/Evaluation.tsx");
-    expect(page).toContain("evaluationRequiresCv");
+    expect(page).toContain("dynamicForm.cv === 'required'");
     expect(page).toContain("normalizePublicEvaluationProject");
     expect(page).toMatch(/CV \(facultatif/);
   });

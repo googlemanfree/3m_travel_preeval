@@ -7,7 +7,7 @@ import { getDb } from "../db";
 import { sql } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { sendPasswordResetEmail } from "../emailService";
-import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../loginAttemptsService";
+import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts, scopedLoginIdentifier } from "../loginAttemptsService";
 import { clientKeyOf, createFixedWindowLimiter } from "../_core/publicRateLimit";
 
 // Renvoi d'e-mail de vérification et réinitialisation : 3 demandes par adresse saisie et 10 par adresse cliente
@@ -266,7 +266,8 @@ export const simpleAuthRouter = router({
     )
     .mutation(async ({ input }) => {
       const { email, password } = input;
-      checkLoginAttempts(email);
+      const loginIdentifier = scopedLoginIdentifier("candidate", email);
+      checkLoginAttempts(loginIdentifier);
 
       const db = await getDb();
       if (!db) throw new Error("Database not available");
@@ -276,7 +277,7 @@ export const simpleAuthRouter = router({
       );
 
       if (!(result as any).rows || (result as any).rows.length === 0) {
-        recordFailedAttempt(email);
+        recordFailedAttempt(loginIdentifier);
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Email ou mot de passe incorrect",
@@ -287,7 +288,7 @@ export const simpleAuthRouter = router({
 
       const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
       if (!isPasswordValid) {
-        recordFailedAttempt(email);
+        recordFailedAttempt(loginIdentifier);
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Email ou mot de passe incorrect",
@@ -295,14 +296,14 @@ export const simpleAuthRouter = router({
       }
 
       if (!user.emailVerified) {
-        recordFailedAttempt(email);
+        recordFailedAttempt(loginIdentifier);
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Veuillez vérifier votre email avant de vous connecter",
         });
       }
 
-      resetLoginAttempts(email);
+      resetLoginAttempts(loginIdentifier);
       await db.execute(
         sql`UPDATE simple_users SET lastLoginAt = NOW() WHERE id = ${user.id}`
       );

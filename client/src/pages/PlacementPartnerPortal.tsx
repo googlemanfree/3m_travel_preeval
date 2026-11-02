@@ -23,6 +23,12 @@ export default function PlacementPartnerPortal() {
               "Identify your agency, then sign in after 3M verification. Every shared profile is anonymised and requires the candidate’s active consent.",
             )}
           </p>
+          <p className="mt-4 text-sm font-semibold text-amber-100" data-testid="agency-access-terms">
+            {t(
+              "Accès sans frais d’inscription · vérification manuelle sous quelques jours ouvrés (confirmée par écrit).",
+              "No registration fee · manual verification within a few business days (confirmed in writing).",
+            )}
+          </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <a
               href="#inscription-agence"

@@ -10,6 +10,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { AnimationPreferencesProvider } from "./contexts/AnimationPreferencesContext";
 import { FontSizePreferencesProvider } from "./contexts/FontSizePreferencesContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import CookieConsent from "./components/CookieConsent";
 import AuthGuard from "./components/AuthGuard";
 import SessionLoader from "./components/SessionLoader";
 import Home from "./pages/Home";
@@ -53,12 +54,13 @@ const CanadaCrsPage = lazyWithTimeout(() => import("./pages/CanadaCrsPage"));
 import Schengen from "./pages/Schengen";
 import Formation from "./pages/Formation";
 import CniPasseport from "./pages/CniPasseport";
-import Faq from "./pages/Faq";
-import VerifierAgence from "./pages/VerifierAgence";
-import GuidesHub from "./pages/GuidesHub";
-import EnFaq from "./pages/EnFaq";
-import EnVerifyAgency from "./pages/EnVerifyAgency";
-import GuidePage from "./pages/GuidePage";
+// Pages de contenu chargées à la demande : hors du lot d'entrée, et leur <html lang> n'est plus écrasé par LanguageProvider au montage.
+const Faq = lazyWithTimeout(() => import("./pages/Faq"));
+const VerifierAgence = lazyWithTimeout(() => import("./pages/VerifierAgence"));
+const GuidesHub = lazyWithTimeout(() => import("./pages/GuidesHub"));
+const EnFaq = lazyWithTimeout(() => import("./pages/EnFaq"));
+const EnVerifyAgency = lazyWithTimeout(() => import("./pages/EnVerifyAgency"));
+const GuidePage = lazyWithTimeout(() => import("./pages/GuidePage"));
 import Services from "./pages/Services";
 const Paiement = lazyWithTimeout(() => import("./pages/Paiement"));
 const SuiviVol = lazyWithTimeout(() => import("./pages/SuiviVol"));
@@ -71,6 +73,12 @@ const EvisaRequestForm = lazyWithTimeout(() => import("./pages/EvisaRequestForm"
 const EvaluationResult = lazyWithTimeout(() => import("./pages/EvaluationResult"));
 const Ressources = lazyWithTimeout(() => import("./pages/Ressources"));
 const ResourceCountryPage = lazyWithTimeout(() => import("./pages/ResourceCountryPage"));
+const CountryGuides = lazyWithTimeout(() => import("./pages/CountryGuides"));
+const CountryGuide = lazyWithTimeout(() => import("./pages/CountryGuide"));
+const DocumentChecklistTool = lazyWithTimeout(() => import("./pages/DocumentChecklistTool"));
+const MobilityOrientationTool = lazyWithTimeout(() => import("./pages/MobilityOrientationTool"));
+const BudgetSimulatorTool = lazyWithTimeout(() => import("./pages/BudgetSimulatorTool"));
+const WhatsNew = lazyWithTimeout(() => import("./pages/WhatsNew"));
 const ProcedureResourceGuide = lazyWithTimeout(() => import("./pages/ProcedureResourceGuide"));
 const Fiches = lazyWithTimeout(() => import("./pages/Fiches"));
 const TranslationOrder = lazyWithTimeout(() => import("./pages/TranslationOrder"));
@@ -82,10 +90,12 @@ import Contact from "./pages/Contact";
 const PolitiqueConfidentialite = lazyWithTimeout(() => import("./pages/PolitiqueConfidentialite"));
 const DossierConfirmation = lazyWithTimeout(() => import("./pages/DossierConfirmation"));
 const ConditionsUtilisation = lazyWithTimeout(() => import("./pages/ConditionsUtilisation"));
+const MentionsLegales = lazyWithTimeout(() => import("./pages/MentionsLegales"));
 const Accessibility = lazyWithTimeout(() => import("./pages/Accessibility"));
 const Sitemap = lazyWithTimeout(() => import("./pages/Sitemap"));
 const ServiceStatus = lazyWithTimeout(() => import("./pages/ServiceStatus"));
 const EmployerPortal = lazyWithTimeout(() => import("./pages/EmployerPortal"));
+const PartnerInvitationActivation = lazyWithTimeout(() => import("./pages/PartnerInvitationActivation"));
 const PlacementPartnerPortal = lazyWithTimeout(() => import("./pages/PlacementPartnerPortal"));
 import PartnersHub from "./pages/PartnersHub";
 const AdminEvaluation = lazyWithTimeout(() => import("./pages/AdminEvaluation"));
@@ -93,9 +103,11 @@ const AdminLogin = lazyWithTimeout(() => import("./pages/AdminLogin"));
 const AdminChangePasswordRequired = lazyWithTimeout(() => import("./pages/AdminChangePasswordRequired"));
 const AdminEvaluations = lazyWithTimeout(() => import("./pages/AdminEvaluations"));
 import Tourism from "./pages/Tourism";
-const FloatingToolsDock = lazyWithTimeout(() =>
-  import("./components/FloatingToolsDock").then((module) => ({ default: module.FloatingToolsDock })),
-);
+// Le dock est un composant global affiché sur les pages publiques. Un import
+// dynamique de ce module provoquait parfois un échec de chunk sur les aperçus
+// déjà ouverts après une mise à jour ; l’import statique garde le dock fiable
+// tout en conservant son montage différé après le premier paint ci-dessous.
+import { FloatingToolsDock } from "./components/FloatingToolsDock";
 import ConfirmEmail from "./pages/ConfirmEmail";
 const SubmitDocuments = lazyWithTimeout(() => import("./pages/SubmitDocuments"));
 import HowItWorks from "./pages/HowItWorks";
@@ -205,16 +217,19 @@ function Router() {
       <Route path={"/assurance"} component={AssuranceInscription} />
       <Route path={"/assurance-inscription"} component={AssuranceInscription} />
       <Route path={"/insurance"}>{() => <Redirect to="/assurance" />}</Route>
+      {/* /evisa (annuaire historique) reste accessible ; /evisas est la surface principale. */}
       <Route path={"/evisa"} component={Evisa} />
-        <Route path={"/evisa-demande"}>{() => <Redirect to="/evisas/request" />}</Route>
+      <Route path={"/evisa-demande"}>{() => <Redirect to="/evisas/request" />}</Route>
       <Route path={"/about"} component={About} />
       <Route path={"/contact"} component={Contact} />
       <Route path={"/politique-confidentialite"} component={PolitiqueConfidentialite} />
+      <Route path={"/mentions-legales"} component={MentionsLegales} />
       <Route path={"/conditions-utilisation"} component={ConditionsUtilisation} />
       <Route path={"/accessibilite"} component={Accessibility} />
       <Route path={"/plan-du-site"} component={Sitemap} />
       <Route path={"/etat-du-service"} component={ServiceStatus} />
       <Route path={"/partenaires"} component={PartnersHub} />
+      <Route path={"/partenaires/activation"} component={PartnerInvitationActivation} />
       <Route path={"/agences-placement"} component={PlacementPartnerPortal} />
       <Route path={"/employeurs"} component={EmployerPortal} />
       <Route path={"/traduction/order"} component={TranslationOrder} />
@@ -350,6 +365,13 @@ function Router() {
       {/* Bibliothèque de ressources PDF + pages pays */}
       <Route path={"/ressources"} component={Ressources} />
       <Route path={"/ressources/:countrySlug"} component={ResourceCountryPage} />
+      {/* Guides par pays issus du catalogue des parcours : publiés seulement après relecture des sources officielles. */}
+      <Route path={"/pays"} component={CountryGuides} />
+      <Route path={"/pays/:slug"} component={CountryGuide} />
+      <Route path={"/outils/liste-de-pieces"} component={DocumentChecklistTool} />
+      <Route path={"/outils/parcours-mobilite"} component={MobilityOrientationTool} />
+      <Route path={"/outils/budget-mobilite"} component={BudgetSimulatorTool} />
+      <Route path={"/quoi-de-neuf"} component={WhatsNew} />
       <Route path={"/guide-procedures"} component={ProcedureResourceGuide} />
 
       {/* Fiches détaillées par pays */}
@@ -646,6 +668,7 @@ function AppShell() {
                   <MultiServiceCartProvider>
                   <SessionLoader isLoading={!sessionRestored} />
                   <Toaster />
+                  <CookieConsent />
                   <ChunkReloadNotice />
                   <PwaStatusNotice />
                   {sessionRestored && (

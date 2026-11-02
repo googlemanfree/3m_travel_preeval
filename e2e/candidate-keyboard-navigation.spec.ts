@@ -21,12 +21,12 @@ test.describe("Navigation clavier candidat", () => {
     await expect(forgotPasswordTrigger).toBeFocused();
   });
 
-  test("indique que Facebook est indisponible sans le présenter comme une connexion active", async ({ page }) => {
+  test("propose le choix de profil et n’affiche plus Facebook en connexion", async ({ page }) => {
     await page.goto("/login");
-    const facebook = page.getByRole("button", { name: "Facebook" });
-    await expect(facebook).toHaveAttribute("aria-disabled", "true");
-    await expect(facebook).toHaveAttribute("aria-describedby", "facebook-coming-soon");
-    await facebook.focus();
-    await expect(page.getByRole("tooltip", { name: "Bientôt disponible" })).toBeVisible();
+    await expect(page.getByTestId("login-profile-choice")).toBeVisible();
+    await expect(page.getByRole("link", { name: /agence de placement/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /employeur/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Facebook" })).toHaveCount(0);
   });
 });
+

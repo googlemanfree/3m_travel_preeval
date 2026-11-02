@@ -43,12 +43,25 @@ export const COMPANY_FOUNDER = {
 
 export const COMPANY_PROFILE = {
   publicName: BRAND_PUBLIC_NAME,
-  /** Nom légal d’exploitation (contrats, reçus, footer). */
+  /** Nom légal d’exploitation (contrats, reçus, footer, RCCM). */
   legalName: "3M Travel Agency SARL",
-  /** Groupe dirigé par le fondateur — à exposer aux moteurs de recherche. */
+  /**
+   * Formule d’affichage publique : raison sociale + enseigne.
+   * Évite la confusion OHADA / marque commerciale sur contact, mentions et preuves.
+   */
+  legalDisplayName: "3M Travel Agency SARL, enseigne 3M TRAVEL AGENCY",
+  /** Groupe dirigé par le fondateur — société mère / holding. */
   groupLegalName: GROUP_LEGAL_NAME,
+  groupRole:
+    "3M Group SARL est la société mère ; 3M Travel Agency SARL exploite l’enseigne commerciale 3M TRAVEL AGENCY (contrats, reçus et registre).",
   publicEmail: "hello@3mtravelagency.com",
   website: "https://www.3mtravelagency.com",
+  /** Hébergeur du site public (mentions légales). */
+  hosting: {
+    providerName: "Manus / WebDev (infrastructure cloud du prestataire de publication)",
+    providerNote:
+      "Le site www.3mtravelagency.com est publié via la plateforme Manus WebDev. Pour toute question technique liée à l’hébergement, contactez l’éditeur ci-dessous.",
+  },
   founder: COMPANY_FOUNDER,
   legalIdentifiers: {
     registration: "RC/YAO/2019/A/2567",
@@ -69,7 +82,7 @@ export const COMPANY_PROFILE = {
   responseSla: {
     label: "sous 24 heures ouvrées",
     definition:
-      "Jours ouvrés Yaoundé (lun–ven, hors jours fériés camerounais). Compteur à partir de la réception de l’évaluation ou du message e-mail/WhatsApp complet. Objectif d’accusé ou de première réponse humaine — pas une décision de visa.",
+      "Jours ouvrés Yaoundé (lun–sam, hors jours fériés camerounais). Compteur à partir de la réception de l’évaluation ou du message e-mail/WhatsApp complet. Objectif d’accusé ou de première réponse humaine — pas une décision de visa.",
   },
   offices: {
     cameroon: {
@@ -81,7 +94,7 @@ export const COMPANY_PROFILE = {
       phoneDisplay: "+237 620 996 045",
       timeZone: "Africa/Douala",
       timeZoneLabel: "Heure du Cameroun (WAT)",
-      openingHours: ["Lun–ven : 08 h 00 – 20 h 00", "Sam–dim : 09 h 00 – 18 h 00"],
+      openingHours: ["Lun–sam : 08 h 00 – 18 h 00", "Dimanche : fermé"],
       addressLines: ["Biyem-Assi, Montée Chapelle Obili", "À 10 m de EHS, Yaoundé, Cameroun"],
       addressLinesEn: ["Biyem-Assi, Montée Chapelle Obili", "10 m from EHS, Yaoundé, Cameroon"],
       mapQuery: "Biyem-Assi, Montée Chapelle Obili, Yaoundé, Cameroun",

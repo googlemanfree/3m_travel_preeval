@@ -3,9 +3,14 @@
  * Génère des rapports personnalisés avec scoring multi-destination
  */
 
+import { evaluationDisplayReference } from "../shared/evaluationReference";
 import { Application } from "../drizzle/schema";
 import { sanitizeClientCommunicationText } from "./clientCommunication";
 import { resolveEvaluationProjectKind, type EvaluationProjectKind } from "../shared/evaluationVisaCv";
+import { bilanIdentityFrom, renderBilanFragment } from "../shared/bilanContent";
+import { bilanVariablesFrom, draftExtras, resolveBilanVariables } from "../shared/bilanVariables";
+import { sanitizeRichTextHtml } from "./services/richText";
+import { PROFILE_DEFS, resolveEvaluationProfile } from "../shared/evaluationProfiles";
 import { STUDY_CYCLE_LABELS, VISITOR_STATUS_LABELS, type StudyCycle, type VisitorStatus } from "../shared/evaluationFormRequirements";
 
 // Destinations disponibles pour l'évaluation
@@ -431,7 +436,7 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
       : projectKind === "tourisme" ? "Visa tourisme / visite"
         : projectKind === "travail" ? "Visa travail"
           : "Projet de mobilité";
-  let adminDraft: { destination?: string; modelLabel?: string; criteria?: { education?: number; experience?: number; languages?: number; market?: number; profile?: number }; finalScore?: number; verdict?: string; strengths?: string[]; weaknesses?: string[]; recommendations?: string[]; checklist?: string[]; advisorValidated?: boolean } = {};
+  let adminDraft: { bilanHtml?: string; destination?: string; modelLabel?: string; criteria?: { education?: number; experience?: number; languages?: number; market?: number; profile?: number }; finalScore?: number; verdict?: string; strengths?: string[]; weaknesses?: string[]; recommendations?: string[]; checklist?: string[]; advisorValidated?: boolean } = {};
   try {
     const parsed = JSON.parse(app.scoringDetails || "{}");
     adminDraft = parsed.adminDraft || {};
@@ -439,6 +444,21 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
     adminDraft = {};
   }
   const customIntro = options.introMessage ?? app.evaluationDeliveryMessage;
+  // Bilan libre (collé par l'administrateur) : mis en forme à l'identité de l'agence, identique dans l'aperçu, l'espace candidat, le PDF et l'e-mail.
+  if (typeof adminDraft.bilanHtml === "string" && adminDraft.bilanHtml.trim().length > 0) {
+    const profile = resolveEvaluationProfile({ visaType: app.visaType, projectType: projectKind === "autre" ? null : projectKind });
+    return renderBilanFragment({
+      html: resolveBilanVariables(adminDraft.bilanHtml, bilanVariablesFrom({ fullName: app.fullName, dossierNumber: app.dossierNumber, destination: app.destination, visaLabel: PROFILE_DEFS[profile].label, visaType: app.visaType, paymentAmount: app.paymentAmount, score: Number.isFinite(Number(adminDraft.finalScore)) ? Number(adminDraft.finalScore) : null, ...draftExtras(adminDraft) })),
+      title: PROFILE_DEFS[profile].reportTitle,
+      candidateName: app.fullName,
+      reference: evaluationDisplayReference(app),
+      projectLabel: PROFILE_DEFS[profile].label,
+      destination: app.destination,
+      score: Number.isFinite(Number(adminDraft.finalScore)) ? Number(adminDraft.finalScore) : null,
+      introHtml: customIntro ? sanitizeRichTextHtml(customIntro) : null,
+      identity: bilanIdentityFrom({ candidateId: (app as { candidateId?: number | null }).candidateId, email: app.email, phone: (app as { whatsappNumber?: string | null }).whatsappNumber, advisor: draftExtras(adminDraft).advisorName || app.adminAssignedTo }),
+    });
+  }
   const clientText = (value: string) => sanitizeClientCommunicationText(value);
   const recommendations = Array.isArray(adminDraft.recommendations) && adminDraft.recommendations.length
     ? adminDraft.recommendations

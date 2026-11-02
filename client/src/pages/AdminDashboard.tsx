@@ -2,8 +2,84 @@
  * Dashboard Administrateur — 3M TRAVEL AGENCY
  * Gestion unifiée des candidats (dossiers en ligne + dossiers agence)
  */
+import { isPreDossierStatus } from "@shared/candidateStatus";
 import React, { lazy, Suspense, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
 import { trpc } from "@/lib/trpc";
+import { evaluationSourceTypeOf } from "@/lib/evaluationSourceType";
+
+/** Libellés des sections du poste de pilotage (fil d'Ariane, barre « Section active »). */
+const ADMIN_TAB_LABELS: Record<string, string> = {
+  pilotage: "Pilotage synchronisé",
+  candidates: "Dossiers",
+  "pre-dossiers": "Pré-dossiers",
+  inbox: "Demandes unifiées",
+  "evaluation-review": "Bilans à valider",
+  "evaluation-reminders": "Bilans à relancer",
+  documents: "Documents",
+  activations: "Activations",
+  partners: "Partenaires & placement",
+  tourism: "Tourisme & devis",
+  consular: "Consulats & liens",
+  "destination-analytics": "Destinations",
+  "evisa-catalogue": "Catalogue e-Visa",
+  "evaluation-config": "Évaluation & pays",
+  "study-catalog": "Écoles & candidatures études",
+  "job-offers": "Offres d'emploi & candidatures",
+  "stay-programs": "Séjours visiteurs & demandes de devis",
+  "activation-safety": "Activations à contrôler",
+  "remote-support": "Accompagnement à distance",
+  insights: "Pilotage avancé",
+  ops: "Outils et contrôles",
+  content: "Contenu du site",
+  calendar: "Calendrier",
+  payments: "Paiements",
+  flights: "Réservations vols",
+  rates: "Taux de change",
+  emails: "E-mails",
+  faq: "Satisfaction FAQ",
+  rag: "Guides & RAG",
+  "passport-history": "Passeports",
+  "route-health": "404 & liens",
+  "simulator-health": "Santé simulateurs",
+  "footer-engagement": "Engagement footer",
+  "system-status": "État système",
+  scheduler: "Planificateur",
+  audit: "Journal d'audit",
+  privacy: "Confidentialité",
+};
+const ADMIN_TAB_STORAGE_KEY = "3m-admin-active-tab";
+/** Sections sensibles : jamais restaurées automatiquement (elles dépendent des droits de la session). */
+const ADMIN_TAB_NOT_RESTORED = new Set(["rates", "scheduler"]);
+
+function readInitialAdminTab(): string {
+  if (typeof window === "undefined") return "pilotage";
+  try {
+    const fromUrl = new URLSearchParams(window.location.search).get("tab");
+    if (fromUrl && ADMIN_TAB_LABELS[fromUrl] && !ADMIN_TAB_NOT_RESTORED.has(fromUrl)) return fromUrl;
+    const stored = window.localStorage.getItem(ADMIN_TAB_STORAGE_KEY);
+    if (stored && ADMIN_TAB_LABELS[stored] && !ADMIN_TAB_NOT_RESTORED.has(stored)) return stored;
+  } catch {
+    // stockage indisponible : on retombe sur le pilotage
+  }
+  return "pilotage";
+}
+
+function rememberAdminTab(tab: string) {
+  try {
+    window.localStorage.setItem(ADMIN_TAB_STORAGE_KEY, tab);
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", tab);
+    window.history.replaceState(window.history.state, "", url.toString());
+  } catch {
+    // navigation privée ou stockage bloqué : l'onglet change quand même
+  }
+}
+
+/** Pastille « à traiter » : invisible à zéro ou quand le module n'est pas encore migré. */
+function InboxBadge({ count, label }: { count: number | null | undefined; label: string }) {
+  if (!count) return null;
+  return <span className="ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-rose-600 px-1.5 text-[11px] font-black leading-5 text-white" role="status" aria-label={`${count} ${label}`} data-testid="inbox-badge">{count > 99 ? "99+" : count}</span>;
+}
 
 function AdminNavGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -131,17 +207,35 @@ import { AdminSchedulerPanel, SchedulerDryRunBanner, SchedulerModeBadge } from "
 import { AdminSimulatorHealth } from "@/components/AdminSimulatorHealth";
 import { AdminFooterEngagement } from "@/components/AdminFooterEngagement";
 import { AdminPlacementPipeline } from "@/components/AdminPlacementPipeline";
+import { AdminPartnerModule } from "@/components/AdminPartnerModule";
+import { AdminCvthequeReview } from "@/components/AdminCvthequeReview";
+import { AdminRecruitmentInbox } from "@/components/AdminRecruitmentInbox";
+import { AdminEvaluationJourneyBoard } from "@/components/AdminEvaluationJourneyBoard";
+import { AdminEvaluationFormEditor } from "@/components/AdminEvaluationFormEditor";
+import { AdminCountryCatalog } from "@/components/AdminCountryCatalog";
+import { AdminStudyCatalog } from "@/components/AdminStudyCatalog";
+import { AdminJobOffers } from "@/components/AdminJobOffers";
+import { AdminStayPrograms } from "@/components/AdminStayPrograms";
+import { AdminActivationSafety } from "@/components/AdminActivationSafety";
+import { AdminRemoteSupport } from "@/components/AdminRemoteSupport";
+import { AdminInsights } from "@/components/AdminInsights";
+import { AdminOps } from "@/components/AdminOps";
+import { AdminContent } from "@/components/AdminContent";
+import { AdminPrivacyCenter } from "@/components/AdminPrivacyCenter";
 import { AdminOperationsControlCenter } from "@/components/AdminOperationsControlCenter";
 import AdminTodayDashboard, { type TodayCandidate } from "@/components/AdminTodayDashboard";
 import { AdminCandidateKanban, getNextKanbanStatus, type KanbanCandidate } from "@/components/AdminCandidateKanban";
 import { AdminCalendarView } from "@/components/AdminCalendarView";
 import { UnifiedRequestInbox } from "@/components/UnifiedRequestInbox";
 import { Candidate360Workspace } from "@/components/Candidate360Workspace";
+import { adminLoginUrl, clearAdminSession, isAdminSessionError } from "@/lib/adminSession";
 import FlightAgentDashboard from "@/pages/FlightAgentDashboard";
 import { AdvisorEvaluationReviewQueue } from "@/components/AdvisorEvaluationReviewQueue";
 import { BilanReminderDashboard } from "@/components/BilanReminderDashboard";
 import { EvaluationDeclarationBadge } from "@/components/EvaluationDeclarationBadge";
 import { AdminPreDossierEvaluationPanel } from "@/components/AdminPreDossierEvaluationPanel";
+import { isBilanSent } from "@/lib/bilanSent";
+import { AdminProfileUndo } from "@/components/AdminProfileUndo";
 import type { EvaluationDeclarationStatus } from "@shared/evaluationDeclaration";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -369,8 +463,9 @@ function SourceBadge({ source }: { source: string }) {
 }
 
 const ACTIVATION_STATUS_CONFIG: Record<CandidateActivationStatus, { label: string; color: string; icon: React.ReactNode }> = {
-  active: { label: "Activé", color: "text-emerald-700 bg-emerald-50 border-emerald-200", icon: <CheckCircle className="w-3 h-3" /> },
-  pending: { label: "En attente", color: "text-amber-700 bg-amber-50 border-amber-200", icon: <Clock className="w-3 h-3" /> },
+  // Il s'agit de l'e-mail du COMPTE confirmé, pas du dossier : un dossier ne s'ouvre qu'après paiement des frais d'ouverture.
+  active: { label: "E-mail confirmé", color: "text-emerald-700 bg-emerald-50 border-emerald-200", icon: <CheckCircle className="w-3 h-3" /> },
+  pending: { label: "E-mail à confirmer", color: "text-amber-700 bg-amber-50 border-amber-200", icon: <Clock className="w-3 h-3" /> },
   expired: { label: "Lien expiré", color: "text-orange-700 bg-orange-50 border-orange-200", icon: <AlertCircle className="w-3 h-3" /> },
   failed: { label: "Échec d’envoi", color: "text-red-700 bg-red-50 border-red-200", icon: <ShieldAlert className="w-3 h-3" /> },
   not_registered: { label: "Non inscrit", color: "text-slate-600 bg-slate-50 border-slate-200", icon: <Mail className="w-3 h-3" /> },
@@ -419,6 +514,11 @@ export function CandidateDetailModal({
   const [paymentConfirmedOptimistically, setPaymentConfirmedOptimistically] = useState(false);
   const [evaluationEditorOpen, setEvaluationEditorOpen] = useState(false);
   const [candidate360Tab, setCandidate360Tab] = useState<"overview" | "evaluation" | "documents" | "payments" | "messages" | "history">("overview");
+  // Ouvre un onglet de la fiche 360° depuis le panneau latéral et y amène l'écran : la fiche est plus bas que les boutons.
+  const open360Tab = (tab: typeof candidate360Tab) => {
+    setCandidate360Tab(tab);
+    window.setTimeout(() => document.getElementById("candidate-360-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+  };
   const [rollbackDialogOpen, setRollbackDialogOpen] = useState(false);
   const [rollbackReason, setRollbackReason] = useState("");
   const [portraitPreviewOpen, setPortraitPreviewOpen] = useState(false);
@@ -458,7 +558,7 @@ export function CandidateDetailModal({
   const evaluationBlocksActivation = isPreDossierAccount
     && candidate?.evaluationDeclarationStatus !== "not_declared"
     && candidate?.evaluationDeclarationStatus !== "validated";
-  const evaluationEditorSourceType = candidate?.source === "ACCOUNT_ONLY" ? "candidate" : candidate?.folderCode?.startsWith("EVAL-AG-") || candidate?.source === "AGENCY_PHYSICAL" ? "agency" : "application";
+  const evaluationEditorSourceType = evaluationSourceTypeOf(candidate);
   const preDossierCvUrl = (() => {
     const fromDoc = (data as { cvDocument?: { documentUrl?: string | null } } | undefined)?.cvDocument?.documentUrl;
     const fromEval = (data as { evaluationContext?: { cvFileUrl?: string | null } } | undefined)?.evaluationContext?.cvFileUrl;
@@ -871,6 +971,23 @@ export function CandidateDetailModal({
                 <SourceBadge source={candidate.source} />
               </div>
             </div>
+            {(isBilanSent(candidate, data) || candidate.evaluationDeclarationStatus === "validated" || candidate.evaluationReviewedAt) ? (
+              <div
+                role="status"
+                className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border-2 border-emerald-500 bg-emerald-50 px-4 py-3 text-emerald-950"
+                data-testid="profile-evaluated-banner"
+              >
+                <CheckCircle className="h-7 w-7 shrink-0 text-emerald-700" aria-hidden="true" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xl font-black uppercase tracking-wide">Profil évalué</p>
+                  <p className="text-xs leading-5 text-emerald-900">
+                    {isBilanSent(candidate, data) ? "Le bilan a déjà été envoyé au candidat." : "L’évaluation a déjà été validée par un conseiller."}
+                    {candidate.evaluationReviewedAt ? ` Validée le ${new Date(candidate.evaluationReviewedAt).toLocaleDateString("fr-FR")}${candidate.evaluationReviewedBy ? ` par ${candidate.evaluationReviewedBy}` : ""}.` : ""}
+                    {" "}Inutile de le refaire : utilisez « Modifier le bilan » pour un ajustement.
+                  </p>
+                </div>
+              </div>
+            ) : null}
             {portraitPreviewOpen && candidate.avatarUrl && (
               <div
                 className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/70 p-4"
@@ -1037,6 +1154,7 @@ export function CandidateDetailModal({
                       );
                     })}
                   </div>
+                  <AdminProfileUndo sessionToken={sessionToken} candidateId={Number(candidate.internalId)} />
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Button
                       type="button"
@@ -1045,7 +1163,7 @@ export function CandidateDetailModal({
                       onClick={() => setEvaluationEditorOpen(true)}
                       data-testid="predossier-open-eval-editor"
                     >
-                      <FileText className="mr-1.5 h-3.5 w-3.5" />Préparer / envoyer le bilan
+                      <FileText className="mr-1.5 h-3.5 w-3.5" />{isBilanSent(candidate, data) ? "Modifier le bilan" : "Préparer / envoyer le bilan"}
                     </Button>
                     {preDossierCvUrl ? (
                       <a
@@ -1062,6 +1180,7 @@ export function CandidateDetailModal({
                 </section>
                 <div id="predossier-evaluation-panel" className="scroll-mt-24">
                 <AdminPreDossierEvaluationPanel
+                  evaluationDone={isBilanSent(candidate, data)}
                   status={candidate.evaluationDeclarationStatus}
                   declaredAt={candidate.evaluationDeclaredAt}
                   reviewedAt={candidate.evaluationReviewedAt}
@@ -1074,7 +1193,7 @@ export function CandidateDetailModal({
                   isOfflineValidating={offlineEvaluationMutation.isPending}
                 />
                 </div>
-                {candidate?.internalStatus === "nouveau" ? (
+                {isPreDossierStatus(candidate?.internalStatus) ? (
                   <section id="predossier-treatment-panel" className="scroll-mt-24 rounded-xl border border-blue-200 bg-white p-5 shadow-sm" aria-label="Actions de traitement du compte pré-dossier">
                     <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
                       <div>
@@ -1195,6 +1314,7 @@ export function CandidateDetailModal({
                   onStatusUpdated();
                 }}
                 initialTab={candidate360Tab}
+                onTabChange={setCandidate360Tab}
               />
             )}
 
@@ -1304,7 +1424,7 @@ export function CandidateDetailModal({
                     ) : guidedNext.code === "employer_selection" || guidedNext.code === "protocol_two" ? (
                       <Button
                         type="button"
-                        onClick={() => setCandidate360Tab(guidedNext.focusTab || "evaluation")}
+                        onClick={() => open360Tab(guidedNext.focusTab || "evaluation")}
                         className="mt-2 w-full bg-amber-700 text-white hover:bg-amber-800"
                         data-testid="guided-employer-selection"
                       >
@@ -1354,16 +1474,16 @@ export function CandidateDetailModal({
                       compact
                       triggerClassName="justify-start border-indigo-300 bg-indigo-50 text-indigo-950 hover:bg-indigo-100"
                     />
-                    <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("documents")} data-testid="open-360-documents">
+                    <Button variant="outline" className="justify-start" onClick={() => open360Tab("documents")} data-testid="open-360-documents">
                       <FileCheck className="mr-2 h-4 w-4 text-violet-700" />Documents du dossier 360°
                     </Button>
-                    <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("payments")} data-testid="open-cancel-validated-payment">
+                    <Button variant="outline" className="justify-start" onClick={() => open360Tab("payments")} data-testid="open-cancel-validated-payment">
                       <FileText className="mr-2 h-4 w-4 text-amber-700" />Paiements et annulation
                     </Button>
-                    <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("overview")} data-testid="open-360-summary">
+                    <Button variant="outline" className="justify-start" onClick={() => open360Tab("overview")} data-testid="open-360-summary">
                       <FileText className="mr-2 h-4 w-4 text-indigo-700" />Synthèse & vue d’ensemble
                     </Button>
-                    <Button variant="outline" className="justify-start" onClick={() => setCandidate360Tab("messages")}>
+                    <Button variant="outline" className="justify-start" onClick={() => open360Tab("messages")}>
                       <Mail className="mr-2 h-4 w-4 text-blue-700" />Échanges candidat
                     </Button>
                   </div>
@@ -1415,9 +1535,19 @@ export function CandidateDetailModal({
         ) : (
           <div className="py-12 text-center text-gray-600">
             <AlertCircle className="mx-auto mb-3 h-6 w-6 text-amber-600" />
-            <p className="font-medium">Impossible de charger cette fiche candidat</p>
-            <p className="mt-1 text-sm text-gray-500">{error?.message || "La fiche est peut-être en cours de synchronisation. Actualisez puis réessayez."}</p>
-            <Button className="mt-4" variant="outline" onClick={() => void refetch()}>Réessayer</Button>
+            {isAdminSessionError(error) ? (
+              <div data-testid="candidate-360-session-ended">
+                <p className="font-medium">Votre session administrateur a pris fin</p>
+                <p className="mx-auto mt-1 max-w-md text-sm text-gray-500">La durée de session est dépassée, ou le même compte s'est connecté ailleurs. Reconnectez-vous : vous reviendrez sur ce dossier.</p>
+                <Button className="mt-4 bg-blue-800 text-white hover:bg-blue-900" onClick={() => { clearAdminSession(); window.location.assign(adminLoginUrl(`${window.location.pathname}${window.location.search}`)); }}>Se reconnecter</Button>
+              </div>
+            ) : (
+              <>
+                <p className="font-medium">Impossible de charger cette fiche candidat</p>
+                <p className="mt-1 text-sm text-gray-500">{error?.message || "La fiche est peut-être en cours de synchronisation. Actualisez puis réessayez."}</p>
+                <Button className="mt-4" variant="outline" onClick={() => void refetch()}>Réessayer</Button>
+              </>
+            )}
           </div>
         )}
 
@@ -1762,6 +1892,7 @@ export default function AdminDashboard() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [visaKindFilter, setVisaKindFilter] = useState("ALL");
   const [activationFilter, setActivationFilter] = useState<CandidateActivationStatus | "ALL">("ALL");
   const [sourceFilter, setSourceFilter] = useState<CandidateSource | "ALL">("ALL");
   const [destinationFilter, setDestinationFilter] = useState("ALL");
@@ -1772,7 +1903,18 @@ export default function AdminDashboard() {
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [openEvaluationEditor, setOpenEvaluationEditor] = useState(false);
   const [preDossierActivateAccountId, setPreDossierActivateAccountId] = useState<number | null>(null);
-  const [activeAdminTab, setActiveAdminTab] = useState("pilotage");
+  const [activeAdminTab, setActiveAdminTabState] = useState<string>(readInitialAdminTab);
+  const opportunitiesInbox = trpc.opportunitiesInbox.summary.useQuery({ sessionToken }, { enabled: Boolean(sessionToken), refetchInterval: 60_000, retry: false });
+  // Un clic sur une section en affiche directement le contenu : on mémorise l'onglet et on amène le contenu sous l'en-tête.
+  const setActiveAdminTab = useCallback((tab: string) => {
+    setActiveAdminTabState(tab);
+    rememberAdminTab(tab);
+    if (typeof window !== "undefined") window.requestAnimationFrame(() => document.getElementById("admin-workspace")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }, []);
+  useEffect(() => {
+    // Lien direct (?tab=candidates) : le contenu apparaît tout de suite, sans descendre dans la page.
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tab")) window.setTimeout(() => document.getElementById("admin-workspace")?.scrollIntoView({ block: "start" }), 400);
+  }, []);
   const [guichetMode, setGuichetMode] = useState(false);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
@@ -1823,6 +1965,18 @@ export default function AdminDashboard() {
   const [archiveDialogItems, setArchiveDialogItems] = useState<Array<{ id: string; folderCode?: string; fullName?: string; email?: string; source?: string }> | null>(null);
   const [archiveReasonInput, setArchiveReasonInput] = useState("Doublon à vérifier");
   const [restoreDialogRecord, setRestoreDialogRecord] = useState<{ candidateId: string; reference: string } | null>(null);
+  const [purgeDialogRecord, setPurgeDialogRecord] = useState<{ candidateId: string; reference: string; email: string } | null>(null);
+  const [purgeEmailInput, setPurgeEmailInput] = useState("");
+  const purgeArchivedMutation = trpc.admin.purgeArchivedAccount.useMutation({
+    onSuccess: (result) => {
+      toast({ title: "Compte supprimé définitivement", description: result.message });
+      setPurgeDialogRecord(null);
+      setPurgeEmailInput("");
+      void archivedRecordsQuery.refetch();
+      void trpcUtils.admin.listCandidates.invalidate();
+    },
+    onError: (error) => toast({ title: "Suppression impossible", description: error.message, variant: "destructive" }),
+  });
 
   const archiveCandidateFromTable = useCallback((candidate: { id?: string; folderCode?: string; fullName?: string; email?: string; source?: string }) => {
     if (!candidate.id) return;
@@ -1957,9 +2111,10 @@ export default function AdminDashboard() {
     activationStatus: activationFilter !== "ALL" ? activationFilter : undefined,
     source: sourceFilter !== "ALL" ? sourceFilter : undefined,
     destination: destinationFilter !== "ALL" ? destinationFilter : undefined,
+    visaKind: visaKindFilter !== "ALL" ? (visaKindFilter as "evisa" | "work" | "study" | "visitor" | "family" | "residence" | "other") : undefined,
     assignedToMe: assignedToMeFilter || undefined,
     sortBy,
-  }), [sessionToken, search, statusFilter, activationFilter, sourceFilter, destinationFilter, assignedToMeFilter, sortBy]);
+  }), [sessionToken, search, statusFilter, activationFilter, sourceFilter, destinationFilter, visaKindFilter, assignedToMeFilter, sortBy]);
   const { data, isLoading, error: candidateListError, refetch, dataUpdatedAt, isFetching: isFetchingCandidates } = trpc.admin.listCandidates.useQuery(
     candidateListInput,
     {
@@ -2178,13 +2333,14 @@ export default function AdminDashboard() {
     await updateKanbanStatusMutation.mutateAsync({ sessionToken, candidateId: candidate.id, newStatus: requestedStatus, notifyClient: true });
   };
   const availableDestinations = data?.availableDestinations || [];
-  const hasCandidateFilters = Boolean(search || statusFilter !== "ALL" || activationFilter !== "ALL" || sourceFilter !== "ALL" || destinationFilter !== "ALL" || assignedToMeFilter || sortBy !== "priority" || nextActionFilter !== "ALL" || nextActionSort !== "default");
+  const hasCandidateFilters = Boolean(search || statusFilter !== "ALL" || activationFilter !== "ALL" || sourceFilter !== "ALL" || destinationFilter !== "ALL" || visaKindFilter !== "ALL" || assignedToMeFilter || sortBy !== "priority" || nextActionFilter !== "ALL" || nextActionSort !== "default");
   const resetCandidateFilters = () => {
     setSearch("");
     setStatusFilter("ALL");
     setActivationFilter("ALL");
     setSourceFilter("ALL");
     setDestinationFilter("ALL");
+    setVisaKindFilter("ALL");
     setAssignedToMeFilter(false);
     setSortBy("priority");
     setNextActionFilter("ALL");
@@ -2379,7 +2535,7 @@ export default function AdminDashboard() {
             <nav aria-label="Fil d’Ariane du pilotage admin" className="flex w-full items-center gap-2 border-t border-white/15 pt-3 text-sm text-blue-100">
               <button type="button" onClick={() => setActiveAdminTab("pilotage")} className="rounded px-1 font-semibold underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Administration</button>
               <span aria-hidden="true">/</span>
-              <span aria-current="page" className="font-bold text-white">{({ pilotage: "Pilotage", candidates: "Dossiers", "pre-dossiers": "Pré-dossiers", payments: "Paiements", documents: "Documents", flights: "Vols", emails: "E-mails" } as Record<string, string>)[activeAdminTab] || "Pilotage"}</span>
+              <span aria-current="page" className="font-bold text-white">{ADMIN_TAB_LABELS[activeAdminTab] || "Pilotage"}</span>
             </nav>
             <nav aria-label="Raccourcis de pilotage admin" className="flex w-full flex-wrap gap-2">
               {[['pilotage', 'Pilotage'], ['candidates', 'Dossiers'], ['pre-dossiers', 'Pré-dossiers'], ['payments', 'Paiements'], ['documents', 'Documents'], ['flights', 'Vols'], ['emails', 'E-mails']].map(([tab, label]) => (
@@ -2501,95 +2657,6 @@ export default function AdminDashboard() {
           </span>
         </div>
 
-        <section className="premium-surface rounded-2xl p-4" aria-label="Supervision des remises SMTP">
-          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-            <div>
-              <h2 className="flex items-center gap-2 font-black text-slate-950"><Mail className="h-5 w-5 text-blue-700" />Remises SMTP</h2>
-              <p className="mt-1 text-sm text-slate-600">Synthèse des 30 dernières remises enregistrées. Les détails sensibles ne sont pas affichés ici.</p>
-            </div>
-            <div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={() => void Promise.all([refetchSmtpDelivery(), refetchSmtpTrend()])} disabled={isFetchingSmtpDelivery || isFetchingSmtpTrend || !sessionToken} className="gap-2"><RefreshCw className={`h-4 w-4 ${isFetchingSmtpDelivery || isFetchingSmtpTrend ? "animate-spin" : ""}`} />Actualiser</Button><Button variant="outline" size="sm" onClick={() => setActiveAdminTab("emails")}>Ouvrir les e-mails</Button></div>
-          </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-xl border border-blue-100 bg-blue-50 p-3"><p className="text-xs font-semibold text-blue-800">Taux de réussite</p><p className="mt-1 text-2xl font-black text-blue-950">{smtpSuccessRate === null ? "—" : `${smtpSuccessRate}%`}</p><p className="text-xs text-blue-700">Sur les remises chargées</p></div>
-            <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3"><p className="text-xs font-semibold text-emerald-800">Envoyés</p><p className="mt-1 text-2xl font-black text-emerald-950">{smtpSummary.sent}</p><p className="text-xs text-emerald-700">Remises confirmées</p></div>
-            <div className="rounded-xl border border-rose-100 bg-rose-50 p-3"><p className="text-xs font-semibold text-rose-800">Échecs</p><p className="mt-1 text-2xl font-black text-rose-950">{smtpSummary.failed}</p><p className="text-xs text-rose-700">À examiner manuellement</p></div>
-            <div className="rounded-xl border border-amber-100 bg-amber-50 p-3"><p className="text-xs font-semibold text-amber-800">En attente</p><p className="mt-1 text-2xl font-black text-amber-950">{smtpSummary.pending}</p><p className="text-xs text-amber-700">Suivi requis</p></div>
-          </div>
-          <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3" aria-label="Évolution du taux de réussite SMTP sur 30 jours">
-            <div className="flex flex-wrap items-baseline justify-between gap-2"><p className="text-xs font-bold uppercase tracking-wide text-slate-600">Taux de réussite SMTP · 30 jours</p><span className="text-xs text-slate-500">Remises finalisées uniquement</span></div>
-            {isFetchingSmtpTrend ? <p className="py-8 text-sm text-slate-500">Chargement de la tendance…</p> : !hasSmtpTrend ? <p className="py-8 text-sm text-slate-600">Aucune remise finalisée sur les 30 derniers jours : aucune tendance n’est tracée.</p> : <div className="mt-2 h-56"><ResponsiveContainer width="100%" height="100%"><LineChart data={smtpDeliveryTrend} margin={{ top: 10, right: 16, left: -20, bottom: 0 }}><CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" /><XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" /><YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} tick={{ fontSize: 11 }} /><Tooltip formatter={(value: number | null) => value === null ? "Aucune remise finalisée" : `${value}%`} labelFormatter={(label) => `Jour : ${label}`} /><Line type="monotone" dataKey="successRate" name="Taux de réussite" stroke="#1d4ed8" strokeWidth={2.5} dot={false} connectNulls={false} /></LineChart></ResponsiveContainer></div>}
-          </div>
-          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-bold uppercase tracking-wide text-slate-600">Dernières erreurs de remise</p>{recentSmtpFailures.length === 0 ? <p className="mt-2 text-sm text-slate-600">Aucun échec dans les remises chargées.</p> : <ul className="mt-2 space-y-1 text-sm text-slate-700">{recentSmtpFailures.map((failure) => <li key={failure.id} className="flex flex-wrap items-center justify-between gap-2"><span>Échec de remise à examiner</span><span className="text-xs text-slate-500">{new Date(failure.createdAt).toLocaleString("fr-FR")}</span></li>)}</ul>}</div>
-        </section>
-
-        <section className="premium-surface rounded-2xl p-4" aria-label="File de priorités manuelle">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h2 className="flex items-center gap-2 font-black text-slate-950"><AlertCircle className="h-5 w-5 text-amber-600" />File de priorités</h2>
-              <p className="mt-1 text-sm text-slate-600">Indicateurs de travail à ouvrir manuellement par un conseiller. Aucune décision ni notification n’est déclenchée automatiquement.</p>
-            </div>
-            <span className="text-xs font-semibold text-slate-500">Actualisation manuelle requise</span>
-          </div>
-          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {manualPriorities.map((priority) => {
-              const tone = priority.tone === "amber" ? "border-amber-200 bg-amber-50" : priority.tone === "orange" ? "border-orange-200 bg-orange-50" : priority.tone === "sky" ? "border-sky-200 bg-sky-50" : "border-blue-200 bg-blue-50";
-              const deadlineTone = priority.deadline.tone === "rose" ? "border-rose-200 bg-rose-100 text-rose-800" : priority.deadline.tone === "amber" ? "border-amber-200 bg-amber-100 text-amber-800" : priority.deadline.tone === "emerald" ? "border-emerald-200 bg-emerald-100 text-emerald-800" : "border-slate-200 bg-slate-100 text-slate-700";
-              return (
-                <button
-                  key={priority.id}
-                  type="button"
-                  onClick={() => setActiveAdminTab(priority.tab)}
-                  className={`min-h-28 rounded-xl border p-4 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${tone}`}
-                  aria-label={`Ouvrir ${priority.label} : ${priority.count} élément(s)`}
-                >
-                  <div className="flex items-start justify-between gap-3"><span className="text-sm font-bold text-slate-900">{priority.label}</span><span className="rounded-full bg-white px-2 py-0.5 text-lg font-black text-slate-950">{priority.count}</span></div>
-                  <p className="mt-3 text-xs leading-5 text-slate-600">{priority.detail}</p>
-                  <span className={`mt-3 flex w-fit items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-bold ${deadlineTone}`}><Timer className="h-3 w-3" />{priority.deadline.label}</span>
-                  <p className="mt-2 text-[11px] leading-4 text-slate-600">{priority.deadline.detail}</p>
-                  <span className="mt-3 inline-block text-xs font-bold text-blue-800">Ouvrir le module →</span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="premium-surface rounded-2xl p-4" aria-label="Échéances de traitement par conseiller">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h2 className="flex items-center gap-2 font-black text-slate-950"><Users className="h-5 w-5 text-blue-700" />Échéances par conseiller</h2>
-              <p className="mt-1 text-sm text-slate-600">Vue de travail fondée sur les échéances enregistrées. Aucun rappel, changement de statut ou notification n’est déclenché automatiquement.</p>
-              {assignedToMeFilter && <p className="mt-1 text-xs font-semibold text-blue-700">Filtré sur « Mes dossiers » ({currentAdminEmail ?? "…"}).</p>}
-            </div>
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row"><Button variant="outline" size="sm" onClick={exportAdvisorDeadlinesCsv} className="gap-2"><Download className="h-4 w-4" />Exporter CSV</Button><Select value={advisorDeadlinePriorityFilter} onValueChange={(value) => setAdvisorDeadlinePriorityFilter(value as typeof advisorDeadlinePriorityFilter)}><SelectTrigger aria-label="Filtrer les échéances par priorité" className="w-full bg-white sm:w-48"><SelectValue placeholder="Toutes priorités" /></SelectTrigger><SelectContent><SelectItem value="all">Toutes priorités</SelectItem><SelectItem value="urgent">Urgente</SelectItem><SelectItem value="high">Haute</SelectItem><SelectItem value="normal">Normale</SelectItem><SelectItem value="low">Basse</SelectItem></SelectContent></Select></div>
-          </div>
-          {isLoadingAdvisorDeadlines ? (
-            <p className="py-6 text-sm text-slate-500">Chargement des échéances…</p>
-          ) : visibleAdvisorDeadlineGroups.length === 0 ? (
-            <p className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Aucune échéance ne correspond à cette priorité.</p>
-          ) : (
-            <div className="mt-4 grid gap-3 xl:grid-cols-2">
-              {visibleAdvisorDeadlineGroups.map((group) => (
-                <article key={group.advisorId ?? "unassigned"} className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div><h3 className="font-bold text-slate-950">{group.advisorName}</h3><p className="text-xs text-slate-500">{group.advisorEmail ?? "À attribuer à un conseiller"}</p></div>
-                    <Badge className="bg-blue-100 text-blue-800">{group.items.length} échéance{group.items.length > 1 ? "s" : ""}</Badge>
-                  </div>
-                  <ul className="mt-3 space-y-2">
-                    {group.items.slice(0, 6).map((item) => {
-                      const deadlineClass = item.deadline.key === "overdue" ? "border-rose-200 bg-rose-50 text-rose-800" : item.deadline.key === "today" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-emerald-200 bg-emerald-50 text-emerald-800";
-                      const priorityMeta = item.priority === "urgent" ? { label: "Priorité urgente", className: "border-rose-300 bg-rose-600 text-white" } : item.priority === "high" ? { label: "Priorité haute", className: "border-orange-300 bg-orange-100 text-orange-900" } : item.priority === "low" ? { label: "Priorité basse", className: "border-slate-300 bg-slate-100 text-slate-700" } : { label: "Priorité normale", className: "border-blue-300 bg-blue-100 text-blue-900" };
-                      return <li key={item.id} className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-900">{item.caseNumber}{item.candidateName ? ` · ${item.candidateName}` : ""}</p><p className="mt-0.5 truncate text-xs text-slate-600">{item.label}</p></div><div className="flex flex-wrap items-center gap-2"><Badge className={priorityMeta.className}>{priorityMeta.label}</Badge><Badge className={deadlineClass}>{item.deadline.label}</Badge><span className="whitespace-nowrap text-xs font-medium text-slate-600">{new Date(item.dueAt).toLocaleString("fr-FR")}</span></div></li>;
-                    })}
-                  </ul>
-                  {group.items.length > 6 && <p className="mt-3 text-xs font-medium text-slate-500">+ {group.items.length - 6} autre(s) échéance(s) dans ce groupe.</p>}
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <div id="admin-placement-pipeline"><AdminPlacementPipeline sessionToken={sessionToken} onOpenCandidate={(adminCandidateRef) => setSelectedCandidateId(adminCandidateRef)} /></div>
-
         {/* Modal de secours si les e-mails de réinitialisation ont échoué */}
         {resetModalData && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
@@ -2634,79 +2701,21 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Widget : répartition des candidats par pays */}
-        <Card className="border-0 shadow-sm overflow-hidden hover:-translate-y-0.5">
-          <CardContent className="p-5">
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-violet-600" />
-                  <h2 className="font-semibold text-gray-900">Répartition des candidats par pays</h2>
-                </div>
-                <p className="text-sm text-gray-500 mt-1">
-                  Vue consolidée des candidats issus des dossiers, évaluations et demandes agence.
-                </p>
-              </div>
-              {countryDistribution && (
-                <div className="text-right shrink-0">
-                  <p className="text-2xl font-bold text-violet-700">{countryDistribution.totalCandidates}</p>
-                  <p className="text-xs text-gray-500">candidats suivis</p>
-                </div>
-              )}
-            </div>
-            {isLoadingCountryDistribution ? (
-              <div className="h-56 flex items-center justify-center text-sm text-gray-500">
-                <RefreshCw className="w-5 h-5 mr-2 animate-spin text-violet-600" />
-                Chargement des statistiques...
-              </div>
-            ) : countryDistribution?.data?.length ? (
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={countryDistribution.data} layout="vertical" margin={{ top: 4, right: 20, left: 12, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                  <XAxis type="number" allowDecimals={false} />
-                  <YAxis dataKey="country" type="category" width={110} tick={{ fontSize: 12 }} />
-                  <Tooltip formatter={(value: number) => [`${value} candidat(s)`, "Répartition"]} />
-                  <Bar dataKey="count" fill="#7c3aed" radius={[0, 5, 5, 0]} name="Candidats" />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-56 flex items-center justify-center text-sm text-gray-500 border border-dashed rounded-lg">
-                Aucune destination renseignée pour le moment.
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <div className="mb-4 flex flex-col justify-between gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 sm:flex-row sm:items-center">
-          <div><p className="font-black text-blue-950">Pôle 3M Solutions</p><p className="text-sm text-blue-800">Consultez et traitez les demandes de plateformes, marketing, support IT et formation.</p></div>
-          <a href="/admin/digital-services" className="relative inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 text-sm font-black text-white transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-            Ouvrir les demandes 3M Solutions
-            {digitalNewCount > 0 && (
-              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[10px] font-black text-amber-950">
-                {digitalNewCount}
-              </span>
-            )}
-          </a>
-        </div>
         <SchedulerDryRunBanner />
         {/* Onglets : Dossiers, Paiements, Documents, Paramètres Vols */}
         <Tabs value={activeAdminTab} onValueChange={setActiveAdminTab} className="w-full" aria-label="Sections du tableau de bord administrateur">
-          <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Pilotage centralisé</p>
-              <div className="premium-gold-rule mt-2" aria-hidden="true" />
-              <h2 className="premium-section-title mt-2 text-xl sm:text-2xl">Espaces de travail</h2>
-            </div>
-            <p className="premium-copy max-w-md text-sm">Sélectionnez une section pour traiter les demandes manuellement.</p>
+          <div className="mb-2 flex items-baseline justify-between gap-3">
+            <h2 className="text-base font-black text-slate-950 sm:text-lg">Espaces de travail</h2>
+            <p className="hidden text-xs text-slate-500 sm:block">Un clic ouvre directement le contenu de la section.</p>
           </div>
-          <div className="mb-6 grid gap-3 lg:grid-cols-2 2xl:grid-cols-5">
-            <AdminNavGroup title="Pilotage des dossiers"><TabsTrigger value="pilotage" onClick={() => setActiveAdminTab("pilotage")} className="font-bold text-cyan-700">Pilotage synchronisé</TabsTrigger><TabsTrigger value="candidates" onClick={() => setActiveAdminTab("candidates")}>Dossiers</TabsTrigger><TabsTrigger value="pre-dossiers" onClick={() => setActiveAdminTab("pre-dossiers")} className="font-bold text-blue-700">Pré-dossiers</TabsTrigger><TabsTrigger value="inbox" onClick={() => setActiveAdminTab("inbox")}>Demandes unifiées</TabsTrigger><TabsTrigger value="evaluation-review" onClick={() => setActiveAdminTab("evaluation-review")} className="font-bold text-amber-700">Bilans à valider</TabsTrigger><TabsTrigger value="evaluation-reminders" onClick={() => setActiveAdminTab("evaluation-reminders")} className="font-bold text-violet-700">Bilans à relancer</TabsTrigger><TabsTrigger value="documents" onClick={() => setActiveAdminTab("documents")}>Documents</TabsTrigger><TabsTrigger value="activations" onClick={() => setActiveAdminTab("activations")}>Activations</TabsTrigger></AdminNavGroup>
-            <AdminNavGroup title="Services & catalogue"><TabsTrigger value="tourism" onClick={() => setActiveAdminTab("tourism")}>Tourisme & Devis</TabsTrigger><TabsTrigger value="consular" onClick={() => setActiveAdminTab("consular")} className="font-bold text-blue-600">Consulats & Liens</TabsTrigger><TabsTrigger value="destination-analytics" onClick={() => setActiveAdminTab("destination-analytics")} className="font-bold text-indigo-700">Destinations</TabsTrigger><TabsTrigger value="evisa-catalogue" onClick={() => setActiveAdminTab("evisa-catalogue")} className="font-bold text-cyan-700">Catalogue e‑Visa</TabsTrigger></AdminNavGroup>
+          <div className="mb-3 grid gap-3 lg:grid-cols-2 2xl:grid-cols-5">
+            <AdminNavGroup title="Pilotage des dossiers"><TabsTrigger value="pilotage" onClick={() => setActiveAdminTab("pilotage")} className="font-bold text-cyan-700">Pilotage synchronisé</TabsTrigger><TabsTrigger value="candidates" onClick={() => setActiveAdminTab("candidates")}>Dossiers</TabsTrigger><TabsTrigger value="pre-dossiers" onClick={() => setActiveAdminTab("pre-dossiers")} className="font-bold text-blue-700">Pré-dossiers</TabsTrigger><TabsTrigger value="inbox" onClick={() => setActiveAdminTab("inbox")}>Demandes unifiées</TabsTrigger><TabsTrigger value="evaluation-review" onClick={() => setActiveAdminTab("evaluation-review")} className="font-bold text-amber-700">Bilans à valider</TabsTrigger><TabsTrigger value="evaluation-reminders" onClick={() => setActiveAdminTab("evaluation-reminders")} className="font-bold text-violet-700">Bilans à relancer</TabsTrigger><TabsTrigger value="documents" onClick={() => setActiveAdminTab("documents")}>Documents</TabsTrigger><TabsTrigger value="activations" onClick={() => setActiveAdminTab("activations")}>Activations</TabsTrigger><TabsTrigger value="partners" onClick={() => setActiveAdminTab("partners")} data-testid="admin-tab-partners">Partenaires & placement</TabsTrigger></AdminNavGroup>
+            <AdminNavGroup title="Services & catalogue"><TabsTrigger value="tourism" onClick={() => setActiveAdminTab("tourism")}>Tourisme & Devis</TabsTrigger><TabsTrigger value="consular" onClick={() => setActiveAdminTab("consular")} className="font-bold text-blue-600">Consulats & Liens</TabsTrigger><TabsTrigger value="destination-analytics" onClick={() => setActiveAdminTab("destination-analytics")} className="font-bold text-indigo-700">Destinations</TabsTrigger><TabsTrigger value="evisa-catalogue" onClick={() => setActiveAdminTab("evisa-catalogue")} className="font-bold text-cyan-700">Catalogue e‑Visa</TabsTrigger><TabsTrigger value="evaluation-config" onClick={() => setActiveAdminTab("evaluation-config")} data-testid="admin-tab-evaluation-config">Évaluation & pays</TabsTrigger><TabsTrigger value="study-catalog" onClick={() => setActiveAdminTab("study-catalog")} data-testid="admin-tab-study-catalog">Écoles & études<InboxBadge count={opportunitiesInbox.data?.study} label="candidatures études à traiter" /></TabsTrigger><TabsTrigger value="job-offers" onClick={() => setActiveAdminTab("job-offers")} data-testid="admin-tab-job-offers">Offres d'emploi<InboxBadge count={opportunitiesInbox.data?.jobs} label="éléments emploi à traiter (offres à modérer, candidatures, signalements)" /></TabsTrigger><TabsTrigger value="stay-programs" onClick={() => setActiveAdminTab("stay-programs")} data-testid="admin-tab-stay-programs">Séjours<InboxBadge count={opportunitiesInbox.data?.stay} label="demandes de séjour à traiter" /></TabsTrigger><TabsTrigger value="activation-safety" onClick={() => setActiveAdminTab("activation-safety")} className="font-bold text-rose-700" data-testid="admin-tab-activation-safety">Activations à contrôler</TabsTrigger><TabsTrigger value="remote-support" onClick={() => setActiveAdminTab("remote-support")} className="font-bold text-blue-700" data-testid="admin-tab-remote-support">Accompagnement à distance</TabsTrigger><TabsTrigger value="insights" onClick={() => setActiveAdminTab("insights")} className="font-bold text-indigo-700" data-testid="admin-tab-insights">Pilotage avancé</TabsTrigger><TabsTrigger value="ops" onClick={() => setActiveAdminTab("ops")} className="font-bold text-teal-700" data-testid="admin-tab-ops">Outils et contrôles</TabsTrigger><TabsTrigger value="content" onClick={() => setActiveAdminTab("content")} className="font-bold text-fuchsia-700" data-testid="admin-tab-content">Contenu du site</TabsTrigger></AdminNavGroup>
             <AdminNavGroup title="Réservations & finance"><TabsTrigger value="calendar" onClick={() => setActiveAdminTab("calendar")}>Calendrier</TabsTrigger><TabsTrigger value="payments" onClick={() => setActiveAdminTab("payments")}>Paiements {pendingPaymentApplications.length > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-700 px-1.5 text-[10px] text-white">{pendingPaymentApplications.length}</Badge>}</TabsTrigger><TabsTrigger value="flights" onClick={() => setActiveAdminTab("flights")} className="font-bold text-sky-700"><Plane className="h-4 w-4" /> Réservations vols {(flightQueueSummary?.pending_review ?? 0) > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-700 px-1.5 text-[10px] text-white">{flightQueueSummary?.pending_review}</Badge>}</TabsTrigger>{canManageSensitiveOps ? <TabsTrigger value="rates" onClick={() => setActiveAdminTab("rates")} className="font-bold text-emerald-600" data-testid="admin-tab-rates">Taux de change</TabsTrigger> : null}</AdminNavGroup>
             <AdminNavGroup title="Communication & qualité"><TabsTrigger value="emails" onClick={() => setActiveAdminTab("emails")}>E-mails</TabsTrigger><TabsTrigger value="faq" onClick={() => setActiveAdminTab("faq")}>Satisfaction FAQ</TabsTrigger><TabsTrigger value="rag" onClick={() => setActiveAdminTab("rag")}>Guides & RAG</TabsTrigger><TabsTrigger value="passport-history" onClick={() => setActiveAdminTab("passport-history")}>Passeports</TabsTrigger></AdminNavGroup>
-            <AdminNavGroup title="Supervision"><TabsTrigger value="route-health" onClick={() => setActiveAdminTab("route-health")} className="font-bold text-rose-700">404 & Liens</TabsTrigger><TabsTrigger value="simulator-health" onClick={() => setActiveAdminTab("simulator-health")} className="font-bold text-amber-700">Santé simulateurs</TabsTrigger><TabsTrigger value="footer-engagement" onClick={() => setActiveAdminTab("footer-engagement")} className="font-bold text-blue-700">Engagement footer</TabsTrigger><TabsTrigger value="system-status" onClick={() => setActiveAdminTab("system-status")} className="font-bold text-emerald-700">État système</TabsTrigger>{canManageSensitiveOps ? <TabsTrigger value="scheduler" onClick={() => setActiveAdminTab("scheduler")} className="font-bold text-amber-700" data-testid="admin-tab-scheduler">Planificateur</TabsTrigger> : null}<TabsTrigger value="audit" onClick={() => setActiveAdminTab("audit")}>Journal d’audit</TabsTrigger></AdminNavGroup>
+            <AdminNavGroup title="Supervision"><TabsTrigger value="route-health" onClick={() => setActiveAdminTab("route-health")} className="font-bold text-rose-700">404 & Liens</TabsTrigger><TabsTrigger value="simulator-health" onClick={() => setActiveAdminTab("simulator-health")} className="font-bold text-amber-700">Santé simulateurs</TabsTrigger><TabsTrigger value="footer-engagement" onClick={() => setActiveAdminTab("footer-engagement")} className="font-bold text-blue-700">Engagement footer</TabsTrigger><TabsTrigger value="system-status" onClick={() => setActiveAdminTab("system-status")} className="font-bold text-emerald-700">État système</TabsTrigger>{canManageSensitiveOps ? <TabsTrigger value="scheduler" onClick={() => setActiveAdminTab("scheduler")} className="font-bold text-amber-700" data-testid="admin-tab-scheduler">Planificateur</TabsTrigger> : null}<TabsTrigger value="audit" onClick={() => setActiveAdminTab("audit")}>Journal d’audit</TabsTrigger><TabsTrigger value="privacy" onClick={() => setActiveAdminTab("privacy")} data-testid="admin-tab-privacy">Confidentialité</TabsTrigger></AdminNavGroup>
           </div>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white/70 px-3 py-2 text-xs text-slate-600"><span>Section active : <strong className="text-slate-950">{activeAdminTab === "candidates" ? "Dossiers" : activeAdminTab === "pre-dossiers" ? "Pré-dossiers" : activeAdminTab === "flights" ? "Réservations vols" : activeAdminTab}</strong></span><div className="flex items-center gap-2"><SchedulerModeBadge compact /><span className="hidden sm:inline">Les changements sensibles nécessitent une validation humaine.</span></div></div>
+          <div id="admin-workspace" className="mb-4 flex scroll-mt-44 flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white/70 px-3 py-2 text-xs text-slate-600"><span>Section active : <strong className="text-slate-950" data-testid="admin-active-section">{ADMIN_TAB_LABELS[activeAdminTab] ?? activeAdminTab}</strong></span><div className="flex items-center gap-2"><SchedulerModeBadge compact /><span className="hidden sm:inline">Les changements sensibles nécessitent une validation humaine.</span></div></div>
 
           <TabsContent value="pilotage" className="space-y-6">
             {guichetMode ? (
@@ -2738,8 +2747,124 @@ export default function AdminDashboard() {
                 {(externalEvaluationCandidates.length + candidates.filter((candidate) => candidate.source === "AGENCY_PHYSICAL").length) === 0 && <p className="mt-4 rounded-lg bg-white/80 p-4 text-sm text-slate-600">Aucune déclaration préalable en attente de contrôle.</p>}
               </CardContent>
             </Card>
-            <AdminCandidateKanban candidates={kanbanCandidates} onMove={handleKanbanMove} onAdvance={handleKanbanAdvance} onOpen={(candidate) => setSelectedCandidateId(candidate.id)} /></TabsContent>
+            <AdminCandidateKanban candidates={kanbanCandidates} onMove={handleKanbanMove} onAdvance={handleKanbanAdvance} onOpen={(candidate) => setSelectedCandidateId(candidate.id)} />
+            <section className="premium-surface rounded-2xl p-4" aria-label="File de priorités manuelle">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="flex items-center gap-2 font-black text-slate-950"><AlertCircle className="h-5 w-5 text-amber-600" />File de priorités</h2>
+                  <p className="mt-1 text-sm text-slate-600">Indicateurs de travail à ouvrir manuellement par un conseiller. Aucune décision ni notification n’est déclenchée automatiquement.</p>
+                </div>
+                <span className="text-xs font-semibold text-slate-500">Actualisation manuelle requise</span>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {manualPriorities.map((priority) => {
+                  const tone = priority.tone === "amber" ? "border-amber-200 bg-amber-50" : priority.tone === "orange" ? "border-orange-200 bg-orange-50" : priority.tone === "sky" ? "border-sky-200 bg-sky-50" : "border-blue-200 bg-blue-50";
+                  const deadlineTone = priority.deadline.tone === "rose" ? "border-rose-200 bg-rose-100 text-rose-800" : priority.deadline.tone === "amber" ? "border-amber-200 bg-amber-100 text-amber-800" : priority.deadline.tone === "emerald" ? "border-emerald-200 bg-emerald-100 text-emerald-800" : "border-slate-200 bg-slate-100 text-slate-700";
+                  return (
+                    <button
+                      key={priority.id}
+                      type="button"
+                      onClick={() => setActiveAdminTab(priority.tab)}
+                      className={`min-h-28 rounded-xl border p-4 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${tone}`}
+                      aria-label={`Ouvrir ${priority.label} : ${priority.count} élément(s)`}
+                    >
+                      <div className="flex items-start justify-between gap-3"><span className="text-sm font-bold text-slate-900">{priority.label}</span><span className="rounded-full bg-white px-2 py-0.5 text-lg font-black text-slate-950">{priority.count}</span></div>
+                      <p className="mt-3 text-xs leading-5 text-slate-600">{priority.detail}</p>
+                      <span className={`mt-3 flex w-fit items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-bold ${deadlineTone}`}><Timer className="h-3 w-3" />{priority.deadline.label}</span>
+                      <p className="mt-2 text-[11px] leading-4 text-slate-600">{priority.deadline.detail}</p>
+                      <span className="mt-3 inline-block text-xs font-bold text-blue-800">Ouvrir le module →</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
 
+            <section className="premium-surface rounded-2xl p-4" aria-label="Échéances de traitement par conseiller">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="flex items-center gap-2 font-black text-slate-950"><Users className="h-5 w-5 text-blue-700" />Échéances par conseiller</h2>
+                  <p className="mt-1 text-sm text-slate-600">Vue de travail fondée sur les échéances enregistrées. Aucun rappel, changement de statut ou notification n’est déclenché automatiquement.</p>
+                  {assignedToMeFilter && <p className="mt-1 text-xs font-semibold text-blue-700">Filtré sur « Mes dossiers » ({currentAdminEmail ?? "…"}).</p>}
+                </div>
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row"><Button variant="outline" size="sm" onClick={exportAdvisorDeadlinesCsv} className="gap-2"><Download className="h-4 w-4" />Exporter CSV</Button><Select value={advisorDeadlinePriorityFilter} onValueChange={(value) => setAdvisorDeadlinePriorityFilter(value as typeof advisorDeadlinePriorityFilter)}><SelectTrigger aria-label="Filtrer les échéances par priorité" className="w-full bg-white sm:w-48"><SelectValue placeholder="Toutes priorités" /></SelectTrigger><SelectContent><SelectItem value="all">Toutes priorités</SelectItem><SelectItem value="urgent">Urgente</SelectItem><SelectItem value="high">Haute</SelectItem><SelectItem value="normal">Normale</SelectItem><SelectItem value="low">Basse</SelectItem></SelectContent></Select></div>
+              </div>
+              {isLoadingAdvisorDeadlines ? (
+                <p className="py-6 text-sm text-slate-500">Chargement des échéances…</p>
+              ) : visibleAdvisorDeadlineGroups.length === 0 ? (
+                <p className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Aucune échéance ne correspond à cette priorité.</p>
+              ) : (
+                <div className="mt-4 grid gap-3 xl:grid-cols-2">
+                  {visibleAdvisorDeadlineGroups.map((group) => (
+                    <article key={group.advisorId ?? "unassigned"} className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div><h3 className="font-bold text-slate-950">{group.advisorName}</h3><p className="text-xs text-slate-500">{group.advisorEmail ?? "À attribuer à un conseiller"}</p></div>
+                        <Badge className="bg-blue-100 text-blue-800">{group.items.length} échéance{group.items.length > 1 ? "s" : ""}</Badge>
+                      </div>
+                      <ul className="mt-3 space-y-2">
+                        {group.items.slice(0, 6).map((item) => {
+                          const deadlineClass = item.deadline.key === "overdue" ? "border-rose-200 bg-rose-50 text-rose-800" : item.deadline.key === "today" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-emerald-200 bg-emerald-50 text-emerald-800";
+                          const priorityMeta = item.priority === "urgent" ? { label: "Priorité urgente", className: "border-rose-300 bg-rose-600 text-white" } : item.priority === "high" ? { label: "Priorité haute", className: "border-orange-300 bg-orange-100 text-orange-900" } : item.priority === "low" ? { label: "Priorité basse", className: "border-slate-300 bg-slate-100 text-slate-700" } : { label: "Priorité normale", className: "border-blue-300 bg-blue-100 text-blue-900" };
+                          return <li key={item.id} className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-900">{item.caseNumber}{item.candidateName ? ` · ${item.candidateName}` : ""}</p><p className="mt-0.5 truncate text-xs text-slate-600">{item.label}</p></div><div className="flex flex-wrap items-center gap-2"><Badge className={priorityMeta.className}>{priorityMeta.label}</Badge><Badge className={deadlineClass}>{item.deadline.label}</Badge><span className="whitespace-nowrap text-xs font-medium text-slate-600">{new Date(item.dueAt).toLocaleString("fr-FR")}</span></div></li>;
+                        })}
+                      </ul>
+                      {group.items.length > 6 && <p className="mt-3 text-xs font-medium text-slate-500">+ {group.items.length - 6} autre(s) échéance(s) dans ce groupe.</p>}
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <div className="mb-4 flex flex-col justify-between gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 sm:flex-row sm:items-center">
+              <div><p className="font-black text-blue-950">Pôle 3M Solutions</p><p className="text-sm text-blue-800">Consultez et traitez les demandes de plateformes, marketing, support IT et formation.</p></div>
+              <a href="/admin/digital-services" className="relative inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 text-sm font-black text-white transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                Ouvrir les demandes 3M Solutions
+                {digitalNewCount > 0 && (
+                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[10px] font-black text-amber-950">
+                    {digitalNewCount}
+                  </span>
+                )}
+              </a>
+            </div>
+
+          </TabsContent>
+          <TabsContent value="partners" className="space-y-6">
+            <div id="admin-placement-pipeline"><AdminPlacementPipeline sessionToken={sessionToken} onOpenCandidate={(adminCandidateRef) => setSelectedCandidateId(adminCandidateRef)} /></div>
+            <div id="admin-partner-module"><AdminPartnerModule sessionToken={sessionToken} /></div>
+            <div id="admin-cvtheque-review"><AdminCvthequeReview sessionToken={sessionToken} /></div>
+            <div id="admin-recruitment-inbox"><AdminRecruitmentInbox sessionToken={sessionToken} /></div>
+          </TabsContent>
+          <TabsContent value="evaluation-config" className="space-y-6">
+            <div id="admin-evaluation-journeys"><AdminEvaluationJourneyBoard sessionToken={sessionToken} /></div>
+            <div id="admin-evaluation-form-editor"><AdminEvaluationFormEditor sessionToken={sessionToken} /></div>
+            <div id="admin-country-catalog"><AdminCountryCatalog sessionToken={sessionToken} /></div>
+          </TabsContent>
+          <TabsContent value="study-catalog" className="space-y-6">
+            <AdminStudyCatalog sessionToken={sessionToken} />
+          </TabsContent>
+          <TabsContent value="stay-programs" className="space-y-6">
+            <AdminStayPrograms sessionToken={sessionToken} />
+          </TabsContent>
+          <TabsContent value="activation-safety" className="space-y-6">
+            <AdminActivationSafety sessionToken={sessionToken} />
+          </TabsContent>
+          <TabsContent value="remote-support" className="space-y-6">
+            <AdminRemoteSupport sessionToken={sessionToken} />
+          </TabsContent>
+          <TabsContent value="insights" className="space-y-6">
+            <AdminInsights sessionToken={sessionToken} />
+          </TabsContent>
+          <TabsContent value="ops" className="space-y-6">
+            <AdminOps sessionToken={sessionToken} />
+          </TabsContent>
+          <TabsContent value="content" className="space-y-6">
+            <AdminContent sessionToken={sessionToken} />
+          </TabsContent>
+          <TabsContent value="job-offers" className="space-y-6">
+            <AdminJobOffers sessionToken={sessionToken} />
+          </TabsContent>
+          <TabsContent value="privacy" className="space-y-6">
+            <div id="admin-privacy-center"><AdminPrivacyCenter sessionToken={sessionToken} /></div>
+          </TabsContent>
           <TabsContent value="tourism" className="space-y-6">
             <AdminTourismRequests />
           </TabsContent>
@@ -2756,6 +2881,49 @@ export default function AdminDashboard() {
 
           <TabsContent value="destination-analytics" className="space-y-6">
             <AdminDestinationAnalytics sessionToken={sessionToken} />
+            {/* Widget : répartition des candidats par pays */}
+            <Card className="border-0 shadow-sm overflow-hidden hover:-translate-y-0.5">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="w-5 h-5 text-violet-600" />
+                      <h2 className="font-semibold text-gray-900">Répartition des candidats par pays</h2>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Vue consolidée des candidats issus des dossiers, évaluations et demandes agence.
+                    </p>
+                  </div>
+                  {countryDistribution && (
+                    <div className="text-right shrink-0">
+                      <p className="text-2xl font-bold text-violet-700">{countryDistribution.totalCandidates}</p>
+                      <p className="text-xs text-gray-500">candidats suivis</p>
+                    </div>
+                  )}
+                </div>
+                {isLoadingCountryDistribution ? (
+                  <div className="h-56 flex items-center justify-center text-sm text-gray-500">
+                    <RefreshCw className="w-5 h-5 mr-2 animate-spin text-violet-600" />
+                    Chargement des statistiques...
+                  </div>
+                ) : countryDistribution?.data?.length ? (
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart data={countryDistribution.data} layout="vertical" margin={{ top: 4, right: 20, left: 12, bottom: 4 }}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                      <XAxis type="number" allowDecimals={false} />
+                      <YAxis dataKey="country" type="category" width={110} tick={{ fontSize: 12 }} />
+                      <Tooltip formatter={(value: number) => [`${value} candidat(s)`, "Répartition"]} />
+                      <Bar dataKey="count" fill="#7c3aed" radius={[0, 5, 5, 0]} name="Candidats" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-56 flex items-center justify-center text-sm text-gray-500 border border-dashed rounded-lg">
+                    Aucune destination renseignée pour le moment.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
           </TabsContent>
 
           <TabsContent value="calendar" className="space-y-6">
@@ -3102,11 +3270,11 @@ export default function AdminDashboard() {
             </SelectContent>
           </Select>
           <Select value={activationFilter} onValueChange={(value) => setActivationFilter(value as CandidateActivationStatus | "ALL")}>
-            <SelectTrigger className="w-full sm:w-52" aria-label="Filtrer par statut d’activation">
-              <SelectValue placeholder="Toutes les activations" />
+            <SelectTrigger className="w-full sm:w-52" aria-label="Filtrer par confirmation de l’e-mail du compte">
+              <SelectValue placeholder="Confirmation e-mail" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">Toutes les activations</SelectItem>
+              <SelectItem value="ALL">Toutes les confirmations</SelectItem>
               {Object.entries(ACTIVATION_STATUS_CONFIG).map(([key, cfg]) => (
                 <SelectItem key={key} value={key}>
                   <span className="flex items-center gap-2">{cfg.icon}{cfg.label}</span>
@@ -3114,6 +3282,26 @@ export default function AdminDashboard() {
               ))}
             </SelectContent>
           </Select>
+          </div>
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par type de visa" data-testid="visa-kind-filters">
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Type de visa</span>
+            {([["ALL", "Tous"], ["work", "Travail"], ["study", "Études"], ["visitor", "Visiteur"], ["evisa", "e-Visa"], ["family", "Famille"], ["residence", "Résidence"], ["other", "À qualifier"]] as const).map(([key, label]) => {
+              const count = key === "ALL" ? undefined : (data as { availableVisaKinds?: Record<string, number> } | undefined)?.availableVisaKinds?.[key] ?? 0;
+              if (key !== "ALL" && !count && visaKindFilter !== key) return null;
+              const active = visaKindFilter === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={active}
+                  data-testid={`visa-kind-${key}`}
+                  onClick={() => setVisaKindFilter(key)}
+                  className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${active ? "border-blue-700 bg-blue-700 text-white" : "border-slate-300 bg-white text-slate-700 hover:border-blue-400"}`}
+                >
+                  {label}{count !== undefined && <span className={`rounded-full px-1.5 text-xs ${active ? "bg-white/20" : "bg-slate-100"}`}>{count}</span>}
+                </button>
+              );
+            })}
           </div>
           <div className="flex flex-col gap-3 lg:flex-row">
             <Select value={sourceFilter} onValueChange={(value) => setSourceFilter(value as CandidateSource | "ALL")}>
@@ -3147,10 +3335,10 @@ export default function AdminDashboard() {
               className={`w-full gap-2 lg:w-auto ${activationFilter === "active" ? "bg-emerald-700 hover:bg-emerald-800" : "border-emerald-200 text-emerald-800 hover:bg-emerald-50"}`}
               aria-pressed={activationFilter === "active"}
               onClick={() => setActivationFilter((value) => value === "active" ? "ALL" : "active")}
-              title="Afficher uniquement les comptes activés, considérés comme comptes premium opérationnels"
+              title="Afficher uniquement les comptes dont l'e-mail est confirmé (ce n'est pas un dossier ouvert : l'ouverture exige le paiement des frais)"
             >
               <Sparkles className="h-4 w-4" />
-              Comptes premium / activés
+              E-mail confirmé
             </Button>
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
               <SelectTrigger className="w-full lg:w-56" aria-label="Trier les dossiers"><ArrowDownUp className="mr-2 h-4 w-4" /><SelectValue placeholder="Trier les dossiers" /></SelectTrigger>
@@ -3257,10 +3445,38 @@ export default function AdminDashboard() {
             <div className="max-h-[55vh] space-y-2 overflow-y-auto">
               {archivedRecordsQuery.isLoading && <p className="text-sm text-slate-500">Chargement des archives…</p>}
               {!archivedRecordsQuery.isLoading && !(archivedRecordsQuery.data?.length) && <p className="text-sm text-slate-500">Aucune archive dans la corbeille.</p>}
-              {(archivedRecordsQuery.data ?? []).map((record) => <div key={record.candidateId} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-3"><div><p className="font-semibold text-slate-800">{record.reference} — {record.fullName}</p><p className="text-xs text-slate-500">{record.email} · {record.source} · {record.reason || "Motif non renseigné"}</p><p className="text-xs text-slate-400">Archivé le {record.deletedAt ? new Date(record.deletedAt).toLocaleString("fr-FR") : "—"} par {record.deletedBy || "—"}</p></div><Button type="button" variant="outline" disabled={restoreArchivedMutation.isPending} onClick={() => setRestoreDialogRecord({ candidateId: record.candidateId, reference: record.reference })}>Restaurer</Button></div>)}
+              {(archivedRecordsQuery.data ?? []).map((record) => <div key={record.candidateId} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-3"><div><p className="font-semibold text-slate-800">{record.reference} — {record.fullName}</p><p className="text-xs text-slate-500">{record.email} · {record.source} · {record.reason || "Motif non renseigné"}</p><p className="text-xs text-slate-400">Archivé le {record.deletedAt ? new Date(record.deletedAt).toLocaleString("fr-FR") : "—"} par {record.deletedBy || "—"}</p></div><Button type="button" variant="outline" disabled={restoreArchivedMutation.isPending} onClick={() => setRestoreDialogRecord({ candidateId: record.candidateId, reference: record.reference })}>Restaurer</Button>{record.source === "account" && <Button type="button" variant="destructive" disabled={purgeArchivedMutation.isPending} onClick={() => { setPurgeEmailInput(""); setPurgeDialogRecord({ candidateId: record.candidateId, reference: record.reference, email: record.email }); }}>Supprimer définitivement</Button>}</div>)}
             </div>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={Boolean(purgeDialogRecord)} onOpenChange={(open) => { if (!open) { setPurgeDialogRecord(null); setPurgeEmailInput(""); } }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer définitivement {purgeDialogRecord?.reference} ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Action irréversible : le compte et ses données personnelles (messages, pièces déposées, notifications, consentements, fiches de placement) sont effacés, et l’adresse e-mail est libérée pour une nouvelle inscription. Les dossiers, évaluations et pièces comptables ne sont pas touchés. Impossible si un paiement est validé.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-2">
+              <Label htmlFor="purge-email-confirmation">Pour confirmer, saisissez l’adresse e-mail du compte : <strong>{purgeDialogRecord?.email}</strong></Label>
+              <Input id="purge-email-confirmation" value={purgeEmailInput} onChange={(event) => setPurgeEmailInput(event.target.value)} autoComplete="off" maxLength={320} />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={!purgeDialogRecord || purgeArchivedMutation.isPending || purgeEmailInput.trim().toLowerCase() !== (purgeDialogRecord?.email ?? "").trim().toLowerCase()}
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (!purgeDialogRecord) return;
+                  purgeArchivedMutation.mutate({ sessionToken, candidateId: purgeDialogRecord.candidateId, emailConfirmation: purgeEmailInput, confirmation: "SUPPRIMER DEFINITIVEMENT" });
+                }}
+              >
+                Supprimer définitivement
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <AlertDialog open={Boolean(restoreDialogRecord)} onOpenChange={(open) => { if (!open) setRestoreDialogRecord(null); }}>
           <AlertDialogContent>
@@ -3471,7 +3687,7 @@ export default function AdminDashboard() {
                         <div>
                           <p className="font-medium text-gray-800 truncate max-w-[160px]">{candidate.fullName}</p>
                           <p className="text-xs text-gray-500 truncate max-w-[160px]">{candidate.email}</p>
-                          <div className="mt-1"><EvaluationDeclarationBadge status={candidate.evaluationDeclarationStatus as EvaluationDeclarationStatus | undefined} /></div>
+                          <div className="mt-1"><EvaluationDeclarationBadge status={candidate.evaluationDeclarationStatus as EvaluationDeclarationStatus | undefined} bilanSent={isBilanSent(candidate, null)} /></div>
                         </div>
                       </td>
                       <td className="px-4 py-3 hidden md:table-cell">
@@ -3724,6 +3940,27 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="emails" className="space-y-6">
+            <section className="premium-surface rounded-2xl p-4" aria-label="Supervision des remises SMTP">
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <h2 className="flex items-center gap-2 font-black text-slate-950"><Mail className="h-5 w-5 text-blue-700" />Remises SMTP</h2>
+                  <p className="mt-1 text-sm text-slate-600">Synthèse des 30 dernières remises enregistrées. Les détails sensibles ne sont pas affichés ici.</p>
+                </div>
+                <div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={() => void Promise.all([refetchSmtpDelivery(), refetchSmtpTrend()])} disabled={isFetchingSmtpDelivery || isFetchingSmtpTrend || !sessionToken} className="gap-2"><RefreshCw className={`h-4 w-4 ${isFetchingSmtpDelivery || isFetchingSmtpTrend ? "animate-spin" : ""}`} />Actualiser</Button><Button variant="outline" size="sm" onClick={() => setActiveAdminTab("emails")}>Ouvrir les e-mails</Button></div>
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-xl border border-blue-100 bg-blue-50 p-3"><p className="text-xs font-semibold text-blue-800">Taux de réussite</p><p className="mt-1 text-2xl font-black text-blue-950">{smtpSuccessRate === null ? "—" : `${smtpSuccessRate}%`}</p><p className="text-xs text-blue-700">Sur les remises chargées</p></div>
+                <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3"><p className="text-xs font-semibold text-emerald-800">Envoyés</p><p className="mt-1 text-2xl font-black text-emerald-950">{smtpSummary.sent}</p><p className="text-xs text-emerald-700">Remises confirmées</p></div>
+                <div className="rounded-xl border border-rose-100 bg-rose-50 p-3"><p className="text-xs font-semibold text-rose-800">Échecs</p><p className="mt-1 text-2xl font-black text-rose-950">{smtpSummary.failed}</p><p className="text-xs text-rose-700">À examiner manuellement</p></div>
+                <div className="rounded-xl border border-amber-100 bg-amber-50 p-3"><p className="text-xs font-semibold text-amber-800">En attente</p><p className="mt-1 text-2xl font-black text-amber-950">{smtpSummary.pending}</p><p className="text-xs text-amber-700">Suivi requis</p></div>
+              </div>
+              <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3" aria-label="Évolution du taux de réussite SMTP sur 30 jours">
+                <div className="flex flex-wrap items-baseline justify-between gap-2"><p className="text-xs font-bold uppercase tracking-wide text-slate-600">Taux de réussite SMTP · 30 jours</p><span className="text-xs text-slate-500">Remises finalisées uniquement</span></div>
+                {isFetchingSmtpTrend ? <p className="py-8 text-sm text-slate-500">Chargement de la tendance…</p> : !hasSmtpTrend ? <p className="py-8 text-sm text-slate-600">Aucune remise finalisée sur les 30 derniers jours : aucune tendance n’est tracée.</p> : <div className="mt-2 h-56"><ResponsiveContainer width="100%" height="100%"><LineChart data={smtpDeliveryTrend} margin={{ top: 10, right: 16, left: -20, bottom: 0 }}><CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" /><XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" /><YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} tick={{ fontSize: 11 }} /><Tooltip formatter={(value: number | null) => value === null ? "Aucune remise finalisée" : `${value}%`} labelFormatter={(label) => `Jour : ${label}`} /><Line type="monotone" dataKey="successRate" name="Taux de réussite" stroke="#1d4ed8" strokeWidth={2.5} dot={false} connectNulls={false} /></LineChart></ResponsiveContainer></div>}
+              </div>
+              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-bold uppercase tracking-wide text-slate-600">Dernières erreurs de remise</p>{recentSmtpFailures.length === 0 ? <p className="mt-2 text-sm text-slate-600">Aucun échec dans les remises chargées.</p> : <ul className="mt-2 space-y-1 text-sm text-slate-700">{recentSmtpFailures.map((failure) => <li key={failure.id} className="flex flex-wrap items-center justify-between gap-2"><span>Échec de remise à examiner</span><span className="text-xs text-slate-500">{new Date(failure.createdAt).toLocaleString("fr-FR")}</span></li>)}</ul>}</div>
+            </section>
+
             <AdminEmailDeliveryManagement />
           </TabsContent>
 

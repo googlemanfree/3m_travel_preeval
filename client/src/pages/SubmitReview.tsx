@@ -234,6 +234,8 @@ export default function SubmitReview({ embedded = false, initialFullName = "", i
                       key={star}
                       type="button"
                       onClick={() => setFormData({ ...formData, rating: star })}
+                      aria-label={`Note : ${star} sur 5`}
+                      aria-pressed={formData.rating === star}
                       className="rounded-full transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                     >
                       <Star

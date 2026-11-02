@@ -18,6 +18,9 @@ vi.mock("@/lib/trpc", () => ({
     monitoring: {
       getEvaluationDeliveryHealth: { useQuery: () => ({ data: null, isLoading: false }) },
     },
+    bilanAi: { status: { useQuery: () => ({ data: undefined }) }, improve: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) } },
+    bilanFollowUp: { sendTest: { useMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }) } },
+    profileUndo: { options: { useQuery: () => ({ data: undefined, isLoading: false, error: null, refetch: vi.fn() }) }, run: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) } },
     unifiedRequests: {
       initializeEvaluationDelivery: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
       getEvaluationDelivery: { useQuery: () => ({ data: null, isLoading: false, isFetching: false, isError: false, error: null, refetch: vi.fn() }) },

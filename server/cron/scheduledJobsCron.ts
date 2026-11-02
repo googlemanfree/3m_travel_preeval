@@ -46,6 +46,7 @@ export const SCHEDULED_JOBS: ScheduledJobSpec[] = [
   { path: "/api/scheduled/evaluation-job", cronTime: "0 0 8 * * *", label: "Évaluation automatique des nouveaux dossiers", candidateFacing: true, supportsDryRun: false },
   { path: "/api/scheduled/compliance-monthly-report", cronTime: "0 0 8 1 * *", label: "Rapport mensuel de conformité documentaire", candidateFacing: false, supportsDryRun: false },
   { path: "/api/scheduled/document-reminders", cronTime: "0 0 10 * * *", label: "Relances pièces manquantes, suivi de vols et invitations d'avis", candidateFacing: true, supportsDryRun: true },
+  { path: "/api/scheduled/signature-confirmation-reminders", cronTime: "0 0 11 * * *", label: "Rappels protocole N°01/N°02 et confirmation de bilan", candidateFacing: true, supportsDryRun: true },
   { path: "/api/scheduled/pilotage-automation", cronTime: "0 30 10 * * *", label: "Pilotage auto — activation COMPTE→3M, relances, avance Kanban sûre", candidateFacing: true, supportsDryRun: true },
   { path: "/api/scheduled/passport-pending-weekly-alert", cronTime: "0 0 9 * * 1", label: "Alerte hebdomadaire passeports en attente (admin)", candidateFacing: false, supportsDryRun: false },
   // Cadence choisie faute de recommandation dans le handler d'origine — à ajuster si besoin.

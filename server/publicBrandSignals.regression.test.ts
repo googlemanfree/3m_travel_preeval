@@ -15,7 +15,8 @@ describe("signaux publics de marque et d’évaluation", () => {
 
   it("publie le titre HTML avec la marque publique unifiée", () => {
     const html = composePublicPrerender(template, "/").html;
-    expect(html).toContain("<title>3M TRAVEL AGENCY | Voyages, Visas, Études &amp; Mobilité Internationale</title>");
+    // Titre d'accueil choisi par 20323922 (positionnement « agence de voyage, visas et mobilité ») ; la marque publique reste « 3M TRAVEL AGENCY ».
+    expect(html).toContain("<title>3M TRAVEL AGENCY | Agence de voyage, visas et mobilité</title>");
     expect(html).not.toContain("3M Travel &amp; Services | Voyages, Visas, Études &amp; Mobilité Internationale");
   });
 

@@ -8,6 +8,8 @@ import { CountryFactsPanel } from "@/components/CountryFactsPanel";
 import ProcedureTrustFooter from "@/components/ProcedureTrustFooter";
 import { getCountryPhotos } from "@/data/countryPhotos";
 import { getCountryFacts } from "@/data/countryFacts";
+import { ProcedureBlueprint } from "@/components/ProcedureBlueprint";
+import { clampSeoDescription, clampSeoTitle } from "@/lib/seoText";
 
 interface DestinationFormationPageProps {
   slug: string;
@@ -18,10 +20,10 @@ export default function DestinationFormationPage({ slug }: DestinationFormationP
 
   useEffect(() => {
     if (!destination) return;
-    document.title = `${destination.name} : formation & travail qualifié | 3M TRAVEL AGENCY`;
+    document.title = clampSeoTitle(`${destination.name} : formation & travail qualifié | 3M TRAVEL AGENCY`);
     document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
       "content",
-      `${destination.dispositif} Repères sur le visa, les secteurs porteurs et l'accompagnement 3M TRAVEL AGENCY depuis Yaoundé pour ${destination.name}.`,
+      clampSeoDescription(`${destination.dispositif} Repères sur le visa, les secteurs porteurs et l'accompagnement 3M TRAVEL AGENCY depuis Yaoundé pour ${destination.name}.`),
     );
   }, [destination]);
 
@@ -130,6 +132,10 @@ export default function DestinationFormationPage({ slug }: DestinationFormationP
             </div>
           )}
         </section>
+
+        <div className="mt-8">
+          <ProcedureBlueprint countryName={destination.name} visaType="travail" slug={destination.slug} locale="fr" evaluationUrl={evalLink} officialUrl={sources[0]?.url ?? null} />
+        </div>
 
         <section className="mt-8 rounded-2xl bg-blue-900 p-6 text-white sm:p-10">
           <h2 className="text-xl font-black">3M TRAVEL AGENCY vous accompagne</h2>

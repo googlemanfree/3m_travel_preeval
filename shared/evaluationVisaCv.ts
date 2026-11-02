@@ -4,6 +4,8 @@
  * Autres visas (études, tourisme, famille…) → évaluation possible sans CV.
  */
 
+import { cvPolicyForProgram, getProgram } from "./dynamicForm/programs";
+
 export type EvaluationProjectKind = "travail" | "etudes" | "tourisme" | "autre";
 
 function foldVisaLabel(value: string | null | undefined): string {
@@ -51,10 +53,13 @@ export function resolveEvaluationProjectKind(
 export function evaluationRequiresCv(
   visaType?: string | null,
   projectType?: string | null,
+  programId?: string | null,
 ): boolean {
-  if (isWorkEvaluationVisa(visaType) || isWorkEvaluationVisa(projectType)) return true;
-  if (isNonWorkEvaluationVisa(visaType) || isNonWorkEvaluationVisa(projectType)) return false;
-  return false;
+  const workProject = isWorkEvaluationVisa(visaType) || isWorkEvaluationVisa(projectType);
+  if (!workProject) return false;
+  // Le visa ou programme choisi précise la règle : un travail qualifié exige le CV, une formation en entreprise le recommande seulement.
+  const program = getProgram(programId);
+  return program ? cvPolicyForProgram(program.id, program.kind) === "required" : true;
 }
 
 export const CV_REMINDER_SUBJECT_FR = "Votre CV est requis pour finaliser l’évaluation — 3M TRAVEL AGENCY";
