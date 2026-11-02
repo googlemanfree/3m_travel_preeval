@@ -1,9 +1,11 @@
 /**
  * Utilitaire de génération de PDF pour les rapports d'évaluation Luxembourg
- * Génère un PDF en base64 pour l'envoi par email
+ * Génère un PDF (Buffer) pour l'envoi par e-mail, sur le papier à en-tête officiel de l'agence.
  */
 
-import jsPDF from 'jspdf';
+import jsPDF from "jspdf";
+import { applyLetterhead, letterheadLayout, type LetterheadOptions } from "../shared/brandLetterhead";
+import { loadBrandLogoSync } from "./utils/brandLogo";
 
 export interface LuxembourgEvaluationData {
   fullName: string;
@@ -22,202 +24,159 @@ export interface LuxembourgEvaluationData {
   recommendationText: string;
 }
 
+const NAVY: [number, number, number] = [23, 55, 94];
+const BLUE: [number, number, number] = [43, 108, 184];
+const INK: [number, number, number] = [31, 41, 55];
+
 export function generateLuxembourgPDF(data: LuxembourgEvaluationData): Buffer {
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-  let yPosition = 20;
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const logo = loadBrandLogoSync();
+  const letterhead: LetterheadOptions = {
+    logoDataUri: logo?.dataUri,
+    logoFormat: logo?.format,
+    documentKind: "Rapport d'évaluation — Luxembourg",
+    recipient: data.fullName,
+    subject: data.jobTitle,
+    serviceFocus: "Visa travail · Luxembourg",
+  };
+  const layout = letterheadLayout(letterhead);
+  const left = layout.marginLeft;
+  const width = layout.contentWidth;
+  const right = layout.marginRight;
+  let y = layout.firstPageTop + 2;
 
-  // Header
-  doc.setFillColor(102, 126, 234); // Blue
-  doc.rect(0, 0, pageWidth, 40, 'F');
+  const ensure = (needed: number) => {
+    if (y + needed <= layout.contentBottom) return;
+    doc.addPage();
+    y = layout.nextPageTop;
+  };
+  const heading = (title: string) => {
+    ensure(14);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11.5);
+    doc.setTextColor(...NAVY);
+    doc.text(title, left, y);
+    y += 7;
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...INK);
+  };
 
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(20);
-  doc.text('🇱🇺 Rapport d\'Évaluation Luxembourg', pageWidth / 2, 15, { align: 'center' });
+  heading("Informations du candidat");
   doc.setFontSize(10);
-  doc.text('3M Travel Agency SARL', pageWidth / 2, 25, { align: 'center' });
+  for (const line of [`Nom : ${data.fullName}`, `E-mail : ${data.email}`, `Poste : ${data.jobTitle}`, `Expérience : ${data.yearsExperience} ans`]) {
+    ensure(6);
+    doc.text(line, left, y);
+    y += 6;
+  }
+  y += 5;
 
-  yPosition = 50;
-
-  // Candidate Info
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(12);
-  doc.setFont(undefined, 'bold');
-  doc.text('Informations du Candidat', 20, yPosition);
-  yPosition += 10;
-
-  doc.setFont(undefined, 'normal');
-  doc.setFontSize(10);
-  doc.text(`Nom : ${data.fullName}`, 20, yPosition);
-  yPosition += 6;
-  doc.text(`Email : ${data.email}`, 20, yPosition);
-  yPosition += 6;
-  doc.text(`Poste : ${data.jobTitle}`, 20, yPosition);
-  yPosition += 6;
-  doc.text(`Expérience : ${data.yearsExperience} ans`, 20, yPosition);
-  yPosition += 12;
-
-  // Score Section
-  doc.setFont(undefined, 'bold');
-  doc.setFontSize(12);
-  doc.text('Score d\'Éligibilité', 20, yPosition);
-  yPosition += 10;
-
-  // Score Box
-  doc.setFillColor(240, 240, 240);
-  doc.rect(20, yPosition, pageWidth - 40, 30, 'F');
-
-  doc.setFont(undefined, 'bold');
-  doc.setFontSize(32);
-  doc.setTextColor(102, 126, 234);
-  doc.text(`${data.scoreTotal}/100`, 50, yPosition + 22, { align: 'center' });
-
-  doc.setTextColor(0, 0, 0);
-  doc.setFont(undefined, 'normal');
-  doc.setFontSize(10);
-  const statusColor = getStatusColor(data.statusLabel);
-  doc.setTextColor(...statusColor);
-  doc.text(data.statusLabel, 120, yPosition + 22, { align: 'center' });
-
-  yPosition += 40;
-
-  // Breakdown
-  doc.setTextColor(0, 0, 0);
-  doc.setFont(undefined, 'bold');
+  heading("Score d'éligibilité");
+  ensure(32);
+  doc.setFillColor(238, 244, 250);
+  doc.roundedRect(left, y, width, 28, 2, 2, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(28);
+  doc.setTextColor(...BLUE);
+  doc.text(`${data.scoreTotal}/100`, left + 30, y + 18, { align: "center" });
   doc.setFontSize(11);
-  doc.text('Détail des Points', 20, yPosition);
-  yPosition += 8;
+  doc.setTextColor(...statusColor(data.statusLabel));
+  doc.text(plainStatus(data.statusLabel), left + 62, y + 17);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...INK);
+  y += 38;
 
-  doc.setFont(undefined, 'normal');
-  doc.setFontSize(9);
-  const breakdownData = [
-    [`Formation Académique`, `${data.scoreFormation} pts`],
-    [`Expérience Professionnelle`, `${data.scoreExperience} pts`],
-    [`Français`, `${data.scoreFrancais} pts`],
-    [`Anglais`, `${data.scoreAnglais} pts`],
-    [`Secteur Professionnel`, `${data.scoreSecteur} pts`],
-    [`Compétences`, `${data.scoreCompetences} pts`],
-    [`Bonus Soft Skills`, `${data.scoreBonus} pts`],
+  heading("Détail des points");
+  doc.setFontSize(9.5);
+  const rows: Array<[string, number]> = [
+    ["Formation académique", data.scoreFormation],
+    ["Expérience professionnelle", data.scoreExperience],
+    ["Français", data.scoreFrancais],
+    ["Anglais", data.scoreAnglais],
+    ["Secteur professionnel", data.scoreSecteur],
+    ["Compétences", data.scoreCompetences],
+    ["Bonus soft skills", data.scoreBonus],
   ];
-
-  breakdownData.forEach((row, index) => {
+  rows.forEach(([label, points], index) => {
+    ensure(7);
     if (index % 2 === 0) {
-      doc.setFillColor(245, 245, 245);
-      doc.rect(20, yPosition - 3, pageWidth - 40, 6, 'F');
+      doc.setFillColor(244, 248, 252);
+      doc.rect(left, y - 4.2, width, 6.4, "F");
     }
-    doc.text(row[0], 25, yPosition);
-    doc.text(row[1], pageWidth - 30, yPosition, { align: 'right' });
-    yPosition += 6;
+    doc.text(label, left + 3, y);
+    doc.text(`${points} pts`, right - 3, y, { align: "right" });
+    y += 6.4;
   });
+  y += 6;
 
-  yPosition += 5;
-
-  // Eligibility Criteria
-  doc.setFont(undefined, 'bold');
-  doc.setFontSize(11);
-  doc.text('Critères d\'Éligibilité', 20, yPosition);
-  yPosition += 8;
-
-  doc.setFont(undefined, 'normal');
-  doc.setFontSize(9);
+  heading("Critères d'éligibilité");
   const criteria = [
-    { label: '✅✅✅ Très Éligible', range: '80-100 points', description: 'Excellent profil pour le Luxembourg' },
-    { label: '✅✅ Éligible', range: '70-79 points', description: 'Bon profil, admission probable' },
-    { label: '🟡 Modérément Éligible', range: '60-69 points', description: 'Profil acceptable, amélioration recommandée' },
-    { label: '🔴 Non-Éligible', range: '<60 points', description: 'Profil insuffisant, destinations alternatives proposées' },
+    { label: "Très éligible", range: "80 à 100 points", description: "Excellent profil pour le Luxembourg" },
+    { label: "Éligible", range: "70 à 79 points", description: "Bon profil, admission probable" },
+    { label: "Modérément éligible", range: "60 à 69 points", description: "Profil acceptable, amélioration recommandée" },
+    { label: "Non éligible", range: "moins de 60 points", description: "Profil insuffisant, destinations alternatives proposées" },
   ];
-
-  criteria.forEach((item) => {
-    if (yPosition > pageHeight - 40) {
-      doc.addPage();
-      yPosition = 20;
-    }
-    doc.setFont(undefined, 'bold');
-    doc.text(item.label, 25, yPosition);
-    doc.setFont(undefined, 'normal');
-    doc.setFontSize(8);
-    doc.text(`(${item.range})`, 80, yPosition);
+  for (const item of criteria) {
+    ensure(11);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.text(item.label, left + 3, y);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`(${item.range})`, left + 52, y);
+    doc.setTextColor(...INK);
     doc.setFontSize(9);
-    doc.text(item.description, 25, yPosition + 4);
-    yPosition += 10;
-  });
-
-  // Recommendations
-  if (yPosition > pageHeight - 40) {
-    doc.addPage();
-    yPosition = 20;
+    doc.text(item.description, left + 3, y + 4.4);
+    y += 10.5;
   }
+  y += 4;
 
-  doc.setFont(undefined, 'bold');
-  doc.setFontSize(11);
-  doc.text('Recommandations Personnalisées', 20, yPosition);
-  yPosition += 8;
-
-  doc.setFont(undefined, 'normal');
-  doc.setFontSize(9);
-  const recLines = doc.splitTextToSize(data.recommendationText, pageWidth - 40);
-  recLines.forEach((line: string) => {
-    if (yPosition > pageHeight - 20) {
-      doc.addPage();
-      yPosition = 20;
-    }
-    doc.text(line, 25, yPosition);
-    yPosition += 5;
-  });
-
-  yPosition += 5;
-
-  // Next Steps
-  if (yPosition > pageHeight - 40) {
-    doc.addPage();
-    yPosition = 20;
+  heading("Recommandations personnalisées");
+  doc.setFontSize(9.5);
+  for (const line of doc.splitTextToSize(data.recommendationText, width - 4) as string[]) {
+    ensure(5);
+    doc.text(line, left + 2, y);
+    y += 5;
   }
+  y += 6;
 
-  doc.setFont(undefined, 'bold');
-  doc.setFillColor(255, 193, 7); // Amber
-  doc.rect(20, yPosition, pageWidth - 40, 8, 'F');
-  doc.setTextColor(0, 0, 0);
-  doc.text('Prochaines Étapes', 25, yPosition + 5);
-  yPosition += 12;
-
-  doc.setFont(undefined, 'normal');
-  doc.setFontSize(9);
+  ensure(14);
+  doc.setFillColor(...NAVY);
+  doc.roundedRect(left, y, width, 8, 1.5, 1.5, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(255, 255, 255);
+  doc.text("Prochaines étapes", left + 4, y + 5.4);
+  y += 13;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.5);
+  doc.setTextColor(...INK);
   const nextSteps = [
-    '1. Contactez notre équipe via WhatsApp pour discuter de votre profil',
-    '2. Préparez vos documents (diplômes, certificats de travail, tests de langue)',
-    '3. Ouvrez votre dossier (frais selon votre profil, confirmés avant paiement)',
-    '4. Soumettez vos documents pour vérification',
-    '5. Recevez votre rapport d\'admissibilité complet',
+    "1. Contactez notre équipe via WhatsApp pour discuter de votre profil",
+    "2. Préparez vos documents (diplômes, certificats de travail, tests de langue)",
+    "3. Ouvrez votre dossier (frais selon votre profil, confirmés avant paiement)",
+    "4. Soumettez vos documents pour vérification",
+    "5. Recevez votre rapport d'admissibilité complet",
   ];
+  for (const step of nextSteps) {
+    ensure(6);
+    doc.text(step, left + 2, y);
+    y += 6;
+  }
 
-  nextSteps.forEach((step) => {
-    if (yPosition > pageHeight - 20) {
-      doc.addPage();
-      yPosition = 20;
-    }
-    doc.text(step, 25, yPosition);
-    yPosition += 6;
-  });
-
-  // Footer
-  doc.setFontSize(8);
-  doc.setTextColor(128, 128, 128);
-  doc.text(
-    `3M Travel Agency SARL | +237 698 104 832 | www.3mtravelagency.com`,
-    pageWidth / 2,
-    pageHeight - 10,
-    { align: 'center' }
-  );
-
-  // Return as Buffer
-  const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
-  return pdfBuffer;
+  applyLetterhead(doc, letterhead);
+  return Buffer.from(doc.output("arraybuffer"));
 }
 
-function getStatusColor(status: string): [number, number, number] {
-  if (status.includes('Très Éligible')) return [34, 197, 94]; // Green
-  if (status.includes('Éligible')) return [59, 130, 246]; // Blue
-  if (status.includes('Modérément')) return [251, 191, 36]; // Amber
-  return [239, 68, 68]; // Red
+/** Les emojis du libellé ne sont pas imprimables en Helvetica : seul le texte est conservé. */
+function plainStatus(status: string): string {
+  return status.replace(/[^A-Za-z0-9\u00C0-\u00FF\s'’\-—·]/g, "").replace(/\s+/g, " ").trim();
+}
+
+function statusColor(status: string): [number, number, number] {
+  if (/non[-\s]/i.test(status)) return [190, 18, 60];
+  if (status.includes("Très Éligible")) return [4, 120, 87];
+  if (status.includes("Modérément")) return [180, 83, 9];
+  if (status.includes("Éligible")) return [29, 78, 216];
+  return [190, 18, 60];
 }

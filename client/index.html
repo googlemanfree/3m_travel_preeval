@@ -1,10 +1,22 @@
 <!doctype html>
+<!-- Rebuild sentinel: promotes the current WebDev checkpoint to production. -->
 <html lang="fr">
 
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>3M TRAVEL AGENCY | Voyages, Visas, Études &amp; Mobilité Internationale</title>
+    <title>3M Travel Agency | Agence de voyage, visas et mobilité</title>
+    <meta name="description" content="Agence de voyage à Yaoundé et Ottawa : billets, hôtels, visas, études à l’étranger et préparation de dossiers de mobilité internationale." />
+    <meta name="keywords" content="agence de voyage Yaoundé, visas Cameroun, études à l’étranger, mobilité internationale, billets d’avion, 3M Travel Agency" />
+    <link rel="canonical" href="https://www.3mtravelagency.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="3M TRAVEL AGENCY" />
+    <meta property="og:title" content="3M Travel Agency | Agence de voyage, visas et mobilité" />
+    <meta property="og:description" content="Billets, hôtels, visas, études à l’étranger et préparation de dossiers depuis Yaoundé et Ottawa." />
+    <meta property="og:url" content="https://www.3mtravelagency.com/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="3M Travel Agency | Agence de voyage, visas et mobilité" />
+    <meta name="twitter:description" content="Billets, hôtels, visas, études à l’étranger et préparation de dossiers depuis Yaoundé et Ottawa." />
     <meta name="3m-build-marker" content="admin-bilan-online-reference-2026-09-04-v1" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -42,7 +54,7 @@
             return;
           }
 
-          const SW_REVISION = '2026-10-12-canada-blank-guard-v1';
+          const SW_REVISION = '2026-10-15-logo-partage-wordmark-v60';
           navigator.serviceWorker.register('/sw.js?revision=' + SW_REVISION, { updateViaCache: 'none' }).then(registration => {
             // Toujours rechercher une nouvelle version après un déploiement :
             // cela évite qu’une ancienne page ou un ancien bundle reste affiché.
@@ -78,16 +90,32 @@
       /* Masquer le pré-rendu seulement après le premier rendu React (app-ready). */
       html.app-ready .seo-prerender { display: none !important; }
       html.app-boot-slow:not(.app-ready) .seo-prerender { display: block !important; }
+      /* Pendant le démarrage (JS actif, React pas encore monté, bundle pas encore lent), le pré-rendu SEO n'est pas
+         stylé : on le retire de l'écran sans le retirer du DOM et on montre un indicateur de chargement. Sans JS ou
+         après app-boot-slow, il redevient visible : jamais de page blanche. */
+      html.js-enabled:not(.app-ready):not(.app-boot-slow) .seo-prerender { visibility: hidden; height: 0; overflow: hidden; }
+      html.js-enabled:not(.app-ready):not(.app-boot-slow) #root::before {
+        content: ""; position: fixed; top: 50%; left: 50%; width: 40px; height: 40px; margin: -20px 0 0 -20px;
+        border: 3px solid #dbeafe; border-top-color: #1e3a8a; border-radius: 50%;
+        animation: boot-spin 0.9s linear infinite;
+      }
+      @keyframes boot-spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) {
+        html.js-enabled:not(.app-ready):not(.app-boot-slow) #root::before { animation: none; border-top-color: #1e3a8a; }
+      }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Polices premium lisibles (Manrope corps + Sora titres), chargées sans bloquer le premier rendu. -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" /></noscript>
-    <!-- Analytics différé : aucune requête tierce ne concurrence le premier affichage. -->
+    <!-- Mesure d'audience : chargée UNIQUEMENT après consentement du visiteur (bandeau cookies, clé 3m-analytics-consent), jamais avant. -->
     <script>
       window.addEventListener('load', function () {
-        var loadAnalytics = function () {
+        var loaded = false;
+        window.__load3mAnalytics = function () {
+          if (loaded) return;
+          loaded = true;
           window.dataLayer = window.dataLayer || [];
           window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
           window.gtag('js', new Date());
@@ -102,8 +130,11 @@
           umami.dataset.websiteId = '%VITE_ANALYTICS_WEBSITE_ID%';
           document.body.appendChild(umami);
         };
-        if ('requestIdleCallback' in window) window.requestIdleCallback(loadAnalytics, { timeout: 2500 });
-        else window.setTimeout(loadAnalytics, 2500);
+        var consent = null;
+        try { consent = window.localStorage.getItem('3m-analytics-consent'); } catch (e) { consent = null; }
+        if (consent !== 'granted') return;
+        if ('requestIdleCallback' in window) window.requestIdleCallback(window.__load3mAnalytics, { timeout: 2500 });
+        else window.setTimeout(window.__load3mAnalytics, 2500);
       }, { once: true });
     </script>
   </head>

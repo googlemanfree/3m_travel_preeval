@@ -12,6 +12,7 @@ import { startLogin } from "./const";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { translateApiErrorMessage } from "./lib/apiErrorTranslator";
 import { normalizeApiResponse } from "./lib/apiResponseGuard";
+import { adminLoginUrl, clearAdminSession, getAdminSessionToken, isAdminSessionError } from "./lib/adminSession";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -66,6 +67,22 @@ const getCurrentLanguage = (): "fr" | "en" => {
   return document.documentElement.lang === "en" ? "en" : "fr";
 };
 
+let adminSessionRedirecting = false;
+/**
+ * Session administrateur perdue (expirée, ou remplacée par une connexion ailleurs) : toute l'administration le sait, pas seulement
+ * la liste des dossiers. On efface le jeton périmé et on renvoie vers la connexion, qui ramène ensuite à la page en cours.
+ */
+const handleAdminSessionLost = (error: unknown) => {
+  if (typeof window === "undefined" || adminSessionRedirecting) return;
+  const path = window.location.pathname;
+  if (!path.startsWith("/admin") || path.startsWith("/admin/login")) return;
+  if (!isAdminSessionError(error)) return;
+  adminSessionRedirecting = true;
+  clearAdminSession();
+  toast.error("Session administrateur terminée", { description: "Reconnectez-vous : vous reviendrez sur cette page." });
+  window.setTimeout(() => window.location.assign(adminLoginUrl(`${path}${window.location.search}`)), 600);
+};
+
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
   if (typeof window === "undefined") return;
@@ -99,6 +116,7 @@ const handleResponseError = (error: unknown) => {
 queryClient.getQueryCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     const error = event.query.state.error;
+    handleAdminSessionLost(error);
     redirectToLoginIfUnauthorized(error);
     handleResponseError(error);
     if (error instanceof TRPCClientError) {
@@ -111,6 +129,7 @@ queryClient.getQueryCache().subscribe(event => {
 queryClient.getMutationCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     const error = event.mutation.state.error;
+    handleAdminSessionLost(error);
     redirectToLoginIfUnauthorized(error);
     handleResponseError(error);
     if (error instanceof TRPCClientError) {
@@ -145,7 +164,8 @@ const trpcClient = trpc.createClient({
         // 1. Jeton administrateur : uniquement dans l’espace admin, afin de ne
         // jamais écraser le jeton candidat après un rechargement de son espace.
         try {
-          const adminToken = sessionStorage.getItem("adminSessionToken") ?? localStorage.getItem("adminSessionToken");
+          // Même ordre que le reste de l'espace admin : le jeton partagé entre onglets (le plus récent) d'abord.
+          const adminToken = getAdminSessionToken();
           if (isAdminRoute && adminToken) {
             return { Authorization: `Bearer ${adminToken}`, "X-Admin-Token": adminToken };
           }

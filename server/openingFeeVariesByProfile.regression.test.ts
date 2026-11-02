@@ -36,8 +36,21 @@ describe("frais d'ouverture : le montant dépend du profil", () => {
   });
 
   it("les consignes données aux IA interdisent d'annoncer un montant précis", () => {
-    expect(read("server/aiEvaluationService.ts")).toContain("n'annonce jamais de montant précis");
-    expect(read("server/routers/aiCopilot.ts")).toContain("n'annonce jamais de montant précis");
+    expect(read("server/aiEvaluationService.ts")).toContain("montant selon votre profil");
+    // Le prompt d'Aureol est construit dans shared/aureolSiteKnowledge.ts (buildAureolSystemPrompt).
+    expect(read("shared/aureolSiteKnowledge.ts")).toContain("montant d'honoraires");
+  });
+
+  it("les fiches procédures n'annoncent plus « 65 000 FCFA » comme prix de l'ouverture de dossier", () => {
+    // Seule exception légitime : la conversion d'un tarif tiers (e-Visa ASAN, 100 USD ≈ 65 000 FCFA), qui n'est pas un honoraire 3M.
+    const data = read("shared/procedureData.ts").replace("100 USD (»65 000 FCFA)", "");
+    expect(data).not.toMatch(/65[\s  ]000 FCFA/i);
+  });
+
+  it("le paiement en ligne ouvert après vérification de l'e-mail utilise le montant du dossier, pas une constante", () => {
+    const application = read("server/routers/application.ts");
+    expect(application).toContain("amount: app.paymentAmount ?? proposedOpeningFee(app.visaType),");
+    expect(application).not.toMatch(/amount:\s*65000\s*,/);
   });
 
   it("les textes publics disent que le montant est confirmé par écrit avant tout paiement", () => {

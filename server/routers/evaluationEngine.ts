@@ -165,7 +165,8 @@ export const evaluationEngineRouter = {
         else if (score >= 80) status = 'HIGHLY_ELIGIBLE';
 
         const result = {
-          folderId: `3M-EVAL-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${randomBytes(2).toString("hex").toUpperCase()}`,
+          // Référence de bilan, jamais un numéro « 3M- » (réservé aux dossiers dont les frais d'ouverture sont payés) ni « EVAL ».
+          folderId: `BILAN-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${randomBytes(2).toString("hex").toUpperCase()}`,
           score,
           status,
           destination: input.destination,
@@ -181,7 +182,7 @@ export const evaluationEngineRouter = {
           },
           recommendation: score >= 70 ? 'Procéder immédiatement' : 'Renforcer le dossier',
           nextSteps: [
-            'Valider l\'ouverture du dossier (65 000 FCFA)',
+            'Valider l\'ouverture du dossier (frais selon le profil, confirmés par écrit avant tout paiement)',
             'Légaliser les documents au MINREX',
             'Choisir une formule d\'accompagnement',
             'Soumettre les documents complets',
@@ -256,7 +257,7 @@ export const evaluationEngineRouter = {
         amount: PRICING_FORMULAS.FORMULA_2_INSTALLMENTS,
         description: 'Option Paiement par Tranches (+15%)',
         benefits: [
-          '65 000 FCFA à la signature',
+          'Frais d\'ouverture à la signature (montant selon le profil, confirmé par écrit)',
           'Échéancier flexible par contrat',
           'Accompagnement complet',
         ],
@@ -265,9 +266,9 @@ export const evaluationEngineRouter = {
         amount: PRICING_FORMULAS.FORMULA_3_VISA_PAYMENT,
         description: 'Option Paiement au Résultat / Visa (+25%)',
         benefits: [
-          '65 000 FCFA à la signature',
+          'Frais d\'ouverture à la signature (montant selon le profil, confirmé par écrit)',
           'Solde réglé à l\'obtention du visa',
-          'Garantie de résultat',
+          'Accompagnement sans promesse de résultat : la décision revient à l\'autorité compétente',
         ],
       },
     };

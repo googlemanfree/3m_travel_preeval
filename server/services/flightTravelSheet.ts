@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
-import { COMPANY_PROFILE } from "../../client/src/lib/companyContacts";
+import { applyLetterhead, letterheadLayout, type LetterheadOptions } from "../../shared/brandLetterhead";
+import { loadBrandLogoSync } from "../utils/brandLogo";
 import { extractTravelers } from "../../shared/flightTravelerCheck";
 
 /**
@@ -28,54 +29,62 @@ export function sheetLegs(flightData: unknown): SheetLeg[] {
 }
 
 export function createTravelSheetPdf(input: TravelSheetInput): Buffer {
-  const office = COMPANY_PROFILE.offices.cameroon;
   const pdf = new jsPDF({ unit: "mm", format: "a4" });
-  pdf.setFillColor(30, 58, 138);
-  pdf.rect(0, 0, 210, 40, "F");
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(20);
-  pdf.text("3M TRAVEL AGENCY", 16, 18);
-  pdf.setFontSize(11);
-  pdf.text("Fiche de voyage", 16, 28);
+  const logo = loadBrandLogoSync();
+  const letterhead: LetterheadOptions = {
+    logoDataUri: logo?.dataUri,
+    logoFormat: logo?.format,
+    documentKind: "Fiche de voyage",
+    reference: input.requestRef,
+    dateLabel: input.issuedAt.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Douala" }),
+  };
+  const layout = letterheadLayout(letterhead);
+  const room = (needed: number, current: number) => {
+    if (current + needed <= layout.contentBottom) return current;
+    pdf.addPage();
+    return layout.nextPageTop;
+  };
 
   pdf.setTextColor(15, 23, 42);
-  pdf.setFontSize(13);
-  pdf.text(`Dossier ${input.requestRef}`, 16, 54);
   pdf.setFontSize(11);
   pdf.setFont("helvetica", "bold");
-  pdf.text("Référence de réservation (PNR) :", 16, 63);
+  let top = layout.firstPageTop + 4;
+  pdf.text("Référence de réservation (PNR) :", 18, top);
   pdf.setFont("helvetica", "normal");
-  pdf.text(input.pnrReference ? input.pnrReference : "à consulter sur le billet de la compagnie", 78, 63);
+  pdf.text(input.pnrReference ? input.pnrReference : "à consulter sur le billet de la compagnie", 80, top);
 
-  let y = 76;
+  let y = top + 13;
   for (const leg of sheetLegs(input.flightData)) {
+    y = room(16, y);
     pdf.setFont("helvetica", "bold");
-    pdf.text(`${leg.title} : ${leg.route}`, 16, y);
+    pdf.text(`${leg.title} : ${leg.route}`, 18, y);
     pdf.setFont("helvetica", "normal");
-    pdf.text(`${leg.flight} — ${leg.when}`, 16, y + 6);
+    pdf.text(`${leg.flight} — ${leg.when}`, 18, y + 6);
     y += 16;
   }
 
   const travelers = extractTravelers(input.passengerData);
   pdf.setFont("helvetica", "bold");
-  pdf.text("Voyageur(s)", 16, y + 2);
+  y = room(20, y);
+  pdf.text("Voyageur(s)", 18, y + 2);
   pdf.setFont("helvetica", "normal");
   y += 9;
   if (travelers.length === 0) {
-    pdf.text("Voir le billet de la compagnie.", 16, y);
+    pdf.text("Voir le billet de la compagnie.", 18, y);
     y += 8;
   }
   for (const traveler of travelers) {
-    pdf.text(`• ${traveler.fullName || "Nom à confirmer"}`, 16, y);
+    y = room(7, y);
+    pdf.text(`• ${traveler.fullName || "Nom à confirmer"}`, 18, y);
     y += 7;
   }
 
-  y += 6;
+  y = room(60, y + 6);
   pdf.setDrawColor(191, 219, 254);
-  pdf.line(16, y, 194, y);
+  pdf.line(18, y, 192, y);
   pdf.setFontSize(10);
   pdf.setFont("helvetica", "bold");
-  pdf.text("Avant de partir", 16, y + 9);
+  pdf.text("Avant de partir", 18, y + 9);
   pdf.setFont("helvetica", "normal");
   const reminders = [
     "Le nom sur le billet doit être identique à celui du passeport ; le passeport doit être valide pour tout le voyage.",
@@ -85,15 +94,13 @@ export function createTravelSheetPdf(input: TravelSheetInput): Buffer {
   ];
   let ry = y + 17;
   for (const reminder of reminders) {
-    const lines = pdf.splitTextToSize(`• ${reminder}`, 178) as string[];
-    pdf.text(lines, 16, ry);
+    const lines = pdf.splitTextToSize(`• ${reminder}`, 174) as string[];
+    ry = room(lines.length * 5 + 2, ry);
+    pdf.text(lines, 18, ry);
     ry += lines.length * 5 + 2;
   }
 
-  pdf.setFontSize(9);
-  pdf.setTextColor(71, 85, 105);
-  pdf.text(`Émise le ${input.issuedAt.toISOString().slice(0, 10)} — ${COMPANY_PROFILE.website}`, 16, 276);
-  pdf.text(`3M TRAVEL AGENCY — hello@3mtravelagency.com — WhatsApp ${office.whatsappDisplay}`, 16, 282);
+  applyLetterhead(pdf, letterhead);
   return Buffer.from(pdf.output("arraybuffer"));
 }
 

@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, ChevronRight, Gauge } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronRight, Gauge, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -17,7 +17,7 @@ type Cockpit = {
     tab?: CockpitTab;
   };
   blockers: Array<{ code: string; message: string; tab?: string }>;
-  checklist: Array<{ key: string; label: string; done: boolean }>;
+  checklist: Array<{ key: string; label: string; done: boolean; lockedUntilPayment?: boolean }>;
   progressPercent: number;
   canForceActions?: string[];
 };
@@ -110,13 +110,25 @@ export default function AdminCandidateCockpitStrip({
           <p className="text-xs font-bold uppercase tracking-wide text-slate-600">Checklist de contrôle</p>
           <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
             {cockpit.checklist.map((item) => (
-              <li key={item.key} className="flex items-center gap-2 text-sm text-slate-800">
-                {item.done ? (
+              <li
+                key={item.key}
+                className="flex items-center gap-2 text-sm text-slate-800"
+                data-testid={`cockpit-check-${item.key}`}
+                data-state={item.lockedUntilPayment ? "locked" : item.done ? "done" : "pending"}
+              >
+                {item.lockedUntilPayment ? (
+                  <Lock className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+                ) : item.done ? (
                   <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
                 ) : (
                   <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" aria-hidden="true" />
                 )}
-                <span className={item.done ? "text-slate-600" : "font-medium"}>{item.label}</span>
+                <span className={item.lockedUntilPayment ? "text-slate-500" : item.done ? "text-slate-600" : "font-medium"}>
+                  {item.label}
+                  {item.lockedUntilPayment ? (
+                    <span className="ml-1 text-[11px] font-normal text-slate-400">(après paiement)</span>
+                  ) : null}
+                </span>
               </li>
             ))}
           </ul>

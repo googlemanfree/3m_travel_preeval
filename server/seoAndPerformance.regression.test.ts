@@ -161,6 +161,8 @@ describe("référencement de la page d'accueil et des pages de service", () => {
 
   it("l'accueil déclare canonical, cartes sociales et une image de partage", () => {
     const html = composePublicPrerender(template, "/").html;
+    expect(html).toContain("3M TRAVEL AGENCY | Agence de voyage, visas et mobilité");
+    expect(html).toContain("Agence de voyage à Yaoundé et Ottawa");
     expect(html).toContain('<link rel="canonical" href="https://www.3mtravelagency.com/" />');
     expect(html).toContain('<meta property="og:title"');
     expect(html).toContain('<meta property="og:image"');

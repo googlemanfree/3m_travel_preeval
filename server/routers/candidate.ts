@@ -2,10 +2,13 @@
  * Routeur tRPC — Espace Candidat
  * Gère l'inscription, la connexion, le profil, le dossier, les documents et la messagerie.
  */
+import { evaluationDisplayReference } from "../../shared/evaluationReference";
+import { isActivatedStatus } from "../../shared/candidateStatus";
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
 import { and, asc, desc, eq, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
 import jwt from "jsonwebtoken";
+import { getSessionCutoff, recordLoginEvent } from "../services/candidateSecurity";
 import { parse as parseCookieHeader } from "cookie";
 import { z } from "zod";
 import { createHash, randomBytes, randomInt } from "node:crypto";
@@ -34,11 +37,15 @@ import {
 } from "../../drizzle/schema";
 import {
   loadAgencyAgreementSignature,
+  loadAgencyAgreementSignaturesByIds,
   saveAgencyAgreementSignature,
 } from "../services/agencyAgreementSignature";
 import { notifyAgreementSignedWhatsApp } from "../services/clientWhatsAppNotify";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 import { getEnrichedCandidateJourney, journeyStepIndex } from "../../shared/candidateJourneyCatalog";
+import { parseClientProjectDetails } from "../../shared/dynamicForm";
+import { loadFormOverrides } from "../services/formOverrides";
+import { latestProgramContext } from "../services/evaluationProgramContext";
 import { accountReference, resolveClientReference } from "../../shared/caseReference";
 import { resolveActiveDossierNumber } from "../../shared/activeDossier";
 import { createSubmissionGuard } from "../_core/publicRateLimit";
@@ -159,6 +166,14 @@ async function getCandidateFromHeader(authHeader: string | undefined) {
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
   const rows = await db.select().from(candidates).where(and(eq(candidates.id, candidateId), isNull(candidates.deletedAt))).limit(1);
   if (!rows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Compte introuvable." });
+  // « Me déconnecter de tous les appareils » : un jeton émis avant la date limite n'ouvre plus rien.
+  try {
+    const issuedAt = (jwt.decode(token) as { iat?: number } | null)?.iat;
+    const cutoff = await getSessionCutoff(db, candidateId);
+    if (cutoff && issuedAt && issuedAt < cutoff) throw new TRPCError({ code: "UNAUTHORIZED", message: "Session expirée, veuillez vous reconnecter." });
+  } catch (error) {
+    if (error instanceof TRPCError) throw error;
+  }
   return rows[0];
 }
 
@@ -223,11 +238,19 @@ function primaryDestinationOf(candidate: { destination?: string | null; preferre
   return candidate.destination ?? "autre";
 }
 
-export function hasUsableCandidatePortrait(candidate: { avatarVerificationStatus?: string | null; avatarUrl?: string | null }) {
+/** Comptes créés à partir de cette date : portrait vérifié exigé avant tout accès, sans tolérance historique. */
+export const STRICT_PORTRAIT_FROM = new Date("2026-10-20T00:00:00.000Z");
+
+export function hasUsableCandidatePortrait(candidate: { avatarVerificationStatus?: string | null; avatarUrl?: string | null; createdAt?: Date | string | null }) {
+  if (candidate.avatarVerificationStatus === "verified") return true;
+  // Depuis le 2026-10-20, un compte n'est utilisable qu'avec un portrait vérifié : une photo importée
+  // (ex. photo Google, statut « pending ») ne suffit plus à contourner la vérification.
+  const createdAt = candidate.createdAt ? new Date(candidate.createdAt) : null;
+  if (createdAt && !Number.isNaN(createdAt.getTime()) && createdAt >= STRICT_PORTRAIT_FROM) return false;
   // Les comptes créés avant l’ajout du statut ont parfois une photo valide mais
   // un statut historique « missing » ou « pending ». On ne bloque pas ces
   // candidats : seul un portrait absent ou explicitement rejeté reste bloquant.
-  return candidate.avatarVerificationStatus === "verified" || (candidate.avatarVerificationStatus !== "rejected" && Boolean(candidate.avatarUrl));
+  return candidate.avatarVerificationStatus !== "rejected" && Boolean(candidate.avatarUrl);
 }
 
 export const candidateProcedure = publicProcedure.use(async ({ ctx, next, path }) => {
@@ -421,7 +444,7 @@ export const candidateRouter = router({
         fullName: z.string().min(2, "Nom requis").max(255),
         email: z.string().email("Email invalide").max(320),
         password: z.string().min(8, "Mot de passe : 8 caractères minimum").max(128),
-        phone: z.string().max(50).optional(),
+        phone: z.string().trim().min(8, "Téléphone / WhatsApp requis").max(50),
         // Jusqu'à 3 pays précis parmi tous les pays du monde (shared/worldCountries.ts) : le pays
         // principal pilote la checklist, le parcours et le score. Les questions de projet ci-dessous
         // sont facultatives ; le formulaire les propose selon le pays (getDestinationFormProfile).
@@ -488,7 +511,8 @@ export const candidateRouter = router({
       const priorEvaluationFields = input.evaluationAlreadyCompleted
         ? priorDeliveredEvaluation
           ? {
-              dossierStatus: "documents" as const,
+              // Évaluation déjà validée, mais le dossier ne s'ouvre qu'après preuve de paiement : le compte reste un pré-compte.
+              dossierStatus: "nouveau" as const,
               evaluationDeclarationStatus: "validated" as const,
               evaluationDeclaredAt: new Date(),
               evaluationReviewedAt: priorDeliveredEvaluation.reviewedAt,
@@ -608,7 +632,7 @@ export const candidateRouter = router({
         password: z.string().min(1).max(128),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       checkLoginAttempts(input.email);
 
       const db = await getDb();
@@ -639,6 +663,8 @@ export const candidateRouter = router({
 
       resetLoginAttempts(input.email);
       await db.update(candidates).set({ lastLoginAt: new Date() }).where(eq(candidates.id, candidate.id));
+      // Connexions récentes et alerte « nouvel appareil » : jamais bloquant pour la connexion elle-même.
+      try { await recordLoginEvent(db, candidate.id, (ctx as { req?: { headers?: Record<string, string | string[] | undefined> } }).req); } catch { /* table non migrée ou erreur ponctuelle */ }
 
       const token = signCandidateToken(candidate.id);
       return {
@@ -691,7 +717,7 @@ export const candidateRouter = router({
     const { requiresPassportPhotoUpload } = await import("../../shared/passportPhotoRequirement");
     const passportPhotoRequired = requiresPassportPhotoUpload({
       dossierStatus: c.dossierStatus,
-      hasAgencyDossier: c.dossierStatus !== "nouveau",
+      hasAgencyDossier: isActivatedStatus(c.dossierStatus),
       visaType: c.visaType,
       avatarVerificationReason: c.avatarVerificationReason,
     });
@@ -935,7 +961,7 @@ export const candidateRouter = router({
       const replacesPassportRequest = isPassportPhotoRequestReason(ctx.candidate.avatarVerificationReason)
         || requiresPassportPhotoUpload({
           dossierStatus: ctx.candidate.dossierStatus,
-          hasAgencyDossier: ctx.candidate.dossierStatus !== "nouveau",
+          hasAgencyDossier: isActivatedStatus(ctx.candidate.dossierStatus),
           visaType: ctx.candidate.visaType,
           avatarVerificationReason: ctx.candidate.avatarVerificationReason,
         });
@@ -1035,15 +1061,6 @@ export const candidateRouter = router({
         }
       }
 
-      let extractionJson: string | null = null;
-      try {
-        const { extractDocumentInformation } = await import("../services/documentExtractorService");
-        const extraction = await extractDocumentInformation(input.fileType, input.fileName);
-        extractionJson = JSON.stringify(extraction);
-      } catch (err) {
-        console.error("Extraction error:", err);
-      }
-
       const insertResult = await db.insert(candidateFiles).values({
         candidateId: ctx.candidate.id,
         fileType: input.fileType,
@@ -1055,7 +1072,6 @@ export const candidateRouter = router({
         status: "uploaded",
         correctionComment: input.correctionComment ?? null,
         replacesFileId: input.replacesFileId ?? null,
-        extractedData: extractionJson,
       });
 
       const documentId = Number((insertResult as any)[0]?.insertId || 0);
@@ -1517,7 +1533,8 @@ export const candidateRouter = router({
       }
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      const rows = await db.select().from(candidates).where(eq(candidates.email, input.email)).limit(1);
+      // Réponse identique pour un compte inconnu ou archivé : on ne révèle rien et aucun lien n'est émis.
+      const rows = await db.select().from(candidates).where(and(eq(candidates.email, input.email), isNull(candidates.deletedAt))).limit(1);
       if (!rows.length) return { success: true, message: "Si cet email existe, un lien a été envoyé." };
       const candidate = rows[0];
       const { rawToken, tokenHash } = issuePasswordResetToken();
@@ -1661,6 +1678,7 @@ export const candidateRouter = router({
           dossierNumber,
           fullName: dossier.fullName,
           destination: dossier.destination,
+          visaType: dossier.visaType,
           variables: protocolVariables,
           content: protocolText,
           signature: {
@@ -1843,6 +1861,7 @@ export const candidateRouter = router({
         destinationProjet: application.destination || "Non spécifiée",
         clientTelephoneWhatsapp: application.whatsappNumber || undefined,
         clientEmail: application.email,
+        montantValide: Number(application.paymentConfirmedAmount ?? application.paymentAmount) || undefined,
         modePaiement: application.paymentMethod || "Paiement confirmé",
         dateHeurePaiement: (application.paymentValidatedAt || application.paymentDate)
           ? new Date(application.paymentValidatedAt || application.paymentDate as Date).toLocaleString("fr-FR", { timeZone: "Africa/Douala" })
@@ -2357,6 +2376,35 @@ export const candidateRouter = router({
       return { success: true, activeDossierNumber: input.dossierNumber };
     }),
 
+  /**
+   * Le bilan d'évaluation ENVOYÉ au candidat, tel que dans son e-mail (même mise en forme). Uniquement un bilan que l'administrateur a validé puis
+   * envoyé (evaluationDeliveryStatus = sent), et uniquement le sien : jamais un brouillon.
+   */
+  getMyEvaluationBilan: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const { applications: applicationsTable } = await import("../../drizzle/schema");
+    const [application] = await db
+      .select()
+      .from(applicationsTable)
+      .where(and(eq(applicationsTable.evaluationDeliveryStatus, "sent"), or(eq(applicationsTable.candidateId, ctx.candidate.id), sql`LOWER(${applicationsTable.email}) = LOWER(${ctx.candidate.email})`)))
+      .orderBy(desc(applicationsTable.evaluationCompletedAt), desc(applicationsTable.updatedAt))
+      .limit(1);
+    if (!application) return null;
+    const { generateEvaluationReportHTML } = await import("../evaluationService");
+    const { frameBrandedDocument } = await import("../../shared/brandLetterhead");
+    const pdfUrl = application.evaluationReportPdfKey ? await storageGetSignedUrl(application.evaluationReportPdfKey).catch(() => null) : null;
+    // Première consultation : alerte dans l'administration et e-mail à l'agence (une seule fois, sans bloquer l'affichage).
+    if (!application.evaluationReportViewedAt) void import("../services/bilanReceipts").then((module) => module.recordBilanViewed(db, application.id, "espace client")).catch(() => undefined);
+    return {
+      dossierNumber: evaluationDisplayReference(application) ?? "",
+      subject: application.evaluationDeliverySubject ?? null,
+      sentAt: application.evaluationCompletedAt ?? null,
+      html: frameBrandedDocument(generateEvaluationReportHTML(application)),
+      pdfUrl,
+    };
+  }),
+
   getMyDossierData: candidateProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -2436,9 +2484,10 @@ export const candidateRouter = router({
                 ? "refuse"
                 : historicalAgencyDossier.status === "en_cours"
                   ? "en_evaluation"
-                  : "nouveau",
+                  : historicalAgencyDossier.initialPaymentStatus === "paid" ? "paye" : "nouveau",
         agreementSigned: false,
-        paymentStatus: "non_paye",
+        // Frais d'ouverture réglés à l'agence : le dossier activé ne doit jamais s'afficher « non payé » à côté de sa référence 3M-.
+        paymentStatus: historicalAgencyDossier.initialPaymentStatus === "paid" ? "SUCCESS" : "non_paye",
         scoringTotal: null,
         evaluationScore: null,
         createdAt: historicalAgencyDossier.createdAt,
@@ -2484,9 +2533,10 @@ export const candidateRouter = router({
           .where(eq(agencyDossierDocuments.dossierId, agencyDossier[0].id))
           .orderBy(desc(agencyDossierDocuments.createdAt))
       : [];
+    const { resolveClientDocumentUrl } = await import("../services/resolveClientDocumentUrl");
     const agencyDocuments = await Promise.all(rawAgencyDocuments.map(async document => ({
       ...document,
-      documentUrl: await storageGetSignedUrl(document.documentUrl.replace(/^\/manus-storage\//, "")),
+      documentUrl: await resolveClientDocumentUrl(document.documentUrl),
     })));
     const evaluationReportPdfUrl = app[0]?.evaluationReportPdfKey
       ? await storageGetSignedUrl(app[0].evaluationReportPdfKey)
@@ -2538,7 +2588,8 @@ export const candidateRouter = router({
     const [progress] = await db.select().from(procedureChecklistProgress)
       .where(and(eq(procedureChecklistProgress.dossierKey, context.dossierKey), eq(procedureChecklistProgress.candidateId, context.candidateId)))
       .limit(1);
-    const journey = getEnrichedCandidateJourney(context.destination, context.visaType, context.visaType);
+    const journeyProgram = await latestProgramContext(db, ctx.candidate.email);
+    const journey = getEnrichedCandidateJourney(context.destination, context.visaType, context.visaType, journeyProgram.programId, journeyProgram.domainId);
     const currentIndex = journeyStepIndex(journey, context.dossierStatus, null, {
       evaluationClientConfirmed: context.evaluationClientConfirmed,
       activationRequested: context.activationRequested,
@@ -2565,7 +2616,8 @@ export const candidateRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const context = await resolveCandidateProcedureContext(db, ctx.candidate);
       if (!context) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier candidat introuvable." });
-      const journey = getEnrichedCandidateJourney(context.destination, context.visaType, context.visaType);
+      const journeyProgram = await latestProgramContext(db, ctx.candidate.email);
+      const journey = getEnrichedCandidateJourney(context.destination, context.visaType, context.visaType, journeyProgram.programId, journeyProgram.domainId);
       const indexMatch = /^checklist-(\d+)$/.exec(input.stepId);
       const stepIndex = indexMatch ? Number(indexMatch[1]) : journey.steps.findIndex(step => step.id === input.stepId);
       if (!Number.isInteger(stepIndex) || stepIndex < 0 || stepIndex >= journey.steps.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette étape ne correspond pas à votre procédure." });
@@ -2693,9 +2745,10 @@ export const candidateRouter = router({
       .where(eq(agencyDossierDocumentAnnotations.dossierId, dossier.id))
       .orderBy(desc(agencyDossierDocumentAnnotations.createdAt));
 
+    const { resolveClientDocumentUrl } = await import("../services/resolveClientDocumentUrl");
     const documents = await Promise.all(rawDocuments.map(async document => ({
       ...document,
-      documentUrl: await storageGetSignedUrl(document.documentUrl.replace(/^\/manus-storage\//, "")),
+      documentUrl: await resolveClientDocumentUrl(document.documentUrl),
       annotations: annotations.filter(annotation => annotation.documentId === document.id),
     })));
 
@@ -2773,7 +2826,8 @@ export const candidateRouter = router({
       throw new TRPCError({ code: "NOT_FOUND", message: "Aucun bilan finalisé n’est disponible." });
     }
     if (!application.evaluationReportViewedAt) {
-      await db.update(applications).set({ evaluationReportViewedAt: new Date(), updatedAt: new Date() }).where(eq(applications.id, application.id));
+      const { recordBilanViewed } = await import("../services/bilanReceipts");
+      await recordBilanViewed(db, application.id, "espace client");
     }
     return { success: true, firstViewedAt: application.evaluationReportViewedAt ?? new Date() };
   }),
@@ -2956,6 +3010,8 @@ export const candidateRouter = router({
       .where(and(eq(agencyDossiers.email, candidate.email), isNull(agencyDossiers.deletedAt)))
       .orderBy(desc(agencyDossiers.createdAt))
       .limit(10);
+    // Protocole signé ou non pour chaque dossier agence (une requête groupée) : la carte de dossier affiche la bonne étape.
+    const agencySignedByDossierId = await loadAgencyAgreementSignaturesByIds(db, agencyDossierRows.map((dossier) => dossier.id)).catch(() => new Map<number, unknown>());
     const onlineDossiers = [
       ...appRows.map((app) => ({
         dossierNumber: app.dossierNumber,
@@ -2963,6 +3019,7 @@ export const candidateRouter = router({
         destination: app.destination,
         dossierStatus: app.dossierStatus,
         paymentStatus: app.paymentStatus,
+        agreementSigned: Boolean(app.agreementSigned),
         createdAt: app.createdAt,
         source: "online" as const,
       })),
@@ -2972,6 +3029,7 @@ export const candidateRouter = router({
         destination: dossier.destination,
         dossierStatus: dossier.status,
         paymentStatus: dossier.initialPaymentStatus === "paid" ? "SUCCESS" : dossier.initialPaymentStatus === "pending" ? "PENDING" : "NOT_PAID",
+        agreementSigned: agencySignedByDossierId.has(dossier.id),
         createdAt: dossier.createdAt,
         source: "agency" as const,
       })),
@@ -3030,13 +3088,15 @@ export const candidateRouter = router({
     // `dossierNumber` reste la clé technique (paiement, pièces) ; l'affichage passe par `reference`.
     const clientReference = resolveClientReference({
       candidateId: candidate.id,
-      agencyDossier: (!selectedApp && activeAgencyDossier) ? { id: activeAgencyDossier.id, status: activeAgencyDossier.status } : null,
+      agencyDossier: (!selectedApp && activeAgencyDossier) ? { id: activeAgencyDossier.id, status: activeAgencyDossier.status, initialPaymentStatus: activeAgencyDossier.initialPaymentStatus } : null,
       onlineApplication: activeApp ? { dossierNumber: activeApp.dossierNumber, paymentStatus: activeApp.paymentStatus, paymentValidatedAt: (activeApp as any).paymentValidatedAt ?? null } : null,
     });
+    const { resolveClientDocumentUrl } = await import("../services/resolveClientDocumentUrl");
     const synchronizedAgencyDocuments = await Promise.all(agencyDocRows.map(async (document) => ({
       ...document,
-      documentUrl: await storageGetSignedUrl(document.documentUrl.replace(/^\/manus-storage\//, "")),
+      documentUrl: await resolveClientDocumentUrl(document.documentUrl),
     })));
+    const formOverrides = await loadFormOverrides(db);
     const clientEvaluations = evalRows.map((evaluation) => ({
       id: evaluation.id,
       referenceCode: evaluation.referenceCode,
@@ -3050,6 +3110,13 @@ export const candidateRouter = router({
       reviewedAt: evaluation.reviewedAt,
       finalResponseSentAt: evaluation.finalResponseSentAt,
       reviewDraft: evaluation.finalResponseSentAt ? evaluation.reviewDraft : null,
+      // Ses propres réponses du formulaire dynamique (visa, domaine, questions du parcours) : de quoi adapter l'espace client.
+      projectDetails: parseClientProjectDetails(evaluation.projectDetailsJson, evaluation.destinationCountry, evaluation.projectType, formOverrides),
+      declaredColumns: {
+        educationLevel: evaluation.educationLevel ?? "",
+        frenchLevel: evaluation.frenchLevel ?? "",
+        englishLevel: evaluation.englishLevel ?? "",
+      },
     }));
 
     const profileCompletion = computeProfileCompletion(candidate);
@@ -3078,7 +3145,7 @@ export const candidateRouter = router({
     const { requiresPassportPhotoUpload } = await import("../../shared/passportPhotoRequirement");
     const passportPhotoRequired = requiresPassportPhotoUpload({
       dossierStatus: candidate.dossierStatus,
-      hasAgencyDossier: Boolean(activeAgencyDossier) || candidate.dossierStatus !== "nouveau",
+      hasAgencyDossier: Boolean(activeAgencyDossier) || isActivatedStatus(candidate.dossierStatus),
       visaType: visaForPassport,
       projectType: clientEvaluations[0]?.projectType ?? null,
       avatarVerificationReason: refreshedReason?.avatarVerificationReason ?? candidate.avatarVerificationReason,

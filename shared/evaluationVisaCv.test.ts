@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { evaluationRequiresCv, isNonWorkEvaluationVisa, isWorkEvaluationVisa } from "./evaluationVisaCv";
+import {
+  evaluationRequiresCv,
+  isNonWorkEvaluationVisa,
+  isWorkEvaluationVisa,
+  resolveEvaluationProjectKind,
+} from "./evaluationVisaCv";
 
 describe("evaluationVisaCv", () => {
   it("détecte les visas travail", () => {
@@ -23,5 +28,15 @@ describe("evaluationVisaCv", () => {
     expect(evaluationRequiresCv(null, "travail")).toBe(true);
     expect(evaluationRequiresCv(null, "etudes")).toBe(false);
     expect(evaluationRequiresCv(null, null)).toBe(false);
+  });
+
+  it("normalise le type de projet pour bilans et pilotage", () => {
+    expect(resolveEvaluationProjectKind("etudes")).toBe("etudes");
+    expect(resolveEvaluationProjectKind(null, "Visa études")).toBe("etudes");
+    expect(resolveEvaluationProjectKind("tourisme")).toBe("tourisme");
+    expect(resolveEvaluationProjectKind("travail")).toBe("travail");
+    expect(resolveEvaluationProjectKind("schengen_travail")).toBe("travail");
+    expect(resolveEvaluationProjectKind("schengen_tourisme")).toBe("tourisme");
+    expect(resolveEvaluationProjectKind("")).toBe("autre");
   });
 });

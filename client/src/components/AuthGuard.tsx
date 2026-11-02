@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import { Lock, LogIn, UserPlus, ArrowRight, Loader2, CircleHelp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const LOGO_URL = "/manus-storage/logo_3m_d0e23210.jpeg";
+const LOGO_URL = "/logo-3m.webp";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -107,7 +107,7 @@ export default function AuthGuard({
         <div className="overflow-hidden rounded-3xl bg-white shadow-[0_24px_80px_-28px_rgba(0,0,0,0.55)] ring-1 ring-white/20">
           {/* Header */}
           <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] px-5 py-5 text-center text-white sm:px-8 sm:py-6">
-            <img src={LOGO_URL} alt="Logo 3M TRAVEL AGENCY" className="mx-auto mb-3 h-12 w-12 rounded-xl object-contain sm:h-14 sm:w-14" />
+            <img src={LOGO_URL} alt="Logo 3M TRAVEL AGENCY" className="mx-auto mb-3 h-12 w-12 rounded-full bg-white object-contain sm:h-14 sm:w-14" />
             <h1 className="text-lg font-black sm:text-xl">Accès Réservé aux Membres</h1>
           </div>
 

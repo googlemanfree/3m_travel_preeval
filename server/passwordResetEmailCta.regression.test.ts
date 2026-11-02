@@ -9,9 +9,10 @@ describe("password reset email CTA visible", () => {
   it("candidat : bouton table, couleur solide, lien texte de secours", () => {
     const email = read("server/emailService.ts");
     const fn = email.slice(email.indexOf("export async function sendPasswordResetEmail"), email.indexOf("type EmailChangeConfirmationInput"));
-    expect(fn).toContain('bgcolor="#1E3A8A"');
-    expect(fn).toContain("background-color: #1E3A8A");
-    expect(fn).toContain("color: #ffffff !important");
+    const shell = read("shared/brandLetterhead.ts");
+    expect(shell).toContain('bgcolor="${navy}"');
+    expect(shell).toContain("color:#ffffff !important");
+    expect(fn).toContain("renderBrandedEmailHtml");
     expect(fn).toContain("Réinitialiser mon mot de passe");
     expect(fn).toContain("Si le bouton n’apparaît pas, copiez-collez ce lien");
     expect(fn).toContain("/reset-password?token=");

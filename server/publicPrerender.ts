@@ -1,6 +1,7 @@
 import { OFFICIAL_SITE_ORIGIN } from "./canonicalDomain";
 import { PUBLIC_FAQ_ITEMS } from "@shared/publicFaq";
-import { getProcedureDisplayTitle, getProcedureFaqItems } from "@shared/procedureSeo";
+import { getProcedureDisplayTitle, getProcedureFaqItems, getProcedureSeoDescription } from "@shared/procedureSeo";
+import { getVerifiedProcedureFee } from "../client/src/data/verifiedProcedureFees";
 import { getPublicDestinationDetail, PUBLIC_DESTINATION_DETAILS } from "../client/src/lib/publicDestinationCatalog";
 import { getInstitutionalProcedureSource } from "../client/src/data/institutionalProcedureSources";
 import {
@@ -12,6 +13,13 @@ import {
 import { OFFICIAL_CONSULAR_PORTALS } from "../client/src/data/officialConsularPortals";
 import { evisasDatabaseComplete } from "../client/src/data/evisasDatabaseComplete";
 import { getStudyDestinationArticle, studyDestinationArticles } from "../client/src/data/studyDestinationArticles";
+import { AGENCY_CHECKS, AGENCY_RED_FLAGS, FAQ_GENERAL_GROUPS } from "../client/src/data/contentCampaign";
+import { GUIDES, getGuide } from "../client/src/data/guidesData";
+import { EN_AGENCY_CHECKS, EN_AGENCY_RED_FLAGS, EN_FAQ_GROUPS } from "../client/src/data/contentCampaignEn";
+import * as campaignPartners from "../client/src/data/contentCampaignPartners";
+import * as campaignDocs from "../client/src/data/contentCampaignDocs";
+import * as campaignTranslation from "../client/src/data/contentCampaignTranslation";
+import * as campaignPages from "../client/src/data/contentCampaignPages";
 import { getEnglishContentByEnSlug, getEnglishContentByFrId, type ProcedureEnglishContent } from "../client/src/data/procedures107English";
 import { getCataloguedDestinationImage } from "../client/src/data/premiumVisuals";
 import { getServiceVisual } from "../client/src/data/premiumVisuals";
@@ -19,14 +27,20 @@ import {
   countryResourceLead,
   getCountryResourcePage,
   listCountryResourcePages,
+  primaryEvalProjectForPage,
 } from "@shared/countryResourceCatalog";
+import { normalizePublicEvaluationProject } from "@shared/evaluationFormRequirements";
+import { clampSeoDescription, clampSeoTitle } from "../client/src/lib/seoText";
+import { PATHWAY_LABELS, ROUTE_TYPE_LABELS, STEP_ACTOR_LABELS, OFFER_REQUIREMENT_LABELS } from "@shared/countryCatalog";
+import { guideCodeForSlug, guideCountryName, guidePath } from "@shared/countryGuides";
+import { getCountryGuide, getCountryGuides, type CountryGuide } from "./services/countryGuidesSnapshot";
 
 const LOCAL_BUSINESS_STRUCTURED_DATA = {
-  "@type": "LocalBusiness",
+  "@type": "TravelAgency",
   "@id": `${OFFICIAL_SITE_ORIGIN}/#localbusiness`,
-  name: COMPANY_PROFILE.legalName,
-  legalName: GROUP_LEGAL_NAME,
-  alternateName: [BRAND_PUBLIC_NAME, GROUP_LEGAL_NAME],
+  name: BRAND_PUBLIC_NAME,
+  legalName: COMPANY_PROFILE.legalName,
+  alternateName: [COMPANY_PROFILE.legalDisplayName, GROUP_LEGAL_NAME],
   url: COMPANY_PROFILE.website,
   email: COMPANY_PROFILE.publicEmail,
   founder: {
@@ -35,10 +49,22 @@ const LOCAL_BUSINESS_STRUCTURED_DATA = {
     name: COMPANY_FOUNDER.name,
     jobTitle: `${COMPANY_FOUNDER.jobTitle} — ${GROUP_LEGAL_NAME}`,
   },
+  parentOrganization: {
+    "@type": "Organization",
+    name: GROUP_LEGAL_NAME,
+  },
   telephone: [
     COMPANY_PROFILE.offices.cameroon.phoneDisplay,
     COMPANY_PROFILE.offices.cameroon.whatsappDisplay,
     COMPANY_PROFILE.offices.ottawa.whatsappDisplay,
+  ],
+  openingHoursSpecification: [
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+      opens: "08:00",
+      closes: "18:00",
+    },
   ],
   contactPoint: [
     {
@@ -46,6 +72,7 @@ const LOCAL_BUSINESS_STRUCTURED_DATA = {
       telephone: COMPANY_PROFILE.offices.cameroon.phoneDisplay,
       contactType: "customer service",
       areaServed: "CM",
+      hoursAvailable: "Mo-Sa 08:00-18:00",
     },
     {
       "@type": "ContactPoint",
@@ -77,9 +104,9 @@ const ORIGIN = OFFICIAL_SITE_ORIGIN;
 const SITE = BRAND_PUBLIC_NAME;
 const LEGAL = "RC/YAO/2019/A/2567 · NIU M112417203369H";
 const SOCIAL_IMAGE_ALT = `Aperçu ${BRAND_PUBLIC_NAME}`;
-/** Titre et description de l'accueil, fixés par l'agence ; le titre dépasse volontairement les 60 caractères usuels. */
-const HOME_TITLE = `${BRAND_PUBLIC_NAME} | Voyages, Visas, Études & Mobilité Internationale`;
-const HOME_DESCRIPTION = `${BRAND_PUBLIC_NAME} accompagne candidats africains : visas, études, voyages et suivi à distance — bureaux Yaoundé et Ottawa.`;
+/** Métadonnées d'accueil courtes, descriptives et alignées sur les recherches locales et internationales. */
+const HOME_TITLE = `${BRAND_PUBLIC_NAME} | Agence de voyage, visas et mobilité`;
+const HOME_DESCRIPTION = `Agence de voyage à Yaoundé et Ottawa : billets, hôtels, visas, études à l’étranger et préparation de dossiers de mobilité internationale.`;
 /** Logo stable (image carrée du site) : le logo des données structurées ne doit pas être l'image de partage, qui change à chaque page. */
 const LOGO_URL = `${OFFICIAL_SITE_ORIGIN}/icon-512.png`;
 /** Portrait SEO du fondateur — Meta / Google doivent identifier Aureol DONFACK ↔ 3M Group SARL. */
@@ -133,10 +160,10 @@ const procedureMetaForPath = (path: string): PublicMeta | undefined => {
   const projectLabel = procedure.visaType === "etudes" ? "études" : procedure.visaType === "visiteur" ? "visiteur" : "travail";
   const displayTitle = getProcedureDisplayTitle(procedure);
   const fullTitle = `${displayTitle} | ${SITE}`;
-  const fullDescription = `Étapes, documents et ressources de préparation pour votre projet ${projectLabel} vers ${procedure.name}, avec accompagnement à distance 3M TRAVEL AGENCY — à vérifier auprès des autorités compétentes.`;
   return {
-    title: fullTitle.length <= 65 ? fullTitle : `${displayTitle} | ${SITE}`,
-    description: fullDescription.length <= 175 ? fullDescription : `Étapes et documents pour votre projet ${projectLabel} vers ${procedure.name}, accompagnement à distance ; à vérifier auprès des autorités.`,
+    title: fullTitle,
+    // Même description que la page affichée (source unique dans shared/procedureSeo.ts), frais vérifiés compris.
+    description: clampSeoDescription(getProcedureSeoDescription(procedure, "fr", getVerifiedProcedureFee(procedure.id))),
     heading: displayTitle,
     lead: `Consultez les étapes de préparation, les documents à prévoir et les ressources associées à votre projet ${projectLabel} vers ${procedure.name}, avec un accompagnement 3M TRAVEL AGENCY à distance.`,
     keywords: [`visa ${procedure.name}`, `${projectLabel} ${procedure.name}`, `procédure ${procedure.name}`, projectLabel, "mobilité internationale", "Afrique", "3M TRAVEL AGENCY"],
@@ -162,7 +189,7 @@ const procedureMetaForPathEn = (path: string): PublicMeta | undefined => {
   const projectLabelEn = procedure.visaType === "etudes" ? "study" : procedure.visaType === "visiteur" ? "visitor" : "work";
   return {
     title: `${displayTitle} | ${SITE}`,
-    description: `Steps, documents and preparation resources for your ${projectLabelEn} project to ${englishContent.name}, with remote support from 3M TRAVEL AGENCY — verify with the competent authorities.`,
+    description: clampSeoDescription(getProcedureSeoDescription({ name: englishContent.name, visaType: procedure.visaType }, "en", getVerifiedProcedureFee(procedure.id))),
     heading: displayTitle,
     lead: `Review the preparation steps, documents to gather, and related resources for your ${projectLabelEn} project to ${englishContent.name}, with remote support from 3M TRAVEL AGENCY.`,
     keywords: [`${englishContent.name} visa`, `${projectLabelEn} visa ${englishContent.name}`, `${englishContent.name} procedure`, projectLabelEn, "international mobility", "Africa", "3M TRAVEL AGENCY"],
@@ -197,6 +224,10 @@ const studyArticleForPath = (path: string) => {
 const HREFLANG_PAIRS: Record<string, string> = {
   "/": "/en",
   "/en": "/",
+  "/faq": "/en/faq",
+  "/en/faq": "/faq",
+  "/verifier-une-agence": "/en/verify-an-agency",
+  "/en/verify-an-agency": "/verifier-une-agence",
 };
 for (const detail of PUBLIC_DESTINATION_DETAILS) {
   const englishContent = getEnglishContentByFrId(detail.procedure.id);
@@ -216,7 +247,16 @@ const privateShell = (heading: string, description: string, lead = "Cette page e
   noindex: true,
 });
 
+/** Guides pratiques : un hub et une page par guide, générés depuis client/src/data/guidesData.ts. */
+const GUIDE_PAGES: Record<string, PublicMeta> = {
+  "/guides": { title: `Guides pratiques mobilité | ${SITE}`, description: "Documents, calendrier, financement, budget, premières démarches et vocabulaire : les guides pratiques pour préparer un projet de mobilité.", heading: "Guides pratiques", lead: "Des repères simples pour les points qui bloquent le plus souvent un dossier, sans promesse de résultat." },
+  "/en/faq": { title: `Frequently asked questions | ${SITE}`, description: "Free assessment, fees, documents, timelines, security, visas and e-Visa: answers to the questions most often asked before starting a mobility project.", heading: "Frequently asked questions", lead: "Clear answers before you start your international mobility project, with no promise of results: decisions belong to authorities, schools and employers." },
+  "/en/verify-an-agency": { title: `Check an agency before paying | ${SITE}`, description: "Signs of a fraudulent offer, checks to make before paying a visa, study or job agency, and what 3M TRAVEL AGENCY commits to doing and never doing.", heading: "Check an agency before paying", lead: "An “assured” visa, job or admission is the most common sign of a scam: here is how to check before you pay." },
+  ...Object.fromEntries(GUIDES.map((guide): [string, PublicMeta] => [`/guides/${guide.slug}`, { title: `${guide.seoTitle} | ${SITE}`, description: guide.description, heading: guide.title, lead: guide.lead }])),
+};
+
 export const PUBLIC_PAGES: Record<string, PublicMeta> = {
+  ...GUIDE_PAGES,
   "/en": {
     title: `3M TRAVEL AGENCY | International Mobility from Africa`,
     description: "3M TRAVEL AGENCY supports African candidates’ international mobility — visas, study abroad and travel — with remote follow-up and offices in Yaoundé and Ottawa.",
@@ -224,7 +264,7 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
     heading: "Your international mobility project, prepared with method",
     lead: "3M TRAVEL AGENCY supports candidates across Africa with remote follow-up. Decisions by authorities, employers and external partners remain independent of the agency.",
   },
-  "/": { title: HOME_TITLE, description: HOME_DESCRIPTION, keywords: ["voyages", "visas", "études à l'étranger", "mobilité internationale", "Afrique", "suivi à distance", "3M TRAVEL AGENCY"], heading: "3M TRAVEL AGENCY : de l’Afrique vers le monde — visas, études et mobilité internationale", lead: "Évaluation gratuite, accompagnement à distance pour candidats africains, bureaux Yaoundé et Ottawa, joignable par WhatsApp — agence enregistrée depuis 2019." },
+  "/": { title: HOME_TITLE, description: HOME_DESCRIPTION, keywords: ["agence de voyage Yaoundé", "visas Cameroun", "études à l'étranger", "mobilité internationale", "billets d'avion", "hôtels", "3M TRAVEL AGENCY"], heading: "3M TRAVEL AGENCY : agence de voyage, visas et mobilité internationale", lead: "Billets, hôtels, visas et préparation de dossiers pour les études et la mobilité internationale, depuis Yaoundé et Ottawa — avec une évaluation claire et un suivi traçable." },
   "/canada": { title: `Visa et immigration Canada | ${SITE}`, description: "Préparez votre projet Canada avec des informations officielles et un accompagnement administratif documenté, sans promesse de résultat.", keywords: ["visa Canada", "immigration Canada", "permis de travail", "études au Canada", "3M TRAVEL AGENCY"], heading: "Démarches Canada", lead: "Préparez votre projet avec des informations vérifiables, sans promesse d’admission, d’emploi ou de résidence." },
   "/canada/crs": { title: `Calculatrice CRS Canada | ${SITE}`, description: "Calculez votre score indicatif du Système de classement global pour Entrée express, avec les quatre compétences linguistiques et les repères officiels IRCC.", keywords: ["calculatrice CRS", "score CRS Canada", "Entrée express", "CLB", "NCLC", "IRCC"], heading: "Calculatrice CRS Canada", lead: "Saisissez votre profil et vos résultats linguistiques pour obtenir une estimation indicative du score CRS. Le résultat officiel dépend d’IRCC et de votre profil Entrée express." },
   "/schengen": { title: `Espace Schengen | ${SITE}`, description: "Repères administratifs pour les projets de visa et de mobilité vers l’espace Schengen.", heading: "Démarches Schengen", lead: "Les exigences varient selon le pays et la situation individuelle ; les liens institutionnels sont prioritaires." },
@@ -242,16 +282,16 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/services": { title: `Tous nos services | ${SITE}`, description: "Études, travail, immigration, visas, billets, assurance, CNI, passeport et e-Visa : les services internationaux de 3M TRAVEL AGENCY depuis Yaoundé et Ottawa.", heading: "Tous les services de 3M TRAVEL AGENCY", lead: "Mobilité internationale, travel et démarches administratives : un interlocuteur structure votre dossier. Les décisions appartiennent aux autorités et prestataires ; 3M prépare et suit sans garantir de résultat." },
   "/formation": { title: `Nos formations | ${SITE}`, description: "Découvrez les programmes de formation et d’orientation proposés par 3M TRAVEL AGENCY.", heading: "Formation et orientation", lead: "Les contenus sont présentés à titre d’information ; chaque inscription est confirmée selon les conditions applicables." },
   "/blog": { title: `Ressources mobilité internationale | ${SITE}`, description: "Guides et articles pratiques sur les démarches de mobilité internationale.", heading: "Ressources et guides", lead: "Consultez nos contenus de préparation et complétez-les avec les sources officielles de votre destination." },
-  "/procedures": { title: `Procédures de mobilité | ${SITE}`, description: "Annuaire des procédures de mobilité : étapes, documents et repères par destination. Évaluation gratuite sans compte pour démarrer ; compte ensuite pour le suivi du dossier.", keywords: ["procédures visa", "documents visa", "mobilité internationale", "dossier immigration", "évaluation sans compte", "3M TRAVEL AGENCY"], heading: "Procédures par destination", lead: "Chaque procédure est adaptée à la destination. Démarrez l’évaluation gratuite sans compte ; créez un compte pour enregistrer le dossier et suivre les pièces." },
+  "/procedures": { title: `Procédures & destinations | ${SITE}`, description: "Annuaire des procédures de mobilité : étapes, documents et repères par destination. Évaluation gratuite sans compte, puis suivi du dossier en compte.", keywords: ["procédures visa", "documents visa", "mobilité internationale", "dossier immigration", "évaluation sans compte", "3M TRAVEL AGENCY"], heading: "Procédures par destination", lead: "Chaque procédure est adaptée à la destination. Démarrez l’évaluation gratuite sans compte ; créez un compte pour enregistrer le dossier et suivre les pièces." },
   "/evisas": { title: `Services e-Visa | ${SITE}`, description: "Préparation et suivi des demandes d’e-Visa avec circuit documentaire sécurisé.", heading: "Services e-Visa", lead: "La décision de délivrance relève de l’autorité compétente ; les documents sont traités avec traçabilité." },
   "/tarifs": { title: `Tarifs et honoraires | ${SITE}`, description: "Honoraires indicatifs, étapes de paiement, et résumé public d’annulation/remboursement avant engagement (protocole signé).", heading: "Tarifs et transparence", lead: "Les frais externes et décisions partenaires sont présentés avant engagement lorsqu’ils sont connus. Résumé public des cas d’annulation et de remboursement ci-dessous, avant tout paiement." },
   "/avis": { title: `Avis et retours | ${SITE}`, description: "Retours publiés après modération et informations de transparence de 3M TRAVEL AGENCY.", heading: "Avis et transparence", lead: "Les retours sont traités avec modération ; aucun résultat individuel n’est garanti." },
-  "/contact": { title: `Contactez-nous | ${SITE}`, description: "Contact 3M TRAVEL AGENCY : WhatsApp Yaoundé +237 698 104 832 (canal principal), fixe +237 620 996 045 (appels), Ottawa sur rendez-vous.", keywords: ["contact 3M TRAVEL AGENCY", "agence visa Yaoundé", "WhatsApp Yaoundé", "agence voyage Cameroun", "Ottawa"], heading: "Contacter 3M TRAVEL AGENCY", lead: "Canal principal Yaoundé : WhatsApp +237 698 104 832 (messages, dossiers). Fixe +237 620 996 045 pour les appels vocaux uniquement. Ottawa : WhatsApp secondaire sur rendez-vous." },
+  "/contact": { title: `Nous contacter | ${SITE}`, description: "Contact 3M TRAVEL AGENCY : WhatsApp Yaoundé +237 698 104 832 (canal principal), fixe +237 620 996 045 (appels), Ottawa sur rendez-vous.", keywords: ["contact 3M TRAVEL AGENCY", "agence visa Yaoundé", "WhatsApp Yaoundé", "agence voyage Cameroun", "Ottawa"], heading: "Contacter 3M TRAVEL AGENCY", lead: "Canal principal Yaoundé : WhatsApp +237 698 104 832 (messages, dossiers). Fixe +237 620 996 045 pour les appels vocaux uniquement. Ottawa : WhatsApp secondaire sur rendez-vous." },
   "/consultation": { title: `Prendre rendez-vous | ${SITE}`, description: "Demandez une consultation avec un conseiller 3M TRAVEL AGENCY : indiquez votre projet et votre pays cible, l’équipe vous recontacte sous 24 à 48 h ouvrées.", keywords: ["rendez-vous conseiller", "consultation visa", "consultation immigration", "agence visa Yaoundé", "3M TRAVEL AGENCY"], heading: "Prendre rendez-vous avec un conseiller", lead: "Indiquez votre projet et votre pays de destination ; un conseiller vous recontacte pour cadrer votre démarche, sans engagement ni promesse de résultat." },
   "/about": {
     title: `Aureol DONFACK, fondateur PDG 3M Group SARL | ${SITE}`,
     description:
-      "Aureol DONFACK, fondateur et PDG de 3M Group SARL (3M TRAVEL AGENCY) : direction de l’agence, engagements de transparence et accompagnement mobilité internationale à Yaoundé.",
+      "Aureol DONFACK, fondateur et PDG de 3M Group SARL : direction de l’agence, engagements de transparence et accompagnement mobilité à Yaoundé.",
     keywords: [
       "Aureol DONFACK",
       "Aureol DONFACK fondateur",
@@ -266,16 +306,29 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   },
   "/politique-confidentialite": {
     title: `Politique de confidentialité | ${SITE}`,
-    description: "Politique complète 3M TRAVEL AGENCY : qui consulte vos documents (vous et l’équipe affectée), données collectées, finalités, conservation jusqu’à 5 ans après clôture, sécurité SSL, cookies techniques et droits d’accès ou de suppression.",
+    description: "Qui consulte vos documents, données collectées, finalités, durée de conservation, sécurité, cookies techniques et droits d’accès ou de suppression.",
     heading: "Confidentialité et données",
     lead: "Politique complète : vos documents ne sont pas publics — consultation limitée à votre compte (Mon espace) et à l’équipe 3M affectée ; conservation pendant le traitement puis archivage jusqu’à 5 ans après clôture ; données d’identité, coordonnées et pièces d’immigration utilisées uniquement pour l’évaluation et le suivi ; droits d’accès, rectification et suppression via hello@3mtravelagency.com. Le détail des sections suit ci-dessous.",
   },
+  "/mentions-legales": {
+    title: `Mentions légales | ${SITE}`,
+    description: "Mentions légales 3M TRAVEL AGENCY : éditeur, RC et NIU, directeur de publication, hébergeur et contact.",
+    heading: "Mentions légales",
+    lead: "Éditeur 3M Travel Agency SARL (enseigne 3M TRAVEL AGENCY), société mère 3M Group SARL, RC/YAO/2019/A/2567, NIU M112417203369H.",
+  },
   "/conditions-utilisation": { title: `Conditions d’utilisation | ${SITE}`, description: "Conditions d’utilisation des services et informations de responsabilité.", heading: "Conditions d’utilisation", lead: "Les services d’accompagnement ne remplacent ni les autorités compétentes ni les décisions de partenaires externes." },
   "/accessibilite": { title: `Accessibilité | ${SITE}`, description: "Engagements et informations d’accessibilité du site 3M TRAVEL AGENCY : ce qui est déjà en place et comment signaler une difficulté.", heading: "Accessibilité", lead: "Nous cherchons à rendre le site utilisable par le plus grand nombre ; signalez-nous toute difficulté rencontrée." },
+  "/faq": { title: `Questions fréquentes | ${SITE}`, description: "Évaluation gratuite, frais et paiement, documents, délais, sécurité, visas et e-Visa : les réponses de 3M TRAVEL AGENCY aux questions les plus posées.", heading: "Questions fréquentes", lead: "Des réponses claires avant de lancer votre projet de mobilité internationale, sans promesse de résultat : les décisions appartiennent aux autorités, écoles et employeurs." },
+  "/verifier-une-agence": { title: `Vérifier une agence avant de payer | ${SITE}`, description: "Signes d’une offre frauduleuse, vérifications à faire avant de payer une agence de visa, d’études ou d’emploi, et engagements de 3M TRAVEL AGENCY.", heading: "Vérifier une agence avant de payer", lead: "Une promesse de visa, d’emploi ou d’admission « assuré » est le signe le plus courant d’une escroquerie : voici comment vérifier avant de payer." },
+  "/outils/liste-de-pieces": { title: `Liste des pièces à préparer pour un visa | ${SITE}`, description: "Choisissez un pays et un projet (travail, études, visiteur) : la liste des pièces à préparer, à cocher et à copier, gratuite et sans compte.", heading: "Liste des pièces à préparer", lead: "Outil gratuit : la liste générale des pièces par pays et par projet, à cocher sur votre appareil, sans compte.", keywords: ["liste des pièces visa", "documents visa", "checklist visa", "pièces à fournir visa", "dossier visa"] },
+  "/outils/budget-mobilite": { title: `Simulateur de budget de mobilité | ${SITE}`, description: "Estimez le budget de votre projet de mobilité avec vos propres montants : visa, dossier, traductions, billet, logement, frais de vie et fonds à justifier. Gratuit, sans compte.", heading: "Simulateur de budget de mobilité", lead: "Outil gratuit : vous saisissez vos montants, le total se calcule devise par devise sur votre appareil, et vous pouvez l'imprimer.", keywords: ["budget mobilité internationale", "combien coûte un visa", "budget études à l'étranger", "fonds à justifier visa", "simulateur budget expatriation"] },
+  "/quoi-de-neuf": { title: `Quoi de neuf : changements de règles et de contenu | ${SITE}`, description: "Les derniers changements de règles, de procédures et de contenu relevés par 3M TRAVEL AGENCY, avec leur date et la page concernée.", heading: "Quoi de neuf", lead: "Les changements de règles et de contenu relevés par notre équipe, avec leur date. Vérifiez toujours auprès de l'autorité concernée.", keywords: ["changement règles visa", "actualités visa", "mises à jour procédures immigration"] },
+  "/outils/parcours-mobilite": { title: `Quel parcours de mobilité pour mon projet ? | ${SITE}`, description: "Cinq questions pour savoir quelle voie correspond à votre projet (travail, études, séjour, famille, installation), quels points surveiller et par quoi commencer. Gratuit, sans compte.", heading: "Quel parcours pour mon projet ?", lead: "Outil gratuit : cinq questions, la famille de parcours adaptée, les points d'attention et les premières étapes, sans compte.", keywords: ["quel visa choisir", "parcours de mobilité internationale", "visa travail ou études", "orientation visa", "mobilité internationale"] },
+  "/pays": { title: `Guides visa par pays | ${SITE}`, description: "Pour chaque pays : étapes du visa travail, études ou visiteur, pièces à préparer, délais et frais, avec la date de vérification.", heading: "Guides visa par pays", lead: "Chaque guide est publié après vérification complète de son contenu, avec la date de vérification." },
   "/ressources": { title: `Bibliothèque de ressources | ${SITE}`, description: "Guides PDF par pays pour le travail, les études et la visite — pages destinations premium et fiches 3M TRAVEL AGENCY.", heading: "Guides par destination", lead: "Choisissez un pays pour consulter tous les guides PDF associés, avec images premium et renvoi vers les sources officielles." },
   "/guide-procedures": { title: `Guide des procédures | ${SITE}`, description: "Bibliothèque PDF des procédures 3M TRAVEL AGENCY : travail, études, visiteur, avec renvoi vers les portails officiels (IRCC, ADEM, France-Visas…).", heading: "Bibliothèque PDF des procédures de mobilité", lead: "Chaque guide publié est rattaché à sa fiche procédure et aux sources officielles à vérifier avant toute démarche." },
   "/3m-solutions": { title: "3M Solutions | 3M TRAVEL AGENCY", description: "Services numériques et accompagnement documentaire de 3M TRAVEL AGENCY : web, formation, réseaux et sécurité.", heading: "3M Solutions", lead: "Découvrez les services numériques et soumettez une demande détaillée à l’équipe." },
-  "/partenaires": { title: `Partenaires B2B internationaux | ${SITE}`, description: "Corridor de talents Afrique → Europe, Amériques et Asie : espace candidat, back-office 3M, agences de placement et employeurs. Profils anonymisés, vérification humaine.", keywords: ["partenaires B2B", "agences de placement", "employeurs internationaux", "mobilité Afrique", "3M TRAVEL AGENCY"], heading: "Corridor de talents international", lead: "Quatre interfaces pour recruteurs et candidats. 3M TRAVEL AGENCY gère la procédure administrative après sélection, contrat et lettre d’invitation." },
+  "/partenaires": { title: `Partenaires B2B internationaux | ${SITE}`, description: "Corridor de talents Afrique → Europe, Amériques et Asie : candidats, agences de placement et employeurs. Profils anonymisés, vérification humaine.", keywords: ["partenaires B2B", "agences de placement", "employeurs internationaux", "mobilité Afrique", "3M TRAVEL AGENCY"], heading: "Corridor de talents international", lead: "Quatre interfaces pour recruteurs et candidats. 3M TRAVEL AGENCY gère la procédure administrative après sélection, contrat et lettre d’invitation." },
   "/agences-placement": { title: `Agences de placement | ${SITE}`, description: "Portail B2B pour agences de placement partenaires : candidats éligibles, profils anonymisés, accès après vérification humaine.", keywords: ["agences de placement", "partenaires recrutement", "candidats éligibles", "3M TRAVEL AGENCY"], heading: "Espace agences de placement", lead: "Demandez un accès vérifié pour sélectionner des candidats éligibles issus de l’évaluation 3M." },
   "/employeurs": { title: `Employeurs internationaux | ${SITE}`, description: "Portail B2B pour employeurs en Europe, Amériques et Asie : identification à l’inscription, profils anonymisés, consentement candidat, suivi 3M après sélection.", keywords: ["employeurs internationaux", "recrutement mobilité", "profils anonymisés", "3M TRAVEL AGENCY"], heading: "Espace employeurs internationaux", lead: "Identifiez votre organisation, puis connectez-vous après vérification 3M. Aucun accès automatique." },
   "/plan-du-site": { title: `Plan du site | ${SITE}`, description: "Accédez aux principales pages, procédures, ressources et informations de 3M TRAVEL AGENCY.", heading: "Plan du site", lead: "Trouvez rapidement les pages utiles à votre démarche de mobilité internationale." },
@@ -285,6 +338,7 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/suivi-vol": { title: `Suivre ma réservation de vol | ${SITE}`, description: "Suivez votre demande de réservation de vol avec votre référence et votre e-mail, sans compte.", heading: "Suivre ma réservation de vol", lead: "Entrez la référence reçue par e-mail et l’adresse e-mail de votre demande. Cette page n’est pas indexée.", noindex: true },
   "/mes-vols-favoris": { title: `Mes vols favoris | ${SITE}`, description: "Espace privé de gestion des vols favoris.", heading: "Mes vols favoris", lead: "Connectez-vous pour consulter vos itinéraires enregistrés. Cette page n’est pas indexée.", noindex: true },
   "/flights": { title: `Billets d'avion internationaux | ${SITE}`, description: "Billets d'avion internationaux et réservation avec 3M TRAVEL AGENCY. Visas, assurance et hôtels au même endroit. Tarifs confirmés avant paiement.", keywords: ["billets d'avion internationaux", "réservation de vol", "3M TRAVEL AGENCY", "agence de voyage", "mobilité internationale"], heading: "Billets d'avion internationaux avec 3M TRAVEL AGENCY", lead: "Comparez les vols internationaux, réservez avec un conseiller, puis complétez visas, assurance et hébergement. Disponibilités et tarifs confirmés avant toute réservation ou paiement." },
+  "/login": { title: `Connexion | ${SITE}`, description: "Connexion à l’espace candidat 3M TRAVEL AGENCY. Agences et employeurs : utilisez les liens vers votre portail dédié.", heading: "Connexion", lead: "Espace candidat ci-dessous. Agences et employeurs : ouvrez votre portail depuis les liens proposés. Cette page n’est pas indexée.", noindex: true },
   "/register": { title: `Inscription | ${SITE}`, description: "Création sécurisée d’un espace client 3M TRAVEL AGENCY.", heading: "Créer mon espace client", lead: "Créez votre espace pour suivre vos démarches et communiquer avec l’agence. Cette page n’est pas indexée.", noindex: true },
   "/signup": { title: `Inscription | ${SITE}`, description: "Création sécurisée d’un espace client 3M TRAVEL AGENCY.", heading: "Créer mon espace client", lead: "Créez votre espace pour suivre vos démarches et communiquer avec l’agence. Cette page n’est pas indexée.", noindex: true },
   "/evaluation": { title: `Évaluation de profil | ${SITE}`, description: "Formulaire sécurisé d’évaluation préalable pour préparer votre projet de mobilité internationale.", heading: "Évaluation préalable de votre projet", lead: "Connectez-vous pour compléter votre évaluation. L’analyse aide à préparer le dossier ; aucune décision de visa, d’emploi ou d’admission n’est automatique.", noindex: true },
@@ -298,9 +352,9 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/confirm-email-change": { title: `Confirmer mon adresse e-mail | ${SITE}`, description: "Page sécurisée de confirmation du changement d’adresse e-mail.", heading: "Confirmer le changement d’adresse", lead: "Cette page sécurisée n’est pas indexée.", noindex: true },
   "/assistance-acces": { title: `Assistance accès | ${SITE}`, description: "Demande d’assistance sécurisée pour la récupération d’accès à un espace client.", heading: "Assistance pour récupérer l’accès", lead: "Cette page de récupération nécessite une vérification humaine et n’est pas indexée.", noindex: true },
   "/parcours": { title: `Comment ça marche | ${SITE}`, description: "Découvrez les étapes du parcours d’accompagnement 3M TRAVEL AGENCY, de l’évaluation initiale à l’obtention de votre visa.", keywords: ["comment ça marche", "parcours visa", "étapes dossier", "accompagnement mobilité", "3M TRAVEL AGENCY"], heading: "Votre parcours d’accompagnement", lead: "De l’évaluation initiale à la constitution du dossier : découvrez comment 3M TRAVEL AGENCY vous accompagne à chaque étape." },
-  "/how-it-works": { title: `Comment ça marche : les étapes | ${SITE}`, description: "Parcours 3M TRAVEL AGENCY : évaluation, structuration du dossier, pièces, réseau de partenaires autorisés et suivi dans l’espace client — de Yaoundé et Ottawa vers le monde.", keywords: ["comment ça marche", "étapes du dossier", "processus visa", "mobilité internationale", "3M TRAVEL AGENCY"], heading: "Comment ça marche ?", lead: "Évaluation, dossier documenté, espace client et canaux autorisés — sans promesse de visa, d’emploi ou d’admission." },
+  "/how-it-works": { title: `Comment ça marche : les étapes | ${SITE}`, description: "Évaluation, dossier, pièces, partenaires autorisés et suivi dans l’espace client : le parcours 3M TRAVEL AGENCY, de Yaoundé et Ottawa vers le monde.", keywords: ["comment ça marche", "étapes du dossier", "processus visa", "mobilité internationale", "3M TRAVEL AGENCY"], heading: "Comment ça marche ?", lead: "Évaluation, dossier documenté, espace client et canaux autorisés — sans promesse de visa, d’emploi ou d’admission." },
   "/fiches": { title: `Fiches pays et démarches | ${SITE}`, description: "Consultez les fiches pratiques par destination pour préparer votre dossier de mobilité internationale.", keywords: ["fiches pays", "fiches visa", "démarches immigration", "destinations mobilité", "3M TRAVEL AGENCY"], heading: "Fiches pratiques par destination", lead: "Retrouvez les informations essentielles pour chaque destination : étapes, documents, contacts consulaires et sources officielles." },
-  "/destinations": { title: `Destinations | ${SITE}`, description: "Explorez les destinations de mobilité internationale accompagnées par 3M TRAVEL AGENCY depuis Yaoundé.", keywords: ["destinations visa", "pays immigration", "mobilité internationale", "études travail étranger", "3M TRAVEL AGENCY"], heading: "Destinations de mobilité internationale", lead: "Choisissez votre destination et consultez les procédures, les sources officielles et les repères d’accompagnement disponibles." },
+  "/destinations": { title: `Destinations d’accompagnement | ${SITE}`, description: "Explorez les destinations de mobilité internationale accompagnées par 3M TRAVEL AGENCY depuis Yaoundé.", keywords: ["destinations visa", "pays immigration", "mobilité internationale", "études travail étranger", "3M TRAVEL AGENCY"], heading: "Destinations de mobilité internationale", lead: "Choisissez votre destination et consultez les procédures, les sources officielles et les repères d’accompagnement disponibles." },
   "/evisa": { title: `Annuaire e-Visa | ${SITE}`, description: "Accédez à l’annuaire complet des procédures e-Visa par destination avec 3M TRAVEL AGENCY.", keywords: ["e-visa", "visa électronique", "demande evisa", "visa en ligne", "3M TRAVEL AGENCY"], heading: "Services e-Visa", lead: "Consultez les procédures e-Visa disponibles, les conditions d’éligibilité et les étapes de demande vérifiées par l’agence." },
   "/conformite-documents": { title: `Conformité de documents | ${SITE}`, description: "Vérifiez la conformité de vos documents avant de constituer votre dossier de mobilité internationale.", keywords: ["conformité documents", "vérification pièces", "contrôle dossier", "documents visa", "3M TRAVEL AGENCY"], heading: "Vérification de la conformité de vos documents", lead: "Assurez-vous que vos pièces sont conformes aux exigences de la destination avant de soumettre votre dossier." },
   // Guides formation et travail qualifié rendus par App.tsx sans fiche procédure équivalente.
@@ -313,6 +367,7 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/procedures/japon": { title: `Japon : stage technique et visa | ${SITE}`, description: "Programme de stagiaires techniques (TITP) et visas de spécialistes au Japon : secteurs, étapes et vigilance sur les organismes agréés.", keywords: ["visa Japon", "stage technique Japon", "TITP", "travail Japon", "3M TRAVEL AGENCY"], heading: "Travailler au Japon", lead: "Repères sur le programme de stagiaires techniques et les visas de spécialistes ; ne traitez qu’avec des organismes agréés et vérifiés." },
   // Parcours personnels, transactionnels ou doublons d’une page de référence : servis en 200 non indexable.
   "/complete-profile": privateShell("Compléter mon profil", "Renseignez les informations manquantes de votre profil pour finaliser votre espace client 3M TRAVEL AGENCY."),
+  "/partenaires/activation": privateShell("Activer mon accès partenaire", "Activation d’un accès partenaire à partir d’un lien d’invitation personnel, à usage unique et de durée limitée."),
   "/forgot-password": privateShell("Mot de passe oublié", "Demandez un lien sécurisé pour réinitialiser le mot de passe de votre espace client 3M TRAVEL AGENCY."),
   "/reset-password": privateShell("Nouveau mot de passe", "Définissez un nouveau mot de passe grâce au lien sécurisé reçu par e-mail pour retrouver l’accès à votre espace client."),
   "/payment/method-selection": privateShell("Choisir un mode de paiement", "Sélectionnez le mode de règlement d’un dossier 3M TRAVEL AGENCY depuis votre espace client."),
@@ -340,6 +395,65 @@ const publicPath = (url: string) => {
   const raw = url.split("?")[0] || "/";
   return raw === "/" ? "/" : raw.replace(/\/+$/, "");
 };
+/**
+ * Guides par pays : seules les fiches PUBLIÉES (donc sourcées et relues) sont indexables. Un pays du catalogue sans fiche
+ * publiée répond 200 avec « guide en cours de vérification » et noindex ; un nom qui n'est pas un pays reste « introuvable ».
+ */
+const guideSlugFromPath = (path: string) => {
+  const match = path.match(/^\/pays\/([^/]+)$/);
+  if (!match) return null;
+  try { return decodeURIComponent(match[1]); } catch { return null; }
+};
+
+const guideDateLabel = (value: string | null) => (value ? new Date(value).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }) : null);
+
+const guideMetaForPath = (path: string): PublicMeta | undefined => {
+  const slug = guideSlugFromPath(path);
+  if (!slug) return undefined;
+  const code = guideCodeForSlug(slug);
+  if (!code) return undefined;
+  const name = guideCountryName(code) ?? slug;
+  const guide = getCountryGuide(slug);
+  if (!guide) {
+    return {
+      title: clampSeoTitle(`Guide ${name} : en cours de vérification | ${SITE}`),
+      description: `Le guide ${name} est en cours de vérification. Consultez nos procédures et e-Visas en attendant.`,
+      heading: `${name} : guide en cours de vérification`,
+      lead: "Nous ne publions un guide qu'après vérification complète de son contenu.",
+      noindex: true,
+    };
+  }
+  const labels = guide.pathways.map((item) => PATHWAY_LABELS[item.pathway].toLowerCase()).join(", ");
+  return {
+    title: clampSeoTitle(`Visa ${name} : ${labels} | ${SITE}`),
+    description: clampSeoDescription(`Étapes, pièces, délais et frais pour ${labels} (${name}). Repères vérifiés${guide.updatedAt ? ` le ${guideDateLabel(guide.updatedAt)}` : ""}.`),
+    heading: `${name} : visa et procédures`,
+    lead: `Repères vérifiés pour ${labels}.`,
+  };
+};
+
+const yesNo = (value: boolean | null, yes: string, no: string) => (value === null ? null : value ? yes : no);
+
+/** Détail complet pour le lecteur ; aucune adresse de source officielle : elles restent côté administration. */
+const guideBodyHtml = (guide: CountryGuide) => guide.pathways.map((item) => {
+  const programs = item.programs.map((program) => {
+    const facts = [
+      program.routeType ? ROUTE_TYPE_LABELS[program.routeType as keyof typeof ROUTE_TYPE_LABELS] : null,
+      program.offerRequired ? OFFER_REQUIREMENT_LABELS[program.offerRequired as keyof typeof OFFER_REQUIREMENT_LABELS] : null,
+      yesNo(program.sponsorLicenceRequired, "Employeur agréé exigé", "Employeur agréé non exigé"),
+      yesNo(program.labourMarketTest, "Test du marché du travail", "Sans test du marché du travail"),
+      yesNo(program.renewable, "Renouvelable", "Non renouvelable"),
+      yesNo(program.familyAllowed, "Famille admise", "Famille non admise"),
+    ].filter(Boolean).join(" · ");
+    const notes = [program.legalBasis, program.salaryNote, program.durationNote, program.feesNote, program.processingNote, program.residencePathNote].filter(Boolean).map((note) => `<p>${esc(String(note))}</p>`).join("");
+    const steps = program.steps.length
+      ? `<ol>${program.steps.map((step) => `<li><strong>${esc(STEP_ACTOR_LABELS[step.actor as keyof typeof STEP_ACTOR_LABELS] ?? step.actor)} :</strong> ${esc(step.title)}${step.description ? ` — ${esc(step.description)}` : ""}${step.documents.length ? ` Pièces : ${esc(step.documents.join(", "))}.` : ""}${step.delayNote ? ` Délai : ${esc(step.delayNote)}.` : ""}${step.feeNote ? ` Frais : ${esc(step.feeNote)}.` : ""}</li>`).join("")}</ol>`
+      : "";
+    return `<article><h3>${esc(program.nameFr || program.officialName)}</h3>${facts ? `<p>${esc(facts)}</p>` : ""}${notes}${steps}</article>`;
+  }).join("");
+  return `<section aria-label="${esc(PATHWAY_LABELS[item.pathway])} ${esc(guide.name)}"><h2>${esc(PATHWAY_LABELS[item.pathway])} : ${esc(guide.name)}</h2>${item.summary ? `<p>${esc(item.summary)}</p>` : ""}${programs}${item.verifiedAt ? `<p>Repères vérifiés le ${esc(guideDateLabel(item.verifiedAt) ?? "")}.</p>` : ""}</section>`;
+}).join("") + `<section aria-label="Lancer ma procédure"><h2>Lancer ma procédure avec ${esc(SITE)}</h2><p>Ces repères sont indicatifs. Un conseiller confirme chaque exigence au moment d'instruire votre dossier, puis vous accompagne dans les démarches. <a href="/#evaluation-multi">Évaluer mon profil gratuitement</a></p></section>`;
+
 const publicNav = `<nav aria-label="Navigation publique pré-rendue"><a href="/">Accueil</a><a href="/procedures">Procédures</a><a href="/evisas">e-Visas</a><a href="/tarifs">Tarifs</a><a href="/sources-officielles">Sources officielles</a><a href="/plan-du-site">Plan du site</a></nav>`;
 const OFFICIAL_SOURCE_DESTINATIONS = [
   ["canada", "Canada", "Immigration, Réfugiés et Citoyenneté Canada"],
@@ -356,7 +470,29 @@ const OFFICIAL_SOURCE_DESTINATIONS = [
   ["etats-unis", "États-Unis", "U.S. Department of State"],
 ] as const;
 
+type PrerenderPair = { title: string; text: string };
+type PrerenderFaq = { question: string; answer: string };
+const prerenderSteps = (title: string, steps: PrerenderPair[]) => `<section aria-label="${esc(title)}"><h2>${esc(title)}</h2><ol>${steps.map((step) => `<li><strong>${esc(step.title)}</strong> — ${esc(step.text)}</li>`).join("")}</ol></section>`;
+const prerenderPairs = (title: string, items: PrerenderPair[]) => `<section aria-label="${esc(title)}"><h2>${esc(title)}</h2><ul>${items.map((item) => `<li><strong>${esc(item.title)}</strong> — ${esc(item.text)}</li>`).join("")}</ul></section>`;
+const prerenderList = (title: string, items: string[]) => `<section aria-label="${esc(title)}"><h2>${esc(title)}</h2><ul>${items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul></section>`;
+const prerenderFaq = (title: string, items: PrerenderFaq[]) => `<section aria-label="${esc(title)}"><h2>${esc(title)}</h2>${items.map((item) => `<h3>${esc(item.question)}</h3><p>${esc(item.answer)}</p>`).join("")}</section>`;
+
+/** Contenu des pages enrichies (campagne d'octobre 2026), lisible sans JavaScript : mêmes textes que les pages, issus des mêmes données. */
+export const CAMPAIGN_PRERENDER: Record<string, () => string> = {
+  "/employeurs": () => prerenderSteps("Comment fonctionne l’accès employeur", campaignPartners.EMPLOYER_HOW_STEPS) + prerenderList("Ce que vous voyez d’un profil", campaignPartners.EMPLOYER_VISIBLE) + prerenderList("Ce que vous ne voyez jamais", campaignPartners.EMPLOYER_HIDDEN) + prerenderPairs("Les règles du partage", campaignPartners.EMPLOYER_COMMITMENTS) + prerenderFaq("Questions des employeurs", campaignPartners.EMPLOYER_FAQ),
+  "/agences-placement": () => prerenderSteps("Devenir agence partenaire", campaignPartners.AGENCY_PARTNER_STEPS) + prerenderList("Ce que nous attendons d’une agence", campaignPartners.AGENCY_PARTNER_CRITERIA) + prerenderFaq("Questions des agences", campaignPartners.AGENCY_PARTNER_FAQ),
+  "/ambassador-program": () => prerenderSteps("Comment fonctionne le programme", campaignPartners.AMBASSADOR_HOW_STEPS) + prerenderList("Ce que vous pouvez dire", campaignPartners.AMBASSADOR_YOU_CAN_SAY) + prerenderList("Ce qu’il ne faut jamais dire", campaignPartners.AMBASSADOR_NEVER_SAY) + prerenderFaq("Questions des ambassadeurs", campaignPartners.AMBASSADOR_FAQ),
+  "/paiement": () => prerenderSteps("Comment payer, étape par étape", campaignDocs.PAY_STEPS) + prerenderList("Après votre paiement", campaignDocs.PAY_AFTER) + prerenderFaq("Questions sur le paiement", campaignDocs.PAY_FAQ),
+  "/cni-passeport": () => prerenderList("Avant de déposer votre demande", campaignDocs.CNI_BEFORE_CHECKLIST) + prerenderSteps("En cas de perte ou de vol", campaignDocs.CNI_LOST_STEPS) + prerenderList("Les pièges à éviter", campaignDocs.CNI_COMMON_ERRORS),
+  "/conformite-documents": () => prerenderPairs("Les six familles de pièces", campaignDocs.DOC_FAMILIES) + prerenderList("Bien préparer vos fichiers", campaignDocs.DOC_FORMAT_RULES) + prerenderSteps("Traduction, légalisation, apostille", campaignDocs.DOC_FORMALITIES) + prerenderList("Les erreurs qui font renvoyer un dossier", campaignDocs.DOC_COMMON_ERRORS) + prerenderFaq("Questions sur les documents", campaignDocs.DOC_FAQ),
+  "/traduction/order": () => prerenderSteps("Comment se déroule la traduction", campaignTranslation.TRANSLATION_STEPS) + prerenderList("Préparer votre document", campaignTranslation.TRANSLATION_PREPARE) + prerenderFaq("Questions sur la traduction", campaignTranslation.TRANSLATION_FAQ),
+  "/schengen": () => prerenderList("Les erreurs qui font refuser un dossier", campaignPages.SCHENGEN_COMMON_ERRORS) + prerenderFaq("Questions sur le visa Schengen", campaignPages.SCHENGEN_FAQ),
+  "/about": () => prerenderFaq("Questions sur l’agence", campaignPages.ABOUT_FAQ),
+};
+
 const routeSpecificPrerender = (path: string) => {
+  const campaignPage = CAMPAIGN_PRERENDER[path];
+  if (campaignPage) return campaignPage();
   if (path === "/") {
     const yaounde = COMPANY_PROFILE.offices.cameroon;
     const ottawa = COMPANY_PROFILE.offices.ottawa;
@@ -364,7 +500,7 @@ const routeSpecificPrerender = (path: string) => {
     return [
       `<section aria-label="Accueil 3M TRAVEL AGENCY"><h2>${esc(BRAND_PUBLIC_NAME)} — de l’Afrique vers le monde</h2><p>Voyages, visas, études et mobilité internationale : évaluation gratuite sans compte pour démarrer, accompagnement documenté, bureaux à Yaoundé et Ottawa. Aucune décision de visa ou d’emploi n’est garantie.</p></section>`,
       `<section aria-label="Preuve d’enregistrement vérifiable"><h2>Identité légale</h2><p><strong>${esc(COMPANY_PROFILE.legalName)}</strong> — ${esc(ids.country)}. Registre : ${esc(ids.registryAuthority)}. N° RC : ${esc(ids.registration)}. NIU : ${esc(ids.taxpayerId)}.</p><p><a href="${esc(ids.registryPortalUrl)}" rel="noopener noreferrer">Portail RCCM Cameroun (OHADA)</a> · <a href="${esc(ids.registrySearchUrl)}" rel="noopener noreferrer">Recherche au registre</a> · <a href="/about">À propos</a></p></section>`,
-      `<section aria-label="Services principaux"><h2>Services</h2><ul><li><a href="/?project=travail#evaluation-multi">Évaluation gratuite (sans compte pour démarrer)</a></li><li><a href="/procedures">Procédures et destinations</a></li><li><a href="/travail">Visa travail</a></li><li><a href="/etudes">Visa études</a></li><li><a href="/flights">Vols et réservation</a></li><li><a href="/tarifs">Tarifs et honoraires</a></li><li><a href="/sources-officielles">Sources officielles</a></li><li><a href="/contact">Contact</a></li><li><a href="/about">À propos</a></li><li><a href="/conditions-utilisation">Conditions d’utilisation</a></li><li><a href="/politique-confidentialite">Politique de confidentialité</a></li></ul></section>`,
+      `<section aria-label="Services principaux"><h2>Services</h2><ul><li><a href="/?project=travail#evaluation-multi">Évaluation gratuite (sans compte pour démarrer)</a></li><li><a href="/procedures">Procédures et destinations</a></li><li><a href="/travail">Visa travail</a></li><li><a href="/etudes">Visa études</a></li><li><a href="/flights">Vols et réservation</a></li><li><a href="/tarifs">Tarifs et honoraires</a></li><li><a href="/sources-officielles">Sources officielles</a></li><li><a href="/contact">Contact</a></li><li><a href="/about">À propos</a></li><li><a href="/mentions-legales">Mentions légales</a></li><li><a href="/conditions-utilisation">Conditions d’utilisation</a></li><li><a href="/politique-confidentialite">Politique de confidentialité</a></li></ul></section>`,
       `<section aria-label="Destinations prioritaires"><h2>Corridors les plus demandés</h2><ul><li><a href="/canada">Canada</a></li><li><a href="/procedures/france-visiteur">France — visiteur</a></li><li><a href="/procedures/france-etudes">France — études</a></li><li><a href="/procedures/france-travail">France — travail</a></li><li><a href="/procedures/allemagne-travail">Allemagne — travail</a></li><li><a href="/schengen">Espace Schengen</a></li></ul></section>`,
       `<section aria-label="Bureaux"><h2>Bureaux et canaux</h2><p><strong>${esc(yaounde.label)}</strong> — ${yaounde.addressLines.map(esc).join(", ")}. ${esc(COMPANY_PROFILE.contactRoles.yaoundeWhatsapp)} : ${esc(yaounde.whatsappDisplay)}${yaounde.phoneDisplay ? ` · ${esc(COMPANY_PROFILE.contactRoles.yaoundePhone)} : ${esc(yaounde.phoneDisplay)}` : ""}. ${esc(yaounde.openingHours.join(" · "))}</p><p><strong>${esc(ottawa.label)}</strong> — ${ottawa.addressLines.map(esc).join(", ")}. ${esc(COMPANY_PROFILE.contactRoles.ottawaWhatsapp)} : ${esc(ottawa.whatsappDisplay)}. ${esc(ottawa.openingHours.join(" · "))}</p><p>Délai de réponse indicatif : ${esc(COMPANY_PROFILE.responseSla.label)}. ${esc(COMPANY_PROFILE.responseSla.definition)}</p><p><a href="mailto:${esc(COMPANY_PROFILE.publicEmail)}">${esc(COMPANY_PROFILE.publicEmail)}</a> · <a href="/contact">Page contact</a> · <a href="/tarifs">Tarifs</a></p></section>`,
     ].join("");
@@ -376,6 +512,27 @@ const routeSpecificPrerender = (path: string) => {
       .map((entry) => `<li><a href="/en/procedures/${encodeURIComponent(entry.enSlug)}">${esc(entry.description)}</a></li>`)
       .join("");
     return `<section aria-label="Mobility services"><h2>Prepare your international mobility project</h2><p>Discover our most requested procedures, verified institutional sources, and a free initial evaluation before any step.</p><p><a href="/?project=travail&amp;destination=canada#evaluation-multi">Start the free evaluation</a> · <a href="/en">Explore priority procedures</a> · <a href="/sources-officielles">View official sources</a></p></section><section aria-label="Priority destinations"><h2>Most requested procedures from Yaoundé</h2><ul>${links}</ul></section>`;
+  }
+  if (path === "/en/faq") {
+    return EN_FAQ_GROUPS.map((group) => `<section aria-label="${esc(group.title)}"><h2>${esc(group.title)}</h2>${group.items.map((item) => `<h3>${esc(item.question)}</h3><p>${esc(item.answer)}</p>`).join("")}</section>`).join("");
+  }
+  if (path === "/en/verify-an-agency") {
+    return `<section aria-label="Warning signs"><h2>Warning signs</h2><ul>${EN_AGENCY_RED_FLAGS.map((flag) => `<li><strong>${esc(flag.title)}</strong> — ${esc(flag.text)}</li>`).join("")}</ul></section><section aria-label="Checks before paying"><h2>What to check before paying</h2><ol>${EN_AGENCY_CHECKS.map((step) => `<li><strong>${esc(step.title)}</strong> — ${esc(step.text)}</li>`).join("")}</ol></section>`;
+  }
+  if (path === "/guides") {
+    return `<section aria-label="Tous les guides"><h2>Tous les guides</h2><ul>${GUIDES.map((guide) => `<li><a href="/guides/${esc(guide.slug)}">${esc(guide.title)}</a> — ${esc(guide.description)}</li>`).join("")}</ul></section>`;
+  }
+  const guideForPath = path.startsWith("/guides/") ? getGuide(path.slice("/guides/".length)) : undefined;
+  if (guideForPath) {
+    const sections = guideForPath.sections.map((section) => `<section aria-label="${esc(section.title)}"><h2>${esc(section.title)}</h2>${(section.paragraphs ?? []).map((paragraph) => `<p>${esc(paragraph)}</p>`).join("")}${section.bullets ? `<ul>${section.bullets.map((bullet) => `<li>${esc(bullet)}</li>`).join("")}</ul>` : ""}</section>`).join("");
+    const faq = `<section aria-label="Questions"><h2>Questions sur ce sujet</h2>${guideForPath.faq.map((item) => `<h3>${esc(item.question)}</h3><p>${esc(item.answer)}</p>`).join("")}</section>`;
+    return sections + faq;
+  }
+  if (path === "/faq") {
+    return FAQ_GENERAL_GROUPS.map((group) => `<section aria-label="${esc(group.title)}"><h2>${esc(group.title)}</h2>${group.items.map((item) => `<h3>${esc(item.question)}</h3><p>${esc(item.answer)}</p>`).join("")}</section>`).join("");
+  }
+  if (path === "/verifier-une-agence") {
+    return `<section aria-label="Signaux d’alerte"><h2>Les signaux d’alerte</h2><ul>${AGENCY_RED_FLAGS.map((flag) => `<li><strong>${esc(flag.title)}</strong> — ${esc(flag.text)}</li>`).join("")}</ul></section><section aria-label="Vérifications avant paiement"><h2>Ce qu’il faut vérifier avant de payer</h2><ol>${AGENCY_CHECKS.map((step) => `<li><strong>${esc(step.title)}</strong> — ${esc(step.text)}</li>`).join("")}</ol></section>`;
   }
   if (path === "/canada/crs") {
     return `<section aria-label="Calculatrice CRS Canada"><h2>Simulateur du Système de classement global</h2><p>Le parcours dédié Canada permet d’examiner l’âge, les études, les langues officielles, l’expérience canadienne, le conjoint, la transférabilité et les points additionnels.</p><p>Les quatre compétences linguistiques — lecture, écriture, écoute et expression orale — doivent être saisies selon le test reconnu par IRCC.</p><p><a href="https://www.canada.ca/fr/immigration-refugies-citoyennete/services/immigrer-canada/entree-express/verifier-note.html#calculatrice" target="_blank" rel="noopener noreferrer">Comparer avec la calculatrice officielle IRCC</a> · <a href="/evaluation?destination=canada">Faire une évaluation complète du profil</a> · <a href="/canada">Retourner à la page Canada</a></p></section>`;
@@ -400,7 +557,8 @@ const routeSpecificPrerender = (path: string) => {
         const docs = page.resources
           .map((resource) => `<li><a href="${esc(resource.url)}">${esc(resource.title)}</a></li>`)
           .join("");
-        return `<section aria-label="Guides ${esc(page.country)}"><h2>Guides ${esc(page.country)}</h2><p>${esc(lead)}</p><ul>${docs}</ul><p><a href="/ressources">Retour à la bibliothèque</a> · <a href="/?project=travail&amp;destination=${esc(page.slug)}#evaluation-multi">Évaluer mon profil</a>${page.officialSources[0] ? ` · <a href="${esc(page.officialSources[0].url)}" rel="noreferrer">Source officielle</a>` : ""}</p></section>`;
+        const evalProject = normalizePublicEvaluationProject(primaryEvalProjectForPage(page)) ?? "travail";
+        return `<section aria-label="Guides ${esc(page.country)}"><h2>Guides ${esc(page.country)}</h2><p>${esc(lead)}</p><ul>${docs}</ul><p><a href="/ressources">Retour à la bibliothèque</a> · <a href="/?project=${esc(evalProject)}&amp;destination=${esc(page.slug)}#evaluation-multi">Évaluer mon profil</a>${page.officialSources[0] ? ` · <a href="${esc(page.officialSources[0].url)}" rel="noreferrer">Source officielle</a>` : ""}</p></section>`;
       }
     }
   }
@@ -411,6 +569,10 @@ const routeSpecificPrerender = (path: string) => {
     const yaounde = COMPANY_PROFILE.offices.cameroon;
     const ottawa = COMPANY_PROFILE.offices.ottawa;
     return `<section aria-label="Coordonnées de 3M TRAVEL AGENCY"><h2>Coordonnées et bureaux</h2><p><strong>Numéros Yaoundé — même logique que l’accueil :</strong> WhatsApp ${esc(yaounde.whatsappDisplay)} = canal principal (messages, dossiers, urgences) ; fixe ${esc(yaounde.phoneDisplay || "")} = appels vocaux uniquement (pas WhatsApp). Ottawa ${esc(ottawa.whatsappDisplay)} = WhatsApp secondaire, coordination Canada sur rendez-vous.</p><article><h3>${esc(yaounde.label)}</h3><p>${yaounde.addressLines.map(esc).join("<br />")}</p><p>${esc(COMPANY_PROFILE.contactRoles.yaoundeWhatsapp)} : <a href="https://wa.me/${esc(yaounde.whatsappNumber)}">${esc(yaounde.whatsappDisplay)}</a>${yaounde.phoneDisplay ? ` · ${esc(COMPANY_PROFILE.contactRoles.yaoundePhone)} : <a href="tel:${esc(yaounde.phoneDisplay.replace(/\s/g, ""))}">${esc(yaounde.phoneDisplay)}</a>` : ""}</p><p>${esc(yaounde.openingHours.join(" · "))}</p></article><article><h3>${esc(ottawa.label)}</h3><p>${ottawa.addressLines.map(esc).join("<br />")}</p><p>${esc(COMPANY_PROFILE.contactRoles.ottawaWhatsapp)} : <a href="https://wa.me/${esc(ottawa.whatsappNumber)}">${esc(ottawa.whatsappDisplay)}</a></p><p>${esc(ottawa.openingHours.join(" · "))}</p></article><p>Délai indicatif : ${esc(COMPANY_PROFILE.responseSla.label)}. ${esc(COMPANY_PROFILE.responseSla.definition)}</p><p><a href="mailto:${esc(COMPANY_PROFILE.publicEmail)}">${esc(COMPANY_PROFILE.publicEmail)}</a> · <a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(yaounde.mapQuery)}">Ouvrir la carte de Yaoundé</a></p></section>`;
+  }
+  if (path === "/mentions-legales") {
+    const yaounde = COMPANY_PROFILE.offices.cameroon;
+    return `<section aria-label="Mentions légales"><h2>Mentions légales</h2><p>Éditeur : ${esc(COMPANY_PROFILE.legalDisplayName)}. Société mère : ${esc(GROUP_LEGAL_NAME)}. RC ${esc(COMPANY_PROFILE.legalIdentifiers.registration)}, NIU ${esc(COMPANY_PROFILE.legalIdentifiers.taxpayerId)}. Siège : ${yaounde.addressLines.map(esc).join(", ")}.</p><p>Directeur de la publication : ${esc(COMPANY_FOUNDER.name)}. Hébergeur : ${esc(COMPANY_PROFILE.hosting.providerName)}. Contact : <a href="mailto:${esc(COMPANY_PROFILE.publicEmail)}">${esc(COMPANY_PROFILE.publicEmail)}</a>.</p><p>${esc(COMPANY_PROFILE.groupRole)}</p><p>Le domaine officiel est www.3mtravelagency.com ; 3mtravelagency.click doit renvoyer en 301 vers le .com.</p><p><a href="/conditions-utilisation">Conditions d’utilisation</a> · <a href="/politique-confidentialite">Politique de confidentialité</a></p></section>`;
   }
   if (path === "/politique-confidentialite") {
     const yaounde = COMPANY_PROFILE.offices.cameroon;
@@ -427,7 +589,7 @@ const routeSpecificPrerender = (path: string) => {
     return `<section aria-label="Informations tarifaires"><h2>Comprendre les tarifs avant de vous engager</h2><article><h3>Fourchettes par type de service</h3><p>e-Visa / court séjour : 65 000 – 150 000 FCFA · Schengen / études Europe : 200 000 – 450 000 FCFA · Canada études ou travail : 350 000 – 800 000 FCFA. Honoraires d’agence indicatifs hors frais tiers.</p></article><article><h3>Exemple de devis — visa études France</h3><p>Ouverture 65 000 FCFA + accompagnement 180 000 FCFA + coordination dépôt 55 000 FCFA = total indicatif 300 000 FCFA. Devis écrit avant engagement.</p></article><article><h3>Ouverture de dossier — à partir de 65 000 FCFA</h3><p>Montant indicatif selon le profil ; confirmation écrite et reçu avant tout règlement.</p></article><article><h3>Services inclus</h3><p>Orientation, checklist documentaire, relecture des pièces, protocole et suivi de statut dans le périmètre écrit.</p></article><article><h3>Frais externes exclus</h3><p>Consulats, biométrie, examens médicaux, assurances, traductions, billets et frais universitaires.</p></article><article><h3>Étapes de paiement</h3><ol><li>Évaluation gratuite</li><li>Devis écrit</li><li>Protocole signé</li><li>Paiement canaux officiels + reçu</li><li>Suivi Mon espace</li></ol></article><article><h3>Annulation et remboursement — cas couverts (résumé public)</h3><ul><li>Évaluation gratuite : aucun paiement — rien à rembourser.</li><li>Avant paiement : aucun engagement financier.</li><li>Après paiement / phase engagée : frais d’ouverture et diligences déjà réalisées en principe non remboursables (protocole + reçu), sauf disposition légale impérative contraire ; situation particulière examinée selon le protocole signé.</li><li>Frais tiers déjà versés : règles des organismes concernés.</li><li>Refus de visa ou résultat négatif : pas de remboursement automatique des honoraires.</li></ul><p>Le détail figure dans le protocole signé et les <a href="/conditions-utilisation#annulation">conditions d’utilisation</a>.</p></article><p><a href="/?project=travail#evaluation-multi">Demander une orientation</a> · <a href="/conditions-utilisation#annulation">Conditions d’utilisation</a></p></section>`;
   }
   if (path === "/plan-du-site") {
-    const links = [["Accueil", "/"], ["Procédures et destinations", "/procedures"], ["e-Visas", "/evisas"], ["Tarifs", "/tarifs"], ["Contact", "/contact"], ["Sources officielles", "/sources-officielles"], ["Ressources", "/ressources"], ["Guide des procédures", "/guide-procedures"], ["Créer un compte", "/register"], ["Connexion candidat", "/login"]] as const;
+    const links = [["Accueil", "/"], ["Procédures et destinations", "/procedures"], ["e-Visas", "/evisas"], ["Tarifs", "/tarifs"], ["Contact", "/contact"], ["Sources officielles", "/sources-officielles"], ["Ressources", "/ressources"], ["Guides visa par pays", "/pays"], ["Guide des procédures", "/guide-procedures"], ["Créer un compte", "/register"], ["Connexion candidat", "/login"]] as const;
     return `<section aria-label="Navigation complète"><h2>Accéder rapidement aux services 3M TRAVEL AGENCY</h2><ul>${links.map(([label, href]) => `<li><a href="${href}">${label}</a></li>`).join("")}</ul></section>`;
   }
   if (path === "/procedures") {
@@ -450,6 +612,31 @@ const routeSpecificPrerender = (path: string) => {
       ? `<p><a href="${esc(destination.officialPortalUrl)}" target="_blank" rel="noopener noreferrer">${esc(destination.officialPortalLabel || "Consulter le portail officiel")}</a>${destination.officialVerifiedAt ? ` · Vérifié le ${esc(destination.officialVerifiedAt)}` : ""}</p>`
       : `<p>Le portail officiel doit être vérifié avant tout paiement ou dépôt de document.</p>`;
     return `<section aria-label="Détails e-Visa"><h2>${esc(destination.country)} : repères e-Visa</h2><p>${esc(destination.culture)}</p><p><strong>Type :</strong> ${esc(destination.type)} · <strong>Durée :</strong> ${esc(destination.duration)} · <strong>Délai :</strong> ${esc(destination.delay)} · <strong>Frais :</strong> ${esc(destination.fee)}</p><h2>Étapes à vérifier</h2><ol>${steps}</ol><p><strong>Documents :</strong> ${esc(destination.docs)}</p>${officialPortal}<p>Ces informations sont indicatives et à confirmer sur le portail officiel avant toute démarche, paiement ou réservation. La délivrance relève de l’autorité compétente : 3M TRAVEL AGENCY n’en garantit ni l’obtention ni les délais.</p><p><a href="/evisas">Retourner à l’annuaire e-Visa</a> · <a href="/contact">Demander une orientation</a></p></section>`;
+  }
+  if (path === "/outils/liste-de-pieces") {
+    return `<section aria-label="Liste des pièces à préparer"><h2>Pays, projet, pièces</h2><p>Choisissez l'un des 196 pays et un projet : travail, études, visiteur, e-Visa, installation durable ou regroupement familial. La liste générale des pièces s'affiche, à cocher sur votre appareil. Elle est indicative : l'autorité du pays peut demander d'autres pièces.</p><p><a href="/pays">Guides par pays</a> · <a href="/procedures">Procédures détaillées</a> · <a href="/#evaluation-multi">Évaluer mon profil</a></p></section>`;
+  }
+  if (path === "/outils/budget-mobilite") {
+    return `<section aria-label="Simulateur de budget"><h2>Votre budget, avec vos propres montants</h2><p>Visa ou permis, frais de dossier, traductions et légalisations, examens médicaux, test de langue, assurance, billet, logement à l'arrivée, frais de vie par mois et fonds à justifier : vous saisissez chaque montant relevé sur les sites officiels ou sur vos devis. Le total se calcule sur votre appareil, devise par devise, sans conversion, et sépare ce qui est dépensé de ce qui doit seulement être justifié. Le site ne propose aucun montant et ne garantit ni visa ni délai.</p><p><a href="/outils/liste-de-pieces">Liste des pièces à préparer</a> · <a href="/outils/parcours-mobilite">Quel parcours pour mon projet ?</a> · <a href="/guides/budget-vie-a-letranger">Guide : budget et vie à l'étranger</a></p></section>`;
+  }
+  if (path === "/quoi-de-neuf") {
+    return `<section aria-label="Quoi de neuf"><h2>Changements de règles et de contenu</h2><p>Cette page liste, avec leur date, les changements de règles, de procédures et de contenu relevés par notre équipe, et renvoie vers la page concernée. Ces informations sont indicatives : vérifiez toujours auprès de l'autorité du pays avant de déposer un dossier.</p><p><a href="/guides">Guides pratiques</a> · <a href="/faq">Questions fréquentes</a></p></section>`;
+  }
+  if (path === "/outils/parcours-mobilite") {
+    return `<section aria-label="Orientation mobilité"><h2>Cinq questions, une orientation</h2><p>Objectif (travail, études, court séjour, regroupement familial, installation), où vous en êtes, langue, calendrier et fonds : l'outil indique la famille de parcours qui correspond à votre situation, les points à surveiller et les premières étapes. L'orientation est générale et indicative : elle ne garantit ni visa ni délai.</p><p><a href="/#evaluation-multi">Évaluer mon profil</a> · <a href="/outils/liste-de-pieces">Liste des pièces à préparer</a> · <a href="/pays">Guides par pays</a></p></section>`;
+  }
+  if (path === "/pays") {
+    const guides =Array.from(getCountryGuides().values()).sort((a, b) => a.name.localeCompare(b.name, "fr"));
+    const list = guides.length
+      ? `<ul>${guides.map((guide) => `<li><a href="${esc(guidePath(guide.slug))}">${esc(guide.name)}</a> — ${esc(guide.pathways.map((item) => PATHWAY_LABELS[item.pathway]).join(", "))}</li>`).join("")}</ul>`
+      : `<p>Les premiers guides sont en cours de vérification. En attendant, consultez nos <a href="/procedures">procédures</a>, nos <a href="/evisas">e-Visas</a> et nos <a href="/ressources">ressources par pays</a>.</p>`;
+    return `<section aria-label="Guides par pays"><h2>Pays disponibles</h2>${list}</section>`;
+  }
+  const guideSlug = guideSlugFromPath(path);
+  if (guideSlug) {
+    const guide = getCountryGuide(guideSlug);
+    if (guide) return `<section aria-label="Guide ${esc(guide.name)}">${guideBodyHtml(guide)}</section>`;
+    return `<section aria-label="Guide en cours de vérification"><p>Ce guide sera publié après vérification de son contenu. Voir les <a href="/pays">guides déjà disponibles</a>.</p></section>`;
   }
   const studyArticle = studyArticleForPath(path);
   if (studyArticle) {
@@ -475,7 +662,10 @@ export function getIndexablePublicPaths() {
     .map((entry) => `/en/procedures/${entry.enSlug}`);
   const evisaPaths = evisasDatabaseComplete.map((entry) => `/evisa/${entry.id}`);
   const studyArticlePaths = studyDestinationArticles.map((entry) => `/blog/etudes/${entry.slug}`);
+  // Uniquement les guides publiés : un pays sans fiche relue n'entre jamais dans le plan du site.
+  const guidePaths = Array.from(getCountryGuides().keys()).sort().map((slug) => guidePath(slug));
   return staticPaths
+    .concat(guidePaths.filter((path) => staticPaths.indexOf(path) === -1))
     .concat(destinationPaths.filter((path) => staticPaths.indexOf(path) === -1))
     .concat(englishProcedurePaths.filter((path) => staticPaths.indexOf(path) === -1))
     .concat(evisaPaths.filter((path) => staticPaths.indexOf(path) === -1))
@@ -527,7 +717,7 @@ export function composePublicPrerender(template: string, url: string) {
       };
     }
   }
-  const meta = PUBLIC_PAGES[path] ?? procedurePage ?? evisaPage ?? blogArticle ?? resourceCountryMeta;
+  const meta = PUBLIC_PAGES[path] ?? procedurePage ?? evisaPage ?? blogArticle ?? resourceCountryMeta ?? guideMetaForPath(path);
   const isStudyArticle = Boolean(studyArticle);
   const socialType = isStudyArticle ? "article" : "website";
   const privatePath = /^\/(admin|mon-espace|mon-dossier|confirm-email|verify-email-link|verify-email|verify-email-sent|verify-application-email|confirm-email-change|login|panier|document-upload|mes-vols-favoris|flights|payment\/[^/]+|flight-booking\/[^/]+)(?:\/|$)/.test(path);
@@ -812,5 +1002,7 @@ export function composePublicPrerender(template: string, url: string) {
     .replace(/<meta\s+name="twitter:[^"]+"[^>]*>\s*/gi, "");
   html = html.replace("</head>", () => `${head}\n</head>`);
   html = html.replace("<!--prerender-app-->", () => body);
+  // Les pages anglaises déclarent leur langue dès le HTML serveur (lecteurs d'écran, moteurs de recherche sans JavaScript).
+  if (isEnPath) html = html.replace(/<html(\s+[^>]*?)?\slang="[^"]*"/i, (_match, before = "") => `<html${before} lang="en"`);
   return { html, status: unknown ? 404 : 200, noindex: Boolean(current.noindex) };
 }

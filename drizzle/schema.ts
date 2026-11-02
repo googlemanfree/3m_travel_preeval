@@ -7,8 +7,17 @@ export * from "./routeHealthSchema";
 export * from "./richTextSchema";
 export * from "./footerEngagementSchema";
 export * from "./newsletterSchema";
+export * from "./partnerModuleSchema";
+export * from "./privacyCvthequeSchema";
+export * from "./recruitmentSchema";
+export * from "./evaluationFormSchema";
 export * from "./placementPortalSchema";
 export * from "./securityMfaSchema";
+export * from "./countryCatalogSchema";
+export * from "./studyCatalogSchema";
+export * from "./jobOffersSchema";
+export * from "./stayProgramsSchema";
+export * from "./remoteSupportSchema";
 
 /**
  * Core user table backing auth flow.

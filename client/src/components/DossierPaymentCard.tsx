@@ -71,7 +71,7 @@ export default function DossierPaymentCard({
           <div>
             <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Frais d’ouverture de dossier</p>
             <h2 id="dossier-payment-title" className="mt-1 text-lg font-black text-slate-950">Régler mon dossier</h2>
-            <p className="mt-2 inline-flex w-fit items-center rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm font-black text-blue-950" data-testid="payment-dossier-reference">Référence unique à utiliser : <span className="ml-2 font-mono tracking-wide">{dossierNumber}</span></p>
+            <p className="mt-2 inline-flex w-fit items-center rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm font-black text-blue-950" data-testid="payment-dossier-reference">Référence de paiement à utiliser : <span className="ml-2 font-mono tracking-wide">{dossierNumber}</span></p>
             <p className="mt-1 text-sm text-slate-700">Montant : <strong>{formatAmount(amount ?? null, currency || "XAF")}</strong>. Virement, dépôt Mobile Money ou paiement en agence : le paiement est pris en compte quand l’agence confirme sa réception. Un second dossier (ex. travail + études) exige un second paiement distinct.</p>
           </div>
         </div>

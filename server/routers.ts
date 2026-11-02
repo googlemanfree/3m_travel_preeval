@@ -85,12 +85,37 @@ import { digitalServicesRouter } from "./routers/digitalServices";
 import { jinkoHotelSearchRouter } from "./routers/jinkoHotelSearch";
 import { footerEngagementRouter } from "./routers/footerEngagement";
 import { placementPortalRouter } from "./routers/placementPortal";
+import { partnerModuleRouter } from "./routers/partnerModule";
+import { cvthequeRouter } from "./routers/cvtheque";
+import { privacyCenterRouter } from "./routers/privacyCenter";
+import { recruitmentRouter } from "./routers/recruitment";
+import { evaluationJourneysRouter } from "./routers/evaluationJourneys";
+import { evaluationFormsRouter } from "./routers/evaluationForms";
+import { countryCatalogRouter } from "./routers/countryCatalog";
+import { studyCatalogRouter } from "./routers/studyCatalog";
+import { stayProgramsRouter } from "./routers/stayPrograms";
+import { activationSafetyRouter } from "./routers/activationSafety";
+import { remoteSupportRouter } from "./routers/remoteSupport";
+import { adminInsightsRouter } from "./routers/adminInsights";
+import { adminOpsRouter } from "./routers/adminOps";
+import { adminContentRouter } from "./routers/adminContent";
+import { clientSpaceRouter } from "./routers/clientSpace";
+import { evaluationDecisionRouter } from "./routers/evaluationDecision";
+import { bilanFollowUpRouter } from "./routers/bilanFollowUp";
+import { profileUndoRouter } from "./routers/profileUndo";
+import { consistencyRouter } from "./routers/consistency";
+import { bilanAiRouter } from "./routers/bilanAi";
+import { opportunitiesInboxRouter } from "./routers/opportunitiesInbox";
+import { employerOffersRouter } from "./routers/employerOffers";
+import { jobOffersRouter } from "./routers/jobOffers";
 import { simulatorDiagnosticsRouter } from "./routers/simulatorDiagnostics";
 import { accessRecoveryRouter } from "./routers/accessRecovery";
 import { dossierVerificationRouter } from "./routers/dossierVerification";
 import { newsletterRouter } from "./routers/newsletter";
 import { ambassadorRouter } from "./routers/ambassador";
 import { schedulerAdminRouter } from "./routers/schedulerAdmin";
+import { adminPassportIdentityRouter } from "./routers/adminPassportIdentity";
+import { adminDocumentInsightsRouter } from "./routers/adminDocumentInsights";
 
 // evaluationRouterNew (routers/evaluationRouter.ts, ex-`evaluationV2`) a été RETIRÉ : `create` était public,
 // sans authentification ni consentement, et insérait dans la même table `evaluations` que le vrai parcours
@@ -162,6 +187,8 @@ export const appRouter = router({
   contact: contactRouter,
   admin: adminRouter,
   schedulerAdmin: schedulerAdminRouter,
+  adminPassportIdentity: adminPassportIdentityRouter,
+  adminDocumentInsights: adminDocumentInsightsRouter,
   adminCandidateManagement: adminCandidateManagementRouter,
   adminSavedViews: adminSavedViewsRouter,
   insuranceRequests: insuranceRequestsRouter,
@@ -204,6 +231,29 @@ export const appRouter = router({
   jinkoHotels: jinkoHotelSearchRouter,
   footerEngagement: footerEngagementRouter,
   placementPortal: placementPortalRouter,
+  partnerModule: partnerModuleRouter,
+  cvtheque: cvthequeRouter,
+  privacyCenter: privacyCenterRouter,
+  recruitment: recruitmentRouter,
+  evaluationJourneys: evaluationJourneysRouter,
+  evaluationForms: evaluationFormsRouter,
+  countryCatalog: countryCatalogRouter,
+  studyCatalog: studyCatalogRouter,
+  stayPrograms: stayProgramsRouter,
+  activationSafety: activationSafetyRouter,
+  remoteSupport: remoteSupportRouter,
+  adminInsights: adminInsightsRouter,
+  adminOps: adminOpsRouter,
+  adminContent: adminContentRouter,
+  clientSpace: clientSpaceRouter,
+  evaluationDecision: evaluationDecisionRouter,
+  bilanFollowUp: bilanFollowUpRouter,
+  profileUndo: profileUndoRouter,
+  consistency: consistencyRouter,
+  bilanAi: bilanAiRouter,
+  opportunitiesInbox: opportunitiesInboxRouter,
+  employerOffers: employerOffersRouter,
+  jobOffers: jobOffersRouter,
   simulatorDiagnostics: simulatorDiagnosticsRouter,
   evisaFavorites: evisaFavoritesRouter,
   evisaReviews: evisaReviewsRouter,

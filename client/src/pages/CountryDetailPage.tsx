@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { getGuideLastUpdatedAt, getPublicDestinationDetail, isDestinationRecentlyUpdated } from '@/lib/publicDestinationCatalog';
+import { getGuideLastUpdatedAt, getPublicDestinationDetail, isDestinationRecentlyUpdated, PUBLIC_DESTINATION_DETAILS } from '@/lib/publicDestinationCatalog';
+import { evisasDatabaseComplete } from '@/data/evisasDatabaseComplete';
 import { DestinationCallbackDialog } from '@/components/DestinationCallbackDialog';
 import { DestinationComparisonDialog } from '@/components/DestinationComparisonDialog';
 import { PublicProcedurePdfButton } from '@/components/PublicProcedurePdfButton';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
-import { getProcedureDisplayTitle, getProcedureFaqItems } from '@shared/procedureSeo';
+import { getProcedureDisplayTitle, getProcedureFaqItems, getProcedureSeoDescription } from '@shared/procedureSeo';
 import { getProcedureRegionBadges, getProcedureVisualSources } from '@/data/procedureVisuals';
 import { getInstitutionalProcedureSource } from '@/data/institutionalProcedureSources';
 import { getVerifiedProcedureFee } from '@/data/verifiedProcedureFees';
@@ -22,6 +23,7 @@ import { trpc } from '@/lib/trpc';
 import { DestinationVisualSheet } from '@/components/DestinationVisualSheet';
 import { PublishedGuideSummaryPanel } from '@/components/PublishedGuideSummaryPanel';
 import ProofGallerySection from '@/components/ProofGallerySection';
+import { ProcedureBlueprint } from '@/components/ProcedureBlueprint';
 import { EVALUATION_CTA_HINT } from '@/components/PublicEvaluationCTA';
 import { proofFilterForProcedure } from '@/data/destinationGallery';
 import { setPageSeo } from '@/lib/pageSeo';
@@ -86,28 +88,22 @@ export default function CountryDetailPage() {
     const displayTitle = getProcedureDisplayTitle(country, locale);
     const procedureVisual = getProcedureVisualSources(country);
     const seoImage = destinationMedia?.imageUrl ?? procedureVisual.desktop;
-    const visaLabelFr =
-      country.visaType === 'etudes' ? 'études' : country.visaType === 'visiteur' ? 'visite / court séjour' : 'travail';
-    const visaLabelEn =
-      country.visaType === 'etudes' ? 'studies' : country.visaType === 'visiteur' ? 'visitor / short stay' : 'work';
     const verifiedFee = getVerifiedProcedureFee(country.id);
     if (locale === 'en') {
       document.documentElement.lang = 'en';
       setPageSeo({
-        title: `${displayTitle} — ${visaLabelEn} visa guide | 3M TRAVEL AGENCY`,
-        description: verifiedFee
-          ? `${displayTitle}: official fees about ${verifiedFee.costLabel}, timelines ${verifiedFee.delayLabel}. Steps, documents and FAQ with 3M TRAVEL AGENCY support from Yaoundé.`
-          : `Steps, required documents, official portal and FAQ for your ${visaLabelEn} project to ${country.name} — prepared with 3M TRAVEL AGENCY from Yaoundé.`,
+        // Même titre que le prérendu serveur (publicPrerender.ts) : il ne change plus après le chargement.
+        title: `${displayTitle} | 3M TRAVEL AGENCY`,
+        // Même description que le prérendu serveur : source unique dans shared/procedureSeo.ts.
+        description: getProcedureSeoDescription({ name: country.name, visaType: country.visaType }, 'en', verifiedFee),
         image: seoImage,
         imageAlt: `International mobility illustration for ${country.name}`,
       });
     } else {
       document.documentElement.lang = 'fr';
       setPageSeo({
-        title: `${displayTitle} — visa ${visaLabelFr} | 3M TRAVEL AGENCY`,
-        description: verifiedFee
-          ? `${displayTitle} : frais ${verifiedFee.costLabel}, délais ${verifiedFee.delayLabel}. Étapes, documents, portail officiel et FAQ — accompagnement 3M TRAVEL AGENCY depuis Yaoundé.`
-          : `Étapes, documents exigés, portail officiel et FAQ pour votre projet ${visaLabelFr} vers ${country.name} — accompagnement 3M TRAVEL AGENCY depuis Yaoundé.`,
+        title: `${displayTitle} | 3M TRAVEL AGENCY`,
+        description: getProcedureSeoDescription({ name: country.name, visaType: country.visaType }, 'fr', verifiedFee),
         image: seoImage,
         imageAlt: `Illustration mobilité internationale pour ${country.name}`,
       });
@@ -165,10 +161,27 @@ export default function CountryDetailPage() {
   const sourceVerifiedAt = institutionalSource
     ? new Date(`${institutionalSource.consultedOn}T00:00:00Z`).toLocaleDateString("fr-FR", { timeZone: "UTC" })
     : null;
-  const evaluationUrl = `/?project=${encodeURIComponent(country.visaType)}&destination=${encodeURIComponent(country.id)}#evaluation-multi`;
+  const evaluationProject =
+    country.visaType === "etudes" ? "etudes"
+      : country.visaType === "visiteur" || String(country.visaType) === "tourisme" ? "tourisme"
+        : "travail"; // visiteur → tourisme (formulaire visiteurs distinct)
+  const evaluationUrl = `/?project=${encodeURIComponent(evaluationProject)}&destination=${encodeURIComponent(country.id)}#evaluation-multi`;
   const pageUpdatedAt = publicPortal?.updatedAt
     ? new Date(publicPortal.updatedAt).toLocaleDateString("fr-FR")
     : destinationDetail?.lastUpdatedAt;
+  // Autres procédures publiées pour le même pays : liens réels vers les fiches qui existent (français uniquement).
+  const siblingKey = (value: string) => value.toLocaleLowerCase('fr-FR').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-');
+  const siblingTypeLabel: Record<string, string> = { travail: 'Travail', etudes: 'Études', visiteur: 'Visite / court séjour' };
+  const procedureSiblings = locale === 'fr'
+    ? [
+        ...PUBLIC_DESTINATION_DETAILS
+          .filter((detail) => siblingKey(detail.procedure.name) === siblingKey(country.name) && detail.procedure.id !== country.id)
+          .map((detail) => ({ href: `/procedures/${detail.procedure.id}`, label: `${siblingTypeLabel[detail.procedure.visaType] ?? detail.procedure.visaType} — ${detail.procedure.name}` })),
+        ...evisasDatabaseComplete
+          .filter((entry) => siblingKey(entry.country) === siblingKey(country.name))
+          .map((entry) => ({ href: `/evisa/${entry.id}`, label: `e-Visa — ${entry.country}` })),
+      ]
+    : [];
   const displayCost = verifiedFee?.costLabel ?? country.cost;
   const displayDelay = verifiedFee?.delayLabel ?? country.processingTime;
 
@@ -524,6 +537,41 @@ export default function CountryDetailPage() {
                   </>
                 )}
               </p>
+              {institutionalSource && locale === 'fr' && institutionalSource.preparationPoints.length > 0 ? (
+                <div
+                  className="rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 to-white p-5 space-y-3"
+                  data-testid="procedure-official-prep-main"
+                >
+                  <div className="flex items-start gap-2">
+                    <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-sky-700" aria-hidden="true" />
+                    <div>
+                      <h3 className="font-bold text-slate-900">{L.institutionalGuidance}</h3>
+                      <p className="mt-1 text-sm text-slate-600">
+                        D’après « {institutionalSource.sourceTitle} » — à confirmer sur la source exacte avant toute démarche.
+                      </p>
+                    </div>
+                  </div>
+                  <ul className="space-y-2" aria-label="Points de préparation issus de la source officielle">
+                    {institutionalSource.preparationPoints.map((point) => (
+                      <li key={point} className="flex gap-2 text-sm leading-relaxed text-slate-800">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-sky-700" aria-hidden="true" />
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <a
+                    href={institutionalSource.officialUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-800 underline-offset-2 hover:underline"
+                    data-testid="procedure-official-source-link-main"
+                  >
+                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                    {L.consultSource} {institutionalSource.sourceTitle}
+                  </a>
+                  <p className="break-all text-xs font-medium text-sky-900">{institutionalSource.officialUrl}</p>
+                </div>
+              ) : null}
               <div className="space-y-4">
                 {country.steps.map((step, idx) => (
                   <div key={idx} className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
@@ -538,6 +586,17 @@ export default function CountryDetailPage() {
                 ))}
               </div>
             </Card>
+
+            {/* Parcours complet : étapes, pièces, coûts, délais, erreurs, après-décision, rôle de 3M */}
+            <ProcedureBlueprint
+              countryName={country.name}
+              visaType={country.visaType}
+              slug={country.id}
+              locale={locale}
+              evaluationUrl={evaluationUrl}
+              officialUrl={institutionalSource?.officialUrl || portal?.officialPortalUrl || null}
+              siblings={procedureSiblings}
+            />
 
             {/* FAQ */}
             <Card className="p-8 border-slate-200 shadow-sm bg-white rounded-3xl">

@@ -18,6 +18,8 @@ import { caseApplicants, caseStatusHistory, cases, clientNotifications, document
 import { dossierReferenceCandidates, normalizeDossierReference, parseAgencyDossierReference } from "../utils/dossierReference";
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 import { requireValidAdminSession } from "./adminAuth";
+import { evaluationDisplayReference } from "../../shared/evaluationReference";
+import { allocateDraftKey } from "../services/accountKeyAllocator";
 import { clientKeyOf, createFixedWindowLimiter } from "../_core/publicRateLimit";
 
 // Plafonds des codes de vérification d'e-mail d'un dossier : 6 essais et 3 renvois par dossier et par quart
@@ -28,18 +30,12 @@ const otpResendClientLimiter = createFixedWindowLimiter({ limit: 10, windowMs: 6
 import { sanitizeClientCommunicationHtml } from "../clientCommunication";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
 import { sendReceiptAndProtocol } from "../services/paymentPackage";
+import { normalizeAfterOpeningPayment } from "../services/normalizeAfterOpeningPayment";
 import { MAX_CLIENT_DOSSIERS, MAX_CLIENT_DOSSIERS_MESSAGE } from "../../shared/clientDossierLimits";
-import { DEFAULT_OPENING_FEE_XAF, MAX_OPENING_FEE_XAF, MIN_OPENING_FEE_XAF, formatXaf } from "../../shared/openingFee";
+import { MAX_OPENING_FEE_XAF, MIN_OPENING_FEE_XAF, formatXaf, proposedOpeningFee } from "../../shared/openingFee";
 import { storedUploadUrlSchema } from "../../shared/storedFileUrl";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function generateEvaluationDraftReference(): string {
-  const year = new Date().getFullYear();
-  // `applications.dossierNumber` est limité à 20 caractères.
-  const rand = randomInt(1000, 10000);
-  return `EVAL-DRAFT-${year}-${rand}`;
-}
 
 async function initCinetPayTransaction(params: {
   transactionId: string;
@@ -180,12 +176,8 @@ export const applicationRouter = router({
       const baseUrl = process.env.APP_BASE_URL ?? "https://www.3mtravelagency.com";
 
       // La demande reçoit une référence interne. Le numéro de dossier client est attribué uniquement après validation humaine du bilan.
-      let dossierNumber = generateEvaluationDraftReference();
-      let existing = await db.select().from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1);
-      while (existing.length > 0) {
-        dossierNumber = generateEvaluationDraftReference();
-        existing = await db.select().from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1);
-      }
+      // Avant paiement, la clé est celle du COMPTE (« COMPTE-00012 ») : plus aucun identifiant « EVAL-… ».
+      const dossierNumber = await allocateDraftKey(db, ctx.candidate.id);
 
       const transactionId = `${dossierNumber.replace(/-/g, "")}${Date.now()}`.slice(0, 50);
 
@@ -224,6 +216,22 @@ export const applicationRouter = router({
         if (ambassadorMatch[0]) verifiedReferredByCode = input.referredByCode;
       }
 
+      // Si le formulaire n’a pas joint de CV, reprendre celui de la dernière évaluation.
+      let resolvedCvUrl = input.cvUrl ?? null;
+      if (!resolvedCvUrl) {
+        try {
+          const [evalCv] = await db
+            .select({ cvFileUrl: evaluations.cvFileUrl })
+            .from(evaluations)
+            .where(sql`LOWER(${evaluations.email}) = LOWER(${input.email.trim()})`)
+            .orderBy(desc(evaluations.createdAt))
+            .limit(1);
+          if (evalCv?.cvFileUrl?.trim()) resolvedCvUrl = evalCv.cvFileUrl.trim();
+        } catch (err) {
+          console.error("[createApplication] Lecture CV évaluation ignorée:", err);
+        }
+      }
+
       const [insertResult] = await db.insert(applications).values({
         dossierNumber,
         candidateId: ctx.candidate.id,
@@ -241,12 +249,12 @@ export const applicationRouter = router({
         formulaChosen: input.formulaChosen,
         paymentStatus: "PENDING",
         paymentTransactionId: transactionId,
-        paymentAmount: 65000,
+        paymentAmount: proposedOpeningFee(input.visaType),
         paymentCurrency: "XAF",
         dossierStatus: "nouveau",
         // Documents uploadés
         passportUrl: input.passportUrl ?? null,
-        cvUrl: input.cvUrl ?? null,
+        cvUrl: resolvedCvUrl,
         diplomaUrl: input.diplomaUrl ?? null,
         // Scoring
         scoringTotal: input.scoringTotal ?? null,
@@ -299,7 +307,7 @@ export const applicationRouter = router({
         input.fullName,
         dossierNumber,
         input.destination,
-        65000, // Montant en FCFA
+        proposedOpeningFee(input.visaType), // montant proposé ; le montant du dossier est confirmé par écrit avant paiement
         "XAF"
       )).catch(err => console.error("[Email] Dossier confirmation error:", err));
 
@@ -308,7 +316,7 @@ export const applicationRouter = router({
         dossierNumber,
         input.fullName,
         input.destination,
-        65000,
+        proposedOpeningFee(input.visaType),
         "XAF"
       )).catch(err => console.error("[Email] Admin alert error:", err));
 
@@ -365,6 +373,24 @@ export const applicationRouter = router({
         .update(candidates)
         .set({ activeDossierNumber: dossierNumber, activeDossierSetAt: new Date() })
         .where(eq(candidates.id, ctx.candidate.id));
+
+      // CV d’évaluation → documents compte / dossier agence (si absent).
+      try {
+        const { syncEvaluationCvToCandidate } = await import("../services/syncEvaluationCvToCandidate");
+        const [linkedAgency] = await db
+          .select({ id: agencyDossiers.id })
+          .from(agencyDossiers)
+          .where(ilike(agencyDossiers.email, input.email.trim()))
+          .orderBy(desc(agencyDossiers.createdAt))
+          .limit(1);
+        await syncEvaluationCvToCandidate(db, {
+          email: input.email,
+          candidateId: ctx.candidate.id,
+          agencyDossierId: linkedAgency?.id ?? null,
+        });
+      } catch (err) {
+        console.error("[createApplication] Sync CV évaluation non effectué:", err);
+      }
 
       return {
         applicationId: newApp?.id ?? 0,
@@ -468,7 +494,7 @@ export const applicationRouter = router({
       try {
         const result = await initCinetPayTransaction({
           transactionId: app.paymentTransactionId ?? "",
-          amount: 65000,
+          amount: app.paymentAmount ?? proposedOpeningFee(app.visaType),
           currency: "XAF",
           description: `Ouverture dossier immigration 3M TRAVEL AGENCY — ${input.dossierNumber}`,
           customerName: app.fullName,
@@ -718,8 +744,20 @@ export const applicationRouter = router({
         if (!existing.lastFailureAt && log.action === "receipt_failed") existing.lastFailureAt = log.createdAt;
         receiptDeliveryByApplicationId.set(log.paymentId, existing);
       }
+      // Le montant par défaut (65 000 XAF) n'est qu'une proposition : un dossier n'a un montant confirmé que si un
+      // administrateur l'a fixé (action « opening_fee_set » dans le journal), exactement et sans limite de récence.
+      const feeSetRows = applicationIds.length
+        ? await db.select({ paymentId: paymentAuditLogs.paymentId }).from(paymentAuditLogs)
+          .where(and(inArray(paymentAuditLogs.paymentId, applicationIds), eq(paymentAuditLogs.action, "opening_fee_set")))
+        : [];
+      const openingFeeSetIds = new Set(feeSetRows.map((row) => row.paymentId));
       return filtered.map((application) => ({
         ...application,
+        // Référence à AFFICHER (COMPTE-… avant paiement, 3M-… après) ; `dossierNumber` reste la clé technique.
+        displayReference: evaluationDisplayReference(application) ?? application.dossierNumber,
+        destination: application.destination,
+        visaType: application.visaType,
+        openingFeeConfirmed: openingFeeSetIds.has(application.id),
         paymentReceipt: application.candidateId ? receiptByCandidateId.get(application.candidateId) ?? null : null,
         paymentReceiptDelivery: receiptDeliveryByApplicationId.get(application.id) ?? {
           status: "not_sent" as const,
@@ -753,7 +791,7 @@ export const applicationRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Le paiement de ce dossier est déjà validé : le montant ne peut plus être modifié. Annulez d’abord la validation si une correction est nécessaire." });
       }
 
-      const previous = application.paymentAmount ?? DEFAULT_OPENING_FEE_XAF;
+      const previous = application.paymentAmount ?? proposedOpeningFee(application.visaType);
       if (previous === input.amount && application.paymentExpectedAmount === input.amount) {
         return { id: application.id, amount: input.amount, previousAmount: previous, changed: false as const };
       }
@@ -809,7 +847,7 @@ export const applicationRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "La correction du reçu n’est disponible qu’après validation du paiement. Pour un dossier en attente, utilisez « Modifier le montant » ou validez le paiement avec la bonne référence." });
       }
 
-      const previousAmount = application.paymentConfirmedAmount ?? application.paymentAmount ?? DEFAULT_OPENING_FEE_XAF;
+      const previousAmount = application.paymentConfirmedAmount ?? application.paymentAmount ?? proposedOpeningFee(application.visaType);
       const previousReference = application.paymentTransactionId ?? "";
       const nextAmount = input.confirmedAmount ?? previousAmount;
       const nextReference = input.paymentReference?.trim() || previousReference;
@@ -950,6 +988,19 @@ export const applicationRouter = router({
         } catch (error) {
           packageError = error instanceof TRPCError ? error.message : "Le reçu et le protocole n’ont pas pu être envoyés.";
           console.error("[Payment] receipt + protocol package failed", { applicationId: application.id, error });
+        }
+      }
+
+      if (input.paymentStatus === "SUCCESS" && application.paymentStatus !== "SUCCESS") {
+        try {
+          await normalizeAfterOpeningPayment(db, {
+            source: "online",
+            dossierId: application.id,
+            candidateEmail: application.email,
+            adminEmail: ctx.user.email || ctx.user.name,
+          });
+        } catch (normalizationError) {
+          console.error("[Payment] automatic reference normalization failed", { applicationId: application.id, normalizationError });
         }
       }
 

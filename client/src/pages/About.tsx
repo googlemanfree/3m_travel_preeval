@@ -5,6 +5,8 @@ import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
 import { PremiumCoverImage } from "@/components/PremiumCoverImage";
 import ProofGallerySection from "@/components/ProofGallerySection";
 import { SocialShareButtons } from "@/components/SocialShareButtons";
+import { FaqSection } from "@/components/PageEnrichment";
+import { ABOUT_FAQ } from "@/data/contentCampaignPages";
 import { getServiceVisual } from "@/data/premiumVisuals";
 import { INTERNATIONAL_BRAND } from "@/data/internationalBrand";
 import { setPageSeo } from "@/lib/pageSeo";
@@ -411,6 +413,8 @@ export default function About() {
         leadFr="Extraits anonymisés de visas et autorisations obtenus par des candidats suivis par 3M TRAVEL AGENCY."
         leadEn="Redacted excerpts of visas and authorisations obtained by candidates supported by 3M TRAVEL AGENCY."
       />
+
+      <FaqSection title="Questions sur l’agence" introduction="Ce que l’on nous demande le plus souvent avant de nous faire confiance." items={ABOUT_FAQ} tone="slate" testId="about-faq" />
 
       <section className="bg-slate-950 px-4 py-16 text-center sm:px-6 lg:px-8" aria-labelledby="about-final-cta-heading">
         <h2 id="about-final-cta-heading" className="text-3xl font-black text-white">Parlons de votre projet</h2>

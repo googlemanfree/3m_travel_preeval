@@ -5,6 +5,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { trpc } from '@/lib/trpc';
 import { useToast } from '@/components/ui/use-toast';
+import { setPageSeo } from '@/lib/pageSeo';
+import { ChecklistSection, FaqSection, StepsSection } from '@/components/PageEnrichment';
+import { TRANSLATION_DOCUMENT_LABELS, TRANSLATION_FAQ, TRANSLATION_PREPARE, TRANSLATION_STEPS } from '@/data/contentCampaignTranslation';
 
 const documentTypes = [
   "birth_certificate",
@@ -47,6 +50,13 @@ export default function TranslationOrder() {
   const [currency, setCurrency] = useState<string>('EUR');
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    setPageSeo({
+      title: 'Traduction de documents : demande en ligne | 3M TRAVEL AGENCY',
+      description: 'Demandez la traduction de vos documents (actes, diplômes, relevés) : estimation par page avant l’envoi, paiement uniquement après confirmation écrite.',
+    });
+  }, []);
 
   const createTranslationRequest = trpc.translation.createTranslationRequest.useMutation({
     onSuccess: () => {
@@ -171,8 +181,12 @@ export default function TranslationOrder() {
   };
 
   return (
-    <main className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Demande de Traduction Certifiée</h1>
+    <main>
+      <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-2">Demande de traduction de documents</h1>
+      <p className="mb-6 max-w-3xl text-gray-700" data-testid="translation-intro">
+        Choisissez le type de document et les langues : le tarif par page s’affiche avant l’envoi. Vous ne payez qu’après avoir reçu, par e-mail, la confirmation écrite et les instructions de paiement.
+      </p>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
@@ -219,7 +233,7 @@ export default function TranslationOrder() {
             <SelectContent>
               {documentTypes.map((type) => (
                 <SelectItem key={type} value={type}>
-                  {type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  {TRANSLATION_DOCUMENT_LABELS[type] ?? type}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -264,7 +278,7 @@ export default function TranslationOrder() {
             id="numberOfPages"
             type="number"
             value={numberOfPages}
-            onChange={(e) => setNumberOfPages(parseInt(e.target.value))}
+            onChange={(e) => setNumberOfPages(Math.max(1, parseInt(e.target.value) || 1))}
             min="1"
             required
           />
@@ -308,10 +322,21 @@ export default function TranslationOrder() {
           </div>
         )}
 
+        <p className="text-sm text-gray-600" data-testid="translation-price-note">
+          {pricePerPage > 0 ? 'Cette estimation dépend du nombre de pages indiqué.' : 'Le tarif s’affiche dès que le type de document et les deux langues sont choisis.'} Le montant définitif et les instructions de paiement vous sont envoyés par e-mail avant tout paiement.
+        </p>
+
         <Button type="submit" className="w-full" disabled={createTranslationRequest.isPending || getTranslationPricing.isFetching}>
           {createTranslationRequest.isPending ? 'Soumission en cours...' : 'Soumettre la Demande'}
         </Button>
       </form>
+      </div>
+
+      <div className="mt-10" data-testid="translation-guide">
+        <StepsSection title="Comment se déroule la traduction" steps={TRANSLATION_STEPS} tone="white" testId="translation-steps" />
+        <ChecklistSection title="Préparer votre document" introduction="Un fichier bien préparé évite un aller-retour et un retard." items={TRANSLATION_PREPARE} tone="slate" testId="translation-prepare" />
+        <FaqSection title="Questions sur la traduction" items={TRANSLATION_FAQ} tone="white" testId="translation-faq" />
+      </div>
     </main>
   );
 }

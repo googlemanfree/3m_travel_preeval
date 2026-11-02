@@ -15,12 +15,12 @@ type Props = {
   destinationHint?: string | null;
   procedureHint?: string | null;
 };
-type Fields = { headline: string; profileSummary: string; highlights: string; destination: string; procedure: string; sector: string; experience: string; languages: string };
+type Fields = { headline: string; profileSummary: string; highlights: string; destination: string; procedure: string; sector: string; experience: string; languages: string; experiences: string; education: string; skills: string; availability: string };
 
 const labels: Record<string, string> = { draft: "Brouillon", approved: "Validée", rejected: "Refusée", needs_revalidation: "À revalider" };
 const MAX_HIGHLIGHTS = 5;
 
-const fieldsFromDraft = (draft: Partial<Record<keyof Fields | "highlights", unknown>> & { highlights?: string[] }): Fields => ({
+const fieldsFromDraft = (draft: Partial<Record<keyof Fields | "highlights", unknown>> & { highlights?: string[]; experiences?: string[]; education?: string[]; skills?: string[] }): Fields => ({
   headline: String(draft.headline ?? ""),
   profileSummary: String(draft.profileSummary ?? ""),
   highlights: (draft.highlights ?? []).join("\n"),
@@ -29,9 +29,14 @@ const fieldsFromDraft = (draft: Partial<Record<keyof Fields | "highlights", unkn
   sector: String(draft.sector ?? ""),
   experience: String(draft.experience ?? ""),
   languages: String(draft.languages ?? ""),
+  experiences: (draft.experiences ?? []).join("\n"),
+  education: (draft.education ?? []).join("\n"),
+  skills: (draft.skills ?? []).join(", "),
+  availability: String(draft.availability ?? ""),
 });
 
 const highlightLines = (value: string) => value.split("\n").map((line) => line.trim()).filter(Boolean);
+const skillList = (value: string) => value.split(/[,\n]/).map((item) => item.trim()).filter(Boolean);
 
 /** Brouillon envoyé au serveur ; l'identité externe et les pièces sont toujours recalculées côté serveur. */
 const serialize = (fields: Fields) =>
@@ -44,6 +49,10 @@ const serialize = (fields: Fields) =>
     profileSummary: fields.profileSummary.trim(),
     ...(fields.headline.trim() ? { headline: fields.headline.trim() } : {}),
     highlights: highlightLines(fields.highlights).slice(0, MAX_HIGHLIGHTS),
+    ...(highlightLines(fields.experiences).length ? { experiences: highlightLines(fields.experiences).slice(0, 6) } : {}),
+    ...(highlightLines(fields.education).length ? { education: highlightLines(fields.education).slice(0, 4) } : {}),
+    ...(skillList(fields.skills).length ? { skills: skillList(fields.skills).slice(0, 12) } : {}),
+    ...(fields.availability.trim() ? { availability: fields.availability.trim() } : {}),
   });
 
 export default function AdminCandidateSummaryCard({ sessionToken, candidateId, destinationHint, procedureHint }: Props) {
@@ -84,6 +93,9 @@ export default function AdminCandidateSummaryCard({ sessionToken, candidateId, d
         headline: result.fields.headline ?? current.headline,
         profileSummary: result.fields.profileSummary,
         highlights: (result.fields.highlights ?? []).join("\n"),
+        experiences: (result.fields.experiences ?? []).join("\n") || current.experiences,
+        education: (result.fields.education ?? []).join("\n") || current.education,
+        skills: (result.fields.skills ?? []).join(", ") || current.skills,
         languages: result.fields.languages || current.languages,
       }));
       toast.success("Résumé proposé à partir du CV : relisez-le avant de valider.");
@@ -193,6 +205,10 @@ export default function AdminCandidateSummaryCard({ sessionToken, candidateId, d
       <div><Label htmlFor={id("sector")} className="text-sm font-semibold text-slate-800">Secteur</Label><Input id={id("sector")} value={fields.sector} maxLength={200} onChange={set("sector")} className="mt-1 bg-white" /></div>
       <div><Label htmlFor={id("experience")} className="text-sm font-semibold text-slate-800">Expérience</Label><Input id={id("experience")} value={fields.experience} maxLength={200} onChange={set("experience")} className="mt-1 bg-white" /></div>
       <div className="sm:col-span-2"><Label htmlFor={id("languages")} className="text-sm font-semibold text-slate-800">Langues</Label><Input id={id("languages")} value={fields.languages} maxLength={300} onChange={set("languages")} className="mt-1 bg-white" /></div>
+      <div className="sm:col-span-2"><Label htmlFor={id("experiences")} className="text-sm font-semibold text-slate-800">Parcours professionnel (une ligne par poste : poste — employeur (période) : réalisations, 6 au plus)</Label><Textarea id={id("experiences")} value={fields.experiences} rows={6} onChange={set("experiences")} className="mt-1 bg-white" data-testid="summary-experiences" /></div>
+      <div className="sm:col-span-2"><Label htmlFor={id("education")} className="text-sm font-semibold text-slate-800">Formation (une ligne par diplôme, 4 au plus)</Label><Textarea id={id("education")} value={fields.education} rows={3} onChange={set("education")} className="mt-1 bg-white" data-testid="summary-education" /></div>
+      <div className="sm:col-span-2"><Label htmlFor={id("skills")} className="text-sm font-semibold text-slate-800">Compétences (séparées par des virgules, 12 au plus)</Label><Textarea id={id("skills")} value={fields.skills} rows={2} onChange={set("skills")} className="mt-1 bg-white" data-testid="summary-skills" /></div>
+      <div className="sm:col-span-2"><Label htmlFor={id("availability")} className="text-sm font-semibold text-slate-800">Disponibilité (facultatif, ex. « Disponible sous 4 semaines »)</Label><Input id={id("availability")} value={fields.availability} maxLength={160} onChange={set("availability")} className="mt-1 bg-white" data-testid="summary-availability" /></div>
     </div>
     <p className="mt-2 text-xs text-slate-600">Les coordonnées (e-mail, téléphone, numéros de pièces) sont masquées automatiquement. Le nom affiché est toujours « prénom + initiale » ; les pièces et leurs statuts viennent du dossier.</p>
 

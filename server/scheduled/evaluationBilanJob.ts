@@ -9,6 +9,7 @@ import { createFinalEvaluationPdf } from "../evaluationBilanPdfService";
 import { buildCandidateSpaceAccessUrl, buildEvaluationReportUrl } from "../services/candidateAccessLink";
 import { appendEvaluationOpenTrackingPixel, buildAdvisorSignatureHtml } from "../services/evaluationEmailCommunication";
 import { buildEvaluationReminderEmailHtml as buildSharedEvaluationReminderEmailHtml } from "../services/evaluationReminderCommunication";
+import { maybeSendJustificatifsAfterBilan } from "../services/autoJustificatifsAfterBilan";
 
 export function buildEvaluationDeliveryEmailHtml(reportHtml: string, dossierNumber: string, advisorName?: string | null): string {
   const candidateSpaceUrl = buildCandidateSpaceAccessUrl(dossierNumber);
@@ -90,6 +91,18 @@ export async function handleEvaluationBilanJob(req: Request, res: Response): Pro
         }
         if (app.candidateId) {
           await db.insert(clientNotifications).values({ candidateId: app.candidateId, type: "evaluation_available", title: "Votre bilan d’évaluation est disponible", body: `Votre bilan finalisé pour le dossier ${app.dossierNumber} est prêt. Consultez-le et téléchargez votre PDF depuis votre espace client.`, actionUrl: "/mon-espace", isRead: false, emailSentAt: sentAt });
+        }
+        try {
+          const justificatifs = await maybeSendJustificatifsAfterBilan(db, app.id);
+          if (justificatifs.sent) {
+            console.log(`[Evaluation Bilan Job] Justificatifs auto envoyés (${justificatifs.itemCount}) pour ${app.dossierNumber}`);
+          } else if (justificatifs.alreadySent) {
+            console.log(`[Evaluation Bilan Job] Justificatifs déjà envoyés pour ${app.dossierNumber}`);
+          } else if (justificatifs.skipped) {
+            console.log(`[Evaluation Bilan Job] Justificatifs skip (${justificatifs.skipped}) pour ${app.dossierNumber}`);
+          }
+        } catch (justifErr) {
+          console.warn(`[Evaluation Bilan Job] Justificatifs auto échoués pour ${app.dossierNumber}:`, justifErr);
         }
 
         console.log(`[Evaluation Bilan Job] OK Bilan report sent for ${app.dossierNumber}`);

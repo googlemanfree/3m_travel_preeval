@@ -28,6 +28,9 @@ import { generateGeminiEvaluationDraft, type GeminiEvaluationDraftInput } from "
 import { getValidationStore, isMissingTableError } from "../services/evaluationValidationStore";
 import { caseActivityLogs, cases, documentRequirements } from "../../drizzle/caseTrackingSchema";
 import { parseApplicationPack } from "../../shared/applicationPack";
+import { evaluationRequiresCv, resolveEvaluationProjectKind } from "../../shared/evaluationVisaCv";
+import { buildAiGuidance, collectDeclaredResponses, resolveDynamicForm } from "../../shared/dynamicForm";
+import { cachedFormOverrides, loadFormOverrides } from "../services/formOverrides";
 
 /**
  * Une évaluation ouverte dans la validation structurée (brouillon IA, checklist, publication) ne passe plus
@@ -107,6 +110,13 @@ interface UnifiedItem {
     language: string | null;
     savedAt: string | null;
   } | null;
+  /** CV déposé à l’évaluation — admin uniquement, pour ouverture directe depuis la liste. */
+  cvFileUrl?: string | null;
+  cvFileName?: string | null;
+  phone?: string | null;
+  visaType?: string | null;
+  /** Indique si le type de projet/visa exige un CV (visa travail). */
+  requiresCv?: boolean;
 }
 
 function preparationTextList(value: unknown, maximum: number): string[] {
@@ -287,7 +297,7 @@ async function requireEvaluationCandidate(db: NonNullable<Awaited<ReturnType<typ
 }
 
 async function ensureEvaluationCase(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, evaluation: Awaited<ReturnType<typeof requireEvaluationCandidate>>) {
-  const caseNumber = evaluation.referenceCode || `EVAL-${evaluation.id}`;
+  const caseNumber = evaluation.referenceCode || `COMPTE-E${evaluation.id}`;
   const [existing] = await db.select().from(cases).where(eq(cases.caseNumber, caseNumber)).limit(1);
   if (existing) return existing;
   await db.insert(cases).values({
@@ -304,6 +314,17 @@ async function ensureEvaluationCase(db: NonNullable<Awaited<ReturnType<typeof ge
   return created;
 }
 
+/** Consignes propres au visa, au domaine et au pays déclarés dans le formulaire (mêmes que lors de la première génération). */
+function retryGuidance(evaluation: typeof evaluations.$inferSelect, details: Record<string, unknown>, projectType: "travail" | "etudes" | "tourisme"): string[] {
+  const values: Record<string, string> = {};
+  for (const [key, value] of Object.entries(details)) if (typeof value === "string") values[key] = value;
+  values.educationLevel = evaluation.educationLevel ?? "";
+  values.frenchLevel = evaluation.frenchLevel ?? "";
+  values.englishLevel = evaluation.englishLevel ?? "";
+  const form = resolveDynamicForm({ country: evaluation.destinationCountry, projectType, programId: values.programId, domainId: values.domainId, overrides: cachedFormOverrides() });
+  return buildAiGuidance(form, values);
+}
+
 function retryInputFromEvaluation(evaluation: typeof evaluations.$inferSelect): GeminiEvaluationDraftInput | null {
   const projectType = evaluation.projectType;
   if (projectType !== "travail" && projectType !== "etudes" && projectType !== "tourisme") return null;
@@ -311,16 +332,16 @@ function retryInputFromEvaluation(evaluation: typeof evaluations.$inferSelect): 
   if (details.preparatoryAnalysisConsent !== true) return null;
   const countryDetails: Record<string, string | number | boolean | undefined> = {};
   for (const key of PREPARATION_DETAIL_KEYS) countryDetails[key] = textDetail(details[key]);
-  if (Array.isArray(details.dynamicResponses)) {
-    details.dynamicResponses.slice(0, 5).forEach((item, index) => {
-      if (!item || typeof item !== "object") return;
-      const response = item as Record<string, unknown>;
-      const question = textDetail(response.question, 260);
-      const answer = textDetail(response.answer, 1000);
-      if (question) countryDetails[`question_complementaire_${index + 1}`] = question;
-      if (answer) countryDetails[`reponse_complementaire_${index + 1}`] = answer;
-    });
-  }
+  // Toutes les réponses déclarées (formulaire dynamique et questions complémentaires) : la relance voit autant de réponses que la première génération.
+  collectDeclaredResponses(details, { country: evaluation.destinationCountry, projectType, overrides: cachedFormOverrides() }).forEach((response, index) => {
+    countryDetails[`question_complementaire_${index + 1}`] = response.question;
+    countryDetails[`reponse_complementaire_${index + 1}`] = response.answer;
+  });
+  const programLabel = textDetail(details.programLabel, 200);
+  const domainLabel = textDetail(details.domainLabel, 120);
+  if (programLabel) countryDetails.programme = programLabel;
+  if (domainLabel) countryDetails.domaine = domainLabel;
+  const guidance = retryGuidance(evaluation, details, projectType);
   const destinationCountry = evaluation.destinationCountry?.trim();
   if (!destinationCountry) return null;
   return {
@@ -333,6 +354,7 @@ function retryInputFromEvaluation(evaluation: typeof evaluations.$inferSelect): 
     languages: textDetail(details.languages, 500),
     financialGuarantee: textDetail(details.financialGuarantee, 500),
     countryDetails,
+    guidance,
     alternativeCountries: (PREPARATION_ALTERNATIVES[destinationCountry] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== destinationCountry),
   };
 }
@@ -345,7 +367,7 @@ export const aiEvaluationManagementRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const evaluation = await requireEvaluationCandidate(db, input.evaluationId);
-      const [operationalCase] = await db.select({ id: cases.id }).from(cases).where(eq(cases.caseNumber, evaluation.referenceCode || `EVAL-${evaluation.id}`)).limit(1);
+      const [operationalCase] = await db.select({ id: cases.id }).from(cases).where(eq(cases.caseNumber, evaluation.referenceCode || `COMPTE-E${evaluation.id}`)).limit(1);
       if (!operationalCase) return [];
       return db.select({ id: documentRequirements.id, documentType: documentRequirements.documentType, status: documentRequirements.status, dueAt: documentRequirements.dueAt, requestedAt: documentRequirements.requestedAt, adminComment: documentRequirements.adminComment })
         .from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(desc(documentRequirements.requestedAt)).limit(100);
@@ -444,7 +466,7 @@ export const aiEvaluationManagementRouter = router({
         items.push({
           id: `evaluation-${e.id}`, type: "evaluation", typeLabel: "Pré-évaluation", fullName: e.fullName, email: e.email,
           createdAt: e.createdAt, score: null, hasConverted, priority, suggestedAction,
-          destinationCategory: e.destinationCategory, destinationCountry: e.destinationCountry, projectType: e.projectType, nationality: e.nationality,
+          destinationCategory: e.destinationCategory, destinationCountry: e.destinationCountry, projectType: e.projectType, visaType: e.visaType, nationality: e.nationality,
           educationLevel: e.educationLevel, employmentStatus: e.employmentStatus, maritalStatus: e.maritalStatus,
           status: e.status, priorVisaRefusal: e.priorVisaRefusal, criminalRecord: e.criminalRecord, familyAbroad: e.familyAbroad,
           acquisitionSource: e.acquisitionSource, acquisitionCampaign: e.acquisitionCampaign,
@@ -453,6 +475,10 @@ export const aiEvaluationManagementRouter = router({
           preparationDraft,
           luxembourgReview,
           applicationPackSummary,
+          cvFileUrl: e.cvFileUrl ?? null,
+          cvFileName: e.cvFileName ?? null,
+          phone: e.phone ?? null,
+          requiresCv: evaluationRequiresCv(e.visaType, e.projectType, textDetail(parseProjectDetails(e.projectDetailsJson ?? null).programId, 80)),
         });
       }
 
@@ -472,7 +498,13 @@ export const aiEvaluationManagementRouter = router({
         const hasConverted = convertedEmails.has(c.email.toLowerCase());
         const needsAdminAction = c.status === "pending_review";
         const { priority, suggestedAction } = computePriority({ score: null, hasConverted, ageHours: ageHours(c.createdAt), needsAdminAction });
-        items.push({ id: `consultation-${c.id}`, type: "consultation", typeLabel: "Consultation + CV", fullName: c.fullName, email: c.email, createdAt: c.createdAt, score: null, hasConverted, priority, suggestedAction, destinationCountry: c.targetCountry, status: c.status });
+        items.push({
+          id: `consultation-${c.id}`, type: "consultation", typeLabel: "Consultation + CV", fullName: c.fullName, email: c.email, createdAt: c.createdAt, score: null, hasConverted, priority, suggestedAction, destinationCountry: c.targetCountry, status: c.status,
+          cvFileUrl: c.cvFileUrl ?? null,
+          cvFileName: c.cvFileName ?? null,
+          phone: c.phone ?? null,
+          requiresCv: true,
+        });
       }
 
       const priorityOrder: Record<Priority, number> = { haute: 0, moyenne: 1, basse: 2 };
@@ -570,7 +602,7 @@ export const aiEvaluationManagementRouter = router({
         await db.update(evaluations).set({ status: secondReviewRequired ? "pending" : "reviewed", reviewedAt: now, reviewedBy: admin.email, reviewNote: input.validationNote, secondReviewRequired }).where(eq(evaluations.id, input.evaluationId));
         await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: secondReviewRequired ? "validated_pending_second_review" : "validated", note: input.validationNote });
         if (secondReviewRequired) return { success: true, delivered: false, requiresSecondReview: true };
-        const delivered = await sendValidatedEvaluationResponseEmail({ to: evaluation.email, fullName: evaluation.fullName, referenceCode: evaluation.referenceCode ?? `EVAL-${evaluation.id}`, response: evaluation.reviewDraft });
+        const delivered = await sendValidatedEvaluationResponseEmail({ to: evaluation.email, fullName: evaluation.fullName, referenceCode: evaluation.referenceCode ?? `COMPTE-E${evaluation.id}`, response: evaluation.reviewDraft });
         if (delivered) {
           await db.update(evaluations).set({ finalResponseSentAt: now }).where(eq(evaluations.id, evaluation.id));
           await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "response_sent", note: "Réponse validée envoyée par e-mail." });
@@ -602,7 +634,7 @@ export const aiEvaluationManagementRouter = router({
       const now = new Date();
       await db.update(evaluations).set({ secondReviewedAt: now, secondReviewedBy: admin.email, secondReviewNote: input.validationNote }).where(eq(evaluations.id, evaluation.id));
       await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "second_validated", note: input.validationNote });
-      const delivered = evaluation.finalResponseSentAt ? true : await sendValidatedEvaluationResponseEmail({ to: evaluation.email, fullName: evaluation.fullName, referenceCode: evaluation.referenceCode ?? `EVAL-${evaluation.id}`, response: evaluation.reviewDraft ?? "" });
+      const delivered = evaluation.finalResponseSentAt ? true : await sendValidatedEvaluationResponseEmail({ to: evaluation.email, fullName: evaluation.fullName, referenceCode: evaluation.referenceCode ?? `COMPTE-E${evaluation.id}`, response: evaluation.reviewDraft ?? "" });
       if (delivered && !evaluation.finalResponseSentAt) {
         await db.update(evaluations).set({ finalResponseSentAt: now }).where(eq(evaluations.id, evaluation.id));
         await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "response_sent", note: "Réponse validée après seconde revue et envoyée par e-mail." });
@@ -626,7 +658,9 @@ export const aiEvaluationManagementRouter = router({
         const [evaluation] = await db.select({ id: evaluations.id, fullName: evaluations.fullName, destinationCountry: evaluations.destinationCountry, projectType: evaluations.projectType, reviewedAt: evaluations.reviewedAt }).from(evaluations).where(eq(evaluations.id, input.evaluationId)).limit(1);
         if (!evaluation) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
         if (evaluation.reviewedAt) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette réponse est déjà validée et ne peut plus être remplacée." });
-        if (evaluation.projectType !== input.templateKey) throw new TRPCError({ code: "BAD_REQUEST", message: "Ce modèle ne correspond pas au type de projet de l’évaluation." });
+        if (resolveEvaluationProjectKind(evaluation.projectType) !== resolveEvaluationProjectKind(input.templateKey) && evaluation.projectType !== input.templateKey) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Ce modèle ne correspond pas au type de projet de l’évaluation." });
+        }
         const draft = buildEvaluationResponseTemplate(input.templateKey, evaluation);
         if (!draft) throw new TRPCError({ code: "BAD_REQUEST", message: "Modèle de réponse indisponible." });
         return { draft };
@@ -641,6 +675,7 @@ export const aiEvaluationManagementRouter = router({
         const [evaluation] = await db.select().from(evaluations).where(eq(evaluations.id, input.evaluationId)).limit(1);
         if (!evaluation) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
         if (evaluation.reviewedAt) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette évaluation est déjà validée ; aucune relance de brouillon n’est autorisée." });
+        await loadFormOverrides(db);
         const preparedInput = retryInputFromEvaluation(evaluation);
         if (!preparedInput) throw new TRPCError({ code: "BAD_REQUEST", message: "La relance requiert un consentement enregistré et des réponses déclarées exploitables." });
         try {

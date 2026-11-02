@@ -11,18 +11,22 @@ import { registerStorageProxy } from "./storageProxy";
 import { registerCandidateUploadRoute, registerPublicUploadRoute } from "../routers/candidateUpload";
 import { registerAgencyDossierUploadRoute } from "../routers/agencyDossierUpload";
 import { registerOpeningPaymentProofUploadRoute } from "../routers/openingPaymentProofUpload";
+import { registerAdminDossierExportRoute } from "../routers/adminDossierExport";
+import { registerPublicHealthRoute } from "../publicHealth";
 import { registerCinetPayWebhook } from "../routers/cinetpayWebhook";
-import { setupDocumentsRoutes } from "../documentsRoutes";
 import { handleEvaluationJob } from "../scheduled/evaluationJob";
 import { handleEvaluationBilanJob } from "../scheduled/evaluationBilanJob";
 import { handleComplianceMonthlyReportJob } from "../scheduled/complianceMonthlyReportJob";
 import { handlePassportPendingWeeklyAlertJob } from "../scheduled/passportPendingWeeklyAlertJob";
 import { handleExternalLinkCheckJob } from "../scheduled/externalLinkCheckJob";
 import { handleDocumentReminderJob, handleReminderStop } from "../scheduled/documentReminderJob";
+import { handleSignatureAndConfirmationRemindersJob } from "../scheduled/signatureAndConfirmationRemindersJob";
+import { handlePilotageAutomationJob } from "../scheduled/pilotageAutomationJob";
 import { handleAlertConfirm, handleAlertStop } from "../scheduled/flightPriceAlerts";
 import { handleEvaluationReviewDeadlineAlertJob } from "../scheduled/evaluationReviewDeadlineAlertJob";
 import { initEvaluationCron } from "../cron/evaluationCron";
 import { initScheduledJobsCron } from "../cron/scheduledJobsCron";
+import { startCountryGuidesRefresh } from "../services/countryGuidesSnapshot";
 import { requireCronSecret } from "./scheduledAuth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
@@ -31,6 +35,8 @@ import { getDb } from "../db";
 import { applications, evaluationEmails } from "../../drizzle/schema";
 import { and, eq, isNull } from "drizzle-orm";
 import { verifyEvaluationEmailTrackingToken } from "../services/evaluationEmailCommunication";
+import { startActivationGuard } from "../services/activationGuard";
+import { recordBilanViewed } from "../services/bilanReceipts";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -55,6 +61,18 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
   app.use(securityHeadersMiddleware);
+  // .click → .com (301) : évite le doublon SEO et les aperçus WhatsApp/Facebook obsolètes.
+  app.use((req, res, next) => {
+    const host = String(req.hostname || req.headers.host || "")
+      .split(":")[0]
+      .toLowerCase();
+    if (host === "3mtravelagency.click" || host === "www.3mtravelagency.click") {
+      const target = `https://www.3mtravelagency.com${req.originalUrl || "/"}`;
+      res.set({ "Cache-Control": "public, max-age=86400" });
+      return res.redirect(301, target);
+    }
+    return next();
+  });
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -65,8 +83,13 @@ async function startServer() {
   registerPublicUploadRoute(app);
   registerAgencyDossierUploadRoute(app);
   registerOpeningPaymentProofUploadRoute(app);
+  registerAdminDossierExportRoute(app);
+  registerPublicHealthRoute(app);
   registerCinetPayWebhook(app);
-  setupDocumentsRoutes(app);
+  // Les anciennes routes /api/documents/{upload,download,list,delete} (documentsRoutes.ts) ne sont PLUS montées : elles
+  // n'exigeaient aucune authentification (lecture, liste et suppression de pièces par simple code de dossier, dépôt
+  // de fichiers par n'importe qui) et aucun écran ne les utilise. Les dépôts passent par les routes authentifiées
+  // ci-dessus (candidat, agence, justificatif de paiement).
   // Scheduled jobs
   app.post("/api/scheduled/evaluation-job", (req, res) => {
     if (!requireCronSecret(req, res)) return;
@@ -84,6 +107,16 @@ async function startServer() {
   app.post("/api/scheduled/document-reminders", (req, res) => {
     if (!requireCronSecret(req, res)) return;
     void handleDocumentReminderJob(req, res);
+  });
+  // Rappels protocole N°01/N°02 + confirmation bilan (J+2, anti-doublon 3 j). Corps {"dryRun": true} : aperçu.
+  app.post("/api/scheduled/signature-confirmation-reminders", (req, res) => {
+    if (!requireCronSecret(req, res)) return;
+    void handleSignatureAndConfirmationRemindersJob(req, res);
+  });
+  // Vague 2–3 : activation COMPTE→3M, relances pilotage, avance Kanban sûre. Corps {"dryRun": true} : aperçu.
+  app.post("/api/scheduled/pilotage-automation", (req, res) => {
+    if (!requireCronSecret(req, res)) return;
+    void handlePilotageAutomationJob(req, res);
   });
   // Désinscription des rappels (lien signé dans chaque e-mail de rappel).
   app.get("/api/reminders/stop", (req, res) => {
@@ -119,7 +152,8 @@ async function startServer() {
           if (tracked) {
             const openedAt = new Date();
             await db.update(evaluationEmails).set({ openedAt }).where(and(eq(evaluationEmails.id, emailId), isNull(evaluationEmails.openedAt)));
-            await db.update(applications).set({ evaluationReportViewedAt: openedAt, updatedAt: openedAt }).where(and(eq(applications.id, tracked.evaluationId), isNull(applications.evaluationReportViewedAt)));
+            // Première ouverture seulement : alerte dans l'administration et e-mail à l'agence.
+            await recordBilanViewed(db, tracked.evaluationId, "e-mail");
           }
         }
       } catch (error) {
@@ -176,6 +210,8 @@ async function startServer() {
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
     initScheduledJobsCron(port);
+    startCountryGuidesRefresh();
+    startActivationGuard();
   });
 }
 

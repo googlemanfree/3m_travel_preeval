@@ -3,6 +3,11 @@
  * libellés de préparation à l’activation.
  */
 
+import {
+  resolveEvaluationProjectKind,
+  type EvaluationProjectKind,
+} from "./evaluationVisaCv";
+
 export type AdminRelanceStage =
   | "evaluation_missing"
   | "evaluation_pending"
@@ -11,6 +16,9 @@ export type AdminRelanceStage =
   | "protocol_pending"
   | "email_unverified"
   | "ready_to_activate"
+  | "cv_missing"
+  | "conversion_open_dossier"
+  | "bilan_confirmation_pending"
   | "generic";
 
 export type AdminMessageTemplate = {
@@ -36,8 +44,8 @@ export const ADMIN_MESSAGE_TEMPLATES: AdminMessageTemplate[] = [
   {
     id: "payment_pending",
     label: "Paiement des frais d’ouverture",
-    subject: "3M Travel — frais d’ouverture en attente",
-    body: "Bonjour {name},\n\nPour activer le suivi de votre dossier {reference}, merci de régulariser les frais d’ouverture et de nous transmettre la preuve de paiement.\n\nCordialement,\nL’équipe 3M Travel Agency",
+    subject: "3M Travel — frais d’ouverture en attente ({reference})",
+    body: "Bonjour {name},\n\nPour activer le suivi de votre dossier {reference} ({visaType} — {destination}), merci de régulariser les frais d’ouverture puis de déposer la preuve de paiement dans votre espace client :\nhttps://www.3mtravelagency.com/mon-espace\n\nDès validation, nous poursuivons le traitement et le protocole d’accord N°01.\n\nCordialement,\nL’équipe 3M Travel Agency\nhttps://www.3mtravelagency.com",
   },
   {
     id: "documents_pending",
@@ -54,14 +62,32 @@ export const ADMIN_MESSAGE_TEMPLATES: AdminMessageTemplate[] = [
   {
     id: "email_unverified",
     label: "E-mail à confirmer",
-    subject: "3M Travel — confirmez votre adresse e-mail",
-    body: "Bonjour {name},\n\nMerci de confirmer votre adresse e-mail pour sécuriser l’accès à votre dossier {reference}. Un lien de confirmation vous a été envoyé.\n\nCordialement,\nL’équipe 3M Travel Agency",
+    subject: "3M Travel — confirmez votre adresse e-mail ({reference})",
+    body: "Bonjour {name},\n\nVotre compte 3M Travel (dossier {reference}) n’est pas encore confirmé.\n\n1) Vérifiez d’abord vos spams / courriers indésirables : cherchez un message de hello@3mtravelagency.com ou « 3M Travel ».\n2) Ouvrez le lien de confirmation dans cet e-mail.\n3) Ou connectez-vous ici : https://www.3mtravelagency.com/login\n\nSi vous ne trouvez toujours pas le message, répondez à ce mail ou écrivez-nous sur WhatsApp — nous pourrons vous renvoyer un nouveau lien.\n\nCordialement,\nL’équipe 3M Travel Agency\nhttps://www.3mtravelagency.com",
   },
   {
     id: "ready_to_activate",
     label: "Prêt à activer (interne)",
     subject: "3M Travel — dossier prêt",
     body: "Bonjour {name},\n\nVotre dossier {reference} est prêt côté pièces et paiement. Notre équipe finalise l’activation du suivi.\n\nCordialement,\nL’équipe 3M Travel Agency",
+  },
+  {
+    id: "cv_missing",
+    label: "CV manquant (préévaluation)",
+    subject: "3M Travel — CV requis pour votre évaluation ({reference})",
+    body: "Bonjour {name},\n\nPour finaliser l’évaluation de votre profil {reference} ({visaType} — {destination}), merci de déposer votre CV à jour dans votre espace client :\nhttps://www.3mtravelagency.com/mon-espace\n\nLe CV est indispensable pour un bilan complet et pour lancer le traitement de votre dossier.\n\nCordialement,\nL’équipe 3M Travel Agency\nhttps://www.3mtravelagency.com",
+  },
+  {
+    id: "conversion_open_dossier",
+    label: "Convaincre d’ouvrir le dossier",
+    subject: "3M Travel — activez le suivi de votre dossier ({reference})",
+    body: "Bonjour {name},\n\nVotre pré-inscription {reference} ({visaType} — {destination}) est enregistrée. Pour lancer le traitement de votre profil (bilan, protocole, suivi conseiller), merci de régulariser les frais d’ouverture depuis votre espace client :\nhttps://www.3mtravelagency.com/mon-espace\n\nDès validation du paiement, nous activons votre dossier officiel 3M et vous accompagnons étape par étape.\n\nCordialement,\nL’équipe 3M Travel Agency\nhttps://www.3mtravelagency.com",
+  },
+  {
+    id: "bilan_confirmation_pending",
+    label: "Confirmer la réception du bilan",
+    subject: "3M Travel — confirmez la réception de votre bilan ({reference})",
+    body: "Bonjour {name},\n\nVotre bilan d’évaluation pour le dossier {reference} est disponible dans votre espace client.\n\nMerci de confirmer que vous l’avez bien reçu et compris (bouton de confirmation dans Mon espace). Cette étape débloque ensuite le paiement d’ouverture et la suite du parcours.\n\nEspace client : https://www.3mtravelagency.com/mon-espace\n\nCordialement,\nL’équipe 3M Travel Agency\nhttps://www.3mtravelagency.com",
   },
   {
     id: "generic",
@@ -71,20 +97,80 @@ export const ADMIN_MESSAGE_TEMPLATES: AdminMessageTemplate[] = [
   },
 ];
 
+/** Variantes évaluation / documents selon le type de visa (travail · études · visiteurs). */
+const VISA_AWARE_STAGE_COPY: Partial<
+  Record<AdminRelanceStage, Partial<Record<EvaluationProjectKind, { subject: string; body: string; label?: string }>>>
+> = {
+  evaluation_missing: {
+    travail: {
+      label: "Évaluation manquante (visa travail)",
+      subject: "3M Travel — évaluation visa travail + CV ({reference})",
+      body: "Bonjour {name},\n\nVotre dossier {reference} (visa travail) est ouvert. Merci de finaliser l’évaluation en ligne avec votre profil professionnel et un CV actualisé.\n\nSans CV, nous ne pourrons pas valider le bilan de mobilité.\n\nCordialement,\nL’équipe 3M Travel Agency",
+    },
+    etudes: {
+      label: "Évaluation manquante (visa études)",
+      subject: "3M Travel — évaluation visa études ({reference})",
+      body: "Bonjour {name},\n\nVotre dossier {reference} (visa études) est ouvert. Merci de finaliser l’évaluation : historique scolaire, cycle d’études visé, diplômes et relevés de notes.\n\nCes éléments sont indispensables pour un bilan études adapté.\n\nCordialement,\nL’équipe 3M Travel Agency",
+    },
+    tourisme: {
+      label: "Évaluation manquante (visa visiteurs)",
+      subject: "3M Travel — évaluation visa visiteurs ({reference})",
+      body: "Bonjour {name},\n\nVotre dossier {reference} (visa visiteurs) est ouvert. Merci de remplir le formulaire simple : statut (chef d’entreprise, employé ou particulier) et motif du séjour.\n\nCordialement,\nL’équipe 3M Travel Agency",
+    },
+  },
+  documents_pending: {
+    travail: {
+      label: "Pièces manquantes (visa travail)",
+      subject: "3M Travel — CV / pièces pro à déposer ({reference})",
+      body: "Bonjour {name},\n\nDes pièces sont encore attendues pour votre dossier {reference} (visa travail). Priorité : CV à jour et justificatifs professionnels dans votre espace client.\n\nCordialement,\nL’équipe 3M Travel Agency",
+    },
+    etudes: {
+      label: "Pièces manquantes (visa études)",
+      subject: "3M Travel — diplômes et relevés à déposer ({reference})",
+      body: "Bonjour {name},\n\nDes pièces sont encore attendues pour votre dossier {reference} (visa études). Priorité : diplômes obtenus et relevés de notes — connectez-vous à votre espace client pour les déposer.\n\nCordialement,\nL’équipe 3M Travel Agency",
+    },
+    tourisme: {
+      label: "Pièces manquantes (visa visiteurs)",
+      subject: "3M Travel — justificatifs visiteurs ({reference})",
+      body: "Bonjour {name},\n\nDes pièces sont encore attendues pour votre dossier {reference} (visa visiteurs). Selon votre statut (chef d’entreprise, employé ou particulier), déposez les justificatifs demandés dans votre espace client.\n\nCordialement,\nL’équipe 3M Travel Agency",
+    },
+  },
+};
+
 export function fillAdminTemplate(
   template: AdminMessageTemplate,
-  vars: { name: string; reference: string },
+  vars: {
+    name: string;
+    reference: string;
+    destination?: string | null;
+    visaType?: string | null;
+  },
 ): { subject: string; body: string } {
   const replace = (text: string) =>
     text
       .replaceAll("{name}", vars.name.trim() || "Madame, Monsieur")
-      .replaceAll("{reference}", vars.reference.trim() || "votre dossier");
+      .replaceAll("{reference}", vars.reference.trim() || "votre dossier")
+      .replaceAll("{destination}", (vars.destination || "").trim() || "votre destination")
+      .replaceAll("{visaType}", (vars.visaType || "").trim() || "votre procédure");
   return { subject: replace(template.subject), body: replace(template.body) };
 }
 
-export function templateForStage(stage: string | null | undefined): AdminMessageTemplate {
+export function templateForStage(
+  stage: string | null | undefined,
+  visaOrProject?: string | null,
+): AdminMessageTemplate {
   const id = (stage || "generic") as AdminRelanceStage;
-  return ADMIN_MESSAGE_TEMPLATES.find((row) => row.id === id) ?? ADMIN_MESSAGE_TEMPLATES[ADMIN_MESSAGE_TEMPLATES.length - 1]!;
+  const base = ADMIN_MESSAGE_TEMPLATES.find((row) => row.id === id)
+    ?? ADMIN_MESSAGE_TEMPLATES[ADMIN_MESSAGE_TEMPLATES.length - 1]!;
+  const kind = resolveEvaluationProjectKind(visaOrProject);
+  const variant = VISA_AWARE_STAGE_COPY[id]?.[kind];
+  if (!variant) return base;
+  return {
+    id: base.id,
+    label: variant.label ?? base.label,
+    subject: variant.subject,
+    body: variant.body,
+  };
 }
 
 export function buildMailtoRelance(input: {
@@ -92,11 +178,17 @@ export function buildMailtoRelance(input: {
   name: string;
   reference: string;
   stage?: string | null;
+  /** Type de visa / projet pour adapter le texte (travail, études, visiteurs). */
+  visaType?: string | null;
+  projectType?: string | null;
 }): string {
-  const filled = fillAdminTemplate(templateForStage(input.stage), {
-    name: input.name,
-    reference: input.reference,
-  });
+  const filled = fillAdminTemplate(
+    templateForStage(input.stage, input.projectType ?? input.visaType),
+    {
+      name: input.name,
+      reference: input.reference,
+    },
+  );
   const params = new URLSearchParams({
     subject: filled.subject,
     body: filled.body,
@@ -109,14 +201,19 @@ export function buildWhatsAppRelance(input: {
   name: string;
   reference: string;
   stage?: string | null;
+  visaType?: string | null;
+  projectType?: string | null;
 }): string | null {
   const digits = input.phone.replace(/\D/g, "");
   if (digits.length < 8) return null;
   const e164 = digits.startsWith("237") || digits.length > 9 ? digits : `237${digits}`;
-  const filled = fillAdminTemplate(templateForStage(input.stage), {
-    name: input.name,
-    reference: input.reference,
-  });
+  const filled = fillAdminTemplate(
+    templateForStage(input.stage, input.projectType ?? input.visaType),
+    {
+      name: input.name,
+      reference: input.reference,
+    },
+  );
   return `https://wa.me/${e164}?text=${encodeURIComponent(filled.body)}`;
 }
 

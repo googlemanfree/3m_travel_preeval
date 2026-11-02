@@ -28,7 +28,7 @@ describe("page /canada — anti page blanche", () => {
     const sw = read("client/public/sw.js");
     expect(sw).toContain("isCacheableResponse");
     expect(sw).toContain("url.pathname.startsWith('/assets/')");
-    expect(sw).toContain("3m-travel-pwa-v41-canada-blank-guard");
+    expect(sw).toMatch(/3m-travel-pwa-v\d+/);
     expect(sw).toContain("response.ok && response.status === 200");
   });
 

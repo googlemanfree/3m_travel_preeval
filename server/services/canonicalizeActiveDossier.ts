@@ -1,7 +1,7 @@
-import { and, eq, isNull, like, sql } from "drizzle-orm";
+import { and, eq, isNull, like, or, sql } from "drizzle-orm";
 import { agencyDossierHistory, agencyDossiers, applications, candidates } from "../../drizzle/schema";
 import { agencyDossierReference, isActiveDossierReference } from "../../shared/caseReference";
-import { parseEvalAgencyShellId } from "../../shared/evalAgencyShell";
+import { agencyMirrorKey, parseEvalAgencyShellId } from "../../shared/evalAgencyShell";
 
 type Db = NonNullable<Awaited<ReturnType<typeof import("../db").getDb>>>;
 
@@ -33,7 +33,10 @@ export async function purgeEvalAgencyShell(
       dossierNumber: applications.dossierNumber,
     })
     .from(applications)
-    .where(and(eq(applications.dossierNumber, evalCode), isNull(applications.deletedAt)))
+    .where(and(
+      or(eq(applications.dossierNumber, evalCode), eq(applications.dossierNumber, agencyMirrorKey(agencyDossierId)), like(applications.dossierNumber, `${agencyMirrorKey(agencyDossierId)}-%`)),
+      isNull(applications.deletedAt),
+    ))
     .limit(20);
 
   const purgedApplicationIds: number[] = [];
@@ -93,7 +96,7 @@ export async function purgeEvalAgencyShell(
 export async function purgeAllOrphanEvalAgencyShells(
   db: Db,
   input?: { adminEmail?: string | null; limit?: number },
-): Promise<{ processed: number; purged: number; canonicals: string[] }> {
+): Promise<{ processed: number; purged: number; skippedUnpaid: number; canonicals: string[] }> {
   const limit = Math.min(Math.max(input?.limit ?? 200, 1), 500);
   const shells = await db
     .select({
@@ -102,20 +105,26 @@ export async function purgeAllOrphanEvalAgencyShells(
       email: applications.email,
     })
     .from(applications)
-    .where(and(like(applications.dossierNumber, "EVAL-AG-%"), isNull(applications.deletedAt)))
+    .where(and(or(like(applications.dossierNumber, "EVAL-AG-%"), like(applications.dossierNumber, "COMPTE-AG-%")), isNull(applications.deletedAt)))
     .limit(limit);
 
   let purged = 0;
   const canonicals: string[] = [];
+  let skippedUnpaid = 0;
   for (const shell of shells) {
     const agencyId = parseEvalAgencyShellId(shell.dossierNumber);
     if (agencyId == null) continue;
     const [agency] = await db
-      .select({ id: agencyDossiers.id })
+      .select({ id: agencyDossiers.id, initialPaymentStatus: agencyDossiers.initialPaymentStatus })
       .from(agencyDossiers)
       .where(and(eq(agencyDossiers.id, agencyId), isNull(agencyDossiers.deletedAt)))
       .limit(1);
     if (!agency) continue;
+    // Pas de passage COMPTE → 3M sans frais d’ouverture validés.
+    if (agency.initialPaymentStatus !== "paid") {
+      skippedUnpaid += 1;
+      continue;
+    }
     const result = await purgeEvalAgencyShell(db, {
       agencyDossierId: agencyId,
       adminEmail: input?.adminEmail,
@@ -124,7 +133,7 @@ export async function purgeAllOrphanEvalAgencyShells(
     purged += result.purgedApplicationIds.length;
     canonicals.push(result.canonical);
   }
-  return { processed: shells.length, purged, canonicals: Array.from(new Set(canonicals)) };
+  return { processed: shells.length, purged, skippedUnpaid, canonicals: Array.from(new Set(canonicals)) };
 }
 
 /**

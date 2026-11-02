@@ -1,13 +1,17 @@
 /**
- * Les dossiers agence créent parfois une application miroir « EVAL-AG-{id} »
- * pour préparer le bilan. Ce n’est PAS un second dossier actif : le numéro
- * de travail reste « 3M-AGN-{id} ».
+ * Les dossiers agence créent parfois une application miroir pour préparer le bilan. Ce n’est PAS un second dossier
+ * actif : le numéro de travail reste « 3M-AGN-{id} ». Le miroir porte la clé « COMPTE-AG-{id} » (avant paiement, il n'y a
+ * qu'un compte, jamais un numéro « EVAL » ni « 3M ») ; l'ancienne clé « EVAL-AG-{id} » est encore reconnue le temps de
+ * la normalisation des données existantes.
  */
 
 import { agencyDossierReference } from "./caseReference";
 
+/** Clé technique d'un miroir de préparation d'un dossier agence (colonne `applications.dossierNumber`, 20 caractères maximum). */
+export const agencyMirrorKey = (agencyDossierId: number): string => `COMPTE-AG-${Math.trunc(agencyDossierId)}`;
+
 export function parseEvalAgencyShellId(folderCode: string | null | undefined): number | null {
-  const match = /^EVAL-AG-(\d{1,10})$/i.exec(String(folderCode ?? "").trim());
+  const match = /^(?:EVAL|COMPTE)-AG-(\d{1,10})(?:-\d+)?$/i.exec(String(folderCode ?? "").trim());
   if (!match) return null;
   const id = Number(match[1]);
   return Number.isFinite(id) && id > 0 ? id : null;
