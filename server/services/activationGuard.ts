@@ -3,6 +3,7 @@ import { adminNotifications, agencySettings } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { deactivateCandidateDossier, scanActivationsWithoutProof } from "./deactivateDossier";
 import { normalizeAccountReferences } from "./normalizeAccountReferences";
+import { describeDbError } from "../utils/dbError";
 
 /**
  * Contrôle permanent : un dossier ne reste jamais activé sans preuve de paiement.
@@ -136,12 +137,12 @@ export function startActivationGuard(): void {
         const references = await enforceReferenceInvariant(db);
         if (references.corrected > 0) console.log(`[reference-guard] ${references.toAccount} remis en COMPTE, ${references.toActive} passé(s) en 3M-`);
       } catch (error) {
-        console.warn("[reference-guard] correction impossible :", error instanceof Error ? error.message : error);
+        console.warn("[reference-guard] correction impossible :", describeDbError(error));
       }
       if (report.removed > 0 || report.failures > 0) console.log(`[activation-guard] ${report.removed} retrait(s), ${report.review} à vérifier, ${report.failures} échec(s)`);
     } catch (error) {
       markUnavailable();
-      console.warn("[activation-guard] contrôle impossible :", error instanceof Error ? error.message : error);
+      console.warn("[activation-guard] contrôle impossible :", describeDbError(error));
     }
   };
   setTimeout(() => void run(), 60_000).unref?.();
