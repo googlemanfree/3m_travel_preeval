@@ -139,11 +139,13 @@ export function buildFormBilanDraft(input: {
     });
   }
 
-  const shortAnswers = plan.answers.filter((answer) => answer.answer.length <= 80).slice(0, 8);
+  const shortAnswers = plan.answers.filter((answer) => answer.answer.length <= 80 && !answer.key.startsWith("crs_")).slice(0, 8);
   const summaryLines = [
     `Projet « ${plan.programLabel} »${plan.countryName ? ` vers ${plan.countryName}` : ""}${plan.domainLabel ? ` — domaine : ${plan.domainLabel}` : ""}. Formulaire renseigné à ${plan.completeness.percent} % (${plan.completeness.answered} réponses sur ${plan.completeness.total}).`,
     ...shortAnswers.map((answer) => `• ${clean(answer.question)} : ${clean(answer.answer)}`),
+    ...(plan.crs.summary ? [`• Score CRS estimé (Entrée express) : ${plan.crs.summary.total} sur ${plan.crs.summary.max}, d’après vos déclarations et la grille publiée par IRCC. Estimation : elle ne vaut ni invitation ni décision.`] : []),
   ];
+  if (plan.crs.required && !plan.crs.summary) internalNotes.push("Calculateur CRS non rempli alors qu'il est obligatoire pour la résidence permanente au Canada : demander au candidat de le compléter.");
 
   return {
     profile,

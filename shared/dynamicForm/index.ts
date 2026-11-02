@@ -7,3 +7,5 @@ export * from "./declared";
 export * from "./clientPlan";
 export * from "./journeyOverlay";
 export * from "./overrides";
+export * from "./crsModule";
+export * from "./crsGuard";

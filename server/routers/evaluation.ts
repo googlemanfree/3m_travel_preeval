@@ -6,7 +6,7 @@ import { clientDocuments, evaluations } from "../../drizzle/schema";
 import { storagePut } from "../storage";
 import { CV_MAX_BASE64_LENGTH } from "../../shared/evaluationCv";
 import { multiProjectEvaluationGap } from "../../shared/evaluationFormRequirements";
-import { buildAiGuidance, collectDeclaredResponses, resolveDynamicForm, sanitizeProjectDetails } from "../../shared/dynamicForm";
+import { buildAiGuidance, collectDeclaredResponses, CRS_REQUIRED_MESSAGE, missingCrsAnswers, resolveDynamicForm, sanitizeProjectDetails } from "../../shared/dynamicForm";
 import { loadFormOverrides } from "../services/formOverrides";
 import { EVALUATION_SUBMISSION_LIMITS, createSubmissionGuard } from "../_core/publicRateLimit";
 import { notifyOwner } from "../_core/notification";
@@ -242,6 +242,10 @@ export const evaluationRouter = router({
 
       const formOverrides = await loadFormOverrides(db);
       const publicDetails = sanitizeProjectDetails({ country: input.destinationCountry, projectType: input.projectType, overrides: formOverrides }, { ...(input.projectAnswers ?? {}), ...(input.programId ? { programId: input.programId } : {}), ...(input.domainId ? { domainId: input.domainId } : {}) });
+      // Canada, résidence permanente : le calculateur CRS est obligatoire (contrôlé ici, pas seulement dans le navigateur).
+      if (missingCrsAnswers({ country: input.destinationCountry, projectType: input.projectType, details: publicDetails, overrides: formOverrides }).length > 0) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: CRS_REQUIRED_MESSAGE });
+      }
       const dossierCode = generateDossierCode();
       const reviewDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000);
       // Créer un enregistrement d'évaluation multi-projets
@@ -450,6 +454,9 @@ export const evaluationRouter = router({
       // Réponses du formulaire dynamique : recomposées côté serveur, seules celles des champs visibles et valides sont conservées.
       const formOverrides = await loadFormOverrides(db);
       const cleanDetails = input.projectDetails && input.projectType ? sanitizeProjectDetails({ country: input.destinationCountry, projectType: input.projectType, overrides: formOverrides }, input.projectDetails) : input.projectDetails;
+      if (cleanDetails && input.projectType && missingCrsAnswers({ country: input.destinationCountry, projectType: input.projectType, details: cleanDetails, overrides: formOverrides }).length > 0) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: CRS_REQUIRED_MESSAGE });
+      }
       if (evaluationRequiresCv(input.visaType, input.projectType, cleanDetails?.programId) && !(input.cvBase64 && input.cvFileName)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: CV_REQUIRED_MESSAGE });
       }

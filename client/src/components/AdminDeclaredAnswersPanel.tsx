@@ -1,5 +1,5 @@
 import { AlertTriangle, ClipboardList } from "lucide-react";
-import { buildClientPlan } from "@shared/dynamicForm";
+import { buildClientPlan, crsBreakdownLines } from "@shared/dynamicForm";
 import { Badge } from "@/components/ui/badge";
 import { useFormOverrides } from "@/hooks/useFormOverrides";
 
@@ -34,6 +34,20 @@ export function AdminDeclaredAnswersPanel({ projectType, country, details, colum
           <p className="min-w-0 flex-1"><strong>Dossier visiteur :</strong> le formulaire suffit à préparer le bilan (sans CV). Contactez le candidat et proposez un rendez-vous : certains éléments se vérifient en présentiel.</p>
           {onContact ? <button type="button" onClick={onContact} className="inline-flex h-9 items-center rounded-md bg-blue-700 px-4 text-sm font-semibold text-white hover:bg-blue-800" data-testid="admin-visitor-contact-button">Contacter / proposer un rendez-vous</button> : null}
         </div>
+      )}
+      {plan.crs.required && (
+        plan.crs.summary ? (
+          <div className="mt-3 rounded-lg border-2 border-red-200 bg-red-50 p-3 text-sm text-red-950" data-testid="admin-crs-score">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <p className="font-black">Score CRS estimé (Canada, résidence permanente)</p>
+              <p className="text-2xl font-black" data-testid="admin-crs-total">{plan.crs.summary.total} <span className="text-sm font-semibold">/ {plan.crs.summary.max}</span></p>
+            </div>
+            <ul className="mt-2 grid gap-x-6 gap-y-1 text-xs sm:grid-cols-2">{crsBreakdownLines(plan.crs.summary).map((line) => <li key={line.label} className="flex justify-between gap-3"><span>{line.label}</span><strong>{line.points}</strong></li>)}</ul>
+            <p className="mt-2 text-[11px] leading-4 text-red-900">Recalculé par le système à partir des réponses du candidat (niveau de langue unique pour les quatre compétences : à affiner avec les résultats réels de test). Grille IRCC vérifiée le {plan.crs.summary.verifiedAt}. {plan.crs.summary.sourceNote} Estimation, sans valeur de décision.</p>
+          </div>
+        ) : (
+          <p role="alert" className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950" data-testid="admin-crs-missing"><strong>Calculateur CRS non rempli.</strong> Il est obligatoire pour une demande de résidence permanente au Canada : demandez au candidat de compléter son évaluation.</p>
+        )
       )}
       {plan.completeness.missingRequired.length > 0 && <p className="mt-2 text-xs text-amber-900">Questions obligatoires sans réponse : {plan.completeness.missingRequired.join(" ; ")}.</p>}
       <section className="mt-3" aria-labelledby="admin-declared-followups" data-testid="admin-declared-followups">

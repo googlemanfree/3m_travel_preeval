@@ -1,5 +1,6 @@
 import { getCountryEvaluationProfile, type CountryEvaluationProfile } from "../countryEvaluationProfile";
 import { countryFields } from "./countryModules";
+import { crsFields, usesCrs } from "./crsModule";
 import { DOMAINS, getDomain, type DomainDef } from "./domains";
 import { FAMILY_DOCUMENTS } from "./documents";
 import {
@@ -146,11 +147,17 @@ export function resolveDynamicForm(context: DynamicFormContext): ResolvedForm {
     ? { id: "country", layer: "pays", title: `Spécificités — ${profile?.name ?? context.country}`, chip: `Pays : ${profile?.name ?? context.country}`, fields: countryExtra }
     : null;
 
+  // Canada, résidence permanente : le calculateur de score CRS est obligatoire (recalculé côté serveur et en administration).
+  const crsSection: DynamicSection | null = usesCrs(profile?.code ?? null, family)
+    ? { id: "crs", layer: "pays", title: "Calculateur de score CRS (Entrée express)", intro: "Obligatoire pour une demande de résidence permanente au Canada. Répondez avec des résultats réels : le score est estimé par l’équipe 3M à partir de la grille officielle d’IRCC et confirmé par un conseiller. Il ne garantit aucune invitation à présenter une demande.", chip: "Pays : Canada — score CRS", fields: crsFields() }
+    : null;
+
   const baseSections = dedupe([
     educationSection(family, rules.education),
     experienceSection(rules.experience, domain, visitLike),
     languagesSection(rules.languages, profile),
     programSection,
+    crsSection,
     domainSection,
     countrySection,
   ].filter((section): section is DynamicSection => Boolean(section)));

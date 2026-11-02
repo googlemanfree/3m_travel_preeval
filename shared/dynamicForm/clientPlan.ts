@@ -1,3 +1,4 @@
+import { crsSummaryFromAnswers, usesCrs, type CrsSummary } from "./crsModule";
 import { FAMILY_DOCUMENTS } from "./documents";
 import { getDomain } from "./domains";
 import { describeProjectDetails, detectFormFlags, formCompleteness, resolveDynamicForm, sanitizeProjectDetails, type DescribedAnswer, type FormCompleteness, type FormFlag, type ResolvedForm } from "./resolve";
@@ -24,6 +25,8 @@ export type ClientPlan = {
   answers: DescribedAnswer[];
   completeness: FormCompleteness;
   flags: FormFlag[];
+  /** Canada, résidence permanente : calculateur CRS obligatoire ; `summary` est recalculé à partir des réponses (null si non rempli). */
+  crs: { required: boolean; summary: CrsSummary | null };
 };
 
 const LEVEL_LOW = new Set(["aucun", "a1_a2"]);
@@ -162,6 +165,7 @@ export function buildClientPlan(
     answers: describeProjectDetails({ country: input.country, projectType: input.projectType, overrides: input.overrides }, details),
     completeness: formCompleteness(form, values),
     flags: detectFormFlags(form, values),
+    crs: { required: usesCrs(form.countryCode, form.family), summary: usesCrs(form.countryCode, form.family) ? crsSummaryFromAnswers(values) : null },
   };
 }
 
