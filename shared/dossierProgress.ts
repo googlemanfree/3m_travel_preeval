@@ -38,6 +38,9 @@ export type DossierProgressInput = {
   visaType?: string | null;
   /** Libellé de la procédure : le parcours affiché à l'écran est choisi avec lui (comme dans l'espace client). */
   procedureLabel?: string | null;
+  /** Visa ou programme et domaine choisis dans l'évaluation : adaptent les étapes. */
+  programId?: string | null;
+  domainId?: string | null;
   dossierStatus?: string | null;
   /** Par défaut « validated » : un dossier dont l'administrateur fait avancer le statut a déjà son évaluation validée. */
   evaluationStatus?: string | null;
@@ -45,7 +48,7 @@ export type DossierProgressInput = {
 };
 
 export function describeDossierProgress(input: DossierProgressInput): DossierProgress {
-  const journey = getEnrichedCandidateJourney(input.destination, input.visaType, input.procedureLabel ?? input.visaType);
+  const journey = getEnrichedCandidateJourney(input.destination, input.visaType, input.procedureLabel ?? input.visaType, input.programId, input.domainId);
   const phaseInfo = describeClientDossierPhase(input.dossierStatus);
   const statusLabel = phaseInfo.label;
   const stepCount = journey.steps.length;

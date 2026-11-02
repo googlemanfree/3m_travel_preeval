@@ -233,6 +233,17 @@ async function applyEffects(tx: Tx, target: { evaluationId: number; versionNumbe
   }
 }
 
+function programIdFromDetails(json: string | null | undefined): string | null {
+  if (!json) return null;
+  try {
+    const parsed: unknown = JSON.parse(json);
+    const id = parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>).programId : null;
+    return typeof id === "string" && id ? id : null;
+  } catch {
+    return null;
+  }
+}
+
 export class DrizzleValidationStore implements ValidationStore {
   constructor(private readonly db: Db) {}
 
@@ -246,6 +257,7 @@ export class DrizzleValidationStore implements ValidationStore {
         destinationCategory: evaluations.destinationCategory,
         visaType: evaluations.visaType,
         projectType: evaluations.projectType,
+        projectDetailsJson: evaluations.projectDetailsJson,
         cvFileUrl: evaluations.cvFileUrl,
         cvFileName: evaluations.cvFileName,
       })
@@ -261,6 +273,7 @@ export class DrizzleValidationStore implements ValidationStore {
       candidateCountry: row.destinationCountry?.trim() || COUNTRY_BY_CATEGORY[row.destinationCategory] || "",
       visaType: row.visaType?.trim() || null,
       projectType: row.projectType?.trim() || null,
+      programId: programIdFromDetails(row.projectDetailsJson),
       cvOnFile: cvFileUrl !== null,
       cvFileName: cvFileUrl !== null ? (row.cvFileName?.trim() || null) : null,
       cvFileUrl,

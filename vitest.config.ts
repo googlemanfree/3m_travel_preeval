@@ -14,6 +14,9 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    // Les suites jsdom (formulaires, panneaux admin) dépassent 5 s quand tous les fichiers tournent en parallèle.
+    testTimeout: 20_000,
+    hookTimeout: 20_000,
     setupFiles: ["./vitest.setup.ts"],
     include: ["server/**/*.test.ts", "server/**/*.test.tsx", "server/**/*.spec.ts", "shared/**/*.test.ts"],
   },

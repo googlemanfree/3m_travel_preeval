@@ -116,8 +116,78 @@ export function buildRegistrationInfoRequest(input: {
     visaType,
     projectKind,
     items,
-    subject: `Informations à compléter — ${destination} · ${visaType} — 3M TRAVEL AGENCY`,
+    subject: `Documents justificatifs — ${destination} · ${visaType} — 3M TRAVEL AGENCY`,
   };
+}
+
+/**
+ * Les pièces justificatives (passeport, état civil, ressources, etc.)
+ * ne se demandent qu’après l’évaluation / envoi du bilan.
+ */
+export function isEvaluationCompleteForJustificatifs(input: {
+  evaluationDeclarationStatus?: string | null;
+  evaluationReviewedAt?: Date | string | null;
+  evaluationDeliveryStatus?: string | null;
+  evaluationClientConfirmed?: boolean | null;
+  evaluationClientConfirmedAt?: Date | string | null;
+  evaluationValidatedAt?: Date | string | null;
+}): boolean {
+  if (String(input.evaluationDeclarationStatus || "").trim().toLowerCase() === "validated") return true;
+  if (input.evaluationReviewedAt) return true;
+  if (input.evaluationValidatedAt) return true;
+  if (String(input.evaluationDeliveryStatus || "").trim().toLowerCase() === "sent") return true;
+  if (input.evaluationClientConfirmed) return true;
+  if (input.evaluationClientConfirmedAt) return true;
+  return false;
+}
+
+/** Corps texte professionnel pour e-mail brandé + espace client. */
+export function registrationInfoRequestPlainBody(input: {
+  fullName: string;
+  destination: string;
+  visaType: string;
+  items: RegistrationInfoItem[];
+  reference?: string | null;
+}): string {
+  const lines = input.items.map(
+    (item) => `• ${item.label}${item.priority === "required" ? " (prioritaire)" : ""} — ${item.detail}`,
+  );
+  return [
+    `Bonjour ${input.fullName},`,
+    "",
+    `Suite à votre évaluation, merci de déposer les documents justificatifs pour votre projet ${input.destination} · ${input.visaType}${input.reference ? ` (réf. ${input.reference})` : ""} :`,
+    "",
+    ...lines,
+    "",
+    "Connectez-vous à votre espace candidat (Documents) pour déposer chaque pièce. Un conseiller relit chaque élément — aucune décision automatique.",
+    "",
+    "Cordialement,",
+    "L’équipe 3M Travel Agency",
+    "https://www.3mtravelagency.com",
+  ].join("\n");
+}
+
+/** Entête complète pour le fil de messages de l’espace client. */
+export function buildRegistrationInfoClientSpaceContent(input: {
+  destination: string;
+  visaType: string;
+  reference?: string | null;
+  body: string;
+}): string {
+  const meta = [
+    input.reference ? `Référence : ${input.reference}` : null,
+    `Destination : ${input.destination}`,
+    `Procédure : ${input.visaType}`,
+  ].filter(Boolean).join(" · ");
+  return [
+    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+    "3M TRAVEL AGENCY",
+    "Demande de documents justificatifs",
+    meta,
+    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+    "",
+    input.body.trim(),
+  ].join("\n");
 }
 
 export function registrationInfoRequestEmailHtml(input: {
@@ -126,22 +196,38 @@ export function registrationInfoRequestEmailHtml(input: {
   visaType: string;
   items: RegistrationInfoItem[];
   portalUrl?: string;
+  reference?: string | null;
 }): string {
   const esc = (value: string) =>
     value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   const list = input.items
     .map(
       (item) =>
-        `<li style="margin:0 0 10px"><strong>${esc(item.label)}</strong>${item.priority === "required" ? " <span style=\"color:#b45309\">(prioritaire)</span>" : ""}<br/><span style="color:#475569;font-size:13px">${esc(item.detail)}</span></li>`,
+        `<li style="margin:0 0 10px"><strong>${esc(item.label)}</strong>${item.priority === "required" ? " <span style=\"color:#b45309\">(prioritaire)</span>" : ""}<br/><span style=\"color:#475569;font-size:13px\">${esc(item.detail)}</span></li>`,
     )
     .join("");
   const portal = input.portalUrl || "/mon-espace";
-  return `<div style="font-family:Arial,sans-serif;color:#0f172a;line-height:1.55;max-width:640px">
-<p>Bonjour ${esc(input.fullName)},</p>
-<p>Pour avancer sur votre projet <strong>${esc(input.destination)}</strong> · <strong>${esc(input.visaType)}</strong>, merci de compléter les éléments suivants dans votre espace client 3M TRAVEL AGENCY :</p>
-<ul style="padding-left:18px">${list}</ul>
-<p>Connectez-vous à votre <a href="${esc(portal)}">espace candidat sécurisé</a> pour déposer les pièces ou répondre à votre conseiller. Aucune décision automatique n’est prise : un conseiller relit chaque élément.</p>
-<p style="color:#64748b;font-size:13px">3M TRAVEL AGENCY — accompagnement mobilité internationale</p>
+  const meta = [
+    input.reference ? `Réf. ${esc(input.reference)}` : null,
+    esc(input.destination),
+    esc(input.visaType),
+  ].filter(Boolean).join(" · ");
+  return `<div style="font-family:Arial,Helvetica,sans-serif;color:#0f172a;line-height:1.55;max-width:640px;margin:0 auto;background:#ffffff">
+<div style="background:linear-gradient(135deg,#123b70 0%,#2563eb 100%);padding:28px 32px;color:#ffffff">
+<p style="margin:0 0 8px;font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:.85">3M TRAVEL AGENCY</p>
+<h1 style="margin:0;font-size:22px;line-height:1.3;color:#ffffff">Documents justificatifs</h1>
+${meta ? `<p style="margin:10px 0 0;font-size:13px;opacity:.9">${meta}</p>` : ""}
+</div>
+<div style="padding:28px 32px;background:#f8fafc">
+<p>Bonjour <strong>${esc(input.fullName)}</strong>,</p>
+<p>Suite à votre évaluation, merci de déposer les documents justificatifs pour votre projet <strong>${esc(input.destination)}</strong> · <strong>${esc(input.visaType)}</strong> dans votre espace client :</p>
+<ul style="padding-left:18px;margin:16px 0">${list}</ul>
+<p style="text-align:center;margin:28px 0 12px">
+<a href="${esc(portal.startsWith("http") ? portal : `https://www.3mtravelagency.com${portal.startsWith("/") ? portal : `/${portal}`}`)}" style="background:#2563eb;color:#ffffff;padding:12px 24px;text-decoration:none;border-radius:7px;display:inline-block;font-weight:700">Ouvrir mon espace Documents</a>
+</p>
+<p style="font-size:13px;color:#64748b">Un conseiller relit chaque élément. Aucune décision de visa, d’admission ou d’emploi n’est automatique.</p>
+</div>
+<div style="padding:16px 32px;background:#e2e8f0;font-size:12px;color:#475569;text-align:center">3M TRAVEL AGENCY — accompagnement mobilité internationale</div>
 </div>`;
 }
 

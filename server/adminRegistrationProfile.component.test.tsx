@@ -54,6 +54,32 @@ describe("AdminRegistrationProfile — ce que l'équipe voit du projet déclaré
     const { container } = render(<AdminRegistrationProfile profile={null} />);
     expect(container.innerHTML).toBe("");
   });
+
+  it("bloque l’envoi des justificatifs tant que l’évaluation n’est pas terminée", () => {
+    render(
+      <AdminRegistrationProfile
+        profile={profile}
+        evaluationCompleted={false}
+        onRequestInfo={() => undefined}
+      />,
+    );
+    const button = screen.getByTestId("registration-request-info") as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(screen.getByTestId("registration-justificatifs-gate").textContent).toMatch(/évaluation/i);
+  });
+
+  it("active l’envoi pro une fois l’évaluation terminée", () => {
+    render(
+      <AdminRegistrationProfile
+        profile={profile}
+        evaluationCompleted
+        onRequestInfo={() => undefined}
+      />,
+    );
+    const button = screen.getByTestId("registration-request-info") as HTMLButtonElement;
+    expect(button.disabled).toBe(false);
+    expect(button.textContent).toMatch(/Envoyer la demande/);
+  });
 });
 
 describe("synchronisation inscription → back-office (câblage)", () => {

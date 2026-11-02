@@ -42,6 +42,8 @@ import { fareRefusal, pnrReferenceRefusal, travelerRefusal } from "../services/f
 import { travelSheetAttachment } from "../services/flightTravelSheet";
 import { storageGetSignedUrl, storagePut } from "../storage";
 import { jsPDF } from "jspdf";
+import { applyLetterhead, letterheadLayout, type LetterheadOptions } from "../../shared/brandLetterhead";
+import { loadBrandLogo } from "../utils/brandLogo";
 import "jspdf-autotable";
 import QRCode from "qrcode";
 import { analyzeDocumentReadability } from "../documentReadabilityService";
@@ -486,35 +488,35 @@ export const flightBookingRouter = router({
     const exportedAt = new Date();
 
     const doc = new jsPDF({ unit: "mm", format: "a4" });
-    doc.setFillColor(15, 45, 91);
-    doc.rect(0, 0, 210, 34, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.text("3M TRAVEL AGENCY", 15, 15);
-    doc.setFontSize(11);
-    doc.text("Relevé détaillé 3M Rewards", 15, 23);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.text(`Document personnel généré le ${exportedAt.toLocaleString("fr-FR")}`, 15, 29);
+    const logo = await loadBrandLogo();
+    const letterhead: LetterheadOptions = {
+      logoDataUri: logo?.dataUri,
+      logoFormat: logo?.format,
+      documentKind: "Relevé détaillé 3M Rewards",
+      dateLabel: exportedAt.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Douala" }),
+    };
+    const layout = letterheadLayout(letterhead);
+    const top = layout.firstPageTop + 2;
 
-    doc.setTextColor(15, 23, 42);
+    doc.setTextColor(23, 55, 94);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
-    doc.text("Synthèse du compte", 15, 46);
+    doc.text("Synthèse du compte", layout.marginLeft, top);
+    doc.setTextColor(31, 41, 55);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text(`Niveau : ${tier}`, 15, 54);
-    doc.text(`Solde disponible : ${availablePoints.toLocaleString("fr-FR")} points`, 15, 61);
-    doc.text(`Points cumulés : ${lifetimePoints.toLocaleString("fr-FR")}`, 15, 68);
-    doc.text(`Billets émis : ${issuedBookings.toLocaleString("fr-FR")}`, 115, 54);
-    doc.text(`Transactions enregistrées : ${transactions.length.toLocaleString("fr-FR")}`, 115, 61);
+    doc.text(`Niveau : ${tier}`, layout.marginLeft, top + 8);
+    doc.text(`Solde disponible : ${availablePoints.toLocaleString("fr-FR")} points`, layout.marginLeft, top + 15);
+    doc.text(`Points cumulés : ${lifetimePoints.toLocaleString("fr-FR")}`, layout.marginLeft, top + 22);
+    doc.text(`Billets émis : ${issuedBookings.toLocaleString("fr-FR")}`, 115, top + 8);
+    doc.text(`Transactions enregistrées : ${transactions.length.toLocaleString("fr-FR")}`, 115, top + 15);
     doc.setFontSize(8);
     doc.setTextColor(71, 85, 105);
-    doc.text("Les points sont crédités après l’émission humaine et validée d’un billet. Les conditions du programme restent applicables.", 15, 76, { maxWidth: 180 });
+    doc.text("Les points sont crédités après l’émission humaine et validée d’un billet. Les conditions du programme restent applicables.", layout.marginLeft, top + 30, { maxWidth: layout.contentWidth });
 
     (doc as any).autoTable({
-      startY: 86,
+      startY: top + 38,
+      margin: { left: layout.marginLeft, right: 210 - layout.marginRight, top: layout.nextPageTop, bottom: 297 - layout.contentBottom },
       head: [["Date", "Référence", "Nature", "Points", "Motif"]],
       body: transactions.length
         ? transactions.map((transaction) => [
@@ -526,16 +528,20 @@ export const flightBookingRouter = router({
           ])
         : [["—", "—", "—", "0", "Aucune transaction de fidélité enregistrée."]],
       styles: { fontSize: 8, cellPadding: 2.7 },
-      headStyles: { fillColor: [30, 64, 175], textColor: [255, 255, 255], fontStyle: "bold" },
+      headStyles: { fillColor: [23, 55, 94], textColor: [255, 255, 255], fontStyle: "bold" },
       alternateRowStyles: { fillColor: [248, 250, 252] },
       columnStyles: { 0: { cellWidth: 27 }, 1: { cellWidth: 23 }, 2: { cellWidth: 26 }, 3: { cellWidth: 25 }, 4: { cellWidth: 79 } },
-      didDrawPage: () => {
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(7);
-        doc.setTextColor(100, 116, 139);
-        doc.text("Relevé personnel 3M Rewards — à conserver pour votre suivi de voyage.", 15, 290);
-      },
     });
+    {
+      const finalY = (doc as any).lastAutoTable?.finalY ?? top + 38;
+      let noteY = finalY + 8;
+      if (noteY > layout.contentBottom) { doc.addPage(); noteY = layout.nextPageTop; }
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(100, 116, 139);
+      doc.text("Relevé personnel 3M Rewards — à conserver pour votre suivi de voyage.", layout.marginLeft, noteY);
+    }
+    applyLetterhead(doc, letterhead);
 
     const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
     const { url } = await storagePut(

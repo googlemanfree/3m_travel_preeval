@@ -33,7 +33,8 @@ describe("suite audit suivante — overlay, frais, SEO, preuves, CTA", () => {
 
   it("renforce le SEO des fiches destination (titre unique + liens internes)", () => {
     const detail = read("client/src/pages/CountryDetailPage.tsx");
-    expect(detail).toContain("visa ${visaLabelFr}");
+    // Le titre affiché est identique au titre prérendu par le serveur (pas de suffixe ajouté après le chargement).
+    expect(detail).toContain("title: `${displayTitle} | 3M TRAVEL AGENCY`");
     expect(detail).toContain("procedure-internal-links");
     expect(detail).toContain('href="/sources-officielles"');
     expect(detail).toContain('href="/tarifs"');

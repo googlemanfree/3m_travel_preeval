@@ -20,8 +20,9 @@ describe("protocole d’accord — signature espace client → PDF mail", () => 
   it("embarque la signature dans le PDF et dessine pied de page agence", () => {
     const pdf = read("server/agreementProtocolPdfService.ts");
     expect(pdf).toContain("AgreementProtocolSignature");
-    expect(pdf).toContain("drawAgencyFooter");
-    expect(pdf).toContain("RC/YAO/2019/A/2567");
+    // Papier à en-tête officiel partagé : en-tête, pied de page et mentions légales (RC/NIU) viennent de shared/brandLetterhead.
+    expect(pdf).toContain("applyLetterhead(doc, letterhead)");
+    expect(read("shared/brandLetterhead.ts")).toContain("RC/YAO/2019/A/2567");
     expect(pdf).toContain("exemplaire signé");
     expect(pdf).toContain("addImage(dataUrl, \"PNG\"");
     expect(pdf).toContain("protocole-01-signe.pdf");
@@ -50,5 +51,18 @@ describe("protocole d’accord — signature espace client → PDF mail", () => 
     expect(admin).toContain("agreement-status-signed");
     expect(admin).toContain("Protocole validé");
     expect(admin).toContain("preview-agreement-protocol");
+  });
+
+  it("sépare visuellement les visas et protège les exports officiels", () => {
+    const admin = read("client/src/components/AdminPaymentManagement.tsx");
+    const cockpit = read("client/src/components/Candidate360Workspace.tsx");
+    const page = read("client/src/pages/EvaluationSpace.tsx");
+    expect(admin).toContain("payment-visa-badge");
+    expect(admin).toContain("getVisaBadge");
+    expect(cockpit).toContain("candidate360-preview-agreement");
+    expect(cockpit).toContain("candidate360-agreement-preview");
+    expect(page).toContain("client-official-documents");
+    expect(page).toContain("officiallyValidated");
+    expect(page).toContain("receiptApprovedAt");
   });
 });

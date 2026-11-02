@@ -13,15 +13,20 @@ import AdminPaymentProofBadge from "@/components/AdminPaymentProofBadge";
 import AdminOpeningFeeDialog from "@/components/AdminOpeningFeeDialog";
 import { INITIAL_AGREEMENT_PROTOCOL } from "@shared/agreementProtocolContent";
 import { isProofFor } from "@shared/paymentProof";
+import { PAYMENT_SORT_LABELS, sortPayments, type PaymentSortMode } from "@shared/paymentSort";
 
 interface Payment {
   id: number;
   dossierNumber: string;
+  /** Référence affichée : COMPTE-… avant paiement, 3M-… après (dossierNumber reste la clé technique). */
+  displayReference?: string;
   fullName: string;
   email: string;
   amount: number;
   expectedAmount: number;
   confirmedAmount?: number | null;
+  /** Un administrateur a fixé ce montant d'ouverture (sinon : valeur par défaut, à confirmer au candidat). */
+  openingFeeConfirmed?: boolean;
   currency: string;
   paymentStatus: "PENDING" | "SUCCESS" | "FAILED" | "CANCELLED";
   paymentMethod?: string;
@@ -32,6 +37,8 @@ interface Payment {
   receiptUrl?: string;
   receiptMimeType?: string;
   receiptFileName?: string;
+  destination?: string | null;
+  visaType?: string | null;
   agreementSigned?: boolean;
   paymentSecretCodeSubmittedAt?: Date | string | null;
   paymentReceiptDelivery?: {
@@ -157,11 +164,13 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated, onOpenC
   const payments: Payment[] = (Array.isArray(applicationsData) ? applicationsData : []).map((app: any) => ({
     id: app.id,
     dossierNumber: app.dossierNumber,
+    displayReference: app.displayReference,
     fullName: app.fullName,
     email: app.email,
     amount: app.paymentAmount || app.paymentExpectedAmount || 65000,
     expectedAmount: app.paymentExpectedAmount || app.paymentAmount || 65000,
     confirmedAmount: app.paymentConfirmedAmount,
+    openingFeeConfirmed: Boolean(app.openingFeeConfirmed),
     currency: app.paymentCurrency || "XAF",
     paymentStatus: app.paymentStatus || "PENDING",
     paymentMethod: app.paymentMethod,
@@ -172,6 +181,8 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated, onOpenC
     receiptUrl: app.paymentReceipt?.fileUrl,
     receiptMimeType: app.paymentReceipt?.mimeType,
     receiptFileName: app.paymentReceipt?.fileName,
+    destination: app.destination,
+    visaType: app.visaType,
     agreementSigned: Boolean(app.agreementSigned),
     paymentSecretCodeSubmittedAt: app.paymentSecretCodeSubmittedAt,
     paymentReceiptDelivery: app.paymentReceiptDelivery,
@@ -187,7 +198,8 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated, onOpenC
 
   // Filtrage local complémentaire pour le rapprochement Mobile Money / Agence.
   const [filterReceiptDelivery, setFilterReceiptDelivery] = useState<"all" | "sent" | "failed" | "not_sent">("all");
-  const filteredPayments = payments.filter((payment) => {
+  const [sortMode, setSortMode] = useState<PaymentSortMode>("recent");
+  const filteredPayments = sortPayments(payments, sortMode).filter((payment) => {
     if (filterAgreement === "pending" && (payment.paymentStatus !== "SUCCESS" || payment.agreementSigned)) return false;
     if (filterAgreement === "signed" && !payment.agreementSigned) return false;
     const receiptStatus = payment.paymentReceiptDelivery?.status ?? "not_sent";
@@ -275,6 +287,15 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated, onOpenC
     if (method.includes("orange")) return "Orange Money à distance";
     if (method.includes("mobile") || method.includes("mtn")) return "Mobile Money à distance";
     return payment.paymentMethod || "Mode à préciser";
+  };
+
+  const getVisaBadge = (visaType?: string | null) => {
+    const value = String(visaType ?? "").toLowerCase();
+    if (/famille|family|regroup/.test(value)) return { label: "Regroupement familial", className: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-800" };
+    if (/étud|etud|study|student|academic/.test(value)) return { label: "Études", className: "border-violet-200 bg-violet-50 text-violet-800" };
+    if (/visit|visiteur|touris|tourism|schengen_tour/.test(value)) return { label: "Visiteurs", className: "border-sky-200 bg-sky-50 text-sky-800" };
+    if (/travail|work|emploi|job|permit|schengen_travail/.test(value)) return { label: "Travail", className: "border-amber-200 bg-amber-50 text-amber-900" };
+    return { label: visaType?.trim() || "Type à préciser", className: "border-slate-200 bg-slate-50 text-slate-700" };
   };
 
   const handleSendReceipt = (payment: Payment, action: "initial" | "resend") => {
@@ -661,6 +682,17 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated, onOpenC
               <option value="FAILED">Échoués</option>
             </select>
             <select
+              aria-label="Trier les paiements"
+              data-testid="payment-sort"
+              value={sortMode}
+              onChange={(e) => setSortMode(e.target.value as PaymentSortMode)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {(Object.keys(PAYMENT_SORT_LABELS) as PaymentSortMode[]).map((mode) => (
+                <option key={mode} value={mode}>{PAYMENT_SORT_LABELS[mode]}</option>
+              ))}
+            </select>
+            <select
               value={filterReconciliation}
               onChange={(e) => setFilterReconciliation(e.target.value as "all" | "reference_pending" | "amount_gap" | "proof_pending")}
               aria-label="Filtrer les rapprochements de paiement"
@@ -731,7 +763,15 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated, onOpenC
                 <tbody>
                   {filteredPayments.map((payment) => (
                     <tr key={payment.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                      <td className="py-3 px-4 font-mono text-blue-600">{payment.dossierNumber}<AdminPaymentProofBadge sessionToken={sessionToken} reference={payment.dossierNumber} /></td>
+                      <td className="py-3 px-4 font-mono text-blue-600">
+                        <div className="flex flex-col items-start gap-1">
+                          <span title={`Numéro technique : ${payment.dossierNumber}`}>{payment.displayReference ?? payment.dossierNumber}</span>
+                          <Badge variant="outline" className={`font-sans text-[11px] font-bold ${getVisaBadge(payment.visaType).className}`} data-testid="payment-visa-badge" title={payment.destination ? `Destination : ${payment.destination}` : undefined}>
+                            {getVisaBadge(payment.visaType).label}
+                          </Badge>
+                          <AdminPaymentProofBadge sessionToken={sessionToken} reference={payment.dossierNumber} />
+                        </div>
+                      </td>
                       <td className="py-3 px-4 font-medium text-gray-900">{payment.fullName}</td>
                       <td className="py-3 px-4 text-gray-600">{payment.email}</td>
                       <td className="py-3 px-4 text-xs text-gray-600">
@@ -740,6 +780,9 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated, onOpenC
                       </td>
                       <td className="py-3 px-4 text-right text-xs text-gray-700">
                         <p><span className="text-gray-500">Attendu :</span> <strong>{payment.expectedAmount.toLocaleString("fr-FR")} {payment.currency}</strong></p>
+                        {payment.paymentStatus !== "SUCCESS" && !payment.openingFeeConfirmed && (
+                          <p className="mt-0.5 text-[11px] font-semibold text-amber-700" data-testid="opening-fee-default-warning">Montant par défaut : à confirmer par écrit au candidat</p>
+                        )}
                         {payment.paymentStatus !== "SUCCESS" && (
                           <button type="button" className="mt-0.5 text-[11px] font-semibold text-blue-700 underline underline-offset-2" data-testid="edit-opening-fee" onClick={() => setFeePayment(payment)}>
                             Modifier le montant
@@ -987,7 +1030,7 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated, onOpenC
                   <div className="bg-gray-50 p-3 rounded-lg space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Dossier:</span>
-                      <span className="font-semibold text-gray-900">{selectedPayment.dossierNumber}</span>
+                      <span className="font-semibold text-gray-900">{selectedPayment.displayReference ?? selectedPayment.dossierNumber}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Candidat:</span>

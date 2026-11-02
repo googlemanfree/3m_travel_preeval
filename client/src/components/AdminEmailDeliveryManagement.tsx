@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { getAdminSessionToken } from "@/lib/adminSession";
 import { getEmailErrorGuidance, getEmailErrorTitle } from "@/lib/emailErrorGuidance";
 import { toast } from "sonner";
 import {
@@ -34,8 +35,9 @@ export default function AdminEmailDeliveryManagement() {
   const [search, setSearch] = useState("");
   const [editingLogId, setEditingLogId] = useState<number | null>(null);
   const [editingEmail, setEditingEmail] = useState("");
+  const [incidentComment, setIncidentComment] = useState("");
   const utils = trpc.useUtils();
-  const sessionToken = typeof window !== "undefined" ? sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || "" : "";
+  const sessionToken = getAdminSessionToken();
   const queryInput = useMemo(() => ({
     sessionToken,
     limit: 100,
@@ -46,6 +48,14 @@ export default function AdminEmailDeliveryManagement() {
   const { data, isLoading, isFetching, error, refetch } = trpc.admin.getEmailDeliveryLogs.useQuery(queryInput, {
     enabled: !!sessionToken,
   });
+  const incidentsQuery = trpc.admin.getEmailIncidents.useQuery(
+    { sessionToken },
+    { enabled: !!sessionToken, refetchOnWindowFocus: false },
+  );
+  const resolutionMetrics = trpc.admin.getResolutionMetrics.useQuery(
+    { sessionToken },
+    { enabled: !!sessionToken, refetchOnWindowFocus: false },
+  );
   const updateRecipientMutation = trpc.admin.updateEmailDeliveryRecipient.useMutation({
     onSuccess: (result) => {
       toast.success(`Adresse corrigée : ${result.recipientEmail}`);
@@ -62,6 +72,46 @@ export default function AdminEmailDeliveryManagement() {
     },
     onError: (mutationError) => toast.error(mutationError.message),
   });
+  const acknowledgeMutation = trpc.admin.acknowledgeIncident.useMutation({
+    onSuccess: () => {
+      toast.success("Incident(s) accusés réception");
+      setIncidentComment("");
+      void incidentsQuery.refetch();
+      utils.admin.getEmailIncidents.invalidate();
+    },
+    onError: (mutationError) => toast.error(mutationError.message),
+  });
+  const addCommentMutation = trpc.admin.addIncidentComment.useMutation({
+    onSuccess: () => {
+      toast.success("Commentaire ajouté");
+      setIncidentComment("");
+      void incidentsQuery.refetch();
+    },
+    onError: (mutationError) => toast.error(mutationError.message),
+  });
+  const openIncidents = (incidentsQuery.data ?? []).filter((incident) => incident.status === "open");
+  const acknowledgeOpenIncidents = async () => {
+    if (!openIncidents.length) {
+      toast.message("Aucun incident ouvert à accuser");
+      return;
+    }
+    for (const incident of openIncidents) {
+      await acknowledgeMutation.mutateAsync({ sessionToken, incidentId: incident.id, resolve: false });
+    }
+  };
+  const addCommentToLatestOpen = () => {
+    const target = openIncidents[0];
+    if (!target) {
+      toast.message("Aucun incident ouvert pour ce commentaire");
+      return;
+    }
+    const comment = incidentComment.trim();
+    if (comment.length < 2) {
+      toast.error("Saisissez un commentaire (2 caractères minimum)");
+      return;
+    }
+    addCommentMutation.mutate({ sessionToken, incidentId: target.id, comment });
+  };
 
   const summary = data?.summary ?? { total: 0, sent: 0, failed: 0, pending: 0 };
   const logs = data?.logs ?? [];
@@ -127,12 +177,69 @@ export default function AdminEmailDeliveryManagement() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h4 className="font-bold text-amber-950">Journal des incidents de seuil</h4>
-                  <p className="mt-1 text-xs text-amber-800">Les seuils configurés et les incidents sont suivis dans les paramètres de supervision.</p>
+                  <p className="mt-1 text-xs text-amber-800">
+                    {openIncidents.length
+                      ? `${openIncidents.length} incident(s) ouvert(s) à traiter.`
+                      : "Aucun incident ouvert. Les seuils configurés restent suivis dans les paramètres de supervision."}
+                  </p>
                 </div>
-                <Button variant="outline" size="sm" className="border-amber-300 text-amber-900">Accuser réception</Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="border-amber-300 text-amber-900"
+                  disabled={acknowledgeMutation.isPending || !openIncidents.length}
+                  onClick={() => void acknowledgeOpenIncidents()}
+                >
+                  Accuser réception
+                </Button>
               </div>
+              {openIncidents.length > 0 && (
+                <ul className="mt-3 space-y-2">
+                  {openIncidents.slice(0, 5).map((incident) => (
+                    <li key={incident.id} className="rounded-lg border border-amber-200 bg-white/80 px-3 py-2 text-xs text-amber-950">
+                      <span className="font-semibold">#{incident.id}</span>
+                      {" · "}
+                      {incident.advisorEmail || "conseiller non renseigné"}
+                      {" · "}
+                      {new Date(incident.createdAt).toLocaleString("fr-FR")}
+                    </li>
+                  ))}
+                </ul>
+              )}
               <p className="mt-3 text-xs font-medium text-amber-900">Délai moyen de résolution par conseiller</p>
-              <label className="mt-2 block text-xs font-semibold text-amber-900">Ajouter le commentaire</label>
+              {(resolutionMetrics.data ?? []).length ? (
+                <ul className="mt-1 space-y-1 text-xs text-amber-900">
+                  {resolutionMetrics.data!.slice(0, 5).map((row) => (
+                    <li key={row.advisorEmail || "unknown"}>
+                      {row.advisorEmail || "—"} : {row.averageResolutionHours.toFixed(1)} h ({row.resolvedCount} résolu(s))
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-1 text-xs text-amber-800">Pas encore de résolution mesurée.</p>
+              )}
+              <label htmlFor="email-incident-comment" className="mt-3 block text-xs font-semibold text-amber-900">Ajouter le commentaire</label>
+              <div className="mt-1 flex flex-col gap-2 sm:flex-row">
+                <Input
+                  id="email-incident-comment"
+                  value={incidentComment}
+                  onChange={(event) => setIncidentComment(event.target.value)}
+                  maxLength={3000}
+                  placeholder="Note interne sur l’incident ouvert…"
+                  className="bg-white"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="border-amber-300 text-amber-900 shrink-0"
+                  disabled={addCommentMutation.isPending || !openIncidents.length}
+                  onClick={addCommentToLatestOpen}
+                >
+                  Enregistrer
+                </Button>
+              </div>
               <p className="mt-2 text-xs text-amber-800">Rapport PDF hebdo · Les adresses e-mail, numéros de téléphone et le contenu sensible sont masqués dans l’aperçu.</p>
               <span className="sr-only">{advisorFilterLabel} · {weeklyComparisonLabel} · {previewLabel} · contentPreviewHtml {contentPreviewHtml} {selectedFailedLogIds.size}</span>
               <span className="sr-only">Tous les types de remise · Échecs d’envoi aujourd’hui · Taux de réussite par service · 30 jours · Sélectionner tous les e-mails en échec affichés · Dernières remises réussies par service · Relancer la sélection · Exporter CSV</span>

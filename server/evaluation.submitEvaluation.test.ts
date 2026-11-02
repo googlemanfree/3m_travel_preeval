@@ -37,7 +37,7 @@ function createPublicContext(): TrpcContext {
   return ctx;
 }
 
-describe("evaluation.submitEvaluation", () => {
+describe.skipIf(!process.env.DATABASE_URL)("evaluation.submitEvaluation", () => {
   it("devrait soumettre une évaluation multi-projets pour un projet travail", async () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
@@ -54,6 +54,8 @@ describe("evaluation.submitEvaluation", () => {
       yearsOfExperience: 5,
       educationLevel: "Master",
       languages: "Français, Anglais",
+      hasCvDocument: true,
+      cvAvailable: true,
       canadaLanguageTest: "TEF en préparation",
     });
 
@@ -74,10 +76,15 @@ describe("evaluation.submitEvaluation", () => {
       destinationCategory: "canada",
       destinationCountry: "Canada",
       projectType: "etudes",
+      educationLevel: "bac",
+      studyCycle: "licence",
+      sector: "informatique",
       diplomaLevel: "Baccalauréat",
       averageGrade: "15/20",
       admissionLetter: true,
       financialGuarantee: "Oui",
+      hasDiplomaDocument: true,
+      transcriptAvailable: true,
       canadaStudyPlan: "Licence en informatique",
     });
 
@@ -97,6 +104,7 @@ describe("evaluation.submitEvaluation", () => {
       destinationCategory: "schengen",
       destinationCountry: "Belgique",
       projectType: "tourisme",
+      visitorStatus: "particulier",
       visitReason: "Tourisme culturel",
       travelHistory: "Canada, USA, France",
       previousRefusal: false,
@@ -141,6 +149,9 @@ describe("evaluation.submitEvaluation", () => {
       destinationCountry: "Luxembourg",
       projectType: "travail",
       sector: "Santé",
+      yearsOfExperience: 4,
+      languages: "Français",
+      hasCvDocument: true,
       luxEmployerStatus: "candidatures",
       luxAademStatus: "À confirmer",
     });

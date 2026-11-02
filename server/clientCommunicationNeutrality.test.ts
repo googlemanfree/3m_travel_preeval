@@ -12,7 +12,7 @@ describe("communications client neutres", () => {
 
     expect(widget).toContain("votre guide 3M TRAVEL AGENCY");
     expect(widget).not.toMatch(/assistant IA|assistant virtuel/i);
-    expect(copilot).toContain("Ne mentionne jamais l'utilisation d'un outil automatisé");
+    expect(readProjectFile("shared/aureolSiteKnowledge.ts")).toContain("Ne mentionne jamais l'utilisation d'un outil automatisé");
     expect(copilot).not.toContain('Tu es le "Copilote IA 3M TRAVEL AGENCY"');
   });
 

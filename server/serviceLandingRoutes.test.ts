@@ -51,11 +51,11 @@ describe("routes canoniques des pages de service", () => {
     const canadaSource = readFileSync(resolve(process.cwd(), "client/src/pages/Canada.tsx"), "utf8");
     expect(homeSource).toContain('id="evaluation-multi"');
     expect(homeSource.indexOf('id="evaluation-multi"')).toBeLessThan(homeSource.indexOf('id="home-quick-access-title"'));
-    expect(proceduresSource).toContain("Canada : Résidence & Emploi");
-    expect(proceduresSource).toContain("Travail International");
-    expect(proceduresSource).toContain('href="/travail"');
-    expect(proceduresSource).toContain("Visa Schengen & Court Séjour");
-    expect(proceduresSource).toContain("Études Internationales");
+    expect(proceduresSource).toContain("Canada : résidence & emploi");
+    expect(proceduresSource).toContain("Travail international");
+    expect(proceduresSource).toContain("href: '/travail'");
+    expect(proceduresSource).toContain("Visa Schengen");
+    expect(proceduresSource).toContain("Études internationales");
     expect(proceduresSource).toContain('href="/?project=travail#evaluation-multi"');
     expect(proceduresSource).toContain('href="/?project=etudes#evaluation-multi"');
     expect(proceduresSource).toContain('href="/?project=tourisme#evaluation-multi"');
@@ -63,4 +63,3 @@ describe("routes canoniques des pages de service", () => {
     expect(canadaSource).toContain("Étape 1 : Évaluez votre score CRS avant de continuer");
   });
 });
-

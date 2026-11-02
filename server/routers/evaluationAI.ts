@@ -4,10 +4,11 @@
  */
 
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
-import { randomInt } from "node:crypto";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "../db";
-import { applications } from "../../drizzle/schema";
+import { applications, candidates } from "../../drizzle/schema";
+import { allocateDraftKey } from "../services/accountKeyAllocator";
 import { invokeLLM } from "../_core/llm";
 import { storagePut, storageGet } from "../storage";
 import { sendEmail } from "../_core/email";
@@ -30,19 +31,6 @@ const submitEvaluationSchema = z.object({
 });
 
 type SubmitEvaluationInput = z.infer<typeof submitEvaluationSchema>;
-
-/**
- * Générer un code dossier unique au format #3M-YYYYMMDD-XXXX
- */
-function generateDossierNumber(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  const random = randomInt(0, 10000).toString().padStart(4, "0");
-
-  return `#3M-${year}${month}${day}-${random}`;
-}
 
 /**
  * Analyser le CV avec Gemini et générer un bilan d'admissibilité
@@ -208,8 +196,11 @@ export const evaluationAIRouter = router({
     .input(submitEvaluationSchema)
     .mutation(async ({ input }) => {
       try {
-        // Générer le numéro de dossier
-        const dossierNumber = generateDossierNumber();
+        // Clé de la demande : celle du COMPTE (ou « COMPTE-S… » sans compte). Jamais « 3M- » : ce numéro n'existe qu'après paiement validé.
+        const keyDb = await getDb();
+        if (!keyDb) throw new Error("Base de données non disponible");
+        const [existingAccount] = await keyDb.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, input.email.trim().toLowerCase())).limit(1);
+        const dossierNumber = await allocateDraftKey(keyDb, existingAccount?.id ?? null);
 
         // Récupérer le contenu du CV s'il existe
         let cvContent = "";

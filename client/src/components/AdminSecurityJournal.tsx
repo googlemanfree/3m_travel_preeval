@@ -8,6 +8,7 @@ const EVENT_LABEL: Record<string, string> = {
   login_failed: "Échec de connexion",
   login_blocked: "Connexion refusée (compte désactivé)",
   twofactor_failed: "Code de vérification en deux étapes incorrect",
+  login_attempts_reset: "Compteur de tentatives réinitialisé",
   revoked_all: "Sessions révoquées",
 };
 const EVENT_TONE: Record<string, string> = {
@@ -15,6 +16,7 @@ const EVENT_TONE: Record<string, string> = {
   login_failed: "bg-rose-50 text-rose-900",
   login_blocked: "bg-rose-50 text-rose-900",
   twofactor_failed: "bg-amber-50 text-amber-900",
+  login_attempts_reset: "bg-blue-50 text-blue-800",
   revoked_all: "bg-slate-100 text-slate-700",
 };
 
@@ -28,7 +30,9 @@ export default function AdminSecurityJournal({ sessionToken }: { sessionToken: s
   const [days, setDays] = useState(30);
   const query = trpc.adminAuth.listSecurityEvents.useQuery({ sessionToken, days }, { enabled: Boolean(sessionToken), retry: false });
   const events = query.data ?? [];
-  const failures = events.filter((event) => event.eventType !== "login").length;
+  const failures = events.filter((event) => ["login_failed", "login_blocked", "twofactor_failed"].includes(event.eventType)).length;
+  const alerts = events.filter((event) => ["login_failed", "login_blocked", "twofactor_failed"].includes(event.eventType)).length;
+  const successfulLogins = events.filter((event) => event.eventType === "login").length;
 
   return (
     <Card className="border border-slate-200 bg-white p-5 shadow-sm" data-testid="admin-security-journal">
@@ -47,6 +51,11 @@ export default function AdminSecurityJournal({ sessionToken }: { sessionToken: s
             <select id="security-period" value={days} onChange={(event) => setDays(Number(event.target.value))} className="rounded-md border border-slate-300 bg-white px-2 py-1">
               {[7, 30, 90].map((value) => <option key={value} value={value}>{value} jours</option>)}
             </select>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3" aria-label="Synthèse de sécurité">
+            <div className="rounded-lg border border-rose-100 bg-rose-50 p-3"><p className="text-xs font-semibold text-rose-800">Échecs / alertes</p><p className="mt-1 text-2xl font-black text-rose-950">{alerts}</p></div>
+            <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3"><p className="text-xs font-semibold text-emerald-800">Connexions réussies</p><p className="mt-1 text-2xl font-black text-emerald-950">{successfulLogins}</p></div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-semibold text-slate-700">Événements suivis</p><p className="mt-1 text-2xl font-black text-slate-950">{events.length}</p></div>
           </div>
           {events.length === 0 ? (
             <p className="mt-3 text-sm text-slate-600">Aucun événement sur cette période.</p>

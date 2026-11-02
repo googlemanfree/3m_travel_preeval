@@ -29,7 +29,7 @@ describe("dépôt client", () => {
   it("monte le centre documentaire sécurisé et conserve l’envoi candidat existant", async () => {
     const page = await import("node:fs/promises").then((fs) => fs.readFile("client/src/pages/EvaluationSpace.tsx", "utf8"));
     expect(page).toContain('data-testid="client-document-dropzone"');
-    expect(page).toContain("Chaque dépôt est transmis de façon sécurisée");
+    expect(page).toContain("Transmission chiffrée, accès limité à votre compte et à l’équipe 3M");
     expect(page).toContain("<DocumentUploader");
     expect(page).toContain("getMyAgencyDocuments.invalidate");
   });

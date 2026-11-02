@@ -137,7 +137,7 @@ describe("Pilotage du dossier : moins de blocs affichés d'emblée", () => {
   it("la frise remplace la grille de cartes d'étapes, avec les mêmes actions serveur", () => {
     expect(workspace).toContain("<ProcedureStepper");
     expect(workspace).toContain("checklist-${step.index}");
-    expect(workspace).toContain("setForceStepDialog({ stepIndex: step.index, checked: true, label: step.label })");
+    expect(workspace).toContain("setForceStepDialog({ stepIndex: step.index, checked: true, label: step.label,");
     expect(workspace).toContain("setForceStepDialog({ stepIndex: step.index, checked: false, label: step.label })");
     expect(workspace).not.toContain("Progression indisponible :");
     expect(workspace).not.toContain("INTERNAL_STEPS_COUNT");

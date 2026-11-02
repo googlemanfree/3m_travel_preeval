@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import {
   Camera,
   Check,
   CheckCircle2,
   Copy,
   Eye,
+  ExternalLink,
   FileText,
   FileCheck2,
   FolderPlus,
@@ -14,6 +15,7 @@ import {
   UserRound,
   X,
 } from "lucide-react";
+import { isOpenableStoredUrl } from "@shared/storedFileUrl";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,6 +48,9 @@ import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from 
 import { getCandidateDestinationOption } from "@shared/candidateDestinationOptions";
 import { ADMIN_PROCEDURE_TYPES } from "@shared/dossierProcedureSelection";
 import { CountrySelect } from "@/components/CountryPicker";
+import { BilanStatusChips, type AccountBilanStatus } from "@/components/BilanStatusChips";
+import { AccountOrderingBar, SortHeader, useAccountView } from "@/components/AccountOrderingBar";
+import { arrangeAccounts } from "@shared/accountOrdering";
 
 type PreDossierAccount = {
   id: number;
@@ -59,6 +64,8 @@ type PreDossierAccount = {
   lastLoginAt: string | Date | null;
   documentsCount: number;
   hasCv?: boolean;
+  cvFileUrl?: string | null;
+  cvFileName?: string | null;
   evaluationWithoutCv?: boolean;
   pendingEvaluationReference?: string | null;
   evaluationValidated?: boolean;
@@ -68,6 +75,7 @@ type PreDossierAccount = {
   paymentValidatedAt?: string | null;
   accountReference?: string;
   referenceView?: { label: string; secondaryLabel: string | null; activated: boolean };
+  bilan?: AccountBilanStatus | null;
   preferredDestinations?: string[];
   visaType?: string | null;
 };
@@ -106,6 +114,7 @@ export default function AdminPreDossierAccountsPanel({
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [listFilter, setListFilter] = useState<PreDossierListFilter>("all");
+  const [accountView, setAccountView] = useAccountView();
   const [selected, setSelected] = useState<PreDossierAccount | null>(null);
   const [paymentPreview, setPaymentPreview] = useState<PreDossierAccount | null>(null);
   useEffect(() => {
@@ -123,6 +132,8 @@ export default function AdminPreDossierAccountsPanel({
   >("agence");
   const [offlineNote, setOfflineNote] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
+  // Photo indisponible : le motif est obligatoire quand seule la référence est fournie.
+  const [noProofReason, setNoProofReason] = useState("");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [additionalProcedureEnabled, setAdditionalProcedureEnabled] = useState(false);
   const [additionalDestination, setAdditionalDestination] = useState("france");
@@ -230,6 +241,7 @@ export default function AdminPreDossierAccountsPanel({
     trpc.adminCandidateManagement.confirmOpeningPaymentForAccount.useMutation({
       onSuccess: () => {
         setPaymentReference("");
+        setNoProofReason("");
         setProofFile(null);
         if (proofInputRef.current) proofInputRef.current.value = "";
         refreshReadiness();
@@ -258,6 +270,15 @@ export default function AdminPreDossierAccountsPanel({
           "Indiquez une référence de transaction ou joignez une photo ou vidéo de la facture.",
         variant: "destructive",
       });
+      return;
+    }
+    if (!proofFile && !validatingSecondPayment && noProofReason.trim().length < 5) {
+      toast({
+        title: "Motif de l’absence de photo",
+        description: "Sans photo, indiquez pourquoi elle n’est pas disponible (ex. facture perdue, paiement fait par un proche). Le paiement sera marqué « sur référence » pour rapprochement.",
+        variant: "destructive",
+      });
+      document.getElementById("opening-payment-no-proof-reason")?.focus();
       return;
     }
     if (additionalProcedureEnabled && !additionalPaymentReference.trim()) {
@@ -318,6 +339,7 @@ export default function AdminPreDossierAccountsPanel({
       candidateId: selected.id,
       paymentReference: activePaymentReference.trim() || undefined,
       proofFileUrl,
+      ...(!proofFile && !validatingSecondPayment && noProofReason.trim() ? { noProofReason: noProofReason.trim() } : {}),
       ...(activePaymentAmount.trim() ? { confirmedAmount: Number(activePaymentAmount) } : {}),
       ...(additionalProcedureEnabled
         ? {
@@ -374,7 +396,7 @@ export default function AdminPreDossierAccountsPanel({
               : "Dossier activé",
           description: result.additionalDossierReference
             ? `${result.dossierReference} et ${result.additionalDossierReference} sont actifs — traitez-les simultanément dans le back-office.`
-            : `${result.previousAccountReference} devient ${result.dossierReference}. ${result.emailSent ? "Le dossier est actif dans l’espace client et l’e-mail a été envoyé." : "Le dossier est actif dans l’espace client ; l’e-mail devra être relancé."}${result.archivedDuplicates?.length ? ` ${result.archivedDuplicates.length} doublon(s) mis en corbeille (réversible) : ${result.archivedDuplicates.join(", ")}.` : ""}`,
+            : `${result.previousAccountReference} devient ${result.dossierReference}. ${result.emailSent ? "Le dossier est actif dans l’espace client et l’e-mail a été envoyé." : "Le dossier est actif dans l’espace client ; l’e-mail devra être relancé."}${result.archivedDuplicates?.length ? ` ${result.archivedDuplicates.length} doublon(s) mis en corbeille (réversible) : ${result.archivedDuplicates.join(", ")}.` : ""}${result.consistencyWarnings?.length ? ` À vérifier — ${result.consistencyWarnings.join(" ")}` : ""}`,
         });
         setAdminNotes("");
         void utils.adminCandidateManagement.listPreDossierAccounts.invalidate();
@@ -439,6 +461,7 @@ export default function AdminPreDossierAccountsPanel({
     setOfflineNote("");
     setOfflineChannel("agence");
     setPaymentReference("");
+    setNoProofReason("");
     setPaymentAmount("");
     setAdditionalProcedureEnabled(false);
     setAdditionalDestination("France");
@@ -478,6 +501,8 @@ export default function AdminPreDossierAccountsPanel({
     without_cv: allAccounts.filter((account) => Boolean(account.evaluationWithoutCv)).length,
   };
   const visibleAccounts = allAccounts.filter((account) => matchesListFilter(account as PreDossierAccount, listFilter));
+  // Rangée et classée selon le choix de l'administrateur (tri, regroupement par étape ou destination).
+  const { rows: orderedRows, starts: groupStarts } = arrangeAccounts(visibleAccounts as unknown as PreDossierAccount[], accountView);
 
   useEffect(() => {
     if (!activateAccountId || query.isLoading) return;
@@ -653,6 +678,7 @@ export default function AdminPreDossierAccountsPanel({
             ))}
           </div>
         </div>
+        <AccountOrderingBar view={accountView} onChange={setAccountView} total={visibleAccounts.length} />
         {query.isLoading ? (
           <p className="py-10 text-center text-sm text-slate-500">
             Chargement des comptes…
@@ -670,15 +696,15 @@ export default function AdminPreDossierAccountsPanel({
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-4 py-3">Compte client</th>
+                  <SortHeader label="Compte client" sort="name" view={accountView} onChange={setAccountView} />
                   <th className="px-4 py-3">Préférence</th>
-                  <th className="px-4 py-3">Pièces & activité</th>
-                  <th className="px-4 py-3">Créé le</th>
+                  <SortHeader label="Pièces & activité" sort="documents" view={accountView} onChange={setAccountView} defaultDir="desc" />
+                  <SortHeader label="Créé le" sort="created" view={accountView} onChange={setAccountView} defaultDir="desc" />
                   <th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y bg-white">
-                {visibleAccounts.map(account => {
+                {orderedRows.map(account => {
                   const validationRequired = Boolean(
                     account.pendingEvaluationReference &&
                     !account.evaluationValidated
@@ -686,8 +712,13 @@ export default function AdminPreDossierAccountsPanel({
                   const openId = `account_${account.id}`;
                   const openFiche = () => onOpenCandidate?.(openId);
                   return (
+                    <Fragment key={account.id}>
+                    {groupStarts.get(account.id) ? (
+                      <tr className="bg-slate-100" data-testid="account-group-header">
+                        <td colSpan={5} className="px-4 py-2 text-xs font-black uppercase tracking-wide text-slate-700">{groupStarts.get(account.id)!.label} <span className="font-semibold text-slate-500">({groupStarts.get(account.id)!.count})</span></td>
+                      </tr>
+                    ) : null}
                     <tr
-                      key={account.id}
                       className="cursor-pointer hover:bg-slate-50 focus-visible:bg-blue-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500"
                       onClick={openFiche}
                       onKeyDown={event => {
@@ -735,6 +766,7 @@ export default function AdminPreDossierAccountsPanel({
                             <Mail className="mr-1 h-3 w-3" /> À confirmer
                           </Badge>
                         )}
+                        <BilanStatusChips accountId={account.id} bilan={account.bilan} documentsCount={account.documentsCount} lastLoginAt={account.lastLoginAt} />
                         {account.pendingEvaluationReference && (
                           <Badge
                             variant="outline"
@@ -753,6 +785,23 @@ export default function AdminPreDossierAccountsPanel({
                             title="Déclaration ou validation hors ligne sans CV déposé — le dossier s’ouvrira selon le pays et le type de visa choisis"
                           >
                             Sans CV
+                          </Badge>
+                        ) : isOpenableStoredUrl(account.cvFileUrl) ? (
+                          <a
+                            href={account.cvFileUrl!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(event) => event.stopPropagation()}
+                            className="ml-1 mt-1 inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800 transition hover:bg-emerald-100"
+                            data-testid={`predossier-cv-open-${account.id}`}
+                            title={account.cvFileName || "Ouvrir le CV"}
+                          >
+                            <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                            Ouvrir le CV
+                          </a>
+                        ) : account.hasCv ? (
+                          <Badge variant="outline" className="ml-1 mt-1 border-emerald-200 bg-emerald-50 text-emerald-800">
+                            CV présent
                           </Badge>
                         ) : null}
                         {account.paymentValidated && (
@@ -828,6 +877,7 @@ export default function AdminPreDossierAccountsPanel({
                         </div>
                       </td>
                     </tr>
+                    </Fragment>
                   );
                 })}
               </tbody>
@@ -1068,18 +1118,20 @@ export default function AdminPreDossierAccountsPanel({
                       : "Valider le paiement des frais d’ouverture"}
                   </p>
                   <p className="mt-1 text-xs leading-5 text-amber-900">
-                    Indiquez l’ID de transaction remis par le candidat, ou
-                    photographiez/filmez la facture reçue en agence. Un seul
-                    des deux suffit.
+                    Photographiez/filmez la facture reçue en agence, ou, si la
+                    photo n’est pas disponible, saisissez l’ID de transaction
+                    ET le motif : le paiement est alors validé « sur référence »
+                    et signalé pour rapprochement avec le relevé.
                   </p>
-                  <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                  <div className="mt-2 flex flex-wrap gap-2">
                     <Input
                       value={paymentReference}
                       onChange={event => setPaymentReference(event.target.value)}
                       placeholder={additionalProcedureEnabled && readiness.data?.paymentValidated ? "Référence du second paiement" : "ID de transaction / référence"}
                       maxLength={255}
                       aria-label={additionalProcedureEnabled && readiness.data?.paymentValidated ? "Référence du second paiement" : "Référence ou ID de transaction du paiement"}
-                      className="sm:flex-1"
+                      data-testid="opening-payment-reference"
+                      className="min-w-[14rem] flex-1 basis-56"
                     />
                     <Input
                       type="number"
@@ -1088,7 +1140,7 @@ export default function AdminPreDossierAccountsPanel({
                       onChange={event => setPaymentAmount(event.target.value)}
                       placeholder="Montant XAF (variable)"
                       aria-label="Montant payé en XAF"
-                      className="sm:w-44"
+                      className="w-44 min-w-[10rem]"
                     />
                     <div
                       data-testid="opening-payment-proof-dropzone"
@@ -1122,6 +1174,20 @@ export default function AdminPreDossierAccountsPanel({
                       {isProofDragActive && <span className="text-xs font-semibold text-amber-900">Déposer ici</span>}
                     </div>
                   </div>
+                  {!proofFile && paymentReference.trim() && !(additionalProcedureEnabled && readiness.data?.paymentValidated) && (
+                    <div className="mt-2" data-testid="opening-payment-no-proof">
+                      <label htmlFor="opening-payment-no-proof-reason" className="text-xs font-semibold text-amber-950">Pourquoi la photo n’est pas disponible ?</label>
+                      <Input
+                        id="opening-payment-no-proof-reason"
+                        value={noProofReason}
+                        onChange={event => setNoProofReason(event.target.value)}
+                        maxLength={300}
+                        placeholder="Ex. facture perdue, paiement fait par un proche, photo illisible"
+                        className="mt-1 bg-white"
+                      />
+                      <p className="mt-1 text-[11px] text-amber-900">La référence ne peut servir qu’une seule fois. Elle sera à rapprocher du relevé Mobile Money / bancaire.</p>
+                    </div>
+                  )}
                   {proofFile && proofPreviewUrl && (
                     <div data-testid="opening-payment-proof-preview" className="mt-3 rounded-xl border border-amber-200 bg-white p-3">
                       <div className="mb-2 flex items-center justify-between gap-2">
@@ -1277,6 +1343,20 @@ export default function AdminPreDossierAccountsPanel({
                 <p className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs leading-5 text-rose-900">
                   Évaluation sans CV : le parcours et la checklist du dossier seront créés à partir du <strong>pays</strong> et du <strong>type de visa</strong> choisis ci-dessous (pas d’un modèle générique).
                 </p>
+              ) : isOpenableStoredUrl(selected?.cvFileUrl) ? (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3" data-testid="predossier-selected-cv">
+                  <p className="text-xs font-semibold text-emerald-950">CV disponible pour ce pré-dossier</p>
+                  <p className="mt-1 truncate text-xs text-emerald-900">{selected?.cvFileName || "CV candidat"}</p>
+                  <a
+                    href={selected!.cvFileUrl!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-900 underline-offset-2 hover:underline"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                    Ouvrir le CV
+                  </a>
+                </div>
               ) : null}
               <div>
                 <Label htmlFor="predossier-destination">Pays de destination confirmé</Label>

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildCountryComplianceStats, getAuditorRecipients } from "./complianceMonthlyReportJob";
 
 describe("buildCountryComplianceStats", () => {
@@ -13,7 +13,15 @@ describe("buildCountryComplianceStats", () => {
     expect(stats.schengen).toEqual({ total: 1, approved: 0, pending: 0, rejected: 1 });
   });
 
-  it("charge les destinataires auditeurs depuis la configuration serveur", () => {
-    expect(getAuditorRecipients()).toContain("hello@3mtravelagency.com");
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("charge les destinataires auditeurs depuis la configuration serveur (normalisés, sans doublon ni adresse invalide)", () => {
+    vi.stubEnv("COMPLIANCE_AUDITOR_EMAILS", "hello@3mtravelagency.com, Audit@Exemple.com ,hello@3mtravelagency.com, pas-une-adresse");
+    expect(getAuditorRecipients()).toEqual(["hello@3mtravelagency.com", "audit@exemple.com"]);
+  });
+
+  it("sans configuration, aucun destinataire n'est inventé", () => {
+    vi.stubEnv("COMPLIANCE_AUDITOR_EMAILS", "");
+    expect(getAuditorRecipients()).toEqual([]);
   });
 });

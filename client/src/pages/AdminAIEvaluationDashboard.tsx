@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { AIScoreGauge } from "@/components/AIScoreGauge";
 import { useToast } from "@/components/ui/use-toast";
 import EvaluationValidationPanel from "@/components/EvaluationValidationPanel";
+import { AdminFreeBilanLauncher } from "@/components/AdminFreeBilanLauncher";
 import CvDraftPanel from "@/components/CvDraftPanel";
 import EvaluationWorkQueue from "@/components/EvaluationWorkQueue";
 import ApplicationPackWorkQueue from "@/components/ApplicationPackWorkQueue";
 import { computeWorkQueue, evaluationIdOf, type WorkQueueKey, type WorkQueueStatus } from "@/lib/adminWorkQueue";
 import { computePackWorkQueue, type PackQueueKey } from "@/lib/adminPackWorkQueue";
+import { getAdminSessionToken } from "@/lib/adminSession";
 import { VALIDATION_FILTERS, VALIDATION_FILTER_LABELS, countByValidationFilter, matchesValidationFilter, type ValidationFilter } from "@/lib/evaluationValidationForm";
 import {
   AlertTriangle,
@@ -19,10 +21,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  Eye,
   FileText,
   History,
   Loader,
   Mail,
+  MessageCircle,
   RefreshCw,
   Search,
   Send,
@@ -32,6 +36,9 @@ import {
   X,
 } from "lucide-react";
 import jsPDF from "jspdf";
+import { isOpenableStoredUrl } from "@shared/storedFileUrl";
+import { evaluationGapReminder, evaluationRequiresCv, resolveEvaluationProjectKind } from "@shared/evaluationVisaCv";
+import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 
 const TYPE_LABELS: Record<string, string> = {
   evaluation: "Pré-évaluation",
@@ -108,7 +115,44 @@ type DashboardItem = {
     language: string | null;
     savedAt: string | null;
   } | null;
+  cvFileUrl?: string | null;
+  cvFileName?: string | null;
+  phone?: string | null;
+  requiresCv?: boolean;
+  visaType?: string | null;
 };
+
+function itemRequiresCv(item: DashboardItem): boolean {
+  if (typeof item.requiresCv === "boolean") return item.requiresCv;
+  return evaluationRequiresCv(item.visaType, item.projectType);
+}
+
+function itemHasOpenableCv(item: DashboardItem): boolean {
+  return isOpenableStoredUrl(item.cvFileUrl);
+}
+
+function itemMissingRequiredCv(item: DashboardItem): boolean {
+  return (item.type === "evaluation" || item.type === "consultation") && itemRequiresCv(item) && !itemHasOpenableCv(item);
+}
+
+function gapRelanceStage(item: DashboardItem): "cv_missing" | "generic" {
+  return itemMissingRequiredCv(item) ? "cv_missing" : "generic";
+}
+
+function buildGapWhatsAppReminder(item: DashboardItem): string | null {
+  const digits = String(item.phone ?? "").replace(/\D/g, "");
+  if (digits.length < 8) return null;
+  const e164 = digits.startsWith("237") || digits.length > 9 ? digits : `237${digits}`;
+  const reminder = evaluationGapReminder(item.projectType ?? item.visaType, item.fullName);
+  return `https://wa.me/${e164}?text=${encodeURIComponent(reminder.body)}`;
+}
+
+function gapReminderLabel(item: DashboardItem): string {
+  const kind = resolveEvaluationProjectKind(item.projectType, item.visaType);
+  if (kind === "etudes") return "Relancer diplômes / cycle";
+  if (kind === "tourisme") return "Relancer statut visiteurs";
+  return "Relancer CV";
+}
 
 type ReviewEvent = { id: number; adminEmail: string; action: string; note?: string | null; createdAt: Date | string };
 
@@ -157,7 +201,7 @@ function buildCsv(items: DashboardItem[]) {
   const headers = [
     "Nom complet", "Email", "Type", "Pays", "Catégorie", "Nationalité", "Études", "Emploi",
     "Situation matrimoniale", "Statut", "Source", "Campagne", "Score IA", "Priorité", "Refus visa", "Antécédents judiciaires",
-    "Famille à l’étranger", "Date de soumission",
+    "Famille à l’étranger", "CV requis", "CV présent", "Nom fichier CV", "Date de soumission",
   ];
   const rows = items.map((item) => [
     item.fullName,
@@ -177,6 +221,9 @@ function buildCsv(items: DashboardItem[]) {
     item.priorVisaRefusal ? "Oui" : "Non",
     item.criminalRecord ? "Oui" : "Non",
     item.familyAbroad ? "Oui" : "Non",
+    itemRequiresCv(item) ? "Oui" : "Non",
+    itemHasOpenableCv(item) ? "Oui" : "Non",
+    item.cvFileName || (itemHasOpenableCv(item) ? "CV" : ""),
     new Date(item.createdAt).toLocaleString("fr-FR"),
   ]);
   return "\uFEFF" + [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
@@ -198,8 +245,8 @@ function buildPdf(items: DashboardItem[]) {
   pdf.text(`Export généré le ${new Date().toLocaleString("fr-FR")} — ${items.length} résultat(s) filtré(s)`, margin, y);
   y += 10;
 
-  const columns = ["Candidat", "Destination", "Profil", "Score IA", "Priorité", "Statut", "Soumis le"];
-  const widths = [48, 40, 45, 22, 25, 28, 40];
+  const columns = ["Candidat", "Destination", "Profil", "Score IA", "Priorité", "Statut", "CV", "Soumis le"];
+  const widths = [42, 34, 38, 20, 22, 24, 28, 34];
   const tableWidth = widths.reduce((sum, width) => sum + width, 0);
   const rowHeight = 8;
   const drawHeader = () => {
@@ -234,6 +281,7 @@ function buildPdf(items: DashboardItem[]) {
       item.score === null ? "En attente" : `${item.score}/100`,
       item.priority,
       displayValue(item.status),
+      itemHasOpenableCv(item) ? `Oui\n${item.cvFileName || "CV"}` : itemRequiresCv(item) ? "Manquant" : "N/A",
       new Date(item.createdAt).toLocaleDateString("fr-FR"),
     ];
     let x = margin;
@@ -284,7 +332,33 @@ function initialReviewDraft(item: DashboardItem) {
 
 export default function AdminAIEvaluationDashboard() {
   const { toast } = useToast();
-  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
+  const sessionToken = getAdminSessionToken();
+  const [gapRelanceSent, setGapRelanceSent] = useState<Record<string, true>>({});
+  const sendGapRelanceMutation = trpc.adminCandidateManagement.sendDynamicRelance.useMutation({
+    onSuccess: (result, variables) => {
+      if (!variables) return;
+      const key = `${variables?.candidateId}:${variables?.stage}`;
+      setGapRelanceSent((prev) => ({ ...prev, [key]: true }));
+      toast({
+        title: result.emailSent ? "Relance envoyée" : "Relance déposée",
+        description: result.message,
+        variant: result.emailSent ? "default" : "destructive",
+      });
+    },
+    onError: (error) => toast({ title: "Relance impossible", description: error.message, variant: "destructive" }),
+  });
+  const sendGapRelance = (item: DashboardItem) => {
+    if (!sessionToken || sendGapRelanceMutation.isPending) return;
+    const key = `${item.email}:${gapRelanceStage(item)}`;
+    if (gapRelanceSent[key]) return;
+    sendGapRelanceMutation.mutate({
+      sessionToken,
+      candidateId: item.email,
+      stage: gapRelanceStage(item),
+      channel: "email",
+      useAi: true,
+    });
+  };
   const { data, isLoading, refetch, isFetching } = trpc.aiEvaluationManagement.getUnifiedDashboard.useQuery(
     { sessionToken, limit: 500 },
     { enabled: !!sessionToken, refetchInterval: false },
@@ -346,6 +420,8 @@ export default function AdminAIEvaluationDashboard() {
   const [acquisitionSourceFilter, setAcquisitionSourceFilter] = useState("all");
   const [pendingQueueOnly, setPendingQueueOnly] = useState(false);
   const [secondReviewOnly, setSecondReviewOnly] = useState(false);
+  const [cvMissingOnly, setCvMissingOnly] = useState(false);
+  const [cvPreview, setCvPreview] = useState<{ documentTitle: string; documentUrl: string; fileType?: string } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [emailPreview, setEmailPreview] = useState<{ fullName: string; email: string; subject: string; body: string } | null>(null);
@@ -412,6 +488,7 @@ export default function AdminAIEvaluationDashboard() {
       const matchesScore = scoreFilter === "all" || (scoreFilter === "scored" ? typeof item.score === "number" : typeof item.score !== "number");
       const matchesPendingQueue = !pendingQueueOnly || (item.type === "evaluation" || item.type === "consultation") && !item.reviewedAt && item.status !== "validated_sent";
       const matchesSecondReview = !secondReviewOnly || (item.type === "evaluation" && Boolean(item.secondReviewRequired) && !item.secondReviewedAt);
+      const matchesCvMissing = !cvMissingOnly || itemMissingRequiredCv(item);
       const matchesType = typeFilter === "all" || item.type === typeFilter;
       const matchesDestination = destinationFilter === "all" || item.destinationCountry === destinationFilter;
       const matchesEducation = educationFilter === "all" || item.educationLevel === educationFilter;
@@ -422,7 +499,7 @@ export default function AdminAIEvaluationDashboard() {
       const matchesValidation = validationFilter === "all" || (item.type === "evaluation" && matchesValidationFilter(validationFilter, validationStatusById.get(Number(item.id.split("-").at(-1)))?.status));
       const matchesWorkQueue = workQueueFilter === null || workQueue.ids[workQueueFilter].has(evaluationIdOf(item) ?? -1);
       const matchesPackQueue = packQueueFilter === null || packWorkQueue.ids[packQueueFilter].has(evaluationIdOf(item) ?? -1);
-      return matchesQuery && matchesScore && matchesPendingQueue && matchesSecondReview && matchesType && matchesDestination && matchesEducation && matchesEmployment && matchesStatus && matchesAcquisitionSource && matchesValidation && matchesWorkQueue && matchesPackQueue;
+      return matchesQuery && matchesScore && matchesPendingQueue && matchesSecondReview && matchesCvMissing && matchesType && matchesDestination && matchesEducation && matchesEmployment && matchesStatus && matchesAcquisitionSource && matchesValidation && matchesWorkQueue && matchesPackQueue;
     });
     if (scoreSort === "default") return filtered;
     return [...filtered].sort((a, b) => {
@@ -430,14 +507,16 @@ export default function AdminAIEvaluationDashboard() {
       const bScore = typeof b.score === "number" ? b.score : -1;
       return scoreSort === "desc" ? bScore - aScore : aScore - bScore;
     });
-  }, [items, search, scoreFilter, scoreSort, typeFilter, destinationFilter, educationFilter, employmentFilter, statusFilter, acquisitionSourceFilter, pendingQueueOnly, secondReviewOnly, validationFilter, validationStatusById, workQueueFilter, workQueue, packQueueFilter, packWorkQueue]);
+  }, [items, search, scoreFilter, scoreSort, typeFilter, destinationFilter, educationFilter, employmentFilter, statusFilter, acquisitionSourceFilter, pendingQueueOnly, secondReviewOnly, cvMissingOnly, validationFilter, validationStatusById, workQueueFilter, workQueue, packQueueFilter, packWorkQueue]);
 
   const pageCount = Math.max(1, Math.ceil(visibleItems.length / pageSize));
   const pagedItems = useMemo(() => visibleItems.slice((currentPage - 1) * pageSize, currentPage * pageSize), [visibleItems, currentPage]);
 
+  const cvMissingCount = useMemo(() => items.filter((item) => itemMissingRequiredCv(item)).length, [items]);
+
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, scoreFilter, scoreSort, typeFilter, destinationFilter, educationFilter, employmentFilter, statusFilter, acquisitionSourceFilter, pendingQueueOnly, secondReviewOnly, validationFilter, workQueueFilter, packQueueFilter]);
+  }, [search, scoreFilter, scoreSort, typeFilter, destinationFilter, educationFilter, employmentFilter, statusFilter, acquisitionSourceFilter, pendingQueueOnly, secondReviewOnly, cvMissingOnly, validationFilter, workQueueFilter, packQueueFilter]);
 
   useEffect(() => {
     if (currentPage > pageCount) setCurrentPage(pageCount);
@@ -492,7 +571,10 @@ export default function AdminAIEvaluationDashboard() {
     setEditingId(item.id);
     setReviewDraft(initialReviewDraft(item));
     setReviewReason("");
-    setSelectedTemplateKey(item.projectType === "travail" || item.projectType === "etudes" || item.projectType === "tourisme" ? item.projectType : "");
+    {
+      const kind = resolveEvaluationProjectKind(item.projectType, item.visaType);
+      setSelectedTemplateKey(kind === "travail" || kind === "etudes" || kind === "tourisme" ? kind : "");
+    }
     setPreparationNotice(null);
     setDeliveryNotice(null);
     setDocumentRequirementEvaluationId(evaluationNumericId(item));
@@ -567,7 +649,8 @@ export default function AdminAIEvaluationDashboard() {
 
   const loadProjectTemplate = (item: DashboardItem) => {
     const evaluationId = evaluationNumericId(item);
-    const templateKey = item.projectType === "travail" || item.projectType === "etudes" || item.projectType === "tourisme" ? item.projectType : null;
+    const kind = resolveEvaluationProjectKind(item.projectType, item.visaType);
+    const templateKey = kind === "travail" || kind === "etudes" || kind === "tourisme" ? kind : null;
     if (!Number.isInteger(evaluationId) || !templateKey || !window.confirm("Charger le modèle correspondant au projet ? Il restera entièrement modifiable avant enregistrement.")) return;
     applyResponseTemplate.mutate({ sessionToken, evaluationId, templateKey }, { onSuccess: (result) => { setEditingId(item.id); setReviewDraft(result.draft); setReviewReason(""); setSelectedTemplateKey(templateKey); setDeliveryNotice("Modèle chargé. Relisez-le, adaptez-le puis enregistrez avec un motif."); }, onError: (error) => setDeliveryNotice(error.message) });
   };
@@ -683,7 +766,7 @@ export default function AdminAIEvaluationDashboard() {
         </div>
 
         <Card className="mb-6 p-4 print:hidden">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2 text-sm font-semibold text-slate-900"><SlidersHorizontal className="h-4 w-4 text-blue-600" /> Filtres des évaluations</div><Button type="button" size="sm" variant={pendingQueueOnly ? "default" : "outline"} onClick={() => setPendingQueueOnly((value) => !value)} aria-pressed={pendingQueueOnly} className={pendingQueueOnly ? "bg-amber-700 text-white hover:bg-amber-800" : "border-amber-300 text-amber-800 hover:bg-amber-50"}><Clock className="mr-2 h-4 w-4" />{pendingQueueOnly ? "File à traiter active" : "Nouveaux à traiter"}</Button><Button type="button" size="sm" variant={secondReviewOnly ? "default" : "outline"} onClick={() => setSecondReviewOnly((value) => !value)} aria-pressed={secondReviewOnly} className={secondReviewOnly ? "bg-violet-700 text-white hover:bg-violet-800" : "border-violet-300 text-violet-800 hover:bg-violet-50"}><CheckCircle2 className="mr-2 h-4 w-4" />{secondReviewOnly ? "Secondes validations actives" : "Secondes validations en attente"}</Button></div>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2 text-sm font-semibold text-slate-900"><SlidersHorizontal className="h-4 w-4 text-blue-600" /> Filtres des évaluations</div><div className="flex flex-wrap gap-2"><Button type="button" size="sm" variant={pendingQueueOnly ? "default" : "outline"} onClick={() => setPendingQueueOnly((value) => !value)} aria-pressed={pendingQueueOnly} className={pendingQueueOnly ? "bg-amber-700 text-white hover:bg-amber-800" : "border-amber-300 text-amber-800 hover:bg-amber-50"}><Clock className="mr-2 h-4 w-4" />{pendingQueueOnly ? "File à traiter active" : "Nouveaux à traiter"}</Button><Button type="button" size="sm" variant={secondReviewOnly ? "default" : "outline"} onClick={() => setSecondReviewOnly((value) => !value)} aria-pressed={secondReviewOnly} className={secondReviewOnly ? "bg-violet-700 text-white hover:bg-violet-800" : "border-violet-300 text-violet-800 hover:bg-violet-50"}><CheckCircle2 className="mr-2 h-4 w-4" />{secondReviewOnly ? "Secondes validations actives" : "Secondes validations en attente"}</Button><Button type="button" size="sm" variant={cvMissingOnly ? "default" : "outline"} onClick={() => setCvMissingOnly((value) => !value)} aria-pressed={cvMissingOnly} data-testid="filter-sans-cv" className={cvMissingOnly ? "bg-rose-700 text-white hover:bg-rose-800" : "border-rose-300 text-rose-800 hover:bg-rose-50"}><FileText className="mr-2 h-4 w-4" />{cvMissingOnly ? `Sans CV (${cvMissingCount})` : `Sans CV · travail (${cvMissingCount})`}</Button></div></div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <label className="text-xs font-medium text-slate-600 sm:col-span-2 lg:col-span-2">Rechercher<div className="relative mt-1"><Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nom, email, pays, études…" maxLength={200} className="h-10 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></div></label>
             <label className="text-xs font-medium text-slate-600">Type<select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="mt-1 block h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm"><option value="all">Tous les types</option>{options.types.map((value) => <option key={value} value={value}>{TYPE_LABELS[value] ?? value}</option>)}</select></label>
@@ -713,9 +796,100 @@ export default function AdminAIEvaluationDashboard() {
               {item.referenceCode && <p className="mt-1 text-xs font-semibold text-slate-700">Référence : {item.referenceCode}</p>}
               <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600"><span className="rounded bg-slate-100 px-2 py-1">Pays : {displayValue(item.destinationCountry)}</span><span className="rounded bg-slate-100 px-2 py-1">Études : {displayValue(item.educationLevel)}</span><span className="rounded bg-slate-100 px-2 py-1">Emploi : {displayValue(item.employmentStatus)}</span><span className="rounded bg-slate-100 px-2 py-1">Statut : {displayValue(item.status)}</span><span className="rounded bg-indigo-50 px-2 py-1 font-semibold text-indigo-800">Source : {ACQUISITION_LABELS[item.acquisitionSource ?? "direct"] ?? "Accès direct"}</span>{item.acquisitionCampaign && <span className="rounded bg-cyan-50 px-2 py-1 text-cyan-800">Campagne : {item.acquisitionCampaign}</span>}</div>
               <p className="mt-2 flex items-center gap-1 text-sm text-gray-700"><TrendingUp className="h-3 w-3 flex-shrink-0 text-blue-500" /> {item.suggestedAction}</p>
+              {(item.type === "evaluation" || item.type === "consultation") && (
+                <div className="mt-2 flex flex-wrap items-center gap-2" data-testid={`evaluation-cv-row-${item.id}`}>
+                  {itemHasOpenableCv(item) ? (
+                    <>
+                      <Badge className="bg-emerald-100 text-emerald-900" data-testid="evaluation-cv-present-badge">CV déposé</Badge>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-8 gap-1.5 border-emerald-300 bg-emerald-50 text-xs font-bold text-emerald-900 hover:bg-emerald-100"
+                        data-testid="evaluation-cv-preview-btn"
+                        onClick={() => setCvPreview({
+                          documentTitle: item.cvFileName || `CV — ${item.fullName}`,
+                          documentUrl: item.cvFileUrl!,
+                          fileType: (item.cvFileName || "").toLowerCase().endsWith(".pdf") ? "application/pdf" : undefined,
+                        })}
+                      >
+                        <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                        Aperçu CV
+                      </Button>
+                      <a
+                        href={item.cvFileUrl!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-emerald-300 bg-white px-3 text-xs font-bold text-emerald-900 hover:bg-emerald-50"
+                        data-testid="evaluation-cv-open-link"
+                        title={item.cvFileName || "Ouvrir le CV soumis à l’évaluation"}
+                      >
+                        <FileText className="h-3.5 w-3.5" aria-hidden="true" />
+                        Ouvrir{item.cvFileName ? ` · ${item.cvFileName}` : ""}
+                      </a>
+                    </>
+                  ) : itemMissingRequiredCv(item) ? (
+                    <>
+                      <Badge className="bg-rose-100 text-rose-900" data-testid="evaluation-cv-missing-badge">CV manquant (visa travail)</Badge>
+                      <button
+                        type="button"
+                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-rose-300 bg-rose-50 px-3 text-xs font-bold text-rose-900 hover:bg-rose-100 disabled:opacity-60"
+                        data-testid="evaluation-cv-remind-email"
+                        disabled={sendGapRelanceMutation.isPending || Boolean(gapRelanceSent[`${item.email}:cv_missing`])}
+                        onClick={() => sendGapRelance(item)}
+                      >
+                        <Mail className="h-3.5 w-3.5" aria-hidden="true" />
+                        {gapRelanceSent[`${item.email}:cv_missing`] ? "Relance envoyée" : "Relancer par e-mail"}
+                      </button>
+                      {buildGapWhatsAppReminder(item) ? (
+                        <a
+                          href={buildGapWhatsAppReminder(item)!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-8 items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-3 text-xs font-bold text-emerald-900 hover:bg-emerald-100"
+                          data-testid="evaluation-cv-remind-whatsapp"
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                          Relancer WhatsApp
+                        </a>
+                      ) : (
+                        <span className="text-xs text-slate-500">WhatsApp : téléphone manquant</span>
+                      )}
+                    </>
+                  ) : item.type === "evaluation" ? (
+                    <>
+                      <Badge className="bg-slate-100 text-slate-700" data-testid="evaluation-cv-optional-badge">CV non exigé pour ce projet</Badge>
+                      <button
+                        type="button"
+                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-3 text-xs font-bold text-amber-950 hover:bg-amber-100 disabled:opacity-60"
+                        data-testid="evaluation-gap-remind-email"
+                        title={evaluationGapReminder(item.projectType ?? item.visaType, item.fullName).subject}
+                        disabled={sendGapRelanceMutation.isPending || Boolean(gapRelanceSent[`${item.email}:generic`])}
+                        onClick={() => sendGapRelance(item)}
+                      >
+                        <Mail className="h-3.5 w-3.5" aria-hidden="true" />
+                        {gapRelanceSent[`${item.email}:generic`] ? "Relance envoyée" : gapReminderLabel(item)}
+                      </button>
+                      {buildGapWhatsAppReminder(item) ? (
+                        <a
+                          href={buildGapWhatsAppReminder(item)!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-8 items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-3 text-xs font-bold text-emerald-900 hover:bg-emerald-100"
+                          data-testid="evaluation-gap-remind-whatsapp"
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                          WhatsApp
+                        </a>
+                      ) : null}
+                    </>
+                  ) : null}
+                </div>
+              )}
               {item.type === "evaluation" && (
                 <div className="mt-3">
                   <div className="flex flex-wrap items-center gap-2">
+                    <AdminFreeBilanLauncher sessionToken={sessionToken} email={item.email} fullName={item.fullName} />
                     {validationStatusById.get(evaluationNumericId(item)) && <Badge className="bg-indigo-100 text-indigo-900">{validationStatusById.get(evaluationNumericId(item))?.label}</Badge>}
                     <Button type="button" size="sm" variant="outline" className="gap-1 border-violet-300 text-violet-900 hover:bg-violet-50" aria-expanded={validationOpenId === item.id} onClick={() => setValidationOpenId(validationOpenId === item.id ? null : item.id)}>
                       <Sparkles className="h-3.5 w-3.5" /> {validationOpenId === item.id ? "Masquer la validation" : "Validation structurée"}
@@ -761,6 +935,13 @@ export default function AdminAIEvaluationDashboard() {
 
       {previewUrl && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4" role="dialog" aria-modal="true" aria-label="Prévisualisation de l’export PDF"><div className="flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl"><div className="flex items-center justify-between border-b px-4 py-3"><div><h2 className="font-semibold text-slate-900">Prévisualisation PDF</h2><p className="text-xs text-slate-500">Vérifiez le document avant le téléchargement.</p></div><div className="flex items-center gap-2"><Button size="sm" onClick={downloadPdf} className="gap-2 bg-blue-700 hover:bg-blue-800"><Download className="h-4 w-4" /> Télécharger</Button><Button size="icon" variant="outline" onClick={closePreview} aria-label="Fermer la prévisualisation"><X className="h-4 w-4" /></Button></div></div><iframe title="Prévisualisation de l’export PDF" src={previewUrl} className="min-h-0 flex-1 bg-slate-100" /></div></div>}
       {emailPreview && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4" role="dialog" aria-modal="true" aria-labelledby="evaluation-email-preview-title"><div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl"><div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4"><div><h2 id="evaluation-email-preview-title" className="flex items-center gap-2 text-lg font-bold text-slate-950"><Mail className="h-5 w-5 text-indigo-700" />Aperçu de l’e-mail d’évaluation</h2><p className="mt-1 text-xs text-slate-500">Aucun e-mail n’est envoyé depuis cet aperçu. Relisez le contenu puis fermez cette fenêtre pour valider.</p></div><Button type="button" size="icon" variant="outline" onClick={() => setEmailPreview(null)} aria-label="Fermer l’aperçu de l’e-mail"><X className="h-4 w-4" /></Button></div><div className="overflow-y-auto p-5"><div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm"><p><span className="font-semibold text-slate-600">À :</span> <span className="text-slate-950">{emailPreview.fullName} &lt;{emailPreview.email}&gt;</span></p><p><span className="font-semibold text-slate-600">Objet :</span> <span className="text-slate-950">{emailPreview.subject}</span></p></div><pre className="mt-4 whitespace-pre-wrap rounded-lg border border-slate-200 bg-white p-5 font-sans text-sm leading-6 text-slate-800">{emailPreview.body}</pre></div><div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-4"><Button type="button" variant="outline" onClick={() => setEmailPreview(null)}>Retour à la rédaction</Button><Button type="button" onClick={() => setEmailPreview(null)} className="bg-emerald-700 text-white hover:bg-emerald-800"><CheckCircle2 className="mr-2 h-4 w-4" />Aperçu validé — fermer</Button></div></div></div>}
+      <DocumentPreviewModal
+        isOpen={Boolean(cvPreview)}
+        onClose={() => setCvPreview(null)}
+        documentTitle={cvPreview?.documentTitle || "CV"}
+        documentUrl={cvPreview?.documentUrl || ""}
+        fileType={cvPreview?.fileType}
+      />
     </main>
   );
 }

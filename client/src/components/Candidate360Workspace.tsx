@@ -1,11 +1,14 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
-  Bell, Briefcase, CalendarClock, CheckCircle2, ClipboardCheck, CreditCard, ExternalLink, FileCheck2, FileText,
+  Bell, Briefcase, CalendarClock, CheckCircle2, ClipboardCheck, CreditCard, ExternalLink, Eye, FileCheck2, FileText,
   FolderKanban, History, ImagePlus, KeyRound, Mail, MessageSquare, Plus, Printer, Save, Send, ShieldAlert, UserCheck, Loader2,
   ArrowRight, CircleAlert, Gauge, LockKeyhole, RefreshCw, Sparkles, TimerReset, Trash2, UserRoundCheck, Zap, Download, FileSpreadsheet, X,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { isEvalAgencyShell } from "@shared/evalAgencyShell";
 import { Badge } from "@/components/ui/badge";
+import { AdminDeclaredAnswersPanel } from "@/components/AdminDeclaredAnswersPanel";
+import { CountrySelect } from "@/components/CountryPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +23,8 @@ const EvaluationDeliveryEditor = lazy(() => import("@/components/EvaluationDeliv
 import { CommunicationHistoryPdfButton } from "@/components/CommunicationHistoryPdfButton";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import CandidateDocumentsCrm from "@/components/CandidateDocumentsCrm";
+import AdminPassportIdentityCard from "@/components/AdminPassportIdentityCard";
+import { AdminDuplicateFilesNotice } from "@/components/AdminDocumentInsights";
 import AdminCandidateSummaryCard from "@/components/AdminCandidateSummaryCard";
 import AdminCandidateCockpitStrip, { type CockpitTreatTarget } from "@/components/AdminCandidateCockpitStrip";
 import AdminClientSpacePreview from "@/components/AdminClientSpacePreview";
@@ -33,7 +38,8 @@ import { buildEvisaMessageSnapshot, buildEvisaMessageTemplate, type EvisaMessage
 import { mergeEvisaCatalogue } from "@/lib/evisaCatalogueMerge";
 import { buildAgreementProtocolText, buildSecondAgreementProtocolText, AGREEMENT_PROTOCOL_VERSION } from "@shared/agreementProtocolContent";
 import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from "@shared/adminSync";
-import { ADMIN_MESSAGE_TEMPLATES, fillAdminTemplate, formatActivationTransition } from "@shared/adminOpsToolkit";
+import { ADMIN_MESSAGE_TEMPLATES, fillAdminTemplate, formatActivationTransition, templateForStage } from "@shared/adminOpsToolkit";
+import { resolveEvaluationProjectKind } from "@shared/evaluationVisaCv";
 import {
   buildUnifiedCommunicationsTimeline,
   candidateIdFromActiveReference,
@@ -48,6 +54,7 @@ import {
   luxembourgProgressTaskPresets,
 } from "@shared/luxembourgJobPlatforms";
 import { PASSPORT_PHOTO_ADMIN_STATUS_LABEL, passportPhotoAdminStatus } from "@shared/passportPhotoRequirement";
+import { evaluationSourceTypeOf } from "@/lib/evaluationSourceType";
 
 type CandidateSummary = {
   id: string;
@@ -61,7 +68,7 @@ type CandidateSummary = {
   projectType: string;
   scoringTotal: number | null;
   source: string;
-  emailHistory?: Array<{ id: number; emailType: string; language: "fr" | "en"; status: string; sentAt: Date | string | null; openedAt: Date | string | null; clickedAt: Date | string | null; failureReason: string | null; sentVia: string | null; createdAt: Date | string }>;
+  emailHistory?: Array<{ id: number; emailType: string; language: "fr" | "en"; status: string; sentAt: Date | string | null; openedAt: Date | string | null; clickedAt: Date | string | null; failureReason: string | null; sentVia: string | null; visaType?: string | null; createdAt: Date | string }>;
   evaluationDeclarationStatus?: string | null;
   evaluationReviewedAt?: Date | string | null;
   evaluationReviewedBy?: string | null;
@@ -89,6 +96,8 @@ type Props = {
   candidate: CandidateSummary;
   onRefresh: () => void;
   initialTab?: "overview" | "evaluation" | "documents" | "payments" | "messages" | "history";
+  /** Prévient le parent quand l'onglet change depuis la fiche : sans cela, un bouton du panneau latéral qui vise l'onglet déjà mémorisé n'a aucun effet. */
+  onTabChange?: (tab: NonNullable<Props["initialTab"]>) => void;
   /** Procédures liées (même client) pour bascule multi-dossiers dans le 360°. */
   siblingProcedures?: SiblingProcedureTab[];
   onSelectSibling?: (siblingId: string) => void;
@@ -111,11 +120,14 @@ function procedureFromEvaluationContext(context?: { projectType?: string | null;
     .join(" ")
     .toLowerCase();
   if (value.includes("e-visa") || value.includes("evisa") || value.includes("électron")) return "evisa";
-  if (value.includes("étude") || value.includes("study") || value.includes("academ")) return "study_permit";
-  if (value.includes("travail") || value.includes("work") || value.includes("emploi")) return "work_permit";
-  if (value.includes("touris") || value.includes("visiteur") || value.includes("visitor")) return "visitor_visa";
+  const kind = resolveEvaluationProjectKind(context?.projectType, context?.procedureLabel, context?.procedureCode);
+  if (kind === "etudes") return "study_permit";
+  if (kind === "travail") return "work_permit";
+  if (kind === "tourisme") return "visitor_visa";
   if (value.includes("famill") || value.includes("regroupement")) return "family_reunification";
-  return "permanent_residence";
+  if (value.includes("permanent") || value.includes("residence") || value.includes("installation")) return "permanent_residence";
+  // Inconnu : ne pas forcer résidence permanente / travail.
+  return "visitor_visa";
 }
 
 function formatDate(value?: Date | string | null) {
@@ -147,7 +159,23 @@ function PaymentHistoryStatusBadge({ status }: { status: string }) {
   return <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800"><CheckCircle2 className="mr-1 h-3 w-3" />Validé</Badge>;
 }
 
-export function Candidate360Workspace({ sessionToken, candidate, onRefresh, initialTab = "overview", siblingProcedures = [], onSelectSibling }: Props) {
+/** Libellés lisibles des champs proposés par la lecture du CV (la clé technique ne doit pas s'afficher). */
+const CV_FIELD_LABELS: Record<string, string> = {
+  educationLevel: "Niveau d’études",
+  diplomaTitle: "Diplôme",
+  graduationYear: "Année d’obtention",
+  fieldOfStudy: "Domaine d’études",
+  employmentStatus: "Situation professionnelle",
+  currentJobTitle: "Poste actuel",
+  yearsOfExperience: "Années d’expérience",
+  industrySector: "Secteur d’activité",
+  mainTasks: "Principales missions",
+  frenchLevel: "Niveau de français",
+  englishLevel: "Niveau d’anglais",
+  languageTestsTaken: "Tests de langue passés",
+};
+
+export function Candidate360Workspace({ sessionToken, candidate, onRefresh, initialTab = "overview", onTabChange, siblingProcedures = [], onSelectSibling }: Props) {
   const utils = trpc.useUtils();
   const [evaluationOpen, setEvaluationOpen] = useState(false);
   const [protocolTwoEmployer, setProtocolTwoEmployer] = useState("");
@@ -164,9 +192,10 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   const [checklistCountry, setChecklistCountry] = useState(candidate.destinationCountry || "");
   const [destinationDraft, setDestinationDraft] = useState(candidate.destinationCountry || "");
   const [visaTypeDraft, setVisaTypeDraft] = useState(candidate.projectType || "");
-  const [isFetchingCv, setIsFetchingCv] = useState(false);
-  const [forceStepDialog, setForceStepDialog] = useState<{ stepIndex: number; checked: boolean; label: string } | null>(null);
+  const [forceStepDialog, setForceStepDialog] = useState<{ stepIndex: number; checked: boolean; label: string; confirmOnBehalf?: boolean } | null>(null);
   const [forceStepReason, setForceStepReason] = useState("");
+  const [bilanConfirmDialogOpen, setBilanConfirmDialogOpen] = useState(false);
+  const [bilanConfirmReason, setBilanConfirmReason] = useState("");
   const [cancelPaymentDialogOpen, setCancelPaymentDialogOpen] = useState(false);
   const [cancelPaymentReason, setCancelPaymentReason] = useState("");
   const [correctPaymentOpen, setCorrectPaymentOpen] = useState(false);
@@ -187,6 +216,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   const [offlineEvaluationNote, setOfflineEvaluationNote] = useState("");
   const [agreementSubject, setAgreementSubject] = useState(`Protocole d’accord de service — ${AGREEMENT_PROTOCOL_VERSION}`);
   const [agreementContent, setAgreementContent] = useState(() => buildAgreementProtocolText(candidate.destinationCountry, candidate.projectType));
+  const [agreementPreviewOpen, setAgreementPreviewOpen] = useState(false);
   const [resendMessage, setResendMessage] = useState("Bonjour,\n\nNous vous renvoyons votre bilan d’évaluation. Nous restons disponibles si vous avez besoin d’une précision.\n\nCordialement,\n3M TRAVEL AGENCY");
   const [selectedClarification, setSelectedClarification] = useState<{ id: number; documentLabel: string; requestMessage: string } | null>(null);
   const [clarificationDeadlineDrafts, setClarificationDeadlineDrafts] = useState<Record<number, string>>({});
@@ -348,8 +378,16 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
     setAdvisorId(data.operationalCase.assignedAdminId ? String(data.operationalCase.assignedAdminId) : "unassigned");
     setLabels((data.operationalCase.labels ?? []).join(", "));
     setDueAt(data.operationalCase.dueAt ? new Date(data.operationalCase.dueAt).toISOString().slice(0, 16) : "");
-    setDestinationDraft(data.operationalCase.countryTarget || candidate.destinationCountry || "");
-  }, [data]);
+    setDestinationDraft(data.operationalCase.countryTarget || data.evaluationContext?.destinationCountry || candidate.destinationCountry || "");
+    const syncedVisa =
+      (data as { dynamicPilotage?: { visaType?: string } } | undefined)?.dynamicPilotage?.visaType
+      || data.evaluationContext?.projectType
+      || data.evaluationContext?.visaType
+      || data.evaluationContext?.procedureLabel
+      || candidate.projectType
+      || "";
+    setVisaTypeDraft(syncedVisa);
+  }, [data, candidate.destinationCountry, candidate.projectType]);
 
   useEffect(() => {
     const context = data?.evaluationContext;
@@ -404,7 +442,38 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   });
   const journeyStepMutation = trpc.admin.updateCandidateJourneyStep.useMutation({
     onSuccess: async (result) => { unlockAction("journeyStep"); toast.success(result.message, { description: "La progression est synchronisée avec l’espace candidat." }); await refresh(); },
-    onError: (mutationError) => { unlockAction("journeyStep"); toast.error("Validation de l’étape impossible", { description: mutationError.message }); },
+    onError: (mutationError) => {
+      unlockAction("journeyStep");
+      const message = mutationError.message || "";
+      if (/confirmation du bilan|Valider à la place du candidat/i.test(message)) {
+        const confirmationStep = (data?.candidateJourney?.steps ?? []).find((step: any) => step.id === "candidate_confirmation");
+        setForceStepReason("Confirmation reçue hors ligne (téléphone / WhatsApp / agence) — validation admin à la place du candidat.");
+        setForceStepDialog({
+          stepIndex: confirmationStep?.index ?? 4,
+          checked: true,
+          label: confirmationStep?.label || "Confirmation du bilan par le candidat",
+          confirmOnBehalf: true,
+        });
+        toast.message("Confirmation du bilan requise", {
+          description: "Indiquez le motif puis validez à la place du candidat pour débloquer la procédure.",
+        });
+        return;
+      }
+      toast.error("Validation de l’étape impossible", { description: message });
+    },
+  });
+  const confirmBilanOnBehalfMutation = trpc.admin.confirmBilanOnBehalfOfCandidate.useMutation({
+    onSuccess: async (result) => {
+      unlockAction("journeyStep");
+      setBilanConfirmDialogOpen(false);
+      setBilanConfirmReason("");
+      toast.success(result.message);
+      await refresh();
+    },
+    onError: (mutationError) => {
+      unlockAction("journeyStep");
+      toast.error("Confirmation impossible", { description: mutationError.message });
+    },
   });
   const updateDeadlineMutation = trpc.admin.updateCandidate360Deadline.useMutation({
     onSuccess: async () => {
@@ -570,20 +639,51 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
 
   const pendingRequirements = useMemo(() => (data?.requirements ?? []).filter((item: any) => item.status !== "approved" && item.status !== "waived"), [data]);
   const [cvAiFields, setCvAiFields] = useState<Record<string, string | null> | null>(null);
-  const cvExtractionMutation = trpc.evaluation.extractFromCV.useMutation({
+  // Le serveur lit lui-même le CV enregistré : le navigateur ne pouvait pas le télécharger (redirection vers un lien signé d'un autre domaine).
+  const cvExtractionMutation = trpc.evaluation.extractFromStoredCV.useMutation({
     onSuccess: (result) => {
       if (!result.success) {
+        setCvAiFields(null);
         toast.error("Extraction CV incomplète", { description: ("message" in result ? result.message : undefined) || "Vérifiez le CV manuellement avant toute décision." });
         return;
       }
-      setCvAiFields(result.fields as Record<string, string | null>);
+      const proposed = result.fields as Record<string, string | null>;
+      setCvAiFields(proposed);
+      if (result.prefilledCount === 0) {
+        toast.warning("Aucune information claire dans ce CV", { description: "Le CV a été lu, mais aucun champ n’est indiqué explicitement. Vérifiez-le à l’écran." });
+        return;
+      }
       toast.success("Informations CV extraites", { description: `${result.prefilledCount} champ(s) proposé(s) pour vérification humaine.` });
     },
-    onError: (mutationError) => toast.error("Extraction IA indisponible", { description: mutationError.message }),
+    onError: (mutationError) => toast.error("Lecture du CV impossible", { description: mutationError.message }),
   });
   const candidateCv: any = useMemo(() => {
+    if (data?.cvDocument?.documentUrl) return data.cvDocument;
     const documents = data?.documents ?? [];
-    return documents.find((document: any) => String(document.documentType ?? "").toLowerCase() === "cv" || String(document.fileName ?? "").toLowerCase().includes("cv")) ?? data?.cvDocument ?? null;
+    const fromDocs = documents.find((document: any) => {
+      const type = String(document.documentType ?? document.fileType ?? "").toLowerCase();
+      const name = String(document.fileName ?? "").toLowerCase();
+      return type === "cv" || name.includes("cv");
+    });
+    if (fromDocs) {
+      return {
+        ...fromDocs,
+        documentUrl: fromDocs.documentUrl || (fromDocs as any).fileUrl || null,
+        fileName: fromDocs.fileName || "CV du candidat",
+        documentType: fromDocs.documentType || (fromDocs as any).fileType || "cv",
+      };
+    }
+    const evalCvUrl = data?.evaluationContext?.cvFileUrl;
+    if (evalCvUrl) {
+      return {
+        documentType: "cv",
+        fileName: data.evaluationContext?.cvFileName || "CV soumis à l’évaluation",
+        documentUrl: evalCvUrl,
+        source: "evaluation",
+        reviewStatus: "pending",
+      };
+    }
+    return null;
   }, [data]);
 
   if (isLoading && !data) return <div className="py-12 text-center text-sm text-slate-500">Chargement du centre de gestion…</div>;
@@ -656,53 +756,71 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
   // Tout candidat affiché dans le centre 360° peut recevoir une première évaluation ;
   // l’identifiant interne est la seule condition nécessaire côté UI.
   const canPrepareEvaluation = Number.isInteger(candidate.internalId) && candidate.internalId > 0;
-  const extractCandidateCv = async () => {
-    if (cvExtractionMutation.isPending || isFetchingCv) return;
+  const extractCandidateCv = () => {
+    if (cvExtractionMutation.isPending) return;
     if (!candidateCv?.documentUrl) {
       toast.error("CV introuvable", { description: "Aucun CV exploitable n’est rattaché à ce dossier." });
       return;
     }
-    setIsFetchingCv(true);
-    try {
-      const documentUrl = new URL(String(candidateCv.documentUrl), window.location.origin).toString();
-      const maxAttempts = 3;
-      let response: Response | null = null;
-      let lastStatus = 0;
-      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-        response = await fetch(documentUrl, { credentials: "include", headers: { Accept: "application/pdf,image/png,image/jpeg,application/octet-stream" }, cache: "no-store" });
-        if (response.ok) break;
-        lastStatus = response.status;
-        // Le stockage peut renvoyer une erreur transitoire (redémarrage, backend temporairement indisponible) : on retente avant d’abandonner.
-        if (attempt < maxAttempts && (response.status >= 500 || response.status === 429)) {
-          await new Promise((resolve) => setTimeout(resolve, 800 * attempt));
-          continue;
-        }
-        break;
-      }
-      if (!response || !response.ok) throw new Error(`Le CV n’est pas accessible depuis le dossier (${lastStatus || response?.status}). Réessayez dans quelques instants.`);
-      const blob = await response.blob();
-      if (blob.size > 5 * 1024 * 1024) throw new Error("Le CV dépasse la taille maximale d’analyse de 5 Mo.");
-      const bytes = new Uint8Array(await blob.arrayBuffer());
-      let binary = "";
-      for (let index = 0; index < bytes.length; index += 0x8000) binary += String.fromCharCode(...Array.from(bytes.subarray(index, index + 0x8000)));
-      cvExtractionMutation.mutate({ cvBase64: btoa(binary), cvMimeType: blob.type === "image/jpg" ? "image/jpeg" : (blob.type || "application/pdf") as "application/pdf" | "image/png" | "image/jpeg" });
-    } catch (error) {
-      toast.error("Lecture du CV impossible", { description: error instanceof Error ? error.message : "Réessayez depuis le dossier." });
-    } finally {
-      setIsFetchingCv(false);
-    }
+    cvExtractionMutation.mutate({ sessionToken, documentUrl: String(candidateCv.documentUrl) });
   };
 
-  const saveOperationalState = () => updateMutation.mutate({
-    sessionToken,
-    candidateId: candidate.id,
-    workflowStatus: workflowStatus as any,
-    priority: priority as any,
-    assignedAdminId: advisorId === "unassigned" ? null : Number(advisorId),
-    dueAt: dueAt ? new Date(dueAt) : null,
-    labels: labelsList,
-    comment: comment.trim() || undefined,
-  });
+  const saveOperationalState = () => {
+    if (!/^(online|agency)_\d+$/.test(String(candidate.id))) {
+      toast.error("Mise à jour impossible", {
+        description: "Le pilotage synchronisé s’applique aux dossiers online_… ou agency_…. Activez d’abord le pré-compte en dossier.",
+      });
+      unlockAction("workflow");
+      return;
+    }
+    const oversizedLabel = labelsList.find((label) => label.length > 32);
+    if (oversizedLabel) {
+      toast.error("Mise à jour impossible", {
+        description: `Étiquette trop longue (32 caractères max) : « ${oversizedLabel.slice(0, 40)}… ». Séparez-les par des virgules.`,
+      });
+      unlockAction("workflow");
+      return;
+    }
+    if (labelsList.length > 12) {
+      toast.error("Mise à jour impossible", { description: "12 étiquettes maximum." });
+      unlockAction("workflow");
+      return;
+    }
+    const parsedDue = dueAt ? new Date(dueAt) : null;
+    if (parsedDue && Number.isNaN(parsedDue.getTime())) {
+      toast.error("Mise à jour impossible", { description: "Échéance métier invalide. Corrigez la date ou laissez le champ vide." });
+      unlockAction("workflow");
+      return;
+    }
+    const assignedAdminId = advisorId === "unassigned" ? null : Number(advisorId);
+    if (assignedAdminId !== null && (!Number.isFinite(assignedAdminId) || assignedAdminId <= 0)) {
+      toast.error("Mise à jour impossible", { description: "Conseiller attribué invalide." });
+      unlockAction("workflow");
+      return;
+    }
+    // Synchronise aussi destination / type de visa si l’admin les a corrigés avant d’enregistrer.
+    const destinationTrimmed = destinationDraft.trim();
+    const visaTrimmed = visaTypeDraft.trim();
+    if (destinationTrimmed.length >= 2) {
+      destinationMutation.mutate({
+        sessionToken,
+        candidateId: candidate.id,
+        destination: destinationTrimmed,
+        visaType: visaTrimmed.length >= 2 ? visaTrimmed : undefined,
+        comment: comment.trim() || undefined,
+      });
+    }
+    updateMutation.mutate({
+      sessionToken,
+      candidateId: candidate.id,
+      workflowStatus: workflowStatus as any,
+      priority: priority as any,
+      assignedAdminId,
+      dueAt: parsedDue,
+      labels: labelsList,
+      comment: comment.trim() || undefined,
+    });
+  };
 
   const setDueShortcut = (hours: number) => {
     const target = new Date(Date.now() + hours * 60 * 60 * 1000);
@@ -1014,21 +1132,47 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
           </Button>
         </div>
         <div className="flex flex-wrap gap-2" data-testid="candidate360-reference-actions">
-          <Button
-            type="button"
-            size="sm"
-            className="h-8 bg-emerald-700 text-xs hover:bg-emerald-800"
-            disabled={canonicalizeDossierMutation.isPending}
-            onClick={() => canonicalizeDossierMutation.mutate({ sessionToken, candidateId: candidate.id })}
-            data-testid="canonicalize-active-dossier"
-          >
-            {canonicalizeDossierMutation.isPending ? "Normalisation…" : "Normaliser en 3M-AGN (supprimer EVAL)"}
-          </Button>
+          {(() => {
+            const evalShell = String((data as any)?.evalShellFolderCode || "").trim();
+            const hasEvalShell = isEvalAgencyShell(evalShell) || isEvalAgencyShell(String(candidate.folderCode || ""));
+            const canNormalize = paymentConfirmed && hasEvalShell;
+            if (!paymentConfirmed) {
+              return (
+                <p className="w-full rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] leading-5 text-amber-950" data-testid="reference-compte-until-payment">
+                  Référence de travail : <strong>COMPTE-…</strong> tant que les frais d’ouverture ne sont pas validés.
+                  Le passage en <strong>3M-…</strong> (normalisation) n’est possible qu’après paiement.
+                  {hasEvalShell ? " Un code EVAL-AG détecté sera absorbé automatiquement à l’activation post-paiement." : ""}
+                </p>
+              );
+            }
+            if (!hasEvalShell) {
+              return (
+                <p className="w-full rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-[11px] leading-5 text-emerald-950" data-testid="reference-already-3m">
+                  Paiement confirmé — référence active <strong>3M-…</strong>. Aucun miroir EVAL-AG à normaliser sur cette fiche.
+                </p>
+              );
+            }
+            return (
+              <Button
+                type="button"
+                size="sm"
+                className="h-8 bg-emerald-700 text-xs hover:bg-emerald-800"
+                disabled={canonicalizeDossierMutation.isPending || !canNormalize}
+                title="Accessible uniquement après paiement des frais d’ouverture"
+                onClick={() => canonicalizeDossierMutation.mutate({ sessionToken, candidateId: candidate.id })}
+                data-testid="canonicalize-active-dossier"
+              >
+                {canonicalizeDossierMutation.isPending ? "Normalisation…" : "Normaliser en 3M-AGN (supprimer EVAL)"}
+              </Button>
+            );
+          })()}
           <Button
             type="button"
             size="sm"
             variant="outline"
             className="h-8 text-xs"
+            disabled={!paymentConfirmed}
+            title={paymentConfirmed ? "Corriger la référence 3M- active" : "Disponible uniquement après paiement des frais d’ouverture"}
             onClick={() => setReferenceEditorOpen((open) => !open)}
             data-testid="toggle-reference-editor"
           >
@@ -1079,7 +1223,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
                 maxLength={80}
                 placeholder="3M-AGN-240001"
               />
-              <p className="mt-1 text-[11px] text-slate-500">Les dossiers activés utilisent exclusivement un numéro 3M-AGN. Les codes EVAL-AG sont des miroirs et sont supprimés.</p>
+              <p className="mt-1 text-[11px] text-slate-500">Deux références seulement : COMPTE-… (précompte, avant paiement) et 3M-… (dossier actif, après frais d’ouverture). Les codes EVAL-AG sont des miroirs techniques à supprimer.</p>
             </div>
             <Button
               type="button"
@@ -1122,7 +1266,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             procedureLabel?: string | null;
           }>)
           : siblingProcedures;
-        const siblings = rawSiblings.filter((sibling) => !/^EVAL-AG-\d+$/i.test(sibling.folderCode || ""));
+        const siblings = rawSiblings.filter((sibling) => !isEvalAgencyShell(sibling.folderCode));
         if (!siblings.length) return null;
         return (
           <AdminSimultaneousProceduresBoard
@@ -1215,7 +1359,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
       </section>
 
       {openingPaymentHistory?.pendingProof ? <div role="status" className="flex items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950"><CircleAlert className="h-5 w-5 shrink-0 text-amber-700" /><span><strong>Preuve de paiement en attente :</strong> une nouvelle pièce doit être validée par un administrateur.</span><Button type="button" size="sm" variant="outline" className="ml-auto border-amber-400 bg-white text-amber-900" onClick={() => setActiveTab("payments")}>Voir</Button></div> : null}
-      <Tabs id="candidate-360-tabs" value={activeTab} onValueChange={(value) => setActiveTab(value as Props["initialTab"])} className="w-full scroll-mt-24">
+      <Tabs id="candidate-360-tabs" value={activeTab} onValueChange={(value) => { setActiveTab(value as Props["initialTab"]); onTabChange?.(value as NonNullable<Props["initialTab"]>); }} className="w-full scroll-mt-24">
         <TabsList className="grid h-auto w-full grid-cols-3 gap-1 bg-slate-100 p-1 sm:grid-cols-6">
           <TabsTrigger value="overview" className="text-xs">Vue d’ensemble</TabsTrigger>
           <TabsTrigger value="evaluation" className="text-xs">Évaluation</TabsTrigger>
@@ -1247,12 +1391,13 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
               <div className="mt-3 flex items-center justify-between text-xs text-slate-500"><span>{dossierProgress.documentsLabel}</span><span>{data.metrics.openTasks} action(s) ouverte(s)</span></div>
             </div>
           </section>
+          <AdminDeclaredAnswersPanel projectType={data.evaluationContext?.projectType} country={data.evaluationContext?.destinationCountry} details={data.evaluationContext?.details as Record<string, unknown> | undefined} columns={(data.evaluationContext as { declaredColumns?: Record<string, string> } | undefined)?.declaredColumns} />
           {(() => {
             const rawSiblings = ((data as any).siblingProcedures as SiblingProcedureTab[] | undefined)?.length
               ? ((data as any).siblingProcedures as SiblingProcedureTab[])
               : siblingProcedures;
             // Ne pas afficher un miroir EVAL-AG comme seconde procédure du même dossier 3M.
-            const siblings = rawSiblings.filter((sibling) => !/^EVAL-AG-\d+$/i.test(sibling.folderCode || ""));
+            const siblings = rawSiblings.filter((sibling) => !isEvalAgencyShell(sibling.folderCode));
             if (!siblings.length) return null;
             return (
               <section className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4" data-testid="candidate360-procedure-tabs" aria-label="Procédures liées du client">
@@ -1459,20 +1604,63 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             </section>
           )}
           {data.candidateJourney?.steps?.length > 0 && (
-            <ProcedureStepper
-              title={data.candidateJourney.title}
-              steps={data.candidateJourney.steps}
-              currentStepIndex={data.candidateJourney.currentStepIndex}
-              internalCount={13}
-              officialSources={data.candidateJourney.officialSources}
-              country={data.candidateJourney.country || candidate.destinationCountry}
-              visaType={data.candidateJourney.visaType || candidate.projectType}
-              publishedGuide={(data.candidateJourney as { publishedGuide?: { title?: string; pdfUrl?: string; programLabel?: string; summaryHeadline?: string; summaryOverview?: string; summaryStepHighlights?: string[]; officialPortalUrl?: string; officialPortalLabel?: string } | null }).publishedGuide}
-              busy={journeyStepMutation.isPending || actionLocks.journeyStep}
-              onValidate={(step) => { lockAction("journeyStep"); journeyStepMutation.mutate({ sessionToken, candidateId: candidate.id, stepId: `checklist-${step.index}`, checked: true }); }}
-              onUnlock={(step) => { setForceStepReason(""); setForceStepDialog({ stepIndex: step.index, checked: true, label: step.label }); }}
-              onUndo={(step) => { setForceStepReason(""); setForceStepDialog({ stepIndex: step.index, checked: false, label: step.label }); }}
-            />
+            <>
+              {!(data as any).evaluationClientConfirmed && /^(online)_\d+$/.test(candidate.id) ? (
+                <div
+                  className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+                  role="status"
+                  data-testid="candidate360-bilan-confirm-banner"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold">Confirmation du bilan en attente</p>
+                      <p className="mt-1 text-xs leading-5 text-amber-900">
+                        Le candidat n’a pas encore confirmé la réception du bilan. Vous pouvez valider à sa place (échange hors ligne) pour débloquer le paiement et les étapes suivantes.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="bg-emerald-700 hover:bg-emerald-800"
+                      disabled={confirmBilanOnBehalfMutation.isPending || actionLocks.journeyStep}
+                      onClick={() => {
+                        setBilanConfirmReason("Confirmation reçue hors ligne — validation admin à la place du candidat.");
+                        setBilanConfirmDialogOpen(true);
+                      }}
+                      data-testid="candidate360-confirm-bilan-on-behalf"
+                    >
+                      Valider à la place du candidat
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+              <ProcedureStepper
+                title={data.candidateJourney.title}
+                steps={data.candidateJourney.steps}
+                currentStepIndex={data.candidateJourney.currentStepIndex}
+                internalCount={13}
+                officialSources={data.candidateJourney.officialSources}
+                country={data.candidateJourney.country || candidate.destinationCountry}
+                visaType={data.candidateJourney.visaType || candidate.projectType}
+                publishedGuide={(data.candidateJourney as { publishedGuide?: { title?: string; pdfUrl?: string; programLabel?: string; summaryHeadline?: string; summaryOverview?: string; summaryStepHighlights?: string[]; officialPortalUrl?: string; officialPortalLabel?: string } | null }).publishedGuide}
+                busy={journeyStepMutation.isPending || confirmBilanOnBehalfMutation.isPending || actionLocks.journeyStep}
+                onValidate={(step) => {
+                  if (step.id === "candidate_confirmation") {
+                    setForceStepReason("Confirmation reçue hors ligne — validation admin à la place du candidat.");
+                    setForceStepDialog({ stepIndex: step.index, checked: true, label: step.label, confirmOnBehalf: true });
+                    return;
+                  }
+                  lockAction("journeyStep");
+                  journeyStepMutation.mutate({ sessionToken, candidateId: candidate.id, stepId: `checklist-${step.index}`, checked: true });
+                }}
+                onUnlock={(step) => {
+                  const onBehalf = step.id === "candidate_confirmation" || step.index === 4;
+                  setForceStepReason(onBehalf ? "Confirmation reçue hors ligne — validation admin à la place du candidat." : "");
+                  setForceStepDialog({ stepIndex: step.index, checked: true, label: step.label, confirmOnBehalf: onBehalf });
+                }}
+                onUndo={(step) => { setForceStepReason(""); setForceStepDialog({ stepIndex: step.index, checked: false, label: step.label }); }}
+              />
+            </>
           )}
           <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:p-6">
             <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 xl:flex-row xl:items-start xl:justify-between">
@@ -1613,7 +1801,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
 
         <TabsContent value="evaluation" className="space-y-3 pt-4">
           <div id="candidate360-evaluation-panel" className="scroll-mt-24 rounded-xl border border-blue-100 bg-blue-50/50 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h4 className="font-semibold text-slate-900">Bilan d’évaluation</h4><p className="mt-1 text-sm text-slate-600">Score IFP 3M : <strong>{candidate.scoringTotal ?? "À calculer"}{candidate.scoringTotal !== null ? "/100" : ""}</strong>. Les versions et approbations restent traçables.</p></div><div className="flex flex-wrap gap-2">{canPrepareEvaluation && <Button className="bg-blue-700 hover:bg-blue-800" onClick={() => setEvaluationOpen(true)}><FileText className="mr-2 h-4 w-4" />{data.evaluationVersions.length ? "Ouvrir le bilan" : "Préparer la première évaluation"}</Button>}<Button variant="outline" className="border-emerald-300 text-emerald-800 hover:bg-emerald-50" disabled={evaluationAlreadyValidated || offlineEvaluationMutation.isPending || actionLocks.offlineEvaluation} onClick={() => setOfflineEvaluationOpen(true)}><UserCheck className="mr-2 h-4 w-4" />{evaluationAlreadyValidated ? "Évaluation déjà validée" : "Valider l’évaluation hors ligne"}</Button></div></div></div>
-          <div id="candidate360-protocol-panel" className="scroll-mt-24 rounded-xl border border-amber-200 bg-amber-50/50 p-4" data-testid="candidate360-protocol-panel"><div className="flex flex-wrap items-center justify-between gap-3"><div><h4 className="font-semibold text-slate-950">Protocole d’accord</h4><p className="mt-1 text-sm text-slate-700">Relancez la signature client, renvoyez l’accès, ou préparez un envoi manuel. Le serveur exige un paiement confirmé — aucun rewrite de statut dossier.</p></div><Badge variant="outline" className="border-amber-300 text-amber-800">{protocolSigned ? "Signé" : paymentConfirmed ? "À signer" : "Après paiement"}</Badge></div>{paymentConfirmed && !protocolSigned && /^(online|agency)_\d+$/.test(candidate.id) ? (<div id="candidate360-protocol-relance" className="mt-3 scroll-mt-24 flex flex-wrap items-center gap-2 rounded-lg border border-indigo-200 bg-white/80 p-3" data-testid="candidate360-protocol-relance"><p className="mr-auto text-sm text-slate-700"><strong className="text-indigo-900">Action prioritaire :</strong> relancer la signature ou renvoyer le lien d’accès.</p><Button type="button" size="sm" variant="outline" className="gap-1.5 border-indigo-200 text-indigo-900 hover:bg-indigo-50" disabled={!sessionToken || protocolRemindMutation.isPending || actionLocks.protocolRemind} onClick={() => { lockAction("protocolRemind"); protocolRemindMutation.mutate({ sessionToken, candidateId: candidate.id }); }} data-testid="candidate360-protocol-remind">{protocolRemindMutation.isPending || actionLocks.protocolRemind ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />}Relancer signature</Button><Button type="button" size="sm" variant="outline" className="gap-1.5 border-slate-300 text-slate-800" disabled={!sessionToken || resendAccessMutation.isPending || actionLocks.resendAccess} onClick={() => { lockAction("resendAccess"); resendAccessMutation.mutate({ sessionToken, candidateId: candidate.id }); }} data-testid="candidate360-protocol-access">{resendAccessMutation.isPending || actionLocks.resendAccess ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}Accès</Button></div>) : <div id="candidate360-protocol-relance" className="sr-only" aria-hidden="true" data-testid="candidate360-protocol-relance" />}<div className="mt-3 grid gap-3"><div><Label htmlFor="agreement-subject">Objet de l’e-mail</Label><Input id="agreement-subject" value={agreementSubject} onChange={(event) => setAgreementSubject(event.target.value)} placeholder={`Protocole d’accord — ${candidate.folderCode}`} maxLength={255} /></div><div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3"><p className="text-xs leading-5 text-blue-900">Après confirmation et sélection d’une procédure, utilisez le modèle distinct du second protocole, puis complétez-le et faites-le relire avant diffusion.</p><Button type="button" variant="outline" className="border-blue-300 text-blue-800 hover:bg-blue-100" onClick={() => { setAgreementSubject(`Second protocole — ${candidate.destinationCountry} — ${candidate.projectType}`); setAgreementContent(buildSecondAgreementProtocolText(candidate.destinationCountry, candidate.projectType, candidate.projectType)); }}>Charger le modèle du second protocole</Button></div><div><Label htmlFor="agreement-content">Texte du protocole</Label><Textarea id="agreement-content" value={agreementContent} onChange={(event) => setAgreementContent(event.target.value)} rows={10} maxLength={12000} /></div><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-slate-500">{agreementContent.length}/12000 caractères · Signature client verrouillée avant paiement.</p><Button type="button" className="bg-amber-700 text-white hover:bg-amber-800" disabled={agreementContent.trim().length < 50 || agreementProtocolMutation.isPending || actionLocks.agreementProtocol} onClick={() => { lockAction("agreementProtocol"); agreementProtocolMutation.mutate({ sessionToken, candidateId: candidate.id, subject: agreementSubject.trim() || undefined, content: agreementContent.trim() }); }}>{agreementProtocolMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Envoi…</> : <><Send className="mr-2 h-4 w-4" />Envoyer par e-mail et déposer</>}</Button></div></div></div>
+          <div id="candidate360-protocol-panel" className="scroll-mt-24 rounded-xl border border-amber-200 bg-amber-50/50 p-4" data-testid="candidate360-protocol-panel"><div className="flex flex-wrap items-center justify-between gap-3"><div><h4 className="font-semibold text-slate-950">Protocole d’accord</h4><p className="mt-1 text-sm text-slate-700">Relancez la signature client, renvoyez l’accès, ou préparez un envoi manuel. Le serveur exige un paiement confirmé — aucun rewrite de statut dossier.</p></div><Badge variant="outline" className="border-amber-300 text-amber-800">{protocolSigned ? "Signé" : paymentConfirmed ? "À signer" : "Après paiement"}</Badge></div>{paymentConfirmed && !protocolSigned && /^(online|agency)_\d+$/.test(candidate.id) ? (<div id="candidate360-protocol-relance" className="mt-3 scroll-mt-24 flex flex-wrap items-center gap-2 rounded-lg border border-indigo-200 bg-white/80 p-3" data-testid="candidate360-protocol-relance"><p className="mr-auto text-sm text-slate-700"><strong className="text-indigo-900">Action prioritaire :</strong> relancer la signature ou renvoyer le lien d’accès.</p><Button type="button" size="sm" variant="outline" className="gap-1.5 border-indigo-200 text-indigo-900 hover:bg-indigo-50" disabled={!sessionToken || protocolRemindMutation.isPending || actionLocks.protocolRemind} onClick={() => { lockAction("protocolRemind"); protocolRemindMutation.mutate({ sessionToken, candidateId: candidate.id }); }} data-testid="candidate360-protocol-remind">{protocolRemindMutation.isPending || actionLocks.protocolRemind ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />}Relancer signature</Button><Button type="button" size="sm" variant="outline" className="gap-1.5 border-slate-300 text-slate-800" disabled={!sessionToken || resendAccessMutation.isPending || actionLocks.resendAccess} onClick={() => { lockAction("resendAccess"); resendAccessMutation.mutate({ sessionToken, candidateId: candidate.id }); }} data-testid="candidate360-protocol-access">{resendAccessMutation.isPending || actionLocks.resendAccess ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}Accès</Button></div>) : <div id="candidate360-protocol-relance" className="sr-only" aria-hidden="true" data-testid="candidate360-protocol-relance" />}<div className="mt-3 grid gap-3"><div><Label htmlFor="agreement-subject">Objet de l’e-mail</Label><Input id="agreement-subject" value={agreementSubject} onChange={(event) => setAgreementSubject(event.target.value)} placeholder={`Protocole d’accord — ${candidate.folderCode}`} maxLength={255} /></div><div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3"><p className="text-xs leading-5 text-blue-900">Après confirmation et sélection d’une procédure, utilisez le modèle distinct du second protocole, puis complétez-le et faites-le relire avant diffusion.</p><Button type="button" variant="outline" className="border-blue-300 text-blue-800 hover:bg-blue-100" onClick={() => { setAgreementSubject(`Second protocole — ${candidate.destinationCountry} — ${candidate.projectType}`); setAgreementContent(buildSecondAgreementProtocolText(candidate.destinationCountry, candidate.projectType, candidate.projectType)); }}>Charger le modèle du second protocole</Button></div><div><Label htmlFor="agreement-content">Texte du protocole</Label><Textarea id="agreement-content" value={agreementContent} onChange={(event) => setAgreementContent(event.target.value)} rows={10} maxLength={12000} /></div><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-slate-500">{agreementContent.length}/12000 caractères · Signature client verrouillée avant paiement.</p><div className="flex flex-wrap gap-2"><Button type="button" variant="outline" className="gap-1.5 border-indigo-300 text-indigo-800 hover:bg-indigo-50" onClick={() => setAgreementPreviewOpen(true)} data-testid="candidate360-preview-agreement"><Eye className="h-4 w-4" />Aperçu dynamique</Button><Button type="button" className="bg-amber-700 text-white hover:bg-amber-800" disabled={agreementContent.trim().length < 50 || agreementProtocolMutation.isPending || actionLocks.agreementProtocol} onClick={() => { lockAction("agreementProtocol"); agreementProtocolMutation.mutate({ sessionToken, candidateId: candidate.id, subject: agreementSubject.trim() || undefined, content: agreementContent.trim() }); }}>{agreementProtocolMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Envoi…</> : <><Send className="mr-2 h-4 w-4" />Envoyer par e-mail et déposer</>}</Button></div></div></div></div>
           {(data as any)?.placementSummary && (
             <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4" data-testid="candidate360-placement-summary">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1765,6 +1953,8 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             </section>
           )}
           {data.communications.documentClarifications?.filter((item: any) => item.status === "pending").length > 0 && <div className="rounded-xl border border-violet-200 bg-violet-50 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h4 className="font-semibold text-violet-950">Clarifications en attente</h4><p className="mt-1 text-sm text-violet-900">Répondez depuis ce dossier : le candidat recevra une notification dans son espace.</p></div><Badge className="border-violet-200 bg-white text-violet-900">{data.communications.documentClarifications.filter((item: any) => item.status === "pending").length} en attente</Badge></div><div className="mt-3 space-y-2">{data.communications.documentClarifications.filter((item: any) => item.status === "pending").map((item: any) => <div key={item.id} className="flex flex-col gap-2 rounded-lg border border-violet-100 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold text-slate-900">{item.documentLabel}</p><p className="mt-1 text-xs text-slate-600">{item.requestMessage || "Le candidat demande une précision."}</p></div><Button size="sm" className="bg-violet-700 hover:bg-violet-800" onClick={() => { setSelectedClarification({ id: item.id, documentLabel: item.documentLabel, requestMessage: item.requestMessage || "" }); setQuickMessageText(`Bonjour,\n\nMerci pour votre demande concernant « ${item.documentLabel} ».\n\n`); setQuickMessageOpen(true); }}><MessageSquare className="mr-1 h-4 w-4" />Répondre avec un modèle</Button></div>)}</div></div>}
+          <AdminPassportIdentityCard sessionToken={sessionToken} candidateId={summaryCandidateId} />
+          <AdminDuplicateFilesNotice sessionToken={sessionToken} candidateId={summaryCandidateId} />
           <CandidateDocumentsCrm
             sessionToken={sessionToken}
             candidateId={candidate.id}
@@ -1773,22 +1963,25 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             onChanged={() => { void refresh(); }}
             onRemind={() => { lockAction("documentReminder"); documentReminderMutation.mutate({ sessionToken, candidateId: candidate.id }); }}
             reminding={documentReminderMutation.isPending || actionLocks.documentReminder}
+            bilanContext={{ candidateName: candidate.fullName, reference: candidate.folderCode || candidate.id, destination: candidate.destinationCountry, exportCandidateId: summaryCandidateId > 0 ? summaryCandidateId : undefined }}
           />
           <details className="rounded-xl border bg-white" data-testid="dossier-tools">
             <summary className="cursor-pointer select-none p-4 text-sm font-semibold text-slate-800">Outils avancés : checklist pays, CV, extraction</summary>
             <div className="space-y-4 border-t p-4">
-          <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4"><div className="flex flex-col gap-3"><div><div className="flex flex-wrap items-center gap-2"><h4 className="font-semibold text-slate-900">Créer une checklist pays et procédure</h4>{data.evaluationContext && <Badge className="border-blue-200 bg-white text-blue-800">Préremplie depuis l’évaluation</Badge>}</div><p className="mt-1 text-sm text-slate-600">Les pièces déjà présentes sont conservées. La destination et la procédure sont reprises automatiquement depuis l’évaluation, puis restent modifiables pour le contrôle humain.</p></div>{data.evaluationContext && <div className="rounded-lg border border-blue-100 bg-white px-3 py-2 text-xs text-slate-600"><strong className="text-blue-800">Contexte récupéré :</strong> {data.evaluationContext.destinationCountry || "Destination à préciser"} · {data.evaluationContext.procedureLabel || data.evaluationContext.projectType || "Procédure à qualifier"}</div>}<div className="grid gap-2 sm:grid-cols-2"><Select value={checklistCountry} onValueChange={setChecklistCountry}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Canada">Canada</SelectItem><SelectItem value="Luxembourg">Luxembourg</SelectItem><SelectItem value="Autre destination">Autre destination</SelectItem></SelectContent></Select><Select value={checklistProcedure} onValueChange={setChecklistProcedure}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="permanent_residence">Résidence permanente</SelectItem><SelectItem value="work_permit">Visa / permis de travail</SelectItem><SelectItem value="study_permit">Études</SelectItem><SelectItem value="visitor_visa">Visite / tourisme</SelectItem><SelectItem value="family_reunification">Regroupement familial</SelectItem><SelectItem value="evisa">e‑Visa / autorisation électronique</SelectItem></SelectContent></Select></div><Textarea value={customChecklistDocuments} onChange={(event) => setCustomChecklistDocuments(event.target.value)} placeholder="Pièces supplémentaires propres à ce dossier, une par ligne (facultatif)" maxLength={2000} /><Button className="w-full sm:w-auto sm:self-end" disabled={countryChecklistMutation.isPending} onClick={() => countryChecklistMutation.mutate({ sessionToken, candidateId: candidate.id, destination: checklistCountry, procedureType: checklistProcedure as any, customDocuments: customChecklistDocuments.split("\n").map((item) => item.trim()).filter(Boolean) })}><Plus className="mr-1 h-4 w-4" />{countryChecklistMutation.isPending ? "Création…" : "Créer la checklist"}</Button></div></div>
-          <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><h4 className="flex items-center gap-2 font-semibold text-indigo-950"><FileText className="h-4 w-4 text-indigo-700" />CV utilisé pour l’évaluation</h4><p className="mt-1 text-sm text-indigo-900">Le conseiller peut vérifier le contenu du CV dans la fiche avant de préparer le bilan.</p></div>{candidateCv?.documentUrl ? <div className="flex flex-wrap gap-2"><Button type="button" size="sm" className="bg-indigo-700 hover:bg-indigo-800" onClick={() => setPreviewDocument({ documentTitle: candidateCv.fileName || "CV du candidat", documentUrl: candidateCv.documentUrl, fileType: candidateCv.mimeType })}><FileText className="mr-2 h-4 w-4" />Aperçu lisible</Button><a href={candidateCv.documentUrl} download className="inline-flex h-9 items-center rounded-md border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-800 hover:bg-indigo-50">Télécharger</a><Button type="button" size="sm" variant="outline" onClick={extractCandidateCv} disabled={cvExtractionMutation.isPending || isFetchingCv} className="border-indigo-300 text-indigo-800 hover:bg-indigo-100"><Sparkles className="mr-2 h-4 w-4" />{isFetchingCv ? "Lecture du CV…" : cvExtractionMutation.isPending ? "Extraction…" : "Extraire les informations"}</Button></div> : <Badge className="border-amber-200 bg-amber-50 text-amber-900">CV non disponible</Badge>}</div>{candidateCv?.documentUrl ? <div className="mt-4 grid gap-3 sm:grid-cols-3"><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Fichier</p><p className="mt-1 truncate text-sm font-semibold text-slate-900">{candidateCv.fileName}</p></div><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Origine</p><p className="mt-1 text-sm font-semibold text-slate-900">{candidateCv.source === "online" ? "Envoyé par le candidat" : "Déposé en agence"}</p></div><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">État</p><p className="mt-1 text-sm font-semibold text-slate-900">{candidateCv.reviewStatus === "approved" ? "Vérifié" : "À vérifier"}</p></div></div> : <p className="mt-3 text-sm text-amber-900">Le dossier ne contient pas encore de CV exploitable. Demandez au candidat de le déposer avant l’évaluation.</p>}</div>
-          {cvAiFields && <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4" aria-live="polite"><div className="flex flex-wrap items-start justify-between gap-3"><div><h4 className="flex items-center gap-2 font-semibold text-emerald-950"><Sparkles className="h-4 w-4 text-emerald-700" />Préremplissage IA proposé</h4><p className="mt-1 text-sm text-emerald-900">Ces informations sont des suggestions extraites du CV. Le conseiller doit les vérifier avant toute décision ou enregistrement.</p></div><Badge className="bg-white text-emerald-800">Validation humaine requise</Badge></div><div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{Object.entries(cvAiFields).filter(([, value]) => value).map(([key, value]) => <div key={key} className="rounded-lg border border-emerald-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{key}</p><p className="mt-1 text-sm font-semibold text-slate-900">{value}</p></div>)}</div></div>}
+          <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4"><div className="flex flex-col gap-3"><div><div className="flex flex-wrap items-center gap-2"><h4 className="font-semibold text-slate-900">Créer une checklist pays et procédure</h4>{data.evaluationContext && <Badge className="border-blue-200 bg-white text-blue-800">Préremplie depuis l’évaluation</Badge>}</div><p className="mt-1 text-sm text-slate-600">Les pièces déjà présentes sont conservées. La destination et la procédure sont reprises automatiquement depuis l’évaluation, puis restent modifiables pour le contrôle humain.</p></div>{typeof (data.evaluationContext?.details as Record<string, unknown> | undefined)?.programLabel === "string" && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-950" data-testid="checklist-program-hint"><strong>Parcours choisi par le candidat :</strong> {String((data.evaluationContext?.details as Record<string, unknown>).programLabel)}{typeof (data.evaluationContext?.details as Record<string, unknown>).domainLabel === "string" ? ` · ${String((data.evaluationContext?.details as Record<string, unknown>).domainLabel)}` : ""}. Les pièces propres à ce parcours sont ajoutées à la checklist.</div>}{data.evaluationContext && <div className="rounded-lg border border-blue-100 bg-white px-3 py-2 text-xs text-slate-600"><strong className="text-blue-800">Contexte récupéré :</strong> {data.evaluationContext.destinationCountry || "Destination à préciser"} · {data.evaluationContext.procedureLabel || data.evaluationContext.projectType || "Procédure à qualifier"}</div>}<div className="grid gap-2 sm:grid-cols-2"><CountrySelect id="candidate360-checklist-country" ariaLabel="Pays de la checklist" placeholder="Pays de destination" value={checklistCountry === "Autre destination" ? "" : checklistCountry} onChange={setChecklistCountry} /><Select value={checklistProcedure} onValueChange={setChecklistProcedure}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="permanent_residence">Résidence permanente</SelectItem><SelectItem value="work_permit">Visa / permis de travail</SelectItem><SelectItem value="study_permit">Études</SelectItem><SelectItem value="visitor_visa">Visite / tourisme</SelectItem><SelectItem value="family_reunification">Regroupement familial</SelectItem><SelectItem value="evisa">e‑Visa / autorisation électronique</SelectItem></SelectContent></Select></div><Textarea value={customChecklistDocuments} onChange={(event) => setCustomChecklistDocuments(event.target.value)} placeholder="Pièces supplémentaires propres à ce dossier, une par ligne (facultatif)" maxLength={2000} /><Button className="w-full sm:w-auto sm:self-end" disabled={countryChecklistMutation.isPending} onClick={() => countryChecklistMutation.mutate({ sessionToken, candidateId: candidate.id, destination: checklistCountry, procedureType: checklistProcedure as any, programId: typeof (data.evaluationContext?.details as Record<string, unknown> | undefined)?.programId === "string" ? String((data.evaluationContext?.details as Record<string, unknown>).programId) : undefined, domainId: typeof (data.evaluationContext?.details as Record<string, unknown> | undefined)?.domainId === "string" ? String((data.evaluationContext?.details as Record<string, unknown>).domainId) : undefined, customDocuments: customChecklistDocuments.split("\n").map((item) => item.trim()).filter(Boolean) })}><Plus className="mr-1 h-4 w-4" />{countryChecklistMutation.isPending ? "Création…" : "Créer la checklist"}</Button></div></div>
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4" data-testid="candidate360-evaluation-cv"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><h4 className="flex items-center gap-2 font-semibold text-indigo-950"><FileText className="h-4 w-4 text-indigo-700" />CV utilisé pour l’évaluation</h4><p className="mt-1 text-sm text-indigo-900">Le conseiller peut vérifier le contenu du CV dans la fiche avant de préparer le bilan.</p></div>{candidateCv?.documentUrl ? <div className="flex flex-wrap gap-2"><Button type="button" size="sm" className="bg-indigo-700 hover:bg-indigo-800" onClick={() => setPreviewDocument({ documentTitle: candidateCv.fileName || "CV du candidat", documentUrl: candidateCv.documentUrl, fileType: candidateCv.mimeType })} data-testid="candidate360-cv-preview"><FileText className="mr-2 h-4 w-4" />Aperçu lisible</Button><a href={candidateCv.documentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-9 items-center rounded-md border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-800 hover:bg-indigo-50" data-testid="candidate360-cv-open">Ouvrir</a><a href={candidateCv.documentUrl} download className="inline-flex h-9 items-center rounded-md border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-800 hover:bg-indigo-50">Télécharger</a><Button type="button" size="sm" variant="outline" onClick={extractCandidateCv} disabled={cvExtractionMutation.isPending} className="border-indigo-300 text-indigo-800 hover:bg-indigo-100" data-testid="candidate360-cv-extract"><Sparkles className="mr-2 h-4 w-4" />{cvExtractionMutation.isPending ? "Lecture du CV…" : "Extraire les informations"}</Button></div> : <Badge className="border-amber-200 bg-amber-50 text-amber-900">CV non disponible</Badge>}</div>{candidateCv?.documentUrl ? <div className="mt-4 grid gap-3 sm:grid-cols-3"><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Fichier</p><p className="mt-1 truncate text-sm font-semibold text-slate-900">{candidateCv.fileName}</p></div><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Origine</p><p className="mt-1 text-sm font-semibold text-slate-900">{candidateCv.source === "evaluation" ? "Soumis à l’évaluation" : candidateCv.source === "online" ? "Envoyé par le candidat" : "Déposé en agence"}</p></div><div className="rounded-lg border border-indigo-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">État</p><p className="mt-1 text-sm font-semibold text-slate-900">{candidateCv.reviewStatus === "approved" ? "Vérifié" : "À vérifier"}</p></div></div> : <p className="mt-3 text-sm text-amber-900">Le dossier ne contient pas encore de CV exploitable. Demandez au candidat de le déposer avant l’évaluation.</p>}</div>
+          {cvAiFields && <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4" aria-live="polite"><div className="flex flex-wrap items-start justify-between gap-3"><div><h4 className="flex items-center gap-2 font-semibold text-emerald-950"><Sparkles className="h-4 w-4 text-emerald-700" />Préremplissage IA proposé</h4><p className="mt-1 text-sm text-emerald-900">Ces informations sont des suggestions extraites du CV. Le conseiller doit les vérifier avant toute décision ou enregistrement.</p></div><Badge className="bg-white text-emerald-800">Validation humaine requise</Badge></div><div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{Object.entries(cvAiFields).filter(([, value]) => value).map(([key, value]) => <div key={key} className="rounded-lg border border-emerald-100 bg-white p-3"><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{CV_FIELD_LABELS[key] ?? key}</p><p className="mt-1 text-sm font-semibold text-slate-900">{value}</p></div>)}</div></div>}
           <div className="rounded-xl border p-4"><h4 className="font-semibold text-slate-900">Documents centralisés</h4><div className="mt-3 space-y-2">{data.documents.length ? data.documents.map((document: any) => {
+            const documentUrl = document.documentUrl || document.fileUrl || null;
+            const documentType = document.documentType || document.fileType || "autre";
             const isPending = String(document.reviewStatus ?? "").toLowerCase() === "pending" || String(document.reviewStatus ?? "").toLowerCase() === "received";
             const canValidate = Boolean(document.documentSource && document.rawId);
             const isValidatingThis = validatingDocumentId === document.id && updateDocumentStatusMutation.isPending;
             return <div key={document.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 p-3">
-              <div className="min-w-0"><p className="text-sm font-medium">{document.documentType} · {document.fileName}</p><p className="text-xs text-slate-500">Déposé le {formatDate(document.uploadedAt)} · {document.uploadedByRole}</p></div>
+              <div className="min-w-0"><p className="text-sm font-medium">{documentType} · {document.fileName}</p><p className="text-xs text-slate-500">Déposé le {formatDate(document.uploadedAt)} · {document.uploadedByRole}</p></div>
               <div className="flex flex-wrap items-center gap-2">
                 <StateBadge status={document.reviewStatus} />
-                {document.documentUrl && <a href={document.documentUrl} download className="inline-flex h-8 items-center rounded-md border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">Télécharger</a>}
+                {documentUrl && <a href={documentUrl} download className="inline-flex h-8 items-center rounded-md border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">Télécharger</a>}
                 {isPending && (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -1814,38 +2007,121 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
           </details>
         </TabsContent>
 
+        <Dialog open={agreementPreviewOpen} onOpenChange={setAgreementPreviewOpen}>
+          <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-blue-950"><Eye className="h-5 w-5 text-indigo-700" />Aperçu du protocole généré</DialogTitle>
+              <DialogDescription>Contrôlez le contenu personnalisé avant tout envoi. La validation humaine reste obligatoire.</DialogDescription>
+            </DialogHeader>
+            <div className="overflow-hidden rounded-xl border border-slate-300 bg-slate-100 p-3" data-testid="candidate360-agreement-preview">
+              <article className="mx-auto max-w-2xl bg-white p-6 shadow-sm">
+                <header className="rounded-t-lg bg-[#0f2460] px-5 py-4 text-white"><p className="text-lg font-black tracking-wide">3M TRAVEL AGENCY</p><p className="text-xs text-blue-100">{agreementSubject || "Protocole d’accord"}</p></header>
+                <div className="border-b border-amber-500 px-5 py-4 text-xs text-slate-600"><p>Dossier : <strong>{candidate.folderCode}</strong></p><p>Candidat : <strong>{candidate.fullName}</strong></p><p>Destination : <strong>{candidate.destinationCountry || "À préciser"}</strong> · Parcours : <strong>{candidate.projectType || "À qualifier"}</strong></p></div>
+                <div className="whitespace-pre-line px-5 py-5 text-sm leading-6 text-slate-700">{agreementContent}</div>
+                <footer className="border-t-2 border-amber-500 px-5 pt-3 text-[11px] text-slate-500">Document préparé pour contrôle humain · 3M TRAVEL AGENCY · Yaoundé, Cameroun</footer>
+              </article>
+            </div>
+            <DialogFooter><Button type="button" variant="outline" onClick={() => setAgreementPreviewOpen(false)}>Fermer l’aperçu</Button></DialogFooter>
+          </DialogContent>
+        </Dialog>
         <DocumentPreviewModal isOpen={Boolean(previewDocument)} onClose={() => setPreviewDocument(null)} documentTitle={previewDocument?.documentTitle ?? "CV du candidat"} documentUrl={previewDocument?.documentUrl ?? ""} fileType={previewDocument?.fileType} />
 
         <Dialog open={Boolean(forceStepDialog)} onOpenChange={(open) => { if (!open) setForceStepDialog(null); }}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{forceStepDialog?.checked ? "Déverrouiller manuellement" : "Annuler cette validation"} — étape {forceStepDialog ? forceStepDialog.stepIndex + 1 : ""}</DialogTitle>
+              <DialogTitle>
+                {forceStepDialog?.confirmOnBehalf
+                  ? "Valider le bilan à la place du candidat"
+                  : forceStepDialog?.checked
+                    ? "Déverrouiller manuellement"
+                    : "Annuler cette validation"}
+                {" — étape "}{forceStepDialog ? forceStepDialog.stepIndex + 1 : ""}
+              </DialogTitle>
               <DialogDescription>
-                {forceStepDialog?.checked
-                  ? `« ${forceStepDialog?.label} » sera marquée comme faite hors de l’ordre normal. Cette action est journalisée et synchronisée avec l’espace candidat.`
-                  : `« ${forceStepDialog?.label} » redeviendra une étape à faire. Cette action est journalisée et synchronisée avec l’espace candidat.`}
+                {forceStepDialog?.confirmOnBehalf
+                  ? `Enregistre la confirmation du bilan pour « ${forceStepDialog?.label} » à la place du client (téléphone, WhatsApp, agence). Le parcours (paiement, pièces) est débloqué et synchronisé.`
+                  : forceStepDialog?.checked
+                    ? `« ${forceStepDialog?.label} » sera marquée comme faite hors de l’ordre normal. Cette action est journalisée et synchronisée avec l’espace candidat.`
+                    : `« ${forceStepDialog?.label} » redeviendra une étape à faire. Cette action est journalisée et synchronisée avec l’espace candidat.`}
               </DialogDescription>
             </DialogHeader>
             <div>
               <Label htmlFor="force-step-reason">Motif (obligatoire, au moins 8 caractères)</Label>
-              <Textarea id="force-step-reason" value={forceStepReason} onChange={(event) => setForceStepReason(event.target.value)} className="mt-2" placeholder="Ex. Étape déjà réalisée hors ligne, confirmée par le candidat par téléphone…" maxLength={2000} />
+              <Textarea id="force-step-reason" value={forceStepReason} onChange={(event) => setForceStepReason(event.target.value)} className="mt-2" placeholder="Ex. Confirmé par téléphone le … / échange WhatsApp / passage en agence…" maxLength={2000} />
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setForceStepDialog(null)} disabled={journeyStepMutation.isPending}>Annuler</Button>
               <Button
                 type="button"
-                className={forceStepDialog?.checked ? "bg-amber-700 hover:bg-amber-800" : "bg-rose-700 hover:bg-rose-800"}
+                className={forceStepDialog?.confirmOnBehalf ? "bg-emerald-700 hover:bg-emerald-800" : forceStepDialog?.checked ? "bg-amber-700 hover:bg-amber-800" : "bg-rose-700 hover:bg-rose-800"}
                 disabled={journeyStepMutation.isPending || forceStepReason.trim().length < 8}
+                data-testid="force-step-confirm"
                 onClick={() => {
                   if (!forceStepDialog) return;
                   lockAction("journeyStep");
                   journeyStepMutation.mutate(
-                    { sessionToken, candidateId: candidate.id, stepId: `checklist-${forceStepDialog.stepIndex}`, checked: forceStepDialog.checked, forceUnlock: true, comment: forceStepReason.trim() },
+                    {
+                      sessionToken,
+                      candidateId: candidate.id,
+                      stepId: `checklist-${forceStepDialog.stepIndex}`,
+                      checked: forceStepDialog.checked,
+                      forceUnlock: !forceStepDialog.confirmOnBehalf,
+                      confirmOnBehalf: Boolean(forceStepDialog.confirmOnBehalf),
+                      comment: forceStepReason.trim(),
+                    },
                     { onSuccess: () => setForceStepDialog(null) },
                   );
                 }}
               >
-                {journeyStepMutation.isPending ? "Traitement…" : forceStepDialog?.checked ? "Confirmer le déverrouillage" : "Confirmer l’annulation"}
+                {journeyStepMutation.isPending
+                  ? "Traitement…"
+                  : forceStepDialog?.confirmOnBehalf
+                    ? "Confirmer à la place du candidat"
+                    : forceStepDialog?.checked
+                      ? "Confirmer le déverrouillage"
+                      : "Confirmer l’annulation"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={bilanConfirmDialogOpen} onOpenChange={setBilanConfirmDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Valider le bilan à la place du candidat</DialogTitle>
+              <DialogDescription>
+                Enregistre la confirmation de réception du bilan (hors ligne). Le client est notifié dans son espace et les étapes suivantes sont débloquées.
+              </DialogDescription>
+            </DialogHeader>
+            <div>
+              <Label htmlFor="bilan-confirm-reason">Motif (obligatoire, au moins 8 caractères)</Label>
+              <Textarea
+                id="bilan-confirm-reason"
+                value={bilanConfirmReason}
+                onChange={(event) => setBilanConfirmReason(event.target.value)}
+                className="mt-2"
+                placeholder="Ex. Confirmé par téléphone le … / WhatsApp / passage en agence…"
+                maxLength={1000}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setBilanConfirmDialogOpen(false)} disabled={confirmBilanOnBehalfMutation.isPending}>Annuler</Button>
+              <Button
+                type="button"
+                className="bg-emerald-700 hover:bg-emerald-800"
+                disabled={confirmBilanOnBehalfMutation.isPending || bilanConfirmReason.trim().length < 8}
+                data-testid="bilan-confirm-on-behalf-submit"
+                onClick={() => {
+                  lockAction("journeyStep");
+                  confirmBilanOnBehalfMutation.mutate({
+                    sessionToken,
+                    candidateId: candidate.id,
+                    comment: bilanConfirmReason.trim(),
+                    notifyClient: true,
+                  });
+                }}
+              >
+                {confirmBilanOnBehalfMutation.isPending ? "Enregistrement…" : "Confirmer à la place du candidat"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -2030,23 +2306,30 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             <h4 className="flex items-center gap-2 font-semibold text-slate-900"><Send className="h-4 w-4 text-blue-700" />Envoyer une communication au candidat</h4>
             <p className="mt-1 text-sm text-slate-600">Modèles par étape, puis envoi journalisé (espace client + e-mail si disponible).</p>
             <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Modèles de message">
-              {ADMIN_MESSAGE_TEMPLATES.map((template) => (
+              {ADMIN_MESSAGE_TEMPLATES.map((template) => {
+                const visaAware = templateForStage(
+                  template.id,
+                  visaTypeDraft || data?.evaluationContext?.projectType || candidate.projectType,
+                );
+                return (
                 <button
                   key={template.id}
                   type="button"
                   data-testid={`message-template-${template.id}`}
                   onClick={() => {
-                    const filled = fillAdminTemplate(template, {
+                    const filled = fillAdminTemplate(visaAware, {
                       name: candidate.fullName,
                       reference: candidate.folderCode,
                     });
                     setOutboundMessage(filled.body);
                   }}
                   className="rounded-full border border-blue-200 bg-white px-3 py-1 text-xs font-bold text-blue-900 hover:border-blue-400"
+                  title={visaAware.label !== template.label ? visaAware.label : undefined}
                 >
-                  {template.label}
+                  {visaAware.label}
                 </button>
-              ))}
+                );
+              })}
             </div>
             <Textarea className="mt-3 bg-white" value={outboundMessage} onChange={(event) => setOutboundMessage(event.target.value)} placeholder="Rédigez une instruction, une décision ou une demande de précision…" maxLength={2000} />
             <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
@@ -2121,7 +2404,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             <div className="flex flex-wrap items-start justify-between gap-3"><div><h4 className="flex items-center gap-2 font-semibold text-slate-950"><History className="h-4 w-4 text-blue-700" />Timeline opérationnelle (statuts)</h4><p className="mt-1 text-sm text-slate-500">Statuts, échéances et actions sont affichés dans l’ordre de réception depuis les journaux serveur.</p></div><Badge variant="outline">{(data.timeline ?? []).length} événement(s)</Badge></div>
             <div className="mt-5">{data.timeline?.length ? <ol aria-label="Historique détaillé du dossier" className="space-y-0">{data.timeline.map((entry: any, index: number) => <li key={entry.id} className="grid grid-cols-[82px_24px_minmax(0,1fr)] gap-3"><time dateTime={new Date(entry.createdAt).toISOString()} className="pt-1 text-right text-xs text-slate-500">{new Date(entry.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</time><div className="relative flex justify-center"><span className={`z-10 mt-1 h-3 w-3 rounded-full border-2 border-white shadow ${entry.kind === "status" ? "bg-blue-700" : entry.status === "deadline_updated" ? "bg-amber-500" : "bg-slate-500"}`} />{index < data.timeline.length - 1 && <span className="absolute top-4 h-full w-px bg-blue-100" />}</div><div className="pb-5"><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-semibold capitalize text-slate-900">{entry.label}</p><Badge variant="outline" className="text-[10px]">{entry.kind === "status" ? "Statut" : entry.status === "deadline_updated" ? "Échéance" : "Activité"}</Badge></div><p className="mt-1 text-sm leading-6 text-slate-600">{entry.comment || "Événement enregistré"}</p><p className="mt-1 text-xs text-slate-400">{entry.actor || "Système"} · {formatDate(entry.createdAt)}</p></div></li>)}</ol> : <p className="rounded-lg border border-dashed p-4 text-sm text-slate-500">Aucun événement serveur n’est encore enregistré pour ce dossier.</p>}</div>
           </div>
-          <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><h4 className="flex items-center gap-2 font-semibold text-slate-950"><Mail className="h-4 w-4 text-blue-700" />Historique des e-mails d’évaluation</h4><p className="mt-1 text-sm text-slate-600">Suivi opérationnel des envois et des ouvertures détectées. Le contenu intégral des e-mails n’est pas exposé dans cette timeline.</p></div><div className="flex flex-wrap items-center gap-2"><Badge variant="outline">{(candidate.emailHistory ?? []).length} e-mail(s)</Badge><Button size="sm" variant="outline" disabled={evaluationReminderMutation.isPending} onClick={() => setResendDialogOpen(true)}><Mail className="mr-1 h-4 w-4" />Renvoyer le bilan</Button></div></div><div className="mt-4 space-y-2">{candidate.emailHistory?.length ? candidate.emailHistory.map((email: any) => <div key={email.id} className="grid gap-2 rounded-lg border border-blue-100 bg-white p-3 sm:grid-cols-[minmax(0,1fr)_auto]"><div><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-semibold text-slate-900">{email.emailType === "reminder" ? "Relance de bilan" : email.emailType === "follow_up" ? "Suivi" : "Bilan d’évaluation"}</p><Badge variant="outline" className="text-[10px]">{email.language === "en" ? "English" : "Français"}</Badge><StateBadge status={email.status} /></div><p className="mt-1 text-xs text-slate-500">Canal : {email.sentVia || "email"} · Créé le {formatDate(email.createdAt)}</p>{email.failureReason && <p className="mt-1 text-xs text-rose-700">Échec : {email.failureReason}</p>}</div><div className="text-left text-xs text-slate-500 sm:text-right"><p>Envoyé : {email.sentAt ? formatDate(email.sentAt) : "Non envoyé"}</p><p className={email.openedAt ? "font-medium text-emerald-700" : "text-amber-700"}>{email.openedAt ? `Lu le ${formatDate(email.openedAt)}` : "Non lu — ouverture non confirmée"}</p>{email.clickedAt && <p className="text-emerald-700">Lien cliqué : {formatDate(email.clickedAt)}</p>}</div></div>) : <p className="rounded-lg border border-dashed border-blue-200 bg-white p-3 text-sm text-slate-500">Aucun e-mail d’évaluation enregistré pour ce dossier.</p>}</div></div>
+          <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><h4 className="flex items-center gap-2 font-semibold text-slate-950"><Mail className="h-4 w-4 text-blue-700" />Historique des e-mails d’évaluation</h4><p className="mt-1 text-sm text-slate-600">Suivi opérationnel des envois et des ouvertures détectées. Le contenu intégral des e-mails n’est pas exposé dans cette timeline.</p></div><div className="flex flex-wrap items-center gap-2"><Badge variant="outline">{(candidate.emailHistory ?? []).length} e-mail(s)</Badge><Button size="sm" variant="outline" disabled={evaluationReminderMutation.isPending} onClick={() => setResendDialogOpen(true)}><Mail className="mr-1 h-4 w-4" />Renvoyer le bilan</Button></div></div><div className="mt-4 space-y-2">{candidate.emailHistory?.length ? candidate.emailHistory.map((email: any) => <div key={email.id} className="grid gap-2 rounded-lg border border-blue-100 bg-white p-3 sm:grid-cols-[minmax(0,1fr)_auto]" data-testid="evaluation-email-journal-row"><div><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-semibold text-slate-900">{email.emailType === "reminder" ? "Relance de bilan" : email.emailType === "follow_up" ? "Suivi" : "Bilan d’évaluation"}</p><Badge variant="outline" className="text-[10px]">{email.language === "en" ? "English" : "Français"}</Badge>{email.visaType ? <Badge variant="outline" className="border-indigo-200 bg-indigo-50 text-[10px] text-indigo-900">{email.visaType}</Badge> : null}<StateBadge status={email.status} /></div><p className="mt-1 text-xs text-slate-500">Canal : {email.sentVia || "email"} · Créé le {formatDate(email.createdAt)}{email.visaType ? ` · Visa : ${email.visaType}` : ""}</p>{email.failureReason && <p className="mt-1 text-xs text-rose-700">Échec : {email.failureReason}</p>}</div><div className="text-left text-xs text-slate-500 sm:text-right"><p>Envoyé : {email.sentAt ? formatDate(email.sentAt) : "Non envoyé"}</p><p className={email.openedAt ? "font-medium text-emerald-700" : "text-amber-700"}>{email.openedAt ? `Lu le ${formatDate(email.openedAt)}` : "Non lu — ouverture non confirmée"}</p>{email.clickedAt && <p className="text-emerald-700">Lien cliqué : {formatDate(email.clickedAt)}</p>}</div></div>) : <p className="rounded-lg border border-dashed border-blue-200 bg-white p-3 text-sm text-slate-500">Aucun e-mail d’évaluation enregistré pour ce dossier.</p>}</div></div>
           <div className="grid gap-3 lg:grid-cols-2">
             <div className="rounded-xl border p-4"><h4 className="flex items-center gap-2 font-semibold"><FileText className="h-4 w-4 text-blue-700" />Décisions et notes internes</h4><div className="mt-3 space-y-2">{data.notes.length ? data.notes.slice(0, 12).map((note: any) => <div key={note.id} className="rounded-lg bg-slate-50 p-3"><p className="text-sm text-slate-700">{note.note}</p><p className="mt-1 text-xs text-slate-400">{formatDate(note.createdAt)}</p></div>) : <p className="text-sm text-slate-500">Aucune note interne. Ajoutez une décision dans Vue d’ensemble.</p>}</div></div>
             <div className="rounded-xl border p-4"><h4 className="flex items-center gap-2 font-semibold"><FolderKanban className="h-4 w-4 text-blue-700" />Détails statut serveur</h4><p className="mt-2 text-sm text-slate-600">{data.statusHistory.length} changement(s) de statut conservé(s), relu(s) depuis le dossier opérationnel.</p><p className="mt-1 text-xs text-slate-500">Les transitions restent séparées des notes privées et des tâches.</p></div>
@@ -2131,7 +2414,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
 
       <Dialog open={offlineEvaluationOpen} onOpenChange={setOfflineEvaluationOpen}><DialogContent><DialogHeader><DialogTitle>Valider l’évaluation hors ligne</DialogTitle><DialogDescription>Utilisez cette action si le conseiller a évalué le candidat par appel, en agence ou par e-mail. Aucun envoi de bilan n’est déclenché.</DialogDescription></DialogHeader><div className="space-y-4"><div><Label htmlFor="offline-evaluation-channel">Canal utilisé</Label><Select value={offlineEvaluationChannel} onValueChange={(value) => setOfflineEvaluationChannel(value as "appel" | "agence" | "email")}><SelectTrigger id="offline-evaluation-channel" className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="appel">Appel téléphonique</SelectItem><SelectItem value="agence">Bureau en agence</SelectItem><SelectItem value="email">E-mail</SelectItem></SelectContent></Select></div><div><Label htmlFor="offline-evaluation-note">Note du conseiller (facultatif)</Label><Textarea id="offline-evaluation-note" value={offlineEvaluationNote} onChange={(event) => setOfflineEvaluationNote(event.target.value)} maxLength={1000} rows={5} placeholder="Ex. Évaluation menée par téléphone le 05/09/2026." /></div></div><DialogFooter><Button variant="outline" onClick={() => setOfflineEvaluationOpen(false)}>Annuler</Button>{evaluationAlreadyValidated ? <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800"><CheckCircle2 className="h-4 w-4" /><span>Évaluation déjà validée par {evaluationValidatedBy} le {formatDate(evaluationValidatedAt)}.</span></div> : <Button disabled={offlineEvaluationMutation.isPending || actionLocks.offlineEvaluation} onClick={() => { lockAction("offlineEvaluation"); offlineEvaluationMutation.mutate({ sessionToken, candidateId: candidate.id, channel: offlineEvaluationChannel, note: offlineEvaluationNote.trim() || undefined }); }}>{offlineEvaluationMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Validation…</> : "Valider l’évaluation hors ligne"}</Button>}</DialogFooter></DialogContent></Dialog>
       <Dialog open={resendDialogOpen} onOpenChange={setResendDialogOpen}><DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>Renvoyer le bilan d’évaluation</DialogTitle><DialogDescription>Personnalisez le message d’accompagnement. Le lien sécurisé et le bilan restent générés par le serveur.</DialogDescription></DialogHeader><div className="space-y-2"><Label htmlFor="resend-evaluation-message">Message d’accompagnement</Label><Textarea id="resend-evaluation-message" value={resendMessage} onChange={(event) => setResendMessage(event.target.value)} maxLength={3000} rows={8} /><p className="text-right text-xs text-slate-500">{resendMessage.length}/3000</p></div><DialogFooter><Button variant="outline" onClick={() => setResendDialogOpen(false)}>Annuler</Button><Button disabled={evaluationReminderMutation.isPending || actionLocks.evaluationReminder || resendMessage.trim().length < 3} onClick={() => { lockAction("evaluationReminder"); evaluationReminderMutation.mutate({ sessionToken, applicationId: candidate.internalId, language: "fr", customMessage: resendMessage.trim() }); setResendDialogOpen(false); }}><Mail className="mr-2 h-4 w-4" />{evaluationReminderMutation.isPending ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" />Envoi…</> : "Envoyer la relance"}</Button></DialogFooter></DialogContent></Dialog>
-      {canPrepareEvaluation && <Suspense fallback={<div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-blue-900">Chargement de l’espace de préparation…</div>}><EvaluationDeliveryEditor sessionToken={sessionToken} sourceRecordId={candidate.internalId} open={evaluationOpen} onOpenChange={setEvaluationOpen} onCompleted={() => void refresh()} /></Suspense>}
+      {canPrepareEvaluation && <Suspense fallback={<div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-blue-900">Chargement de l’espace de préparation…</div>}><EvaluationDeliveryEditor sessionToken={sessionToken} sourceRecordId={candidate.internalId} sourceType={evaluationSourceTypeOf(candidate)} open={evaluationOpen} onOpenChange={setEvaluationOpen} onCompleted={() => void refresh()} /></Suspense>}
     </div>
   );
 }

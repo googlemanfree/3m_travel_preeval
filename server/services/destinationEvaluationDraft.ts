@@ -1,4 +1,5 @@
 import { invokeLLM } from "../_core/llm";
+import { resolveEvaluationProjectKind, type EvaluationProjectKind } from "../../shared/evaluationVisaCv";
 
 export const evaluationDestinations = ["canada", "luxembourg", "europe"] as const;
 export type EvaluationDestination = typeof evaluationDestinations[number];
@@ -37,6 +38,8 @@ type ApplicationSnapshot = {
   languageSkills: string | null;
   nationality: string | null;
   age: number | null;
+  visaType?: string | null;
+  projectType?: string | null;
 };
 
 const destinationGuidance: Record<EvaluationDestination, { label: string; focus: string; checklist: string[] }> = {
@@ -57,6 +60,35 @@ const destinationGuidance: Record<EvaluationDestination, { label: string; focus:
   },
 };
 
+function guidanceForKind(
+  destination: EvaluationDestination,
+  kind: EvaluationProjectKind,
+): { label: string; focus: string; checklist: string[] } {
+  const base = destinationGuidance[destination];
+  if (kind === "etudes") {
+    return {
+      label: `${base.label.replace("évaluation préliminaire", "visa études")}`,
+      focus: "Vérifier le parcours académique, le cycle visé, les diplômes et relevés, le financement et l’avancement de l’admission — sans critère d’emploi.",
+      checklist: ["Passeport valide", "Diplômes et relevés de notes", "Cycle / filière visés", "Plan de financement indicatif", "Lettre de motivation ou pré-admission si disponible"],
+    };
+  }
+  if (kind === "tourisme") {
+    return {
+      label: `${base.label.replace("évaluation préliminaire", "visa visiteurs")}`,
+      focus: "Vérifier le statut déclaré (chef d’entreprise, employé ou particulier), le motif du séjour, l’itinéraire, les ressources et les attaches au pays de résidence.",
+      checklist: ["Passeport valide", "Statut et motif du séjour", "Itinéraire / hébergement", "Preuves de fonds", "Preuves d’attaches / intention de retour"],
+    };
+  }
+  if (kind === "travail") {
+    return {
+      label: `${base.label.replace("évaluation préliminaire", "visa travail")}`,
+      focus: base.focus,
+      checklist: base.checklist,
+    };
+  }
+  return base;
+}
+
 function contentFrom(result: Awaited<ReturnType<typeof invokeLLM>>): string {
   const value = result.choices[0]?.message.content;
   if (typeof value === "string") return value;
@@ -73,7 +105,8 @@ function strings(value: unknown, max: number): string[] {
 }
 
 export async function generateDestinationEvaluationDraft(application: ApplicationSnapshot, destination: EvaluationDestination): Promise<DestinationEvaluationDraft> {
-  const guide = destinationGuidance[destination];
+  const projectKind = resolveEvaluationProjectKind(application.projectType, application.visaType);
+  const guide = guidanceForKind(destination, projectKind);
   const profile = {
     nom: application.fullName,
     age: application.age ?? "Non renseigné",
@@ -83,6 +116,7 @@ export async function generateDestinationEvaluationDraft(application: Applicatio
     poste: application.currentJobTitle || "Non renseigné",
     langues: application.languageSkills || "Non renseigné",
     nationalite: application.nationality || "Non renseigné",
+    typeProjet: projectKind,
   };
   const result = await invokeLLM({
     model: "gpt-5-mini",

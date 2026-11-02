@@ -74,11 +74,13 @@ function officialCatalogUrl(country: string, kind: PublishedProcedureKind): stri
 
 function detectVisaKind(visaType?: string | null, procedureLabel?: string | null): PublishedProcedureKind {
   const key = fold(`${visaType || ""} ${procedureLabel || ""}`);
-  if (/etud|study|student|academ|admission|permis d etudes/.test(key)) return "etudes";
-  if (/visiteur|visitor|touris|schengen|court sejour/.test(key)) return "visiteur";
-  if (/travail|work|emploi|worker|lmia|eimt|permis de travail|contrat/.test(key)) return "travail";
-  if (/formation|ausbildung|apprentissage/.test(key)) return "etudes";
-  return "travail";
+  // Ordre : études → travail → visiteurs (évite schengen_travail → visiteur).
+  if (/etud|study|student|academ|admission|permis d etudes|formation|ausbildung|apprentissage/.test(key)) return "etudes";
+  if (/travail|work|emploi|worker|lmia|eimt|permis de travail|contrat|travailleur/.test(key)) return "travail";
+  if (/visiteur|visitor|touris|court sejour|loisirs/.test(key)) return "visiteur";
+  // « schengen » seul = court séjour visiteurs ; inconnu = ne pas forcer travail.
+  if (/\bschengen\b/.test(key) && !/travail|etud|work|study/.test(key)) return "visiteur";
+  return "visiteur";
 }
 
 function step(

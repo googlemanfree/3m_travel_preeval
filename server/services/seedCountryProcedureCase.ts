@@ -5,6 +5,7 @@
 
 import { eq } from "drizzle-orm";
 import { agencyDossiers, applications, candidates } from "../../drizzle/schema";
+import { latestProgramContext } from "./evaluationProgramContext";
 import { caseActivityLogs, cases, documentRequirements } from "../../drizzle/caseTrackingSchema";
 import { buildCountryProcedureDocumentChecklist } from "../../shared/countryProcedureChecklist";
 import { agencyDossierReference } from "../../shared/caseReference";
@@ -74,6 +75,9 @@ export async function seedCountryProcedureChecklist(
     actorAdminId?: number | null;
     /** Pièces déjà remises / demandées en plus du catalogue pays × visa. */
     customDocuments?: string[];
+    /** Visa ou programme et domaine de l'évaluation ; repris automatiquement de la dernière évaluation du candidat s'ils sont absents. */
+    programId?: string | null;
+    domainId?: string | null;
   },
 ): Promise<{ caseId: number; added: number; label: string }> {
   const operational = input.source === "agency"
@@ -86,10 +90,19 @@ export async function seedCountryProcedureChecklist(
     visaType: input.visaType,
   }).where(eq(cases.id, operational.id));
 
+  let programId = input.programId ?? null;
+  let domainId = input.domainId ?? null;
+  if (!programId) {
+    const [caseRow] = await db.select({ candidateId: cases.candidateId }).from(cases).where(eq(cases.id, operational.id)).limit(1);
+    const [owner] = caseRow?.candidateId ? await db.select({ email: candidates.email }).from(candidates).where(eq(candidates.id, caseRow.candidateId)).limit(1) : [];
+    ({ programId, domainId } = await latestProgramContext(db, owner?.email));
+  }
   const template = buildCountryProcedureDocumentChecklist({
     destination: input.destination,
     procedureType: input.visaType,
     customDocuments: input.customDocuments,
+    programId,
+    domainId,
   });
   const existing = await db.select({ documentType: documentRequirements.documentType })
     .from(documentRequirements)

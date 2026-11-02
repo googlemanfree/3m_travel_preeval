@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 describe("accès Jinko de recherche hôtelière", () => {
-  it("authentifie une recherche non transactionnelle sans appeler de route de réservation", async () => {
+  it.skipIf(!process.env.JINKO_API_KEY)("authentifie une recherche non transactionnelle sans appeler de route de réservation", async () => {
     const apiKey = process.env.JINKO_API_KEY;
     expect(apiKey).toBeTruthy();
 

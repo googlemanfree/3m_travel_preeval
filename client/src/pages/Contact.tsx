@@ -221,13 +221,25 @@ export default function Contact() {
             data-testid="contact-founder-identity"
           >
             <p>
-              <strong className="text-slate-950">{GROUP_LEGAL_NAME}</strong>
+              <strong className="text-slate-950">{COMPANY_PROFILE.legalDisplayName}</strong>
               {" — "}
               fondateur et PDG{" "}
               <a href="/about#aureol-donfack" className="font-semibold text-blue-800 underline-offset-2 hover:underline">
                 {COMPANY_FOUNDER.name}
               </a>
-              . Exploitation commerciale : {COMPANY_PROFILE.legalName} (RC {COMPANY_PROFILE.legalIdentifiers.registration}).
+              {" "}
+              ({GROUP_LEGAL_NAME}). RC {COMPANY_PROFILE.legalIdentifiers.registration}
+              {COMPANY_PROFILE.legalIdentifiers.taxpayerId ? ` · NIU ${COMPANY_PROFILE.legalIdentifiers.taxpayerId}` : ""}.
+            </p>
+            <p className="mt-2 text-slate-600">{COMPANY_PROFILE.groupRole}</p>
+            <p className="mt-2">
+              <a href="/mentions-legales" className="font-semibold text-blue-800 underline-offset-2 hover:underline">
+                Mentions légales
+              </a>
+              {" · "}
+              <a href="/verifier-une-agence" className="font-semibold text-blue-800 underline-offset-2 hover:underline">
+                Comment nous vérifions
+              </a>
             </p>
           </aside>
         </div>

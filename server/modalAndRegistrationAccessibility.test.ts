@@ -14,13 +14,14 @@ describe("Accessibilité des modales et de l’inscription", () => {
     expect(source).toContain("onClick={closeForgotPasswordModal}");
   });
 
-  it("garde Facebook indisponible et rend Google disponible uniquement après configuration", () => {
+  it("retire Facebook non ouvert et rend Google disponible uniquement après configuration", () => {
     const login = read("client/src/pages/Login.tsx");
     const register = read("client/src/pages/Register.tsx");
     expect(login).toContain('window.location.assign("/api/auth/google/start")');
     expect(register).toContain('window.location.assign("/api/auth/google/start")');
-    expect(login).toContain("facebook-coming-soon");
-    expect(register).toContain("register-facebook-coming-soon");
+    expect(login).not.toContain("facebook-coming-soon");
+    expect(register).not.toContain("register-facebook-coming-soon");
+    expect(login).toContain("login-profile-choice");
   });
 
   it("propose une validation immédiate et une force de mot de passe accessible à l’inscription", () => {

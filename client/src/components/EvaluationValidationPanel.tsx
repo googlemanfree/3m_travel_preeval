@@ -11,10 +11,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import EvaluationReportView from "@/components/EvaluationReportView";
 import EvaluationVersionForm from "@/components/EvaluationVersionForm";
+import { PROFILE_DEFS, criteriaFor } from "@shared/evaluationProfiles";
 import { availabilityFor, describeValue, linesToList, sameVersion } from "@/lib/evaluationValidationForm";
 import { CV_MISSING_FOR_PUBLICATION } from "@shared/evaluationCv";
 import { isOpenableStoredUrl } from "@shared/storedFileUrl";
-import { ADMIN_DRAFT_BADGE, AI_DRAFT_LABEL, NOTIFICATION_PORTAL_PLACEHOLDER, PUBLICATION_CHECKLIST, ROUTE_LABELS, SCORE_CRITERIA, SUGGESTED_STATUS_LABELS, WORKFLOW_STATUS_LABELS, missingChecklistItems, type AdminEvaluationVersion } from "@shared/evaluationValidation";
+import { ADMIN_DRAFT_BADGE, AI_DRAFT_LABEL, NOTIFICATION_PORTAL_PLACEHOLDER, PUBLICATION_CHECKLIST, SUGGESTED_STATUS_LABELS, WORKFLOW_STATUS_LABELS, missingChecklistItems, type AdminEvaluationVersion } from "@shared/evaluationValidation";
 import type { AppRouter } from "../../../server/routers";
 
 type CaseView = NonNullable<inferRouterOutputs<AppRouter>["evaluationValidation"]["getCase"]["view"]>;
@@ -74,7 +75,7 @@ function AiDraftZone({ view }: { view: CaseView }) {
             Score proposé par l’IA : <strong>{view.aiScore.effectiveTotal}/100</strong> — statut suggéré : {SUGGESTED_STATUS_LABELS[view.aiScore.suggestedStatus]}
           </p>
           <ul className="mt-2 grid gap-1 text-xs text-slate-700 sm:grid-cols-2">
-            {SCORE_CRITERIA.map((criterion) => (
+            {criteriaFor(view.profile).map((criterion) => (
               <li key={criterion.key} className="flex justify-between gap-2">
                 <span>{criterion.label}</span>
                 <span className="font-semibold">
@@ -87,7 +88,7 @@ function AiDraftZone({ view }: { view: CaseView }) {
       )}
       <Card className="p-4 text-sm">
         <p>
-          Voie principale : <strong>{draft.route} — {ROUTE_LABELS[draft.route]}</strong> · risque : {draft.riskLevel}
+          Voie principale : <strong>{draft.route} — {PROFILE_DEFS[view.profile].routes[draft.route]}</strong> · risque : {draft.riskLevel}
         </p>
         {draft.alternativeCountries.length > 0 && <p className="mt-1 text-slate-700">Pays alternatifs (internes) : {draft.alternativeCountries.map((alternative) => `${alternative.country} — ${alternative.rationale}`).join(" · ")}</p>}
         {draft.profileSummary && <p className="mt-2 whitespace-pre-line text-slate-700">{draft.profileSummary}</p>}
@@ -248,6 +249,7 @@ export default function EvaluationValidationPanel({ evaluationId, sessionToken }
     <div className="mt-4 space-y-4 rounded-lg border-2 border-violet-200 bg-white p-4" data-testid="validation-panel">
       <div className="flex flex-wrap items-center gap-2">
         <Badge className="bg-indigo-100 text-indigo-900" data-testid="workflow-status">{view.labels.workflow}</Badge>
+        <Badge className="bg-sky-100 text-sky-900" data-testid="evaluation-profile">Bilan : {PROFILE_DEFS[view.profile].label}</Badge>
         <span className="text-xs text-slate-500">Version {view.case.versionNumber}</span>
         {!published && <Badge className="bg-violet-100 text-violet-900">{ADMIN_DRAFT_BADGE}</Badge>}
         {view.needsSecondValidation && !published && <Badge className="bg-amber-100 text-amber-900">Seconde validation requise</Badge>}
@@ -306,7 +308,7 @@ export default function EvaluationValidationPanel({ evaluationId, sessionToken }
 
         <TabsContent value="admin" className="mt-3">
           {draft ? (
-            <EvaluationVersionForm value={draft} onChange={setDraft} readOnly={!availability.canEdit} candidateCountry={view.evaluation.candidateCountry} />
+            <EvaluationVersionForm value={draft} onChange={setDraft} readOnly={!availability.canEdit} candidateCountry={view.evaluation.candidateCountry} candidateName={view.evaluation.candidateName} suggestedProfile={view.suggestedProfile} />
           ) : (
             <p className="text-sm text-slate-600">Aucune version administrateur : générez le brouillon IA ou ouvrez le dossier pour saisir à la main.</p>
           )}
@@ -373,6 +375,9 @@ export default function EvaluationValidationPanel({ evaluationId, sessionToken }
           )}
         </div>
         {blockers.length > 0 && !published && <ul className="space-y-0.5 text-xs text-amber-800">{blockers.map((text) => <li key={text}>{text}</li>)}</ul>}
+        {/* Un bouton grisé sans explication ressemble à une panne : on dit toujours pourquoi. */}
+        {!published && availability.canEdit && !dirty && <p className="text-xs text-slate-500" data-testid="why-save-disabled">« Enregistrer le brouillon » se réactive dès qu’un champ est modifié.</p>}
+        {!published && !availability.canEdit && <p className="text-xs text-slate-500" data-testid="why-edit-disabled">Cette évaluation n’est pas modifiable dans son état actuel ; utilisez « Réévaluer » pour ouvrir une nouvelle version.</p>}
         {view.needsSecondValidation && availability.canPublish && <p className="text-xs text-amber-800">Ce résultat (« Préparation recommandée ») exige deux administrateurs : votre publication sera enregistrée comme première validation.</p>}
       </div>
 

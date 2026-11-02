@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm";
+import { PRE_DOSSIER_STATUSES } from "../../shared/candidateStatus";
 import { agencyDossierDocuments, agencyDossiers, applications, candidateFiles, candidates, paymentAuditLogs } from "../../drizzle/schema";
 import { accountReference, agencyDossierReference } from "../../shared/caseReference";
 import { clientStatusLabel } from "../../shared/dossierProgress";
@@ -14,7 +15,7 @@ const ACTIVE_AGENCY = ["en_cours", "documents_requis", "recherche_employeur", "v
 async function loadReadyToActivate(db: Db, now: Date): Promise<PilotageItem[]> {
   const pool = await db.select({ id: candidates.id, fullName: candidates.fullName, email: candidates.email, destination: candidates.destination, reviewedAt: candidates.evaluationReviewedAt })
     .from(candidates)
-    .where(and(isNull(candidates.deletedAt), eq(candidates.dossierStatus, "nouveau"), eq(candidates.evaluationDeclarationStatus, "validated"), isNotNull(candidates.evaluationReviewedAt)))
+    .where(and(isNull(candidates.deletedAt), inArray(candidates.dossierStatus, [...PRE_DOSSIER_STATUSES]), eq(candidates.evaluationDeclarationStatus, "validated"), isNotNull(candidates.evaluationReviewedAt)))
     .limit(LIMIT);
   if (pool.length === 0) return [];
   const ids = pool.map((row) => row.id);

@@ -11,7 +11,8 @@ describe("parcours d’évaluation et replis utilisateur", () => {
   const candidate360 = readFileSync(resolve(projectRoot, "client/src/components/Candidate360Workspace.tsx"), "utf8");
 
   it("dirige Nouvelle évaluation vers le formulaire authentifié existant", () => {
-    expect(evaluationSpace).toContain("setLocation(`/evaluation?source=client-space");
+    expect(evaluationSpace).toContain('source: "client-space"');
+    expect(evaluationSpace).toContain("setLocation(`/evaluation?${params.toString()}`)");
     expect(evaluationSpace).not.toContain("setLocation('/evaluation-ia')");
     expect(app).toContain('path={"/evaluation"}');
   });

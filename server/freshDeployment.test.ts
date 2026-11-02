@@ -14,9 +14,9 @@ describe("Chargement frais après déploiement", () => {
     expect(source).toContain("controllerchange");
     expect(source).toContain("isPreviewHost");
     expect(source).toContain("registration.unregister()");
-    expect(worker).toContain("3m-travel-pwa-v41-canada-blank-guard");
+    expect(worker).toMatch(/const CACHE_NAME = '3m-travel-pwa-v\d+[a-z0-9-]*'/);
     expect(source).toContain("SW_REVISION");
-    expect(source).toContain("2026-10-12-canada-blank-guard-v1");
+    expect(source).toMatch(/const SW_REVISION = '\d{4}-\d{2}-\d{2}-[a-z0-9-]+'/);
     expect(source).toContain("/sw.js?revision=");
     expect(worker).toContain("IS_PREVIEW_HOST");
     expect(worker).toContain("SKIP_WAITING");

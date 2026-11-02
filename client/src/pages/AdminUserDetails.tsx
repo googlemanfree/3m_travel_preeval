@@ -20,9 +20,10 @@ import {
   Briefcase,
 } from "lucide-react";
 import { useState } from "react";
+import { getAdminSessionToken } from "@/lib/adminSession";
 
 export default function AdminUserDetails() {
-  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
+  const sessionToken = getAdminSessionToken();
   const [, params] = useRoute<{ userId: string }>("/admin/users/:userId");
   const userId = params?.userId ? parseInt(params.userId) : null;
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
@@ -282,6 +283,15 @@ export default function AdminUserDetails() {
                                     size="sm"
                                     variant="outline"
                                     className="flex-1 flex items-center justify-center gap-1"
+                                    onClick={() => {
+                                      if (!doc.fileUrl) return;
+                                      const anchor = document.createElement("a");
+                                      anchor.href = doc.fileUrl;
+                                      anchor.target = "_blank";
+                                      anchor.rel = "noopener noreferrer";
+                                      anchor.download = doc.fileName || doc.documentType || "document";
+                                      anchor.click();
+                                    }}
                                   >
                                     <Download className="w-4 h-4" />
                                     Télécharger

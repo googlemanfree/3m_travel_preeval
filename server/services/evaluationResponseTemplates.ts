@@ -1,3 +1,5 @@
+import { resolveEvaluationProjectKind } from "../../shared/evaluationVisaCv";
+
 export type EvaluationProjectType = "travail" | "etudes" | "tourisme";
 
 export type EvaluationResponseTemplate = {
@@ -81,6 +83,8 @@ export function buildEvaluationResponseTemplate(
   projectType: string | null | undefined,
   input: { fullName: string; destinationCountry?: string | null },
 ) {
-  const template = EVALUATION_RESPONSE_TEMPLATES.find((item) => item.key === projectType);
+  const kind = resolveEvaluationProjectKind(projectType);
+  const templateKey = kind === "autre" ? null : kind;
+  const template = EVALUATION_RESPONSE_TEMPLATES.find((item) => item.key === (templateKey ?? projectType));
   return template?.build(input) ?? null;
 }

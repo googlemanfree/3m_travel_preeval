@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { getAdminSessionToken } from '@/lib/adminSession';
 import { trpc } from '@/lib/trpc';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { AlertCircle, CheckCircle2, MessageSquare, Zap } from 'lucide-react';
 
 export default function AdminAccompagnement() {
-  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
+  const sessionToken = getAdminSessionToken();
   const [selectedEval, setSelectedEval] = useState<any>(null);
   const [newStatus, setNewStatus] = useState<string>('');
   const [notes, setNotes] = useState<string>('');

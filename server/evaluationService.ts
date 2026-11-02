@@ -3,8 +3,15 @@
  * Génère des rapports personnalisés avec scoring multi-destination
  */
 
+import { evaluationDisplayReference } from "../shared/evaluationReference";
 import { Application } from "../drizzle/schema";
 import { sanitizeClientCommunicationText } from "./clientCommunication";
+import { resolveEvaluationProjectKind, type EvaluationProjectKind } from "../shared/evaluationVisaCv";
+import { bilanIdentityFrom, renderBilanFragment } from "../shared/bilanContent";
+import { bilanVariablesFrom, draftExtras, resolveBilanVariables } from "../shared/bilanVariables";
+import { sanitizeRichTextHtml } from "./services/richText";
+import { PROFILE_DEFS, resolveEvaluationProfile } from "../shared/evaluationProfiles";
+import { STUDY_CYCLE_LABELS, VISITOR_STATUS_LABELS, type StudyCycle, type VisitorStatus } from "../shared/evaluationFormRequirements";
 
 // Destinations disponibles pour l'évaluation
 const DESTINATIONS = {
@@ -33,50 +40,58 @@ interface DestinationScore {
 }
 
 /**
- * Calcule le score pour une destination spécifique
- * Ajuste les critères selon les exigences du marché du travail
+ * Facteur d’ajustement destination selon le type de projet.
+ * Travail : pénalités marché du travail (Luxembourg, H1B…).
+ * Études / visiteurs : ajustements pédagogiques ou consulaires, sans logique employeur.
+ */
+function destinationAdjustmentFactor(destination: string, kind: EvaluationProjectKind): number {
+  const dest = destination.toLowerCase();
+  if (kind === "etudes") {
+    switch (dest) {
+      case "canada": return 1.04;
+      case "allemagne": return 1.02;
+      case "pologne": return 1.03;
+      case "luxembourg": return 0.92;
+      case "royaume_uni": return 0.95;
+      case "etats_unis": return 0.90;
+      default: return 1;
+    }
+  }
+  if (kind === "tourisme") {
+    switch (dest) {
+      case "canada": return 1.0;
+      case "pologne": return 1.02;
+      case "allemagne": return 0.98;
+      case "luxembourg": return 0.94;
+      case "royaume_uni": return 0.96;
+      case "etats_unis": return 0.88;
+      default: return 1;
+    }
+  }
+  // travail / autre — logique marché du travail historique
+  switch (dest) {
+    case "pologne": return 1.05;
+    case "canada": return 1.02;
+    case "allemagne": return 0.95;
+    case "luxembourg": return 0.75;
+    case "royaume_uni": return 0.85;
+    case "etats_unis": return 0.70;
+    default: return 1;
+  }
+}
+
+/**
+ * Calcule le score pour une destination spécifique (ajusté au type de visa).
  */
 function calculateDestinationScore(
   criteria: ScoringCriteria,
-  destination: string
+  destination: string,
+  kind: EvaluationProjectKind = "autre",
 ): DestinationScore {
-  let baseScore = criteria.education + criteria.experience + criteria.language + criteria.sector + criteria.ageAdjustment;
+  const baseScore = criteria.education + criteria.experience + criteria.language + criteria.sector + criteria.ageAdjustment;
+  let adjustedScore = Math.round(baseScore * destinationAdjustmentFactor(destination, kind));
+  adjustedScore = Math.max(0, Math.min(100, adjustedScore));
 
-  // Ajustements par destination (facteurs de marché)
-  let adjustedScore = baseScore;
-  let adjustmentFactor = 1;
-
-  switch (destination.toLowerCase()) {
-    case "pologne":
-      // Marché très favorable pour les techniciens et cadres
-      adjustmentFactor = 1.05; // +5% bonus
-      break;
-    case "canada":
-      // Marché favorable, critères clairs et objectifs
-      adjustmentFactor = 1.02; // +2% bonus
-      break;
-    case "allemagne":
-      // Marché modérément favorable
-      adjustmentFactor = 0.95; // -5% pénalité
-      break;
-    case "luxembourg":
-      // Marché très restrictif pour les non-EU
-      adjustmentFactor = 0.75; // -25% pénalité importante
-      break;
-    case "royaume_uni":
-      // Marché modérément restrictif (post-Brexit)
-      adjustmentFactor = 0.85; // -15% pénalité
-      break;
-    case "etats_unis":
-      // Marché très restrictif (visa H1B limité)
-      adjustmentFactor = 0.70; // -30% pénalité
-      break;
-  }
-
-  adjustedScore = Math.round(baseScore * adjustmentFactor);
-  adjustedScore = Math.max(0, Math.min(100, adjustedScore)); // Limiter entre 0 et 100
-
-  // Déterminer le badge
   let badge: "excellent" | "recommande" | "admissible" | "modere";
   if (adjustedScore >= 85) badge = "excellent";
   else if (adjustedScore >= 70) badge = "recommande";
@@ -87,14 +102,36 @@ function calculateDestinationScore(
     destination,
     score: adjustedScore,
     badge,
-    description: getDestinationDescription(destination, adjustedScore),
+    description: getDestinationDescription(destination, adjustedScore, kind),
   };
 }
 
 /**
- * Génère une description contextuelle pour chaque destination
+ * Génère une description contextuelle pour chaque destination, selon le type de projet.
  */
-function getDestinationDescription(destination: string, score: number): string {
+function getDestinationDescription(destination: string, score: number, kind: EvaluationProjectKind = "autre"): string {
+  const badgeKey = score >= 85 ? "excellent" : score >= 70 ? "recommande" : score >= 55 ? "admissible" : "modere";
+
+  if (kind === "etudes") {
+    const studies: Record<string, string> = {
+      excellent: "Projet d’études très solide — parcours académique et financement bien orientés pour cette destination.",
+      recommande: "Projet d’études favorable — diplômes, cycle et langue à consolider avant dépôt.",
+      admissible: "Projet d’études admissible — pièces scolaires et plan de financement à renforcer.",
+      modere: "Projet d’études à renforcer — historique scolaire, cycle ou ressources insuffisamment documentés.",
+    };
+    return studies[badgeKey] || "Évaluation études en cours…";
+  }
+
+  if (kind === "tourisme") {
+    const visitor: Record<string, string> = {
+      excellent: "Projet de visite très cohérent — statut, motif, ressources et attaches bien alignés.",
+      recommande: "Projet de visite favorable — itinéraire et preuves d’attaches à finaliser.",
+      admissible: "Projet de visite admissible — motif, fonds ou intention de retour à documenter davantage.",
+      modere: "Projet de visite à renforcer — statut, ressources ou attaches encore fragiles.",
+    };
+    return visitor[badgeKey] || "Évaluation visiteurs en cours…";
+  }
+
   const descriptions: Record<string, Record<string, string>> = {
     pologne: {
       excellent: "Dossier excellent — Très forte probabilité d'acceptation. Marché très favorable pour votre profil.",
@@ -135,16 +172,17 @@ function getDestinationDescription(destination: string, score: number): string {
   };
 
   const destDesc = descriptions[destination.toLowerCase()] || descriptions.pologne;
-  const badgeKey = score >= 85 ? "excellent" : score >= 70 ? "recommande" : score >= 55 ? "admissible" : "modere";
   return destDesc[badgeKey] || "Évaluation en cours...";
 }
 
 /**
- * Extrait les critères de scoring depuis les détails du dossier
+ * Extrait les critères de scoring depuis les détails du dossier.
+ * Pour études / visiteurs, les axes « expérience / secteur » sont réinterprétés
+ * (cycle / financement, statut / motif) afin d’éviter un biais travail.
  */
 function extractScoringCriteria(app: Application): ScoringCriteria {
   const anyApp = app as any;
-  // Si les détails de scoring sont absents ou incomplets, on effectue un calcul dynamique basé sur les champs du dossier si disponibles
+  const kind = reportProjectKindOf(app);
   let criteria: ScoringCriteria = {
     education: 12,
     experience: 12,
@@ -156,22 +194,34 @@ function extractScoringCriteria(app: Application): ScoringCriteria {
   if (app.scoringDetails) {
     try {
       const details = JSON.parse(app.scoringDetails);
-      criteria = {
-        education: details.education ?? criteria.education,
-        experience: details.experience ?? criteria.experience,
-        language: details.language ?? criteria.language,
-        sector: details.sector ?? criteria.sector,
-        ageAdjustment: details.age ?? criteria.ageAdjustment,
-      };
-      return criteria;
-    } catch (e) {
-      // En cas d'erreur de parsing, on utilise une évaluation rigoureuse minimale au lieu d'un score gonflé arbitraire
+      // Ne pas court-circuiter si le JSON ne contient que adminDraft / métadonnées.
+      const hasNumericGrid = ["education", "experience", "language", "sector", "age"].some(
+        (key) => typeof details[key] === "number",
+      );
+      if (hasNumericGrid) {
+        criteria = {
+          education: details.education ?? criteria.education,
+          experience: details.experience ?? criteria.experience,
+          language: details.language ?? criteria.language,
+          sector: details.sector ?? criteria.sector,
+          ageAdjustment: details.age ?? criteria.ageAdjustment,
+        };
+        return criteria;
+      }
+    } catch {
+      // Repli dynamique ci-dessous
     }
   }
 
-  // Calcul dynamique de repli basé sur le niveau d'études et d'expérience stocké
-  if (anyApp.educationLevel) {
-    const edu = anyApp.educationLevel.toLowerCase();
+  let projectDetails: Record<string, unknown> = {};
+  try {
+    projectDetails = JSON.parse(anyApp.projectDetailsJson || "{}");
+  } catch {
+    projectDetails = {};
+  }
+
+  if (anyApp.educationLevel || anyApp.academicLevel || anyApp.diplomaTitle) {
+    const edu = String(anyApp.educationLevel || anyApp.academicLevel || anyApp.diplomaTitle || "").toLowerCase();
     if (edu.includes("master") || edu.includes("doctorat") || edu.includes("ingénieur") || edu.includes("bac+5")) {
       criteria.education = 22;
     } else if (edu.includes("licence") || edu.includes("bachelor") || edu.includes("bac+3")) {
@@ -183,8 +233,26 @@ function extractScoringCriteria(app: Application): ScoringCriteria {
     }
   }
 
-  if (anyApp.yearsOfExperience) {
-    const exp = anyApp.yearsOfExperience.toLowerCase();
+  if (kind === "etudes") {
+    const cycle = String(projectDetails.studyCycle || "").toLowerCase();
+    if (/doctorat|phd|master|mba/.test(cycle)) criteria.experience = 22;
+    else if (/licence|bachelor/.test(cycle)) criteria.experience = 18;
+    else if (cycle) criteria.experience = 14;
+    else criteria.experience = 10;
+    criteria.sector = typeof projectDetails.sector === "string" && projectDetails.sector.trim() ? 16 : 10;
+    criteria.ageAdjustment = projectDetails.fundingDeclared === true || projectDetails.hasFunding === true ? 9 : 5;
+  } else if (kind === "tourisme") {
+    const status = String(projectDetails.visitorStatus || "").toLowerCase();
+    if (/chef|entreprise|business/.test(status)) criteria.experience = 20;
+    else if (/employe|salarie/.test(status)) criteria.experience = 16;
+    else if (status) criteria.experience = 12;
+    else criteria.experience = 8;
+    const reason = String(projectDetails.visitReason || "").trim();
+    criteria.sector = reason.length >= 20 ? 16 : reason.length >= 8 ? 12 : 8;
+    criteria.education = criteria.education; // documents de base déjà scorés
+    criteria.ageAdjustment = projectDetails.fundingDeclared === true ? 9 : 5;
+  } else if (anyApp.yearsOfExperience) {
+    const exp = String(anyApp.yearsOfExperience).toLowerCase();
     if (exp.includes("5") || exp.includes("plus") || exp.includes("10") || exp.includes("supérieur")) {
       criteria.experience = 24;
     } else if (exp.includes("3") || exp.includes("4")) {
@@ -196,13 +264,13 @@ function extractScoringCriteria(app: Application): ScoringCriteria {
     }
   }
 
-  if (anyApp.frenchLevel || anyApp.englishLevel) {
-    const lang = ((anyApp.frenchLevel || "") + " " + (anyApp.englishLevel || "")).toLowerCase();
+  if (anyApp.frenchLevel || anyApp.englishLevel || anyApp.languageSkills) {
+    const lang = ((anyApp.frenchLevel || "") + " " + (anyApp.englishLevel || "") + " " + (anyApp.languageSkills || "")).toLowerCase();
     if (lang.includes("bilingue") || lang.includes("courant") || lang.includes("avancé") || lang.includes("c1") || lang.includes("c2")) {
       criteria.language = 18;
     } else if (lang.includes("intermédiaire") || lang.includes("b2")) {
       criteria.language = 14;
-    } else {
+    } else if (lang.trim()) {
       criteria.language = 9;
     }
   }
@@ -215,41 +283,136 @@ function extractScoringCriteria(app: Application): ScoringCriteria {
  */
 export function generateAllDestinationScores(app: Application): DestinationScore[] {
   const criteria = extractScoringCriteria(app);
+  const kind = reportProjectKindOf(app);
   const destinations = ["pologne", "canada", "allemagne", "luxembourg", "royaume_uni", "etats_unis"];
 
-  return destinations.map(dest => calculateDestinationScore(criteria, dest)).sort((a, b) => b.score - a.score);
+  return destinations.map((dest) => calculateDestinationScore(criteria, dest, kind)).sort((a, b) => b.score - a.score);
+}
+
+function reportProjectKindOf(app: Application): EvaluationProjectKind {
+  const anyApp = app as { visaType?: string | null; projectType?: string | null; scoringDetails?: string | null };
+  let scoringProject: string | null = null;
+  try {
+    const parsed = JSON.parse(anyApp.scoringDetails || "{}");
+    scoringProject = typeof parsed?.projectType === "string" ? parsed.projectType : typeof parsed?.adminDraft?.projectType === "string" ? parsed.adminDraft.projectType : null;
+  } catch {
+    scoringProject = null;
+  }
+  return resolveEvaluationProjectKind(anyApp.projectType, anyApp.visaType, scoringProject);
 }
 
 /**
- * Génère des recommandations personnalisées basées sur les critères du candidat
+ * Génère des recommandations personnalisées selon le type de projet (travail / études / tourisme).
  */
 export function generatePersonalizedRecommendations(criteria: ScoringCriteria, app: Application): string[] {
+  const kind = reportProjectKindOf(app);
   const recommendations: string[] = [];
+  const anyApp = app as { priorVisaRefusal?: boolean | null };
 
-  if (criteria.language < 14) {
-    recommendations.push("Amélioration linguistique : Votre score en langues peut être optimisé en passant un test officiel certifié (TCF Canada, IELTS ou TEF) pour atteindre un niveau B2/C1, ce qui ajouterait jusqu'à +8 points à votre évaluation globale.");
+  if (kind === "etudes") {
+    if (criteria.education < 16) {
+      recommendations.push("Dossier académique : consolidez diplômes, relevés de notes et, si possible, une lettre d’admission ou de pré-admission de l’établissement visé.");
+    } else {
+      recommendations.push("Parcours académique solide : vos diplômes constituent une base crédible pour un projet d’études à l’étranger.");
+    }
+    if (criteria.language < 14) {
+      recommendations.push("Langue d’études : un test officiel (IELTS, TOEFL, TCF/TEF) au niveau exigé par l’établissement renforce nettement l’admissibilité.");
+    } else {
+      recommendations.push("Niveau linguistique favorable pour suivre une formation dans la langue d’enseignement déclarée.");
+    }
+    recommendations.push("Financement : préparez un plan de ressources (relevés, prise en charge, bourse) cohérent avec les frais de scolarité et de séjour.");
+    recommendations.push("Cycle visé : alignez diplômes, relevés et lettre de motivation sur le type de cycle demandé (licence, master, formation pro…).");
+    recommendations.push("Projet d’études : rédigez une lettre de motivation claire (choix de la formation, lien avec votre parcours, intention de retour ou de suite de carrière).");
+  } else if (kind === "tourisme") {
+    recommendations.push("Statut déclaré : adaptez les justificatifs selon que vous êtes chef d’entreprise, employé ou particulier (activité, salaires, ou situation personnelle).");
+    recommendations.push("Itinéraire : précisez dates, hébergement et programme de séjour de façon cohérente et vérifiable.");
+    recommendations.push("Attaches au pays de résidence : documents d’emploi, activité, famille ou biens démontrant l’intention de retour.");
+    if (criteria.language < 10) {
+      recommendations.push("Communication : un niveau de langue suffisant pour le séjour (ou un accompagnement) facilite les contrôles consulaires.");
+    }
+    recommendations.push("Ressources de voyage : preuves de fonds couvrant transport, hébergement et frais de séjour pour toute la durée déclarée.");
   } else {
-    recommendations.push("Compétences linguistiques solides : Votre profil linguistique est un atout majeur pour les programmes de mobilité ciblés.");
+    if (criteria.language < 14) {
+      recommendations.push("Amélioration linguistique : un test officiel certifié (TCF Canada, IELTS ou TEF) au niveau B2/C1 peut renforcer votre évaluation globale.");
+    } else {
+      recommendations.push("Compétences linguistiques solides : votre profil linguistique est un atout pour les programmes de mobilité professionnelle.");
+    }
+    if (criteria.experience < 18) {
+      recommendations.push("Expérience professionnelle : consolidez certificats de travail et lettres de recommandation pour valoriser votre parcours auprès des employeurs.");
+    } else {
+      recommendations.push("Expérience professionnelle confirmée : votre parcours constitue une base solide pour les critères de recrutement internationaux.");
+    }
+    if (criteria.education < 16) {
+      recommendations.push("Évaluation des diplômes (WES / ENIC-NARIC) : une attestation d’équivalence officielle renforce l’admissibilité pour les voies d’immigration qualifiée.");
+    } else {
+      recommendations.push("Niveau de formation académique compétitif : vos diplômes répondent aux standards des destinations partenaires.");
+    }
+    recommendations.push("CV à jour : pour un projet travail, un CV détaillé et cohérent avec le métier visé est indispensable au montage du dossier.");
   }
 
-  if (criteria.experience < 18) {
-    recommendations.push("Expérience professionnelle : Consolider vos certificats de travail et formaliser des lettres de recommandation détaillées permettra de valoriser davantage vos années d'expérience auprès des employeurs partenaires.");
-  } else {
-    recommendations.push("Expérience professionnelle confirmée : Votre parcours professionnel constitue une base excellente pour les critères de recrutement internationaux.");
-  }
-
-  if (criteria.education < 16) {
-    recommendations.push("Évaluation des diplômes (WES / ENIC-NARIC) : L'obtention d'une attestation d'équivalence officielle pour vos diplômes renforcera l'admissibilité de votre dossier pour les voies d'immigration qualifiée.");
-  } else {
-    recommendations.push("Niveau de formation académique compétitif : Vos diplômes répondent aux standards requis pour nos destinations partenaires.");
-  }
-
-  const anyApp = app as any;
   if (anyApp.priorVisaRefusal) {
-    recommendations.push("Antécédents de visa : Une attention particulière sera portée sur la rédaction d'une lettre explicative détaillée pour motiver les antécédents de refus et démontrer un changement significatif de situation.");
+    recommendations.push("Antécédents de visa : préparez une lettre explicative factuelle démontrant l’évolution de votre situation depuis le refus.");
   }
 
   return recommendations;
+}
+
+function criteriaRowsForKind(
+  kind: EvaluationProjectKind,
+  criteria: ScoringCriteria,
+  adminDraft: { criteria?: { education?: number; experience?: number; languages?: number; market?: number; profile?: number } },
+  hasDestinationModel: boolean,
+): Array<[string, number, number]> {
+  if (hasDestinationModel) {
+    if (kind === "etudes") {
+      return [
+        ["Formation et diplôme", adminDraft.criteria?.education ?? 0, 25],
+        ["Projet d’études / motivation", adminDraft.criteria?.profile ?? 0, 25],
+        ["Langues déclarées", adminDraft.criteria?.languages ?? 0, 20],
+        ["Financement indicatif", adminDraft.criteria?.market ?? 0, 20],
+        ["Cohérence du parcours", adminDraft.criteria?.experience ?? 0, 10],
+      ];
+    }
+    if (kind === "tourisme") {
+      return [
+        ["Cohérence du séjour", adminDraft.criteria?.profile ?? 0, 25],
+        ["Attaches et intention de retour", adminDraft.criteria?.experience ?? 0, 25],
+        ["Ressources de voyage", adminDraft.criteria?.market ?? 0, 25],
+        ["Langues / autonomie", adminDraft.criteria?.languages ?? 0, 15],
+        ["Documents de base", adminDraft.criteria?.education ?? 0, 10],
+      ];
+    }
+    return [
+      ["Formation et diplôme", adminDraft.criteria?.education ?? 0, 20],
+      ["Expérience professionnelle", adminDraft.criteria?.experience ?? 0, 20],
+      ["Langues déclarées", adminDraft.criteria?.languages ?? 0, 15],
+      ["Adéquation indicative marché", adminDraft.criteria?.market ?? 0, 30],
+      ["Profil et cohérence du projet", adminDraft.criteria?.profile ?? 0, 15],
+    ];
+  }
+  if (kind === "etudes") {
+    return [
+      ["Formation académique", criteria.education, 30],
+      ["Projet d’études", criteria.sector, 25],
+      ["Compétences linguistiques", criteria.language, 25],
+      ["Capacité de financement", criteria.ageAdjustment, 20],
+    ];
+  }
+  if (kind === "tourisme") {
+    return [
+      ["Cohérence du séjour", criteria.sector, 30],
+      ["Attaches socio-économiques", criteria.experience, 25],
+      ["Ressources de voyage", criteria.education, 25],
+      ["Autonomie linguistique", criteria.language, 20],
+    ];
+  }
+  return [
+    ["Formation académique", criteria.education, 25],
+    ["Expérience professionnelle", criteria.experience, 25],
+    ["Compétences linguistiques", criteria.language, 20],
+    ["Secteur en demande", criteria.sector, 20],
+    ["Ajustement marché & métier", criteria.ageAdjustment, 10],
+  ];
 }
 
 /**
@@ -267,7 +430,13 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
   const scores = generateAllDestinationScores(app);
   const topScore = scores[0];
   const criteria = extractScoringCriteria(app);
-  let adminDraft: { destination?: string; modelLabel?: string; criteria?: { education?: number; experience?: number; languages?: number; market?: number; profile?: number }; finalScore?: number; verdict?: string; strengths?: string[]; weaknesses?: string[]; recommendations?: string[]; checklist?: string[]; advisorValidated?: boolean } = {};
+  const projectKind = reportProjectKindOf(app);
+  const projectKindLabel =
+    projectKind === "etudes" ? "Visa études"
+      : projectKind === "tourisme" ? "Visa tourisme / visite"
+        : projectKind === "travail" ? "Visa travail"
+          : "Projet de mobilité";
+  let adminDraft: { bilanHtml?: string; destination?: string; modelLabel?: string; criteria?: { education?: number; experience?: number; languages?: number; market?: number; profile?: number }; finalScore?: number; verdict?: string; strengths?: string[]; weaknesses?: string[]; recommendations?: string[]; checklist?: string[]; advisorValidated?: boolean } = {};
   try {
     const parsed = JSON.parse(app.scoringDetails || "{}");
     adminDraft = parsed.adminDraft || {};
@@ -275,6 +444,21 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
     adminDraft = {};
   }
   const customIntro = options.introMessage ?? app.evaluationDeliveryMessage;
+  // Bilan libre (collé par l'administrateur) : mis en forme à l'identité de l'agence, identique dans l'aperçu, l'espace candidat, le PDF et l'e-mail.
+  if (typeof adminDraft.bilanHtml === "string" && adminDraft.bilanHtml.trim().length > 0) {
+    const profile = resolveEvaluationProfile({ visaType: app.visaType, projectType: projectKind === "autre" ? null : projectKind });
+    return renderBilanFragment({
+      html: resolveBilanVariables(adminDraft.bilanHtml, bilanVariablesFrom({ fullName: app.fullName, dossierNumber: app.dossierNumber, destination: app.destination, visaLabel: PROFILE_DEFS[profile].label, visaType: app.visaType, paymentAmount: app.paymentAmount, score: Number.isFinite(Number(adminDraft.finalScore)) ? Number(adminDraft.finalScore) : null, ...draftExtras(adminDraft) })),
+      title: PROFILE_DEFS[profile].reportTitle,
+      candidateName: app.fullName,
+      reference: evaluationDisplayReference(app),
+      projectLabel: PROFILE_DEFS[profile].label,
+      destination: app.destination,
+      score: Number.isFinite(Number(adminDraft.finalScore)) ? Number(adminDraft.finalScore) : null,
+      introHtml: customIntro ? sanitizeRichTextHtml(customIntro) : null,
+      identity: bilanIdentityFrom({ candidateId: (app as { candidateId?: number | null }).candidateId, email: app.email, phone: (app as { whatsappNumber?: string | null }).whatsappNumber, advisor: draftExtras(adminDraft).advisorName || app.adminAssignedTo }),
+    });
+  }
   const clientText = (value: string) => sanitizeClientCommunicationText(value);
   const recommendations = Array.isArray(adminDraft.recommendations) && adminDraft.recommendations.length
     ? adminDraft.recommendations
@@ -282,21 +466,41 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
   const hasDestinationModel = Boolean(adminDraft.criteria && adminDraft.modelLabel);
   const selectedDestination = adminDraft.modelLabel || app.destination || "Évaluation préliminaire";
   const selectedScore = adminDraft.finalScore ?? app.scoringTotal ?? 0;
-  const renderedCriteria = hasDestinationModel
-    ? [
-      ["Formation et diplôme", adminDraft.criteria?.education ?? 0, 20],
-      ["Expérience professionnelle", adminDraft.criteria?.experience ?? 0, 20],
-      ["Langues déclarées", adminDraft.criteria?.languages ?? 0, 15],
-      ["Adéquation indicative marché", adminDraft.criteria?.market ?? 0, 30],
-      ["Profil et cohérence du projet", adminDraft.criteria?.profile ?? 0, 15],
-    ] as Array<[string, number, number]>
-    : [
-      ["Formation académique", criteria.education, 25],
-      ["Expérience professionnelle", criteria.experience, 25],
-      ["Compétences linguistiques", criteria.language, 20],
-      ["Secteur en demande", criteria.sector, 20],
-      ["Ajustement marché & métier", criteria.ageAdjustment, 10],
-    ] as Array<[string, number, number]>;
+  const renderedCriteria = criteriaRowsForKind(projectKind, criteria, adminDraft, hasDestinationModel);
+  const projectDetails = (() => {
+    try {
+      const anyApp = app as { projectDetailsJson?: string | null };
+      return JSON.parse(anyApp.projectDetailsJson || "{}") as Record<string, unknown>;
+    } catch {
+      return {} as Record<string, unknown>;
+    }
+  })();
+  const studyCycleLabel = typeof projectDetails.studyCycle === "string" && projectDetails.studyCycle in STUDY_CYCLE_LABELS
+    ? STUDY_CYCLE_LABELS[projectDetails.studyCycle as StudyCycle]
+    : null;
+  const visitorStatusLabel = typeof projectDetails.visitorStatus === "string" && projectDetails.visitorStatus in VISITOR_STATUS_LABELS
+    ? VISITOR_STATUS_LABELS[projectDetails.visitorStatus as VisitorStatus]
+    : null;
+  const evaluationFrame =
+    projectKind === "etudes"
+      ? `Cadre études : historique scolaire, diplômes et relevés${studyCycleLabel ? ` · cycle visé : ${studyCycleLabel}` : ""}${typeof projectDetails.sector === "string" && projectDetails.sector.trim() ? ` · filière : ${String(projectDetails.sector).trim()}` : ""}.`
+      : projectKind === "tourisme"
+        ? `Cadre visiteurs : formulaire simplifié${visitorStatusLabel ? ` · statut : ${visitorStatusLabel}` : ""}${typeof projectDetails.visitReason === "string" && projectDetails.visitReason.trim() ? ` · motif : ${String(projectDetails.visitReason).trim()}` : ""}.`
+        : `Cadre travail : profil professionnel et CV actualisé${typeof projectDetails.sector === "string" && projectDetails.sector.trim() ? ` · métier : ${String(projectDetails.sector).trim()}` : ""}.`;
+  const strategicOrientation =
+    projectKind === "etudes"
+      ? "Cette orientation études est préliminaire : elle nécessite la vérification du cycle visé, de l’admission, du financement et des pièces académiques (diplômes et relevés)."
+      : projectKind === "tourisme"
+        ? "Cette orientation visiteurs est préliminaire : elle s’appuie sur le statut déclaré (chef d’entreprise, employé ou particulier), l’itinéraire et les preuves d’attaches / de ressources."
+        : hasDestinationModel
+          ? "Cette orientation travail est préliminaire et nécessite la vérification du CV, des pièces, des conditions de programme et, le cas échéant, d’une offre d’employeur."
+          : topScore.description;
+  const legalFrame =
+    projectKind === "etudes"
+      ? "Nos démarches s'effectuent en stricte conformité avec les lois sur l'immigration. Notre rôle se limite à l'ingénierie documentaire, au conseil technique et à la préparation du dossier d’études. L'admission académique et l'octroi du visa restent la compétence souveraine de l’établissement et des autorités étatiques."
+      : projectKind === "tourisme"
+        ? "Nos démarches s'effectuent en stricte conformité avec les lois sur l'immigration. Notre rôle se limite à l'ingénierie documentaire et à la préparation du dossier de visite. L'octroi du visa ou de l’autorisation de séjour reste la compétence souveraine des autorités étatiques."
+        : "Nos démarches s'effectuent en stricte conformité avec les lois sur l'immigration. Notre rôle se limite à l'ingénierie documentaire, au conseil technique, à la préparation rigoureuse de votre dossier administratif et à la mise en relation avec les opportunités du marché. L'octroi final des visas et permis de travail reste la compétence souveraine des autorités étatiques.";
 
   // Barre de progression visuelle
   const progressBar = (score: number): string => {
@@ -351,12 +555,13 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
       <img class="brand-logo" src="https://www.3mtravelagency.com/logo-3m-hd.webp" alt="Logo 3M TRAVEL AGENCY" />
       <p class="brand-name">3M Travel Agency SARL</p>
       <h1>📋 Indice de Faisabilité Préliminaire (IFP 3M)</h1>
-      <p>Évaluation indicative d’agence — 3M TRAVEL AGENCY</p>
+      <p>Évaluation indicative d’agence — ${escapeReportHtml(projectKindLabel)} — 3M TRAVEL AGENCY</p>
     </div>
     
     <div class="body">
       <p>Bonjour <strong>${escapeReportHtml(app.fullName)}</strong>,</p>
-      <p>Nous avons le plaisir de vous transmettre les conclusions de notre comité d'admission concernant l'analyse approfondie de votre dossier de candidature pour notre programme de mobilité internationale.</p>
+      <p>Nous vous transmettons les conclusions de notre analyse préliminaire pour votre projet <strong>${escapeReportHtml(projectKindLabel)}</strong>${app.destination ? ` vers <strong>${escapeReportHtml(String(app.destination))}</strong>` : ""}.</p>
+      <div class="recommendation"><p><strong>Type d’évaluation :</strong> ${escapeReportHtml(evaluationFrame)}</p></div>
       ${customIntro ? `<div class="recommendation"><p>${escapeReportHtml(clientText(customIntro)).replace(/\n/g, "<br/>")}</p></div>` : ""}
       
       <div class="section">
@@ -390,9 +595,9 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
       <div class="section">
         <div class="section-title">🎯 RECOMMANDATION STRATÉGIQUE & PLAN D'ACTION</div>
         <div class="recommendation">
-          <p><strong>Orientation à examiner :</strong> ${hasDestinationModel ? escapeReportHtml(selectedDestination) : DESTINATIONS[topScore.destination as keyof typeof DESTINATIONS]?.name || escapeReportHtml(topScore.destination)}</p>
-          <p>${hasDestinationModel ? "Cette orientation est préliminaire et nécessite la vérification des pièces, des conditions de programme et, le cas échéant, d’une offre d’employeur." : topScore.description}</p>
-          <p style="margin-top: 10px;">La décision finale relève toujours de l’autorité compétente, du programme visé et, lorsque nécessaire, de l’employeur. Ce bilan ne constitue pas une garantie de visa, d’emploi ou d’admission.</p>
+          <p><strong>Orientation à examiner (${escapeReportHtml(projectKindLabel)}) :</strong> ${hasDestinationModel ? escapeReportHtml(selectedDestination) : DESTINATIONS[topScore.destination as keyof typeof DESTINATIONS]?.name || escapeReportHtml(topScore.destination)}</p>
+          <p>${strategicOrientation}</p>
+          <p style="margin-top: 10px;">La décision finale relève toujours de l’autorité compétente et du programme visé. Ce bilan ne constitue pas une garantie de visa, d’emploi, d’admission ou de séjour.</p>
         </div>
         
         <div style="margin-top: 20px;">
@@ -406,7 +611,7 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
       
       <div class="section">
         <div class="section-title">⚙️ CADRE JURIDIQUE</div>
-        <p>Nos démarches s'effectuent en stricte conformité avec les lois sur l'immigration. Notre rôle se limite à l'ingénierie documentaire, au conseil technique, à la préparation rigoureuse de votre dossier administratif et à la mise en relation avec les opportunités du marché. L'octroi final des visas et permis de travail reste la compétence souveraine des autorités étatiques.</p>
+        <p>${legalFrame}</p>
       </div>
       
       <div class="section">
@@ -438,12 +643,42 @@ export function generateEvaluationReportText(app: Application): string {
   const scores = generateAllDestinationScores(app);
   const topScore = scores[0];
   const criteria = extractScoringCriteria(app);
+  const kind = reportProjectKindOf(app);
+  const kindLabel =
+    kind === "etudes" ? "Visa études"
+      : kind === "tourisme" ? "Visa visiteurs / tourisme"
+        : kind === "travail" ? "Visa travail"
+          : "Projet de mobilité";
+  const criteriaLines =
+    kind === "etudes"
+      ? [
+          `- Formation académique (/25) : ${criteria.education} / 25`,
+          `- Projet d’études / cycle (/25) : ${criteria.experience} / 25`,
+          `- Langue d’études (/20) : ${criteria.language} / 20`,
+          `- Filière / cohérence (/20) : ${criteria.sector} / 20`,
+          `- Financement indicatif (/10) : ${criteria.ageAdjustment} / 10`,
+        ]
+      : kind === "tourisme"
+        ? [
+            `- Documents de base (/25) : ${criteria.education} / 25`,
+            `- Statut déclaré (/25) : ${criteria.experience} / 25`,
+            `- Autonomie linguistique (/20) : ${criteria.language} / 20`,
+            `- Motif / cohérence du séjour (/20) : ${criteria.sector} / 20`,
+            `- Ressources de voyage (/10) : ${criteria.ageAdjustment} / 10`,
+          ]
+        : [
+            `- Formation académique (/25) : ${criteria.education} / 25`,
+            `- Expérience professionnelle (/25) : ${criteria.experience} / 25`,
+            `- Compétences linguistiques (/20) : ${criteria.language} / 20`,
+            `- Secteur en demande (/20) : ${criteria.sector} / 20`,
+            `- Ajustement marché & métier (/10) : ${criteria.ageAdjustment} / 10`,
+          ];
 
-  return `Rapport d'Évaluation Professionnelle — 3M TRAVEL AGENCY
+  return `Rapport d'Évaluation — ${kindLabel} — 3M TRAVEL AGENCY
 
 Bonjour ${app.fullName},
 
-Nous avons le plaisir de vous transmettre les conclusions de notre comité d'admission concernant l'analyse approfondie de votre dossier de candidature pour notre programme de mobilité internationale.
+Nous vous transmettons les conclusions de notre analyse préliminaire pour votre projet ${kindLabel}.
 
 ---
 
@@ -460,11 +695,7 @@ ${scores
 
 📈 ANALYSE DE VOS CRITÈRES
 
-- Formation académique (/25) : ${criteria.education} / 25
-- Expérience professionnelle (/25) : ${criteria.experience} / 25
-- Compétences linguistiques (/20) : ${criteria.language} / 20
-- Secteur en demande (/20) : ${criteria.sector} / 20
-- Ajustement marché & métier (/10) : ${criteria.ageAdjustment} / 10
+${criteriaLines.join("\n")}
 
 SCORE TOTAL : ${criteria.education + criteria.experience + criteria.language + criteria.sector + criteria.ageAdjustment} / 100
 
@@ -477,13 +708,13 @@ Score : ${topScore.score}/100 (${topScore.badge.toUpperCase()})
 
 ${topScore.description}
 
-Notre analyse stratégique identifie cette destination comme offrant les meilleures perspectives pour votre profil, avec des procédures simplifiées et des opportunités réelles d'établissement ou de résidence permanente.
+Ce bilan est indicatif et ne constitue pas une garantie de visa, d’emploi, d’admission ou de séjour.
 
 ---
 
 ⚙️ CADRE JURIDIQUE
 
-Nos démarches s'effectuent en stricte conformité avec les lois sur l'immigration. Notre rôle se limite à l'ingénierie documentaire, au conseil technique, à la préparation rigoureuse de votre dossier administratif et à la mise en relation avec les opportunités du marché. L'octroi final des visas et permis de travail reste la compétence souveraine des autorités étatiques.
+Nos démarches s'effectuent en stricte conformité avec les lois sur l'immigration. Notre rôle se limite à l'ingénierie documentaire et à la préparation du dossier. L'octroi final reste la compétence souveraine des autorités étatiques.
 
 ---
 

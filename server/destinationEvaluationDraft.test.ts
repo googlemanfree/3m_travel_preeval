@@ -43,4 +43,27 @@ describe("brouillon IA par destination", () => {
     expect(canDeliverEvaluation(false, "not_required", true)).toBe(true);
     expect(canDeliverEvaluation(true, "approved", true)).toBe(true);
   });
+
+  it("adapte le brouillon IA au visa études (checklist sans CV employeur)", async () => {
+    const draft = await generateDestinationEvaluationDraft({
+      fullName: "Étudiante Démonstration",
+      destination: "Canada",
+      academicLevel: "licence",
+      diplomaTitle: "Licence en informatique",
+      fieldOfStudy: "Informatique",
+      experienceYears: 0,
+      currentJobTitle: null,
+      jobSector: null,
+      languageSkills: "Français courant",
+      nationality: "Camerounaise",
+      age: 22,
+      projectType: "etudes",
+      visaType: "canada_etude",
+    }, "canada");
+
+    expect(draft.modelLabel).toMatch(/études/i);
+    expect(draft.checklist).toContain("Diplômes et relevés de notes");
+    expect(draft.checklist).toContain("Cycle / filière visés");
+    expect(draft.checklist).not.toContain("CV actualisé");
+  });
 });

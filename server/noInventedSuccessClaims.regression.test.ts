@@ -21,6 +21,14 @@ describe("aucune statistique de réussite inventée sur le site public", () => {
     expect(router).not.toMatch(/averageProcessingTime/);
   });
 
+  it("aucune formule payante n'est vendue comme « visa garanti » (page Luxembourg et modèle de protocole)", () => {
+    for (const file of ["client/src/data/countryProcedures/luxembourg.ts", "shared/agreementProtocolCountryTemplates.ts"]) {
+      expect(read(file), file).not.toMatch(/(?:Sortie de )?Visa Garanti/);
+    }
+    // La formule existe toujours : paiement du solde seulement après l'obtention du visa.
+    expect(read("client/src/data/countryProcedures/luxembourg.ts")).toContain("Paiement à l'obtention du visa (+25%)");
+  });
+
   it("les pages e-Visa décrivent un contrôle avant soumission, pas une « garantie »", () => {
     expect(read("client/src/pages/Evisa.tsx")).not.toContain("Garantie Conformité");
     expect(read("client/src/pages/EvisaDetailPage.tsx")).not.toContain("Garantie 3M TRAVEL AGENCY");

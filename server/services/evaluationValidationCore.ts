@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import { CV_MISSING_FOR_PUBLICATION } from "../../shared/evaluationCv";
 import { evaluationRequiresCv } from "../../shared/evaluationVisaCv";
+import { PROFILE_DEFS, resolveEvaluationProfile, type EvaluationProfile } from "../../shared/evaluationProfiles";
 import {
   ADMIN_DRAFT_BADGE,
   AI_DRAFT_LABEL,
@@ -23,6 +24,7 @@ import {
   nextWorkflowStatus,
   renderNotificationEmail,
   resolveScore,
+  scoresAboveProfileMax,
   versionFromAiDraft,
   type AdminEvaluationVersion,
   type AiEvaluationDraft,
@@ -165,6 +167,8 @@ export type EvaluationContext = {
   /** Type de visa / projet — le CV n’est obligatoire que pour le travail. */
   visaType: string | null;
   projectType: string | null;
+  /** Visa ou programme choisi dans le formulaire dynamique : précise si le CV est exigé. */
+  programId?: string | null;
   /** CV au dossier : obligatoire pour visa travail, optionnel sinon. */
   cvOnFile: boolean;
   cvFileName: string | null;
@@ -236,6 +240,16 @@ function parseVersion(input: unknown): AdminEvaluationVersion {
   throw new ValidationFlowError("INVALID_INPUT", `Champ « ${issue?.path.join(".") || "version"} » invalide : ${issue?.message ?? "valeur incorrecte"}.`);
 }
 
+/** Profil du bilan déduit de la demande du candidat : le programme choisi fait foi, puis le projet, puis le visa. */
+export function contextProfile(context: Pick<EvaluationContext, "projectType" | "visaType" | "programId">): EvaluationProfile {
+  return resolveEvaluationProfile({ projectType: context.projectType, visaType: context.visaType, programId: context.programId });
+}
+
+/** Version dont le profil est toujours renseigné : celui choisi par l'administrateur, sinon celui de la demande. */
+function withProfile(version: AdminEvaluationVersion, context: Pick<EvaluationContext, "projectType" | "visaType" | "programId">): AdminEvaluationVersion {
+  return version.profile ? version : { ...version, profile: contextProfile(context) };
+}
+
 function buildReport(version: AdminEvaluationVersion, meta: { candidateName: string; validatedAt: string }): ClientReport {
   try {
     return buildClientReport(version, meta);
@@ -246,11 +260,22 @@ function buildReport(version: AdminEvaluationVersion, meta: { candidateName: str
 }
 
 /** Éléments sans lesquels un rapport client n'aurait pas de sens (aucune valeur n'est inventée pour les combler). */
-export function missingPublishableFields(version: AdminEvaluationVersion): string[] {
+export function missingPublishableFields(version: AdminEvaluationVersion, requestedCountry?: string | null): string[] {
   const missing: string[] = [];
   if (!version.priorityCountry.trim() || sameCountry(version.priorityCountry, PLACEHOLDER_COUNTRY)) missing.push("Pays prioritaire");
   if (!version.profileSummary.trim()) missing.push("Résumé du profil");
   if (!version.route) missing.push("Voie principale recommandée");
+  // Écarts assumés : possibles, mais jamais sans motif écrit (interne, jamais montré au candidat).
+  const requested = (requestedCountry ?? "").trim();
+  if (requested && !sameCountry(version.priorityCountry, requested) && !(version.countryJustification ?? "").trim()) {
+    missing.push(`Justification du pays évalué (le candidat a demandé « ${requested} »)`);
+  }
+  if (version.finalStatus) {
+    const resolution = resolveScore({ scores: version.scores, totalOverride: version.totalOverride, finalStatus: version.finalStatus, profile: version.profile ?? "travail" });
+    if (version.finalStatus !== resolution.suggestedStatus && !(version.statusJustification ?? "").trim()) {
+      missing.push("Justification interne du statut final (différent du statut suggéré par le score)");
+    }
+  }
   return missing;
 }
 
@@ -305,6 +330,7 @@ export async function recordAiDraft(deps: ValidationDeps, evaluationId: number, 
   const adminEdited = current.adminVersionUpdatedBy !== null;
   const nextStatus = current.workflowStatus === "dossier_recu" ? (nextWorkflowStatus("dossier_recu", "generate_ai_draft") ?? current.workflowStatus) : current.workflowStatus;
   const chosenCountry = context.candidateCountry.trim();
+  const profile = contextProfile(context);
 
   let patch: ValidationCasePatch;
   let audit: NonNullable<TransitionEffects["audit"]>;
@@ -314,7 +340,7 @@ export async function recordAiDraft(deps: ValidationDeps, evaluationId: number, 
     patch = {
       workflowStatus: nextStatus,
       aiDraftError: error,
-      adminVersion: current.adminVersion ?? blankAdminVersion({ priorityCountry: chosenCountry || PLACEHOLDER_COUNTRY, candidateName: context.candidateName, evaluationDate }),
+      adminVersion: current.adminVersion ?? blankAdminVersion({ priorityCountry: chosenCountry || PLACEHOLDER_COUNTRY, candidateName: context.candidateName, evaluationDate, profile }),
       adminVersionUpdatedAt: current.adminVersion ? current.adminVersionUpdatedAt : now,
     };
     audit = { adminEmail: SYSTEM_ACTOR, action: "structured_ai_failed", note: error };
@@ -334,8 +360,8 @@ export async function recordAiDraft(deps: ValidationDeps, evaluationId: number, 
       warnings.push({ field: finding.field, message: `Formulation à revoir avant publication : ${finding.terms.map((term) => `« ${term} »`).join(", ")}.` });
     }
 
-    const seeded = versionFromAiDraft(draft, { evaluationDate });
-    const email = defaultNotificationEmail({ candidateName: context.candidateName, priorityCountry: draft.priorityCountry });
+    const seeded = versionFromAiDraft(draft, { evaluationDate, profile });
+    const email = defaultNotificationEmail({ candidateName: context.candidateName, priorityCountry: draft.priorityCountry, profile });
     patch = {
       workflowStatus: nextStatus,
       aiDraft: draft,
@@ -362,7 +388,16 @@ export async function recordAiDraft(deps: ValidationDeps, evaluationId: number, 
  * vaut pour un contenu précis.
  */
 export async function saveAdminVersion(deps: ValidationDeps, admin: Actor, evaluationId: number, input: unknown): Promise<{ case: ValidationCase; changedFields: string[] }> {
-  const version = parseVersion(input);
+  const context = await requireContext(deps.store, evaluationId);
+  // Le profil de la demande (études, e-Visa…) s'applique d'office : les notes sont contrôlées sur le bon barème.
+  const raw = input && typeof input === "object" ? { ...(input as Record<string, unknown>), profile: (input as { profile?: unknown }).profile ?? contextProfile(context) } : input;
+  const parsed = parseVersion(raw);
+  const version = withProfile(parsed, context);
+  const profileDef = PROFILE_DEFS[version.profile ?? contextProfile(context)];
+  const above = scoresAboveProfileMax(version.scores, version.profile ?? contextProfile(context));
+  if (above.length > 0) {
+    throw new ValidationFlowError("INVALID_INPUT", `Note trop élevée pour un bilan « ${profileDef.label} » : ${above.map((entry) => `${entry.label} (${entry.value} / ${entry.max})`).join(", ")}.`);
+  }
   const current = await ensureCase(deps, evaluationId);
   const nextStatus = nextWorkflowStatus(current.workflowStatus, "save_draft");
   if (!nextStatus) {
@@ -556,16 +591,16 @@ export async function publishEvaluation(deps: ValidationDeps, admin: Actor, eval
   }
   const missing = missingChecklistItems(input.checklist, { sendEmail: input.sendEmail });
   if (missing.length > 0) throw new ValidationFlowError("CHECKLIST_INCOMPLETE", "Cochez toute la checklist avant de publier.", { missing });
-  const incomplete = missingPublishableFields(version);
+  const context = await requireContext(deps.store, evaluationId);
+  const incomplete = missingPublishableFields(version, context.candidateCountry);
   if (incomplete.length > 0) throw new ValidationFlowError("INCOMPLETE_VERSION", `Complétez avant de publier : ${incomplete.join(", ")}.`, { missing: incomplete });
 
-  const context = await requireContext(deps.store, evaluationId);
   // Visa travail : CV obligatoire. Autres visas : évaluation intelligente sans bloquer sur le CV.
-  if (evaluationRequiresCv(context.visaType, context.projectType) && !context.cvOnFile) {
+  if (evaluationRequiresCv(context.visaType, context.projectType, context.programId) && !context.cvOnFile) {
     throw new ValidationFlowError("CV_REQUIRED", `CV manquant : ${CV_MISSING_FOR_PUBLICATION}`);
   }
   const now = deps.now();
-  const report = buildReport(version, { candidateName: context.candidateName, validatedAt: isoDate(now) });
+  const report = buildReport(withProfile(version, context), { candidateName: context.candidateName, validatedAt: isoDate(now) });
   const rendered = input.sendEmail ? renderEmailFor(deps, version, context.candidateEmail) : null;
 
   // Règle historique du site : un résultat « préparation recommandée » exige deux administrateurs distincts.
@@ -715,6 +750,9 @@ export type AdminValidationView = {
   /** Score et statut proposés par l'IA : jamais modifiés après la génération. */
   aiScore: ScoreResolution | null;
   adminScore: ScoreResolution | null;
+  /** Profil du bilan en cours (études, travail, e-Visa…) et celui que suggère la demande du candidat. */
+  profile: EvaluationProfile;
+  suggestedProfile: EvaluationProfile;
   /** Aperçu exact de ce que verrait le candidat ; `previewError` explique pourquoi il n'est pas publiable. */
   clientPreview: ClientReport | null;
   previewError: string | null;
@@ -741,7 +779,8 @@ export async function buildAdminView(deps: ValidationDeps, evaluationId: number)
 async function assembleAdminView(deps: ValidationDeps, context: EvaluationContext, current: ValidationCase): Promise<AdminValidationView> {
   const evaluationId = current.evaluationId;
   const [cases, changes] = await Promise.all([deps.store.listCases(evaluationId), deps.store.listChanges(evaluationId)]);
-  const version = current.adminVersion;
+  const version = current.adminVersion ? withProfile(current.adminVersion, context) : null;
+  const effectiveProfile: EvaluationProfile = version?.profile ?? contextProfile(context);
 
   let clientPreview: ClientReport | null = null;
   let previewError: string | null = null;
@@ -753,7 +792,7 @@ async function assembleAdminView(deps: ValidationDeps, context: EvaluationContex
     }
   }
   const policy = deps.policy ?? DEFAULT_VALIDATION_POLICY;
-  const adminScore = version ? resolveScore({ scores: version.scores, totalOverride: version.totalOverride, finalStatus: version.finalStatus }) : null;
+  const adminScore = version ? resolveScore({ scores: version.scores, totalOverride: version.totalOverride, finalStatus: version.finalStatus, profile: effectiveProfile }) : null;
 
   return {
     labels: { aiDraft: AI_DRAFT_LABEL, adminBadge: ADMIN_DRAFT_BADGE, workflow: WORKFLOW_STATUS_LABELS[current.workflowStatus] },
@@ -781,11 +820,13 @@ async function assembleAdminView(deps: ValidationDeps, context: EvaluationContex
       emailError: current.emailError,
       emailReviewed: current.publishedChecklist?.emailReviewed === true,
     },
-    aiScore: current.aiDraft ? resolveScore({ scores: current.aiDraft.scores }) : null,
+    aiScore: current.aiDraft ? resolveScore({ scores: current.aiDraft.scores, profile: effectiveProfile }) : null,
+    profile: effectiveProfile,
+    suggestedProfile: contextProfile(context),
     adminScore,
     clientPreview,
     previewError,
-    incompleteFields: version ? missingPublishableFields(version) : ["Version administrateur"],
+    incompleteFields: version ? missingPublishableFields(version, context.candidateCountry) : ["Version administrateur"],
     needsSecondValidation: adminScore ? policy.requireSecondValidationFor.includes(adminScore.effectiveStatus) : false,
     versions: cases.map((entry) => ({ versionNumber: entry.versionNumber, workflowStatus: entry.workflowStatus, publishedAt: iso(entry.publishedAt), publishedBy: entry.publishedBy, createdAt: entry.createdAt.toISOString() })),
     changes: changes.map((change) => ({ versionNumber: change.versionNumber, adminEmail: change.adminEmail, field: change.field, oldValue: change.oldValue, newValue: change.newValue, createdAt: change.createdAt.toISOString() })),

@@ -8,6 +8,8 @@ import { EditDocumentCategoryModal } from "./EditDocumentCategoryModal";
 import { getCandidateToken } from "@/hooks/useCandidateAuth";
 import { categoryForRequirement, validateCandidateFile } from "@/lib/candidateUpload";
 import { imagesToPdf, isHeic, isImage, prepareFileForUpload } from "@/lib/prepareUpload";
+import { fetchWithRetry } from "@/lib/resilientFetch";
+import { documentHelpFor } from "@shared/clientCase";
 
 /** Valeur du choix « Autre document » dans la liste des pièces du pays et du visa. */
 export const OTHER_REQUIREMENT = "__other";
@@ -28,6 +30,8 @@ interface DocumentFile {
   warnings?: string[];
   notes?: string[];
   preparing?: boolean;
+  /** Message de reprise automatique (connexion instable) pendant l'envoi. */
+  retryNote?: string;
   file?: File;
 }
 
@@ -220,24 +224,28 @@ export function DocumentUploader({
       formData.append("fileType", file.category || "other");
       if (file.requirement && file.requirement !== OTHER_REQUIREMENT) formData.append("requirementLabel", file.requirement.slice(0, 200));
       if (clarificationRequestId) formData.append("clarificationRequestId", String(clarificationRequestId));
-      const response = await fetch("/api/candidate/upload", {
+      // Réseau instable : l'envoi est repris seul (1,5 s, 4 s puis 9 s), et attend le retour de la connexion si l'appareil est hors ligne.
+      const response = await fetchWithRetry(() => fetch("/api/candidate/upload", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
         credentials: "include",
+      }), {
+        onRetry: (attempt, total, reason) => setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, retryNote: reason === "offline" ? "Pas de connexion : l'envoi reprend dès son retour…" : `Connexion instable : nouvelle tentative ${attempt}/${total}…` } : f)),
       });
       setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, progress: 65 } : f));
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Erreur lors du dépôt du document.");
 
       const uploadedFile = { name: file.name, type: fileObj.type || (file.name.toLowerCase().endsWith(".png") ? "image/png" : "application/pdf"), size: file.size };
-      setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, status: "success" as const, progress: 100 } : f));
+      setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, status: "success" as const, progress: 100, retryNote: undefined } : f));
       setLastUploaded(uploadedFile);
       onUploadSuccess?.(uploadedFile);
     } catch (error) {
       setFiles((prev) => prev.map((f) => f.id === file.id ? {
         ...f,
         status: "error" as const,
+        retryNote: undefined,
         error: error instanceof Error ? error.message : "Erreur lors du dépôt du document",
       } : f));
     }
@@ -288,6 +296,20 @@ export function DocumentUploader({
             <option value={OTHER_REQUIREMENT}>Autre document (non listé)</option>
           </select>
           <p className="mt-1 text-xs text-gray-600">La liste correspond à votre destination et à votre type de visa. Le document sera rattaché à la pièce choisie dans votre checklist.</p>
+          {selectedRequirement && selectedRequirement !== OTHER_REQUIREMENT && (() => {
+            const help = documentHelpFor(selectedRequirement, typeof document !== "undefined" && document.documentElement.lang?.startsWith("en") ? "en" : "fr");
+            return (
+              <details className="mt-3 rounded-lg border border-blue-200 bg-blue-50/70 p-3 text-sm text-slate-800" open data-testid="document-help">
+                <summary className="cursor-pointer font-bold text-blue-950">Pourquoi cette pièce ? Exemples acceptés et refusés</summary>
+                <p className="mt-2">{help.why}</p>
+                <p className="mt-2 font-semibold text-emerald-800">✓ Accepté</p>
+                <ul className="list-disc pl-5">{help.good.map((line) => <li key={line}>{line}</li>)}</ul>
+                <p className="mt-2 font-semibold text-rose-800">✗ Souvent renvoyé</p>
+                <ul className="list-disc pl-5">{help.refused.map((line) => <li key={line}>{line}</li>)}</ul>
+                <p className="mt-2 text-xs text-slate-600">Conseil général : votre conseiller confirme la liste exacte pour votre dossier.</p>
+              </details>
+            );
+          })()}
         </div>
       )}
       {!clarificationRequestId && !hasRequirements && <div className="mb-6">
@@ -485,6 +507,7 @@ export function DocumentUploader({
                       )}
 
                       {file.preparing && <p className="mt-1 text-xs text-slate-600" role="status">Préparation de la photo…</p>}
+                      {file.status === "uploading" && file.retryNote && <p className="mt-1 text-xs font-semibold text-amber-800" role="status" data-testid="upload-retry-note">{file.retryNote}</p>}
                       {(file.notes ?? []).map((note) => <p key={note} className="mt-1 text-xs text-emerald-800">{note}</p>)}
                       {file.status === "pending" && (file.warnings ?? []).map((warning) => <p key={warning} className="mt-1 text-xs font-semibold text-amber-800" data-testid="file-warning">⚠ {warning} Vous pouvez l’envoyer quand même.</p>)}
                       {file.error && (
