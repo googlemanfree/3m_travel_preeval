@@ -53,8 +53,9 @@ describe("admin ops complet — câblage UI", () => {
     expect(cockpit).toContain("cockpit-relance-mail");
     expect(cockpit).toContain("cockpit-relance-whatsapp");
     expect(cockpit).toContain("cockpit-force-confirm-email");
-    expect(cockpit).toContain("buildMailtoRelance");
-    expect(cockpit).toContain("buildWhatsAppRelance");
+    expect(cockpit).toContain("sendDynamicRelance");
+    expect(cockpit).toContain("Envoyer e-mail");
+    expect(cockpit).not.toContain("buildMailtoRelance");
     expect(workspace).toContain("candidate360-message-templates");
     expect(workspace).toContain("candidate360-activation-history");
     expect(workspace).toContain("ADMIN_MESSAGE_TEMPLATES");

@@ -4,6 +4,7 @@ import { ArrowRight, BookOpen, Compass, FileText, Landmark, Search, ShieldCheck,
 import { listCountryResourcePages } from "@shared/countryResourceCatalog";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { GUIDES } from "@/data/guidesData";
 
 type Language = "fr" | "en";
 type Copy = Record<Language, string>;
@@ -34,6 +35,10 @@ const SITE_SECTIONS: SitemapSection[] = [
       { key: "about", label: { fr: "À propos", en: "About us" }, href: "/about", description: { fr: "Découvrir le rôle de conseil et les engagements de transparence.", en: "Learn about our advisory role and transparency commitments." } },
       { key: "pricing", label: { fr: "Tarifs", en: "Pricing" }, href: "/tarifs", description: { fr: "Comprendre les honoraires, frais tiers et modalités.", en: "Understand agency fees, third-party costs and terms." } },
       { key: "contact", label: { fr: "Contact", en: "Contact" }, href: "/contact", description: { fr: "Contacter l’agence ou consulter les coordonnées des bureaux.", en: "Contact the agency or view office details." } },
+      { key: "faq", label: { fr: "Questions fréquentes", en: "Frequently asked questions" }, href: "/faq", description: { fr: "Évaluation, frais, documents, délais, sécurité et visas : les réponses aux questions les plus posées.", en: "Assessment, fees, documents, timelines, security and visas: answers to the most common questions." } },
+      { key: "verify_agency", label: { fr: "Vérifier une agence", en: "Check an agency" }, href: "/verifier-une-agence", description: { fr: "Signes d’une offre frauduleuse et vérifications à faire avant de payer.", en: "Warning signs of a fraudulent offer and checks to make before paying." } },
+      { key: "guides", label: { fr: "Guides pratiques", en: "Practical guides" }, href: "/guides", description: { fr: "Documents, calendrier, financement, budget, premières démarches et vocabulaire.", en: "Documents, timeline, funding, budget, first steps and vocabulary (guides in French)." } },
+      ...GUIDES.map((guide) => ({ key: `guide_${guide.slug}`, label: { fr: guide.seoTitle, en: guide.seoTitle }, href: `/guides/${guide.slug}`, description: { fr: guide.description, en: guide.description } })),
       { key: "reviews", label: { fr: "Avis", en: "Reviews" }, href: "/avis", description: { fr: "Consulter ou soumettre un avis selon le circuit de modération.", en: "Read or submit a review through the moderation process." } },
     ],
   },
@@ -54,6 +59,11 @@ const SITE_SECTIONS: SitemapSection[] = [
     key: "resources", title: { fr: "Ressources et procédures", en: "Resources & procedures" }, description: { fr: "Les contenus utiles pour préparer un dossier documenté et retrouver les sources institutionnelles.", en: "Useful content to prepare a documented case and find institutional sources." }, icon: BookOpen,
     links: [
       { key: "resources", label: { fr: "Ressources", en: "Resources" }, href: "/ressources", description: { fr: "Parcourir la bibliothèque pays et les PDF publiés.", en: "Browse the country library and published PDFs." } },
+      { key: "budget_simulator", label: { fr: "Simulateur de budget de mobilité", en: "Mobility budget simulator" }, href: "/outils/budget-mobilite", description: { fr: "Outil gratuit : vos propres montants, un total par devise, imprimable.", en: "Free tool: your own amounts, a total per currency, printable." } },
+      { key: "whats_new", label: { fr: "Quoi de neuf", en: "What's new" }, href: "/quoi-de-neuf", description: { fr: "Changements de règles et de contenu, datés.", en: "Dated changes to rules and content." } },
+      { key: "mobility_orientation", label: { fr: "Quel parcours pour mon projet ?", en: "Which route for my project?" }, href: "/outils/parcours-mobilite", description: { fr: "Outil gratuit : cinq questions pour trouver la voie adaptée à votre projet.", en: "Free tool: five questions to find the route that fits your project." } },
+      { key: "document_checklist", label: { fr: "Liste des pièces à préparer", en: "Document checklist" }, href: "/outils/liste-de-pieces", description: { fr: "Outil gratuit : pièces par pays et par projet, à cocher.", en: "Free tool: documents by country and project, to tick off." } },
+      { key: "country_guides", label: { fr: "Guides visa par pays", en: "Visa guides by country" }, href: "/pays", description: { fr: "Étapes et liens officiels, publiés après relecture des sources.", en: "Steps and official links, published once sources are reviewed." } },
       ...listCountryResourcePages()
         .filter((page) => ["canada", "luxembourg", "france", "allemagne", "belgique", "emirats", "etats-unis", "royaume-uni"].includes(page.slug))
         .map((page) => ({
@@ -90,7 +100,9 @@ const SITE_SECTIONS: SitemapSection[] = [
       { key: "login", label: { fr: "Connexion candidat", en: "Candidate sign-in" }, href: "/login", description: { fr: "Accéder à un compte existant.", en: "Access an existing account." } },
       { key: "candidate_space", label: { fr: "Espace candidat", en: "Candidate space" }, href: "/mon-espace", description: { fr: "Suivre vos dossiers et documents une fois connecté.", en: "Track your cases and documents once signed in." } },
       { key: "privacy", label: { fr: "Politique de confidentialité", en: "Privacy policy" }, href: "/politique-confidentialite", description: { fr: "Comprendre le traitement des informations personnelles.", en: "Understand how personal information is handled." } },
+      { key: "legal", label: { fr: "Mentions légales", en: "Legal notice" }, href: "/mentions-legales", description: { fr: "Éditeur, RC, NIU, directeur de publication et hébergeur.", en: "Publisher, registry IDs, publication director and host." } },
       { key: "terms", label: { fr: "Conditions d’utilisation", en: "Terms of use" }, href: "/conditions-utilisation", description: { fr: "Consulter le cadre d’utilisation du site et des services.", en: "Read the framework governing use of the site and services." } },
+      { key: "verify", label: { fr: "Comment nous vérifions", en: "How we verify" }, href: "/verifier-une-agence", description: { fr: "Critères anti-fraude et vérifications avant paiement.", en: "Anti-fraud checks before you pay." } },
     ],
   },
 ];

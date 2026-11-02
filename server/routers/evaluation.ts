@@ -6,6 +6,8 @@ import { clientDocuments, evaluations } from "../../drizzle/schema";
 import { storagePut } from "../storage";
 import { CV_MAX_BASE64_LENGTH } from "../../shared/evaluationCv";
 import { multiProjectEvaluationGap } from "../../shared/evaluationFormRequirements";
+import { buildAiGuidance, collectDeclaredResponses, resolveDynamicForm, sanitizeProjectDetails } from "../../shared/dynamicForm";
+import { loadFormOverrides } from "../services/formOverrides";
 import { EVALUATION_SUBMISSION_LIMITS, createSubmissionGuard } from "../_core/publicRateLimit";
 import { notifyOwner } from "../_core/notification";
 import { generateDossierCode } from "../utils/generateDossierCode";
@@ -18,6 +20,7 @@ import { and, count, desc, eq } from "drizzle-orm";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { candidateProcedure } from "./candidate";
 import { requireValidAdminSession } from "./adminAuth";
+import { loadStoredCvBuffer } from "../services/cvTextLoader";
 
 /** Freine l'envoi en rafale et l'usage des formulaires publics pour écrire à des tiers (e-mail de réception). */
 export const evaluationSubmissionGuard = createSubmissionGuard(EVALUATION_SUBMISSION_LIMITS);
@@ -186,10 +189,14 @@ const multiProjectEvaluationInput = z.object({
   germanyLanguageLevel: z.string().max(120).optional(),
   germanyRecognitionStatus: z.string().max(500).optional(),
   geminiAnalysisConsent: z.boolean().default(false),
+  // Visa ou programme, domaine et réponses propres au parcours (formulaire dynamique) : nettoyés côté serveur avant tout enregistrement.
+  programId: z.string().max(80).optional(),
+  domainId: z.string().max(40).optional(),
+  projectAnswers: z.record(z.string().max(60), z.string().max(1000)).optional(),
   dynamicResponses: z.array(z.object({
     question: z.string().trim().min(3).max(260),
     answer: z.string().trim().min(1).max(1000),
-  })).max(5).default([]),
+  })).max(12).default([]),
 }).superRefine((value, ctx) => {
   const gap = multiProjectEvaluationGap({
     projectType: value.projectType,
@@ -217,7 +224,11 @@ const multiProjectEvaluationInput = z.object({
 export const evaluationRouter = router({
   geminiOrientationPreview: publicProcedure.input(z.object({ destinationCountry: z.string().min(2).max(80), projectType: z.enum(["travail", "etudes", "tourisme"]), nationality: z.string().max(120).optional(), age: z.number().int().min(16).max(100).optional(), sector: z.string().max(300).optional(), yearsOfExperience: z.number().min(0).max(80).optional(), educationLevel: z.string().max(120).optional(), languages: z.string().max(500).optional(), financialGuarantee: z.string().max(500).optional(), countryDetails: z.record(z.string(), z.union([z.string().max(1000), z.number(), z.boolean()])).default({}), consent: z.literal(true) })).mutation(async ({ input }) => {
     const alternatives = (orientationAlternativeCandidates[input.destinationCountry] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== input.destinationCountry);
-    return generateGeminiEvaluationDraft({ destinationCountry: input.destinationCountry, projectType: input.projectType, nationality: input.nationality, age: input.age, sector: input.sector, yearsOfExperience: input.yearsOfExperience, educationLevel: input.educationLevel, languages: input.languages, financialGuarantee: input.financialGuarantee, countryDetails: input.countryDetails, alternativeCountries: alternatives });
+    return generateGeminiEvaluationDraft({ destinationCountry: input.destinationCountry, projectType: input.projectType, nationality: input.nationality, age: input.age, sector: input.sector, yearsOfExperience: input.yearsOfExperience, educationLevel: input.educationLevel, languages: input.languages, financialGuarantee: input.financialGuarantee, countryDetails: input.countryDetails, alternativeCountries: alternatives }).catch((error: unknown) => {
+      // Service d'IA indisponible ou non configuré : message clair, le candidat poursuit avec le questionnaire standard.
+      logger.warn("evaluation.orientation_preview.unavailable", { reason: error instanceof Error ? error.message.slice(0, 200) : "inconnu" });
+      throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Les questions personnalisées sont momentanément indisponibles. Vous pouvez poursuivre avec le questionnaire standard." });
+    });
   }),
 
   submitEvaluation: publicProcedure
@@ -229,6 +240,8 @@ export const evaluationRouter = router({
         throw new Error("Base de données non disponible");
       }
 
+      const formOverrides = await loadFormOverrides(db);
+      const publicDetails = sanitizeProjectDetails({ country: input.destinationCountry, projectType: input.projectType, overrides: formOverrides }, { ...(input.projectAnswers ?? {}), ...(input.programId ? { programId: input.programId } : {}), ...(input.domainId ? { domainId: input.domainId } : {}) });
       const dossierCode = generateDossierCode();
       const reviewDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000);
       // Créer un enregistrement d'évaluation multi-projets
@@ -278,6 +291,7 @@ export const evaluationRouter = router({
           germanyRecognitionStatus: input.germanyRecognitionStatus,
           preparatoryAnalysisConsent: input.geminiAnalysisConsent,
           preparatoryAnalysisConsentRecordedAt: input.geminiAnalysisConsent ? new Date().toISOString() : null,
+          ...publicDetails,
           dynamicResponses: input.dynamicResponses,
         }),
         cvFileUrl: undefined,
@@ -295,10 +309,17 @@ export const evaluationRouter = router({
       await openStructuredEvaluation(evaluationId);
       if (input.geminiAnalysisConsent) {
         const alternatives = (orientationAlternativeCandidates[input.destinationCountry] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== input.destinationCountry);
-        const dynamicDetails = Object.fromEntries(input.dynamicResponses.flatMap((response, index) => [
-          [`question_complementaire_${index + 1}`, response.question],
-          [`reponse_complementaire_${index + 1}`, response.answer],
-        ]));
+        // Questions et réponses lisibles (formulaire dynamique puis questions complémentaires de l'IA), toutes conservées.
+        const declared = collectDeclaredResponses({ ...(publicDetails ?? {}), dynamicResponses: input.dynamicResponses }, { country: input.destinationCountry, projectType: input.projectType, overrides: formOverrides });
+        const dynamicDetails: Record<string, string> = {
+          ...(publicDetails?.programLabel ? { programme: publicDetails.programLabel } : {}),
+          ...(publicDetails?.domainLabel ? { domaine: publicDetails.domainLabel } : {}),
+          ...Object.fromEntries(declared.flatMap((response, index) => [[`question_complementaire_${index + 1}`, response.question], [`reponse_complementaire_${index + 1}`, response.answer]])),
+        };
+        const publicGuidance = buildAiGuidance(
+          resolveDynamicForm({ country: input.destinationCountry, projectType: input.projectType, programId: publicDetails?.programId, domainId: publicDetails?.domainId, overrides: formOverrides }),
+          { ...(publicDetails ?? {}), educationLevel: input.educationLevel ?? "", languages: input.languages ?? "" },
+        );
         void (async () => {
           try {
             const draft = await generateGeminiEvaluationDraft({
@@ -323,6 +344,7 @@ export const evaluationRouter = router({
                 ...dynamicDetails,
               },
               alternativeCountries: alternatives,
+              guidance: publicGuidance,
             });
             await db.update(evaluations).set({ aiReportContent: JSON.stringify(draft), aiProcessedAt: new Date(), aiProcessingError: null }).where(eq(evaluations.id, evaluationId));
             logger.info("evaluation.preparation_draft.completed", { evaluationId });
@@ -425,7 +447,10 @@ export const evaluationRouter = router({
 
       const { evaluationRequiresCv } = await import("../../shared/evaluationVisaCv");
       const { CV_REQUIRED_MESSAGE } = await import("../../shared/evaluationCv");
-      if (evaluationRequiresCv(input.visaType, input.projectType) && !(input.cvBase64 && input.cvFileName)) {
+      // Réponses du formulaire dynamique : recomposées côté serveur, seules celles des champs visibles et valides sont conservées.
+      const formOverrides = await loadFormOverrides(db);
+      const cleanDetails = input.projectDetails && input.projectType ? sanitizeProjectDetails({ country: input.destinationCountry, projectType: input.projectType, overrides: formOverrides }, input.projectDetails) : input.projectDetails;
+      if (evaluationRequiresCv(input.visaType, input.projectType, cleanDetails?.programId) && !(input.cvBase64 && input.cvFileName)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: CV_REQUIRED_MESSAGE });
       }
 
@@ -481,8 +506,8 @@ export const evaluationRouter = router({
         travelReason: input.travelReason,
         availableBudget: input.availableBudget,
         projectType: input.projectType,
-        projectDetailsJson: input.projectDetails || input.geminiAnalysisConsent ? JSON.stringify({
-          ...(input.projectDetails ?? {}),
+        projectDetailsJson: cleanDetails || input.geminiAnalysisConsent ? JSON.stringify({
+          ...(cleanDetails ?? {}),
           preparatoryAnalysisConsent: input.geminiAnalysisConsent,
           preparatoryAnalysisConsentRecordedAt: input.geminiAnalysisConsent ? new Date().toISOString() : null,
           // Consentement DISTINCT à la lecture du CV : jamais déduit du consentement général, et sans effet sans CV enregistré.
@@ -512,6 +537,17 @@ export const evaluationRouter = router({
         const projectType = input.projectType as "travail" | "etudes" | "tourisme";
         const destinationCountry = input.destinationCountry || input.destinationCategory;
         const alternatives = (orientationAlternativeCandidates[destinationCountry ?? ""] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== destinationCountry);
+        // Le modèle reçoit les questions et réponses lisibles (pas des codes), le visa et le domaine choisis, et des consignes propres au dossier.
+        const declared = collectDeclaredResponses(cleanDetails, { country: destinationCountry, projectType, overrides: formOverrides });
+        const geminiCountryDetails: Record<string, string> = {
+          ...(cleanDetails?.programLabel ? { programme: cleanDetails.programLabel } : {}),
+          ...(cleanDetails?.domainLabel ? { domaine: cleanDetails.domainLabel } : {}),
+          ...Object.fromEntries(declared.flatMap((response, index) => [["question_" + (index + 1), response.question], ["reponse_" + (index + 1), response.answer]])),
+        };
+        const geminiGuidance = buildAiGuidance(
+          resolveDynamicForm({ country: destinationCountry, projectType, programId: cleanDetails?.programId, domainId: cleanDetails?.domainId, overrides: formOverrides }),
+          { ...(cleanDetails ?? {}), educationLevel: input.educationLevel ?? "", frenchLevel: input.frenchLevel ?? "", englishLevel: input.englishLevel ?? "" },
+        );
         (async () => {
           try {
             const draft = await generateGeminiEvaluationDraft({
@@ -523,8 +559,9 @@ export const evaluationRouter = router({
               educationLevel: input.educationLevel,
               languages: [input.frenchLevel, input.englishLevel, input.languageTestsTaken].filter(Boolean).join(", "),
               financialGuarantee: input.availableBudget,
-              countryDetails: input.projectDetails ?? {},
+              countryDetails: geminiCountryDetails,
               alternativeCountries: alternatives,
+              guidance: geminiGuidance,
             });
             await db.update(evaluations).set({
               aiReportContent: JSON.stringify(draft),
@@ -689,6 +726,42 @@ export const evaluationRouter = router({
         if (error instanceof TRPCError) throw error;
         logger.error("evaluation.cv_prefill.failed", {}, error);
         return { success: false, fields: {}, prefilledCount: 0, message: "L’analyse automatique n’est pas disponible. Vous pouvez compléter le formulaire manuellement." };
+      }
+    }),
+
+  /**
+   * Extraction depuis le CV DÉJÀ enregistré d'un dossier, pour l'équipe : le serveur lit lui-même le fichier.
+   * (Le navigateur ne le peut pas : l'adresse du site redirige vers un lien signé d'un autre domaine, refusé avec les cookies.)
+   * L'adresse n'est acceptée que si elle vient de notre stockage ou d'un https public ; rien n'est enregistré.
+   */
+  extractFromStoredCV: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1).max(512), documentUrl: z.string().trim().min(1).max(1000) }))
+    .mutation(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const buffer = await loadStoredCvBuffer(input.documentUrl);
+      if (!buffer) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Le CV est introuvable ou trop volumineux (5 Mo maximum). Rouvrez le dossier ou demandez un nouveau dépôt." });
+      }
+      const mimeType = buffer.subarray(0, 4).toString() === "%PDF" ? "application/pdf"
+        : buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) ? "image/png"
+        : buffer.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff])) ? "image/jpeg"
+        : null;
+      if (!mimeType) throw new TRPCError({ code: "BAD_REQUEST", message: "Le fichier n'est ni un PDF, ni une image JPG ou PNG : il ne peut pas être lu automatiquement." });
+      try {
+        if (mimeType === "application/pdf") {
+          const totalPages = await getPdfPageCount(buffer);
+          const cvText = await extractTextFromPDF(buffer);
+          if (cvText.trim().length < 20) {
+            return { success: false as const, fields: {}, prefilledCount: 0, message: "Le texte du CV n’a pas pu être lu (PDF scanné ?). Complétez le dossier manuellement." };
+          }
+          const fields = (await extractCVFieldsForForm(cvText)) ?? {};
+          return { success: true as const, source: "pdf" as const, totalPages, fields, prefilledCount: Object.keys(fields).length };
+        }
+        const fields = (await extractCVFieldsFromImage(`data:${mimeType};base64,${buffer.toString("base64")}`)) ?? {};
+        return { success: true as const, source: "image" as const, fields, prefilledCount: Object.keys(fields).length };
+      } catch (error) {
+        logger.error("evaluation.cv_stored_extraction.failed", {}, error);
+        return { success: false as const, fields: {}, prefilledCount: 0, message: "L’analyse automatique n’est pas disponible pour le moment. Réessayez dans quelques instants ou complétez le dossier manuellement." };
       }
     }),
 

@@ -123,8 +123,9 @@ describe("accueil : « Que voulez-vous accomplir ? »", () => {
   it("est placé après le corridor léger, avant les preuves et le B2B ; le hero reste allégé", () => {
     const home = read("client/src/pages/Home.tsx");
     expect(home).toContain("<QuickActionsSection />");
-    expect(home.indexOf("<HeroSectionVIP")).toBeLessThan(home.indexOf('id="home-talent-corridor"'));
-    expect(home.indexOf('id="home-talent-corridor"')).toBeLessThan(home.indexOf("<QuickActionsSection />"));
+    expect(home.indexOf("<HeroSectionVIP")).toBeLessThan(home.indexOf("<ProofGallerySection />"));
+    expect(home.indexOf("<QuickActionsSection />")).toBeLessThan(home.indexOf('id="home-talent-corridor"'));
+    expect(home.indexOf('id="home-talent-corridor"')).toBeLessThan(home.indexOf('id="home-employer-b2b"'));
     expect(home.indexOf("<ProofGallerySection />")).toBeLessThan(home.indexOf("<QuickActionsSection />"));
     expect(home.indexOf("<ProofGallerySection />")).toBeLessThan(home.indexOf('id="home-employer-b2b"'));
     expect(home.indexOf("<QuickActionsSection />")).toBeLessThan(home.indexOf("<ServicesOverviewSection />"));

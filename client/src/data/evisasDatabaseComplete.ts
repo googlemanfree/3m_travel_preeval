@@ -21,6 +21,8 @@ export interface EvisaDestination {
   officialVerifiedAt?: string;
 }
 
+// Les images e-Visa sont facultatives : une URL externe qui disparaît (Unsplash) retire l'image, la page retombe sur le drapeau.
+
 const createVerificationFirstEvisa = (id: string, country: string, capital: string, flag: string, region: string): EvisaDestination => ({
   id,
   country,
@@ -114,7 +116,7 @@ export const evisasDatabaseComplete: EvisaDestination[] = [
       "Réception de l'e-Visa validé par e-mail en 2 à 5 jours",
       "Impression de l'e-Visa pour présentation à l'arrivée à l'aéroport du Caire ou Hurghada"
     ],
-    image: "https://images.unsplash.com/photo-1568322445389-f64ac25256f0?auto=format&fit=crop&w=800&q=80"
+    image: ""
   },
   {
     id: "tanzanie",
@@ -234,7 +236,7 @@ export const evisasDatabaseComplete: EvisaDestination[] = [
       "Paiement des frais (50 USD)",
       "Validation électronique rapide"
     ],
-    image: "https://images.unsplash.com/photo-1578593147216-e9173c161be2?auto=format&fit=crop&w=800&q=80"
+    image: ""
   },
   {
     id: "djibouti",
@@ -570,7 +572,7 @@ export const evisasDatabaseComplete: EvisaDestination[] = [
       "Paiement de la NZeTA et de la taxe de conservation (IVL)",
       "Réception de l'approbation électronique sous 72h"
     ],
-    image: "https://images.unsplash.com/photo-1507699622108-4be3957004f1?auto=format&fit=crop&w=800&q=80"
+    image: ""
   },
   ...verificationFirstDestinations,
 ];

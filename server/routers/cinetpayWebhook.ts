@@ -11,6 +11,8 @@ import { applications } from "../../drizzle/schema";
 import { clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { and, eq } from "drizzle-orm";
 import { sendPaymentConfirmationEmail } from "../emailService";
+import { CINETPAY_VALIDATOR, finalizeOnlineOpeningPaymentAfterCinetPay } from "../services/openingPaymentAutomation";
+import { proposedOpeningFee } from "../../shared/openingFee";
 import { confirmFlightOnlinePaymentByTransactionId } from "./cinetpayFlightPayment";
 
 interface CinetPayWebhookBody {
@@ -145,7 +147,7 @@ export function registerCinetPayWebhook(app: Express): void {
 
       const verification = await verifyCinetPayTransaction(transactionId, siteId, apiKey);
       if (verification.status === "ACCEPTED") {
-        const expectedAmount = application.paymentAmount ?? 65000;
+        const expectedAmount = application.paymentAmount ?? proposedOpeningFee(application.visaType);
         if (verification.amount !== undefined && verification.amount !== expectedAmount) {
           console.error(`[CinetPay Webhook] Montant incohérent pour ${transactionId}`);
           res.status(400).json({ error: "Payment amount mismatch" });
@@ -164,23 +166,38 @@ export function registerCinetPayWebhook(app: Express): void {
       }
 
       const isFirstSuccessfulTransition = paymentStatus === "SUCCESS" && application.paymentStatus === "PENDING";
+      const validatedAt = paymentStatus === "SUCCESS" ? (application.paymentValidatedAt ?? new Date()) : application.paymentValidatedAt;
+      const validatedBy =
+        paymentStatus === "SUCCESS"
+          ? (application.paymentValidatedBy?.trim() || CINETPAY_VALIDATOR)
+          : application.paymentValidatedBy;
       await db.update(applications)
         .set({
           paymentStatus,
           dossierStatus: paymentStatus === "SUCCESS" && application.agreementSigned && application.evaluationDeliveryStatus === "sent" && Boolean(application.evaluationClientConfirmedAt) ? "paye" : application.dossierStatus,
           paymentMethod: paymentMethod || null,
           paymentDate: paymentStatus === "SUCCESS" ? new Date() : application.paymentDate,
+          paymentValidatedAt: validatedAt,
+          paymentValidatedBy: validatedBy,
+          paymentConfirmedAmount:
+            paymentStatus === "SUCCESS"
+              ? (application.paymentConfirmedAmount ?? application.paymentAmount ?? proposedOpeningFee(application.visaType))
+              : application.paymentConfirmedAmount,
+          paymentExpectedAmount:
+            paymentStatus === "SUCCESS"
+              ? (application.paymentExpectedAmount ?? application.paymentAmount ?? proposedOpeningFee(application.visaType))
+              : application.paymentExpectedAmount,
         })
         .where(and(eq(applications.id, application.id), eq(applications.paymentTransactionId, transactionId)));
 
-      // Un email et une notification in-app sont envoyés uniquement à la première transition PENDING → SUCCESS.
+      // Un email, le pack reçu+protocole et la purge EVAL partent à la première transition PENDING → SUCCESS.
       if (isFirstSuccessfulTransition) {
         try {
           await sendPaymentConfirmationEmail(
             application.email,
             application.fullName,
             application.dossierNumber,
-            application.paymentAmount ?? 65000,
+            application.paymentAmount ?? proposedOpeningFee(application.visaType),
             application.paymentCurrency ?? "XAF"
           );
         } catch (emailErr) {
@@ -192,12 +209,20 @@ export function registerCinetPayWebhook(app: Express): void {
               candidateId: application.candidateId,
               type: "payment_confirmed",
               title: "Votre paiement a été confirmé",
-              body: `Votre paiement de ${(application.paymentAmount ?? 65000).toLocaleString("fr-FR")} XAF a été reçu. Votre dossier ${application.dossierNumber} est maintenant débloqué pour le dépôt de documents.`,
+              body: `Votre paiement de ${(application.paymentAmount ?? proposedOpeningFee(application.visaType)).toLocaleString("fr-FR")} XAF a été reçu. Votre dossier ${application.dossierNumber} est maintenant débloqué pour le dépôt de documents.`,
               actionUrl: "/mon-espace?section=documents",
             });
           } catch (notifErr) {
             console.warn("[CinetPay Webhook] Notification insert failed:", notifErr);
           }
+        }
+        try {
+          const automation = await finalizeOnlineOpeningPaymentAfterCinetPay(db, application.id);
+          if (automation.packageError) {
+            console.warn("[CinetPay Webhook] Pack reçu+protocole:", automation.packageError);
+          }
+        } catch (packErr) {
+          console.warn("[CinetPay Webhook] Automatisation ouverture échouée:", packErr);
         }
       }
 

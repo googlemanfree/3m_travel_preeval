@@ -45,7 +45,7 @@ export const ADMIN_MESSAGE_TEMPLATES: AdminMessageTemplate[] = [
     id: "payment_pending",
     label: "Paiement des frais d’ouverture",
     subject: "3M Travel — frais d’ouverture en attente ({reference})",
-    body: "Bonjour {name},\n\nPour activer le suivi de votre dossier {reference}, merci de régulariser les frais d’ouverture puis de déposer la preuve de paiement dans votre espace client :\nhttps://www.3mtravelagency.com/mon-espace\n\nDès réception et validation, nous poursuivons le traitement.\n\nCordialement,\nL’équipe 3M Travel Agency\nhttps://www.3mtravelagency.com",
+    body: "Bonjour {name},\n\nPour activer le suivi de votre dossier {reference} ({visaType} — {destination}), merci de régulariser les frais d’ouverture puis de déposer la preuve de paiement dans votre espace client :\nhttps://www.3mtravelagency.com/mon-espace\n\nDès validation, nous poursuivons le traitement et le protocole d’accord N°01.\n\nCordialement,\nL’équipe 3M Travel Agency\nhttps://www.3mtravelagency.com",
   },
   {
     id: "documents_pending",
@@ -75,13 +75,13 @@ export const ADMIN_MESSAGE_TEMPLATES: AdminMessageTemplate[] = [
     id: "cv_missing",
     label: "CV manquant (préévaluation)",
     subject: "3M Travel — CV requis pour votre évaluation ({reference})",
-    body: "Bonjour {name},\n\nPour finaliser l’évaluation de votre profil ({reference}), merci de déposer votre CV à jour dans votre espace client :\nhttps://www.3mtravelagency.com/mon-espace\n\nSans CV, nous ne pouvons pas préparer un bilan complet ni ouvrir le traitement de votre dossier.\n\nCordialement,\nL’équipe 3M Travel Agency\nhttps://www.3mtravelagency.com",
+    body: "Bonjour {name},\n\nPour finaliser l’évaluation de votre profil {reference} ({visaType} — {destination}), merci de déposer votre CV à jour dans votre espace client :\nhttps://www.3mtravelagency.com/mon-espace\n\nLe CV est indispensable pour un bilan complet et pour lancer le traitement de votre dossier.\n\nCordialement,\nL’équipe 3M Travel Agency\nhttps://www.3mtravelagency.com",
   },
   {
     id: "conversion_open_dossier",
     label: "Convaincre d’ouvrir le dossier",
     subject: "3M Travel — activez le suivi de votre dossier ({reference})",
-    body: "Bonjour {name},\n\nVotre pré-inscription {reference} est enregistrée. Pour lancer le traitement de votre profil (bilan, protocole, suivi conseiller), merci de régulariser les frais d’ouverture depuis votre espace client :\nhttps://www.3mtravelagency.com/mon-espace\n\nDès validation du paiement, nous activons votre dossier officiel et vous guideons étape par étape.\n\nCordialement,\nL’équipe 3M Travel Agency\nhttps://www.3mtravelagency.com",
+    body: "Bonjour {name},\n\nVotre pré-inscription {reference} ({visaType} — {destination}) est enregistrée. Pour lancer le traitement de votre profil (bilan, protocole, suivi conseiller), merci de régulariser les frais d’ouverture depuis votre espace client :\nhttps://www.3mtravelagency.com/mon-espace\n\nDès validation du paiement, nous activons votre dossier officiel 3M et vous accompagnons étape par étape.\n\nCordialement,\nL’équipe 3M Travel Agency\nhttps://www.3mtravelagency.com",
   },
   {
     id: "bilan_confirmation_pending",
@@ -139,12 +139,19 @@ const VISA_AWARE_STAGE_COPY: Partial<
 
 export function fillAdminTemplate(
   template: AdminMessageTemplate,
-  vars: { name: string; reference: string },
+  vars: {
+    name: string;
+    reference: string;
+    destination?: string | null;
+    visaType?: string | null;
+  },
 ): { subject: string; body: string } {
   const replace = (text: string) =>
     text
       .replaceAll("{name}", vars.name.trim() || "Madame, Monsieur")
-      .replaceAll("{reference}", vars.reference.trim() || "votre dossier");
+      .replaceAll("{reference}", vars.reference.trim() || "votre dossier")
+      .replaceAll("{destination}", (vars.destination || "").trim() || "votre destination")
+      .replaceAll("{visaType}", (vars.visaType || "").trim() || "votre procédure");
   return { subject: replace(template.subject), body: replace(template.body) };
 }
 

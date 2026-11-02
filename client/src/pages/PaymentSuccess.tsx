@@ -115,7 +115,7 @@ export default function PaymentSuccess() {
                   Contacter sur WhatsApp
                 </Button>
               </a>
-              <Link href="/dashboard">
+              <Link href="/mon-espace">
                 <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold">
                   Mon espace candidat
                   <ArrowRight className="w-4 h-4 ml-2" />

@@ -217,6 +217,7 @@ export default function CountryComparisonPage() {
                 <GraduationCap className="w-4 h-4 text-blue-600" /> Niveau d'Études
               </label>
               <select
+                aria-label="Niveau d’études"
                 value={userProfile.education}
                 onChange={(e) => handleProfileChange('education', e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
@@ -233,6 +234,7 @@ export default function CountryComparisonPage() {
                 <Briefcase className="w-4 h-4 text-indigo-600" /> Expérience Professionnelle
               </label>
               <select
+                aria-label="Expérience professionnelle"
                 value={userProfile.experience}
                 onChange={(e) => handleProfileChange('experience', e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
@@ -249,6 +251,7 @@ export default function CountryComparisonPage() {
                 <DollarSign className="w-4 h-4 text-emerald-600" /> Budget Envisagé
               </label>
               <select
+                aria-label="Budget envisagé"
                 value={userProfile.budget}
                 onChange={(e) => handleProfileChange('budget', e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
@@ -264,6 +267,7 @@ export default function CountryComparisonPage() {
                 <UserCheck className="w-4 h-4 text-purple-600" /> Type de Visa Souhaité
               </label>
               <select
+                aria-label="Type de visa souhaité"
                 value={userProfile.targetVisa}
                 onChange={(e) => handleProfileChange('targetVisa', e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"

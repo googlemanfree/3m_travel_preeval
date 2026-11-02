@@ -1,0 +1,98 @@
+import { boolean, char, date, decimal, index, int, json, mysqlEnum, mysqlTable, smallint, text, timestamp, tinyint, uniqueIndex, varchar } from "drizzle-orm/mysql-core";
+
+/** Offres d'emploi, candidatures et signalements (migration 0089). Uniquement de nouvelles tables. */
+export const jobOffers = mysqlTable("job_offers", {
+  id: int("id").autoincrement().primaryKey(),
+  reference: varchar("reference", { length: 24 }).notNull(),
+  /** Employeur vérifié rattaché (placement_organizations), s'il existe déjà dans le portail. */
+  organizationId: int("organization_id"),
+  employerName: varchar("employer_name", { length: 255 }),
+  hideEmployerName: boolean("hide_employer_name").notNull().default(false),
+  title: varchar("title", { length: 255 }).notNull(),
+  countryCode: varchar("country_code", { length: 2 }).notNull(),
+  city: varchar("city", { length: 120 }),
+  domainId: varchar("domain_id", { length: 40 }),
+  programRef: varchar("program_ref", { length: 80 }),
+  visaSponsorship: mysqlEnum("visa_sponsorship", ["employer_sponsors", "employer_assists", "candidate_handles"]).notNull().default("employer_assists"),
+  contractType: mysqlEnum("contract_type", ["cdi", "cdd", "seasonal", "interim", "internship", "apprenticeship", "freelance"]).notNull().default("cdi"),
+  contractMonths: smallint("contract_months"),
+  salaryMin: decimal("salary_min", { precision: 12, scale: 2 }),
+  salaryMax: decimal("salary_max", { precision: 12, scale: 2 }),
+  salaryCurrency: char("salary_currency", { length: 3 }),
+  salaryPeriod: mysqlEnum("salary_period", ["hour", "month", "year"]),
+  salaryVisible: boolean("salary_visible").notNull().default(false),
+  benefits: text("benefits"),
+  languagesJson: json("languages_json").$type<Array<{ lang: string; level: string; required?: boolean }>>(),
+  diplomasJson: json("diplomas_json").$type<Array<{ level: string; field?: string; required?: boolean }>>(),
+  experienceMinYears: smallint("experience_min_years"),
+  startDate: date("start_date", { mode: "string" }),
+  startFlexible: boolean("start_flexible").notNull().default(true),
+  positionsCount: smallint("positions_count").notNull().default(1),
+  applicationDeadline: date("application_deadline", { mode: "string" }),
+  description: text("description").notNull(),
+  requirements: text("requirements"),
+  status: mysqlEnum("status", ["draft", "in_moderation", "published", "closed", "rejected", "archived"]).notNull().default("draft"),
+  moderationNote: text("moderation_note"),
+  moderatedByAdminId: int("moderated_by_admin_id"),
+  moderatedAt: timestamp("moderated_at"),
+  publishedAt: timestamp("published_at"),
+  closedAt: timestamp("closed_at"),
+  closeReason: mysqlEnum("close_reason", ["filled", "cancelled", "expired", "withdrawn_by_admin"]),
+  version: int("version").notNull().default(1),
+  createdByAdminId: int("created_by_admin_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  uniqueIndex("uq_job_offers_reference").on(table.reference),
+  index("idx_job_offers_country_status").on(table.countryCode, table.status),
+  index("idx_job_offers_org").on(table.organizationId, table.status),
+]);
+
+export const jobApplications = mysqlTable("job_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  offerId: int("offer_id").notNull(),
+  candidateId: int("candidate_id").notNull(),
+  status: mysqlEnum("status", ["submitted", "screening", "documents_requested", "shortlisted", "interview", "offer_sent", "accepted", "hired", "rejected", "withdrawn"]).notNull().default("submitted"),
+  disclosureLevel: tinyint("disclosure_level").notNull().default(1),
+  precheckJson: json("precheck_json").$type<unknown>(),
+  profileSnapshotJson: json("profile_snapshot_json").$type<Record<string, string | null>>(),
+  coverNote: varchar("cover_note", { length: 1000 }),
+  rejectionCode: varchar("rejection_code", { length: 40 }),
+  adminNote: text("admin_note"),
+  consentTextVersion: varchar("consent_text_version", { length: 20 }).notNull(),
+  consentAt: timestamp("consent_at").defaultNow().notNull(),
+  submittedAt: timestamp("submitted_at").defaultNow().notNull(),
+  lastStatusAt: timestamp("last_status_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  uniqueIndex("uq_job_applications_offer_candidate").on(table.offerId, table.candidateId),
+  index("idx_job_applications_status").on(table.status, table.lastStatusAt),
+  index("idx_job_applications_candidate").on(table.candidateId, table.status),
+]);
+
+export const jobApplicationEvents = mysqlTable("job_application_events", {
+  id: int("id").autoincrement().primaryKey(),
+  applicationId: int("application_id").notNull(),
+  actorType: mysqlEnum("actor_type", ["candidate", "admin", "system"]).notNull(),
+  actorId: int("actor_id"),
+  action: varchar("action", { length: 80 }).notNull(),
+  note: varchar("note", { length: 1000 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [index("idx_job_application_events_app").on(table.applicationId, table.createdAt)]);
+
+export const jobOfferReports = mysqlTable("job_offer_reports", {
+  id: int("id").autoincrement().primaryKey(),
+  offerId: int("offer_id").notNull(),
+  reporterCandidateId: int("reporter_candidate_id").notNull(),
+  reason: mysqlEnum("reason", ["fees_requested", "fake_offer", "discrimination", "illegal_content", "wrong_info", "other"]).notNull(),
+  details: varchar("details", { length: 1000 }),
+  status: mysqlEnum("status", ["open", "reviewing", "upheld", "dismissed"]).notNull().default("open"),
+  handledByAdminId: int("handled_by_admin_id"),
+  decisionNote: varchar("decision_note", { length: 1000 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  uniqueIndex("uq_job_offer_reports_offer_reporter").on(table.offerId, table.reporterCandidateId),
+  index("idx_job_offer_reports_status").on(table.status, table.createdAt),
+]);

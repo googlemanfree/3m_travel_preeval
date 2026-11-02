@@ -1,4 +1,8 @@
 ﻿import { TRPCError } from "@trpc/server";
+import { evaluationDisplayReference } from "../../shared/evaluationReference";
+import { isProvisionalReference } from "../../shared/accountKeys";
+import { agencyMirrorKey, isEvalAgencyShell } from "../../shared/evalAgencyShell";
+import { allocateDraftKey } from "../services/accountKeyAllocator";
 import { randomInt } from "node:crypto";
 import { and, asc, desc, eq, inArray, isNull, like } from "drizzle-orm";
 import { z } from "zod";
@@ -20,13 +24,20 @@ import {
   profileEvaluations,
   translationRequests,
   tourismServiceRequests,
+  adminNotifications,
 } from "../../drizzle/schema";
 import { cases, caseActivityLogs, clientNotifications, evaluationBilanVersions, unifiedClientRequestHistory, unifiedClientRequests } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
 import { generateEvaluationReportHTML } from "../evaluationService";
+import { inspectBilan, toBilanHtml } from "../../shared/bilanContent";
+import { bilanVariablesFrom, draftExtras, resolveBilanVariables } from "../../shared/bilanVariables";
+import { reviewBilan } from "../../shared/bilanReview";
+import { proposedOpeningFee } from "../../shared/openingFee";
+import { frameBrandedDocument, renderBrandedEmailHtml } from "../../shared/brandLetterhead";
 import { sendEmail } from "../_core/email";
+import { acknowledgeBilanSent } from "../services/bilanReceipts";
 import { createFinalEvaluationPdf } from "../evaluationBilanPdfService";
 import { storageGetSignedUrl } from "../storage";
 import { evaluationDestinations, generateDestinationEvaluationDraft } from "../services/destinationEvaluationDraft";
@@ -36,6 +47,19 @@ import { appendEvaluationOpenTrackingPixel, buildAdvisorSignatureHtml, escapeHtm
 import { buildEvaluationReminderEmailHtml, buildEvaluationReminderEmailSubject, type EvaluationReminderLanguage } from "../services/evaluationReminderCommunication";
 import { resolveEvaluationProjectKind } from "../../shared/evaluationVisaCv";
 import { EVALUATION_KIND_LABELS } from "../../shared/evaluationBilanTemplates";
+import { maybeSendJustificatifsAfterBilan } from "../services/autoJustificatifsAfterBilan";
+
+/** Bilans en cours d'envoi : un double clic ou une requête rejouée ne peut jamais envoyer deux e-mails pour le même dossier. */
+const evaluationSendsInProgress = new Set<number>();
+export async function exclusiveEvaluationSend<T>(key: number, work: () => Promise<T>): Promise<T> {
+  if (evaluationSendsInProgress.has(key)) throw new TRPCError({ code: "CONFLICT", message: "L’envoi de ce bilan est déjà en cours : patientez quelques secondes." });
+  evaluationSendsInProgress.add(key);
+  try {
+    return await work();
+  } finally {
+    evaluationSendsInProgress.delete(key);
+  }
+}
 
 function resolveDeliveryVisaJournal(application: { visaType?: string | null; scoringDetails?: string | null }) {
   let scoringProject: string | null = null;
@@ -65,17 +89,26 @@ const evaluationDraftSchema = z.object({
   destination: z.enum(evaluationDestinations),
   finalScore: z.number().int().min(0).max(100),
   verdict: z.string().trim().max(500),
-  strengths: z.array(z.string().trim().min(2).max(500)).max(6),
-  weaknesses: z.array(z.string().trim().min(2).max(500)).max(6),
-  recommendations: z.array(z.string().trim().min(2).max(800)).max(8),
-  message: z.string().trim().max(12000).optional(),
+  strengths: z.array(z.string().trim().min(2).max(500)).max(30),
+  weaknesses: z.array(z.string().trim().min(2).max(500)).max(30),
+  recommendations: z.array(z.string().trim().min(2).max(800)).max(40),
+  message: z.string().trim().max(60000).optional(),
+  /** Bilan complet collé par l'administrateur (HTML, texte, Markdown…) : nettoyé et mis en forme côté serveur. */
+  bilanHtml: z.string().max(400_000).optional(),
+  /** Texte tel que saisi dans l'éditeur simple : renvoyé tel quel à la réouverture (le HTML est dérivé, pas rééditable sans perte). */
+  bilanSource: z.string().max(400_000).optional(),
+  /** Frais d'ouverture choisis par l'administrateur pour ce profil (XAF) ; date limite et conseiller facultatifs, repris par {{montant}}, {{date_limite}}, {{conseiller}}. */
+  openingFeeXaf: z.number().int().min(1000).max(5_000_000).optional(),
+  openingDeadline: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
+  advisorName: z.string().trim().max(120).optional(),
   subject: z.string().trim().min(4).max(255).optional(),
   requiresSecondApproval: z.boolean().default(false),
   language: z.enum(["fr", "en"]).default("fr"),
 });
 
+/** Numéro provisoire : clé de compte (« COMPTE-… ») ou ancien « EVAL-… » pas encore normalisé. */
 function isProvisionalEvaluationReference(reference: string) {
-  return reference.startsWith("EVAL-DRAFT-");
+  return isProvisionalReference(reference);
 }
 
 function mapCandidateDestination(destination: string | null | undefined): "canada" | "luxembourg" | "pologne" | "europe" | "golfe" | "oceanie" | "caucase" | "autre" {
@@ -83,10 +116,6 @@ function mapCandidateDestination(destination: string | null | undefined): "canad
   return "autre";
 }
 
-function generateBootstrapEvaluationReference() {
-  // applications.dossierNumber est limité à 20 caractères en production.
-  return `EVAL-DRAFT-${new Date().getFullYear()}-${randomInt(1000, 10000)}`;
-}
 
 /** Dates JSON-safe (ISO) — évite les échecs superjson « Unable to transform response ». */
 function toIsoDate(value: Date | string | null | undefined): string | null {
@@ -116,9 +145,13 @@ function serializeEvaluationDeliveryApplication(application: {
   return {
     id: application.id,
     dossierNumber: application.dossierNumber,
+    /** Référence à afficher : COMPTE-… tant que rien n'est payé, 3M-… après paiement (dossierNumber reste la clé technique). */
+    displayReference: evaluationDisplayReference(application),
     fullName: application.fullName,
     email: application.email,
     whatsappNumber: application.whatsappNumber ?? null,
+    candidateId: (application as { candidateId?: number | null }).candidateId ?? null,
+    adminAssignedTo: (application as { adminAssignedTo?: string | null }).adminAssignedTo ?? null,
     destination: application.destination ?? null,
     visaType: application.visaType ?? null,
     scoringTotal: application.scoringTotal ?? 0,
@@ -132,8 +165,13 @@ function serializeEvaluationDeliveryApplication(application: {
   };
 }
 
-async function issueFinalDossierNumber(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, application: { id: number; dossierNumber: string }) {
+async function issueFinalDossierNumber(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, application: { id: number; dossierNumber: string; paymentStatus?: string | null; paymentValidatedAt?: Date | string | null }) {
   if (!isProvisionalEvaluationReference(application.dossierNumber)) return application.dossierNumber;
+  // Un miroir de dossier agence garde sa clé : sa référence de travail est « 3M-AGN-… », portée par le dossier agence.
+  if (isEvalAgencyShell(application.dossierNumber)) return application.dossierNumber;
+  // Règle de l'agence : « 3M-… » seulement après paiement validé des frais d'ouverture. Avant, le dossier reste un COMPTE : la validation
+  // du bilan ne change aucun numéro (auparavant elle attribuait un 3M- à un compte qui n'avait pas payé).
+  if (application.paymentStatus !== "SUCCESS" || !application.paymentValidatedAt) return application.dossierNumber;
   const year = new Date().getFullYear();
   const standardNumber = `3M-${year}-${String(application.id).padStart(5, "0")}`;
   const existing = (await db.select({ id: applications.id }).from(applications).where(eq(applications.dossierNumber, standardNumber)).limit(1))[0];
@@ -192,7 +230,8 @@ async function resolveEvaluationApplication(db: NonNullable<Awaited<ReturnType<t
     // sans activer le dossier ni modifier le paiement.
     if (effectiveCvUrl || effectiveCvName) {
       const destination = mapCandidateDestination(String(agencyDossier.destination || "").trim().toLowerCase());
-      const dossierNumber = `EVAL-AG-${agencyDossier.id}`;
+      // Miroir de préparation d'un dossier agence : clé « COMPTE-AG-{id} » (jamais « EVAL »), retrouvé aussi par le marqueur de l'adminNote.
+      const dossierNumber = agencyMirrorKey(agencyDossier.id);
       await db.insert(applications).values({
         dossierNumber,
         candidateId: agencyCandidate?.id ?? null,
@@ -235,10 +274,7 @@ async function resolveEvaluationApplication(db: NonNullable<Awaited<ReturnType<t
     if (accountApplication) return accountApplication;
     // Certains comptes créés après une évaluation externe n’ont pas encore de ligne applications.
     // Initialiser uniquement un brouillon de préparation, sans activer le dossier ni modifier le paiement.
-    let dossierNumber = generateBootstrapEvaluationReference();
-    while ((await db.select({ id: applications.id }).from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1)).length) {
-      dossierNumber = generateBootstrapEvaluationReference();
-    }
+    const dossierNumber = await allocateDraftKey(db, candidateAccount.id);
     const destination = mapCandidateDestination(candidateAccount.destination);
     const draftDestination = destination === "autre" ? "europe" : destination;
     const initialDraft = {
@@ -488,8 +524,8 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
   }
 
   return [
-    ...apps.map((row) => ({ sourceType: "application" as const, sourceRecordId: row.id, candidateId: row.candidateId, displayReference: row.dossierNumber, fullName: row.fullName, email: row.email, phone: row.whatsappNumber ?? null, destination: row.destination, requestTypeLabel: "Ouverture de dossier", sourceStatus: row.dossierStatus, evaluationApprovalStatus: row.evaluationApprovalStatus, evaluationDeliveryStatus: row.evaluationDeliveryStatus, evaluationReportViewedAt: row.evaluationReportViewedAt, createdAt: row.createdAt, updatedAt: row.updatedAt })),
-    ...evaluations.map((row) => ({ sourceType: "evaluation" as const, sourceRecordId: row.id, candidateId: null, displayReference: `EVAL-${row.id}`, fullName: row.fullName, email: row.email, phone: row.whatsappPhone ?? null, destination: row.destination, requestTypeLabel: "Évaluation de profil", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
+    ...apps.map((row) => ({ sourceType: "application" as const, sourceRecordId: row.id, candidateId: row.candidateId, displayReference: evaluationDisplayReference(row) ?? row.dossierNumber, fullName: row.fullName, email: row.email, phone: row.whatsappNumber ?? null, destination: row.destination, requestTypeLabel: "Ouverture de dossier", sourceStatus: row.dossierStatus, evaluationApprovalStatus: row.evaluationApprovalStatus, evaluationDeliveryStatus: row.evaluationDeliveryStatus, evaluationReportViewedAt: row.evaluationReportViewedAt, createdAt: row.createdAt, updatedAt: row.updatedAt })),
+    ...evaluations.map((row) => ({ sourceType: "evaluation" as const, sourceRecordId: row.id, candidateId: null, displayReference: `Demande n° ${row.id}`, fullName: row.fullName, email: row.email, phone: row.whatsappPhone ?? null, destination: row.destination, requestTypeLabel: "Évaluation de profil", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
     ...consultations.map((row) => ({ sourceType: "consultation" as const, sourceRecordId: row.id, candidateId: null, displayReference: `CONS-${row.id}`, fullName: row.fullName, email: row.email, phone: row.phone ?? null, destination: row.targetCountry ?? null, requestTypeLabel: "Consultation", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.createdAt })),
     ...flights.map((row) => ({ sourceType: "flight" as const, sourceRecordId: row.id, candidateId: row.candidateId, displayReference: row.requestRef, fullName: "Client réservation de vol", email: row.candidateEmail, phone: row.candidatePhone ?? null, destination: null, requestTypeLabel: "Réservation de vol", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
     ...insurances.map((row) => ({ sourceType: "insurance" as const, sourceRecordId: row.id, candidateId: null, displayReference: row.reference, fullName: row.fullName, email: row.email, phone: row.phone, destination: row.destinationCountry, requestTypeLabel: "Assurance voyage", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
@@ -658,10 +694,7 @@ initializeEvaluationDelivery: publicProcedure
       const [existing] = await db.select().from(applications).where(eq(applications.candidateId, candidate.id)).orderBy(desc(applications.createdAt)).limit(1);
       if (existing) return { success: true, created: false, candidateId: candidate.id, application: serializeEvaluationDeliveryApplication(existing), message: "Le dossier d’évaluation provisoire existe déjà." };
 
-      let dossierNumber = generateBootstrapEvaluationReference();
-      while ((await db.select({ id: applications.id }).from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1)).length) {
-        dossierNumber = generateBootstrapEvaluationReference();
-      }
+      const dossierNumber = await allocateDraftKey(db, candidate.id);
       const destination = mapCandidateDestination(candidate.destination);
       const draftDestination = destination === "autre" ? "europe" : destination;
       const initialDraft = {
@@ -765,6 +798,11 @@ initializeEvaluationDelivery: publicProcedure
           finalScore: Number.isFinite(Number(adminDraft.finalScore)) ? Number(adminDraft.finalScore) : (application.scoringTotal ?? 0),
           verdict: String(adminDraft.verdict ?? ""),
           profileSummary: String(adminDraft.profileSummary ?? ""),
+          bilanHtml: typeof adminDraft.bilanHtml === "string" ? adminDraft.bilanHtml : "",
+          bilanSource: typeof adminDraft.bilanSource === "string" ? adminDraft.bilanSource : "",
+          openingFeeXaf: typeof adminDraft.openingFeeXaf === "number" ? adminDraft.openingFeeXaf : null,
+          openingDeadline: typeof adminDraft.openingDeadline === "string" ? adminDraft.openingDeadline : "",
+          advisorName: typeof adminDraft.advisorName === "string" ? adminDraft.advisorName : "",
           strengths: Array.isArray(adminDraft.strengths) ? adminDraft.strengths.map(String) : [],
           weaknesses: Array.isArray(adminDraft.weaknesses) ? adminDraft.weaknesses.map(String) : [],
           recommendations: Array.isArray(adminDraft.recommendations) ? adminDraft.recommendations.map(String) : [],
@@ -772,7 +810,7 @@ initializeEvaluationDelivery: publicProcedure
           nextAdminAction: String(adminDraft.nextAdminAction ?? ""),
           message: application.evaluationDeliveryMessage ?? "",
           language: adminDraft.language === "en" ? "en" : "fr",
-          subject: application.evaluationDeliverySubject ?? (isProvisionalEvaluationReference(application.dossierNumber) ? "Votre bilan d'évaluation 3M TRAVEL AGENCY" : `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`),
+          subject: application.evaluationDeliverySubject ?? (isProvisionalEvaluationReference(application.dossierNumber) ? "Votre bilan d'évaluation 3M TRAVEL AGENCY" : `Votre Bilan d'Évaluation - Dossier N° ${evaluationDisplayReference(application) ?? application.dossierNumber}`),
           requiresSecondApproval: Boolean(application.evaluationRequiresSecondApproval),
           advisorValidated: adminDraft.advisorValidated === true,
           advisorValidatedAt,
@@ -794,9 +832,9 @@ initializeEvaluationDelivery: publicProcedure
       const html = `${messageHtml ? `<section style="margin-bottom:24px">${messageHtml}</section>` : ""}${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Votre bilan finalisé est également disponible au format PDF dans votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p><p style="font-size:13px;color:#64748b">Connectez-vous avec l’adresse e-mail associée à votre dossier pour consulter les pièces demandées, les échanges et les prochaines étapes.</p>${buildAdvisorSignatureHtml(application.adminAssignedTo || admin.fullName)}`;
       return {
         recipient: application.email,
-        subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`,
+        subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${evaluationDisplayReference(application) ?? application.dossierNumber}`,
         html,
-        attachmentLabel: `Bilan d’évaluation — dossier ${application.dossierNumber}.pdf`,
+        attachmentLabel: `Bilan d’évaluation — dossier ${evaluationDisplayReference(application) ?? application.dossierNumber}.pdf`,
         requiresManualValidation: true,
       };
     }),
@@ -812,12 +850,14 @@ initializeEvaluationDelivery: publicProcedure
       let details: Record<string, any> = {};
       try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
       const draft = details.adminDraft ?? {};
-      if (!draft.verdict || !Array.isArray(draft.recommendations) || !draft.recommendations.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Enregistrez un bilan complet avant de générer l’aperçu PDF." });
-      if (draft.advisorValidated !== true) throw new TRPCError({ code: "BAD_REQUEST", message: "Validez explicitement le bilan en tant qu’administrateur avant de générer le PDF." });
+      const hasFreeBilan = typeof draft.bilanHtml === "string" && draft.bilanHtml.length > 0;
+      if (!hasFreeBilan && (!draft.verdict || !Array.isArray(draft.recommendations) || !draft.recommendations.length)) throw new TRPCError({ code: "BAD_REQUEST", message: "Enregistrez un bilan complet avant de générer l’aperçu PDF." });
+      // L'aperçu PDF est possible dès le brouillon (il est alors marqué « aperçu interne ») ; le PDF final n'est produit qu'à l'envoi, après validation.
+      const isDraftPreview = draft.advisorValidated !== true;
       const versions = await db.select({ versionNumber: evaluationBilanVersions.versionNumber, createdAt: evaluationBilanVersions.createdAt, createdByAdminAccountId: evaluationBilanVersions.createdByAdminAccountId, approvalStatus: evaluationBilanVersions.approvalStatus }).from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, application.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(30);
       const versionNumber = versions[0]?.versionNumber ?? 1;
-      const pdf = await createFinalEvaluationPdf(application, versionNumber, versions);
-      return { url: pdf.url, key: pdf.key, fileName: `bilan-${application.dossierNumber}-v${versionNumber}.pdf`, versionNumber, requiresManualValidation: true };
+      const pdf = await createFinalEvaluationPdf(application, versionNumber, versions, { preview: isDraftPreview });
+      return { url: pdf.url, key: pdf.key, fileName: `bilan-${isDraftPreview ? "apercu-" : ""}${application.dossierNumber}-v${versionNumber}.pdf`, versionNumber, requiresManualValidation: true, preview: isDraftPreview };
     }),
 
   sendEvaluationTestEmail: publicProcedure
@@ -836,7 +876,7 @@ initializeEvaluationDelivery: publicProcedure
       const candidateSpaceUrl = buildCandidateSpaceAccessUrl(application.dossierNumber);
       const messageHtml = application.evaluationDeliveryMessage ? sanitizeRichTextHtml(application.evaluationDeliveryMessage) : "";
       const html = `<div style="border:2px solid #f59e0b;background:#fffbeb;padding:12px;margin-bottom:20px;font-family:Arial,sans-serif"><strong>TEST INTERNE — NE PAS DIFFUSER AU CLIENT</strong><br/>Prévisualisation du bilan destiné à ${escapeHtmlText(application.fullName)} (${escapeHtmlText(application.email)}).</div>${messageHtml ? `<section style="margin-bottom:24px">${messageHtml}</section>` : ""}${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Le bilan final sera disponible dans l’<a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p>${buildAdvisorSignatureHtml(application.adminAssignedTo || admin.fullName)}`;
-      await sendEmail({ to: input.testEmail, subject: `[TEST INTERNE] ${application.evaluationDeliverySubject || `Bilan d’évaluation — Dossier ${application.dossierNumber}`}`, html });
+      await sendEmail({ to: input.testEmail, subject: `[TEST INTERNE] ${application.evaluationDeliverySubject || `Bilan d’évaluation — Dossier ${evaluationDisplayReference(application) ?? application.dossierNumber}`}`, html });
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
       if (source) {
         const request = await ensureManagedRequest(source);
@@ -882,22 +922,26 @@ initializeEvaluationDelivery: publicProcedure
       let details: Record<string, unknown> = {};
       try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
       const previousDraft = (details.adminDraft && typeof details.adminDraft === "object" ? details.adminDraft : {}) as Record<string, unknown>;
-      const nextDraft = { ...previousDraft, destination: input.destination, finalScore: input.finalScore, verdict: input.verdict, strengths: input.strengths, weaknesses: input.weaknesses, recommendations: input.recommendations, language: input.language, advisorValidated: false, advisorValidatedAt: null, advisorValidatedByAdminId: null };
+      const pastedBilanHtml = typeof input.bilanHtml === "string" ? toBilanHtml(input.bilanHtml) : undefined;
+      if (pastedBilanHtml && inspectBilan(pastedBilanHtml).empty) throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan collé est vide ou trop court : collez le texte complet du bilan." });
+      const nextDraft = { ...previousDraft, ...(pastedBilanHtml !== undefined ? { bilanHtml: pastedBilanHtml || undefined, bilanSource: pastedBilanHtml && typeof input.bilanSource === "string" ? input.bilanSource : undefined, bilanMode: pastedBilanHtml ? "libre" : "structure" } : {}), destination: input.destination, finalScore: input.finalScore, verdict: input.verdict, strengths: input.strengths, weaknesses: input.weaknesses, recommendations: input.recommendations, language: input.language, ...(input.openingFeeXaf !== undefined ? { openingFeeXaf: input.openingFeeXaf } : {}), ...(input.openingDeadline !== undefined ? { openingDeadline: input.openingDeadline || undefined } : {}), ...(input.advisorName !== undefined ? { advisorName: input.advisorName || undefined } : {}), advisorValidated: false, advisorValidatedAt: null, advisorValidatedByAdminId: null };
       const nextDetails = { ...details, adminDraft: nextDraft };
       const messageHtml = input.message ? normalizeAdminMessage(input.message) : null;
       const messagePlainText = messageHtml ? richTextToPlainText(messageHtml) : "";
       if (input.message && messagePlainText.length < 3) throw new TRPCError({ code: "BAD_REQUEST", message: "Le message d’accompagnement doit contenir au moins trois caractères lisibles." });
-      const updatedApplication = { ...application, destination: input.destination, scoringDetails: JSON.stringify(nextDetails), scoringTotal: input.finalScore, evaluationDeliveryMessage: messageHtml || null, evaluationDeliverySubject: input.subject || null };
+      const feeToApply = input.openingFeeXaf !== undefined && application.paymentStatus !== "SUCCESS" ? input.openingFeeXaf : undefined;
+      const updatedApplication = { ...application, ...(feeToApply !== undefined ? { paymentAmount: feeToApply } : {}), destination: input.destination, scoringDetails: JSON.stringify(nextDetails), scoringTotal: input.finalScore, evaluationDeliveryMessage: messageHtml || null, evaluationDeliverySubject: input.subject || null };
       const scoreBadge = input.finalScore >= 80 ? "eligible" : input.finalScore >= 60 ? "admissible" : "faible";
       const latestVersion = (await db.select({ versionNumber: evaluationBilanVersions.versionNumber }).from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, application.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(1))[0];
       const versionNumber = (latestVersion?.versionNumber ?? 0) + 1;
       const approvalStatus = input.requiresSecondApproval ? "pending" : "not_required" as const;
       const reportHtml = generateEvaluationReportHTML(updatedApplication);
-      await db.update(applications).set({ destination: input.destination, scoringDetails: updatedApplication.scoringDetails, scoringTotal: input.finalScore, scoringBadge: scoreBadge, evaluationDeliveryMessage: messageHtml || null, evaluationDeliverySubject: input.subject || null, evaluationDeliveryStatus: "draft", evaluationScheduledAt: null, evaluationRequiresSecondApproval: input.requiresSecondApproval, evaluationApprovalStatus: approvalStatus, evaluationApprovedAt: null, evaluationApprovedByAdminId: null, updatedAt: new Date() }).where(eq(applications.id, application.id));
+      await db.update(applications).set({ ...(feeToApply !== undefined ? { paymentAmount: feeToApply } : {}), destination: input.destination, scoringDetails: updatedApplication.scoringDetails, scoringTotal: input.finalScore, scoringBadge: scoreBadge, evaluationDeliveryMessage: messageHtml || null, evaluationDeliverySubject: input.subject || null, evaluationDeliveryStatus: "draft", evaluationScheduledAt: null, evaluationRequiresSecondApproval: input.requiresSecondApproval, evaluationApprovalStatus: approvalStatus, evaluationApprovedAt: null, evaluationApprovedByAdminId: null, updatedAt: new Date() }).where(eq(applications.id, application.id));
       await db.insert(evaluationBilanVersions).values({ applicationId: application.id, versionNumber, contentJson: JSON.stringify({ adminDraft: nextDraft, subject: input.subject || null, message: messageHtml || null, messagePlainText: messagePlainText || null }), reportHtml, createdByAdminAccountId: admin.id, requiresSecondApproval: input.requiresSecondApproval, approvalStatus: input.requiresSecondApproval ? "pending" : "draft" });
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
       if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_draft_saved", comment: `Version ${versionNumber} du bilan enregistrée${input.requiresSecondApproval ? " et soumise à une seconde approbation" : ""}.`, actorAdminAccountId: admin.id }); }
-      return { success: true, reportHtml, versionNumber, approvalStatus, message: input.requiresSecondApproval ? "Brouillon enregistré et transmis au second approbateur." : "Brouillon enregistré et prévisualisation mise à jour." };
+      const bilanInspection = typeof nextDraft.bilanHtml === "string" && nextDraft.bilanHtml ? inspectBilan(nextDraft.bilanHtml) : null;
+      return { success: true, reportHtml: frameBrandedDocument(reportHtml), bilanInspection, versionNumber, approvalStatus, message: input.requiresSecondApproval ? "Brouillon enregistré et transmis au second approbateur." : "Brouillon enregistré et prévisualisation mise à jour." };
     }),
 
   validateEvaluationDraft: publicProcedure
@@ -913,14 +957,29 @@ initializeEvaluationDelivery: publicProcedure
       try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
       const previousDraft = (details.adminDraft && typeof details.adminDraft === "object" ? details.adminDraft : {}) as Record<string, unknown>;
       const verdict = typeof previousDraft.verdict === "string" ? previousDraft.verdict.trim() : "";
-      if (verdict.length < 3) throw new TRPCError({ code: "BAD_REQUEST", message: "Saisissez au moins trois caractères dans le bilan avant validation." });
+      const freeBilan = typeof previousDraft.bilanHtml === "string" ? previousDraft.bilanHtml : "";
+      if (freeBilan) {
+        // Bilan libre : le même contrôle que le rapport structuré. Une promesse de résultat ou une donnée sensible bloque la validation (jamais supprimée en silence).
+        // Les variables ({{montant}}, {{nom}}…) sont remplacées avant le contrôle : seule une zone réellement vide bloque la validation.
+        const resolvedBilan = resolveBilanVariables(freeBilan, bilanVariablesFrom({ fullName: application.fullName, dossierNumber: application.dossierNumber, destination: application.destination, visaType: application.visaType, paymentAmount: application.paymentAmount, ...draftExtras(previousDraft) }));
+        const inspection = inspectBilan(resolvedBilan);
+        if (inspection.empty) throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan est vide ou trop court pour être validé." });
+        if (inspection.forbiddenTerms.length > 0) throw new TRPCError({ code: "BAD_REQUEST", message: `Formulation à revoir avant validation (promesse de résultat) : ${inspection.forbiddenTerms.join(", ")}.` });
+        if (inspection.sensitiveData.length > 0) throw new TRPCError({ code: "BAD_REQUEST", message: `Donnée sensible à retirer avant validation : ${inspection.sensitiveData.join(", ")}.` });
+        // Un montant ou un champ laissé « [À CONFIRMER] » ne doit jamais partir chez le candidat.
+        if (inspection.placeholders.length > 0) throw new TRPCError({ code: "BAD_REQUEST", message: `Zone à compléter restante dans le bilan : ${inspection.placeholders.join(", ")}. Renseignez-la avant validation.` });
+        // Relecture automatique : un nom, une note globale ou un total qui ne correspondent pas au dossier bloquent la validation.
+        const reviewErrors = reviewBilan(resolvedBilan, { fullName: application.fullName, destinations: [application.destination], expectedAmount: application.paymentAmount && application.paymentAmount > 0 ? application.paymentAmount : proposedOpeningFee(application.visaType) }).filter((issue) => issue.level === "error");
+        if (reviewErrors.length > 0) throw new TRPCError({ code: "BAD_REQUEST", message: `Relecture automatique : ${reviewErrors.map((issue) => issue.message).join(" ")}` });
+      } else if (verdict.length < 3) throw new TRPCError({ code: "BAD_REQUEST", message: "Saisissez au moins trois caractères dans le bilan avant validation." });
       const now = new Date();
       const finalDossierNumber = await issueFinalDossierNumber(db, application);
+      const shownReference = evaluationDisplayReference(application) ?? finalDossierNumber;
       const nextDraft = { ...previousDraft, advisorValidated: true, advisorValidatedAt: now.toISOString(), advisorValidatedByAdminId: admin.id };
       await db.update(applications).set({ scoringDetails: JSON.stringify({ ...details, adminDraft: nextDraft, dossierIssuedAt: now.toISOString(), dossierIssuedByAdminId: admin.id }), updatedAt: now }).where(eq(applications.id, application.id));
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
-      if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_advisor_validated", comment: `${input.validationComment || "Bilan relu et validé par le conseiller avant diffusion."} Numéro de dossier attribué : ${finalDossierNumber}.`, actorAdminAccountId: admin.id }); }
-      return { success: true, dossierNumber: finalDossierNumber, message: `Validation conseiller enregistrée. Le numéro de dossier ${finalDossierNumber} est maintenant attribué ; le bilan peut être envoyé ou planifié après les approbations requises.` };
+      if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_advisor_validated", comment: `${input.validationComment || "Bilan relu et validé par le conseiller avant diffusion."} Référence du dossier : ${shownReference}.`, actorAdminAccountId: admin.id }); }
+      return { success: true, dossierNumber: shownReference, message: "Validation conseiller enregistrée. Le bilan peut être envoyé ou planifié après les approbations requises. La référence « 3M-… » n'apparaît qu'une fois les frais d'ouverture payés." };
     }),
 
   approveSensitiveEvaluation: publicProcedure
@@ -970,7 +1029,7 @@ initializeEvaluationDelivery: publicProcedure
       previewConfirmed: z.literal(true),
       attachments: z.array(z.object({ name: z.string().trim().min(1).max(255), mimeType: z.enum(["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/jpeg", "image/png"]), contentBase64: z.string().min(1).max(8_000_000), size: z.number().int().positive().max(5 * 1024 * 1024) })).max(3).default([]),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(({ input }) => exclusiveEvaluationSend(input.sourceRecordId, async () => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
@@ -990,16 +1049,24 @@ initializeEvaluationDelivery: publicProcedure
       const extraAttachments = input.attachments.map((attachment) => ({ filename: attachment.name.replace(/[\\/]/g, "_"), content: Buffer.from(attachment.contentBase64, "base64"), contentType: attachment.mimeType }));
       const candidateSpaceUrl = buildCandidateSpaceAccessUrl(application.dossierNumber);
       const messageHtml = application.evaluationDeliveryMessage ? sanitizeRichTextHtml(application.evaluationDeliveryMessage) : "";
-      const emailBaseHtml = `${messageHtml ? `<section style="margin-bottom:24px">${messageHtml}</section>` : ""}${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Votre bilan finalisé est également disponible au format PDF dans votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p><p style="font-size:13px;color:#64748b">Connectez-vous avec l’adresse e-mail associée à votre dossier pour consulter les pièces demandées, les échanges et les prochaines étapes.</p>${buildAdvisorSignatureHtml(application.adminAssignedTo || admin.fullName)}`;
+      const plainEmailBaseHtml = `${messageHtml ? `<section style="margin-bottom:24px">${messageHtml}</section>` : ""}${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Votre bilan finalisé est également disponible au format PDF dans votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p><p style="font-size:13px;color:#64748b">Connectez-vous avec l’adresse e-mail associée à votre dossier pour consulter les pièces demandées, les échanges et les prochaines étapes.</p>${buildAdvisorSignatureHtml(application.adminAssignedTo || admin.fullName)}`;
+      // E-mail à l'identité de l'agence (en-tête, coordonnées, mentions légales) avec un bouton vers l'espace client : la suite du parcours est à un clic.
+      const emailBaseHtml = renderBrandedEmailHtml({
+        title: "Votre bilan d’évaluation",
+        reference: evaluationDisplayReference(application),
+        preheader: "Votre bilan est prêt : consultez-le, puis ouvrez votre dossier pour avancer.",
+        bodyHtml: `${plainEmailBaseHtml}<p style="margin:22px 0 0;font:14px/1.7 'Segoe UI',Calibri,Arial,Helvetica,sans-serif;color:#1f2937;text-align:justify"><strong style="color:#17375e">Et maintenant ?</strong> Si ce bilan vous convient, cliquez sur « Je valide et j’ouvre mon dossier » dans votre espace client. Réunir et vérifier les pièces demande souvent plusieurs semaines : commencer tôt laisse de la marge pour les rendez-vous et les délais de dépôt. Les frais d’ouverture sont confirmés par votre conseiller selon votre profil. Ce bilan évalue la préparation de votre dossier : il ne garantit aucune décision des autorités.</p>`,
+        cta: { label: "Je valide et j’ouvre mon dossier", url: candidateSpaceUrl },
+      });
       const insertedTracking = await db.insert(evaluationEmails).values({ evaluationId: application.id, candidateEmail: application.email, candidateName: application.fullName, destinationCountry: application.destination || "Mobilité internationale", visaType: visaJournal.journalVisaLabel.slice(0, 100), emailType: "admissibility_report", language: deliveryDraft.language === "en" ? "en" : "fr", scheduledAt: new Date(), status: "pending", reportContent: emailBaseHtml, secureLink: candidateSpaceUrl });
       const trackingEmailId = Number((insertedTracking as any)[0]?.insertId ?? 0);
       const availabilityHtml = trackingEmailId > 0 ? appendEvaluationOpenTrackingPixel(emailBaseHtml, trackingEmailId) : emailBaseHtml;
       try {
         await sendEmail({
           to: application.email,
-          subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`,
+          subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${evaluationDisplayReference(application) ?? application.dossierNumber}`,
           html: availabilityHtml,
-          attachments: [{ filename: `bilan-${application.dossierNumber}-v${versionNumber}.pdf`, content: finalPdf.bytes, contentType: "application/pdf" }, ...extraAttachments],
+          attachments: [{ filename: `bilan-${evaluationDisplayReference(application) ?? application.id}-v${versionNumber}.pdf`, content: finalPdf.bytes, contentType: "application/pdf" }, ...extraAttachments],
         });
         if (trackingEmailId > 0) await db.update(evaluationEmails).set({ status: "sent", sentAt: new Date(), reportContent: availabilityHtml }).where(eq(evaluationEmails.id, trackingEmailId));
       } catch (error) {
@@ -1014,13 +1081,25 @@ initializeEvaluationDelivery: publicProcedure
         await db.insert(evaluationBilanVersions).values({ applicationId: application.id, versionNumber, contentJson: JSON.stringify({ systemGenerated: true }), reportHtml: generateEvaluationReportHTML(application), createdByAdminAccountId: admin.id, requiresSecondApproval: false, approvalStatus: "sent", pdfKey: finalPdf.key, pdfUrl: finalPdf.url, sentAt: now });
       }
       if (application.candidateId) {
-        await db.insert(clientNotifications).values({ candidateId: application.candidateId, type: "evaluation_available", title: "Votre bilan d’évaluation est disponible", body: `Votre bilan finalisé pour le dossier ${application.dossierNumber} est prêt. Consultez-le et téléchargez votre PDF depuis votre espace client.`, actionUrl: "/mon-espace", isRead: false, emailSentAt: now });
+        await db.insert(clientNotifications).values({ candidateId: application.candidateId, type: "evaluation_available", title: "Votre bilan d’évaluation est disponible", body: `Votre bilan finalisé pour le dossier ${evaluationDisplayReference(application) ?? ""} est prêt. Consultez-le et téléchargez votre PDF depuis votre espace client.`, actionUrl: "/mon-espace", isRead: false, emailSentAt: now });
       }
+      let justificatifsAuto: Awaited<ReturnType<typeof maybeSendJustificatifsAfterBilan>> | null = null;
+      try {
+        justificatifsAuto = await maybeSendJustificatifsAfterBilan(db, application.id, { actorEmail: admin.email || admin.fullName || null });
+      } catch (error) {
+        console.warn("[sendEvaluationNow] justificatifs auto après bilan:", error);
+      }
+      // Alerte interne systématique : l'évaluation est effectuée (le bilan est parti), la suite dépend de la réponse du candidat.
+      try { await db.insert(adminNotifications).values({ type: "new_evaluation", title: "Évaluation effectuée : bilan envoyé", message: `${application.fullName} (${evaluationDisplayReference(application) ?? "sans référence"}) — bilan ${visaJournal.kindLabel} envoyé dans l'espace client et par e-mail. Étape suivante : le candidat valide son bilan et ouvre son dossier.`.slice(0, 1000), relatedId: `evaluation_sent:${application.id}`, targetAdminType: null, isRead: false }); } catch { /* l'alerte ne bloque jamais l'envoi déjà effectué */ }
+      void acknowledgeBilanSent({ fullName: application.fullName, email: application.email, dossierNumber: evaluationDisplayReference(application) ?? "sans référence", destination: application.destination, kindLabel: visaJournal.kindLabel, sentBy: admin.fullName || admin.email || "un administrateur" });
       const journalComment = `Bilan ${visaJournal.kindLabel} validé et envoyé (espace client + e-mail) après contrôle d’aperçu. Type de visa utilisé : ${visaJournal.journalVisaLabel}.`;
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
       if (source) {
         const request = await ensureManagedRequest(source);
         await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_sent", comment: journalComment, actorAdminAccountId: admin.id });
+        // Étape suivante automatique : la balle passe au candidat (valider et ouvrir son dossier) ; l'équipe est prévenue que l'évaluation est faite.
+        await db.update(unifiedClientRequests).set({ workflowStatus: "waiting_customer" }).where(eq(unifiedClientRequests.id, request.id));
+        await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "next_step_auto", previousValue: null, newValue: "waiting_customer", comment: "Étape suivante : en attente de la réponse du candidat (valider son bilan et ouvrir son dossier).", actorAdminAccountId: admin.id });
       }
       const linkedCase = (await db.select({ id: cases.id }).from(cases).where(eq(cases.legacyApplicationId, application.id)).orderBy(desc(cases.id)).limit(1))[0];
       if (linkedCase) {
@@ -1034,8 +1113,15 @@ initializeEvaluationDelivery: publicProcedure
           description: journalComment,
         });
       }
-      return { success: true, dossierNumber: application.dossierNumber, projectKind: visaJournal.projectKind, visaType: visaJournal.journalVisaLabel, message: `Bilan ${visaJournal.kindLabel} validé et envoyé immédiatement dans l’espace client et par e-mail.` };
-    }),
+      return {
+        success: true,
+        dossierNumber: evaluationDisplayReference(application) ?? application.dossierNumber,
+        projectKind: visaJournal.projectKind,
+        visaType: visaJournal.journalVisaLabel,
+        justificatifsAuto,
+        message: `Bilan ${visaJournal.kindLabel} validé et envoyé immédiatement dans l’espace client et par e-mail.`,
+      };
+    })),
   listEvaluationDeliveryHistory: publicProcedure
     .input(sessionInput.extend({ sourceRecordId: z.number().int().positive() }))
     .query(async ({ input }) => {

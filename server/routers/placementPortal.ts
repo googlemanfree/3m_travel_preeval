@@ -23,7 +23,10 @@ import {
   placementProfileSubmissions,
   placementSubmissionEvents,
   agencyDossierDocuments,
+  partnerRegistrationExtras,
 } from "../../drizzle/schema";
+import { ensurePartnerProfileFromRequest } from "../services/partnerProfiles";
+import { PARTNER_CATEGORIES, PARTNER_CATEGORY_LABELS, defaultCategoryForOrganizationType, isIntermediaryCategory, organizationTypeForCategory } from "../../shared/partnerModule";
 import { computeSelectableStage, POST_SELECTION_LABELS, resolvePostSelectionStage } from "../../shared/talentCorridor";
 import { getDb } from "../db";
 import { sendEmail } from "../_core/email";
@@ -32,7 +35,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
 import { verifyCandidateToken } from "./candidate";
 import { beginTwoFactorEnrollment, confirmTwoFactorEnrollment, getTwoFactorStatus, verifyTwoFactor } from "../twoFactor";
-import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts } from "../loginAttemptsService";
+import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts, scopedLoginIdentifier } from "../loginAttemptsService";
 import { nextPostSelectionStage, type PostSelectionStage } from "../../shared/talentCorridor";
 import { storageGetSignedUrl, storagePut } from "../storage";
 import { buildPlacementSummaryDraft, buildPlacementSummaryPdf, detectPortrait, fingerprintPlacementSources, normalizePlacementSummaryDraft, summaryFieldsFromCvDraft } from "../services/placementProfileSummary";
@@ -41,7 +44,7 @@ import { generateCvDraft } from "../services/cvDraftGenerator";
 import { CV_DRAFT_MAX_PER_HOUR, createCvDraftLimiter } from "./cvDraft";
 
 const employerSessionHours = 24;
-const hashToken = (value: string) => createHash("sha256").update(value).digest("hex");
+export const hashToken = (value: string) => createHash("sha256").update(value).digest("hex");
 const makeProfileCode = () => `PRF-${randomBytes(4).toString("hex").toUpperCase()}`;
 
 /** Chaque génération de résumé depuis un CV est un appel facturé au modèle : même plafond que le générateur de CV. */
@@ -157,6 +160,27 @@ const partnerAccessRequestSchema = z.object({
   sectors: z.string().trim().max(255).optional(),
   targetMarkets: z.string().trim().max(255).optional(),
   message: z.string().trim().min(20).max(3000),
+  /** Charte partenaire : aucune facturation candidat + confidentialité. */
+  acknowledgeCharter: z.literal(true),
+  /** Catégorie précise (employeur direct, recruteur / cabinet, agence) ; rattachée aux deux types d'organisation existants. */
+  partnerCategory: z.enum(PARTNER_CATEGORIES).optional(),
+  /** Intermédiaires : entreprise bénéficiaire ou mandat, ou indication que ces informations sont confidentielles. */
+  mandateCompany: z.string().trim().max(255).optional(),
+  mandateConfidential: z.boolean().optional(),
+}).superRefine((value, ctx) => {
+  if (value.partnerCategory && organizationTypeForCategory(value.partnerCategory) !== value.organizationType) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["partnerCategory"], message: "La catégorie choisie ne correspond pas au type d’organisation." });
+  }
+  if (value.partnerCategory && isIntermediaryCategory(value.partnerCategory) && !value.mandateCompany?.trim() && !value.mandateConfidential) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["mandateCompany"], message: "Indiquez l’entreprise bénéficiaire ou le mandat, ou précisez que ces informations sont confidentielles." });
+  }
+  if (value.organizationType === "placement_partner" && !(value.registrationNumber?.trim().length)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["registrationNumber"],
+      message: "Le numéro d’enregistrement ou de licence est obligatoire pour une agence de placement.",
+    });
+  }
 });
 const collaborationAuditActionSchema = z.enum([
   "favorite_shared",
@@ -168,7 +192,7 @@ const collaborationAuditActionSchema = z.enum([
   "collaborator_suspension_reviewed",
 ]);
 
-async function getEmployerSession(rawToken: string) {
+export async function getEmployerSession(rawToken: string) {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
   const account = (await db.select().from(placementEmployerAccounts)
@@ -183,7 +207,7 @@ async function getEmployerSession(rawToken: string) {
   return { db, account, organization };
 }
 
-function requireEmployerManager(account: { collaborationRole: "reader" | "manager" }) {
+export function requireEmployerManager(account: { collaborationRole: "reader" | "manager" }) {
   if (account.collaborationRole !== "manager") {
     throw new TRPCError({ code: "FORBIDDEN", message: "Cette action est réservée aux gestionnaires de l’organisation." });
   }
@@ -286,7 +310,7 @@ export const placementPortalRouter = router({
     };
   }),
 
-  adminReviewCandidateSummary: publicProcedure.input(z.object({ sessionToken: z.string().min(20), profileId: z.number().int().positive(), action: z.enum(["approve", "reject"]), draft: z.string().trim().min(50).max(6000), note: z.string().trim().max(1500).optional() })).mutation(async ({ input }) => {
+  adminReviewCandidateSummary: publicProcedure.input(z.object({ sessionToken: z.string().min(20), profileId: z.number().int().positive(), action: z.enum(["approve", "reject"]), draft: z.string().trim().min(50).max(16000), note: z.string().trim().max(1500).optional() })).mutation(async ({ input }) => {
     const admin = await requireValidAdminSession(input.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
@@ -339,7 +363,7 @@ export const placementPortalRouter = router({
   }),
 
   /** Aperçu du PDF avec les corrections en cours : rien n'est enregistré. */
-  adminPreviewCandidateSummary: publicProcedure.input(z.object({ sessionToken: z.string().min(20), candidateId: z.number().int().positive(), draft: z.string().trim().min(50).max(6000) })).mutation(async ({ input }) => {
+  adminPreviewCandidateSummary: publicProcedure.input(z.object({ sessionToken: z.string().min(20), candidateId: z.number().int().positive(), draft: z.string().trim().min(50).max(16000) })).mutation(async ({ input }) => {
     await requireValidAdminSession(input.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
@@ -472,7 +496,24 @@ export const placementPortalRouter = router({
         status: "pending",
       });
       const requestId = Number((result as any)[0]?.insertId ?? 0);
-      const orgKind = input.organizationType === "placement_partner" ? "Agence de placement" : "Employeur international";
+      const partnerCategory = input.partnerCategory ?? defaultCategoryForOrganizationType(input.organizationType);
+      // Informations complémentaires (catégorie, mandat) : table séparée, jamais bloquante si la migration n'est pas encore appliquée.
+      let uploadToken: string | undefined;
+      try {
+        uploadToken = randomBytes(24).toString("base64url");
+        await db.insert(partnerRegistrationExtras).values({
+          requestId,
+          category: partnerCategory,
+          mandateCompany: input.mandateCompany?.trim() || null,
+          mandateConfidential: Boolean(input.mandateConfidential),
+          uploadTokenHash: hashToken(uploadToken),
+          uploadTokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
+        });
+      } catch (extrasError) {
+        uploadToken = undefined;
+        logger.error("placement_portal.registration_extras_failed", { requestId }, extrasError);
+      }
+      const orgKind = PARTNER_CATEGORY_LABELS[partnerCategory].fr;
       try {
         await db.insert(adminNotifications).values({
           type: "new_contact_message",
@@ -502,6 +543,7 @@ ${input.sectors || input.targetMarkets ? `<p>${[input.sectors, input.targetMarke
       resetLoginAttempts(`partner-access:${email}`);
       return {
         requestId,
+        uploadToken,
         message: "Demande enregistrée. 3M TRAVEL AGENCY vérifie votre organisation avant de remettre un accès.",
       };
     } catch (error) {
@@ -602,6 +644,12 @@ ${input.sectors || input.targetMarkets ? `<p>${[input.sectors, input.targetMarke
         verifiedAt: now,
         verifiedByAdminId: admin.id,
       }).where(eq(placementOrganizations.id, organizationId));
+    }
+    // Fiche de suivi partenaire : créée à l'approbation, jamais « actif » automatiquement (module partenaires, migration 0081).
+    try {
+      await ensurePartnerProfileFromRequest(db, request, organizationId, verified, admin);
+    } catch (profileError) {
+      logger.error("placement_portal.partner_profile_failed", { requestId: request.id }, profileError);
     }
     let temporaryPassword: string | null = null;
     if (input.createAccess) {
@@ -706,26 +754,27 @@ ${input.sectors || input.targetMarkets ? `<p>${[input.sectors, input.targetMarke
   }),
 
   employerLogin: publicProcedure.input(z.object({ email: z.string().email().max(320), password: z.string().min(1).max(128), twoFactorCode: z.string().trim().min(6).max(32).optional() })).mutation(async ({ input }) => {
-    checkLoginAttempts(input.email);
+    const loginIdentifier = scopedLoginIdentifier("employer", input.email);
+    checkLoginAttempts(loginIdentifier);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
     const account = (await db.select().from(placementEmployerAccounts).where(eq(placementEmployerAccounts.email, input.email.toLowerCase())).limit(1))[0];
     if (!account || account.status !== "active") {
-      recordFailedAttempt(input.email);
+      recordFailedAttempt(loginIdentifier);
       throw new TRPCError({ code: "UNAUTHORIZED", message: "Identifiants employeur invalides." });
     }
     if (!(await bcrypt.compare(input.password, account.passwordHash))) {
-      recordFailedAttempt(input.email);
+      recordFailedAttempt(loginIdentifier);
       throw new TRPCError({ code: "UNAUTHORIZED", message: "Identifiants employeur invalides." });
     }
     const organization = (await db.select().from(placementOrganizations).where(and(eq(placementOrganizations.id, account.organizationId), eq(placementOrganizations.verificationStatus, "verified"))).limit(1))[0];
     if (!organization) throw new TRPCError({ code: "FORBIDDEN", message: "Accès organisation non vérifié." });
     const twoFactor = await verifyTwoFactor("employer", account.id, input.twoFactorCode ?? "");
     if (twoFactor.required && !twoFactor.valid) {
-      recordFailedAttempt(input.email);
+      if (input.twoFactorCode) recordFailedAttempt(loginIdentifier);
       throw new TRPCError({ code: "UNAUTHORIZED", message: input.twoFactorCode ? "Code 2FA invalide ou déjà utilisé." : "TOTP_REQUIRED" });
     }
-    resetLoginAttempts(input.email);
+    resetLoginAttempts(loginIdentifier);
     const rawToken = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + employerSessionHours * 60 * 60 * 1000);
     await db.update(placementEmployerAccounts).set({ sessionTokenHash: hashToken(rawToken), sessionExpiresAt: expiresAt, lastLoginAt: new Date() }).where(eq(placementEmployerAccounts.id, account.id));

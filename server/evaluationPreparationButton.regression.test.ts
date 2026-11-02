@@ -16,19 +16,20 @@ describe("préparation manuelle du bilan", () => {
   });
 
   it("conserve la validation humaine obligatoire avant diffusion", () => {
-    expect(editor).toContain("Validation obligatoire du conseiller");
-    expect(editor).toContain("onClick={async () => { if (await ensureDraft()) validateDraft.mutate");
+    expect(editor).toContain("validateDraft.mutateAsync");
+    expect(editor).toContain("if (!(await persist())) return false;");
     expect(router).toContain("Le brouillon doit être validé par un conseiller avant envoi");
     expect(router).toContain("validé et envoyé immédiatement dans l’espace client et par e-mail.");
     expect(router).toContain("previewConfirmed: z.literal(true)");
   });
 
-  it("bloque proprement la prévisualisation et l’enregistrement d’un brouillon sans recommandations", () => {
-    expect(editor).toContain("if (payload.recommendations.length < 1)");
-    expect(editor).toContain("Ajoutez au moins une recommandation avant d’enregistrer le brouillon.");
-    expect(editor).toContain("Recommandations requises");
-    expect(editor).toContain("Préparation impossible");
-    expect(editor).toContain("Brouillon non enregistré");
-    expect(editor).toContain("catch {");
+  it("bloque proprement la prévisualisation et l’enregistrement d’un brouillon sans aucun contenu de bilan", () => {
+    // Plus de recommandation obligatoire : un bilan collé (ou un simple message) suffit.
+    expect(editor).toContain("Saisissez le bilan (quelques lignes au moins).");
+    expect(editor).toContain("disabled={locked || busy || !text.trim() || !dirty}");
+    expect(editor).toContain("Bilan non enregistré");
+    expect(editor).toContain("Validation impossible");
+    expect(editor).toContain("Envoi impossible");
+    expect(editor).toContain("catch (caught)");
   });
 });

@@ -83,7 +83,9 @@ describe("admin cockpit dossiers", () => {
     expect(dashboard).toContain("AdminCockpitControlBoard");
     expect(dashboard).toContain("AdminCandidateCockpitStrip");
     expect(dashboard).toContain("onTreatNow");
-    expect(dashboard).toContain('useState("pilotage")');
+    // Le pilotage reste la section d'ouverture par défaut (dernier onglet mémorisé ou lien ?tab= sinon).
+    expect(dashboard).toContain('return "pilotage";');
+    expect(dashboard).toContain("useState<string>(readInitialAdminTab)");
   });
 
   it("route le protocole vers l’onglet évaluation (où vit le panneau d’envoi)", () => {

@@ -61,10 +61,28 @@ export function referenceChangeSentence(accountRef: string, dossierRef: string):
   return `Votre référence de compte ${accountRef} est remplacée par votre numéro de dossier ${dossierRef}. Utilisez désormais ${dossierRef} dans tous vos échanges avec l’agence.`;
 }
 
+/**
+ * Un dossier agence rattaché à un compte est ACTIVÉ dès que ses frais d'ouverture sont payés (l'activation crée la ligne avec le statut
+ * « nouveau » mais « payé »), ou dès que l'agence l'a fait avancer. Seul un pré-dossier non payé et sans suite reste un compte.
+ */
+export function agencyDossierIsActivated(agency: { status?: string | null; initialPaymentStatus?: string | null }): boolean {
+  if (String(agency.initialPaymentStatus ?? "").toLowerCase() === "paid") return true;
+  return Boolean(agency.status) && agency.status !== "nouveau";
+}
+
+/**
+ * Référence à AFFICHER pour un dossier agence : « 3M-AGN-… » seulement une fois les frais payés (ou le dossier réellement avancé) ;
+ * avant, la référence de compte « COMPTE-… » du candidat (à défaut de compte lié, la référence agence reste la seule disponible).
+ */
+export function agencyDisplayReference(agency: { id: number; status?: string | null; initialPaymentStatus?: string | null }, linkedCandidateId?: number | null): string {
+  if (agencyDossierIsActivated(agency) || !linkedCandidateId || linkedCandidateId <= 0) return agencyDossierReference(agency.id);
+  return accountReference(linkedCandidateId);
+}
+
 export type ReferenceSources = {
   candidateId: number;
   /** Dossier agence rattaché au compte (par e-mail). Un pré-dossier « nouveau » n'est pas un dossier activé. */
-  agencyDossier?: { id: number; status?: string | null } | null;
+  agencyDossier?: { id: number; status?: string | null; initialPaymentStatus?: string | null } | null;
   /** Dossier en ligne : activé quand le paiement des frais d'ouverture est confirmé ET validé par l'administration. */
   onlineApplication?: { dossierNumber?: string | null; paymentStatus?: string | null; paymentValidatedAt?: Date | string | null } | null;
 };
@@ -76,7 +94,7 @@ export type ReferenceSources = {
  */
 export function resolveClientReference(input: ReferenceSources): ReferenceStage {
   const agency = input.agencyDossier;
-  if (agency && agency.status && agency.status !== "nouveau") {
+  if (agency && agencyDossierIsActivated(agency)) {
     return currentReference({ candidateId: input.candidateId, activeDossierReference: agencyDossierReference(agency.id) });
   }
   const online = input.onlineApplication;
@@ -85,3 +103,9 @@ export function resolveClientReference(input: ReferenceSources): ReferenceStage 
   }
   return currentReference({ candidateId: input.candidateId });
 }
+
+/** Destination non précisée dans le dossier (« autre », « general »…) : à ne jamais afficher comme un pays. */
+export const isUnspecifiedDestination = (value: string | null | undefined): boolean => {
+  const folded = (value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  return !folded || ["autre", "other", "general", "generale", "non precise", "a preciser", "n/a"].includes(folded);
+};

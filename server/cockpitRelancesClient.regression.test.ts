@@ -52,15 +52,15 @@ describe("cockpit — relances client e-mail / WhatsApp + confirmation admin", (
     expect(router).toContain("phone: account.phone");
 
     const cockpit = read("client/src/components/AdminCockpitControlBoard.tsx");
-    expect(cockpit).toContain("buildMailtoRelance");
-    expect(cockpit).toContain("buildWhatsAppRelance");
-    expect(cockpit).toContain("visaType: item.visaType");
+    expect(cockpit).toContain("sendDynamicRelance");
+    expect(cockpit).toContain("Envoyer e-mail");
     expect(cockpit).toContain("cockpit-relance-mail");
     expect(cockpit).toContain("cockpit-relance-whatsapp");
     expect(cockpit).toContain("cockpit-force-confirm-email");
     expect(cockpit).toContain("cockpit-resend-confirm-link");
     expect(cockpit).toContain("forceConfirmEmail");
     expect(cockpit).toContain("adminActivation.resend");
+    expect(cockpit).not.toContain("buildMailtoRelance");
   });
 
   it("garde forceConfirmEmail côté activation admin", () => {

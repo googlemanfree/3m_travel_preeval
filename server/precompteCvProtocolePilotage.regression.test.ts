@@ -90,10 +90,11 @@ describe("précompte — CV visible + protocole après paiement + pilotage", () 
     expect(dashboard).toContain("candidate-cv-download");
     expect(dashboard).toContain("candidate-cv-missing");
     expect(dashboard).toContain("predossier-pilotage-panel");
-    expect(dashboard).toContain("buildMailtoRelance");
-    expect(dashboard).toContain("buildWhatsAppRelance");
+    expect(dashboard).toContain("sendDynamicRelance");
+    expect(dashboard).toContain("Envoyer e-mail");
     expect(dashboard).toContain("conversion_open_dossier");
     expect(dashboard).toContain("cv_missing");
+    expect(dashboard).not.toContain("buildMailtoRelance");
 
     const strip = read("client/src/components/AdminCandidateCockpitStrip.tsx");
     expect(strip).toContain("lockedUntilPayment");

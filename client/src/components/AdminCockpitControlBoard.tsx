@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, Gauge, Mail, MessageCircle, RefreshCw, Send, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CheckCircle, Gauge, Loader2, Mail, MessageCircle, RefreshCw, Send, ShieldCheck } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { formatAdminSyncTime } from "@shared/adminSync";
-import { buildMailtoRelance, buildWhatsAppRelance } from "@shared/adminOpsToolkit";
 
 type Category =
   | "email_unverified"
@@ -67,6 +66,36 @@ export default function AdminCockpitControlBoard({
   const [visible, setVisible] = useState(16);
   const [forceConfirm, setForceConfirm] = useState<ForceConfirmTarget | null>(null);
   const [forceConfirmReason, setForceConfirmReason] = useState("");
+  const [relancePendingKey, setRelancePendingKey] = useState<string | null>(null);
+  const [relanceSentKeys, setRelanceSentKeys] = useState<Record<string, true>>({});
+
+  const sendDynamicRelanceMutation = trpc.adminCandidateManagement.sendDynamicRelance.useMutation({
+    onSuccess: (result, variables) => {
+      if (!variables) return;
+      const key = `${variables.candidateId}:${variables.stage}:${variables.channel}`;
+      setRelancePendingKey(null);
+      setRelanceSentKeys((prev) => ({ ...prev, [key]: true }));
+      if (variables.channel === "email" || variables.channel === "both") {
+        toast({
+          title: result.emailSent ? "E-mail bien parti" : "E-mail non délivré",
+          description: result.emailSent
+            ? `${result.message} Visible aussi dans l’espace client.`
+            : result.message,
+          variant: result.emailSent ? "default" : "destructive",
+        });
+      } else {
+        toast({ title: "Relance déposée", description: result.message });
+      }
+      if ((variables.channel === "whatsapp" || variables.channel === "both") && result.whatsappUrl) {
+        window.open(result.whatsappUrl, "_blank", "noopener,noreferrer");
+      }
+      void query.refetch();
+    },
+    onError: (error) => {
+      setRelancePendingKey(null);
+      toast({ title: "Relance impossible", description: error.message, variant: "destructive" });
+    },
+  });
 
   const resendMutation = trpc.adminActivation.resend.useMutation({
     onSuccess: () => {
@@ -168,26 +197,26 @@ export default function AdminCockpitControlBoard({
               <ul className="space-y-2">
                 {items.slice(0, visible).map((item) => {
                   const stage = CATEGORY_TO_STAGE[item.category as Category] ?? "generic";
-                  const mailtoHref = item.email
-                    ? buildMailtoRelance({
-                        email: item.email,
-                        name: item.fullName,
-                        reference: item.reference,
-                        stage,
-                        visaType: item.visaType,
-                      })
-                    : null;
-                  const whatsappHref = item.phone
-                    ? buildWhatsAppRelance({
-                        phone: item.phone,
-                        name: item.fullName,
-                        reference: item.reference,
-                        stage,
-                        visaType: item.visaType,
-                      })
-                    : null;
                   const canForceConfirm = item.category === "email_unverified" && typeof item.candidateId === "number";
                   const canResendLink = canForceConfirm;
+                  const mailKey = `${item.openId}:${stage}:email`;
+                  const waKey = `${item.openId}:${stage}:whatsapp`;
+                  const mailSent = Boolean(relanceSentKeys[mailKey]);
+                  const waSent = Boolean(relanceSentKeys[waKey]);
+                  const mailPending = relancePendingKey === mailKey;
+                  const waPending = relancePendingKey === waKey;
+                  const sendRelance = (channel: "email" | "whatsapp") => {
+                    const key = channel === "email" ? mailKey : waKey;
+                    if (relanceSentKeys[key] || sendDynamicRelanceMutation.isPending) return;
+                    setRelancePendingKey(key);
+                    sendDynamicRelanceMutation.mutate({
+                      sessionToken,
+                      candidateId: item.openId,
+                      stage,
+                      channel,
+                      useAi: true,
+                    });
+                  };
 
                   return (
                     <li key={item.id}>
@@ -214,31 +243,44 @@ export default function AdminCockpitControlBoard({
                           </span>
                         </button>
                         <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5" data-testid="cockpit-relance-actions">
-                          {mailtoHref ? (
-                            <a
-                              href={mailtoHref}
-                              onClick={(event) => event.stopPropagation()}
+                          {item.email ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              className={`h-8 gap-1 px-2.5 text-xs font-bold text-white ${mailSent ? "bg-emerald-700 hover:bg-emerald-700" : "bg-blue-700 hover:bg-blue-800"}`}
                               data-testid="cockpit-relance-mail"
-                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-800 hover:border-blue-300 hover:bg-blue-50"
-                              title={`Relancer ${item.fullName} par e-mail (message prêt)`}
+                              data-relance-state={mailSent ? "sent" : mailPending ? "pending" : "ready"}
+                              disabled={sendDynamicRelanceMutation.isPending || mailSent}
+                              aria-busy={mailPending}
+                              title={mailSent ? "Déjà envoyé — verrouillé anti-doublon" : mailPending ? "Envoi en cours…" : `Accessible : envoyer à ${item.fullName} (espace + e-mail)`}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                sendRelance("email");
+                              }}
                             >
-                              <Mail className="h-3.5 w-3.5" aria-hidden="true" />
-                              E-mail
-                            </a>
+                              {mailPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : mailSent ? <CheckCircle className="h-3.5 w-3.5" aria-hidden="true" /> : <Mail className="h-3.5 w-3.5" aria-hidden="true" />}
+                              {mailSent ? "E-mail envoyé" : mailPending ? "Envoi…" : "Envoyer e-mail"}
+                            </Button>
                           ) : null}
-                          {whatsappHref ? (
-                            <a
-                              href={whatsappHref}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(event) => event.stopPropagation()}
+                          {item.phone ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className={`h-8 gap-1 px-2.5 text-xs font-bold ${waSent ? "border-emerald-400 bg-emerald-100 text-emerald-900" : "border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100"}`}
                               data-testid="cockpit-relance-whatsapp"
-                              className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-bold text-emerald-900 hover:bg-emerald-100"
-                              title={`Relancer ${item.fullName} sur WhatsApp (message prêt)`}
+                              data-relance-state={waSent ? "sent" : waPending ? "pending" : "ready"}
+                              disabled={sendDynamicRelanceMutation.isPending || waSent}
+                              aria-busy={waPending}
+                              title={waSent ? "Déjà préparé — verrouillé anti-doublon" : waPending ? "Envoi en cours…" : `Accessible : déposer puis ouvrir WhatsApp pour ${item.fullName}`}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                sendRelance("whatsapp");
+                              }}
                             >
-                              <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
-                              WhatsApp
-                            </a>
+                              {waPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : waSent ? <CheckCircle className="h-3.5 w-3.5" aria-hidden="true" /> : <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />}
+                              {waSent ? "Envoyé" : waPending ? "Envoi…" : "WhatsApp"}
+                            </Button>
                           ) : item.email && item.category !== "ready_to_activate" ? (
                             <span className="text-[11px] text-slate-500" data-testid="cockpit-relance-whatsapp-missing">
                               WhatsApp : tél. manquant

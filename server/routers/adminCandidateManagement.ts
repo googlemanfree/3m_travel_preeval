@@ -1,15 +1,20 @@
 ﻿import { publicProcedure, router } from "../_core/trpc";
+import { PRE_DOSSIER_STATUSES, isActivatedStatus } from "../../shared/candidateStatus";
 import { TRPCError } from "@trpc/server";
 import crypto from "node:crypto";
 import { z } from "zod";
-import { and, desc, eq, isNull, isNotNull, like, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, isNotNull, like, or, sql } from "drizzle-orm";
+import { checkNoProofReason, checkPaymentReference, referenceKey } from "../../shared/openingPaymentReference";
+import { declaredProjectWarnings } from "../../shared/declaredConsistency";
 import { applications, agencyDossiers, agencyDossierDocuments, agencyDossierHistory, agencySettings, clientDocuments, candidateFiles, candidateMessages, candidates, evaluations, paymentAuditLogs, paymentReceiptApprovals } from "../../drizzle/schema";
 import { caseActivityLogs, caseStatusHistory, cases, clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
-import { requireAdminSessionFromCookie, requireValidAdminSession } from "./adminAuth";
+import { requireAdminSessionFromCookie, requireSuperAdminSession, requireValidAdminSession } from "./adminAuth";
 import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../emailService";
+import { PAYMENT_PROOF_REQUIRED_MESSAGE } from "../services/openingPaymentEvidence";
 import { describeDossierProgress, progressText } from "../../shared/dossierProgress";
 import { sendReceiptAndProtocol } from "../services/paymentPackage";
+import { runOpeningPaymentAutomation } from "../services/openingPaymentAutomation";
 import { generateReceiptA5HTML } from "../receiptA5Service";
 import { archiveRedundantPreAccounts, loadEmailsWithActiveDossier, loadRedundantPreAccounts } from "../services/redundantPreAccountsStore";
 import { loadPilotageQueue } from "../services/pilotageQueueStore";
@@ -153,6 +158,9 @@ type OpeningPaymentRecord = {
   validatedBy: string;
   reference: string | null;
   proofFileUrl: string | null;
+  /** Validé sans photo de la facture : référence de transaction + motif obligatoire, à rapprocher du relevé. */
+  referenceOnly?: boolean;
+  noProofReason?: string | null;
   confirmedAmount: number | null;
   additionalPayment?: {
     reference: string;
@@ -169,6 +177,13 @@ export type PendingOpeningPaymentProof = {
   fileName?: string;
   mimeType?: string;
 };
+
+/** Paiement accepté : photo/vidéo jointe, OU validation sur référence avec motif et validateur (jamais une référence nue). */
+function hasAcceptedOpeningPayment(record: OpeningPaymentRecord | null | undefined): boolean {
+  if (!record) return false;
+  if (record.proofFileUrl?.trim()) return true;
+  return record.referenceOnly === true && checkPaymentReference(record.reference).ok && checkNoProofReason(record.noProofReason).ok && Boolean(record.validatedBy?.trim());
+}
 
 async function getOpeningPaymentRecord(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, candidateId: number): Promise<OpeningPaymentRecord | null> {
   const [row] = await db.select({ settingValue: agencySettings.settingValue }).from(agencySettings)
@@ -451,7 +466,7 @@ export const adminCandidateManagementRouter = router({
 
       for (const account of accountRows) {
         const emailKey = account.email.trim().toLowerCase();
-        const paymentConfirmed = account.dossierStatus !== "nouveau" || openingPaidIds.has(account.id);
+        const paymentConfirmed = isActivatedStatus(account.dossierStatus) || openingPaidIds.has(account.id);
         const cockpit = buildCandidateCockpit({
           emailVerified: account.emailVerified,
           evaluationStatus: account.evaluationDeclarationStatus,
@@ -459,7 +474,7 @@ export const adminCandidateManagementRouter = router({
           paymentConfirmed,
           receiptApproved: receiptByEmail.has(emailKey),
           protocolSigned: false,
-          dossierActivated: account.dossierStatus !== "nouveau" || activeEmails.has(emailKey),
+          dossierActivated: isActivatedStatus(account.dossierStatus) || activeEmails.has(emailKey),
           pendingDocuments: pendingDocCount.get(account.id) ?? 0,
           destination: account.destination,
           visaType: account.visaType,
@@ -578,7 +593,7 @@ export const adminCandidateManagementRouter = router({
       // Un pré-compte déjà mis en corbeille n'est plus à ouvrir, et celui dont la personne a déjà un dossier actif non plus :
       // il n'est ni supprimé ni modifié, seulement retiré de cette liste (le nombre masqué est annoncé à l'administrateur).
       const [allAccounts, files, evaluationRows, activeEmails] = await Promise.all([
-        db.select().from(candidates).where(and(eq(candidates.dossierStatus, "nouveau"), isNull(candidates.deletedAt))).orderBy(desc(candidates.createdAt)).limit(500),
+        db.select().from(candidates).where(and(inArray(candidates.dossierStatus, [...PRE_DOSSIER_STATUSES]), isNull(candidates.deletedAt))).orderBy(desc(candidates.createdAt)).limit(500),
         db.select({
           candidateId: candidateFiles.candidateId,
           fileType: candidateFiles.fileType,
@@ -627,6 +642,32 @@ export const adminCandidateManagementRouter = router({
       await Promise.all(filtered.map(async (account) => {
         openingPaymentByCandidate.set(account.id, await getOpeningPaymentRecord(db, account.id));
       }));
+      // Suivi du bilan : dernier dossier d'évaluation de chaque compte (par compte, à défaut par e-mail) et réponse du candidat.
+      const filteredIds = filtered.map((account) => account.id);
+      const filteredEmails = filtered.map((account) => account.email.trim().toLowerCase());
+      const appRows = filtered.length === 0 ? [] : await db.select({
+        id: applications.id,
+        candidateId: applications.candidateId,
+        email: applications.email,
+        evaluationDeliveryStatus: applications.evaluationDeliveryStatus,
+        evaluationCompletedAt: applications.evaluationCompletedAt,
+        evaluationReportViewedAt: applications.evaluationReportViewedAt,
+        activationRequestedAt: applications.activationRequestedAt,
+        paymentAmount: applications.paymentAmount,
+        paymentStatus: applications.paymentStatus,
+      }).from(applications).where(or(inArray(applications.candidateId, filteredIds), inArray(sql<string>`LOWER(${applications.email})`, filteredEmails))).orderBy(desc(applications.createdAt)).limit(2000);
+      const latestAppByCandidate = new Map<number, (typeof appRows)[number]>();
+      const latestAppByEmail = new Map<string, (typeof appRows)[number]>();
+      for (const row of appRows) {
+        if (row.candidateId && !latestAppByCandidate.has(row.candidateId)) latestAppByCandidate.set(row.candidateId, row);
+        const key = row.email.trim().toLowerCase();
+        if (!latestAppByEmail.has(key)) latestAppByEmail.set(key, row);
+      }
+      const decisionRows = appRows.length === 0 ? [] : await db.select({ settingKey: agencySettings.settingKey, settingValue: agencySettings.settingValue }).from(agencySettings).where(inArray(agencySettings.settingKey, appRows.slice(0, 1000).map((row) => `evaluation_decision:${row.id}`)));
+      const decisionByApplication = new Map<number, { decision?: string; reason?: string | null }>();
+      for (const row of decisionRows) {
+        try { decisionByApplication.set(Number(String(row.settingKey).split(":")[1]), JSON.parse(row.settingValue ?? "{}")); } catch { /* décision illisible : ignorée */ }
+      }
       return {
         total: filtered.length,
         coveredByActiveDossier,
@@ -674,6 +715,22 @@ export const adminCandidateManagementRouter = router({
               }
             })(),
             visaType: account.visaType,
+            bilan: (() => {
+              const app = latestAppByCandidate.get(account.id) ?? latestAppByEmail.get(emailKey);
+              if (!app) return null;
+              const decision = decisionByApplication.get(app.id);
+              const sent = app.evaluationDeliveryStatus === "sent";
+              return {
+                sent,
+                sentAt: sent ? app.evaluationCompletedAt ?? null : null,
+                viewedAt: sent ? app.evaluationReportViewedAt ?? null : null,
+                decision: sent && (decision?.decision === "accepted" || decision?.decision === "declined") ? decision.decision : null,
+                declineReason: sent && decision?.decision === "declined" ? decision.reason ?? null : null,
+                openingRequested: Boolean(app.activationRequestedAt),
+                feeXaf: Number(app.paymentAmount) > 0 ? Number(app.paymentAmount) : null,
+                paid: app.paymentStatus === "SUCCESS",
+              };
+            })(),
           };
         }),
       };
@@ -816,6 +873,166 @@ export const adminCandidateManagementRouter = router({
       return { success: true, emailSent, sentBy: admin.email, accountReference: accountReference(candidate.id) };
     }),
 
+  /**
+   * Relance dynamique : compose un message professionnel (modèle + IA),
+   * le dépose dans l’espace client (entête) et l’envoie par e-mail brandé.
+   * WhatsApp : retourne l’URL préremplie (même texte).
+   */
+  sendDynamicRelance: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      /** `account_123`, `online_123`, `agency_123` ou id numérique de compte. */
+      candidateId: z.union([z.string().min(1).max(50), z.number().int().positive()]),
+      stage: z.string().trim().min(2).max(64),
+      channel: z.enum(["email", "whatsapp", "both"]).default("email"),
+      useAi: z.boolean().optional().default(true),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+
+      const rawId = typeof input.candidateId === "number" ? `account_${input.candidateId}` : input.candidateId.trim();
+      const accountMatch = /^account_(\d+)$/.exec(rawId);
+      const onlineMatch = /^online_(\d+)$/.exec(rawId);
+      const agencyMatch = /^agency_(\d+)$/.exec(rawId);
+      const numericOnly = /^\d+$/.exec(rawId);
+      const emailLookup = rawId.includes("@") ? rawId.toLowerCase() : null;
+
+      let candidateRow: typeof candidates.$inferSelect | null = null;
+      let reference = "";
+      let destination: string | null = null;
+      let visaType: string | null = null;
+      let phone: string | null = null;
+
+      if (emailLookup) {
+        const [row] = await db.select().from(candidates).where(and(sql`LOWER(TRIM(${candidates.email})) = ${emailLookup}`, isNull(candidates.deletedAt))).limit(1);
+        if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable pour cet e-mail." });
+        candidateRow = row;
+        reference = accountReference(row.id);
+        destination = row.destination || null;
+        visaType = row.visaType || null;
+        phone = row.phone || null;
+      } else if (accountMatch || numericOnly) {
+        const id = Number((accountMatch ?? numericOnly)![1]);
+        const [row] = await db.select().from(candidates).where(and(eq(candidates.id, id), isNull(candidates.deletedAt))).limit(1);
+        if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
+        candidateRow = row;
+        reference = accountReference(row.id);
+        destination = row.destination || null;
+        visaType = row.visaType || null;
+        phone = row.phone || null;
+      } else if (onlineMatch) {
+        const id = Number(onlineMatch[1]);
+        const [app] = await db.select().from(applications).where(eq(applications.id, id)).limit(1);
+        if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        const [row] = await db.select().from(candidates).where(eq(candidates.email, app.email)).limit(1);
+        if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Compte lié au dossier introuvable." });
+        candidateRow = row;
+        reference = app.dossierNumber || accountReference(row.id);
+        destination = app.destination || row.destination || null;
+        visaType = app.visaType || row.visaType || null;
+        phone = app.whatsappNumber || row.phone || null;
+      } else if (agencyMatch) {
+        const id = Number(agencyMatch[1]);
+        const [dossier] = await db.select().from(agencyDossiers).where(and(eq(agencyDossiers.id, id), isNull(agencyDossiers.deletedAt))).limit(1);
+        if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+        const [row] = await db.select().from(candidates).where(eq(candidates.email, dossier.email)).limit(1);
+        if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Compte lié au dossier agence introuvable." });
+        candidateRow = row;
+        reference = agencyDossierReference(dossier.id);
+        destination = dossier.destination || row.destination || null;
+        visaType = dossier.visaType || row.visaType || null;
+        phone = dossier.phone || row.phone || null;
+      } else {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide pour la relance." });
+      }
+
+      const { composeDynamicRelance, buildWhatsAppUrlFromBody } = await import("../services/dynamicRelance");
+      const composed = await composeDynamicRelance({
+        stage: input.stage,
+        name: candidateRow.fullName,
+        reference,
+        email: candidateRow.email,
+        phone,
+        visaType,
+        projectType: visaType,
+        destination,
+        useAi: input.useAi !== false,
+      });
+
+      const notificationResult = await db.insert(clientNotifications).values({
+        candidateId: candidateRow.id,
+        type: "admin_relance",
+        title: composed.subject,
+        body: composed.body,
+        actionUrl: "/mon-espace",
+        isRead: false,
+      });
+      const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
+      await db.insert(candidateMessages).values({
+        candidateId: candidateRow.id,
+        notificationId: notificationId || null,
+        senderRole: "advisor",
+        content: composed.clientSpaceContent,
+        isRead: false,
+      });
+
+      let emailSent = false;
+      if (input.channel === "email" || input.channel === "both") {
+        emailSent = await sendClientNotificationEmail({
+          to: candidateRow.email,
+          fullName: candidateRow.fullName,
+          title: composed.subject,
+          body: composed.body,
+          actionUrl: "/mon-espace",
+          sourceLabel: "3M TRAVEL AGENCY",
+        });
+        if (emailSent && notificationId > 0) {
+          await db.update(clientNotifications).set({ emailSentAt: new Date() }).where(eq(clientNotifications.id, notificationId));
+        }
+      }
+
+      const whatsappUrl = (input.channel === "whatsapp" || input.channel === "both")
+        ? buildWhatsAppUrlFromBody(phone, composed.body)
+        : null;
+
+      await db.insert(paymentAuditLogs).values({
+        adminName: admin.email || "Administrateur",
+        adminEmail: admin.email || "",
+        action: "dynamic_relance_sent",
+        paymentId: candidateRow.id,
+        candidateEmail: candidateRow.email,
+        amount: "0",
+        details: JSON.stringify({
+          stage: composed.stage,
+          channel: input.channel,
+          aiEnhanced: composed.aiEnhanced,
+          emailSent,
+          whatsappPrepared: Boolean(whatsappUrl),
+          subject: composed.subject,
+          sentBy: admin.email,
+        }),
+      });
+
+      return {
+        success: true,
+        emailSent,
+        deliveredToClientSpace: true,
+        aiEnhanced: composed.aiEnhanced,
+        subject: composed.subject,
+        body: composed.body,
+        label: composed.label,
+        whatsappUrl,
+        reference,
+        message: emailSent
+          ? `Relance « ${composed.label} » envoyée (espace client + e-mail)${composed.aiEnhanced ? " — message IA" : ""}.`
+          : input.channel === "whatsapp"
+            ? `Relance « ${composed.label} » déposée dans l’espace client${whatsappUrl ? " — WhatsApp prêt" : " (téléphone manquant)"}.`
+            : `Relance « ${composed.label} » déposée dans l’espace client (e-mail non délivré — à relancer).`,
+      };
+    }),
+
   /** Tableau de bord reçus + protocoles pour un pilotage transparent. */
   contractsReceiptsDesk: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1) }))
@@ -869,15 +1086,16 @@ export const adminCandidateManagementRouter = router({
       const receiptByDossier = new Set(receiptApprovals.map((row) => row.dossierNumber.trim().toUpperCase()));
       const receiptByEmail = new Set(receiptApprovals.map((row) => row.candidateEmail.trim().toLowerCase()));
 
-      const agencyByEmail = new Map<string, { id: number; status: string | null }>();
+      const agencyByEmail = new Map<string, { id: number; status: string | null; initialPaymentStatus: string | null }>();
       const agencyRows = await db.select({
         id: agencyDossiers.id,
         email: agencyDossiers.email,
         status: agencyDossiers.status,
+        initialPaymentStatus: agencyDossiers.initialPaymentStatus,
       }).from(agencyDossiers).where(isNull(agencyDossiers.deletedAt)).orderBy(desc(agencyDossiers.updatedAt)).limit(2000);
       for (const row of agencyRows) {
         const key = row.email.trim().toLowerCase();
-        if (!agencyByEmail.has(key)) agencyByEmail.set(key, { id: row.id, status: row.status });
+        if (!agencyByEmail.has(key)) agencyByEmail.set(key, { id: row.id, status: row.status, initialPaymentStatus: row.initialPaymentStatus });
       }
 
       const onlinePipeline = paidApps.map((app) => {
@@ -1165,17 +1383,18 @@ export const adminCandidateManagementRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
       if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
-      const alreadyActive = candidate.dossierStatus !== "nouveau";
+      const alreadyActive = isActivatedStatus(candidate.dossierStatus);
       const evaluationValidated = candidate.evaluationDeclarationStatus === "validated" && Boolean(candidate.evaluationReviewedAt);
       // Preuve saisie directement sur ce compte (sans dossier) ; consultée en premier pour éviter d'interroger
       // dossiers en ligne/agence quand elle suffit déjà, et exposée telle quelle à l'écran d'activation.
       const openingPayment = alreadyActive ? null : await getOpeningPaymentRecord(db, candidate.id);
-      const paymentValidated = alreadyActive ? true : Boolean(openingPayment) || (await isOpeningPaymentValidated(db, candidate));
+      // Une confirmation sans preuve jointe ne débloque rien : la preuve (ou un paiement en ligne / agence confirmé) est exigée.
+      const paymentValidated = alreadyActive ? true : hasAcceptedOpeningPayment(openingPayment) || (await isOpeningPaymentValidated(db, candidate));
       const blockers: Array<{ code: "already_active" | "evaluation" | "payment"; message: string }> = [];
       if (alreadyActive) blockers.push({ code: "already_active", message: ACTIVATION_MESSAGES.alreadyActive });
       else {
         if (!evaluationValidated) blockers.push({ code: "evaluation", message: ACTIVATION_MESSAGES.evaluation });
-        if (!paymentValidated) blockers.push({ code: "payment", message: ACTIVATION_MESSAGES.payment });
+        if (!paymentValidated) blockers.push({ code: "payment", message: openingPayment ? PAYMENT_PROOF_REQUIRED_MESSAGE : ACTIVATION_MESSAGES.payment });
       }
       return { candidateId: candidate.id, accountReference: accountReference(candidate.id), alreadyActive, evaluationValidated, paymentValidated, openingPayment, canActivate: blockers.length === 0, blockers };
     }),
@@ -1217,10 +1436,12 @@ export const adminCandidateManagementRouter = router({
       paymentReference: z.string().trim().max(255).optional(),
       proofFileUrl: z.string().max(1000).optional(),
       confirmedAmount: z.number().int().positive().max(100000000).optional(),
+      /** Photo indisponible : motif obligatoire quand seule la référence est fournie. */
+      noProofReason: z.string().trim().max(300).optional(),
       additionalPaymentReference: z.string().trim().max(255).optional(),
       additionalConfirmedAmount: z.number().int().positive().max(100000000).optional(),
-    }).refine((value) => Boolean(value.paymentReference?.trim()) || Boolean(value.proofFileUrl?.trim()), {
-      message: "Indiquez une référence de transaction ou joignez une preuve (photo ou vidéo de la facture).",
+    }).refine((value) => Boolean(value.proofFileUrl?.trim()) || Boolean(value.additionalPaymentReference?.trim()) || Boolean(value.paymentReference?.trim()), {
+      message: "Joignez la photo ou la vidéo de la facture, ou saisissez la référence de la transaction et le motif de l'absence de photo.",
     }))
     .mutation(async ({ input, ctx }) => {
       const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
@@ -1228,7 +1449,7 @@ export const adminCandidateManagementRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
       if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
-      if (candidate.dossierStatus !== "nouveau") throw new TRPCError({ code: "CONFLICT", message: ACTIVATION_MESSAGES.alreadyActive });
+      if (isActivatedStatus(candidate.dossierStatus)) throw new TRPCError({ code: "CONFLICT", message: ACTIVATION_MESSAGES.alreadyActive });
       const existing = await getOpeningPaymentRecord(db, candidate.id);
       if (existing && !input.additionalPaymentReference?.trim()) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Le paiement a déjà été confirmé par ${existing.validatedBy} le ${new Date(existing.validatedAt).toLocaleString("fr-FR")}. Aucune seconde validation n'est nécessaire.` });
@@ -1237,6 +1458,36 @@ export const adminCandidateManagementRouter = router({
       // pas (sinon une pièce d'un autre candidat, un passeport par exemple, pourrait être jointe comme « preuve »).
       if (input.proofFileUrl && !(storageKeyFromStoredUrl(input.proofFileUrl) ?? "").startsWith(`candidates/opening-payment-proof/${candidate.id}/`)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Preuve de paiement invalide : redéposez la photo ou la vidéo." });
+      }
+      // Sans photo : la référence de transaction ET le motif de l'absence de photo sont obligatoires. Une même référence ne peut jamais
+      // valider deux comptes (sinon un seul paiement ouvrirait plusieurs dossiers).
+      const referenceOnly = !existing && !input.proofFileUrl?.trim();
+      let noProofReason: string | null = null;
+      if (!existing && input.paymentReference?.trim()) {
+        // Avec une photo, la référence n'est qu'une indication ; sans photo, elle est la seule base du paiement : contrôle strict.
+        const referenceCheck = checkPaymentReference(input.paymentReference);
+        if (referenceCheck.ok === false && referenceOnly) throw new TRPCError({ code: "BAD_REQUEST", message: referenceCheck.message });
+        const wantedReference = referenceCheck.ok ? referenceCheck.reference : input.paymentReference.trim();
+        const others = await db.select({ key: agencySettings.settingKey, value: agencySettings.settingValue }).from(agencySettings)
+          .where(and(like(agencySettings.settingKey, `${OPENING_PAYMENT_KEY_PREFIX}%`), sql`${agencySettings.settingKey} <> ${`${OPENING_PAYMENT_KEY_PREFIX}${candidate.id}`}`)).limit(5000);
+        const wanted = referenceKey(wantedReference);
+        // Une référence trop courte pour être discriminante (accompagnée d'une photo) ne sert pas à détecter une réutilisation.
+        for (const other of Array.isArray(others) && wanted.length >= 6 ? others : []) {
+          try {
+            const parsed = JSON.parse(other.value) as OpeningPaymentRecord;
+            if ([parsed.reference, parsed.additionalPayment?.reference].some((value) => value && referenceKey(value) === wanted)) {
+              throw new TRPCError({ code: "CONFLICT", message: "Cette référence de transaction a déjà servi à valider un autre compte : vérifiez l'ID ou joignez la photo de la facture." });
+            }
+          } catch (error) {
+            if (error instanceof TRPCError) throw error;
+          }
+        }
+      }
+      if (referenceOnly) {
+        if (!input.paymentReference?.trim()) throw new TRPCError({ code: "BAD_REQUEST", message: "Saisissez la référence de la transaction, ou joignez la photo de la facture." });
+        const reasonCheck = checkNoProofReason(input.noProofReason);
+        if (reasonCheck.ok === false) throw new TRPCError({ code: "BAD_REQUEST", message: reasonCheck.message });
+        noProofReason = reasonCheck.reason;
       }
       const now = new Date().toISOString();
       const record: OpeningPaymentRecord = existing
@@ -1254,6 +1505,7 @@ export const adminCandidateManagementRouter = router({
             validatedBy: admin.email || "Administrateur",
             reference: input.paymentReference?.trim() || null,
             proofFileUrl: input.proofFileUrl?.trim() || null,
+            ...(referenceOnly ? { referenceOnly: true, noProofReason } : {}),
             confirmedAmount: input.confirmedAmount ?? null,
             ...(input.additionalPaymentReference?.trim()
               ? {
@@ -1274,7 +1526,7 @@ export const adminCandidateManagementRouter = router({
         paymentId: candidate.id,
         candidateEmail: candidate.email,
         amount: `${input.confirmedAmount ?? 65000} XAF`,
-        details: `Paiement d'ouverture confirmé pour ${accountReference(candidate.id)} depuis le dialogue d'activation · ${record.reference ?? "sans référence"}${record.proofFileUrl ? " · preuve jointe" : ""}${record.additionalPayment ? ` · seconde procédure : ${record.additionalPayment.reference} (${record.additionalPayment.confirmedAmount ?? 65000} XAF)` : ""}.`,
+        details: `Paiement d'ouverture confirmé pour ${accountReference(candidate.id)} depuis le dialogue d'activation · ${record.reference ?? "sans référence"}${record.proofFileUrl ? " · preuve jointe" : ""}${record.referenceOnly ? ` · SUR RÉFÉRENCE SEULE, photo indisponible (${record.noProofReason}) : à rapprocher du relevé` : ""}${record.additionalPayment ? ` · seconde procédure : ${record.additionalPayment.reference} (${record.additionalPayment.confirmedAmount ?? 65000} XAF)` : ""}.`,
       });
       if (record.additionalPayment) {
         await db.insert(paymentAuditLogs).values({
@@ -1308,13 +1560,15 @@ export const adminCandidateManagementRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
       if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
-      if (candidate.dossierStatus !== "nouveau") throw new TRPCError({ code: "CONFLICT", message: ACTIVATION_MESSAGES.alreadyActive });
+      if (isActivatedStatus(candidate.dossierStatus)) throw new TRPCError({ code: "CONFLICT", message: ACTIVATION_MESSAGES.alreadyActive });
       if (candidate.evaluationDeclarationStatus !== "validated" || !candidate.evaluationReviewedAt) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: ACTIVATION_MESSAGES.evaluation });
       }
       const openingPayment = await getOpeningPaymentRecord(db, candidate.id);
-      if (!openingPayment && !(await isOpeningPaymentValidated(db, candidate))) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: ACTIVATION_MESSAGES.payment });
+      // Une confirmation sans preuve (simple référence) ne suffit plus : il faut la preuve jointe, un paiement en ligne validé
+      // ou un paiement agence confirmé au journal.
+      if (!hasAcceptedOpeningPayment(openingPayment) && !(await isOpeningPaymentValidated(db, candidate))) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: openingPayment ? PAYMENT_PROOF_REQUIRED_MESSAGE : ACTIVATION_MESSAGES.payment });
       }
       if (input.additionalProcedure && !openingPayment?.additionalPayment) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le second paiement d'ouverture doit être validé avant d'ajouter la seconde procédure." });
@@ -1405,6 +1659,26 @@ export const adminCandidateManagementRouter = router({
         newValue: dossierReference,
         details: "Référence de compte remplacée par le numéro de dossier actif après paiement des frais d’ouverture validé et activation par l’administration",
       });
+      // Cohérence avec les informations données au départ : un écart est signalé, tracé, jamais bloquant.
+      let consistencyWarnings: string[] = [];
+      try {
+        const [declaredEvaluation] = await db.select({ destinationCountry: evaluations.destinationCountry, projectType: evaluations.projectType, visaType: evaluations.visaType, projectDetailsJson: evaluations.projectDetailsJson })
+          .from(evaluations).where(sql`LOWER(${evaluations.email}) = LOWER(${candidate.email})`).orderBy(desc(evaluations.createdAt)).limit(1);
+        const declaredLabel = (() => { try { const parsed = declaredEvaluation?.projectDetailsJson ? JSON.parse(declaredEvaluation.projectDetailsJson) : null; return typeof parsed?.programLabel === "string" ? parsed.programLabel : null; } catch { return null; } })();
+        consistencyWarnings = declaredProjectWarnings(declaredEvaluation ? { ...declaredEvaluation, programLabel: declaredLabel } : null, { destination: primaryProcedure.destination, visaType: primaryProcedure.visaType });
+        if (consistencyWarnings.length > 0) {
+          await db.insert(agencyDossierHistory).values({
+            dossierId: agencyDossierId,
+            action: "declared_mismatch",
+            changedBy: admin.email || "unknown",
+            oldValue: null,
+            newValue: JSON.stringify(consistencyWarnings),
+            details: "Écart entre l'évaluation du candidat et la procédure ouverte à l'activation",
+          });
+        }
+      } catch (err) {
+        console.error("[activatePreDossierAccount] Contrôle de cohérence non effectué:", err);
+      }
       let additionalAgencyDossierId: number | null = null;
       let additionalDossierReference: string | null = null;
       if (additionalProcedure) {
@@ -1607,6 +1881,7 @@ export const adminCandidateManagementRouter = router({
         dossierReference,
         previousAccountReference,
         archivedDuplicates,
+        consistencyWarnings,
         additionalAgencyDossierId,
         additionalDossierReference,
         simultaneousProcedures: Boolean(additionalAgencyDossierId),
@@ -2053,12 +2328,16 @@ export const adminCandidateManagementRouter = router({
         details: `Dossier ${dossierNumber} · ${referenceLabel} · validation en un clic depuis la fiche candidat.`,
       });
 
-      // Dès que le paiement est confirmé, le reçu et le Protocole d'accord N°01 partent ENSEMBLE, dans un seul e-mail.
+      // Dès que le paiement est confirmé : pack reçu+protocole + purge miroir EVAL (Vague 1).
       // Un échec d'envoi n'annule pas la confirmation : le bouton « Envoyer reçu + protocole » permet de relancer.
       let packageSent = false;
       let packageError: string | null = null;
+      let evalPurged = 0;
       try {
-        packageSent = (await sendReceiptAndProtocol(db, reference, { email: admin.email || "Administrateur" })).sent;
+        const automation = await runOpeningPaymentAutomation(db, reference, admin.email || "Administrateur");
+        packageSent = automation.packageSent;
+        packageError = automation.packageError;
+        evalPurged = automation.evalPurged;
       } catch (error) {
         packageError = error instanceof TRPCError ? error.message : "Le reçu et le protocole n’ont pas pu être envoyés.";
         console.error("[Payment] receipt + protocol package failed", { dossierNumber, error });
@@ -2074,6 +2353,7 @@ export const adminCandidateManagementRouter = router({
         validatedAt,
         packageSent,
         packageError,
+        evalPurged,
         receiptA5Ready: true,
         amount,
         currency: "XAF",
@@ -2399,6 +2679,7 @@ export const adminCandidateManagementRouter = router({
       let visaType = "";
       let whatsapp = "";
       let paymentMethodLabel = "";
+      let paymentAmountValue: number | undefined;
       let paymentTimestamp: Date | null = null;
       if (reference.source === "agency") {
         const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
@@ -2424,6 +2705,7 @@ export const adminCandidateManagementRouter = router({
         whatsapp = application.whatsappNumber || "";
         paymentMethodLabel = application.paymentMethod || "";
         paymentTimestamp = application.paymentValidatedAt || application.paymentDate || null;
+        paymentAmountValue = Number(application.paymentConfirmedAmount ?? application.paymentAmount) || undefined;
       }
       if (!paymentConfirmed) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le protocole ne peut être envoyé qu’après confirmation du paiement." });
       // Protocole généré selon pays + type de visa (guides PDF publiés / COUNTRY_PROTOCOL_PROFILES).
@@ -2434,6 +2716,7 @@ export const adminCandidateManagementRouter = router({
         destinationProjet: destination || "Non spécifiée",
         clientTelephoneWhatsapp: whatsapp || undefined,
         clientEmail: email,
+        montantValide: paymentAmountValue,
         modePaiement: paymentMethodLabel || "Validation manuelle par un conseiller",
         dateHeurePaiement: paymentTimestamp ? paymentTimestamp.toLocaleString("fr-FR", { timeZone: "Africa/Douala" }) : "Non renseignée",
         conseillerEmail: admin.email || "",
@@ -2447,6 +2730,7 @@ export const adminCandidateManagementRouter = router({
         dossierNumber,
         fullName,
         destination,
+        visaType,
         variables: protocolVariables,
         content: protocolText,
       });
@@ -2792,6 +3076,7 @@ export const adminCandidateManagementRouter = router({
     .input(z.object({ sessionToken: z.string().min(1), confirmDelete: z.boolean().default(false) }))
     .mutation(async ({ input, ctx }) => {
       const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      if (input.confirmDelete) await requireSuperAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 

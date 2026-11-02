@@ -1,14 +1,25 @@
-import { CheckCircle2, Clock3, HelpCircle, ShieldCheck } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Activity, AlertTriangle, CheckCircle2, Clock3, Database, HelpCircle, Loader2, RefreshCw, ShieldCheck } from "lucide-react";
 import { Link } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
+
+type HealthState = "checking" | "ok" | "degraded" | "unreachable";
+type Health = { state: HealthState; checkedAt: Date | null };
+type RouteProbe = { path: string; status: number | null };
+type DeploymentHealth = { buildMarker?: string; database?: "ok" | "down"; catalog?: { migration: string; tables: Record<string, number> } };
+const PUBLIC_ROUTES = ["/", "/mon-espace", "/evaluation", "/employeurs", "/login", "/admin", "/pays", "/pays/canada", "/outils/liste-de-pieces"];
 
 const copy = {
   fr: {
     eyebrow: "ÉTAT DU SERVICE",
     title: "Une information claire, au bon moment.",
-    intro: "Consultez ici l’état général des services publics de 3M TRAVEL AGENCY.",
-    updated: "Dernière vérification : disponibilité publique observée",
+    intro: "Consultez ici l’état général des services publics de 3M TRAVEL AGENCY. Le contrôle ci-dessous est réalisé en direct, au chargement de la page.",
+    updated: "Dernière vérification",
     operational: "Opérationnel",
+    degraded: "Service dégradé",
+    checking: "Vérification en cours…",
+    unreachable: "Vérification impossible depuis votre appareil",
+    recheck: "Vérifier à nouveau",
     services: "Services publics",
     publicSite: "Site public et navigation",
     forms: "Formulaires de contact et d’orientation",
@@ -20,13 +31,36 @@ const copy = {
     contact: "Contacter l’agence",
     home: "Retour à l’accueil",
     trust: "Informations publiques, sans données de dossier",
+    deploymentTitle: "Synthèse du déploiement",
+    build: "Build servi",
+    routes: "Routes HTTP contrôlées",
+    routesChecking: "Contrôle des routes en cours…",
+    tables: "Tables catalogue 0087",
+    migration: "Migration",
+    noData: "Non disponible",
+    coversTitle: "Ce que couvre cette page",
+    covers: [
+      "Le site public : si cette page s’affiche, il répond.",
+      "Les formulaires et les espaces sécurisés : ils dépendent de la base de données, que nous interrogeons en direct à chaque chargement.",
+      "Cette page ne remplace pas une surveillance complète et ne mesure pas les délais de traitement des autorités.",
+    ],
+    problemTitle: "Un service ne répond pas ?",
+    problem: [
+      "Actualisez la page puis réessayez dans quelques instants ; vérifiez aussi votre connexion.",
+      "Si le problème persiste, écrivez-nous par WhatsApp ou par e-mail en indiquant la page et l’heure : un conseiller peut poursuivre votre démarche par un autre canal.",
+      "Vos données déjà enregistrées ne sont pas perdues lors d’une interruption temporaire.",
+    ],
   },
   en: {
     eyebrow: "SERVICE STATUS",
     title: "Clear information, when you need it.",
-    intro: "Check the general status of 3M TRAVEL AGENCY public services here.",
-    updated: "Last checked: public availability observed",
+    intro: "Check the general status of 3M TRAVEL AGENCY public services here. The check below is performed live when the page loads.",
+    updated: "Last checked",
     operational: "Operational",
+    degraded: "Degraded service",
+    checking: "Checking…",
+    unreachable: "Check not possible from your device",
+    recheck: "Check again",
     services: "Public services",
     publicSite: "Public website and navigation",
     forms: "Contact and guidance forms",
@@ -38,13 +72,88 @@ const copy = {
     contact: "Contact the agency",
     home: "Back to home",
     trust: "Public information, no case data",
+    deploymentTitle: "Deployment summary",
+    build: "Served build",
+    routes: "Checked HTTP routes",
+    routesChecking: "Checking routes…",
+    tables: "0087 catalogue tables",
+    migration: "Migration",
+    noData: "Unavailable",
+    coversTitle: "What this page covers",
+    covers: [
+      "The public website: if this page displays, it is responding.",
+      "Forms and secure spaces: they depend on the database, which we query live each time the page loads.",
+      "This page does not replace full monitoring and does not measure authorities' processing times.",
+    ],
+    problemTitle: "A service is not responding?",
+    problem: [
+      "Refresh the page and try again in a few moments; also check your connection.",
+      "If the problem persists, write to us on WhatsApp or by e-mail with the page and the time: an advisor can continue your procedure through another channel.",
+      "Data you have already saved is not lost during a temporary interruption.",
+    ],
   },
 } as const;
+
+/** Interroge le contrôle public de disponibilité du serveur. */
+export function usePublicHealth(): Health & { refresh: () => void } {
+  const [health, setHealth] = useState<Health>({ state: "checking", checkedAt: null });
+  const refresh = useCallback(() => {
+    let cancelled = false;
+    setHealth((current) => ({ ...current, state: "checking" }));
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    fetch("/api/public/health", { cache: "no-store", signal: controller.signal })
+      .then(async (response) => {
+        const body = (await response.json().catch(() => null)) as { status?: string; checkedAt?: string } | null;
+        if (cancelled) return;
+        const checkedAt = body?.checkedAt ? new Date(body.checkedAt) : new Date();
+        setHealth({ state: body?.status === "ok" ? "ok" : "degraded", checkedAt });
+      })
+      .catch(() => {
+        if (!cancelled) setHealth({ state: "unreachable", checkedAt: new Date() });
+      })
+      .finally(() => clearTimeout(timer));
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, []);
+  useEffect(() => refresh(), [refresh]);
+  return { ...health, refresh: () => void refresh() };
+}
 
 export default function ServiceStatus() {
   const { language } = useLanguage();
   const t = copy[language];
-  const statusRows = [t.publicSite, t.forms, t.secure];
+  const { state, checkedAt, refresh } = usePublicHealth();
+  const [deployment, setDeployment] = useState<DeploymentHealth | null>(null);
+  const [routeProbes, setRouteProbes] = useState<RouteProbe[]>([]);
+  const [deploymentChecking, setDeploymentChecking] = useState(true);
+
+  const refreshDeployment = useCallback(async () => {
+    setDeploymentChecking(true);
+    const [deploymentResponse, ...routeResponses] = await Promise.all([
+      fetch("/api/public/deployment-health", { cache: "no-store" }).catch(() => null),
+      ...PUBLIC_ROUTES.map((path) => fetch(path, { method: "HEAD", cache: "no-store" }).catch(() => null)),
+    ]);
+    setDeployment(deploymentResponse ? await deploymentResponse.json().catch(() => null) : null);
+    setRouteProbes(routeResponses.map((response, index) => ({ path: PUBLIC_ROUTES[index], status: response?.status ?? null })));
+    setDeploymentChecking(false);
+  }, []);
+
+  useEffect(() => { void refreshDeployment(); }, [refreshDeployment]);
+
+  const stateLabel = state === "ok" ? t.operational : state === "degraded" ? t.degraded : state === "checking" ? t.checking : t.unreachable;
+  const dotClass = (live: boolean) => {
+    if (!live) return "bg-emerald-500"; // le site public répond : la page est servie
+    return state === "ok" ? "bg-emerald-500" : state === "degraded" ? "bg-red-500" : "bg-slate-400";
+  };
+  const rows: Array<{ label: string; live: boolean }> = [
+    { label: t.publicSite, live: false },
+    { label: t.forms, live: true },
+    { label: t.secure, live: true },
+  ];
+  const time = checkedAt ? checkedAt.toLocaleTimeString(language === "en" ? "en-GB" : "fr-FR", { hour: "2-digit", minute: "2-digit" }) : null;
 
   return (
     <main className="min-h-[calc(100vh-5rem)] bg-[#f4f8ff] text-[#102b57]">
@@ -71,13 +180,29 @@ export default function ServiceStatus() {
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-5">
             <div>
               <h2 className="text-xl font-bold text-[#071b3d]">{t.services}</h2>
-              <p className="mt-1 text-sm text-slate-500">{t.updated}</p>
+              <p className="mt-1 text-sm text-slate-500" data-testid="status-checked-at">{t.updated} : {time ?? "—"}</p>
             </div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-sm font-bold text-emerald-700"><CheckCircle2 className="h-4 w-4" aria-hidden="true" />{t.operational}</span>
+            <span
+              role="status"
+              aria-live="polite"
+              data-testid="status-badge"
+              className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-bold ${state === "ok" ? "bg-emerald-50 text-emerald-700" : state === "degraded" ? "bg-red-50 text-red-700" : "bg-slate-100 text-slate-700"}`}
+            >
+              {state === "ok" ? <CheckCircle2 className="h-4 w-4" aria-hidden="true" /> : state === "checking" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <AlertTriangle className="h-4 w-4" aria-hidden="true" />}
+              {stateLabel}
+            </span>
           </div>
           <ul className="divide-y divide-slate-100">
-            {statusRows.map((label) => <li key={label} className="flex items-center justify-between gap-4 py-4 text-sm font-medium text-slate-700"><span>{label}</span><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" aria-label={t.operational} /></li>)}
+            {rows.map((row) => (
+              <li key={row.label} className="flex items-center justify-between gap-4 py-4 text-sm font-medium text-slate-700">
+                <span>{row.label}</span>
+                <span className={`h-2.5 w-2.5 rounded-full ${dotClass(row.live)}`} aria-label={row.live ? stateLabel : t.operational} />
+              </li>
+            ))}
           </ul>
+          <button type="button" onClick={refresh} disabled={state === "checking"} data-testid="status-recheck" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#0b2f6f] px-4 py-2 text-sm font-bold text-[#0b2f6f] transition-colors hover:bg-[#eaf1ff] disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0b2f6f] focus-visible:ring-offset-2">
+            <RefreshCw className="h-4 w-4" aria-hidden="true" />{t.recheck}
+          </button>
         </div>
 
         <aside className="rounded-2xl border border-[#d7e3f5] bg-[#fffdf5] p-5 sm:p-7">
@@ -85,6 +210,45 @@ export default function ServiceStatus() {
           <p className="mt-4 text-sm leading-6 text-slate-700">{t.none}</p>
           <p className="mt-5 border-t border-[#eedca8] pt-4 text-xs leading-5 text-slate-600">{t.notice}</p>
         </aside>
+      </section>
+
+      <section className="mx-auto grid max-w-5xl gap-6 px-4 pb-10 sm:px-6 md:grid-cols-2" data-testid="status-guidance">
+        <div className="rounded-2xl border border-[#d7e3f5] bg-white p-5 sm:p-7">
+          <h2 className="text-lg font-bold text-[#071b3d]">{t.coversTitle}</h2>
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-700">{t.covers.map((item) => <li key={item}>{item}</li>)}</ul>
+        </div>
+        <div className="rounded-2xl border border-[#d7e3f5] bg-white p-5 sm:p-7">
+          <h2 className="text-lg font-bold text-[#071b3d]">{t.problemTitle}</h2>
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-700">{t.problem.map((item) => <li key={item}>{item}</li>)}</ul>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-4 pb-10 sm:px-6" data-testid="deployment-summary">
+        <div className="rounded-2xl border border-[#d7e3f5] bg-white p-5 shadow-[0_16px_45px_rgba(7,27,61,.06)] sm:p-7">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-5">
+            <div>
+              <p className="text-xs font-bold tracking-[0.18em] text-[#bd7a00]">{t.deploymentTitle.toUpperCase()}</p>
+              <h2 className="mt-2 text-xl font-bold text-[#071b3d]">{t.routes}</h2>
+            </div>
+            <button type="button" onClick={refreshDeployment} disabled={deploymentChecking} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#0b2f6f] px-4 py-2 text-sm font-bold text-[#0b2f6f] transition-colors hover:bg-[#eaf1ff] disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0b2f6f] focus-visible:ring-offset-2">
+              <Activity className="h-4 w-4" aria-hidden="true" />{t.recheck}
+            </button>
+          </div>
+          <div className="mt-5 grid gap-4 lg:grid-cols-[.8fr_1.2fr]">
+            <div className="space-y-3 rounded-xl bg-[#f4f8ff] p-4 text-sm text-slate-700">
+              <div className="flex items-center gap-2 font-semibold text-[#071b3d]"><Activity className="h-4 w-4 text-[#0b2f6f]" aria-hidden="true" />{t.build}</div>
+              <code className="block break-all rounded-lg bg-white px-3 py-2 text-xs text-[#0b2f6f]">{deployment?.buildMarker ?? t.noData}</code>
+              <div className="flex items-center gap-2 font-semibold text-[#071b3d]"><Database className="h-4 w-4 text-[#0b2f6f]" aria-hidden="true" />Base de données : {deployment?.database === "ok" ? t.operational : deployment?.database === "down" ? t.degraded : t.checking}</div>
+              <p className="text-xs text-slate-500">{t.migration} : {deployment?.catalog?.migration ?? t.noData}</p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {Object.entries(deployment?.catalog?.tables ?? {}).map(([name, count]) => <div key={name} className="rounded-lg border border-[#d7e3f5] bg-white px-3 py-2"><span className="block truncate text-slate-500">{name}</span><strong className="text-base text-[#071b3d]">{count}</strong></div>)}
+              </div>
+            </div>
+            <div>
+              {deploymentChecking && routeProbes.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">{t.routesChecking}</p> : <ul className="grid gap-2 sm:grid-cols-2">{routeProbes.map((route) => { const ok = route.status !== null && route.status >= 200 && route.status < 400; return <li key={route.path} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 px-3 py-2 text-sm"><code className="truncate text-slate-700">{route.path}</code><span className={`shrink-0 rounded-full px-2 py-1 text-xs font-bold ${ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>{route.status ?? "—"}</span></li>; })}</ul>}
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="mx-auto flex max-w-5xl flex-col gap-4 px-4 pb-16 sm:flex-row sm:items-center sm:justify-between sm:px-6">

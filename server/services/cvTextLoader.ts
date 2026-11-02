@@ -71,6 +71,24 @@ async function defaultFetchFile(url: string): Promise<Buffer | null> {
   }
 }
 
+/**
+ * Télécharge, côté serveur, le fichier d'un CV enregistré (« /manus-storage/… » ou https absolu sûr).
+ * C'est le serveur qui lit le fichier : le navigateur ne peut pas le faire, car l'adresse du site redirige vers un lien signé sur un
+ * autre domaine, que le navigateur refuse de suivre avec les cookies (« Failed to fetch »). Renvoie null si le fichier est
+ * inaccessible, trop volumineux (5 Mo) ou sur une adresse non sûre ; ne lève jamais.
+ */
+export async function loadStoredCvBuffer(cvFileUrl: string | null | undefined, deps: Pick<CvTextDeps, "resolveStoredUrl" | "fetchFile"> = {}): Promise<Buffer | null> {
+  if (!cvFileUrl) return null;
+  try {
+    const target = await (deps.resolveStoredUrl ?? defaultResolveStoredUrl)(cvFileUrl);
+    if (!target || !isSafeCvUrl(target)) return null;
+    return await (deps.fetchFile ?? defaultFetchFile)(target);
+  } catch (error) {
+    console.warn("[cvTextLoader] CV inaccessible", error instanceof Error ? error.message.slice(0, 200) : error);
+    return null;
+  }
+}
+
 const isPdf = (buffer: Buffer) => buffer.length > 5 && buffer.subarray(0, 5).toString("latin1") === "%PDF-";
 
 export async function loadCvExcerpt(cvFileUrl: string | null | undefined, deps: CvTextDeps = {}): Promise<CvExcerpt | null> {

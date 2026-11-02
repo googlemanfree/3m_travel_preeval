@@ -1,8 +1,9 @@
 import { AlertCircle, CheckCircle2, Circle, CircleHelp, ClipboardList, Clock3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { assembleChecklistRequirements, buildRequirementOptions, customRequirementKind, dueInfo, documentsForRequirement, getRequirements, kindFromMatches, normalize, resolveProcedure, summarizeChecklist, MAX_CHECKLIST_DOCUMENTS, type ChecklistDocument, type CustomRequirement, type Requirement } from "@/lib/documentChecklist";
+import { assembleChecklistRequirements, buildRequirementOptions, customRequirementKind, dueInfo, documentsForRequirement, getRequirements, kindFromMatches, normalize, resolveProcedure, summarizeChecklist, MAX_CHECKLIST_DOCUMENTS, type ChecklistDocument, type ChecklistScope, type CustomRequirement, type Requirement } from "@/lib/documentChecklist";
 import RequirementQuickUpload from "@/components/RequirementQuickUpload";
+import { isUnspecifiedDestination } from "@shared/caseReference";
 
 type DocumentClarification = {
   id?: number;
@@ -27,8 +28,8 @@ function documentState(requirement: Requirement, documents: ChecklistDocument[])
   return { kind, ...STATE_VIEW[kind] };
 }
 
-export function deriveChecklistStates(destination: string | null | undefined, projectType: string | null | undefined, documents: ChecklistDocument[], customRequirements: CustomRequirement[] = []) {
-  const { catalogue } = assembleChecklistRequirements(destination, projectType, customRequirements);
+export function deriveChecklistStates(destination: string | null | undefined, projectType: string | null | undefined, documents: ChecklistDocument[], customRequirements: CustomRequirement[] = [], scope?: ChecklistScope) {
+  const { catalogue } = assembleChecklistRequirements(destination, projectType, customRequirements, scope);
   return catalogue.map((requirement) => ({ requirement, state: documentState(requirement, documents), dueAt: undefined as Date | string | null | undefined }));
 }
 
@@ -66,6 +67,7 @@ export default function DossierDocumentChecklist({
   onUploaded,
   customRequirements = [],
   clarifications = [],
+  scope,
 }: {
   destination?: string | null;
   documents: ChecklistDocument[];
@@ -77,9 +79,11 @@ export default function DossierDocumentChecklist({
   onUploaded?: () => void;
   customRequirements?: CustomRequirement[];
   clarifications?: DocumentClarification[];
+  /** Visa ou programme et domaine choisis dans l'évaluation : la checklist en reprend les pièces propres. */
+  scope?: ChecklistScope;
 }) {
-  const assembled = assembleChecklistRequirements(destination, projectType, customRequirements);
-  const states = deriveChecklistStates(destination, projectType, documents, customRequirements);
+  const assembled = assembleChecklistRequirements(destination, projectType, customRequirements, scope);
+  const states = deriveChecklistStates(destination, projectType, documents, customRequirements, scope);
   const manualStates = assembled.customs.map((requirement) => ({ requirement: { category: "Demande de votre conseiller", label: requirement.documentType, detail: requirement.adminComment ?? undefined }, state: customRequirementState(requirement, documents), dueAt: requirement.dueAt }));
   const allStates = [...states, ...manualStates];
   const progress = calculateChecklistProgress(allStates);
@@ -87,7 +91,7 @@ export default function DossierDocumentChecklist({
   const verifiedCount = allStates.filter(({ state }) => state.kind === "verified").length;
   const pendingCount = allStates.filter(({ state }) => state.kind === "missing" || state.kind === "replace").length;
   const pendingClarificationCount = clarifications.filter((item) => item.status === "pending" && item.documentLabel?.trim()).length;
-  const destinationLabel = resolveProcedure(destination)?.name ?? destination ?? "votre destination";
+  const destinationLabel = isUnspecifiedDestination(destination) ? "votre destination (à préciser dans votre évaluation)" : (resolveProcedure(destination)?.name ?? destination ?? "votre destination");
 
   return (
     <Card className="mb-8 border-indigo-100 bg-white shadow-sm" aria-labelledby="document-checklist-title">

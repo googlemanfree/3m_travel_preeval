@@ -1,11 +1,11 @@
 import type { jsPDF as JsPdf } from "jspdf";
 import type { DocumentBilan } from "@/lib/documentBilan";
+import { applyLetterhead, letterheadLayout, serviceFocusLabel, type LetterheadOptions } from "@shared/brandLetterhead";
+import { loadClientBrandLogo, type ClientBrandLogo } from "@/lib/brandLogo";
 
-const MARGIN = 16;
+const MARGIN = 18;
 const PAGE_WIDTH = 210;
-const PAGE_HEIGHT = 297;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
-const BOTTOM = PAGE_HEIGHT - 18;
 
 const LEVEL_COLORS: Record<string, [number, number, number]> = {
   done: [4, 120, 87],
@@ -18,12 +18,21 @@ const LEVEL_COLORS: Record<string, [number, number, number]> = {
 const formatDate = (date: Date) => date.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
 
 /** Dessine le bilan sur un document jsPDF déjà créé (testable sans navigateur). */
-export function renderDocumentBilanPdf(pdf: JsPdf, bilan: DocumentBilan): void {
-  let y = MARGIN;
+export function renderDocumentBilanPdf(pdf: JsPdf, bilan: DocumentBilan, logo?: ClientBrandLogo | null): void {
+  const letterhead: LetterheadOptions = {
+    logoDataUri: logo?.dataUri,
+    logoFormat: logo?.format,
+    documentKind: "Bilan documentaire du dossier",
+    reference: bilan.reference,
+    recipient: bilan.candidateName,
+    serviceFocus: serviceFocusLabel(null, bilan.destination),
+  };
+  const layout = letterheadLayout(letterhead);
+  let y = layout.firstPageTop + 2;
   const ensureSpace = (height: number) => {
-    if (y + height > BOTTOM) {
+    if (y + height > layout.contentBottom) {
       pdf.addPage();
-      y = MARGIN;
+      y = layout.nextPageTop;
     }
   };
   const text = (value: string, size: number, options: { bold?: boolean; color?: [number, number, number]; x?: number; width?: number } = {}) => {
@@ -40,12 +49,7 @@ export function renderDocumentBilanPdf(pdf: JsPdf, bilan: DocumentBilan): void {
     }
   };
 
-  text("3M TRAVEL AGENCY", 9, { bold: true, color: [30, 58, 138] });
-  y += 1.5;
-  text("Bilan documentaire du dossier", 18, { bold: true });
-  y += 2;
-  text(`${bilan.candidateName} · réf. ${bilan.reference}${bilan.destination ? ` · ${bilan.destination}` : ""}`, 10.5, { color: [51, 65, 85] });
-  text(`Établi le ${formatDate(bilan.generatedAt)}`, 9, { color: [100, 116, 139] });
+  text(`Établi le ${formatDate(bilan.generatedAt)}${bilan.destination ? ` · Destination : ${bilan.destination}` : ""}`, 9, { color: [100, 116, 139] });
   y += 4;
 
   const { summary } = bilan;
@@ -94,21 +98,16 @@ export function renderDocumentBilanPdf(pdf: JsPdf, bilan: DocumentBilan): void {
     text("Toutes les pièces demandées sont traitées.", 10, { color: [4, 120, 87], bold: true });
   }
 
-  const pages = pdf.getNumberOfPages();
-  for (let page = 1; page <= pages; page += 1) {
-    pdf.setPage(page);
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(8);
-    pdf.setTextColor(100, 116, 139);
-    pdf.text("Document de suivi interne. La validation d'une pièce par l'agence ne préjuge pas de la décision des autorités.", MARGIN, PAGE_HEIGHT - 10, { maxWidth: CONTENT_WIDTH });
-    pdf.text(`Page ${page} / ${pages}`, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 10, { align: "right" });
-  }
+  y += 4;
+  text("Document de suivi. La validation d'une pièce par l'agence ne préjuge pas de la décision des autorités.", 8, { color: [100, 116, 139] });
+
+  applyLetterhead(pdf, letterhead);
 }
 
 /** Crée le PDF dans le navigateur et déclenche le téléchargement. */
 export async function downloadDocumentBilanPdf(bilan: DocumentBilan, fileName: string): Promise<void> {
   const { jsPDF } = await import("jspdf");
   const pdf = new jsPDF({ unit: "mm", format: "a4" });
-  renderDocumentBilanPdf(pdf, bilan);
+  renderDocumentBilanPdf(pdf, bilan, await loadClientBrandLogo());
   pdf.save(fileName);
 }

@@ -57,6 +57,8 @@ import { CandidateCountryJourney } from "@/components/CandidateCountryJourney";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
+import { getAdminSessionToken } from "@/lib/adminSession";
 import {
   CANDIDATE_PAGE_SIZES,
   type CandidatePageSize,
@@ -181,12 +183,14 @@ interface CandidateDetailModalProps {
   candidate: Candidate | null;
   isOpen: boolean;
   onClose: () => void;
+  initialTab?: "info" | "messages" | "ai-summary" | "interview";
 }
 
 const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
   candidate,
   isOpen,
   onClose,
+  initialTab = "info",
 }) => {
   const [adminNotes, setAdminNotes] = useState(candidate?.adminNotes || "");
   const [status, setStatus] = useState(candidate?.status || "nouveau");
@@ -196,6 +200,7 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
   const [destination, setDestination] = useState(candidate?.destination || "");
   const [visaType, setVisaType] = useState(candidate?.visaType || "");
   const [messageText, setMessageText] = useState("");
+  const [activeTab, setActiveTab] = useState(initialTab);
   const utils = trpc.useUtils();
   const candidateReference = candidate ? String(candidate.id) : "online_1";
 
@@ -208,7 +213,8 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
     setPhone(candidate.phone || "");
     setDestination(candidate.destination || "");
     setVisaType(candidate.visaType || "");
-  }, [candidate]);
+    setActiveTab(initialTab);
+  }, [candidate, initialTab]);
 
   const messagesQuery = trpc.adminCandidateManagement.getMessages.useQuery(
     { candidateId: candidateReference },
@@ -259,7 +265,7 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
           </div>
         </DialogHeader>
 
-        <Tabs defaultValue="info" className="w-full">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="info">Informations</TabsTrigger>
             <TabsTrigger value="messages">Messagerie</TabsTrigger>
@@ -443,6 +449,7 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 
 export default function CandidatesManager() {
+  const [, navigate] = useLocation();
   const initialUrlState = React.useMemo(
     () => parseCandidateListUrl(typeof window === "undefined" ? "" : window.location.search),
     []
@@ -459,6 +466,7 @@ export default function CandidatesManager() {
     null
   );
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [detailInitialTab, setDetailInitialTab] = useState<"info" | "messages" | "ai-summary" | "interview">("info");
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
   const [activeSavedViewId, setActiveSavedViewId] = useState<number | null>(null);
 
@@ -484,6 +492,13 @@ export default function CandidatesManager() {
   const resendConfirmationMutation = trpc.adminCandidateManagement.resendConfirmation.useMutation({
     onSuccess: ({ recipientEmail }) => toast.success(`E-mail de confirmation renvoyé à ${recipientEmail}.`),
     onError: error => toast.error(error.message || "Impossible de renvoyer l’e-mail de confirmation."),
+  });
+  const archiveCandidateMutation = trpc.admin.archiveDuplicateRecord.useMutation({
+    onSuccess: (result) => {
+      toast.success(result.message || "Dossier placé dans la corbeille réversible.");
+      void utils.adminCandidateManagement.list.invalidate();
+    },
+    onError: (archiveError) => toast.error(archiveError.message || "Impossible de mettre le dossier à la corbeille."),
   });
   const [csvPreview, setCsvPreview] = useState<{ csv: string; count: number; headers: string[]; rows: string[][] } | null>(null);
   const exportMutation = trpc.adminCandidateManagement.exportCsv.useMutation({
@@ -606,9 +621,33 @@ export default function CandidatesManager() {
     }
   };
 
-  const handleViewDetails = (candidate: Candidate) => {
+  const handleViewDetails = (candidate: Candidate, tab: "info" | "messages" | "ai-summary" | "interview" = "info") => {
+    setDetailInitialTab(tab);
     setSelectedCandidate(candidate);
     setIsDetailOpen(true);
+  };
+
+  const handleArchiveCandidate = (candidate: Candidate) => {
+    const candidateId = String(candidate.id);
+    if (!/^(online|agency|account)_\d+$/.test(candidateId)) {
+      toast.error("Référence de dossier non prise en charge pour la corbeille.");
+      return;
+    }
+    const confirmed = window.confirm(
+      `Placer « ${candidate.fullName} » (${candidate.applicationNumber}) dans la corbeille réversible ?`,
+    );
+    if (!confirmed) return;
+    const sessionToken = getAdminSessionToken();
+    if (!sessionToken) {
+      toast.error("Session administrateur requise. Reconnectez-vous.");
+      return;
+    }
+    archiveCandidateMutation.mutate({
+      sessionToken,
+      candidateId,
+      reason: `Archivage depuis Gestion des candidatures — ${candidate.applicationNumber}`,
+      confirmation: "CORBEILLE",
+    });
   };
 
   return (
@@ -628,7 +667,11 @@ export default function CandidatesManager() {
               Gérez et suivez toutes les candidatures reçues
             </p>
           </div>
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button
+            type="button"
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={() => navigate("/admin/agency-dossiers")}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Nouvelle candidature
           </Button>
@@ -894,15 +937,19 @@ export default function CandidatesManager() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleViewDetails(candidate, "info")}>
                               <Edit className="w-4 h-4 mr-2" />
                               Modifier
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleViewDetails(candidate, "messages")}>
                               <MessageSquare className="w-4 h-4 mr-2" />
                               Envoyer message
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600">
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              disabled={archiveCandidateMutation.isPending}
+                              onClick={() => handleArchiveCandidate(candidate)}
+                            >
                               <Trash2 className="w-4 h-4 mr-2" />
                               Supprimer
                             </DropdownMenuItem>
@@ -953,7 +1000,11 @@ export default function CandidatesManager() {
       <CandidateDetailModal
         candidate={selectedCandidate}
         isOpen={isDetailOpen}
-        onClose={() => setIsDetailOpen(false)}
+        initialTab={detailInitialTab}
+        onClose={() => {
+          setIsDetailOpen(false);
+          setDetailInitialTab("info");
+        }}
       />
 
       <Dialog open={Boolean(csvPreview)} onOpenChange={(open) => { if (!open) setCsvPreview(null); }}>

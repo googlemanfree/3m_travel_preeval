@@ -11,6 +11,7 @@ import AdminDocumentsByCandidate from "./AdminDocumentsByCandidate";
 import { AdminCandidatesToRemind } from "./AdminCandidatesToRemind";
 import { groupDocumentsByCandidate, type CandidateDocumentGroup } from "@/lib/documentGroups";
 import { toast } from "sonner";
+import { getAdminSessionToken } from "@/lib/adminSession";
 import { trpc } from "@/lib/trpc";
 import { DOCUMENT_REJECTION_REASONS, composeRejectionComment, type DocumentRejectionCode } from "@shared/documentRejectionReasons";
 import { summarizeWaiting, waitingInfo } from "@shared/documentWaiting";
@@ -42,7 +43,7 @@ interface Document {
 }
 
 export function AdminDocumentsManagement() {
-  const sessionToken = typeof window !== "undefined" ? sessionStorage.getItem("adminSessionToken") || "" : "";
+  const sessionToken = getAdminSessionToken();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [sourceFilter, setSourceFilter] = useState<"all" | "client" | "candidate" | "agency">("all");
@@ -79,10 +80,6 @@ export function AdminDocumentsManagement() {
   const [isRecognizing, setIsRecognizing] = useState(false);
   const [staleOnly, setStaleOnly] = useState(false);
 
-  const approveDocumentMutation = trpc.admin.approveDocument.useMutation();
-  const rejectDocumentMutation = trpc.admin.rejectDocument.useMutation();
-  const approveCandidateFileMutation = trpc.admin.approveCandidateFile.useMutation();
-  const rejectCandidateFileMutation = trpc.admin.rejectCandidateFile.useMutation();
   const updateDocumentStatusMutation = trpc.admin.updateDocumentStatus.useMutation();
   const saveMarkerAnnotationsMutation = trpc.admin.savePassportMarkerAnnotations.useMutation();
   const uploadDocumentForCandidateMutation = trpc.admin.uploadDocumentForCandidate.useMutation();

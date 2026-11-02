@@ -30,13 +30,6 @@ export const PROOF_PHOTOS: ProofPhoto[] = [
     category: "immigration",
   },
   {
-    src: "/proof-photos/proof-passports-letters-1.jpg",
-    alt: "Illustration contextuelle d’un parcours professionnel international, sans promesse de placement",
-    caption: "Placements — illustration du parcours professionnel international, sans promesse de résultat",
-    category: "placements",
-    kind: "context",
-  },
-  {
     src: "/proof-photos/proof-letter-1.jpg",
     alt: "Lettre de confirmation IRCC — résidence permanente Canada, informations personnelles masquées",
     caption: "Confirmation officielle IRCC — traitement de résidence permanente",

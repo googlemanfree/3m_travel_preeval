@@ -50,8 +50,10 @@ export function adminOperationalStageLabels(
   destination?: string | null,
   visaType?: string | null,
   procedureLabel?: string | null,
+  programId?: string | null,
+  domainId?: string | null,
 ): Record<AdminOperationalStage, string> {
-  const journey = getEnrichedCandidateJourney(destination, visaType, procedureLabel ?? visaType);
+  const journey = getEnrichedCandidateJourney(destination, visaType, procedureLabel ?? visaType, programId, domainId);
   const steps = journey.steps;
   const countryFold = fold(journey.country || destination || "");
   const submissionFallback = /luxembourg/.test(countryFold)
@@ -127,17 +129,16 @@ export function buildAdminProcedureSnapshot(input: {
   destination?: string | null;
   visaType?: string | null;
   procedureLabel?: string | null;
+  /** Visa ou programme et domaine choisis dans l'évaluation : adaptent les étapes. */
+  programId?: string | null;
+  domainId?: string | null;
   internalStatus?: string | null;
   paymentStatus?: string | null;
   evaluationStatus?: string | null;
   evaluationClientConfirmed?: boolean;
   activationRequested?: boolean;
 }): AdminProcedureSnapshot {
-  const journey = getEnrichedCandidateJourney(
-    input.destination,
-    input.visaType,
-    input.procedureLabel ?? input.visaType,
-  );
+  const journey = getEnrichedCandidateJourney(input.destination, input.visaType, input.procedureLabel ?? input.visaType, input.programId, input.domainId);
   const statusFold = fold(String(input.internalStatus || ""));
   const paymentConfirmed = PAID.has(String(input.paymentStatus || ""));
   // Si le dossier a déjà avancé (paiement, documents, soumission…), l’évaluation
@@ -152,6 +153,8 @@ export function buildAdminProcedureSnapshot(input: {
       : "pending";
 
   const progress = describeDossierProgress({
+    programId: input.programId,
+    domainId: input.domainId,
     destination: input.destination,
     visaType: input.visaType,
     procedureLabel: input.procedureLabel ?? input.visaType,
@@ -192,6 +195,8 @@ export function buildAdminProcedureSnapshot(input: {
       input.destination,
       input.visaType,
       input.procedureLabel ?? input.visaType,
+      input.programId,
+      input.domainId,
     ),
     publishedGuide: journey.publishedGuide
       ? {

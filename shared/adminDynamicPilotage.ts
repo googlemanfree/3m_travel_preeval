@@ -200,12 +200,11 @@ export function determineDynamicCandidate360NextAction(input: {
   destination?: string | null;
   visaType?: string | null;
   procedureLabel?: string | null;
+  /** Visa ou programme et domaine choisis dans l'évaluation : adaptent les étapes. */
+  programId?: string | null;
+  domainId?: string | null;
 }): AdminDynamicNextAction {
-  const journey = getEnrichedCandidateJourney(
-    input.destination,
-    input.visaType,
-    input.procedureLabel ?? input.visaType,
-  );
+  const journey = getEnrichedCandidateJourney(input.destination, input.visaType, input.procedureLabel ?? input.visaType, input.programId, input.domainId);
   const kind = detectAdminProcedureKind(input.visaType, input.procedureLabel ?? journey.visaType);
   const country = journey.country || input.destination?.trim() || "destination à préciser";
   const nextStepLabel = journey.steps[1]?.label ?? journey.steps[0]?.label ?? null;
@@ -260,6 +259,9 @@ export function buildAdminDynamicPilotageContext(input: {
   destination?: string | null;
   visaType?: string | null;
   procedureLabel?: string | null;
+  /** Visa ou programme et domaine choisis dans l'évaluation : adaptent les étapes. */
+  programId?: string | null;
+  domainId?: string | null;
   workflowStatus: string;
   paymentStatus?: string | null;
   pendingDocuments: number;
@@ -267,11 +269,7 @@ export function buildAdminDynamicPilotageContext(input: {
   dueAt?: Date | null;
   currentStepIndex?: number | null;
 }): AdminDynamicPilotageContext {
-  const journey = getEnrichedCandidateJourney(
-    input.destination,
-    input.visaType,
-    input.procedureLabel ?? input.visaType,
-  );
+  const journey = getEnrichedCandidateJourney(input.destination, input.visaType, input.procedureLabel ?? input.visaType, input.programId, input.domainId);
   const kind = detectAdminProcedureKind(input.visaType, input.procedureLabel ?? journey.visaType);
   const stepIndex = Math.min(
     Math.max(input.currentStepIndex ?? 0, 0),

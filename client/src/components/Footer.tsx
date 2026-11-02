@@ -56,7 +56,9 @@ const SOCIAL_LINKS: SocialLink[] = [
 const USEFUL_LINKS: FooterLink[] = [
   { key: "useful_destinations", label: { fr: "Destinations populaires", en: "Popular destinations" }, href: "/procedures", description: { fr: "Explorer les procédures disponibles selon votre destination.", en: "Explore procedures available for your destination." } },
   { key: "useful_contact", label: { fr: "Contact", en: "Contact" }, href: "/contact", description: { fr: "Consulter les coordonnées et envoyer une demande à l’agence.", en: "View contact details and send a request to the agency." } },
-  { key: "useful_terms", label: { fr: "Mentions légales", en: "Legal notice" }, href: "/conditions-utilisation", description: { fr: "Lire les conditions d’utilisation et le cadre de service.", en: "Read terms of use and the service framework." } },
+  { key: "useful_legal", label: { fr: "Mentions légales", en: "Legal notice" }, href: "/mentions-legales", description: { fr: "Éditeur, RC, NIU, directeur de publication et hébergeur.", en: "Publisher, company registry, tax ID, publication director and host." } },
+  { key: "useful_terms", label: { fr: "Conditions d’utilisation", en: "Terms of use" }, href: "/conditions-utilisation", description: { fr: "Lire les conditions d’utilisation et le cadre de service.", en: "Read terms of use and the service framework." } },
+  { key: "useful_verify", label: { fr: "Comment nous vérifions", en: "How we verify" }, href: "/verifier-une-agence", description: { fr: "Critères anti-fraude et vérifications avant de payer.", en: "Anti-fraud checks before you pay." } },
   { key: "useful_sitemap", label: { fr: "Plan du site", en: "Sitemap" }, href: "/plan-du-site", description: { fr: "Retrouver l’ensemble des accès publics en une seule page.", en: "Find all public entry points on a single page." } },
   { key: "useful_accessibility", label: { fr: "Accessibilité", en: "Accessibility" }, href: "/accessibilite", description: { fr: "Adapter l’affichage et les préférences d’interaction.", en: "Adjust display and interaction preferences." } },
   { key: "useful_status", label: { fr: "État du service", en: "Service status" }, href: "/etat-du-service", description: { fr: "Consulter la disponibilité publique et les maintenances annoncées.", en: "Check public availability and announced maintenance." } },
@@ -71,6 +73,7 @@ const MINI_SITE_MAP: FooterLink[] = [
   { key: "mini_assessment", label: { fr: "Évaluation gratuite", en: "Free assessment" }, href: "/?project=travail#evaluation-multi", description: { fr: "Formulaire d’évaluation gratuit sans compte pour démarrer et soumettre ; créez un compte ensuite pour le suivi et le dépôt de CV.", en: "Free assessment form without an account to start and submit; create an account afterwards for follow-up and CV upload." } },
   { key: "mini_booking", label: { fr: "3M Booking", en: "3M Booking" }, href: "/flights", description: { fr: "Rechercher des options de voyage et de réservation.", en: "Search travel and booking options." } },
   { key: "mini_procedures", label: { fr: "Procédures", en: "Procedures" }, href: "/procedures", description: { fr: "Comparer les démarches et destinations proposées.", en: "Compare available procedures and destinations." } },
+  { key: "mini_country_guides", label: { fr: "Guides par pays", en: "Country guides" }, href: "/pays", description: { fr: "Étapes et liens officiels, publiés après relecture des sources.", en: "Steps and official links, published once sources are reviewed." } },
   { key: "mini_evisas", label: { fr: "e-Visas", en: "e-Visas" }, href: "/evisas", description: { fr: "Préparer une demande de visa électronique adaptée.", en: "Prepare a suitable electronic visa application." } },
   { key: "mini_pricing", label: { fr: "Tarifs", en: "Pricing" }, href: "/tarifs", description: { fr: "Comprendre les honoraires, frais tiers et modalités.", en: "Understand fees, third-party costs and terms." } },
   { key: "mini_sources", label: { fr: "Sources officielles", en: "Official sources" }, href: "/sources-officielles", description: { fr: "Vérifier les ressources gouvernementales par destination.", en: "Check government resources by destination." } },
@@ -85,7 +88,7 @@ const NAVIGATION_LINKS: FooterLink[] = [
   { key: "nav_procedures", label: { fr: "Procédures & destinations", en: "Procedures & destinations" }, href: "/procedures", description: { fr: "Comparer les démarches de mobilité internationale.", en: "Compare international mobility procedures." } },
   { key: "nav_register", label: { fr: "Inscription", en: "Sign up" }, href: "/register", description: { fr: "Créer un espace personnel pour suivre vos demandes.", en: "Create a personal space to follow your requests." } },
   { key: "nav_login", label: { fr: "Espace candidat", en: "Candidate space" }, href: "/login", description: { fr: "Accéder à votre espace et à vos dossiers existants.", en: "Access your space and existing cases." } },
-  { key: "nav_partners", label: { fr: "Partenaires B2B", en: "B2B partners" }, href: "/partenaires", description: { fr: "Hub international des 4 interfaces.", en: "International hub for the four interfaces." } },
+  { key: "nav_partners", label: { fr: "Entreprises & partenaires", en: "Companies & partners" }, href: "/partenaires", description: { fr: "Hub international des 4 interfaces.", en: "International hub for the four interfaces." } },
   { key: "nav_placement", label: { fr: "Agences de placement", en: "Placement agencies" }, href: "/agences-placement", description: { fr: "Accéder à la porte d’entrée des agences partenaires.", en: "Open the placement agency entry point." } },
   { key: "nav_employers", label: { fr: "Employeurs internationaux", en: "International employers" }, href: "/employeurs", description: { fr: "Accéder au portail des employeurs vérifiés.", en: "Open the verified employer portal." } },
 ];
@@ -94,7 +97,7 @@ const DESTINATION_LINKS: FooterLink[] = [
   ["canada", "Canada", "/canada"], ["france", "France", "/procedures/france"], ["germany", "Allemagne", "/procedures/allemagne-formation"], ["luxembourg", "Luxembourg", "/procedures/luxembourg"], ["uk", "Royaume-Uni", "/procedures/royaume-uni"], ["australia", "Australie", "/procedures/australie"],
 ].map(([key, frenchLabel, href]) => ({ key: `destination_${key}`, href, label: { fr: frenchLabel, en: frenchLabel === "Allemagne" ? "Germany" : frenchLabel === "Royaume-Uni" ? "United Kingdom" : frenchLabel === "Australie" ? "Australia" : frenchLabel }, description: { fr: `Explorer les informations de procédure disponibles pour ${frenchLabel}.`, en: `Explore available procedure information for ${frenchLabel === "Allemagne" ? "Germany" : frenchLabel === "Royaume-Uni" ? "the United Kingdom" : frenchLabel === "Australie" ? "Australia" : frenchLabel}.` } }));
 
-const FOOTER_SHORTCUT_CLASS = "group inline-flex min-h-8 items-center rounded-md px-1 py-1 outline-none transition-[color,transform,background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:translate-x-1 hover:bg-white/10 hover:text-blue-100 focus-visible:translate-x-1 focus-visible:bg-white/10 focus-visible:text-blue-100 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f2460] motion-reduce:transform-none motion-reduce:transition-none";
+const FOOTER_SHORTCUT_CLASS = "group inline-flex min-h-11 items-center sm:min-h-8 rounded-md px-1 py-1 outline-none transition-[color,transform,background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:translate-x-1 hover:bg-white/10 hover:text-blue-100 focus-visible:translate-x-1 focus-visible:bg-white/10 focus-visible:text-blue-100 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f2460] motion-reduce:transform-none motion-reduce:transition-none";
 
 type FooterShortcutProps = { link: FooterLink; language: Language; onTrack: (link: FooterLink) => void };
 
@@ -222,7 +225,7 @@ export default function Footer() {
         {/* Marque + CTA */}
         <div className="grid gap-6 border-b border-white/15 pb-8 lg:grid-cols-[1.4fr_1fr] lg:items-end">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            <img src="/logo-3m.webp" alt="Logo 3M TRAVEL AGENCY" className="h-12 w-auto shrink-0 object-contain" />
+            <img src="/logo-3m.webp" alt="Logo 3M TRAVEL AGENCY" className="h-12 w-12 shrink-0 rounded-full bg-white object-contain" />
             <div className="min-w-0">
               <p className="text-lg font-black tracking-tight text-white sm:text-xl">{COMPANY_PROFILE.publicName}</p>
               <p className="mt-1 max-w-xl text-base leading-relaxed text-slate-200">{copy(footerCopy.agencySummary)}</p>
@@ -275,19 +278,19 @@ export default function Footer() {
                 </div>
                 <div className="flex items-center gap-2">
                   <MessageCircle className="h-4 w-4 shrink-0 text-emerald-300" aria-hidden="true" />
-                  <a href={COMPANY_CONTACTS.yaounde.whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-block py-1 font-semibold text-emerald-100 underline-offset-2 hover:underline">
+                  <a href={COMPANY_CONTACTS.yaounde.whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center py-1 sm:min-h-0 font-semibold text-emerald-100 underline-offset-2 hover:underline">
                     {copy(footerCopy.yaoundeWhatsapp)} : {COMPANY_CONTACTS.yaounde.whatsappNumber}
                   </a>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 shrink-0 text-blue-300" aria-hidden="true" />
-                  <a href={`tel:${COMPANY_CONTACTS.yaounde.phone.replace(/\s/g, "")}`} className="inline-block py-1 font-semibold hover:text-white">
+                  <a href={`tel:${COMPANY_CONTACTS.yaounde.phone.replace(/\s/g, "")}`} className="inline-flex min-h-11 items-center py-1 sm:min-h-0 font-semibold hover:text-white">
                     {copy(footerCopy.yaoundePhone)} : {COMPANY_CONTACTS.yaounde.phone}
                   </a>
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 shrink-0 text-blue-300" aria-hidden="true" />
-                  <a href={`mailto:${COMPANY_CONTACTS.yaounde.email}`} className="inline-block py-1 hover:text-white">{COMPANY_CONTACTS.yaounde.email}</a>
+                  <a href={`mailto:${COMPANY_CONTACTS.yaounde.email}`} className="inline-flex min-h-11 items-center py-1 sm:min-h-0 hover:text-white">{COMPANY_CONTACTS.yaounde.email}</a>
                 </div>
               </div>
             </div>
@@ -300,13 +303,13 @@ export default function Footer() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 shrink-0 text-blue-300" aria-hidden="true" />
-                  <a href={`tel:+${OFFICE_CONTACTS.ottawa.whatsappNumber}`} className="inline-block py-1 font-semibold hover:text-white">
+                  <a href={`tel:+${OFFICE_CONTACTS.ottawa.whatsappNumber}`} className="inline-flex min-h-11 items-center py-1 sm:min-h-0 font-semibold hover:text-white">
                     {copy(footerCopy.ottawaOffice)} : {OFFICE_CONTACTS.ottawa.whatsappDisplay}
                   </a>
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 shrink-0 text-blue-300" aria-hidden="true" />
-                  <a href={`mailto:${COMPANY_CONTACTS.ottawa.email}`} className="inline-block py-1 hover:text-white">{COMPANY_CONTACTS.ottawa.email}</a>
+                  <a href={`mailto:${COMPANY_CONTACTS.ottawa.email}`} className="inline-flex min-h-11 items-center py-1 sm:min-h-0 hover:text-white">{COMPANY_CONTACTS.ottawa.email}</a>
                 </div>
               </div>
             </div>

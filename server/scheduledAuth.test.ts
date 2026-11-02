@@ -5,8 +5,11 @@ import { requireCronSecret } from "./_core/scheduledAuth";
 
 let server: ReturnType<typeof createServer>;
 let endpoint = "";
+// Test hermétique : sans secret configuré, l'endpoint répond 503 (cas distinct, vérifié plus bas) ; on fixe donc un secret de test.
+const previousCronSecret = process.env.CRON_SECRET;
 
 beforeAll(async () => {
+  process.env.CRON_SECRET = previousCronSecret || "secret-de-test-local";
   const app = express();
   app.post("/api/scheduled/test-auth", (req, res) => {
     if (!requireCronSecret(req, res)) return;
@@ -20,6 +23,8 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  if (previousCronSecret === undefined) delete process.env.CRON_SECRET;
+  else process.env.CRON_SECRET = previousCronSecret;
   await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
 });
 
@@ -27,6 +32,17 @@ describe("endpoints planifiés protégés", () => {
   it("refuse un appel sans secret", async () => {
     const response = await fetch(endpoint, { method: "POST" });
     expect(response.status).toBe(401);
+  });
+
+  it("désactive l'endpoint (503) quand aucun secret n'est configuré", async () => {
+    const secret = process.env.CRON_SECRET;
+    delete process.env.CRON_SECRET;
+    try {
+      const response = await fetch(endpoint, { method: "POST" });
+      expect(response.status).toBe(503);
+    } finally {
+      process.env.CRON_SECRET = secret;
+    }
   });
 
   it("accepte l’appel authentifié par CRON_SECRET", async () => {

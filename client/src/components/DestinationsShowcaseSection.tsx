@@ -177,7 +177,7 @@ export default function DestinationsShowcaseSection() {
                       <li key={entry.code}>
                         <a
                           href={entry.href}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-800 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-900"
+                          className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-800 sm:min-h-0 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-900"
                           title={entry.hasProcedurePage ? "Fiche procédure avec source officielle" : "Évaluation / orientation"}
                         >
                           <span aria-hidden="true">{entry.flag}</span>

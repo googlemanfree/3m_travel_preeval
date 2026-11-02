@@ -9,8 +9,9 @@ const router = readFileSync(resolve(root, "server/routers/unifiedRequests.ts"), 
 
 describe("distribution du bilan PDF", () => {
   it("construit un PDF professionnel avec le logo agence existant", () => {
-    expect(pdfService).toContain('path.resolve(import.meta.dirname, "../client/public/favicon.png")');
-    expect(pdfService).toContain('doc.addImage(logoData, "PNG"');
+    // Logo et en-tête viennent du papier à en-tête officiel partagé (loadBrandLogo + applyLetterhead).
+    expect(pdfService).toContain("loadBrandLogo()");
+    expect(pdfService).toContain("applyLetterhead(doc, letterhead)");
     expect(pdfService).toContain('Bilan d’évaluation préliminaire — document finalisé');
   });
 

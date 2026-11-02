@@ -11,10 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import EvaluationReportView from "@/components/EvaluationReportView";
 import EvaluationVersionForm from "@/components/EvaluationVersionForm";
+import { PROFILE_DEFS, criteriaFor } from "@shared/evaluationProfiles";
 import { availabilityFor, describeValue, linesToList, sameVersion } from "@/lib/evaluationValidationForm";
 import { CV_MISSING_FOR_PUBLICATION } from "@shared/evaluationCv";
+import { evaluationRequiresCv } from "@shared/evaluationVisaCv";
+import EvaluationFormDraftCard from "@/components/EvaluationFormDraftCard";
 import { isOpenableStoredUrl } from "@shared/storedFileUrl";
-import { ADMIN_DRAFT_BADGE, AI_DRAFT_LABEL, NOTIFICATION_PORTAL_PLACEHOLDER, PUBLICATION_CHECKLIST, ROUTE_LABELS, SCORE_CRITERIA, SUGGESTED_STATUS_LABELS, WORKFLOW_STATUS_LABELS, missingChecklistItems, type AdminEvaluationVersion } from "@shared/evaluationValidation";
+import { ADMIN_DRAFT_BADGE, AI_DRAFT_LABEL, NOTIFICATION_PORTAL_PLACEHOLDER, PUBLICATION_CHECKLIST, SUGGESTED_STATUS_LABELS, WORKFLOW_STATUS_LABELS, missingChecklistItems, type AdminEvaluationVersion } from "@shared/evaluationValidation";
 import type { AppRouter } from "../../../server/routers";
 
 type CaseView = NonNullable<inferRouterOutputs<AppRouter>["evaluationValidation"]["getCase"]["view"]>;
@@ -74,7 +77,7 @@ function AiDraftZone({ view }: { view: CaseView }) {
             Score proposé par l’IA : <strong>{view.aiScore.effectiveTotal}/100</strong> — statut suggéré : {SUGGESTED_STATUS_LABELS[view.aiScore.suggestedStatus]}
           </p>
           <ul className="mt-2 grid gap-1 text-xs text-slate-700 sm:grid-cols-2">
-            {SCORE_CRITERIA.map((criterion) => (
+            {criteriaFor(view.profile).map((criterion) => (
               <li key={criterion.key} className="flex justify-between gap-2">
                 <span>{criterion.label}</span>
                 <span className="font-semibold">
@@ -87,7 +90,7 @@ function AiDraftZone({ view }: { view: CaseView }) {
       )}
       <Card className="p-4 text-sm">
         <p>
-          Voie principale : <strong>{draft.route} — {ROUTE_LABELS[draft.route]}</strong> · risque : {draft.riskLevel}
+          Voie principale : <strong>{draft.route} — {PROFILE_DEFS[view.profile].routes[draft.route]}</strong> · risque : {draft.riskLevel}
         </p>
         {draft.alternativeCountries.length > 0 && <p className="mt-1 text-slate-700">Pays alternatifs (internes) : {draft.alternativeCountries.map((alternative) => `${alternative.country} — ${alternative.rationale}`).join(" · ")}</p>}
         {draft.profileSummary && <p className="mt-2 whitespace-pre-line text-slate-700">{draft.profileSummary}</p>}
@@ -223,13 +226,15 @@ export default function EvaluationValidationPanel({ evaluationId, sessionToken }
   const availability = availabilityFor(status);
   const dirty = Boolean(draft && view.case.adminVersion && !sameVersion(draft, view.case.adminVersion));
   const published = status === "validee_publiee" || status === "validee_publiee_notifiee";
+  // Même règle que le serveur : le CV n'est exigé que pour un travail qualifié ; études, séjours, e-Visa… se préparent depuis le formulaire.
+  const cvRequired = evaluationRequiresCv(view.evaluation.visaType, view.evaluation.projectType, view.evaluation.programId);
   const blockers: string[] = [];
   if (!availability.canPublish) blockers.push(published ? "Cette évaluation est déjà publiée." : "Publication impossible dans ce statut.");
   else {
     if (dirty) blockers.push("Enregistrez d’abord vos modifications : la publication porte sur la version enregistrée.");
     if (view.incompleteFields.length > 0) blockers.push(`À compléter avant publication : ${view.incompleteFields.join(", ")}.`);
     if (view.previewError) blockers.push(view.previewError);
-    if (!view.evaluation.cvOnFile) blockers.push(CV_MISSING_FOR_PUBLICATION);
+    if (cvRequired && !view.evaluation.cvOnFile) blockers.push(CV_MISSING_FOR_PUBLICATION);
   }
   // Le CV est enregistré sous « /manus-storage/… » (relatif au site) : sans cette exception l'administrateur voyait le nom du fichier sans pouvoir l'ouvrir.
   const cvLink = isOpenableStoredUrl(view.evaluation.cvFileUrl) ? view.evaluation.cvFileUrl : null;
@@ -248,6 +253,7 @@ export default function EvaluationValidationPanel({ evaluationId, sessionToken }
     <div className="mt-4 space-y-4 rounded-lg border-2 border-violet-200 bg-white p-4" data-testid="validation-panel">
       <div className="flex flex-wrap items-center gap-2">
         <Badge className="bg-indigo-100 text-indigo-900" data-testid="workflow-status">{view.labels.workflow}</Badge>
+        <Badge className="bg-sky-100 text-sky-900" data-testid="evaluation-profile">Bilan : {PROFILE_DEFS[view.profile].label}</Badge>
         <span className="text-xs text-slate-500">Version {view.case.versionNumber}</span>
         {!published && <Badge className="bg-violet-100 text-violet-900">{ADMIN_DRAFT_BADGE}</Badge>}
         {view.needsSecondValidation && !published && <Badge className="bg-amber-100 text-amber-900">Seconde validation requise</Badge>}
@@ -266,12 +272,16 @@ export default function EvaluationValidationPanel({ evaluationId, sessionToken }
           )}
         </p>
       ) : (
-        !published && (
+        !published && (cvRequired ? (
           <p role="alert" className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900" data-testid="cv-status">
             <AlertTriangle className="mr-1 inline h-4 w-4" aria-hidden="true" />
             <strong>CV manquant.</strong> {CV_MISSING_FOR_PUBLICATION}
           </p>
-        )
+        ) : (
+          <p className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700" data-testid="cv-status">
+            <strong>CV non requis</strong> pour un bilan « {PROFILE_DEFS[view.profile].label} » : le formulaire rempli par le candidat suffit à préparer le bilan.
+          </p>
+        ))
       )}
 
       {notice && <p role="status" className={`rounded-md border p-3 text-sm ${notice.tone === "warning" ? "border-amber-300 bg-amber-50 text-amber-900" : notice.tone === "success" ? "border-emerald-300 bg-emerald-50 text-emerald-900" : "border-blue-200 bg-blue-50 text-blue-900"}`}>{notice.text}</p>}
@@ -305,8 +315,9 @@ export default function EvaluationValidationPanel({ evaluationId, sessionToken }
         </TabsContent>
 
         <TabsContent value="admin" className="mt-3">
+          {draft && view.formDraft ? <EvaluationFormDraftCard formDraft={view.formDraft} value={draft} onChange={setDraft} readOnly={!availability.canEdit} /> : null}
           {draft ? (
-            <EvaluationVersionForm value={draft} onChange={setDraft} readOnly={!availability.canEdit} candidateCountry={view.evaluation.candidateCountry} />
+            <EvaluationVersionForm value={draft} onChange={setDraft} readOnly={!availability.canEdit} candidateCountry={view.evaluation.candidateCountry} candidateName={view.evaluation.candidateName} suggestedProfile={view.suggestedProfile} />
           ) : (
             <p className="text-sm text-slate-600">Aucune version administrateur : générez le brouillon IA ou ouvrez le dossier pour saisir à la main.</p>
           )}
@@ -373,6 +384,9 @@ export default function EvaluationValidationPanel({ evaluationId, sessionToken }
           )}
         </div>
         {blockers.length > 0 && !published && <ul className="space-y-0.5 text-xs text-amber-800">{blockers.map((text) => <li key={text}>{text}</li>)}</ul>}
+        {/* Un bouton grisé sans explication ressemble à une panne : on dit toujours pourquoi. */}
+        {!published && availability.canEdit && !dirty && <p className="text-xs text-slate-500" data-testid="why-save-disabled">« Enregistrer le brouillon » se réactive dès qu’un champ est modifié.</p>}
+        {!published && !availability.canEdit && <p className="text-xs text-slate-500" data-testid="why-edit-disabled">Cette évaluation n’est pas modifiable dans son état actuel ; utilisez « Réévaluer » pour ouvrir une nouvelle version.</p>}
         {view.needsSecondValidation && availability.canPublish && <p className="text-xs text-amber-800">Ce résultat (« Préparation recommandée ») exige deux administrateurs : votre publication sera enregistrée comme première validation.</p>}
       </div>
 

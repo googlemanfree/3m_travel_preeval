@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { imageCount, letterheadImageBaseline } from "./testUtils/pdfImages";
 import { resolve } from "node:path";
 import { deflateSync } from "node:zlib";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -134,7 +135,7 @@ describe("fiche de synthèse : aperçu administrateur et portrait", () => {
     expect(state.fetches).toEqual([]);
     expect(result.photoShareConsent).toBe(false);
     expect(result.portraitIncluded).toBe(false);
-    expect(pdfOf(result.previewPdfDataUrl)).not.toContain("/Subtype /Image");
+    expect(imageCount(pdfOf(result.previewPdfDataUrl))).toBe(letterheadImageBaseline());
   });
 
   it("avec l'accord photo et une photo exploitable : portrait incrusté dans l'aperçu", async () => {
@@ -142,7 +143,7 @@ describe("fiche de synthèse : aperçu administrateur et portrait", () => {
     const result = await caller().adminGetCandidateSummary({ sessionToken: token, candidateId: 5 });
     expect(state.fetches).toHaveLength(1);
     expect(result.portraitIncluded).toBe(true);
-    expect(pdfOf(result.previewPdfDataUrl)).toContain("/Subtype /Image");
+    expect(imageCount(pdfOf(result.previewPdfDataUrl))).toBe(letterheadImageBaseline() + 1);
   });
 
   it("accord photo mais aucune photo au dossier : fiche complète sans portrait, signalé à l'administrateur", async () => {
@@ -185,7 +186,7 @@ describe("fiche de synthèse : validation", () => {
     expect(result).toMatchObject({ status: "approved", portraitIncluded: true });
     expect(state.stored).toHaveLength(1);
     expect(state.stored[0].key).toBe("placement-summaries/PRF-AB12CD34.pdf");
-    expect(state.stored[0].bytes.toString("latin1")).toContain("/Subtype /Image");
+    expect(imageCount(state.stored[0].bytes.toString("latin1"))).toBe(letterheadImageBaseline() + 1);
     const update = state.updates.find((entry) => entry.table === placementCandidateProfiles)!.values;
     expect(update.summaryStatus).toBe("approved");
     expect(update.summaryFingerprint).toBe(fingerprintFor(true, 41));
@@ -198,7 +199,7 @@ describe("fiche de synthèse : validation", () => {
     seed({ photoConsent: false });
     const result = await caller().adminReviewCandidateSummary({ sessionToken: token, profileId: 3, action: "approve", draft });
     expect(result.portraitIncluded).toBe(false);
-    expect(state.stored[0].bytes.toString("latin1")).not.toContain("/Subtype /Image");
+    expect(imageCount(state.stored[0].bytes.toString("latin1"))).toBe(letterheadImageBaseline());
   });
 
   it("brouillon invalide : refusé avec un message clair, rien n'est stocké", async () => {

@@ -544,16 +544,14 @@ function RoutesByDeparture({ onPick }: { onPick: PickRoute }) {
   );
 }
 
-function CarrierLogo({ name, logo }: { name: string; logo: string }) {
-  const [failed, setFailed] = useState(false);
+/**
+ * Monogramme du code IATA : aucune requête vers un service tiers (le service de logos utilisé auparavant ne répond plus,
+ * ce qui laissait dix images cassées et transmettait la visite à un tiers). Aucun logo de marque n'est reproduit.
+ */
+function CarrierLogo({ name, code }: { name: string; code: string }) {
   return (
-    <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
-      {!failed ? (
-        <img src={logo} alt="" className="h-full w-full object-contain p-1.5" loading="lazy" onError={() => setFailed(true)} />
-      ) : (
-        <Plane className="h-4 w-4 text-slate-400" aria-hidden="true" />
-      )}
-      <span className="sr-only">{name}</span>
+    <div data-testid="carrier-monogram" className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 text-xs font-black tracking-wide text-slate-700" aria-hidden="true">
+      {code}
     </div>
   );
 }
@@ -588,7 +586,7 @@ export function FlightAfricaCarriersBand() {
               className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-gradient-to-br from-white to-slate-50 px-3 py-3 shadow-sm"
               data-testid={`flight-carrier-${carrier.code}`}
             >
-              <CarrierLogo name={carrier.name} logo={carrier.logo} />
+              <CarrierLogo name={carrier.name} code={carrier.code} />
               <span className="min-w-0">
                 <span className="block truncate text-sm font-black text-slate-900">{carrier.name}</span>
                 <span className="block truncate text-[11px] font-semibold text-slate-500">{carrier.code} · {carrier.hub}</span>

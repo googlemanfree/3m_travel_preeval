@@ -6,8 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { SocialShareButtons } from '@/components/SocialShareButtons';
 import { evisasDatabaseComplete, EvisaDestination } from '@/data/evisasDatabaseComplete';
+import { getCountryPhotos } from '@/data/countryPhotos';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { setPageSeo } from '@/lib/pageSeo';
+import { ChecklistSection, FaqSection, StepsSection } from '@/components/PageEnrichment';
+import { buildEvisaCountryFaq, EVISA_COUNTRY_CHECKS, EVISA_COUNTRY_ERRORS, EVISA_COUNTRY_REFUSAL_STEPS } from '@/data/contentCampaignEvisa';
 
 export default function EvisaDetailPage() {
   const [, params] = useRoute<{ evisaId: string }>('/evisa/:evisaId');
@@ -25,6 +29,14 @@ export default function EvisaDetailPage() {
       } catch (e) {}
     }
   }, [evisaId]);
+
+  useEffect(() => {
+    if (!destination) return;
+    setPageSeo({
+      title: `e-Visa ${destination.country} : démarche, documents, délai indicatif | 3M TRAVEL AGENCY`,
+      description: `Fiche e-Visa ${destination.country} : étapes de la démarche en ligne, documents à préparer, erreurs fréquentes et lien vers le portail officiel. Délais et frais indicatifs, à confirmer sur le portail.`,
+    });
+  }, [destination]);
 
   const toggleFavorite = () => {
     if (!evisaId) return;
@@ -60,6 +72,10 @@ export default function EvisaDetailPage() {
     );
   }
 
+  // Photo de ville libre de droits (Wikimedia Commons) : prioritaire sur l'image du catalogue, avec son crédit obligatoire.
+  const cityPhoto = getCountryPhotos(destination.id)[0];
+  const heroImage = cityPhoto?.src ?? destination.image;
+
   return (
     <main className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -89,9 +105,9 @@ export default function EvisaDetailPage() {
           className="relative rounded-3xl overflow-hidden shadow-2xl border border-slate-200 bg-slate-900 text-white"
         >
           <div className="absolute inset-0 z-0">
-            {destination.image ? <img
-              src={destination.image}
-              alt={destination.country}
+            {heroImage ? <img
+              src={heroImage}
+              alt={cityPhoto?.alt ?? destination.country}
               loading="eager"
               decoding="async"
               fetchPriority="high"
@@ -121,18 +137,25 @@ export default function EvisaDetailPage() {
             <p className="text-slate-200 text-base sm:text-lg max-w-3xl leading-relaxed font-light">
               {destination.culture}
             </p>
+            {cityPhoto && (
+              <p className="text-[11px] leading-5 text-slate-300" data-testid="evisa-photo-credit">
+                Photo d’illustration : {cityPhoto.place},{" "}
+                <a href={cityPhoto.fileUrl} target="_blank" rel="noreferrer noopener" className="underline underline-offset-2">{cityPhoto.author}</a>{" "}
+                (<a href={cityPhoto.licenseUrl} target="_blank" rel="noreferrer noopener" className="underline underline-offset-2">{cityPhoto.license}</a>) — via Wikimedia Commons.
+              </p>
+            )}
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-white/10">
               <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10">
                 <p className="text-xs text-slate-300 font-semibold uppercase flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-blue-400" /> Délai d'obtention
+                  <Clock className="w-3.5 h-3.5 text-blue-400" /> Délai indicatif
                 </p>
                 <p className="text-lg font-black text-white mt-1">{destination.delay}</p>
               </div>
 
               <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10">
                 <p className="text-xs text-slate-300 font-semibold uppercase flex items-center gap-1.5">
-                  <DollarSign className="w-3.5 h-3.5 text-emerald-400" /> Frais officiels
+                  <DollarSign className="w-3.5 h-3.5 text-emerald-400" /> Frais indicatifs
                 </p>
                 <p className="text-lg font-black text-white mt-1">{destination.fee}</p>
               </div>
@@ -148,9 +171,12 @@ export default function EvisaDetailPage() {
                 <p className="text-xs text-slate-300 font-semibold uppercase flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-purple-400" /> Format
                 </p>
-                <p className="text-lg font-black text-white mt-1">100% Numérique</p>
+                <p className="text-lg font-black text-white mt-1">Démarche en ligne</p>
               </div>
             </div>
+            <p className="text-xs text-slate-300" data-testid="evisa-indicative-note">
+              Délai et frais sont indicatifs : ils sont fixés par le portail officiel et peuvent changer. {destination.officialVerifiedAt ? `Portail vérifié le ${destination.officialVerifiedAt}.` : "Cette fiche n’a pas été vérifiée récemment sur le portail officiel : consultez-le avant de déposer."}
+            </p>
           </div>
         </motion.div>
 
@@ -203,7 +229,7 @@ export default function EvisaDetailPage() {
                       {idx + 1}
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-slate-900">Étape {idx + 1}</h4>
+                      <h3 className="text-sm font-bold text-slate-900">Étape {idx + 1}</h3>
                       <p className="text-sm text-slate-600 mt-0.5">{step}</p>
                     </div>
                   </div>
@@ -283,6 +309,13 @@ export default function EvisaDetailPage() {
 
         </div>
 
+      </div>
+
+      <div className="mt-10" data-testid="evisa-country-guide">
+        <ChecklistSection title={`Avant de déposer votre demande pour ${destination.country}`} items={EVISA_COUNTRY_CHECKS} tone="white" testId="evisa-country-checks" />
+        <ChecklistSection title="Les erreurs qui font perdre une demande" items={EVISA_COUNTRY_ERRORS} tone="blue" testId="evisa-country-errors" />
+        <StepsSection title="Si la demande est refusée" steps={EVISA_COUNTRY_REFUSAL_STEPS} tone="slate" testId="evisa-country-refusal" />
+        <FaqSection title={`Questions sur l’e-Visa ${destination.country}`} items={buildEvisaCountryFaq(destination)} tone="white" testId="evisa-country-faq" />
       </div>
     </main>
   );

@@ -39,9 +39,18 @@ describe("choix de destination obligatoire à l'inscription", () => {
 describe("blocage réel de l'espace candidat tant que l'évaluation n'est pas soumise", () => {
   it("les onglets Documents et Dossier affichent un blocage explicite plutôt qu'un contenu vide ou générique quand l'évaluation est requise", () => {
     const source = read("client/src/pages/EvaluationSpace.tsx");
-    expect(source).toContain('{activeTab === "dossier" && (evaluationRequired ? evaluationGateCard : (');
+    // Le blocage du dossier cède devant le protocole à signer (paiement confirmé) : sinon « Ouvrir le protocole » n'aboutit pas.
+    expect(source).toContain('{activeTab === "dossier" && (evaluationRequired && !agreementAfterPaymentRequired ? evaluationGateCard : (');
     expect(source).toContain('{activeTab === "documents" && (evaluationRequired ? evaluationGateCard : (');
     expect(source).toContain("Terminez d'abord votre évaluation");
+  });
+
+  it("le bouton « Lire et signer » reçoit le dossier à signer (en ligne ou agence) et le même état de paiement que le bandeau", () => {
+    const source = read("client/src/pages/EvaluationSpace.tsx");
+    const panel = source.slice(source.indexOf("<SignableDocumentsPanel"), source.indexOf("onOpenProtocol"));
+    expect(panel).toContain("agreementDossier ? {");
+    expect(panel).toContain("agreementAfterPaymentRequired || procedurePaymentConfirmed");
+    expect(panel).not.toContain("activeDossier={activeDossier}");
   });
 
   it("la checklist documentaire et l'affichage de destination utilisent le pays précis déclaré (pas seulement la catégorie large historique)", () => {

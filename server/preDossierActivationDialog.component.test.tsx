@@ -296,19 +296,27 @@ describe("dialogue « Activer le dossier client »", () => {
     expect(await screen.findByTestId("opening-payment-proof-preview")).toBeTruthy();
   });
 
-  it("confirme le paiement avec seulement une référence saisie (pas de fichier)", () => {
+  it("sans photo : la référence seule demande d'abord le motif, puis confirme « sur référence »", () => {
     h.readiness = { data: readiness({ evaluationValidated: true, blockers: [{ code: "payment", message: "x" }] }), isLoading: false };
     open();
     fireEvent.change(
       screen.getByLabelText("Référence ou ID de transaction du paiement"),
       { target: { value: "OM-998877" } }
     );
+    // Le champ du motif apparaît dès qu'une référence est saisie sans photo ; sans motif, rien n'est envoyé.
+    expect(screen.getByTestId("opening-payment-no-proof")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Confirmer le paiement" }));
+    expect(h.confirmPayment).not.toHaveBeenCalled();
+    expect(h.toast).toHaveBeenCalledWith(expect.objectContaining({ title: "Motif de l’absence de photo" }));
+
+    fireEvent.change(screen.getByLabelText("Pourquoi la photo n’est pas disponible ?"), { target: { value: "facture perdue par le client" } });
     fireEvent.click(screen.getByRole("button", { name: "Confirmer le paiement" }));
     expect(h.confirmPayment).toHaveBeenCalledWith({
       sessionToken: "jeton",
       candidateId: 42,
       paymentReference: "OM-998877",
       proofFileUrl: undefined,
+      noProofReason: "facture perdue par le client",
     });
   });
 

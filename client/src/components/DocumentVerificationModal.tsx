@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
+import { getAdminSessionToken } from "@/lib/adminSession";
 import { trpc } from "@/lib/trpc";
 
 interface DocumentVerificationModalProps {
@@ -30,16 +31,18 @@ export function DocumentVerificationModal({
     setIsLoading(true);
     try {
       await approveMutation.mutateAsync({
-        sessionToken: typeof window !== "undefined" ? sessionStorage.getItem("adminSessionToken") || "" : "",
+        sessionToken: getAdminSessionToken(),
         documentId: document.id,
         comment,
       });
+      toast.success("Document approuvé");
       onSuccess();
       onClose();
       setComment("");
       setAction(null);
     } catch (err) {
       console.error("Erreur lors de l'approbation:", err);
+      toast.error(err instanceof Error ? err.message : "Impossible d’approuver le document.");
     } finally {
       setIsLoading(false);
     }
@@ -47,22 +50,24 @@ export function DocumentVerificationModal({
 
   const handleReject = async () => {
     if (!comment.trim()) {
-      alert("Veuillez fournir une raison pour le rejet");
+      toast.error("Veuillez fournir une raison pour le rejet");
       return;
     }
-    setIsLoading(false);
+    setIsLoading(true);
     try {
       await rejectMutation.mutateAsync({
-        sessionToken: typeof window !== "undefined" ? sessionStorage.getItem("adminSessionToken") || "" : "",
+        sessionToken: getAdminSessionToken(),
         documentId: document.id,
         comment,
       });
+      toast.success("Document rejeté");
       onSuccess();
       onClose();
       setComment("");
       setAction(null);
     } catch (err) {
       console.error("Erreur lors du rejet:", err);
+      toast.error(err instanceof Error ? err.message : "Impossible de rejeter le document.");
     } finally {
       setIsLoading(false);
     }

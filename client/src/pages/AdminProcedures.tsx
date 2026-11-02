@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { getAdminSessionToken } from '@/lib/adminSession';
 import { trpc } from '@/lib/trpc';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import { Globe, TrendingUp, Users } from 'lucide-react';
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export default function AdminProcedures() {
-  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
+  const sessionToken = getAdminSessionToken();
   const [selectedDestination, setSelectedDestination] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
 
