@@ -949,6 +949,10 @@ export const adminCandidateManagementRouter = router({
       }
 
       const { composeDynamicRelance, buildWhatsAppUrlFromBody } = await import("../services/dynamicRelance");
+      // Relance « pièces » : la liste exacte de ce qui manque (programme choisi moins fichiers déjà déposés).
+      const missingItems = input.stage === "documents_pending"
+        ? await (await import("../services/relanceMissingPieces")).missingPiecesForCandidate(db, { id: candidateRow.id, email: candidateRow.email })
+        : [];
       const composed = await composeDynamicRelance({
         stage: input.stage,
         name: candidateRow.fullName,
@@ -958,6 +962,7 @@ export const adminCandidateManagementRouter = router({
         visaType,
         projectType: visaType,
         destination,
+        missingItems,
         useAi: input.useAi !== false,
       });
 
@@ -994,7 +999,7 @@ export const adminCandidateManagementRouter = router({
       }
 
       const whatsappUrl = (input.channel === "whatsapp" || input.channel === "both")
-        ? buildWhatsAppUrlFromBody(phone, composed.body)
+        ? buildWhatsAppUrlFromBody(phone, composed.whatsappBody)
         : null;
 
       await db.insert(paymentAuditLogs).values({

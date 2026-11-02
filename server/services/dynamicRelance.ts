@@ -20,6 +20,8 @@ export type DynamicRelanceContext = {
   visaType?: string | null;
   projectType?: string | null;
   destination?: string | null;
+  /** Pièces réellement manquantes (insérées dans les modèles qui les listent). */
+  missingItems?: string[];
   useAi?: boolean;
 };
 
@@ -28,6 +30,8 @@ export type ComposedRelance = {
   label: string;
   subject: string;
   body: string;
+  /** Texte court pour WhatsApp (jamais poli par l'IA : les liens et faits restent exacts). */
+  whatsappBody: string;
   /** Corps formaté pour l’espace client (entête professionnelle). */
   clientSpaceContent: string;
   aiEnhanced: boolean;
@@ -129,7 +133,9 @@ export async function composeDynamicRelance(input: DynamicRelanceContext): Promi
     reference: input.reference,
     destination: input.destination,
     visaType: input.visaType || input.projectType,
+    missingItems: input.missingItems,
   });
+  const whatsappBody = filled.short;
   let subject = filled.subject;
   let body = filled.body;
   let aiEnhanced = false;
@@ -154,6 +160,7 @@ export async function composeDynamicRelance(input: DynamicRelanceContext): Promi
     label: template.label,
     subject,
     body,
+    whatsappBody,
     clientSpaceContent: buildClientSpaceContent({
       label: template.label,
       reference: input.reference,

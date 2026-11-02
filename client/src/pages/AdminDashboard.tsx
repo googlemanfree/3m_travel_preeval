@@ -1101,6 +1101,11 @@ export function CandidateDetailModal({
                       { stage: "evaluation_missing" as const, label: "Finaliser l’évaluation", hint: "Formulaire + contexte visa" },
                       { stage: "payment_pending" as const, label: "Frais d’ouverture", hint: "Avant protocole N°01" },
                       { stage: "conversion_open_dossier" as const, label: "Convaincre d’ouvrir", hint: "Passage COMPTE → 3M" },
+                      { stage: "documents_pending" as const, label: "Compléter les pièces", hint: "Liste exacte des pièces manquantes" },
+                      { stage: "phone_update" as const, label: "Mettre à jour le téléphone", hint: "Numéro + WhatsApp" },
+                      { stage: "passport_photo_missing" as const, label: "Photo type passeport", hint: "Consignes de la photo" },
+                      { stage: "payment_proof_unclear" as const, label: "Preuve de paiement illisible", hint: "Redemander un justificatif net" },
+                      { stage: "appointment_followup" as const, label: "Proposer un rendez-vous", hint: "Visiteur / entretien" },
                       { stage: "generic" as const, label: "Relance générale", hint: "Message libre adapté" },
                     ]).map((item) => {
                       const mailKey = `${item.stage}:email`;
