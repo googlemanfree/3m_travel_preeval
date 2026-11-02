@@ -46,10 +46,12 @@ describe("simulateur CRS complet", () => {
   });
 
   it("sauvegarde localement le brouillon et restaure le parcours", () => {
-    expect(source).toContain("3m-crs-simulator-draft-v2");
+    expect(source).toContain("3m-crs-simulator-draft-v4");
     expect(source).toContain("isDraftLoaded");
     expect(source).toContain("Votre dernière simulation a été restaurée.");
     expect(source).toContain("languageScores");
+    expect(source).toContain("childrenCount");
+    expect(source).toContain("canada-preliminary-dossier");
   });
 
   it("affiche un récapitulatif éditable avant le partage", () => {
