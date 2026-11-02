@@ -42,4 +42,11 @@ describe("runtime Manus à la demande", () => {
     const config = readFileSync(resolve(root, "vite.config.ts"), "utf8");
     expect(config).toContain('isProductionBuild ? manusRuntimeOnDemandPlugin() : vitePluginManusRuntime({ injectTo: "body" })');
   });
+
+  it("ne lit pas le runtime au chargement du bundle serveur : la lecture est différée au build", () => {
+    const config = readFileSync(resolve(root, "vite.config.ts"), "utf8");
+    expect(config).toContain("const readRuntime = () => {");
+    expect(config).toContain('source = fs.readFileSync(runtimePath, "utf8");');
+    expect(config).toContain("generateBundle()");
+  });
 });

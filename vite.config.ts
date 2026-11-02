@@ -182,16 +182,27 @@ function buildMarkerPlugin(): Plugin {
 
 function manusRuntimeOnDemandPlugin(): Plugin {
   const runtimePath = path.resolve(PROJECT_ROOT, "node_modules", "vite-plugin-manus-runtime", "runtime_dist", "manus-runtime.js");
-  const source = fs.readFileSync(runtimePath, "utf8");
-  const fileName = manusRuntimeFileName(source);
+  // Le serveur de production importe aussi cette configuration pour initialiser Vite.
+  // Ne lis donc pas le runtime au chargement du module : le bundle serveur s'exécute
+  // depuis dist/ et ne contient pas node_modules/vite-plugin-manus-runtime.
+  let source: string | undefined;
+  let fileName: string | undefined;
+  const readRuntime = () => {
+    if (!source) {
+      source = fs.readFileSync(runtimePath, "utf8");
+      fileName = manusRuntimeFileName(source);
+    }
+    return { source, fileName };
+  };
   return {
     name: "3m-manus-runtime-on-demand",
     enforce: "post",
     apply: "build",
     generateBundle() {
-      this.emitFile({ type: "asset", fileName, source });
+      const runtime = readRuntime();
+      this.emitFile({ type: "asset", fileName: runtime.fileName!, source: runtime.source! });
     },
-    transformIndexHtml: () => [{ tag: "script", attrs: { id: "manus-runtime-loader" }, children: manusRuntimeLoaderScript(fileName), injectTo: "body" }],
+    transformIndexHtml: () => [{ tag: "script", attrs: { id: "manus-runtime-loader" }, children: manusRuntimeLoaderScript(readRuntime().fileName!), injectTo: "body" }],
   };
 }
 
