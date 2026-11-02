@@ -3,6 +3,7 @@ import { z } from "zod";
 import { CV_MISSING_FOR_PUBLICATION } from "../../shared/evaluationCv";
 import { evaluationRequiresCv } from "../../shared/evaluationVisaCv";
 import { PROFILE_DEFS, resolveEvaluationProfile, type EvaluationProfile } from "../../shared/evaluationProfiles";
+import { applyFormBilanDraft, buildFormBilanDraft, type FormBilanDraft } from "../../shared/evaluationFromForm";
 import {
   ADMIN_DRAFT_BADGE,
   AI_DRAFT_LABEL,
@@ -169,6 +170,8 @@ export type EvaluationContext = {
   projectType: string | null;
   /** Visa ou programme choisi dans le formulaire dynamique : précise si le CV est exigé. */
   programId?: string | null;
+  /** Réponses du formulaire dynamique (détails du projet + colonnes du formulaire) : elles préparent le bilan des études, séjours, e-Visa et installations. */
+  projectDetails?: Record<string, string> | null;
   /** CV au dossier : obligatoire pour visa travail, optionnel sinon. */
   cvOnFile: boolean;
   cvFileName: string | null;
@@ -243,6 +246,16 @@ function parseVersion(input: unknown): AdminEvaluationVersion {
 /** Profil du bilan déduit de la demande du candidat : le programme choisi fait foi, puis le projet, puis le visa. */
 export function contextProfile(context: Pick<EvaluationContext, "projectType" | "visaType" | "programId">): EvaluationProfile {
   return resolveEvaluationProfile({ projectType: context.projectType, visaType: context.visaType, programId: context.programId });
+}
+
+/** Brouillon de bilan tiré des réponses du formulaire du candidat (null sans formulaire dynamique). */
+export function formDraftFromContext(context: Pick<EvaluationContext, "projectType" | "visaType" | "candidateCountry" | "projectDetails">): FormBilanDraft | null {
+  return buildFormBilanDraft({ projectType: context.projectType, country: context.candidateCountry, details: context.projectDetails ?? null, visaType: context.visaType });
+}
+
+function seedBlankFromForm(blank: AdminEvaluationVersion, context: EvaluationContext): AdminEvaluationVersion {
+  const draft = formDraftFromContext(context);
+  return draft ? applyFormBilanDraft(blank, draft).version : blank;
 }
 
 /** Version dont le profil est toujours renseigné : celui choisi par l'administrateur, sinon celui de la demande. */
@@ -340,7 +353,8 @@ export async function recordAiDraft(deps: ValidationDeps, evaluationId: number, 
     patch = {
       workflowStatus: nextStatus,
       aiDraftError: error,
-      adminVersion: current.adminVersion ?? blankAdminVersion({ priorityCountry: chosenCountry || PLACEHOLDER_COUNTRY, candidateName: context.candidateName, evaluationDate, profile }),
+      // Sans IA, le formulaire du candidat prépare déjà le bilan (résumé, atouts, points à renforcer, plan, pièces) ; les notes restent à l'administrateur.
+      adminVersion: current.adminVersion ?? seedBlankFromForm(blankAdminVersion({ priorityCountry: chosenCountry || PLACEHOLDER_COUNTRY, candidateName: context.candidateName, evaluationDate, profile }), context),
       adminVersionUpdatedAt: current.adminVersion ? current.adminVersionUpdatedAt : now,
     };
     audit = { adminEmail: SYSTEM_ACTOR, action: "structured_ai_failed", note: error };
@@ -753,6 +767,8 @@ export type AdminValidationView = {
   /** Profil du bilan en cours (études, travail, e-Visa…) et celui que suggère la demande du candidat. */
   profile: EvaluationProfile;
   suggestedProfile: EvaluationProfile;
+  /** Brouillon de bilan tiré du formulaire du candidat (null si le formulaire dynamique n'a pas été rempli). */
+  formDraft: FormBilanDraft | null;
   /** Aperçu exact de ce que verrait le candidat ; `previewError` explique pourquoi il n'est pas publiable. */
   clientPreview: ClientReport | null;
   previewError: string | null;
@@ -823,6 +839,7 @@ async function assembleAdminView(deps: ValidationDeps, context: EvaluationContex
     aiScore: current.aiDraft ? resolveScore({ scores: current.aiDraft.scores, profile: effectiveProfile }) : null,
     profile: effectiveProfile,
     suggestedProfile: contextProfile(context),
+    formDraft: formDraftFromContext(context),
     adminScore,
     clientPreview,
     previewError,

@@ -14,6 +14,8 @@ import EvaluationVersionForm from "@/components/EvaluationVersionForm";
 import { PROFILE_DEFS, criteriaFor } from "@shared/evaluationProfiles";
 import { availabilityFor, describeValue, linesToList, sameVersion } from "@/lib/evaluationValidationForm";
 import { CV_MISSING_FOR_PUBLICATION } from "@shared/evaluationCv";
+import { evaluationRequiresCv } from "@shared/evaluationVisaCv";
+import EvaluationFormDraftCard from "@/components/EvaluationFormDraftCard";
 import { isOpenableStoredUrl } from "@shared/storedFileUrl";
 import { ADMIN_DRAFT_BADGE, AI_DRAFT_LABEL, NOTIFICATION_PORTAL_PLACEHOLDER, PUBLICATION_CHECKLIST, SUGGESTED_STATUS_LABELS, WORKFLOW_STATUS_LABELS, missingChecklistItems, type AdminEvaluationVersion } from "@shared/evaluationValidation";
 import type { AppRouter } from "../../../server/routers";
@@ -224,13 +226,15 @@ export default function EvaluationValidationPanel({ evaluationId, sessionToken }
   const availability = availabilityFor(status);
   const dirty = Boolean(draft && view.case.adminVersion && !sameVersion(draft, view.case.adminVersion));
   const published = status === "validee_publiee" || status === "validee_publiee_notifiee";
+  // Même règle que le serveur : le CV n'est exigé que pour un travail qualifié ; études, séjours, e-Visa… se préparent depuis le formulaire.
+  const cvRequired = evaluationRequiresCv(view.evaluation.visaType, view.evaluation.projectType, view.evaluation.programId);
   const blockers: string[] = [];
   if (!availability.canPublish) blockers.push(published ? "Cette évaluation est déjà publiée." : "Publication impossible dans ce statut.");
   else {
     if (dirty) blockers.push("Enregistrez d’abord vos modifications : la publication porte sur la version enregistrée.");
     if (view.incompleteFields.length > 0) blockers.push(`À compléter avant publication : ${view.incompleteFields.join(", ")}.`);
     if (view.previewError) blockers.push(view.previewError);
-    if (!view.evaluation.cvOnFile) blockers.push(CV_MISSING_FOR_PUBLICATION);
+    if (cvRequired && !view.evaluation.cvOnFile) blockers.push(CV_MISSING_FOR_PUBLICATION);
   }
   // Le CV est enregistré sous « /manus-storage/… » (relatif au site) : sans cette exception l'administrateur voyait le nom du fichier sans pouvoir l'ouvrir.
   const cvLink = isOpenableStoredUrl(view.evaluation.cvFileUrl) ? view.evaluation.cvFileUrl : null;
@@ -268,12 +272,16 @@ export default function EvaluationValidationPanel({ evaluationId, sessionToken }
           )}
         </p>
       ) : (
-        !published && (
+        !published && (cvRequired ? (
           <p role="alert" className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900" data-testid="cv-status">
             <AlertTriangle className="mr-1 inline h-4 w-4" aria-hidden="true" />
             <strong>CV manquant.</strong> {CV_MISSING_FOR_PUBLICATION}
           </p>
-        )
+        ) : (
+          <p className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700" data-testid="cv-status">
+            <strong>CV non requis</strong> pour un bilan « {PROFILE_DEFS[view.profile].label} » : le formulaire rempli par le candidat suffit à préparer le bilan.
+          </p>
+        ))
       )}
 
       {notice && <p role="status" className={`rounded-md border p-3 text-sm ${notice.tone === "warning" ? "border-amber-300 bg-amber-50 text-amber-900" : notice.tone === "success" ? "border-emerald-300 bg-emerald-50 text-emerald-900" : "border-blue-200 bg-blue-50 text-blue-900"}`}>{notice.text}</p>}
@@ -307,6 +315,7 @@ export default function EvaluationValidationPanel({ evaluationId, sessionToken }
         </TabsContent>
 
         <TabsContent value="admin" className="mt-3">
+          {draft && view.formDraft ? <EvaluationFormDraftCard formDraft={view.formDraft} value={draft} onChange={setDraft} readOnly={!availability.canEdit} /> : null}
           {draft ? (
             <EvaluationVersionForm value={draft} onChange={setDraft} readOnly={!availability.canEdit} candidateCountry={view.evaluation.candidateCountry} candidateName={view.evaluation.candidateName} suggestedProfile={view.suggestedProfile} />
           ) : (
