@@ -9,6 +9,7 @@ import { sendEmail } from "../_core/email";
 import { createAgreementProtocolOnePdf } from "../agreementProtocolPdfService";
 import type { getDb } from "../db";
 import { buildPaymentReceiptPdf, formatPaymentAmount } from "../utils/paymentReceipt";
+import { proposedOpeningFee } from "../../shared/openingFee";
 import { buildPaymentPackageEmail } from "./paymentPackageEmail";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
@@ -69,7 +70,7 @@ async function loadDossier(db: Db, reference: PaymentReference): Promise<Loaded>
     email: application.email,
     fullName: application.fullName,
     dossierNumber: application.dossierNumber,
-    amount: Number(application.paymentConfirmedAmount ?? application.paymentAmount ?? 65000),
+    amount: Number(application.paymentConfirmedAmount ?? application.paymentAmount ?? proposedOpeningFee(application.visaType)),
     currency: application.paymentCurrency ?? "XAF",
     paymentDate: application.paymentDate ?? application.paymentValidatedAt ?? new Date(),
     paymentMethod: application.paymentMethod || "Validation administrative",
