@@ -50,7 +50,7 @@ import { accountReference, resolveClientReference } from "../../shared/caseRefer
 import { resolveActiveDossierNumber } from "../../shared/activeDossier";
 import { createSubmissionGuard } from "../_core/publicRateLimit";
 import { notifyAdmins } from "./adminNotifications";
-import { buildCandidateMessageAlert } from "../services/candidateMessageAlert";
+import { alertStaffOfCandidateMessage } from "../services/candidateMessageEmailAlert";
 
 // Messages du candidat : 20 par heure et par compte / connexion, 300 au total (chaque message alerte l'administration).
 const candidateMessageGuard = createSubmissionGuard({ perClient: { limit: 20, windowMs: 60 * 60_000 }, perEmail: { limit: 20, windowMs: 60 * 60_000 }, global: { limit: 300, windowMs: 60 * 60_000 } });
@@ -1407,7 +1407,8 @@ export const candidateRouter = router({
       });
 
       // La cloche de l'administration signale le message (avant : invisible tant que la messagerie du dossier n'était pas ouverte).
-      await notifyAdmins(buildCandidateMessageAlert({ candidateId: ctx.candidate.id, fullName: ctx.candidate.fullName, content: input.content, hasAttachment: Boolean(attachment) }));
+      // + e-mail à la boîte de l'équipe (un par fenêtre de 10 minutes et par client) ; ne fait jamais échouer l'envoi.
+      await alertStaffOfCandidateMessage({ candidateId: ctx.candidate.id, fullName: ctx.candidate.fullName, content: input.content, hasAttachment: Boolean(attachment) });
 
       return { success: true, attachment };
     }),
@@ -2890,6 +2891,8 @@ export const candidateRouter = router({
           })
           .$returningId();
 
+        await alertStaffOfCandidateMessage({ candidateId: ctx.candidate.id, fullName: ctx.candidate.fullName, content: input.question, hasAttachment: false, kind: "question" });
+
         return {
           success: true,
           message: "Question envoyee avec succes",
@@ -2941,6 +2944,8 @@ export const candidateRouter = router({
             isRead: false,
           })
           .$returningId();
+
+        await alertStaffOfCandidateMessage({ candidateId: ctx.candidate.id, fullName: ctx.candidate.fullName, content: `${input.preferredDate} à ${input.preferredTime} — ${input.reason}`, hasAttachment: false, kind: "rendez-vous" });
 
         return {
           success: true,

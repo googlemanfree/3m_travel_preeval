@@ -40,6 +40,8 @@ import { buildAgreementProtocolText, buildSecondAgreementProtocolText, AGREEMENT
 import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from "@shared/adminSync";
 import { ADMIN_MESSAGE_TEMPLATES, fillAdminTemplate, formatActivationTransition, templateForStage } from "@shared/adminOpsToolkit";
 import { resolveEvaluationProjectKind } from "@shared/evaluationVisaCv";
+import { whatsappLink } from "@shared/remoteSupport";
+import { normalizeWhatsAppPhone } from "@shared/whatsappPhone";
 import {
   buildUnifiedCommunicationsTimeline,
   candidateIdFromActiveReference,
@@ -305,6 +307,13 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
       }),
     [redundantQuery.data, candidate.folderCode, candidate.id, data],
   );
+  // Réponse directe : dernier message du candidat (contexte) et lien WhatsApp prêt à envoyer.
+  const lastCandidateMessage = useMemo(() => {
+    const messages = (data?.communications?.messages ?? []) as Array<{ senderRole?: string; content?: string; createdAt?: string | Date }>;
+    return [...messages].reverse().find((message) => message.senderRole === "candidate" && message.content) ?? null;
+  }, [data]);
+  const candidateWhatsAppNumber = String((candidate as { whatsapp?: string | null }).whatsapp || (candidate as { phone?: string | null }).phone || (data as { candidate?: { whatsapp?: string | null; phone?: string | null } } | undefined)?.candidate?.whatsapp || (data as { candidate?: { phone?: string | null } } | undefined)?.candidate?.phone || "");
+  const whatsappReplyLink = (text: string): string | null => whatsappLink(normalizeWhatsAppPhone(candidateWhatsAppNumber) ?? candidateWhatsAppNumber, text);
   const unifiedTimeline = useMemo(() => {
     if (!data) return [];
     return buildUnifiedCommunicationsTimeline({
@@ -627,9 +636,10 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
     onError: (mutationError) => { setValidatingDocumentId(null); toast.error("Validation impossible", { description: mutationError.message }); },
   });
   const sendMessageMutation = trpc.admin.sendCandidate360Message.useMutation({
-    onSuccess: async (result) => {
+    onSuccess: async (result, variables) => {
       unlockAction("message");
-      toast.success(selectedClarification ? "Réponse de clarification envoyée" : "Message enregistré", { description: result.emailSent ? "Le candidat a été notifié dans son espace et par e-mail." : "Le message est visible dans l’espace candidat. L’e-mail n’a pas pu être envoyé." });
+      const viaWhatsApp = Boolean(variables && typeof variables === "object" && variables.channel === "whatsapp");
+      toast.success(selectedClarification ? "Réponse de clarification envoyée" : viaWhatsApp ? "Réponse consignée" : "Message enregistré", { description: viaWhatsApp ? "Le message est consigné dans l’espace candidat et l’historique (envoi par WhatsApp, sans e-mail)." : result.emailSent ? "Le candidat a été notifié dans son espace et par e-mail." : "Le message est visible dans l’espace candidat. L’e-mail n’a pas pu être envoyé." });
       setOutboundMessage("");
       setSelectedClarification(null);
       await refresh();
@@ -2302,9 +2312,10 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
               </div>
             </div>
           ) : null}
-          <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 sm:col-span-2" data-testid="candidate360-message-templates">
-            <h4 className="flex items-center gap-2 font-semibold text-slate-900"><Send className="h-4 w-4 text-blue-700" />Envoyer une communication au candidat</h4>
-            <p className="mt-1 text-sm text-slate-600">Modèles par étape, puis envoi journalisé (espace client + e-mail si disponible).</p>
+          <div className="order-first rounded-xl border-2 border-blue-200 bg-blue-50/50 p-4 sm:col-span-2" data-testid="candidate360-message-templates">
+            <h4 className="flex items-center gap-2 font-semibold text-slate-900"><Send className="h-4 w-4 text-blue-700" />Répondre au candidat</h4>
+            <p className="mt-1 text-sm text-slate-600">Écrivez ici, puis choisissez le canal : espace client + e-mail, ou WhatsApp (le message est alors consigné dans l’espace et l’historique, sans e-mail). Modèles par étape ci-dessous.</p>
+            {lastCandidateMessage ? <p className="mt-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700" data-testid="candidate360-last-candidate-message"><strong>Dernier message du candidat</strong> ({formatDate(lastCandidateMessage.createdAt)}) : {String(lastCandidateMessage.content).replace(/\s+/g, " ").slice(0, 220)}</p> : null}
             <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Modèles de message">
               {ADMIN_MESSAGE_TEMPLATES.map((template) => {
                 const visaAware = templateForStage(
@@ -2346,7 +2357,26 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
                 >
                   <KeyRound className="h-3.5 w-3.5" />Renvoyer l’accès
                 </Button>
-                <Button size="sm" disabled={outboundMessage.trim().length < 3 || sendMessageMutation.isPending} onClick={() => sendMessageMutation.mutate({ sessionToken, candidateId: candidate.id, content: outboundMessage.trim() })}><Send className="mr-2 h-4 w-4" />{sendMessageMutation.isPending ? "Envoi…" : "Envoyer au candidat"}</Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="gap-1 border-emerald-300 bg-emerald-50 text-emerald-950 hover:bg-emerald-100"
+                  disabled={outboundMessage.trim().length < 3 || sendMessageMutation.isPending || !whatsappReplyLink(outboundMessage.trim())}
+                  title={candidateWhatsAppNumber ? "Ouvre WhatsApp avec le message et le consigne dans l’espace client (sans e-mail)" : "Numéro WhatsApp ou téléphone du candidat indisponible"}
+                  onClick={() => {
+                    const link = whatsappReplyLink(outboundMessage.trim());
+                    if (!link) return;
+                    // Ouverture immédiate (geste de l'utilisateur) ; la consignation dans l'historique suit.
+                    const opened = window.open(link, "_blank");
+                    if (opened) opened.opener = null;
+                    sendMessageMutation.mutate({ sessionToken, candidateId: candidate.id, content: outboundMessage.trim(), channel: "whatsapp" });
+                  }}
+                  data-testid="candidate360-reply-whatsapp"
+                >
+                  <MessageSquare className="h-3.5 w-3.5" />Répondre par WhatsApp
+                </Button>
+                <Button size="sm" disabled={outboundMessage.trim().length < 3 || sendMessageMutation.isPending} onClick={() => sendMessageMutation.mutate({ sessionToken, candidateId: candidate.id, content: outboundMessage.trim() })} data-testid="candidate360-reply-email"><Send className="mr-2 h-4 w-4" />{sendMessageMutation.isPending ? "Envoi…" : "Répondre (espace + e-mail)"}</Button>
               </div>
             </div>
           </div>

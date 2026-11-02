@@ -18,6 +18,7 @@ import { eq, and, desc } from "drizzle-orm";
 import { getOrCreateCandidateForPlatformUser } from "./candidate";
 import { publishCandidateFilesToCase } from "../services/publishCandidateFilesToCase";
 import { storedUploadUrlSchema } from "../../shared/storedFileUrl";
+import { alertStaffOfCandidateMessage } from "../services/candidateMessageEmailAlert";
 
 export const oauthUserDashboardRouter = router({
   // ── Profil utilisateur OAuth (lié à un vrai dossier candidat) ──────────────
@@ -202,6 +203,8 @@ export const oauthUserDashboardRouter = router({
         content: input.content,
         isRead: false,
       });
+
+      await alertStaffOfCandidateMessage({ candidateId: c.id, fullName: c.fullName, content: input.content, hasAttachment: false });
 
       return { success: true, message: "Message envoyé." };
     }),

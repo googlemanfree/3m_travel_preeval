@@ -6320,6 +6320,8 @@ export const adminRouter = router({
       attachmentMimeType: z.string().max(100).optional(),
       attachmentSizeBytes: z.number().int().min(0).optional(),
       clarificationRequestId: z.number().int().positive().optional(),
+      /** « space_email » (par défaut) : espace client + e-mail. « whatsapp » : le message est consigné dans l'espace client, sans e-mail (le conseiller l'envoie ensuite par WhatsApp). */
+      channel: z.enum(["space_email", "whatsapp"]).default("space_email"),
       evisaSnapshots: z.array(z.object({
         destinationId: z.string().trim().min(1).max(80),
         country: z.string().trim().min(1).max(160),
@@ -6407,7 +6409,7 @@ export const adminRouter = router({
       }
 
       let emailSent = false;
-      try {
+      if (input.channel !== "whatsapp") try {
         const safeAttachUrl = input.attachmentUrl && /^https?:\/\//i.test(input.attachmentUrl) ? esc(input.attachmentUrl) : "#";
         const attachmentHtml = input.attachmentName && input.attachmentUrl
           ? `<p><strong>Pièce jointe :</strong> <a href="${safeAttachUrl}" target="_blank">${esc(input.attachmentName)}</a></p>`
@@ -6429,7 +6431,7 @@ export const adminRouter = router({
         actionType: "candidate_message_sent",
         entityType: "communication",
         entityId: String(candidateRecord?.id ?? "email"),
-        description: `${clarification ? `Clarification répondue pour « ${clarification.documentLabel} »` : "Message envoyé au candidat"}${emailSent ? " par e-mail et espace client" : " dans l’espace client"}${messageHtml !== messageBody ? " avec mise en forme enrichie" : ""}${input.evisaSnapshots?.length ? ` avec instantané e‑Visa (${input.evisaSnapshots.map((item) => item.country).join(", ")})` : ""}.`,
+        description: `${clarification ? `Clarification répondue pour « ${clarification.documentLabel} »` : "Message envoyé au candidat"}${input.channel === "whatsapp" ? " dans l’espace client, avec envoi par WhatsApp (sans e-mail)" : emailSent ? " par e-mail et espace client" : " dans l’espace client"}${messageHtml !== messageBody ? " avec mise en forme enrichie" : ""}${input.evisaSnapshots?.length ? ` avec instantané e‑Visa (${input.evisaSnapshots.map((item) => item.country).join(", ")})` : ""}.`,
       });
       return { success: true, emailSent, deliveredToClientSpace: Boolean(candidateRecord), clarificationRequestId: clarification?.id ?? null };
     }),

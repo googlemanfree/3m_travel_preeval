@@ -40,6 +40,7 @@ describe("procédure sendMessage du candidat", () => {
 
   it("l'alerte part après l'enregistrement du message", () => {
     expect(send.indexOf("db.insert(candidateMessages)")).toBeGreaterThan(-1);
-    expect(send.indexOf("notifyAdmins(buildCandidateMessageAlert(")).toBeGreaterThan(send.indexOf("db.insert(candidateMessages)"));
+    // cloche + e-mail à l'équipe via le service unique (voir messagingReplyAlert.test.ts)
+    expect(send.indexOf("alertStaffOfCandidateMessage(")).toBeGreaterThan(send.indexOf("db.insert(candidateMessages)"));
   });
 });
