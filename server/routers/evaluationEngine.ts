@@ -165,7 +165,8 @@ export const evaluationEngineRouter = {
         else if (score >= 80) status = 'HIGHLY_ELIGIBLE';
 
         const result = {
-          folderId: `3M-EVAL-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${randomBytes(2).toString("hex").toUpperCase()}`,
+          // Référence de bilan, jamais un numéro « 3M- » (réservé aux dossiers dont les frais d'ouverture sont payés) ni « EVAL ».
+          folderId: `BILAN-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${randomBytes(2).toString("hex").toUpperCase()}`,
           score,
           status,
           destination: input.destination,

@@ -527,7 +527,7 @@ export default function EvaluationSpace() {
   } : null);
   const candidateCase = (caseTrackingData?.cases?.[0] ?? null) as any;
   const validatedSteps = (candidateCase?.history ?? []).filter((entry: any) => entry.changedByRole === "admin" || entry.changedByRole === "system").slice(0, 5);
-  const evaluationCaseNumber = latestEvaluation?.referenceCode ? String(latestEvaluation.referenceCode) : latestEvaluation?.id ? `EVAL-${latestEvaluation.id}` : null;
+  const evaluationCaseNumber = latestEvaluation?.referenceCode ? String(latestEvaluation.referenceCode) : latestEvaluation?.id ? `Demande n° ${latestEvaluation.id}` : null;
   // Checklist dynamique du dossier actif (3M-AGN / en ligne), pas seulement l’ancienne EVAL-…
   const customRequirements = pickActiveCaseRequirements(caseTrackingData?.cases as any, [
     selectedDossierNumber,

@@ -1,3 +1,5 @@
+import { isEvalAgencyShell } from "@shared/evalAgencyShell";
+
 export type EvaluationSourceType = "application" | "candidate" | "agency";
 
 /**
@@ -8,6 +10,6 @@ export type EvaluationSourceType = "application" | "candidate" | "agency";
 export function evaluationSourceTypeOf(candidate: { id?: string | null; source?: string | null; folderCode?: string | null } | null | undefined): EvaluationSourceType {
   if (!candidate) return "application";
   if (candidate.source === "ACCOUNT_ONLY" || String(candidate.id ?? "").startsWith("account_")) return "candidate";
-  if (candidate.source === "AGENCY_PHYSICAL" || String(candidate.folderCode ?? "").startsWith("EVAL-AG-")) return "agency";
+  if (candidate.source === "AGENCY_PHYSICAL" || isEvalAgencyShell(candidate.folderCode)) return "agency";
   return "application";
 }

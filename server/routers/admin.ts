@@ -34,6 +34,7 @@ import {
   parseEvalAgencyShellId,
   canonicalAgencyCandidateId,
   canonicalAgencyFolderCode,
+  agencyMirrorKey,
 } from "../../shared/evalAgencyShell";
 import {
   purgeAllOrphanEvalAgencyShells,
@@ -2071,7 +2072,7 @@ export const adminRouter = router({
         const onlineWithoutEvalShells = collapseEvalAgencyShellRows(normalizedOnline);
         const agencyWithEvalSearch = normalizedAgency.map((row) => {
           const agencyId = Number(String(row.id).replace(/^agency_/, ""));
-          const evalCode = agencyId > 0 ? `EVAL-AG-${agencyId}` : null;
+          const evalCode = agencyId > 0 ? agencyMirrorKey(agencyId) : null;
           const searchable = Array.from(
             new Set([
               row.folderCode,
@@ -3568,7 +3569,7 @@ export const adminRouter = router({
               id: `agency_${dossier.id}`,
               internalId: dossier.id,
               folderCode: agencyDisplayReference(dossier, candRec?.id),
-              formerFolderCodes: [`EVAL-AG-${dossier.id}`],
+              formerFolderCodes: [agencyMirrorKey(dossier.id)],
               fullName: dossier.fullName,
               email: dossier.email,
               whatsapp: dossier.phone || "",
@@ -3921,7 +3922,7 @@ export const adminRouter = router({
 
         const documents = [
           ...clientRows.map(({ document: doc, evaluationCandidateId, evaluationFullName, evaluationEmail, applicationCandidateId, applicationDossierNumber }: any) => ({
-            id: doc.id, source: "client" as const, candidateId: evaluationCandidateId ?? applicationCandidateId ?? null, candidateEmail: doc.candidateEmail || evaluationEmail || null, dossierNumber: evaluationCandidateId ? (dossierByCandidate.get(evaluationCandidateId) || `EVAL-${doc.evaluationId}`) : (applicationDossierNumber || `EVAL-${doc.evaluationId}`), candidateName: evaluationFullName || doc.candidateEmail || evaluationEmail || "N/A", documentType: normalizeAdminDocumentType(doc.documentType, doc.documentName), documentName: doc.documentName, documentUrl: doc.documentUrl, status: doc.status, verificationStatus: doc.verificationStatus, submittedAt: doc.receiptGeneratedAt || doc.createdAt, verifiedAt: doc.verifiedAt, verifiedByAdmin: doc.verifiedByAdmin, humanVerified: Boolean(doc.verifiedAt && doc.verifiedByAdmin), verificationComment: doc.verificationComment, receiptNumber: doc.receiptNumber, replacesId: doc.replacesDocumentId ?? null, aiClassification: doc.aiClassification ?? null, aiClassificationConfidence: doc.aiClassificationConfidence ?? null, aiClassifiedAt: doc.aiClassifiedAt ?? null, suggestedFolder: doc.suggestedFolder ?? null, extractedData: doc.extractedData ?? null, readabilityScore: doc.readabilityScore ?? null, readabilityIssues: doc.readabilityIssues ?? null,
+            id: doc.id, source: "client" as const, candidateId: evaluationCandidateId ?? applicationCandidateId ?? null, candidateEmail: doc.candidateEmail || evaluationEmail || null, dossierNumber: evaluationCandidateId ? (dossierByCandidate.get(evaluationCandidateId) || `COMPTE-E${doc.evaluationId}`) : (applicationDossierNumber || `COMPTE-E${doc.evaluationId}`), candidateName: evaluationFullName || doc.candidateEmail || evaluationEmail || "N/A", documentType: normalizeAdminDocumentType(doc.documentType, doc.documentName), documentName: doc.documentName, documentUrl: doc.documentUrl, status: doc.status, verificationStatus: doc.verificationStatus, submittedAt: doc.receiptGeneratedAt || doc.createdAt, verifiedAt: doc.verifiedAt, verifiedByAdmin: doc.verifiedByAdmin, humanVerified: Boolean(doc.verifiedAt && doc.verifiedByAdmin), verificationComment: doc.verificationComment, receiptNumber: doc.receiptNumber, replacesId: doc.replacesDocumentId ?? null, aiClassification: doc.aiClassification ?? null, aiClassificationConfidence: doc.aiClassificationConfidence ?? null, aiClassifiedAt: doc.aiClassifiedAt ?? null, suggestedFolder: doc.suggestedFolder ?? null, extractedData: doc.extractedData ?? null, readabilityScore: doc.readabilityScore ?? null, readabilityIssues: doc.readabilityIssues ?? null,
           })),
           ...candidateRows.map((doc) => ({
             id: doc.id, source: "candidate" as const, candidateId: doc.candidateId, candidateEmail: doc.candidateEmail, dossierNumber: doc.candidateId ? (dossierByCandidate.get(doc.candidateId) || "N/A") : "N/A", candidateName: doc.candidateName || doc.candidateEmail || "N/A", documentType: normalizeAdminDocumentType(doc.fileType, doc.fileName), documentName: doc.fileName, documentUrl: doc.fileUrl, status: doc.status === "verified" ? "verified" : doc.status === "rejected" ? "rejected" : "pending", verificationStatus: doc.status === "verified" ? "approved" : doc.status === "rejected" ? "rejected" : "pending", submittedAt: doc.uploadedAt, verifiedAt: undefined, verifiedByAdmin: undefined, humanVerified: false, verificationComment: doc.rejectionReason, receiptNumber: null, replacesId: doc.replacesFileId ?? null, aiClassification: null, aiClassificationConfidence: null, aiClassifiedAt: null, suggestedFolder: null, extractedData: doc.extractedData ?? null, readabilityScore: null, readabilityIssues: null,
@@ -5021,7 +5022,7 @@ export const adminRouter = router({
         dualOpportunityHandoff,
         redirectToCanonicalAgencyId,
         evalShellPurged,
-        evalShellFolderCode: evalShellId != null && !evalShellPurged ? `EVAL-AG-${evalShellId}` : null,
+        evalShellFolderCode: evalShellId != null && !evalShellPurged ? agencyMirrorKey(evalShellId) : null,
         canonicalFolderCode: reference.source === "agency"
           ? agencyDisplayReference(sourceRecord as typeof agencyDossiers.$inferSelect, candidateRecord?.id)
           : (evalShellId != null ? canonicalAgencyFolderCode(evalShellId) : null),

@@ -4,6 +4,7 @@
  * ou sans valeur reste visible : le contrôle « zone à compléter » bloque alors la validation (jamais d'envoi avec un trou).
  */
 
+import { isProvisionalReference } from "./accountKeys";
 import { proposedOpeningFee } from "./openingFee";
 import { firstName } from "./remoteSupport";
 
@@ -42,7 +43,8 @@ export function formatDeadline(value: string | null | undefined): string | null 
 /** Valeurs d'un dossier. Le montant est celui du dossier ; à défaut, le montant proposé pour ce type de visa (jamais un 0). */
 export function bilanVariablesFrom(input: { fullName: string; dossierNumber?: string | null; destination?: string | null; visaLabel?: string | null; visaType?: string | null; paymentAmount?: number | null; score?: number | null; now?: Date; openingDeadline?: string | null; advisorName?: string | null }): BilanVariableValues {
   const amount = typeof input.paymentAmount === "number" && input.paymentAmount > 0 ? input.paymentAmount : proposedOpeningFee(input.visaLabel ?? input.visaType);
-  const reference = input.dossierNumber && !input.dossierNumber.startsWith("EVAL-DRAFT-") ? input.dossierNumber : null;
+  // Une clé provisoire (« COMPTE-… », ancien « EVAL-… ») n'est jamais imprimée comme numéro de dossier.
+  const reference = input.dossierNumber && !isProvisionalReference(input.dossierNumber) ? input.dossierNumber : null;
   return {
     nom: input.fullName,
     prenom: firstName(input.fullName),

@@ -32,9 +32,10 @@ describe("remise validée d’évaluation pré-dossier", () => {
     expect(editor).toContain('sourceType?: "application" | "candidate"');
     expect(editor).toContain("Chargement du dossier…");
     expect(dashboard).toContain("sourceType={evaluationEditorSourceType}");
-    expect(router).toContain("applications.dossierNumber est limité à 20 caractères");
-    expect(router).toContain("randomInt(1000, 10000)");
-    expect(read("server/routers/application.ts")).toContain("randomInt(1000, 10000)");
+    // Avant paiement : une clé de COMPTE (« COMPTE-00012 »), jamais un identifiant « EVAL-… » ni « 3M-… ».
+    expect(router).toContain("allocateDraftKey(db, candidateAccount.id)");
+    expect(router).toContain("allocateDraftKey(db, candidate.id)");
+    expect(read("server/routers/application.ts")).toContain("allocateDraftKey(db, ctx.candidate.id)");
   });
 
   it("récupère une session plateforme lorsque le jeton admin local manque", () => {

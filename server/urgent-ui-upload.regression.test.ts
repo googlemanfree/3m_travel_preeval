@@ -21,8 +21,8 @@ describe("Correctifs urgents upload et navigation", () => {
 
   it("normalise le proxy CV et signale un CV manquant", () => {
     const source = read("client/src/components/Candidate360Workspace.tsx");
-    expect(source).toContain("new URL(String(candidateCv.documentUrl), window.location.origin)");
-    expect(source).toContain('cache: "no-store"');
+    // Le serveur lit lui-même le CV enregistré (le navigateur ne peut pas suivre la redirection vers le lien signé).
+    expect(source).toContain("cvExtractionMutation.mutate({ sessionToken, documentUrl: String(candidateCv.documentUrl) })");
     expect(source).toContain("CV introuvable");
   });
 

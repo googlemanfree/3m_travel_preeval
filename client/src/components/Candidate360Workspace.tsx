@@ -5,6 +5,7 @@ import {
   ArrowRight, CircleAlert, Gauge, LockKeyhole, RefreshCw, Sparkles, TimerReset, Trash2, UserRoundCheck, Zap, Download, FileSpreadsheet, X,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { isEvalAgencyShell } from "@shared/evalAgencyShell";
 import { Badge } from "@/components/ui/badge";
 import { AdminDeclaredAnswersPanel } from "@/components/AdminDeclaredAnswersPanel";
 import { CountrySelect } from "@/components/CountryPicker";
@@ -1133,7 +1134,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
         <div className="flex flex-wrap gap-2" data-testid="candidate360-reference-actions">
           {(() => {
             const evalShell = String((data as any)?.evalShellFolderCode || "").trim();
-            const hasEvalShell = /^EVAL-AG-\d+$/i.test(evalShell) || /^EVAL-AG-\d+$/i.test(String(candidate.folderCode || ""));
+            const hasEvalShell = isEvalAgencyShell(evalShell) || isEvalAgencyShell(String(candidate.folderCode || ""));
             const canNormalize = paymentConfirmed && hasEvalShell;
             if (!paymentConfirmed) {
               return (
@@ -1265,7 +1266,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             procedureLabel?: string | null;
           }>)
           : siblingProcedures;
-        const siblings = rawSiblings.filter((sibling) => !/^EVAL-AG-\d+$/i.test(sibling.folderCode || ""));
+        const siblings = rawSiblings.filter((sibling) => !isEvalAgencyShell(sibling.folderCode));
         if (!siblings.length) return null;
         return (
           <AdminSimultaneousProceduresBoard
@@ -1396,7 +1397,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
               ? ((data as any).siblingProcedures as SiblingProcedureTab[])
               : siblingProcedures;
             // Ne pas afficher un miroir EVAL-AG comme seconde procédure du même dossier 3M.
-            const siblings = rawSiblings.filter((sibling) => !/^EVAL-AG-\d+$/i.test(sibling.folderCode || ""));
+            const siblings = rawSiblings.filter((sibling) => !isEvalAgencyShell(sibling.folderCode));
             if (!siblings.length) return null;
             return (
               <section className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4" data-testid="candidate360-procedure-tabs" aria-label="Procédures liées du client">

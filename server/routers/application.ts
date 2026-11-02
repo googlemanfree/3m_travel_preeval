@@ -19,6 +19,7 @@ import { dossierReferenceCandidates, normalizeDossierReference, parseAgencyDossi
 import { assertApplicationCanEnterStatus } from "../utils/applicationGates";
 import { requireValidAdminSession } from "./adminAuth";
 import { evaluationDisplayReference } from "../../shared/evaluationReference";
+import { allocateDraftKey } from "../services/accountKeyAllocator";
 import { clientKeyOf, createFixedWindowLimiter } from "../_core/publicRateLimit";
 
 // Plafonds des codes de vérification d'e-mail d'un dossier : 6 essais et 3 renvois par dossier et par quart
@@ -35,13 +36,6 @@ import { MAX_OPENING_FEE_XAF, MIN_OPENING_FEE_XAF, formatXaf, proposedOpeningFee
 import { storedUploadUrlSchema } from "../../shared/storedFileUrl";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function generateEvaluationDraftReference(): string {
-  const year = new Date().getFullYear();
-  // `applications.dossierNumber` est limité à 20 caractères.
-  const rand = randomInt(1000, 10000);
-  return `EVAL-DRAFT-${year}-${rand}`;
-}
 
 async function initCinetPayTransaction(params: {
   transactionId: string;
@@ -182,12 +176,8 @@ export const applicationRouter = router({
       const baseUrl = process.env.APP_BASE_URL ?? "https://www.3mtravelagency.com";
 
       // La demande reçoit une référence interne. Le numéro de dossier client est attribué uniquement après validation humaine du bilan.
-      let dossierNumber = generateEvaluationDraftReference();
-      let existing = await db.select().from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1);
-      while (existing.length > 0) {
-        dossierNumber = generateEvaluationDraftReference();
-        existing = await db.select().from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1);
-      }
+      // Avant paiement, la clé est celle du COMPTE (« COMPTE-00012 ») : plus aucun identifiant « EVAL-… ».
+      const dossierNumber = await allocateDraftKey(db, ctx.candidate.id);
 
       const transactionId = `${dossierNumber.replace(/-/g, "")}${Date.now()}`.slice(0, 50);
 

@@ -1,5 +1,8 @@
 ﻿import { TRPCError } from "@trpc/server";
 import { evaluationDisplayReference } from "../../shared/evaluationReference";
+import { isProvisionalReference } from "../../shared/accountKeys";
+import { agencyMirrorKey, isEvalAgencyShell } from "../../shared/evalAgencyShell";
+import { allocateDraftKey } from "../services/accountKeyAllocator";
 import { randomInt } from "node:crypto";
 import { and, asc, desc, eq, inArray, isNull, like } from "drizzle-orm";
 import { z } from "zod";
@@ -103,8 +106,9 @@ const evaluationDraftSchema = z.object({
   language: z.enum(["fr", "en"]).default("fr"),
 });
 
+/** Numéro provisoire : clé de compte (« COMPTE-… ») ou ancien « EVAL-… » pas encore normalisé. */
 function isProvisionalEvaluationReference(reference: string) {
-  return reference.startsWith("EVAL-DRAFT-");
+  return isProvisionalReference(reference);
 }
 
 function mapCandidateDestination(destination: string | null | undefined): "canada" | "luxembourg" | "pologne" | "europe" | "golfe" | "oceanie" | "caucase" | "autre" {
@@ -112,10 +116,6 @@ function mapCandidateDestination(destination: string | null | undefined): "canad
   return "autre";
 }
 
-function generateBootstrapEvaluationReference() {
-  // applications.dossierNumber est limité à 20 caractères en production.
-  return `EVAL-DRAFT-${new Date().getFullYear()}-${randomInt(1000, 10000)}`;
-}
 
 /** Dates JSON-safe (ISO) — évite les échecs superjson « Unable to transform response ». */
 function toIsoDate(value: Date | string | null | undefined): string | null {
@@ -165,8 +165,13 @@ function serializeEvaluationDeliveryApplication(application: {
   };
 }
 
-async function issueFinalDossierNumber(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, application: { id: number; dossierNumber: string }) {
+async function issueFinalDossierNumber(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, application: { id: number; dossierNumber: string; paymentStatus?: string | null; paymentValidatedAt?: Date | string | null }) {
   if (!isProvisionalEvaluationReference(application.dossierNumber)) return application.dossierNumber;
+  // Un miroir de dossier agence garde sa clé : sa référence de travail est « 3M-AGN-… », portée par le dossier agence.
+  if (isEvalAgencyShell(application.dossierNumber)) return application.dossierNumber;
+  // Règle de l'agence : « 3M-… » seulement après paiement validé des frais d'ouverture. Avant, le dossier reste un COMPTE : la validation
+  // du bilan ne change aucun numéro (auparavant elle attribuait un 3M- à un compte qui n'avait pas payé).
+  if (application.paymentStatus !== "SUCCESS" || !application.paymentValidatedAt) return application.dossierNumber;
   const year = new Date().getFullYear();
   const standardNumber = `3M-${year}-${String(application.id).padStart(5, "0")}`;
   const existing = (await db.select({ id: applications.id }).from(applications).where(eq(applications.dossierNumber, standardNumber)).limit(1))[0];
@@ -225,7 +230,8 @@ async function resolveEvaluationApplication(db: NonNullable<Awaited<ReturnType<t
     // sans activer le dossier ni modifier le paiement.
     if (effectiveCvUrl || effectiveCvName) {
       const destination = mapCandidateDestination(String(agencyDossier.destination || "").trim().toLowerCase());
-      const dossierNumber = `EVAL-AG-${agencyDossier.id}`;
+      // Miroir de préparation d'un dossier agence : clé « COMPTE-AG-{id} » (jamais « EVAL »), retrouvé aussi par le marqueur de l'adminNote.
+      const dossierNumber = agencyMirrorKey(agencyDossier.id);
       await db.insert(applications).values({
         dossierNumber,
         candidateId: agencyCandidate?.id ?? null,
@@ -268,10 +274,7 @@ async function resolveEvaluationApplication(db: NonNullable<Awaited<ReturnType<t
     if (accountApplication) return accountApplication;
     // Certains comptes créés après une évaluation externe n’ont pas encore de ligne applications.
     // Initialiser uniquement un brouillon de préparation, sans activer le dossier ni modifier le paiement.
-    let dossierNumber = generateBootstrapEvaluationReference();
-    while ((await db.select({ id: applications.id }).from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1)).length) {
-      dossierNumber = generateBootstrapEvaluationReference();
-    }
+    const dossierNumber = await allocateDraftKey(db, candidateAccount.id);
     const destination = mapCandidateDestination(candidateAccount.destination);
     const draftDestination = destination === "autre" ? "europe" : destination;
     const initialDraft = {
@@ -522,7 +525,7 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
 
   return [
     ...apps.map((row) => ({ sourceType: "application" as const, sourceRecordId: row.id, candidateId: row.candidateId, displayReference: evaluationDisplayReference(row) ?? row.dossierNumber, fullName: row.fullName, email: row.email, phone: row.whatsappNumber ?? null, destination: row.destination, requestTypeLabel: "Ouverture de dossier", sourceStatus: row.dossierStatus, evaluationApprovalStatus: row.evaluationApprovalStatus, evaluationDeliveryStatus: row.evaluationDeliveryStatus, evaluationReportViewedAt: row.evaluationReportViewedAt, createdAt: row.createdAt, updatedAt: row.updatedAt })),
-    ...evaluations.map((row) => ({ sourceType: "evaluation" as const, sourceRecordId: row.id, candidateId: null, displayReference: `EVAL-${row.id}`, fullName: row.fullName, email: row.email, phone: row.whatsappPhone ?? null, destination: row.destination, requestTypeLabel: "Évaluation de profil", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
+    ...evaluations.map((row) => ({ sourceType: "evaluation" as const, sourceRecordId: row.id, candidateId: null, displayReference: `Demande n° ${row.id}`, fullName: row.fullName, email: row.email, phone: row.whatsappPhone ?? null, destination: row.destination, requestTypeLabel: "Évaluation de profil", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
     ...consultations.map((row) => ({ sourceType: "consultation" as const, sourceRecordId: row.id, candidateId: null, displayReference: `CONS-${row.id}`, fullName: row.fullName, email: row.email, phone: row.phone ?? null, destination: row.targetCountry ?? null, requestTypeLabel: "Consultation", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.createdAt })),
     ...flights.map((row) => ({ sourceType: "flight" as const, sourceRecordId: row.id, candidateId: row.candidateId, displayReference: row.requestRef, fullName: "Client réservation de vol", email: row.candidateEmail, phone: row.candidatePhone ?? null, destination: null, requestTypeLabel: "Réservation de vol", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
     ...insurances.map((row) => ({ sourceType: "insurance" as const, sourceRecordId: row.id, candidateId: null, displayReference: row.reference, fullName: row.fullName, email: row.email, phone: row.phone, destination: row.destinationCountry, requestTypeLabel: "Assurance voyage", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
@@ -691,10 +694,7 @@ initializeEvaluationDelivery: publicProcedure
       const [existing] = await db.select().from(applications).where(eq(applications.candidateId, candidate.id)).orderBy(desc(applications.createdAt)).limit(1);
       if (existing) return { success: true, created: false, candidateId: candidate.id, application: serializeEvaluationDeliveryApplication(existing), message: "Le dossier d’évaluation provisoire existe déjà." };
 
-      let dossierNumber = generateBootstrapEvaluationReference();
-      while ((await db.select({ id: applications.id }).from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1)).length) {
-        dossierNumber = generateBootstrapEvaluationReference();
-      }
+      const dossierNumber = await allocateDraftKey(db, candidate.id);
       const destination = mapCandidateDestination(candidate.destination);
       const draftDestination = destination === "autre" ? "europe" : destination;
       const initialDraft = {
@@ -974,11 +974,12 @@ initializeEvaluationDelivery: publicProcedure
       } else if (verdict.length < 3) throw new TRPCError({ code: "BAD_REQUEST", message: "Saisissez au moins trois caractères dans le bilan avant validation." });
       const now = new Date();
       const finalDossierNumber = await issueFinalDossierNumber(db, application);
+      const shownReference = evaluationDisplayReference(application) ?? finalDossierNumber;
       const nextDraft = { ...previousDraft, advisorValidated: true, advisorValidatedAt: now.toISOString(), advisorValidatedByAdminId: admin.id };
       await db.update(applications).set({ scoringDetails: JSON.stringify({ ...details, adminDraft: nextDraft, dossierIssuedAt: now.toISOString(), dossierIssuedByAdminId: admin.id }), updatedAt: now }).where(eq(applications.id, application.id));
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
-      if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_advisor_validated", comment: `${input.validationComment || "Bilan relu et validé par le conseiller avant diffusion."} Numéro de dossier attribué : ${finalDossierNumber}.`, actorAdminAccountId: admin.id }); }
-      return { success: true, dossierNumber: finalDossierNumber, message: "Validation conseiller enregistrée. Le bilan peut être envoyé ou planifié après les approbations requises. La référence « 3M-… » n'apparaît qu'une fois les frais d'ouverture payés." };
+      if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_advisor_validated", comment: `${input.validationComment || "Bilan relu et validé par le conseiller avant diffusion."} Référence du dossier : ${shownReference}.`, actorAdminAccountId: admin.id }); }
+      return { success: true, dossierNumber: shownReference, message: "Validation conseiller enregistrée. Le bilan peut être envoyé ou planifié après les approbations requises. La référence « 3M-… » n'apparaît qu'une fois les frais d'ouverture payés." };
     }),
 
   approveSensitiveEvaluation: publicProcedure

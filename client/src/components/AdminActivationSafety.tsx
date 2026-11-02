@@ -20,6 +20,16 @@ export function AdminActivationSafety({ sessionToken }: { sessionToken: string }
   const utils = trpc.useUtils();
   const guardStatus = trpc.activationSafety.status.useQuery({ sessionToken }, { enabled: Boolean(sessionToken), retry: false, refetchInterval: 30_000 });
   const scan = trpc.activationSafety.scan.useQuery({ sessionToken }, { enabled: Boolean(sessionToken), retry: false });
+  const referenceAudit = trpc.activationSafety.referenceAudit.useQuery({ sessionToken }, { enabled: Boolean(sessionToken), retry: false });
+  const [normalizeConfirmation, setNormalizeConfirmation] = useState("");
+  const normalize = trpc.activationSafety.referenceNormalize.useMutation({
+    onSuccess: (report) => {
+      toast.success(`${report.toAccount} compte(s) remis en COMPTE, ${report.toActive} passé(s) en 3M-${report.remainingEval ? ` · ${report.remainingEval} restent à corriger` : " · plus aucun EVAL"}`);
+      setNormalizeConfirmation("");
+      void utils.activationSafety.referenceAudit.invalidate();
+    },
+    onError: (error) => toast.error(error.message || "Normalisation impossible."),
+  });
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [reason, setReason] = useState("Activation sans preuve de paiement");
   const [confirmation, setConfirmation] = useState("");
@@ -89,6 +99,49 @@ export function AdminActivationSafety({ sessionToken }: { sessionToken: string }
         </div>
         {guardStatus.data?.lastError && <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800" role="alert">{guardStatus.data.lastError} Réessayez après le rétablissement de la connexion.</p>}
         {guardStatus.error && <p className="mt-3 text-sm text-rose-700" role="alert">Le statut de supervision est momentanément indisponible.</p>}
+      </section>
+      <section className="rounded-xl border border-indigo-200 bg-indigo-50 p-4" data-testid="reference-normalization">
+        <h2 className="text-base font-black text-indigo-950">Références des comptes : COMPTE avant paiement, 3M après</h2>
+        <p className="mt-1 text-sm text-indigo-950">
+          Tout ancien numéro « EVAL » revient à une référence de compte tant que les frais d'ouverture ne sont pas payés et validés ; seul un compte payé passe à « 3M- ».
+          L'aperçu ne modifie rien. L'application renomme aussi les bilans, reçus et preuves liés, et peut être relancée sans risque.
+        </p>
+        {referenceAudit.isLoading && <p className="mt-3 text-sm text-slate-700">Analyse en cours…</p>}
+        {referenceAudit.error && <p className="mt-3 text-sm text-rose-700" role="alert">{referenceAudit.error.message}</p>}
+        {referenceAudit.data && (
+          <>
+            <p className="mt-3 text-sm font-semibold text-slate-900" data-testid="reference-normalization-summary">
+              {referenceAudit.data.scanned === 0
+                ? "Aucune référence « EVAL » dans la base."
+                : `${referenceAudit.data.scanned} référence(s) « EVAL » : ${referenceAudit.data.toAccount} reviennent en COMPTE, ${referenceAudit.data.toActive} passent en 3M- (payées et validées).`}
+              {referenceAudit.data.remainingEval > 0 && referenceAudit.data.applied && ` ${referenceAudit.data.remainingEval} restent à corriger : relancez.`}
+            </p>
+            {referenceAudit.data.items.length > 0 && (
+              <ul className="mt-2 max-h-56 divide-y divide-indigo-100 overflow-auto rounded-lg border border-indigo-100 bg-white text-xs">
+                {referenceAudit.data.items.slice(0, 200).map((item) => (
+                  <li key={item.applicationId} className="flex flex-wrap items-center justify-between gap-2 p-2">
+                    <span className="font-semibold text-slate-900">{item.fullName || `Demande ${item.applicationId}`}</span>
+                    <span className="font-mono text-slate-600">{item.from} → <strong className={item.outcome === "active" ? "text-emerald-800" : "text-indigo-900"}>{item.to}</strong></span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {referenceAudit.data.unpaidWithActiveNumber.length > 0 && (
+              <p className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950" data-testid="unpaid-with-3m">
+                {referenceAudit.data.unpaidWithActiveNumber.length} dossier(s) en ligne portent un numéro « 3M- » sans frais d'ouverture payés et validés (non modifiés ici, à contrôler dans « Dossiers activés sans preuve ») :{" "}
+                {referenceAudit.data.unpaidWithActiveNumber.slice(0, 8).map((row) => `${row.dossierNumber} (${row.fullName})`).join(", ")}
+              </p>
+            )}
+          </>
+        )}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Input value={normalizeConfirmation} onChange={(event) => setNormalizeConfirmation(event.target.value)} placeholder="Tapez NORMALISER pour appliquer" aria-label="Confirmation de la normalisation" className="max-w-xs bg-white" />
+          <Button type="button" disabled={normalizeConfirmation !== "NORMALISER" || normalize.isPending || !referenceAudit.data || referenceAudit.data.scanned === 0} onClick={() => normalize.mutate({ sessionToken, confirmation: "NORMALISER" })} data-testid="reference-normalize-apply">
+            {normalize.isPending ? "Application…" : "Appliquer la normalisation"}
+          </Button>
+          <Button type="button" variant="outline" onClick={() => void referenceAudit.refetch()} disabled={referenceAudit.isFetching}>Actualiser l'aperçu</Button>
+        </div>
+        <p className="mt-2 text-[11px] text-indigo-900">L'application est réservée au super administrateur.</p>
       </section>
       <section className="rounded-xl border border-amber-300 bg-amber-50 p-4">
         <h2 className="flex items-center gap-2 text-base font-black text-amber-950"><ShieldAlert className="h-5 w-5" aria-hidden="true" />Dossiers activés sans preuve de paiement</h2>

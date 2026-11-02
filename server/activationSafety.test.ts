@@ -92,7 +92,7 @@ describe("désactivation, retour en pré-compte et annulations", () => {
     expect(read("server/routers.ts")).toContain("activationSafety: activationSafetyRouter");
     expect(read("client/src/pages/AdminDashboard.tsx")).toContain('<AdminActivationSafety sessionToken={sessionToken} />');
     const names = Array.from(router.matchAll(/\n  ([A-Za-z]+): publicProcedure/g), (match) => match[1]);
-    expect(names).toEqual(["status", "scan", "searchActive", "deactivate", "requests", "decideRequest", "deactivateMany", "reactivate"]);
+    expect(names).toEqual(["status", "scan", "searchActive", "deactivate", "requests", "decideRequest", "deactivateMany", "reactivate", "referenceAudit", "referenceNormalize"]);
   });
 
   it("expose un état agrégé du contrôle sans SQL ni données personnelles dans l'interface", () => {

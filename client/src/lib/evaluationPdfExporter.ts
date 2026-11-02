@@ -37,7 +37,7 @@ export async function exportEvaluationToPDF(evaluation: EvaluationResult): Promi
     logoDataUri: logo?.dataUri,
     logoFormat: logo?.format,
     documentKind: "Résultat d’évaluation",
-    reference: `EVAL-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`,
+    reference: `BILAN-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`,
     recipient: evaluation.candidateName,
     serviceFocus: serviceFocusLabel(evaluation.evaluationType === 'study_visa' ? 'études' : evaluation.evaluationType === 'luxembourg' ? 'visa' : '', evaluation.country),
   };

@@ -8,6 +8,7 @@ import { getDb } from "../db";
 import { deactivateCandidateDossier, hasDeactivationSnapshot, reactivateCandidateDossier, scanActivationsWithoutProof, ACTIVE_CANDIDATE_STATUSES } from "../services/deactivateDossier";
 import { getActivationGuardStatus } from "../services/activationGuard";
 import { getOpeningPaymentEvidence } from "../services/openingPaymentEvidence";
+import { normalizeAccountReferences } from "../services/normalizeAccountReferences";
 import { recordPrivacyEvent } from "../services/privacyAudit";
 import { adminLabel } from "../services/partnerProfiles";
 import { isSuperAdminEmail, requireSuperAdminSession, requireValidAdminSession } from "./adminAuth";
@@ -164,5 +165,20 @@ export const activationSafetyRouter = router({
     if (result.ok === false) throw new TRPCError({ code: "PRECONDITION_FAILED", message: REACTIVATION_MESSAGES[result.reason] });
     await recordPrivacyEvent(db, { actorType: "admin", actorId: admin.id, actorLabel: actor, action: "dossier.reactivated", resourceType: "candidate", resourceId: input.candidateId, details: "Désactivation annulée après vérification de la preuve de paiement." });
     return { ok: true as const, reference: result.reference };
+  }),
+
+  /** Aperçu (aucune écriture) : références « EVAL-… » à remettre en règle (COMPTE avant paiement, 3M après). */
+  referenceAudit: publicProcedure.input(z.object({ sessionToken: session })).query(async ({ input }) => {
+    await requireValidAdminSession(input.sessionToken);
+    return normalizeAccountReferences(await requireDb(), { apply: false });
+  }),
+
+  /** Application : réservée au super administrateur, avec confirmation écrite. Idempotente (relancer ne change rien de plus). */
+  referenceNormalize: publicProcedure.input(z.object({ sessionToken: session, confirmation: z.literal("NORMALISER") })).mutation(async ({ input }) => {
+    const admin = await requireSuperAdminSession(input.sessionToken);
+    const db = await requireDb();
+    const report = await normalizeAccountReferences(db, { apply: true, adminEmail: admin.email });
+    await recordPrivacyEvent(db, { actorType: "admin", actorId: admin.id, actorLabel: admin.email ?? `admin #${admin.id}`, action: "references.normalized", resourceType: "application", resourceId: "bulk", details: `${report.toAccount} retour(s) en compte, ${report.toActive} passage(s) en 3M-, ${report.remainingEval} restant(s) à corriger.` });
+    return report;
   }),
 });

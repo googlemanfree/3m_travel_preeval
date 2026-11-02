@@ -74,7 +74,7 @@ export function AdminEvaluationJourneyBoard({ sessionToken }: { sessionToken: st
               <li key={item.id} className="rounded-xl border border-slate-200 p-3 text-sm">
                 <div className="flex flex-wrap items-center gap-2">
                   <strong className="text-slate-950">{item.fullName}</strong>
-                  <span className="text-xs text-slate-500">{item.reference ?? `EVAL-${item.id}`}</span>
+                  <span className="text-xs text-slate-500">{item.reference ?? `Demande n° ${item.id}`}</span>
                   <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-bold text-sky-900">{item.country ?? "Pays à préciser"}</span>
                   <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-900">{item.programLabel}</span>
                   {item.domainLabel && <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-900">{item.domainLabel}</span>}

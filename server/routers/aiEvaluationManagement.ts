@@ -297,7 +297,7 @@ async function requireEvaluationCandidate(db: NonNullable<Awaited<ReturnType<typ
 }
 
 async function ensureEvaluationCase(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, evaluation: Awaited<ReturnType<typeof requireEvaluationCandidate>>) {
-  const caseNumber = evaluation.referenceCode || `EVAL-${evaluation.id}`;
+  const caseNumber = evaluation.referenceCode || `COMPTE-E${evaluation.id}`;
   const [existing] = await db.select().from(cases).where(eq(cases.caseNumber, caseNumber)).limit(1);
   if (existing) return existing;
   await db.insert(cases).values({
@@ -367,7 +367,7 @@ export const aiEvaluationManagementRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const evaluation = await requireEvaluationCandidate(db, input.evaluationId);
-      const [operationalCase] = await db.select({ id: cases.id }).from(cases).where(eq(cases.caseNumber, evaluation.referenceCode || `EVAL-${evaluation.id}`)).limit(1);
+      const [operationalCase] = await db.select({ id: cases.id }).from(cases).where(eq(cases.caseNumber, evaluation.referenceCode || `COMPTE-E${evaluation.id}`)).limit(1);
       if (!operationalCase) return [];
       return db.select({ id: documentRequirements.id, documentType: documentRequirements.documentType, status: documentRequirements.status, dueAt: documentRequirements.dueAt, requestedAt: documentRequirements.requestedAt, adminComment: documentRequirements.adminComment })
         .from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(desc(documentRequirements.requestedAt)).limit(100);
@@ -602,7 +602,7 @@ export const aiEvaluationManagementRouter = router({
         await db.update(evaluations).set({ status: secondReviewRequired ? "pending" : "reviewed", reviewedAt: now, reviewedBy: admin.email, reviewNote: input.validationNote, secondReviewRequired }).where(eq(evaluations.id, input.evaluationId));
         await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: secondReviewRequired ? "validated_pending_second_review" : "validated", note: input.validationNote });
         if (secondReviewRequired) return { success: true, delivered: false, requiresSecondReview: true };
-        const delivered = await sendValidatedEvaluationResponseEmail({ to: evaluation.email, fullName: evaluation.fullName, referenceCode: evaluation.referenceCode ?? `EVAL-${evaluation.id}`, response: evaluation.reviewDraft });
+        const delivered = await sendValidatedEvaluationResponseEmail({ to: evaluation.email, fullName: evaluation.fullName, referenceCode: evaluation.referenceCode ?? `COMPTE-E${evaluation.id}`, response: evaluation.reviewDraft });
         if (delivered) {
           await db.update(evaluations).set({ finalResponseSentAt: now }).where(eq(evaluations.id, evaluation.id));
           await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "response_sent", note: "Réponse validée envoyée par e-mail." });
@@ -634,7 +634,7 @@ export const aiEvaluationManagementRouter = router({
       const now = new Date();
       await db.update(evaluations).set({ secondReviewedAt: now, secondReviewedBy: admin.email, secondReviewNote: input.validationNote }).where(eq(evaluations.id, evaluation.id));
       await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "second_validated", note: input.validationNote });
-      const delivered = evaluation.finalResponseSentAt ? true : await sendValidatedEvaluationResponseEmail({ to: evaluation.email, fullName: evaluation.fullName, referenceCode: evaluation.referenceCode ?? `EVAL-${evaluation.id}`, response: evaluation.reviewDraft ?? "" });
+      const delivered = evaluation.finalResponseSentAt ? true : await sendValidatedEvaluationResponseEmail({ to: evaluation.email, fullName: evaluation.fullName, referenceCode: evaluation.referenceCode ?? `COMPTE-E${evaluation.id}`, response: evaluation.reviewDraft ?? "" });
       if (delivered && !evaluation.finalResponseSentAt) {
         await db.update(evaluations).set({ finalResponseSentAt: now }).where(eq(evaluations.id, evaluation.id));
         await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "response_sent", note: "Réponse validée après seconde revue et envoyée par e-mail." });
