@@ -24,4 +24,14 @@ describe("améliorations par espace (2026-11-02)", () => {
     const portal = read("client/src/pages/EmployerPortal.tsx");
     expect(portal).toContain('data-testid="partner-help-strip"');
   });
+
+  it("visa visiteur : le client voit l'étape « conseiller + rendez-vous », l'admin voit la consigne de contact", () => {
+    const client = read("client/src/components/ClientProgramPlan.tsx");
+    expect(client).toContain('data-testid="client-visitor-next-step"');
+    expect(client).toContain('href="/consultation"');
+    const admin = read("client/src/components/AdminDeclaredAnswersPanel.tsx");
+    expect(admin).toContain('data-testid="admin-visitor-contact"');
+    const workspace = read("client/src/components/Candidate360Workspace.tsx");
+    expect(workspace).toContain('templateForStage("appointment_followup"');
+  });
 });

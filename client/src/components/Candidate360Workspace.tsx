@@ -1401,7 +1401,12 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
               <div className="mt-3 flex items-center justify-between text-xs text-slate-500"><span>{dossierProgress.documentsLabel}</span><span>{data.metrics.openTasks} action(s) ouverte(s)</span></div>
             </div>
           </section>
-          <AdminDeclaredAnswersPanel projectType={data.evaluationContext?.projectType} country={data.evaluationContext?.destinationCountry} details={data.evaluationContext?.details as Record<string, unknown> | undefined} columns={(data.evaluationContext as { declaredColumns?: Record<string, string> } | undefined)?.declaredColumns} />
+          <AdminDeclaredAnswersPanel projectType={data.evaluationContext?.projectType} country={data.evaluationContext?.destinationCountry} details={data.evaluationContext?.details as Record<string, unknown> | undefined} columns={(data.evaluationContext as { declaredColumns?: Record<string, string> } | undefined)?.declaredColumns} onContact={() => {
+            // Visiteur : ouvre les Échanges avec le modèle « Proposer un rendez-vous » prêt à relire et envoyer.
+            const filled = fillAdminTemplate(templateForStage("appointment_followup", data.evaluationContext?.projectType || candidate.projectType), { name: candidate.fullName, reference: candidate.folderCode, destination: candidate.destinationCountry, visaType: candidate.projectType });
+            setOutboundMessage(filled.body);
+            setActiveTab("messages");
+          }} />
           {(() => {
             const rawSiblings = ((data as any).siblingProcedures as SiblingProcedureTab[] | undefined)?.length
               ? ((data as any).siblingProcedures as SiblingProcedureTab[])

@@ -8,13 +8,15 @@ type Props = {
   country?: string | null;
   details?: Record<string, unknown> | null;
   columns?: Record<string, string>;
+  /** Ouvre l'onglet Échanges (réponse directe, modèle « Proposer un rendez-vous »). */
+  onContact?: () => void;
 };
 
 /**
  * Lecture conseiller du formulaire dynamique : visa ou programme, domaine, complétude, points à clarifier et réponses
  * avec leurs libellés (plus de codes bruts). Les points à clarifier sont des questions à poser, jamais des accusations.
  */
-export function AdminDeclaredAnswersPanel({ projectType, country, details, columns }: Props) {
+export function AdminDeclaredAnswersPanel({ projectType, country, details, columns, onContact }: Props) {
   const overrides = useFormOverrides();
   const plan = buildClientPlan({ projectType, country, details, columns, overrides });
   if (!plan) return null;
@@ -27,6 +29,12 @@ export function AdminDeclaredAnswersPanel({ projectType, country, details, colum
         {plan.domainLabel && <Badge className="border-violet-200 bg-violet-50 text-violet-900">{plan.domainLabel}</Badge>}
         <span className="ml-auto text-xs font-semibold text-slate-600" data-testid="admin-declared-completeness">{plan.completeness.answered}/{plan.completeness.total} réponses ({plan.completeness.percent} %)</span>
       </div>
+      {projectType === "tourisme" && (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-950" data-testid="admin-visitor-contact">
+          <p className="min-w-0 flex-1"><strong>Dossier visiteur :</strong> le formulaire suffit à préparer le bilan (sans CV). Contactez le candidat et proposez un rendez-vous : certains éléments se vérifient en présentiel.</p>
+          {onContact ? <button type="button" onClick={onContact} className="inline-flex h-9 items-center rounded-md bg-blue-700 px-4 text-sm font-semibold text-white hover:bg-blue-800" data-testid="admin-visitor-contact-button">Contacter / proposer un rendez-vous</button> : null}
+        </div>
+      )}
       {plan.completeness.missingRequired.length > 0 && <p className="mt-2 text-xs text-amber-900">Questions obligatoires sans réponse : {plan.completeness.missingRequired.join(" ; ")}.</p>}
       <section className="mt-3" aria-labelledby="admin-declared-followups" data-testid="admin-declared-followups">
         <h5 id="admin-declared-followups" className="text-xs font-black uppercase tracking-wide text-emerald-800">À suivre avec le candidat</h5>

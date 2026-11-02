@@ -67,6 +67,14 @@ export function ClientProgramPlan({ projectType, country, projectDetails, column
         </section>
       </div>
 
+      {projectType === "tourisme" && (
+        <section className="mt-5 rounded-xl border-2 border-blue-200 bg-blue-50 p-4" aria-labelledby="client-visitor-next" data-testid="client-visitor-next-step">
+          <h4 id="client-visitor-next" className="text-sm font-black text-blue-950">Prochaine étape : échanger avec un conseiller</h4>
+          <p className="mt-1 text-sm text-blue-950">Votre formulaire suffit pour préparer votre dossier visiteur : il est transmis à notre équipe, qui l’étudie. Certains éléments se vérifient mieux en personne (situation, ressources, pièces originales). Un conseiller vous contactera ; vous pouvez aussi choisir vous-même un créneau.</p>
+          <a href="/consultation" className="mt-3 inline-flex h-11 items-center rounded-md bg-blue-700 px-5 text-sm font-semibold text-white hover:bg-blue-800" data-testid="client-visitor-appointment">Prendre rendez-vous</a>
+        </section>
+      )}
+
       {plan.answers.length > 0 && (
         <details className="mt-5 rounded-lg border border-slate-200 p-3 text-sm" data-testid="client-plan-answers">
           <summary className="flex cursor-pointer items-center gap-2 font-semibold text-slate-900"><ClipboardList className="h-4 w-4" aria-hidden="true" />Ce que vous avez déclaré ({plan.answers.length})</summary>
