@@ -6,7 +6,7 @@ import { and, count, desc, eq, sql } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { CINETPAY_VALIDATOR, finalizeOnlineOpeningPaymentAfterCinetPay } from "../services/openingPaymentAutomation";
 
-const DEFAULT_PAYMENT_AMOUNT = 65000;
+import { DEFAULT_OPENING_FEE_XAF, proposedOpeningFee } from "../../shared/openingFee";
 const PAYMENT_CURRENCY = "XAF";
 
 async function verifyWithCinetPay(transactionId: string) {
@@ -55,7 +55,7 @@ export const cinetpayPaymentRouter = router({
       if (application.paymentStatus === "SUCCESS") return { success: false, error: "Ce dossier a déjà été payé" };
 
       const transactionId = `3M-${application.dossierNumber}-${randomBytes(16).toString("hex")}`;
-      const amount = application.paymentAmount ?? DEFAULT_PAYMENT_AMOUNT;
+      const amount = application.paymentAmount ?? proposedOpeningFee(application.visaType);
       await db.update(applications).set({
         paymentStatus: "PENDING",
         paymentTransactionId: transactionId,
@@ -93,7 +93,7 @@ export const cinetpayPaymentRouter = router({
         dossierNumber: application.dossierNumber,
         candidateName: application.fullName,
         email: application.email,
-        amount: application.paymentAmount ?? DEFAULT_PAYMENT_AMOUNT,
+        amount: application.paymentAmount ?? proposedOpeningFee(application.visaType),
         currency: application.paymentCurrency ?? PAYMENT_CURRENCY,
         paymentStatus: application.paymentStatus,
       };
@@ -116,7 +116,7 @@ export const cinetpayPaymentRouter = router({
 
       const verification = await verifyWithCinetPay(input.transactionId);
       if (!verification.configured) return { success: false, error: "Vérification CinetPay non configurée" };
-      const amountMatches = verification.amount === undefined || verification.amount === (application.paymentAmount ?? DEFAULT_PAYMENT_AMOUNT);
+      const amountMatches = verification.amount === undefined || verification.amount === (application.paymentAmount ?? proposedOpeningFee(application.visaType));
       if (verification.accepted && amountMatches) {
         const now = new Date();
         const updated = await db.update(applications).set({
@@ -125,8 +125,8 @@ export const cinetpayPaymentRouter = router({
           paymentMethod: verification.paymentMethod || null,
           paymentValidatedAt: application.paymentValidatedAt ?? now,
           paymentValidatedBy: application.paymentValidatedBy?.trim() || CINETPAY_VALIDATOR,
-          paymentConfirmedAmount: application.paymentConfirmedAmount ?? application.paymentAmount ?? DEFAULT_PAYMENT_AMOUNT,
-          paymentExpectedAmount: application.paymentExpectedAmount ?? application.paymentAmount ?? DEFAULT_PAYMENT_AMOUNT,
+          paymentConfirmedAmount: application.paymentConfirmedAmount ?? application.paymentAmount ?? proposedOpeningFee(application.visaType),
+          paymentExpectedAmount: application.paymentExpectedAmount ?? application.paymentAmount ?? proposedOpeningFee(application.visaType),
           dossierStatus: application.agreementSigned && application.evaluationDeliveryStatus === "sent" && Boolean(application.evaluationClientConfirmedAt) ? "paye" : application.dossierStatus,
         }).where(and(eq(applications.id, application.id), eq(applications.paymentStatus, "PENDING")));
         const transitioned = Number((updated as { affectedRows?: number }[] | undefined)?.[0]?.affectedRows ?? 0) > 0;
@@ -161,7 +161,7 @@ export const cinetpayPaymentRouter = router({
           transactionId: row.paymentTransactionId,
           dossierNumber: row.dossierNumber,
           status: row.paymentStatus,
-          amount: row.paymentAmount ?? DEFAULT_PAYMENT_AMOUNT,
+          amount: row.paymentAmount ?? DEFAULT_OPENING_FEE_XAF,
           currency: row.paymentCurrency ?? PAYMENT_CURRENCY,
           paymentDate: row.paymentDate,
         })),
@@ -175,7 +175,7 @@ export const cinetpayPaymentRouter = router({
     const [agg] = await db.select({
       total: count(),
       successful: count(sql`CASE WHEN paymentStatus = 'SUCCESS' THEN 1 END`),
-      totalAmountPaid: sql<number>`COALESCE(SUM(CASE WHEN paymentStatus = 'SUCCESS' THEN COALESCE(paymentAmount, ${DEFAULT_PAYMENT_AMOUNT}) ELSE 0 END), 0)`,
+      totalAmountPaid: sql<number>`COALESCE(SUM(CASE WHEN paymentStatus = 'SUCCESS' THEN COALESCE(paymentAmount, ${DEFAULT_OPENING_FEE_XAF}) ELSE 0 END), 0)`,
       pending: count(sql`CASE WHEN paymentStatus = 'PENDING' THEN 1 END`),
       failed: count(sql`CASE WHEN paymentStatus = 'FAILED' THEN 1 END`),
     }).from(applications).where(eq(applications.candidateId, ctx.user.id));

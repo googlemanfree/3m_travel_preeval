@@ -556,7 +556,7 @@ export const applicationRouter = router({
 
       try {
         const transactionId = app.paymentTransactionId ?? `3M-${app.dossierNumber}-${randomBytes(16).toString("hex")}`;
-        const amount = app.paymentAmount ?? 65000;
+        const amount = app.paymentAmount ?? proposedOpeningFee(app.visaType);
         const result = await initCinetPayTransaction({
           transactionId,
           amount,
@@ -611,7 +611,7 @@ export const applicationRouter = router({
       if (!siteId || !apiKey) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le paiement en ligne est temporairement indisponible. Contactez votre conseiller." });
 
       const transactionId = app.paymentTransactionId ?? `3M-${app.dossierNumber}-${randomBytes(16).toString("hex")}`;
-      const amount = app.paymentAmount ?? 65000;
+      const amount = app.paymentAmount ?? proposedOpeningFee(app.visaType);
       const result = await initCinetPayTransaction({
         transactionId,
         amount,
@@ -936,8 +936,8 @@ export const applicationRouter = router({
           paymentDate: isValidated ? new Date() : application.paymentDate,
           paymentMethod: isValidated ? (application.paymentMethod || "VALIDATION_AGENCE") : application.paymentMethod,
           paymentTransactionId: input.paymentReference?.trim() || application.paymentTransactionId || "VALIDATION_MANUELLE",
-          paymentExpectedAmount: input.expectedAmount ?? application.paymentExpectedAmount ?? application.paymentAmount ?? 65000,
-          paymentConfirmedAmount: isValidated ? (input.confirmedAmount ?? application.paymentConfirmedAmount ?? application.paymentAmount ?? 65000) : isCancelValidated ? null : application.paymentConfirmedAmount,
+          paymentExpectedAmount: input.expectedAmount ?? application.paymentExpectedAmount ?? application.paymentAmount ?? proposedOpeningFee(application.visaType),
+          paymentConfirmedAmount: isValidated ? (input.confirmedAmount ?? application.paymentConfirmedAmount ?? application.paymentAmount ?? proposedOpeningFee(application.visaType)) : isCancelValidated ? null : application.paymentConfirmedAmount,
           paymentValidatedAt: validatedAt,
           paymentValidatedBy: isValidated ? (ctx.user.email || ctx.user.name || "Administrateur") : isCancelValidated ? null : application.paymentValidatedBy,
           dossierStatus: nextDossierStatus as typeof application.dossierStatus,
@@ -951,7 +951,7 @@ export const applicationRouter = router({
         action: isCancelValidated ? "cancelled_validated" : input.paymentStatus === "SUCCESS" ? "confirmed" : input.paymentStatus.toLowerCase(),
         paymentId: application.id,
         candidateEmail: application.email,
-        amount: `${application.paymentAmount ?? 65000} ${application.paymentCurrency ?? "XAF"}`,
+        amount: `${application.paymentAmount ?? proposedOpeningFee(application.visaType)} ${application.paymentCurrency ?? "XAF"}`,
         details: input.adminNotes || `Statut de paiement défini sur ${input.paymentStatus} pour le dossier ${application.dossierNumber}`,
       });
 
@@ -970,7 +970,7 @@ export const applicationRouter = router({
               ? "Paiement annulé — dossier remis en attente"
               : "Votre paiement nécessite une correction",
           body: isValidated
-            ? `Votre versement de ${application.paymentAmount ?? 65000} ${application.paymentCurrency ?? "XAF"} pour le dossier ${application.dossierNumber} a été validé. Votre quittance PDF est maintenant disponible dans l’espace client.`
+            ? `Votre versement de ${application.paymentAmount ?? proposedOpeningFee(application.visaType)} ${application.paymentCurrency ?? "XAF"} pour le dossier ${application.dossierNumber} a été validé. Votre quittance PDF est maintenant disponible dans l’espace client.`
             : isCancelValidated
               ? `Le paiement validé du dossier ${application.dossierNumber} a été annulé par l’administration. Motif : ${input.adminNotes || "Correction administrative."} Un nouveau règlement est nécessaire pour poursuivre.`
               : `Le justificatif de paiement du dossier ${application.dossierNumber} n’a pas pu être validé. Motif : ${input.adminNotes || "Veuillez contacter l’administration ou déposer un nouveau reçu."}`,
@@ -1045,7 +1045,7 @@ export const applicationRouter = router({
           dossierNumber: application.dossierNumber,
           fullName: application.fullName,
           email: application.email,
-          amount: Number(application.paymentConfirmedAmount ?? application.paymentAmount ?? 65000),
+          amount: Number(application.paymentConfirmedAmount ?? application.paymentAmount ?? proposedOpeningFee(application.visaType)),
           currency: application.paymentCurrency ?? "XAF",
           paymentDate: application.paymentDate ?? application.paymentValidatedAt ?? new Date(),
           paymentMethod: application.paymentMethod || "Validation administrative",
@@ -1073,7 +1073,7 @@ export const applicationRouter = router({
             action: "receipt_failed",
             paymentId: application.id,
             candidateEmail: application.email,
-            amount: `${application.paymentAmount ?? 65000} ${application.paymentCurrency ?? "XAF"}`,
+            amount: `${application.paymentAmount ?? proposedOpeningFee(application.visaType)} ${application.paymentCurrency ?? "XAF"}`,
             details: `Échec de remise du reçu pour le dossier ${application.dossierNumber}. Aucun détail SMTP sensible n’est exposé.`,
           });
         } catch (auditError) {
@@ -1088,7 +1088,7 @@ export const applicationRouter = router({
         action: input.deliveryMode === "resend" ? "receipt_resent" : "receipt_sent",
         paymentId: application.id,
         candidateEmail: application.email,
-        amount: `${application.paymentAmount ?? 65000} ${application.paymentCurrency ?? "XAF"}`,
+        amount: `${application.paymentAmount ?? proposedOpeningFee(application.visaType)} ${application.paymentCurrency ?? "XAF"}`,
         details: `${input.deliveryMode === "resend" ? "Confirmation de paiement renvoyée" : "Confirmation de paiement envoyée"} après validation manuelle du dossier ${application.dossierNumber}`,
       });
 
