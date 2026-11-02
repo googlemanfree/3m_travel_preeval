@@ -65,6 +65,19 @@ describe("plan de normalisation des références EVAL", () => {
     expect(new Set(plan.map((item) => item.to.toUpperCase())).size).toBe(plan.length);
   });
 
+  it("un numéro 3M- sans paiement prouvé revient à COMPTE ; un compte payé n'est jamais rétrogradé", () => {
+    const plan = planReferenceNormalization([
+      { applicationId: 10, dossierNumber: "3M-2026-1560001", candidateId: 156, paidAndValidated: false, agencyMirrorOf: null, demoteActive: true },
+      { applicationId: 11, dossierNumber: "#3M-20261101-0042", candidateId: null, paidAndValidated: false, agencyMirrorOf: null, demoteActive: true },
+      { applicationId: 12, dossierNumber: "3M-2026-00012", candidateId: 7, paidAndValidated: true, agencyMirrorOf: null, demoteActive: true },
+      { applicationId: 13, dossierNumber: "3M-2026-00013", candidateId: 8, paidAndValidated: false, agencyMirrorOf: null },
+    ], context);
+    expect(plan.map((item) => [item.applicationId, item.to, item.outcome])).toEqual([
+      [10, "COMPTE-00156", "account"],
+      [11, "COMPTE-S000011", "account"],
+    ]);
+  });
+
   it("idempotent : les références déjà normalisées ne sont pas retouchées", () => {
     const plan = planReferenceNormalization([
       { applicationId: 1, dossierNumber: "COMPTE-00009-2", candidateId: 9, paidAndValidated: false, agencyMirrorOf: null },

@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { adminNotifications, agencySettings } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { deactivateCandidateDossier, scanActivationsWithoutProof } from "./deactivateDossier";
+import { normalizeAccountReferences } from "./normalizeAccountReferences";
 
 /**
  * Contrôle permanent : un dossier ne reste jamais activé sans preuve de paiement.
@@ -97,6 +98,27 @@ async function announce(db: Db, input: { removed: number; review: number; failur
   } catch { /* l'alerte est facultative : le contrôle a déjà été appliqué */ }
 }
 
+export function referenceGuardEnabled(value: string | undefined = process.env.REFERENCE_GUARD, guardValue: string | undefined = process.env.ACTIVATION_GUARD): boolean {
+  return activationGuardEnabled(guardValue) && String(value ?? "").trim().toLowerCase() !== "off";
+}
+
+/**
+ * Filet permanent des références : un compte non payé ne porte jamais un numéro « 3M- » (ni un ancien « EVAL ») ; seul un compte payé et
+ * validé garde « 3M- ». Corrige par petits lots (50 par passage, une transaction par demande) et prévient l'administration.
+ * Arrêt d'urgence : REFERENCE_GUARD=off (ou ACTIVATION_GUARD=off).
+ */
+export async function enforceReferenceInvariant(db: Db): Promise<{ corrected: number; toAccount: number; toActive: number }> {
+  if (!referenceGuardEnabled()) return { corrected: 0, toAccount: 0, toActive: 0 };
+  const report = await normalizeAccountReferences(db, { apply: true, adminEmail: ACTIVATION_GUARD_ACTOR, limit: 50 });
+  const corrected = report.toAccount + report.toActive;
+  if (corrected > 0) {
+    try {
+      await db.insert(adminNotifications).values({ type: "payment_received", title: "Références remises en règle", message: `${report.toAccount} compte(s) non payé(s) remis en COMPTE et ${report.toActive} compte(s) payé(s) passé(s) en 3M-. Aucune pièce supprimée.`.slice(0, 1000), relatedId: "reference_guard" } as typeof adminNotifications.$inferInsert);
+    } catch { /* l'alerte est facultative : la correction est déjà faite */ }
+  }
+  return { corrected, toAccount: report.toAccount, toActive: report.toActive };
+}
+
 let timer: ReturnType<typeof setInterval> | null = null;
 
 /** Démarre le contrôle permanent (une minute après le démarrage, puis toutes les 30 minutes). Sans effet si ACTIVATION_GUARD=off ou déjà démarré. */
@@ -110,6 +132,12 @@ export function startActivationGuard(): void {
         return;
       }
       const report = await enforceActivationInvariant(db);
+      try {
+        const references = await enforceReferenceInvariant(db);
+        if (references.corrected > 0) console.log(`[reference-guard] ${references.toAccount} remis en COMPTE, ${references.toActive} passé(s) en 3M-`);
+      } catch (error) {
+        console.warn("[reference-guard] correction impossible :", error instanceof Error ? error.message : error);
+      }
       if (report.removed > 0 || report.failures > 0) console.log(`[activation-guard] ${report.removed} retrait(s), ${report.review} à vérifier, ${report.failures} échec(s)`);
     } catch (error) {
       markUnavailable();

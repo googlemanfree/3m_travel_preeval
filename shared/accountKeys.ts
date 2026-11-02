@@ -57,6 +57,8 @@ export type NormalizationInput = {
   paidAndValidated: boolean;
   /** Pour un miroir « EVAL-AG-{id} » : identifiant du dossier agence. */
   agencyMirrorOf: number | null;
+  /** Demande numérotée « 3M- » alors qu'aucun paiement n'est prouvé : elle revient à une clé de compte (jamais d'un compte payé). */
+  demoteActive?: boolean;
 };
 
 export type NormalizationPlanItem = {
@@ -76,7 +78,7 @@ export function planReferenceNormalization(rows: NormalizationInput[], context: 
   const active = Array.from(context.existingActiveNumbers);
   const plan: NormalizationPlanItem[] = [];
   for (const row of [...rows].sort((a, b) => a.applicationId - b.applicationId)) {
-    if (!isLegacyEvalReference(row.dossierNumber)) continue;
+    if (!isLegacyEvalReference(row.dossierNumber) && !(row.demoteActive && !row.paidAndValidated)) continue;
     if (row.paidAndValidated && row.agencyMirrorOf == null) {
       // Même format que l'attribution à la validation (« 3M-AAAA-00012 », numéro de la demande) ; une suite libre si déjà pris.
       const byId = `3M-${context.year}-${String(Math.trunc(row.applicationId)).padStart(5, "0")}`;

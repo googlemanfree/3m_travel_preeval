@@ -4,6 +4,7 @@ import { TRPCError } from "@trpc/server";
 import crypto from "node:crypto";
 import { z } from "zod";
 import { and, desc, eq, inArray, isNull, isNotNull, like, or, sql } from "drizzle-orm";
+import { checkNoProofReason, checkPaymentReference, referenceKey } from "../../shared/openingPaymentReference";
 import { declaredProjectWarnings } from "../../shared/declaredConsistency";
 import { applications, agencyDossiers, agencyDossierDocuments, agencyDossierHistory, agencySettings, clientDocuments, candidateFiles, candidateMessages, candidates, evaluations, paymentAuditLogs, paymentReceiptApprovals } from "../../drizzle/schema";
 import { caseActivityLogs, caseStatusHistory, cases, clientNotifications } from "../../drizzle/caseTrackingSchema";
@@ -157,6 +158,9 @@ type OpeningPaymentRecord = {
   validatedBy: string;
   reference: string | null;
   proofFileUrl: string | null;
+  /** Validé sans photo de la facture : référence de transaction + motif obligatoire, à rapprocher du relevé. */
+  referenceOnly?: boolean;
+  noProofReason?: string | null;
   confirmedAmount: number | null;
   additionalPayment?: {
     reference: string;
@@ -173,6 +177,13 @@ export type PendingOpeningPaymentProof = {
   fileName?: string;
   mimeType?: string;
 };
+
+/** Paiement accepté : photo/vidéo jointe, OU validation sur référence avec motif et validateur (jamais une référence nue). */
+function hasAcceptedOpeningPayment(record: OpeningPaymentRecord | null | undefined): boolean {
+  if (!record) return false;
+  if (record.proofFileUrl?.trim()) return true;
+  return record.referenceOnly === true && checkPaymentReference(record.reference).ok && checkNoProofReason(record.noProofReason).ok && Boolean(record.validatedBy?.trim());
+}
 
 async function getOpeningPaymentRecord(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, candidateId: number): Promise<OpeningPaymentRecord | null> {
   const [row] = await db.select({ settingValue: agencySettings.settingValue }).from(agencySettings)
@@ -1378,7 +1389,7 @@ export const adminCandidateManagementRouter = router({
       // dossiers en ligne/agence quand elle suffit déjà, et exposée telle quelle à l'écran d'activation.
       const openingPayment = alreadyActive ? null : await getOpeningPaymentRecord(db, candidate.id);
       // Une confirmation sans preuve jointe ne débloque rien : la preuve (ou un paiement en ligne / agence confirmé) est exigée.
-      const paymentValidated = alreadyActive ? true : Boolean(openingPayment?.proofFileUrl?.trim()) || (await isOpeningPaymentValidated(db, candidate));
+      const paymentValidated = alreadyActive ? true : hasAcceptedOpeningPayment(openingPayment) || (await isOpeningPaymentValidated(db, candidate));
       const blockers: Array<{ code: "already_active" | "evaluation" | "payment"; message: string }> = [];
       if (alreadyActive) blockers.push({ code: "already_active", message: ACTIVATION_MESSAGES.alreadyActive });
       else {
@@ -1425,10 +1436,12 @@ export const adminCandidateManagementRouter = router({
       paymentReference: z.string().trim().max(255).optional(),
       proofFileUrl: z.string().max(1000).optional(),
       confirmedAmount: z.number().int().positive().max(100000000).optional(),
+      /** Photo indisponible : motif obligatoire quand seule la référence est fournie. */
+      noProofReason: z.string().trim().max(300).optional(),
       additionalPaymentReference: z.string().trim().max(255).optional(),
       additionalConfirmedAmount: z.number().int().positive().max(100000000).optional(),
-    }).refine((value) => Boolean(value.proofFileUrl?.trim()) || Boolean(value.additionalPaymentReference?.trim()), {
-      message: "Joignez la preuve de paiement (photo ou vidéo de la facture) : une simple référence ne suffit plus pour ouvrir un dossier.",
+    }).refine((value) => Boolean(value.proofFileUrl?.trim()) || Boolean(value.additionalPaymentReference?.trim()) || Boolean(value.paymentReference?.trim()), {
+      message: "Joignez la photo ou la vidéo de la facture, ou saisissez la référence de la transaction et le motif de l'absence de photo.",
     }))
     .mutation(async ({ input, ctx }) => {
       const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
@@ -1446,6 +1459,36 @@ export const adminCandidateManagementRouter = router({
       if (input.proofFileUrl && !(storageKeyFromStoredUrl(input.proofFileUrl) ?? "").startsWith(`candidates/opening-payment-proof/${candidate.id}/`)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Preuve de paiement invalide : redéposez la photo ou la vidéo." });
       }
+      // Sans photo : la référence de transaction ET le motif de l'absence de photo sont obligatoires. Une même référence ne peut jamais
+      // valider deux comptes (sinon un seul paiement ouvrirait plusieurs dossiers).
+      const referenceOnly = !existing && !input.proofFileUrl?.trim();
+      let noProofReason: string | null = null;
+      if (!existing && input.paymentReference?.trim()) {
+        // Avec une photo, la référence n'est qu'une indication ; sans photo, elle est la seule base du paiement : contrôle strict.
+        const referenceCheck = checkPaymentReference(input.paymentReference);
+        if (referenceCheck.ok === false && referenceOnly) throw new TRPCError({ code: "BAD_REQUEST", message: referenceCheck.message });
+        const wantedReference = referenceCheck.ok ? referenceCheck.reference : input.paymentReference.trim();
+        const others = await db.select({ key: agencySettings.settingKey, value: agencySettings.settingValue }).from(agencySettings)
+          .where(and(like(agencySettings.settingKey, `${OPENING_PAYMENT_KEY_PREFIX}%`), sql`${agencySettings.settingKey} <> ${`${OPENING_PAYMENT_KEY_PREFIX}${candidate.id}`}`)).limit(5000);
+        const wanted = referenceKey(wantedReference);
+        // Une référence trop courte pour être discriminante (accompagnée d'une photo) ne sert pas à détecter une réutilisation.
+        for (const other of Array.isArray(others) && wanted.length >= 6 ? others : []) {
+          try {
+            const parsed = JSON.parse(other.value) as OpeningPaymentRecord;
+            if ([parsed.reference, parsed.additionalPayment?.reference].some((value) => value && referenceKey(value) === wanted)) {
+              throw new TRPCError({ code: "CONFLICT", message: "Cette référence de transaction a déjà servi à valider un autre compte : vérifiez l'ID ou joignez la photo de la facture." });
+            }
+          } catch (error) {
+            if (error instanceof TRPCError) throw error;
+          }
+        }
+      }
+      if (referenceOnly) {
+        if (!input.paymentReference?.trim()) throw new TRPCError({ code: "BAD_REQUEST", message: "Saisissez la référence de la transaction, ou joignez la photo de la facture." });
+        const reasonCheck = checkNoProofReason(input.noProofReason);
+        if (reasonCheck.ok === false) throw new TRPCError({ code: "BAD_REQUEST", message: reasonCheck.message });
+        noProofReason = reasonCheck.reason;
+      }
       const now = new Date().toISOString();
       const record: OpeningPaymentRecord = existing
         ? {
@@ -1462,6 +1505,7 @@ export const adminCandidateManagementRouter = router({
             validatedBy: admin.email || "Administrateur",
             reference: input.paymentReference?.trim() || null,
             proofFileUrl: input.proofFileUrl?.trim() || null,
+            ...(referenceOnly ? { referenceOnly: true, noProofReason } : {}),
             confirmedAmount: input.confirmedAmount ?? null,
             ...(input.additionalPaymentReference?.trim()
               ? {
@@ -1482,7 +1526,7 @@ export const adminCandidateManagementRouter = router({
         paymentId: candidate.id,
         candidateEmail: candidate.email,
         amount: `${input.confirmedAmount ?? 65000} XAF`,
-        details: `Paiement d'ouverture confirmé pour ${accountReference(candidate.id)} depuis le dialogue d'activation · ${record.reference ?? "sans référence"}${record.proofFileUrl ? " · preuve jointe" : ""}${record.additionalPayment ? ` · seconde procédure : ${record.additionalPayment.reference} (${record.additionalPayment.confirmedAmount ?? 65000} XAF)` : ""}.`,
+        details: `Paiement d'ouverture confirmé pour ${accountReference(candidate.id)} depuis le dialogue d'activation · ${record.reference ?? "sans référence"}${record.proofFileUrl ? " · preuve jointe" : ""}${record.referenceOnly ? ` · SUR RÉFÉRENCE SEULE, photo indisponible (${record.noProofReason}) : à rapprocher du relevé` : ""}${record.additionalPayment ? ` · seconde procédure : ${record.additionalPayment.reference} (${record.additionalPayment.confirmedAmount ?? 65000} XAF)` : ""}.`,
       });
       if (record.additionalPayment) {
         await db.insert(paymentAuditLogs).values({
@@ -1523,7 +1567,7 @@ export const adminCandidateManagementRouter = router({
       const openingPayment = await getOpeningPaymentRecord(db, candidate.id);
       // Une confirmation sans preuve (simple référence) ne suffit plus : il faut la preuve jointe, un paiement en ligne validé
       // ou un paiement agence confirmé au journal.
-      if (!openingPayment?.proofFileUrl?.trim() && !(await isOpeningPaymentValidated(db, candidate))) {
+      if (!hasAcceptedOpeningPayment(openingPayment) && !(await isOpeningPaymentValidated(db, candidate))) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: openingPayment ? PAYMENT_PROOF_REQUIRED_MESSAGE : ACTIVATION_MESSAGES.payment });
       }
       if (input.additionalProcedure && !openingPayment?.additionalPayment) {

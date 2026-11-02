@@ -4,7 +4,9 @@ import { cases } from "../../drizzle/caseTrackingSchema";
 import { planReferenceNormalization, type NormalizationPlanItem } from "../../shared/accountKeys";
 import { parseEvalAgencyShellId } from "../../shared/evalAgencyShell";
 import { proofKey } from "../../shared/paymentProof";
+import { isEvaluationPaid } from "../../shared/evaluationReference";
 import { purgeEvalAgencyShell } from "./canonicalizeActiveDossier";
+import { getOpeningPaymentEvidence } from "./openingPaymentEvidence";
 
 type Db = NonNullable<Awaited<ReturnType<typeof import("../db").getDb>>>;
 
@@ -52,6 +54,27 @@ export async function normalizeAccountReferences(db: Db, input: { apply: boolean
     }
   }
 
+  // Demandes déjà numérotées « 3M- » (ou « #3M- ») SANS paiement prouvé : elles reviennent à une clé de compte. Prudence maximale : une demande
+  // reste intacte dès qu'un signe de paiement existe (statut payé, paiement validé, preuve ou référence validée sur le compte).
+  const suspects = await db
+    .select({ id: applications.id, dossierNumber: applications.dossierNumber, candidateId: applications.candidateId, email: applications.email, fullName: applications.fullName, paymentStatus: applications.paymentStatus, paymentValidatedAt: applications.paymentValidatedAt, dossierStatus: applications.dossierStatus })
+    .from(applications)
+    .where(and(or(and(like(applications.dossierNumber, "3M-%"), sql`${applications.dossierNumber} NOT LIKE '3M-AGN-%'`), like(applications.dossierNumber, "#3M-%")), isNull(applications.deletedAt)))
+    .limit(limit);
+  const demotable: typeof suspects = [];
+  for (const row of suspects) {
+    if (isEvaluationPaid({ paymentStatus: row.paymentStatus, dossierStatus: row.dossierStatus }) || row.paymentValidatedAt) continue;
+    let accountId = row.candidateId;
+    if (!accountId) {
+      const [account] = await db.select({ id: candidates.id }).from(candidates).where(sql`LOWER(${candidates.email}) = LOWER(${row.email})`).limit(1);
+      accountId = account?.id ?? null;
+    }
+    if (accountId && (await getOpeningPaymentEvidence(db, { id: accountId, email: row.email })).ok) continue;
+    demotable.push({ ...row, candidateId: accountId });
+  }
+  for (const row of demotable) legacy.push({ id: row.id, dossierNumber: row.dossierNumber, candidateId: row.candidateId, email: row.email, fullName: row.fullName, paymentStatus: row.paymentStatus, paymentValidatedAt: row.paymentValidatedAt });
+  const demotedIds = new Set(demotable.map((row) => row.id));
+
   const takenRows = await db.select({ value: applications.dossierNumber }).from(applications).where(or(like(applications.dossierNumber, "COMPTE-%"), like(applications.dossierNumber, "3M-%")));
   const year = new Date().getFullYear();
   const plan = planReferenceNormalization(
@@ -59,8 +82,9 @@ export async function normalizeAccountReferences(db: Db, input: { apply: boolean
       applicationId: row.id,
       dossierNumber: row.dossierNumber,
       candidateId: row.candidateId,
-      paidAndValidated: row.paymentStatus === "SUCCESS" && Boolean(row.paymentValidatedAt),
+      paidAndValidated: !demotedIds.has(row.id) && row.paymentStatus === "SUCCESS" && Boolean(row.paymentValidatedAt),
       agencyMirrorOf: parseEvalAgencyShellId(row.dossierNumber),
+      demoteActive: demotedIds.has(row.id),
     })),
     { takenKeys: takenRows.map((row) => row.value), existingActiveNumbers: takenRows.map((row) => row.value).filter((value) => value.toUpperCase().startsWith("3M-")), year },
   );
@@ -99,11 +123,6 @@ export async function normalizeAccountReferences(db: Db, input: { apply: boolean
 
   const [remaining] = await db.select({ total: sql<number>`count(*)` }).from(applications).where(or(...LEGACY_PATTERNS.map((pattern) => like(applications.dossierNumber, pattern))));
 
-  const unpaidActive = await db
-    .select({ id: applications.id, dossierNumber: applications.dossierNumber, fullName: applications.fullName })
-    .from(applications)
-    .where(and(like(applications.dossierNumber, "3M-%"), sql`${applications.dossierNumber} NOT LIKE '3M-AGN-%'`, isNull(applications.deletedAt), sql`NOT (${applications.paymentStatus} = 'SUCCESS' AND ${applications.paymentValidatedAt} IS NOT NULL)`))
-    .limit(100);
 
   return {
     applied: input.apply,
@@ -111,7 +130,7 @@ export async function normalizeAccountReferences(db: Db, input: { apply: boolean
     toAccount: plan.filter((item) => item.outcome === "account").length,
     toActive: plan.filter((item) => item.outcome === "active").length,
     items: plan.map((item) => ({ ...item, fullName: nameOf.get(item.applicationId) ?? "" })),
-    unpaidWithActiveNumber: unpaidActive.map((row) => ({ applicationId: row.id, dossierNumber: row.dossierNumber, fullName: row.fullName })),
+    unpaidWithActiveNumber: demotable.map((row) => ({ applicationId: row.id, dossierNumber: row.dossierNumber, fullName: row.fullName })),
     sweep,
     remainingEval: Number(remaining?.total ?? 0),
   };

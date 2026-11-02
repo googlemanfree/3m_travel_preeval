@@ -172,8 +172,34 @@ describe("activation : mêmes conditions, mêmes messages, et la référence cha
 });
 
 describe("confirmOpeningPaymentForAccount : valider le paiement directement sur un compte sans dossier", () => {
-  it("refuse une référence de transaction seule : la preuve jointe est obligatoire", async () => {
-    await expect(caller().confirmOpeningPaymentForAccount({ ...base, candidateId: 42, paymentReference: "OM-998877" })).rejects.toThrow(/preuve de paiement/);
+  it("sans photo : la référence seule est refusée tant que le motif de l'absence de photo manque", async () => {
+    state.reads = [[candidate()], [], []];
+    await expect(caller().confirmOpeningPaymentForAccount({ ...base, candidateId: 42, paymentReference: "OM-998877" })).rejects.toThrow(/photo n'est pas disponible/);
+    expect(state.inserts).toHaveLength(0);
+  });
+
+  it("sans photo : une référence inventée est refusée", async () => {
+    state.reads = [[candidate()], [], []];
+    await expect(caller().confirmOpeningPaymentForAccount({ ...base, candidateId: 42, paymentReference: "123456", noProofReason: "facture perdue" })).rejects.toThrow(/ID de transaction/);
+    expect(state.inserts).toHaveLength(0);
+  });
+
+  it("sans aucune référence ni photo : refusé par le schéma", async () => {
+    await expect(caller().confirmOpeningPaymentForAccount({ ...base, candidateId: 42 })).rejects.toThrow(/photo ou la vidéo de la facture, ou saisissez la référence/);
+  });
+
+  it("sans photo : référence plausible + motif = paiement validé, tracé « sur référence seule » pour rapprochement", async () => {
+    state.reads = [[candidate()], [], []];
+    const result = await caller().confirmOpeningPaymentForAccount({ ...base, candidateId: 42, paymentReference: "OM-998877", noProofReason: "facture perdue par le client" });
+    expect(result.record).toMatchObject({ reference: "OM-998877", proofFileUrl: null, referenceOnly: true, noProofReason: "facture perdue par le client", validatedBy: "agent@3mtravelagency.com" });
+    const auditInsert = state.inserts.find((row) => row.action === "confirmed" && row.candidateEmail === "candidat@example.com");
+    expect(auditInsert.details).toContain("SUR RÉFÉRENCE SEULE");
+    expect(auditInsert.details).toContain("facture perdue par le client");
+  });
+
+  it("une même référence ne valide jamais deux comptes", async () => {
+    state.reads = [[candidate()], [], [{ key: "opening_payment:7", value: JSON.stringify({ candidateId: 7, reference: "om 998877" }) }]];
+    await expect(caller().confirmOpeningPaymentForAccount({ ...base, candidateId: 42, paymentReference: "OM-998877", noProofReason: "facture perdue" })).rejects.toThrow(/déjà servi à valider un autre compte/);
     expect(state.inserts).toHaveLength(0);
   });
 
@@ -202,6 +228,7 @@ describe("confirmOpeningPaymentForAccount : valider le paiement directement sur 
       ...base,
       candidateId: 42,
       paymentReference: "OM-PRINCIPAL",
+      noProofReason: "facture perdue par le client",
       confirmedAmount: 72000,
       additionalPaymentReference: "OM-SECONDE",
       additionalConfirmedAmount: 91000,

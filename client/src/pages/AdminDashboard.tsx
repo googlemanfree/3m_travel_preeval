@@ -463,8 +463,9 @@ function SourceBadge({ source }: { source: string }) {
 }
 
 const ACTIVATION_STATUS_CONFIG: Record<CandidateActivationStatus, { label: string; color: string; icon: React.ReactNode }> = {
-  active: { label: "Activé", color: "text-emerald-700 bg-emerald-50 border-emerald-200", icon: <CheckCircle className="w-3 h-3" /> },
-  pending: { label: "En attente", color: "text-amber-700 bg-amber-50 border-amber-200", icon: <Clock className="w-3 h-3" /> },
+  // Il s'agit de l'e-mail du COMPTE confirmé, pas du dossier : un dossier ne s'ouvre qu'après paiement des frais d'ouverture.
+  active: { label: "E-mail confirmé", color: "text-emerald-700 bg-emerald-50 border-emerald-200", icon: <CheckCircle className="w-3 h-3" /> },
+  pending: { label: "E-mail à confirmer", color: "text-amber-700 bg-amber-50 border-amber-200", icon: <Clock className="w-3 h-3" /> },
   expired: { label: "Lien expiré", color: "text-orange-700 bg-orange-50 border-orange-200", icon: <AlertCircle className="w-3 h-3" /> },
   failed: { label: "Échec d’envoi", color: "text-red-700 bg-red-50 border-red-200", icon: <ShieldAlert className="w-3 h-3" /> },
   not_registered: { label: "Non inscrit", color: "text-slate-600 bg-slate-50 border-slate-200", icon: <Mail className="w-3 h-3" /> },
@@ -3252,11 +3253,11 @@ export default function AdminDashboard() {
             </SelectContent>
           </Select>
           <Select value={activationFilter} onValueChange={(value) => setActivationFilter(value as CandidateActivationStatus | "ALL")}>
-            <SelectTrigger className="w-full sm:w-52" aria-label="Filtrer par statut d’activation">
-              <SelectValue placeholder="Toutes les activations" />
+            <SelectTrigger className="w-full sm:w-52" aria-label="Filtrer par confirmation de l’e-mail du compte">
+              <SelectValue placeholder="Confirmation e-mail" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">Toutes les activations</SelectItem>
+              <SelectItem value="ALL">Toutes les confirmations</SelectItem>
               {Object.entries(ACTIVATION_STATUS_CONFIG).map(([key, cfg]) => (
                 <SelectItem key={key} value={key}>
                   <span className="flex items-center gap-2">{cfg.icon}{cfg.label}</span>
@@ -3317,10 +3318,10 @@ export default function AdminDashboard() {
               className={`w-full gap-2 lg:w-auto ${activationFilter === "active" ? "bg-emerald-700 hover:bg-emerald-800" : "border-emerald-200 text-emerald-800 hover:bg-emerald-50"}`}
               aria-pressed={activationFilter === "active"}
               onClick={() => setActivationFilter((value) => value === "active" ? "ALL" : "active")}
-              title="Afficher uniquement les comptes activés, considérés comme comptes premium opérationnels"
+              title="Afficher uniquement les comptes dont l'e-mail est confirmé (ce n'est pas un dossier ouvert : l'ouverture exige le paiement des frais)"
             >
               <Sparkles className="h-4 w-4" />
-              Comptes premium / activés
+              E-mail confirmé
             </Button>
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
               <SelectTrigger className="w-full lg:w-56" aria-label="Trier les dossiers"><ArrowDownUp className="mr-2 h-4 w-4" /><SelectValue placeholder="Trier les dossiers" /></SelectTrigger>

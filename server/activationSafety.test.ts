@@ -33,11 +33,14 @@ describe("aucune activation sans preuve de paiement", () => {
     expect(service).toContain("paiement_non_justifie");
   });
 
-  it("l'activation manuelle et l'écran d'activation exigent la preuve jointe ; une référence seule ne suffit plus", () => {
+  it("l'activation exige la preuve jointe OU une référence validée avec motif ; une référence nue ne suffit jamais", () => {
     const router = read("server/routers/adminCandidateManagement.ts");
-    expect(router).toContain("!openingPayment?.proofFileUrl?.trim() && !(await isOpeningPaymentValidated(db, candidate))");
-    expect(router).toContain("Boolean(openingPayment?.proofFileUrl?.trim()) || (await isOpeningPaymentValidated(db, candidate))");
-    expect(router).toContain("une simple référence ne suffit plus pour ouvrir un dossier");
+    expect(router).toContain("!hasAcceptedOpeningPayment(openingPayment) && !(await isOpeningPaymentValidated(db, candidate))");
+    expect(router).toContain("hasAcceptedOpeningPayment(openingPayment) || (await isOpeningPaymentValidated(db, candidate))");
+    // Sans photo : référence plausible + motif + validateur, et jamais déjà utilisée par un autre compte.
+    expect(router).toContain("record.referenceOnly === true && checkPaymentReference(record.reference).ok && checkNoProofReason(record.noProofReason).ok && Boolean(record.validatedBy?.trim())");
+    expect(router).toContain("déjà servi à valider un autre compte");
+    expect(read("server/services/openingPaymentEvidence.ts")).toContain('source: "reference_declared"');
   });
 
   it("déposer une pièce ou déclarer une ancienne évaluation n'ouvre plus le dossier", () => {

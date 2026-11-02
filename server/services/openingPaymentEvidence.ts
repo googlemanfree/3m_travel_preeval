@@ -6,18 +6,21 @@
  *  - un paiement en ligne réussi ET validé par un administrateur (ou par la vérification CinetPay) ;
  *  - un paiement du pré-dossier agence confirmé dans le journal d'audit des paiements.
  *
- * Une simple référence saisie à la main, ou un dossier agence marqué « payé » sans journal, ne suffit pas.
+ *  - un paiement validé SANS photo, sur une référence de transaction plausible et jamais réutilisée, avec le motif de l'absence de photo
+ *    et l'administrateur qui l'a validé (source « reference_declared », à rapprocher du relevé).
+ * Une référence seule, sans motif ni nom de validateur, ou un dossier agence marqué « payé » sans journal, ne suffit pas.
  */
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { agencyDossiers, agencySettings, applications, paymentAuditLogs } from "../../drizzle/schema";
 import type { getDb } from "../db";
+import { checkNoProofReason, checkPaymentReference } from "../../shared/openingPaymentReference";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
 
 /** Même clé que la confirmation du paiement d'un compte qui n'a pas encore de dossier (agency_settings). */
 export const OPENING_PAYMENT_KEY_PREFIX = "opening_payment:";
 
-export type OpeningPaymentEvidenceSource = "proof_file" | "online_validated" | "agency_confirmed";
+export type OpeningPaymentEvidenceSource = "proof_file" | "reference_declared" | "online_validated" | "agency_confirmed";
 
 export type OpeningPaymentEvidence = {
   ok: boolean;
@@ -34,8 +37,13 @@ export async function getOpeningPaymentEvidence(db: Db, candidate: { id: number;
     .limit(1);
   if (setting) {
     try {
-      const record = JSON.parse(setting.settingValue) as { proofFileUrl?: string | null };
+      const record = JSON.parse(setting.settingValue) as { proofFileUrl?: string | null; referenceOnly?: boolean; reference?: string | null; noProofReason?: string | null; validatedBy?: string | null };
       if (typeof record.proofFileUrl === "string" && record.proofFileUrl.trim()) return { ok: true, source: "proof_file", agencyPaidWithoutLog: false };
+      // Paiement validé SANS photo : accepté seulement s'il porte une référence plausible, le motif de l'absence de photo et le nom de
+      // l'administrateur qui l'a validé (voir shared/openingPaymentReference.ts). Il reste signalé « sur référence » pour rapprochement.
+      if (record.referenceOnly === true && checkPaymentReference(record.reference).ok && checkNoProofReason(record.noProofReason).ok && Boolean(record.validatedBy?.trim())) {
+        return { ok: true, source: "reference_declared", agencyPaidWithoutLog: false };
+      }
     } catch {
       // Enregistrement illisible : pas une preuve.
     }

@@ -103,7 +103,7 @@ export function AdminActivationSafety({ sessionToken }: { sessionToken: string }
       <section className="rounded-xl border border-indigo-200 bg-indigo-50 p-4" data-testid="reference-normalization">
         <h2 className="text-base font-black text-indigo-950">Références des comptes : COMPTE avant paiement, 3M après</h2>
         <p className="mt-1 text-sm text-indigo-950">
-          Tout ancien numéro « EVAL » revient à une référence de compte tant que les frais d'ouverture ne sont pas payés et validés ; seul un compte payé passe à « 3M- ».
+          Tout ancien numéro « EVAL » et tout numéro « 3M- » sans paiement prouvé reviennent à une référence de compte ; seul un compte payé et validé garde ou reçoit « 3M- ».
           L'aperçu ne modifie rien. L'application renomme aussi les bilans, reçus et preuves liés, et peut être relancée sans risque.
         </p>
         {referenceAudit.isLoading && <p className="mt-3 text-sm text-slate-700">Analyse en cours…</p>}
@@ -112,8 +112,8 @@ export function AdminActivationSafety({ sessionToken }: { sessionToken: string }
           <>
             <p className="mt-3 text-sm font-semibold text-slate-900" data-testid="reference-normalization-summary">
               {referenceAudit.data.scanned === 0
-                ? "Aucune référence « EVAL » dans la base."
-                : `${referenceAudit.data.scanned} référence(s) « EVAL » : ${referenceAudit.data.toAccount} reviennent en COMPTE, ${referenceAudit.data.toActive} passent en 3M- (payées et validées).`}
+                ? "Aucune référence à corriger : plus d'« EVAL » et aucun numéro « 3M- » sans paiement."
+                : `${referenceAudit.data.scanned} référence(s) à corriger : ${referenceAudit.data.toAccount} reviennent en COMPTE, ${referenceAudit.data.toActive} passent en 3M- (payées et validées).`}
               {referenceAudit.data.remainingEval > 0 && referenceAudit.data.applied && ` ${referenceAudit.data.remainingEval} restent à corriger : relancez.`}
             </p>
             {referenceAudit.data.items.length > 0 && (
@@ -128,7 +128,7 @@ export function AdminActivationSafety({ sessionToken }: { sessionToken: string }
             )}
             {referenceAudit.data.unpaidWithActiveNumber.length > 0 && (
               <p className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950" data-testid="unpaid-with-3m">
-                {referenceAudit.data.unpaidWithActiveNumber.length} dossier(s) en ligne portent un numéro « 3M- » sans frais d'ouverture payés et validés (non modifiés ici, à contrôler dans « Dossiers activés sans preuve ») :{" "}
+                {referenceAudit.data.unpaidWithActiveNumber.length} demande(s) portent un numéro « 3M- » sans aucun paiement prouvé (elles reviennent en COMPTE à l'application) :{" "}
                 {referenceAudit.data.unpaidWithActiveNumber.slice(0, 8).map((row) => `${row.dossierNumber} (${row.fullName})`).join(", ")}
               </p>
             )}
