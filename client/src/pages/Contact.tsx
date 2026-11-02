@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Clock, Send, MessageSquare, Zap, AlertCircle, CheckCircle, Facebook } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Send, MessageSquare, Zap, AlertCircle, CheckCircle, Facebook, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ChatModal } from '@/components/ChatModal';
@@ -40,6 +40,7 @@ export default function Contact() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
   const sendContactEmailMutation = trpc.contact.sendContactEmail.useMutation();
 
@@ -103,9 +104,22 @@ export default function Contact() {
     setError(null);
   };
 
+  const fieldErrors = {
+    name: formData.name.trim().length < 2 ? 'Indiquez votre nom complet (au moins 2 caractères).' : '',
+    email: !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim()) ? 'Saisissez une adresse e-mail valide, par exemple nom@domaine.com.' : '',
+    subject: formData.subject.trim().length < 3 ? 'Précisez brièvement le sujet de votre demande.' : '',
+    message: formData.message.trim().length < 10 ? 'Votre message doit contenir au moins 10 caractères.' : '',
+  };
+  const hasFieldErrors = Object.values(fieldErrors).some(Boolean);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setHasAttemptedSubmit(true);
     setError(null);
+    if (hasFieldErrors) {
+      setError('Vérifiez les champs signalés avant d’envoyer votre message.');
+      return;
+    }
     setIsLoading(true);
 
     try {
@@ -408,6 +422,8 @@ export default function Contact() {
                       type="text"
                       name="name"
                       aria-label="Nom complet"
+                      aria-invalid={Boolean(hasAttemptedSubmit && fieldErrors.name)}
+                      aria-describedby="contact-name-help"
                       value={formData.name}
                       onChange={handleInputChange}
                       placeholder="Votre nom"
@@ -416,6 +432,9 @@ export default function Contact() {
                       className="w-full"
                       maxLength={200}
                     />
+                    <p id="contact-name-help" className={`mt-1 text-xs ${hasAttemptedSubmit && fieldErrors.name ? 'text-red-700' : 'text-slate-500'}`}>
+                      {hasAttemptedSubmit && fieldErrors.name ? fieldErrors.name : 'Votre nom et prénom.'}
+                    </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -425,6 +444,8 @@ export default function Contact() {
                       type="email"
                       name="email"
                       aria-label="E-mail"
+                      aria-invalid={Boolean(hasAttemptedSubmit && fieldErrors.email)}
+                      aria-describedby="contact-email-help"
                       value={formData.email}
                       onChange={handleInputChange}
                       placeholder="votre@email.com"
@@ -433,6 +454,9 @@ export default function Contact() {
                       className="w-full"
                       maxLength={320}
                     />
+                    <p id="contact-email-help" className={`mt-1 text-xs ${hasAttemptedSubmit && fieldErrors.email ? 'text-red-700' : 'text-slate-500'}`}>
+                      {hasAttemptedSubmit && fieldErrors.email ? fieldErrors.email : 'Nous vous répondrons à cette adresse.'}
+                    </p>
                   </div>
                 </div>
 
@@ -461,6 +485,8 @@ export default function Contact() {
                       type="text"
                       name="subject"
                       aria-label="Sujet"
+                      aria-invalid={Boolean(hasAttemptedSubmit && fieldErrors.subject)}
+                      aria-describedby="contact-subject-help"
                       value={formData.subject}
                       onChange={handleInputChange}
                       placeholder="Sujet de votre message"
@@ -469,6 +495,9 @@ export default function Contact() {
                       className="w-full"
                       maxLength={300}
                     />
+                    <p id="contact-subject-help" className={`mt-1 text-xs ${hasAttemptedSubmit && fieldErrors.subject ? 'text-red-700' : 'text-slate-500'}`}>
+                      {hasAttemptedSubmit && fieldErrors.subject ? fieldErrors.subject : 'Ex. Demande d’information sur un visa.'}
+                    </p>
                   </div>
                 </div>
 
@@ -479,6 +508,8 @@ export default function Contact() {
                   <textarea
                     name="message"
                     aria-label="Message"
+                    aria-invalid={Boolean(hasAttemptedSubmit && fieldErrors.message)}
+                    aria-describedby="contact-message-help"
                     value={formData.message}
                     onChange={handleInputChange}
                     placeholder="Décrivez votre demande..."
@@ -488,6 +519,9 @@ export default function Contact() {
                     maxLength={5000}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none disabled:bg-gray-100"
                   />
+                  <p id="contact-message-help" className={`mt-1 text-xs ${hasAttemptedSubmit && fieldErrors.message ? 'text-red-700' : 'text-slate-500'}`}>
+                    {hasAttemptedSubmit && fieldErrors.message ? fieldErrors.message : `${formData.message.length}/5000 caractères`}
+                  </p>
                 </div>
 
                 <motion.button
@@ -504,7 +538,7 @@ export default function Contact() {
                     </>
                   ) : isLoading ? (
                     <>
-                      <span className="animate-spin">⏳</span>
+                      <Loader2 size={20} className="animate-spin" aria-hidden="true" />
                       <span>Envoi en cours...</span>
                     </>
                   ) : (
