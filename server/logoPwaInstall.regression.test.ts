@@ -34,7 +34,7 @@ describe("logo de navigation et installation PWA", () => {
     expect(source).toContain("w-[min(22rem,calc(100%-2rem))]");
     expect(source).toContain("bottom-24");
     expect(source).toContain('role="status" aria-live="polite"');
-    expect(sw).toContain("3m-travel-pwa-v59-offline-brand");
+    expect(sw).toContain("3m-travel-pwa-v60-logo-partage-wordmark");
     expect(sw).toContain("'/offline.html'");
     expect(sw).toContain("caches.match('/offline.html')");
     expect(offline).toContain('src="/logo-3m.webp"');
