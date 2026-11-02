@@ -418,6 +418,10 @@ export default function EmployerPortal() {
         <LogOut className="mr-2 h-4 w-4" />{t("Déconnexion", "Sign out")}
       </Button>
     </header>
+    <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700" data-testid="partner-help-strip">
+      <p className="min-w-0 flex-1">{t("Une question sur un profil, un retour de sélection ou votre accès ? Écrivez à l’équipe 3M en rappelant le nom de votre organisation.", "A question about a profile, selection feedback or your access? Write to the 3M team and mention your organisation’s name.")}</p>
+      <a href={`mailto:hello@3mtravelagency.com?subject=${encodeURIComponent(t("Espace partenaire — question", "Partner workspace — question"))}${organization?.name ? encodeURIComponent(` · ${organization.name}`) : ""}`} className="inline-flex h-10 items-center rounded-md bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-800">{t("Contacter l’équipe 3M", "Contact the 3M team")}</a>
+    </section>
     <section className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-950">
       <p className="flex items-center gap-2 font-bold"><ShieldCheck className="h-4 w-4" />{t("Règle de confidentialité", "Privacy rule")}</p>
       <p className="mt-1">{t("Les décisions enregistrées ici sont des retours de sélection. 3M les examine avant toute communication ou transmission de pièces au candidat.", "Decisions recorded here are selection feedback. 3M reviews them before any communication or document transfer to a candidate.")}</p>

@@ -1013,6 +1013,16 @@ export default function EvaluationSpace() {
               <ReviewInviteCard approved={["approuve", "visa_approuve"].includes(String(cProfile.dossierStatus))} destination={primaryDestination} visaType={(cProfile as any).visaType} />
               <FlightAfterVisaCard approved={["approuve", "visa_approuve"].includes(String(cProfile.dossierStatus)) || ["approuve", "visa_approuve"].includes(String((activeDossier as any)?.status ?? (activeDossier as any)?.dossierStatus))} destination={primaryDestination} />
               <MyFlightRequestsCard />
+              <Card className="border-2 border-blue-200 bg-blue-50/60 p-5 shadow-sm" data-testid="client-appointment-cta">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Besoin d’un échange ?</p>
+                    <h3 className="mt-1 text-lg font-bold text-slate-950">Prendre rendez-vous avec un conseiller</h3>
+                    <p className="mt-1 text-sm text-slate-600">Certains éléments se vérifient mieux de vive voix ou en agence (visa visiteur, pièces originales, questions sur votre dossier). Choisissez un créneau, votre dossier sera préparé pour l’entretien.</p>
+                  </div>
+                  <a href="/consultation" className="inline-flex h-11 items-center rounded-md bg-blue-700 px-5 text-sm font-semibold text-white hover:bg-blue-800">Prendre rendez-vous</a>
+                </div>
+              </Card>
               <Card className="border-slate-200 bg-white p-5 shadow-sm" data-testid="client-online-services-sync">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>

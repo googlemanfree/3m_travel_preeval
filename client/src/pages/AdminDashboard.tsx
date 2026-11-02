@@ -971,6 +971,23 @@ export function CandidateDetailModal({
                 <SourceBadge source={candidate.source} />
               </div>
             </div>
+            {(isBilanSent(candidate, data) || candidate.evaluationDeclarationStatus === "validated" || candidate.evaluationReviewedAt) ? (
+              <div
+                role="status"
+                className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border-2 border-emerald-500 bg-emerald-50 px-4 py-3 text-emerald-950"
+                data-testid="profile-evaluated-banner"
+              >
+                <CheckCircle className="h-7 w-7 shrink-0 text-emerald-700" aria-hidden="true" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xl font-black uppercase tracking-wide">Profil évalué</p>
+                  <p className="text-xs leading-5 text-emerald-900">
+                    {isBilanSent(candidate, data) ? "Le bilan a déjà été envoyé au candidat." : "L’évaluation a déjà été validée par un conseiller."}
+                    {candidate.evaluationReviewedAt ? ` Validée le ${new Date(candidate.evaluationReviewedAt).toLocaleDateString("fr-FR")}${candidate.evaluationReviewedBy ? ` par ${candidate.evaluationReviewedBy}` : ""}.` : ""}
+                    {" "}Inutile de le refaire : utilisez « Modifier le bilan » pour un ajustement.
+                  </p>
+                </div>
+              </div>
+            ) : null}
             {portraitPreviewOpen && candidate.avatarUrl && (
               <div
                 className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/70 p-4"
@@ -3670,7 +3687,7 @@ export default function AdminDashboard() {
                         <div>
                           <p className="font-medium text-gray-800 truncate max-w-[160px]">{candidate.fullName}</p>
                           <p className="text-xs text-gray-500 truncate max-w-[160px]">{candidate.email}</p>
-                          <div className="mt-1"><EvaluationDeclarationBadge status={candidate.evaluationDeclarationStatus as EvaluationDeclarationStatus | undefined} /></div>
+                          <div className="mt-1"><EvaluationDeclarationBadge status={candidate.evaluationDeclarationStatus as EvaluationDeclarationStatus | undefined} bilanSent={isBilanSent(candidate, null)} /></div>
                         </div>
                       </td>
                       <td className="px-4 py-3 hidden md:table-cell">
