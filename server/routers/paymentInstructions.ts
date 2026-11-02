@@ -23,7 +23,7 @@ import { notifyAdmins } from "./adminNotifications";
 import { candidateProcedure } from "./candidate";
 
 export const PAYMENT_INSTRUCTIONS_KEY = "payment_instructions";
-import { proposedOpeningFee } from "../../shared/openingFee";
+const DEFAULT_DOSSIER_AMOUNT = 65000;
 
 const office = COMPANY_PROFILE.offices.cameroon;
 const AGENCY_FACTS: AgencyFacts = {
@@ -132,7 +132,7 @@ export const paymentInstructionsRouter = router({
         if (!application || application.email.trim().toLowerCase() !== candidateEmail) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable." });
         if (application.paymentStatus === "SUCCESS") throw new TRPCError({ code: "BAD_REQUEST", message: "Le paiement de ce dossier est déjà confirmé." });
         fullName = application.fullName;
-        amount = application.paymentAmount ?? proposedOpeningFee(application.visaType);
+        amount = application.paymentAmount ?? DEFAULT_DOSSIER_AMOUNT;
         currency = application.paymentCurrency ?? "XAF";
         await db.update(applications).set({ paymentMethod: code }).where(eq(applications.id, application.id));
       } else {

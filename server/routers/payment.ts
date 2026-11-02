@@ -13,7 +13,7 @@ import { randomBytes } from "node:crypto";
 import { storagePut } from "../storage";
 import { notifyDocumentSubmission } from "../services/documentSubmissionNotification";
 
-import { proposedOpeningFee } from "../../shared/openingFee";
+const PAYMENT_AMOUNT = 65000; // XAF
 const PAYMENT_CURRENCY = "XAF";
 const MAX_DOCUMENT_SIZE = 5 * 1024 * 1024;
 const ALLOWED_DOCUMENT_MIME_TYPES = new Set([
@@ -89,7 +89,7 @@ export const paymentRouter = router({
           .set({
             paymentStatus: "PENDING",
             paymentTransactionId: transactionId,
-            paymentAmount: application.paymentAmount ?? proposedOpeningFee(application.visaType),
+            paymentAmount: application.paymentAmount ?? PAYMENT_AMOUNT,
             paymentCurrency: PAYMENT_CURRENCY,
             paymentMethod: null,
           })
@@ -101,7 +101,7 @@ export const paymentRouter = router({
 
         return {
           success: true,
-          amount: application.paymentAmount ?? proposedOpeningFee(application.visaType),
+          amount: application.paymentAmount ?? PAYMENT_AMOUNT,
           currency: PAYMENT_CURRENCY,
           transactionId,
           paymentUrl,
@@ -164,7 +164,7 @@ export const paymentRouter = router({
         });
         const verification = await response.json() as { code?: string; data?: { status?: string; payment_method?: string; amount?: number | string } };
         const isAccepted = verification.code === "00" && verification.data?.status === "ACCEPTED";
-        const expectedAmount = application.paymentAmount ?? proposedOpeningFee(application.visaType);
+        const expectedAmount = application.paymentAmount ?? PAYMENT_AMOUNT;
         const receivedAmount = verification.data?.amount === undefined ? expectedAmount : Number(verification.data.amount);
         if (!isAccepted || receivedAmount !== expectedAmount) {
           return {
@@ -190,7 +190,7 @@ export const paymentRouter = router({
           success: true,
           message: "Paiement confirmé avec succès",
           dossierNumber: input.dossierNumber,
-          amount: application.paymentAmount ?? proposedOpeningFee(application.visaType),
+          amount: application.paymentAmount ?? PAYMENT_AMOUNT,
           currency: PAYMENT_CURRENCY,
           transactionId: input.transactionId,
         };

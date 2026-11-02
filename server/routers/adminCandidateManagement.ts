@@ -1,5 +1,4 @@
 ﻿import { publicProcedure, router } from "../_core/trpc";
-import { proposedOpeningFee } from "../../shared/openingFee";
 import { PRE_DOSSIER_STATUSES, isActivatedStatus } from "../../shared/candidateStatus";
 import { TRPCError } from "@trpc/server";
 import crypto from "node:crypto";
@@ -2300,7 +2299,7 @@ export const adminCandidateManagementRouter = router({
           paymentDate: application.paymentDate ?? validatedAt,
           paymentMethod: application.paymentMethod || "VALIDATION_AGENCE",
           paymentTransactionId: application.paymentTransactionId || referenceLabel,
-          paymentExpectedAmount: application.paymentExpectedAmount ?? application.paymentAmount ?? proposedOpeningFee(application.visaType),
+          paymentExpectedAmount: application.paymentExpectedAmount ?? application.paymentAmount ?? 65000,
           paymentConfirmedAmount: application.paymentConfirmedAmount ?? amount,
           paymentValidatedAt: application.paymentValidatedAt ?? validatedAt,
           paymentValidatedBy: application.paymentValidatedBy ?? (admin.email || "Administrateur"),
@@ -2393,7 +2392,7 @@ export const adminCandidateManagementRouter = router({
         paid = application.paymentStatus === "SUCCESS";
         fullName = application.fullName;
         dossierNumber = application.dossierNumber;
-        amount = String(application.paymentConfirmedAmount ?? application.paymentAmount ?? proposedOpeningFee(application.visaType));
+        amount = String(application.paymentConfirmedAmount ?? application.paymentAmount ?? 65000);
         paymentMethod = application.paymentMethod || "Validation administrative";
         paymentReference = application.paymentTransactionId || null;
         paidAt = application.paymentDate ?? application.paymentValidatedAt ?? new Date();
@@ -2488,7 +2487,7 @@ export const adminCandidateManagementRouter = router({
         candidateEmail = application.email;
         fullName = application.fullName;
         phone = application.whatsappNumber || null;
-        amount = String(application.paymentConfirmedAmount ?? application.paymentAmount ?? proposedOpeningFee(application.visaType));
+        amount = String(application.paymentConfirmedAmount ?? application.paymentAmount ?? 65000);
         currency = application.paymentCurrency ?? currency;
       }
       if (!candidateEmail) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Aucune adresse e-mail client n’est disponible pour ce dossier." });

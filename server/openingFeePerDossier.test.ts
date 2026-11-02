@@ -112,8 +112,7 @@ describe("plus de montant imposé dans le parcours de paiement", () => {
     const source = read("server/routers/payment.ts");
     expect(source).not.toMatch(/paymentAmount: PAYMENT_AMOUNT,/);
     expect(source).not.toMatch(/^\s*amount: PAYMENT_AMOUNT,/m);
-    // Le repli d'un dossier sans montant est la proposition selon le visa (comme le webhook), pas une constante unique.
-    expect(source).toContain("paymentAmount: application.paymentAmount ?? proposedOpeningFee(application.visaType),");
+    expect(source).toContain("paymentAmount: application.paymentAmount ?? PAYMENT_AMOUNT,");
   });
 
   it("les écrans /payment/* et l'e-mail de validation n'écrivent plus 65 000 en dur", () => {
