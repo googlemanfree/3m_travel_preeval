@@ -6,6 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+import { manusRuntimeFileName, manusRuntimeLoaderScript } from "./server/manusRuntimeLoader";
 import { commitFromEnv, injectBuildMarker, readCommitFromBuildMetadata, readCommitFromGitFiles, resolveBuildMarker } from "./server/publicBuildMarker";
 
 // =============================================================================
@@ -179,6 +180,21 @@ function buildMarkerPlugin(): Plugin {
   };
 }
 
+function manusRuntimeOnDemandPlugin(): Plugin {
+  const runtimePath = path.resolve(PROJECT_ROOT, "node_modules", "vite-plugin-manus-runtime", "runtime_dist", "manus-runtime.js");
+  const source = fs.readFileSync(runtimePath, "utf8");
+  const fileName = manusRuntimeFileName(source);
+  return {
+    name: "3m-manus-runtime-on-demand",
+    enforce: "post",
+    apply: "build",
+    generateBundle() {
+      this.emitFile({ type: "asset", fileName, source });
+    },
+    transformIndexHtml: () => [{ tag: "script", attrs: { id: "manus-runtime-loader" }, children: manusRuntimeLoaderScript(fileName), injectTo: "body" }],
+  };
+}
+
 // Les métadonnées de localisation JSX et le collecteur navigateur sont utiles au
 // développement, mais augmentent fortement la mémoire de Rollup sans rien
 // apporter au bundle publié. Les exclure en production évite de réutiliser un
@@ -187,8 +203,9 @@ const isProductionBuild = process.env.NODE_ENV === "production";
 const plugins = [
   react(),
   tailwindcss(),
-  // Le runtime Manus (~370 Ko) est injecté en fin de <body> : il ne retarde plus l’analyse du contenu de la page.
-  vitePluginManusRuntime({ injectTo: "body" }),
+  // Le runtime Manus (~370 Ko) ne sert que dans l'aperçu de la plateforme (page ouverte dans un cadre) : en production il est émis
+  // comme fichier statique et chargé seulement dans un cadre ; en développement, le plugin d'origine reste en place.
+  isProductionBuild ? manusRuntimeOnDemandPlugin() : vitePluginManusRuntime({ injectTo: "body" }),
   buildMarkerPlugin(),
   ...(!isProductionBuild ? [jsxLocPlugin(), vitePluginManusDebugCollector()] : []),
 ];
