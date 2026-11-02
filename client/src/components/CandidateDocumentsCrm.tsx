@@ -3,6 +3,8 @@ import { CheckCircle2, Download, FileUp, MessageSquarePlus, Plus, RotateCcw, Sen
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
+import { buildDocumentBilan, documentBilanFileName } from "@/lib/documentBilan";
+import { downloadDocumentBilanPdf } from "@/lib/documentBilanPdf";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,13 +48,61 @@ type Props = {
   onChanged: () => void;
   onRemind: () => void;
   reminding?: boolean;
+  /** Identité du dossier pour le bilan PDF ; sans elle, le bouton n'apparaît pas. */
+  bilanContext?: { candidateName: string; reference: string; destination?: string | null; /** Identifiant numérique du compte candidat : active l'export ZIP. */ exportCandidateId?: number };
 };
 
 type Dialogs = { kind: "deposit" | "reject" | "add" | "request" | null; requirement?: CrmRequirement };
 
 /** Pièces du dossier : une ligne par pièce, une action principale par état. */
-export default function CandidateDocumentsCrm({ sessionToken, candidateId, requirements, documents, onChanged, onRemind, reminding }: Props) {
+export default function CandidateDocumentsCrm({ sessionToken, candidateId, requirements, documents, onChanged, onRemind, reminding, bilanContext }: Props) {
   const [filter, setFilter] = useState<CrmFilter>("all");
+  const [bilanBusy, setBilanBusy] = useState(false);
+  const [exportBusy, setExportBusy] = useState(false);
+  const exportZip = async () => {
+    const exportId = bilanContext?.exportCandidateId;
+    if (!exportId || exportId <= 0) return;
+    setExportBusy(true);
+    try {
+      const response = await fetch("/api/admin/dossier-export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionToken}` },
+        body: JSON.stringify({ candidateId: exportId }),
+      });
+      if (!response.ok) {
+        const problem = await response.json().catch(() => null);
+        throw new Error(problem?.error || "Export impossible.");
+      }
+      const skipped = Number(response.headers.get("X-Export-Skipped") || 0);
+      const disposition = response.headers.get("Content-Disposition") || "";
+      const name = /filename="([^"]+)"/.exec(disposition)?.[1] || "Dossier_pieces.zip";
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      toast.success(skipped > 0 ? `Export créé : ${skipped} pièce(s) non incluse(s), détail dans LISEZ-MOI.txt.` : "Export des pièces créé.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Export impossible.");
+    } finally {
+      setExportBusy(false);
+    }
+  };
+  const downloadBilan = async () => {
+    if (!bilanContext) return;
+    setBilanBusy(true);
+    try {
+      const bilan = buildDocumentBilan({ ...bilanContext, requirements, documents });
+      await downloadDocumentBilanPdf(bilan, documentBilanFileName(bilanContext.reference));
+    } catch {
+      toast.error("Le bilan PDF n'a pas pu être créé.");
+    } finally {
+      setBilanBusy(false);
+    }
+  };
   const [dialog, setDialog] = useState<Dialogs>({ kind: null });
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const summary = useMemo(() => summarizeRequirements(requirements), [requirements]);
@@ -99,9 +149,20 @@ export default function CandidateDocumentsCrm({ sessionToken, candidateId, requi
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          {bilanContext && (
+            <Button type="button" variant="outline" size="sm" onClick={() => void downloadBilan()} disabled={bilanBusy} data-testid="documents-bilan-pdf">
+              <Download className="mr-1.5 h-4 w-4" aria-hidden="true" />{bilanBusy ? "Création…" : "Bilan PDF"}
+            </Button>
+          )}
+          {bilanContext?.exportCandidateId ? (
+            <Button type="button" variant="outline" size="sm" onClick={() => void exportZip()} disabled={exportBusy} data-testid="documents-export-zip">
+              <Download className="mr-1.5 h-4 w-4" aria-hidden="true" />{exportBusy ? "Export…" : "Exporter (ZIP)"}
+            </Button>
+          ) : null}
           {summary.awaitingCandidate > 0 && (
             <Button type="button" variant="outline" size="sm" onClick={onRemind} disabled={reminding}><Send className="mr-1.5 h-4 w-4" aria-hidden="true" />{reminding ? "Envoi…" : `Relancer (${summary.awaitingCandidate})`}</Button>
           )}
+          <Button type="button" variant="outline" size="sm" onClick={() => setDialog({ kind: "deposit" })} data-testid="crm-deposit-free"><FileUp className="mr-1.5 h-4 w-4" aria-hidden="true" />Déposer un document</Button>
           <Button type="button" variant="outline" size="sm" onClick={() => setDialog({ kind: "request" })}><MessageSquarePlus className="mr-1.5 h-4 w-4" aria-hidden="true" />Demander une pièce</Button>
           <Button type="button" size="sm" onClick={() => setDialog({ kind: "add" })}><Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />Ajouter une pièce</Button>
         </div>
@@ -190,26 +251,94 @@ export default function CandidateDocumentsCrm({ sessionToken, candidateId, requi
   );
 }
 
+const DEPOSIT_DOCUMENT_TYPES = [
+  "CV",
+  "Passeport",
+  "Photo d’identité",
+  "Diplôme",
+  "Relevé de notes",
+  "Lettre d’admission",
+  "Justificatif de domicile",
+  "Justificatif de ressources",
+  "Itinéraire de voyage",
+  "Preuves d’attaches",
+  "Justificatif de paiement",
+  "Casier judiciaire",
+  "Acte de naissance",
+  "Autre document",
+] as const;
+
 function DepositDialog({ open, requirement, busy, onClose, onSubmit }: { open: boolean; requirement?: CrmRequirement; busy: boolean; onClose: () => void; onSubmit: (values: { file: File; receivedAt: string; note: string; validate: boolean; documentType: string }) => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [receivedAt, setReceivedAt] = useState(today());
   const [note, setNote] = useState("");
   const [validate, setValidate] = useState(false);
+  const [documentType, setDocumentType] = useState(requirement?.documentType ?? "");
+  const [customType, setCustomType] = useState("");
   const [error, setError] = useState<string | null>(null);
+  React.useEffect(() => {
+    if (!open) return;
+    setDocumentType(requirement?.documentType ?? "");
+    setCustomType("");
+    setFile(null);
+    setNote("");
+    setValidate(false);
+    setError(null);
+    setReceivedAt(today());
+  }, [open, requirement?.id, requirement?.documentType]);
+  const lockedType = Boolean(requirement?.documentType);
+  const resolvedType = lockedType ? (requirement?.documentType ?? "") : documentType === "Autre document" ? customType.trim() : documentType.trim();
   const submit = () => {
     if (!file) return setError("Choisissez le fichier scanné ou photographié.");
     if (file.size > MAX_FILE_BYTES) return setError("Le fichier ne doit pas dépasser 8 Mo.");
+    if (resolvedType.trim().length < 2) return setError("Indiquez précisément quel document vous déposez (ex. CV, passeport, lettre d’admission).");
     setError(null);
-    onSubmit({ file, receivedAt, note, validate, documentType: requirement?.documentType ?? "" });
+    onSubmit({ file, receivedAt, note, validate, documentType: resolvedType.trim() });
   };
   return (
-    <Dialog open={open} onOpenChange={(next) => { if (!next) { setFile(null); setNote(""); setValidate(false); setError(null); onClose(); } }}>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) { setFile(null); setNote(""); setValidate(false); setDocumentType(requirement?.documentType ?? ""); setCustomType(""); setError(null); onClose(); } }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Déposer un document reçu en agence</DialogTitle>
-          <DialogDescription>{requirement ? `Pièce : ${requirement.documentType}. ` : ""}Le fichier sera visible dans l’espace du candidat, qui en est averti.</DialogDescription>
+          <DialogDescription>
+            {lockedType
+              ? `Pièce concernée : ${requirement!.documentType}. Le fichier sera visible dans l’espace du candidat.`
+              : "Choisissez d’abord le type de pièce, puis le fichier. Le candidat en est averti."}
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
+          {lockedType ? (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-950" data-testid="deposit-document-type-locked">
+              Document à téléverser : {requirement!.documentType}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="deposit-type">Quel document déposez-vous ?</Label>
+              <select
+                id="deposit-type"
+                value={documentType}
+                onChange={(event) => setDocumentType(event.target.value)}
+                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                data-testid="deposit-document-type"
+                aria-required="true"
+              >
+                <option value="">Choisir le type de document…</option>
+                {DEPOSIT_DOCUMENT_TYPES.map((type) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+              {documentType === "Autre document" ? (
+                <Input
+                  value={customType}
+                  onChange={(event) => setCustomType(event.target.value)}
+                  placeholder="Précisez le document (ex. Attestation d’hébergement)"
+                  maxLength={100}
+                  className="mt-1"
+                  data-testid="deposit-document-type-custom"
+                />
+              ) : null}
+            </div>
+          )}
           <div><Label htmlFor="deposit-file">Fichier (PDF, JPG ou PNG, 8 Mo maximum)</Label><Input id="deposit-file" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" onChange={(event) => setFile(event.target.files?.[0] ?? null)} className="mt-1" /></div>
           <div><Label htmlFor="deposit-date">Date de remise en agence</Label><Input id="deposit-date" type="date" max={today()} value={receivedAt} onChange={(event) => setReceivedAt(event.target.value)} className="mt-1" /></div>
           <div><Label htmlFor="deposit-note">Note (facultatif, visible par le candidat)</Label><Textarea id="deposit-note" value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} rows={2} className="mt-1" /></div>

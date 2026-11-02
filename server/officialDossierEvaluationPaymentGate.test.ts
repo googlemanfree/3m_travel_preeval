@@ -14,7 +14,7 @@ describe("official dossier evaluation and payment gate", () => {
     // vérifie d'abord cette preuve de compte, puis retombe sur isOpeningPaymentValidated (dossier en ligne/agence) :
     // aucune des deux voies n'est jamais contournée.
     expect(source).toContain("const openingPayment = await getOpeningPaymentRecord(db, candidate.id);");
-    expect(source).toContain("if (!openingPayment && !(await isOpeningPaymentValidated(db, candidate))) {");
+    expect(source).toContain("if (!hasAcceptedOpeningPayment(openingPayment) && !(await isOpeningPaymentValidated(db, candidate))) {");
     expect(source).toContain('latestApplication?.paymentStatus === "SUCCESS"');
     expect(source).toContain('eq(agencyDossiers.initialPaymentStatus, "paid")');
     expect(source).toContain("async function getOpeningPaymentRecord");
@@ -46,7 +46,8 @@ describe("official dossier evaluation and payment gate", () => {
   it("protects the inherited admin status mutation for online and agency records", () => {
     const adminDossier = read("server/routers/adminDossier.ts");
     const admin = read("server/routers/admin.ts");
-    expect(admin).toContain("assertApplicationCanEnterStatus(app, internalStatusMap[input.newStatus])");
+    expect(admin).toContain("assertApplicationCanEnterStatus({");
+    expect(admin).toContain("}, internalStatusMap[input.newStatus]);");
     expect(adminDossier).toContain("agencyPaymentConfirmed");
     expect(adminDossier).toContain("const paymentConfirmed =");
     expect(adminDossier).toContain("Création bloquée");

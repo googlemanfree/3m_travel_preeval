@@ -14,6 +14,7 @@ import { eq, and, or, like, desc, isNull, isNotNull, sql, count, inArray } from 
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { AGENCY_DOSSIER_STATUS_VALUES, isLuxembourgEmploymentProcedure, isLuxembourgEmploymentStatus } from "../../shared/agencyDossierStatus";
 import { duplicateConflictMessage, findPotentialDuplicates, normalizeDuplicateEmail } from "../utils/duplicateDetection";
+import { isSuperAdminEmail } from "./adminAuth";
 
 export const agencyDossierRouter = router({
   /**
@@ -523,10 +524,10 @@ export const agencyDossierRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
-      if (ctx.user?.role !== "admin") {
+      if (ctx.user?.role !== "admin" || !isSuperAdminEmail(ctx.user.email)) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: "Seuls les administrateurs peuvent supprimer des dossiers",
+          message: "La suppression des dossiers est réservée au super administrateur.",
         });
       }
 
@@ -578,7 +579,7 @@ export const agencyDossierRouter = router({
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      if (ctx.user?.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Seuls les administrateurs peuvent restaurer un dossier" });
+      if (ctx.user?.role !== "admin" || !isSuperAdminEmail(ctx.user.email)) throw new TRPCError({ code: "FORBIDDEN", message: "La restauration des dossiers est réservée au super administrateur." });
       const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, input.dossierId)).limit(1);
       if (!dossier || !dossier.deletedAt) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable dans la corbeille" });
       if (Date.now() - dossier.deletedAt.getTime() > 30 * 24 * 60 * 60 * 1000) throw new TRPCError({ code: "BAD_REQUEST", message: "La période de restauration de 30 jours est expirée" });

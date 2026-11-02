@@ -6,6 +6,8 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { evisasDatabaseComplete, EvisaDestination } from '@/data/evisasDatabaseComplete';
 import { motion } from 'framer-motion';
+import { ChecklistSection, FaqSection, StepsSection } from '@/components/PageEnrichment';
+import { EVISA_BEFORE_YOU_APPLY, EVISA_HOW_STEPS, EVISA_HUB_FAQ } from '@/data/contentCampaign';
 
 export default function EvisasAdvanced() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -37,7 +39,7 @@ export default function EvisasAdvanced() {
         {/* En-tête de la page */}
         <div className="text-center space-y-4 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100 text-blue-800 text-xs font-black tracking-wider uppercase">
-            <Sparkles className="w-4 h-4 text-amber-600" /> Annuaire Officiel e-Visa 100% Numérique
+            <Sparkles className="w-4 h-4 text-amber-600" /> Annuaire e-Visa par pays — démarche en ligne
           </div>
           <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
             Procédures <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700">e-Visa</span> & Autorisations
@@ -49,6 +51,7 @@ export default function EvisasAdvanced() {
 
         {/* Barre de recherche et filtres de régions */}
         <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+          <h2 className="sr-only">Rechercher une destination e-Visa</h2>
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <Input
@@ -104,6 +107,7 @@ export default function EvisasAdvanced() {
         </div>
 
         {/* Grille des destinations e-Visa */}
+        <h2 className="text-2xl font-black text-slate-900" data-testid="evisas-directory-title">Destinations e-Visa disponibles <span className="text-base font-bold text-slate-500">({filteredEvisas.length})</span></h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredEvisas.map((destination) => (
             <motion.div
@@ -193,6 +197,12 @@ export default function EvisasAdvanced() {
             </p>
           </div>
         )}
+
+        <div className="-mx-4 sm:-mx-6 lg:-mx-8" data-testid="evisas-guide">
+          <StepsSection title="Comment fonctionne un e-Visa" introduction="Quatre étapes, valables pour la plupart des pays ; chaque fiche indique les particularités et le portail officiel." steps={EVISA_HOW_STEPS} tone="slate" />
+          <ChecklistSection title="À vérifier avant de déposer votre demande" introduction="Les erreurs les plus fréquentes se corrigent avant le dépôt." items={EVISA_BEFORE_YOU_APPLY} tone="white" />
+          <FaqSection title="Questions sur les e-Visa" items={EVISA_HUB_FAQ} tone="slate" testId="evisas-faq" />
+        </div>
 
       </div>
     </main>

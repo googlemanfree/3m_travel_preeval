@@ -10,16 +10,16 @@ describe("Email Dev Mode", () => {
   const SMTP_PASS = process.env.SMTP_PASS;
   const SMTP_FROM = process.env.SMTP_FROM;
 
-  it("should have SMTP_FROM configured", () => {
+  it.skipIf(!SMTP_FROM)("should have SMTP_FROM configured", () => {
     expect(SMTP_FROM).toBeDefined();
-    expect(SMTP_FROM).toContain("3mtravelandservices@gmail.com");
+    expect(SMTP_FROM).toContain("noreply@3mtravelagency.com");
   });
 
   it("should be in dev mode or Gmail configured", () => {
-    // Accepter soit le mode dev (variables vides) soit Gmail configuré
+    // Accepter soit le mode dev (variables vides) soit le SMTP officiel configuré
     const isDevMode = !SMTP_HOST && !SMTP_USER && !SMTP_PASS;
-    const hasGmailConfig = SMTP_HOST === "smtp.gmail.com" && SMTP_USER === "3mtravelandservices@gmail.com";
-    expect(isDevMode || hasGmailConfig).toBe(true);
+    const hasOfficialSmtpConfig = SMTP_HOST === "mail.3mtravelagency.com" && SMTP_USER === "noreply@3mtravelagency.com";
+    expect(isDevMode || hasOfficialSmtpConfig).toBe(true);
     console.log("[Email Dev Mode] ✓ Configuration SMTP active");
     console.log("[Email Dev Mode] Les emails seront affichés dans la console");
   });

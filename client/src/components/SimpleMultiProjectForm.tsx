@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { getEvaluationDocumentRequirements } from "@/data/evaluationDocumentCatalogue";
 import { trpc } from "@/lib/trpc";
+import { describeFormError } from "@/lib/formErrors";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
 import React from "react";
@@ -14,8 +15,22 @@ import { useLocation } from "wouter";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, FileText, LoaderCircle, MailCheck, MessageCircleMore, Pencil, ShieldCheck, Sparkles, UploadCloud } from "lucide-react";
 import { CountrySelect } from "@/components/CountryPicker";
+import { DynamicFormSections } from "@/components/DynamicFormSections";
+import { DynamicProjectChoice } from "@/components/DynamicProjectChoice";
+import { useFormOverrides } from "@/hooks/useFormOverrides";
+import { resolveDynamicForm, visibleSections } from "@shared/dynamicForm";
 import { getCandidateDestinationOption } from "@shared/candidateDestinationOptions";
 import { DOCUMENT_VAULT_POLICY } from "@shared/documentVaultPolicy";
+import {
+  STUDY_CYCLE_LABELS,
+  STUDY_CYCLE_OPTIONS,
+  VISITOR_STATUS_LABELS,
+  VISITOR_STATUS_OPTIONS,
+  multiProjectEvaluationGap,
+  normalizePublicEvaluationProject,
+  type StudyCycle,
+  type VisitorStatus,
+} from "@shared/evaluationFormRequirements";
 
 /** Analytics anonymes (gtag) — pas de données personnelles. */
 function trackEvent(eventName: string, params?: Record<string, unknown>) {
@@ -24,6 +39,16 @@ function trackEvent(eventName: string, params?: Record<string, unknown>) {
 }
 
 type ProjectType = "travail" | "etudes" | "tourisme";
+
+type EvaluationDocumentType =
+  | "passport"
+  | "cv"
+  | "diploma"
+  | "certificate"
+  | "bank_statement"
+  | "language_test"
+  | "educational_transcript"
+  | "other";
 
 type FormData = {
   fullName: string;
@@ -36,11 +61,15 @@ type FormData = {
   sector?: string;
   yearsOfExperience?: number;
   educationLevel?: string;
+  studyCycle?: StudyCycle | "";
+  diplomaLevel?: string;
   languages?: string;
   financialGuarantee?: string;
   visitReason?: string;
+  visitorStatus?: VisitorStatus | "";
   travelHistory?: string;
   socialTies?: string;
+  transcriptAvailable?: boolean;
   cvLink?: string;
   canadaLanguageTest?: string;
   canadaStudyPlan?: string;
@@ -128,24 +157,39 @@ export function SimpleMultiProjectForm() {
   const [location, setLocation] = useLocation();
   const { isAuthenticated, candidate } = useCandidateAuth();
   const searchParams = new URLSearchParams(location.split("?")[1] || "");
-  const projectParam = searchParams.get("project") as ProjectType | null;
+  const rawProjectParam = searchParams.get("project");
+  const projectParam = normalizePublicEvaluationProject(rawProjectParam);
   const destinationParam = searchParams.get("destination") || "";
   const canonicalDestinationParam = destinationParam ? (getCandidateDestinationOption(destinationParam)?.name ?? destinationParam) : "";
   const isPostRegistrationOnboarding = searchParams.get("onboarding") === "evaluation";
-  const initialProject = projectParam && ["travail", "etudes", "tourisme"].includes(projectParam) ? projectParam : "travail";
+  const initialProject = projectParam ?? "travail";
   const [currentStep, setCurrentStep] = React.useState(0);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [uploadProgress, setUploadProgress] = React.useState<{ done: number; total: number } | null>(null);
   const [isSuccessVisible, setIsSuccessVisible] = React.useState(false);
   const [contactTouched, setContactTouched] = React.useState({ email: false, whatsappPhone: false });
-  const [formData, setFormData] = React.useState<FormData>({ fullName: "", email: "", whatsappPhone: "", nationality: "", destinationCountry: canonicalDestinationParam, projectType: initialProject, geminiAnalysisConsent: false });
-  const [selectedDocuments, setSelectedDocuments] = React.useState<Array<{ file: File; documentType: "passport" | "cv" | "diploma" | "certificate" | "bank_statement" | "language_test" | "other" }>>([]);
-  const [selectedDocumentType, setSelectedDocumentType] = React.useState<"passport" | "cv" | "diploma" | "certificate" | "bank_statement" | "language_test" | "other">("other");
+  const [formData, setFormData] = React.useState<FormData>({ fullName: "", email: "", whatsappPhone: "", nationality: "", destinationCountry: canonicalDestinationParam, projectType: initialProject, studyCycle: "", visitorStatus: "", transcriptAvailable: false, geminiAnalysisConsent: false });
+  const [selectedDocuments, setSelectedDocuments] = React.useState<Array<{ file: File; documentType: EvaluationDocumentType }>>([]);
+  const [selectedDocumentType, setSelectedDocumentType] = React.useState<EvaluationDocumentType>(initialProject === "travail" ? "cv" : initialProject === "etudes" ? "diploma" : "other");
   const [uploadedDocumentCount, setUploadedDocumentCount] = React.useState(0);
   const [submittedDossierCode, setSubmittedDossierCode] = React.useState<string | null>(null);
   const [submittedReviewDeadline, setSubmittedReviewDeadline] = React.useState<string | null>(null);
   const [hasTrackedStart, setHasTrackedStart] = React.useState(false);
   const [orientationPreview, setOrientationPreview] = React.useState<null | { summary: string; strengths: string[]; gapsToClarify: string[]; documentPriorities: string[]; advisorQuestions: string[]; alternatives: Array<{ country: string; rationale: string; checks: string[] }>; disclaimer: string }>(null);
   const [dynamicResponses, setDynamicResponses] = React.useState<DynamicResponse[]>([]);
+  // Visa ou programme, domaine et réponses propres au parcours : le formulaire se recompose à chaque choix, sans jamais effacer une réponse.
+  const [programId, setProgramId] = React.useState("");
+  const [domainId, setDomainId] = React.useState("");
+  const [programAnswers, setProgramAnswers] = React.useState<Record<string, string>>({});
+  const formOverrides = useFormOverrides();
+  const dynamicForm = React.useMemo(() => resolveDynamicForm({ country: formData.destinationCountry, projectType: formData.projectType, programId, domainId, overrides: formOverrides }), [formData.destinationCountry, formData.projectType, programId, domainId, formOverrides]);
+  // Les questions de profil (études, expérience, langues) et celles déjà posées par les critères ci-dessous ne sont pas répétées.
+  const PUBLIC_COVERED_KEYS = React.useMemo(() => new Set(["studyLevel", "programName", "fundingPlan", "targetJob", "relevantExperience", "visitorStatus", "returnTies", "travelHistory", "stayPurpose"]), []);
+  const programSections = React.useMemo(() => visibleSections(dynamicForm, programAnswers)
+    .filter((section) => section.id !== "education" && section.id !== "experience" && section.id !== "languages" && (section.id !== "program" || Boolean(programId)))
+    .map((section) => ({ ...section, fields: section.fields.filter((field) => !PUBLIC_COVERED_KEYS.has(field.key)) }))
+    .filter((section) => section.fields.length > 0), [dynamicForm, programAnswers, programId, PUBLIC_COVERED_KEYS]);
+  const visibleProgramAnswers = () => Object.fromEntries(programSections.flatMap((section) => section.fields).filter((field) => (programAnswers[field.key] ?? "").trim()).map((field) => [field.key, programAnswers[field.key].trim()]));
 
   const isEmailValid = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
   const isWhatsappValid = (value: string) => { const digits = value.replace(/\D/g, ""); return digits.length >= 8 && digits.length <= 15; };
@@ -167,7 +211,7 @@ export function SimpleMultiProjectForm() {
   }, [formData.destinationCountry, formData.projectType, hasTrackedStart]);
 
   React.useEffect(() => {
-    if (projectParam && ["travail", "etudes", "tourisme"].includes(projectParam)) setFormData((prev) => ({ ...prev, projectType: projectParam }));
+    if (projectParam) setFormData((prev) => ({ ...prev, projectType: projectParam }));
     if (canonicalDestinationParam) setFormData((prev) => ({ ...prev, destinationCountry: canonicalDestinationParam }));
   }, [canonicalDestinationParam, projectParam]);
 
@@ -180,7 +224,7 @@ export function SimpleMultiProjectForm() {
     }));
   }, [candidate?.email, candidate?.fullName, isPostRegistrationOnboarding]);
 
-  const submitEvaluation = trpc.evaluation.submitEvaluation.useMutation({ onError: (error: { message?: string }) => toast.error(error.message || "Erreur lors de la soumission") });
+  const submitEvaluation = trpc.evaluation.submitEvaluation.useMutation({ onError: (error: { message?: string }) => toast.error("Votre évaluation n’a pas été envoyée", { description: describeFormError(error) }) });
   const uploadSupportingDocument = trpc.evaluation.uploadSupportingDocument.useMutation();
   const previewGeminiOrientation = trpc.evaluation.geminiOrientationPreview.useMutation({ onSuccess: (data) => {
     setOrientationPreview(data);
@@ -192,6 +236,32 @@ export function SimpleMultiProjectForm() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
   const onTextChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => update(event.target.name as keyof FormData, event.target.value);
+
+  const requirementSnapshot = () => {
+    const hasCvDocument = selectedDocuments.some((item) => item.documentType === "cv");
+    const hasDiplomaDocument = selectedDocuments.some((item) => item.documentType === "diploma");
+    const hasTranscriptDocument = selectedDocuments.some((item) => item.documentType === "educational_transcript");
+    return {
+      projectType: formData.projectType,
+      sector: formData.sector,
+      yearsOfExperience: formData.yearsOfExperience === undefined || formData.yearsOfExperience === null || String(formData.yearsOfExperience) === ""
+        ? null
+        : Number(formData.yearsOfExperience),
+      languages: formData.languages,
+      educationLevel: formData.educationLevel,
+      studyCycle: formData.studyCycle,
+      diplomaLevel: formData.diplomaLevel || formData.educationLevel,
+      financialGuarantee: formData.financialGuarantee,
+      visitReason: formData.visitReason,
+      visitorStatus: formData.visitorStatus,
+      cvLink: formData.cvLink,
+      hasCvDocument,
+      hasDiplomaDocument,
+      hasTranscriptDocument,
+      transcriptAvailable: Boolean(formData.transcriptAvailable) || hasTranscriptDocument,
+      cvAvailable: hasCvDocument || Boolean(formData.cvLink?.trim()),
+    };
+  };
 
   const validateStep = (step: number) => {
     // Étape 0 = Projet (conversion) : destination d’abord, contact ensuite.
@@ -206,10 +276,22 @@ export function SimpleMultiProjectForm() {
         return false;
       }
     }
-    if (step === 3 && formData.projectType === "travail") {
-      const hasCv = selectedDocuments.some((item) => item.documentType === "cv") || Boolean(formData.cvLink?.trim());
-      if (!hasCv) {
-        toast.error("Pour un projet de visa travail, ajoutez d’abord votre CV en fichier ou indiquez un lien CV sécurisé.");
+    if (step === 2) {
+      const gap = multiProjectEvaluationGap(requirementSnapshot(), "criteria");
+      if (gap) {
+        toast.error(gap);
+        return false;
+      }
+      const missingProgramFields = programId ? programSections.flatMap((section) => section.fields).filter((field) => field.required && !(programAnswers[field.key] ?? "").trim()) : [];
+      if (missingProgramFields.length) {
+        toast.error(`Complétez les questions de votre parcours : ${missingProgramFields.map((field) => field.label).join(", ")}.`);
+        return false;
+      }
+    }
+    if (step === 3) {
+      const gap = multiProjectEvaluationGap(requirementSnapshot(), "documents");
+      if (gap) {
+        toast.error(gap);
         return false;
       }
     }
@@ -240,21 +322,43 @@ export function SimpleMultiProjectForm() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!validateStep(0) || !validateStep(1) || !validateStep(3)) return;
+    if (!validateStep(0) || !validateStep(1) || !validateStep(2) || !validateStep(3)) return;
     setIsSubmitting(true);
     try {
+      const requirementsPayload = requirementSnapshot();
       const created = await submitEvaluation.mutateAsync({
         ...formData,
+        studyCycle: formData.studyCycle || undefined,
+        visitorStatus: formData.visitorStatus || undefined,
         age: formData.age ? Number(formData.age) : undefined,
-        yearsOfExperience: formData.yearsOfExperience ? Number(formData.yearsOfExperience) : undefined,
+        yearsOfExperience: requirementsPayload.yearsOfExperience ?? undefined,
         destinationCategory: categoryForCountry(formData.destinationCountry),
-        dynamicResponses: dynamicResponses.filter((response) => response.answer.trim()),
+        dynamicResponses: dynamicResponses.filter((response) => response.answer.trim()).slice(0, 12),
+        programId: programId || undefined,
+        domainId: dynamicForm.domain?.id,
+        projectAnswers: visibleProgramAnswers(),
+        cvAvailable: requirementsPayload.cvAvailable,
+        hasCvDocument: requirementsPayload.hasCvDocument,
+        hasDiplomaDocument: requirementsPayload.hasDiplomaDocument,
+        hasTranscriptDocument: requirementsPayload.hasTranscriptDocument,
+        transcriptAvailable: requirementsPayload.transcriptAvailable,
+        diplomaLevel: requirementsPayload.diplomaLevel || undefined,
       });
       let uploaded = 0;
+      const failedDocuments: string[] = [];
       for (const item of selectedDocuments) {
+        setUploadProgress({ done: uploaded + failedDocuments.length, total: selectedDocuments.length });
+        try {
         await uploadSupportingDocument.mutateAsync({ evaluationId: created.evaluationId, email: formData.email, uploadToken: created.documentUploadToken, documentType: item.documentType, fileName: item.file.name, mimeType: item.file.type as "application/pdf" | "image/jpeg" | "image/png", sizeBytes: item.file.size, fileBase64: await readFileAsDataUrl(item.file) });
         uploaded += 1;
+        } catch (uploadError) {
+          // L'évaluation est déjà enregistrée : un document refusé ne doit ni la bloquer ni passer inaperçu.
+          failedDocuments.push(item.file.name);
+          toast.warning(`Document non envoyé : ${item.file.name}`, { description: describeFormError(uploadError) });
+        }
       }
+      setUploadProgress(null);
+      if (failedDocuments.length > 0) toast.info("Votre évaluation est bien enregistrée. Vous pourrez ajouter les documents manquants depuis votre espace ou en répondant à notre e-mail.");
       setUploadedDocumentCount(uploaded);
       setSubmittedDossierCode(typeof created.dossierCode === "string" && created.dossierCode.trim() ? created.dossierCode.trim() : null);
       setSubmittedReviewDeadline(formatReviewDeadline(created.reviewDeadline));
@@ -266,7 +370,7 @@ export function SimpleMultiProjectForm() {
       });
       toast.success("Évaluation soumise avec succès. Vérifiez votre e-mail.");
       setIsSuccessVisible(true);
-    } finally { setIsSubmitting(false); }
+    } finally { setIsSubmitting(false); setUploadProgress(null); }
   };
 
   const requestOrientationPreview = () => {
@@ -403,10 +507,20 @@ export function SimpleMultiProjectForm() {
               <motion.section key={currentStep} initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -18 }} transition={{ duration: 0.2, ease: "easeOut" }} aria-labelledby={`evaluation-step-${currentStep}`}>
                 <h3 id={`evaluation-step-${currentStep}`} className="mb-1 text-lg font-black text-slate-950">{STEPS[currentStep].label}</h3><p className="mb-5 text-sm text-slate-600">{STEPS[currentStep].description}</p>
                 {currentStep === 0 && <div className="space-y-5">
-                  <Field label="Type de projet *"><Select value={formData.projectType} onValueChange={(value) => setFormData((prev) => ({ ...prev, projectType: value as ProjectType, destinationCountry: "" }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="travail">Travail / professionnel</SelectItem><SelectItem value="etudes">Études</SelectItem><SelectItem value="tourisme">Tourisme / visite</SelectItem></SelectContent></Select></Field>
+                  <Field label="Type de projet *"><Select value={formData.projectType} onValueChange={(value) => {
+                    const next = value as ProjectType;
+                    setFormData((prev) => ({ ...prev, projectType: next, destinationCountry: "", studyCycle: "", visitorStatus: "", sector: "", yearsOfExperience: undefined, educationLevel: "", languages: "", visitReason: "", diplomaLevel: "", transcriptAvailable: false }));
+                    setProgramId("");
+                    setSelectedDocumentType(next === "travail" ? "cv" : next === "etudes" ? "diploma" : "other");
+                    setSelectedDocuments([]);
+                  }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="travail">Travail / professionnel</SelectItem><SelectItem value="etudes">Études</SelectItem><SelectItem value="tourisme">Tourisme / visite</SelectItem></SelectContent></Select></Field>
+                  {formData.projectType === "travail" && <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-700" data-testid="eval-hint-travail">Évaluation <strong>visa travail</strong> : profil professionnel complet + <strong>CV actualisé obligatoire</strong>.</p>}
+                  {formData.projectType === "etudes" && <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-700" data-testid="eval-hint-etudes">Évaluation <strong>visa études</strong> : historique scolaire, <strong>diplômes</strong>, <strong>relevés de notes</strong> et <strong>cycle visé</strong> obligatoires.</p>}
+                  {formData.projectType === "tourisme" && <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-700" data-testid="eval-hint-tourisme">Évaluation <strong>visa visiteurs</strong> : formulaire simple — statut (chef d’entreprise, employé ou particulier) + motif du séjour.</p>}
                   <Field label="Pays de destination *"><CountrySelect id="home-evaluation-destination" ariaLabel="Pays de destination" placeholder="Sélectionner un pays" value={formData.destinationCountry === "Autre pays" ? "" : formData.destinationCountry} priority={COUNTRIES_BY_PROJECT[formData.projectType].filter((country) => country.value !== "Autre pays").map((country) => country.value)} onChange={(country) => update("destinationCountry", country)} /></Field>
                   {formData.destinationCountry && <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-950"><strong>Repère pour {formData.destinationCountry} :</strong> {COUNTRY_GUIDANCE[formData.destinationCountry] ?? COUNTRY_GUIDANCE["Autre pays"]}</div>}
                   {officialPortal && <a href={officialPortal.url} target="_blank" rel="noreferrer" className="inline-flex rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm font-bold text-blue-900 underline underline-offset-2 hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">Consulter le portail institutionnel : {officialPortal.label} ↗</a>}
+                  {formData.destinationCountry && <DynamicProjectChoice form={dynamicForm} projectKind={formData.projectType} programId={programId} domainId={domainId} showKind={false} onKind={() => undefined} onProgram={setProgramId} onDomain={setDomainId} />}
                   <p className="text-sm leading-6 text-slate-600">Ensuite : vos coordonnées, puis les critères et documents utiles — sans engagement de résultat.</p>
                 </div>}
                 {currentStep === 1 && <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -417,21 +531,23 @@ export function SimpleMultiProjectForm() {
                   <Field label="Âge"><Input name="age" type="number" min="16" max="100" value={formData.age || ""} onChange={onTextChange} placeholder="Ex. 28" /></Field>
                 </div>}
                 {currentStep === 2 && <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {formData.projectType === "travail" && <><Field label="Secteur ou métier visé"><Input name="sector" value={formData.sector || ""} onChange={onTextChange} placeholder="Ex. logistique, soins, informatique" maxLength={150} /></Field><Field label="Années d’expérience"><Input name="yearsOfExperience" type="number" min="0" value={formData.yearsOfExperience || ""} onChange={onTextChange} placeholder="Ex. 5" /></Field><Field label="Niveaux de langue" full><Input name="languages" value={formData.languages || ""} onChange={onTextChange} placeholder="Français, anglais, test déjà passé…" maxLength={255} /></Field></>}
-                  {formData.projectType === "etudes" && <><Field label="Niveau d’études"><Select value={formData.educationLevel || ""} onValueChange={(value) => update("educationLevel", value)}><SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger><SelectContent><SelectItem value="bac">Baccalauréat</SelectItem><SelectItem value="licence">Licence</SelectItem><SelectItem value="master">Master</SelectItem></SelectContent></Select></Field><Field label="Filière / programme envisagé"><Input name="sector" value={formData.sector || ""} onChange={onTextChange} placeholder="Ex. informatique, santé…" maxLength={150} /></Field><Field label="Financement prévu" full><Input name="financialGuarantee" value={formData.financialGuarantee || ""} onChange={onTextChange} placeholder="Épargne, garant, bourse…" maxLength={255} /></Field></>}
-                  {formData.projectType === "tourisme" && <><Field label="Motif du séjour"><Input name="visitReason" value={formData.visitReason || ""} onChange={onTextChange} placeholder="Visite familiale, tourisme, événement…" maxLength={255} /></Field><Field label="Historique de voyages"><Input name="travelHistory" value={formData.travelHistory || ""} onChange={onTextChange} placeholder="Pays visités et années" maxLength={255} /></Field><Field label="Attaches dans le pays de résidence" full><Textarea name="socialTies" value={formData.socialTies || ""} onChange={onTextChange} placeholder="Emploi, études, famille ou autres obligations" maxLength={2000} /></Field></>}
+                  {formData.projectType === "travail" && <><Field label="Secteur ou métier visé *"><Input name="sector" value={formData.sector || ""} onChange={onTextChange} placeholder="Ex. logistique, soins, informatique" maxLength={150} data-testid="eval-travail-sector" /></Field><Field label="Années d’expérience *"><Input name="yearsOfExperience" type="number" min="0" value={formData.yearsOfExperience ?? ""} onChange={onTextChange} placeholder="Ex. 5 (0 si débutant)" data-testid="eval-travail-experience" /></Field><Field label="Niveaux de langue *" full><Input name="languages" value={formData.languages || ""} onChange={onTextChange} placeholder="Français, anglais, test déjà passé…" maxLength={255} data-testid="eval-travail-languages" /></Field><p className="md:col-span-2 text-xs leading-5 text-slate-600">À l’étape Documents, un <strong>CV actualisé</strong> (fichier ou lien) sera exigé pour finaliser l’évaluation travail.</p></>}
+                  {formData.projectType === "etudes" && <><Field label="Dernier niveau / diplôme obtenu *"><Select value={formData.educationLevel || ""} onValueChange={(value) => { update("educationLevel", value); update("diplomaLevel", value); }}><SelectTrigger data-testid="eval-etudes-niveau"><SelectValue placeholder="Sélectionner" /></SelectTrigger><SelectContent><SelectItem value="bac">Baccalauréat</SelectItem><SelectItem value="bts_dut">BTS / DUT</SelectItem><SelectItem value="licence">Licence / Bachelor</SelectItem><SelectItem value="master">Master</SelectItem><SelectItem value="doctorat">Doctorat</SelectItem><SelectItem value="autre">Autre</SelectItem></SelectContent></Select></Field><Field label="Cycle d’études visé *"><Select value={formData.studyCycle || ""} onValueChange={(value) => update("studyCycle", value)}><SelectTrigger data-testid="eval-etudes-cycle"><SelectValue placeholder="Licence, master…" /></SelectTrigger><SelectContent>{STUDY_CYCLE_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></Field><Field label="Filière / programme envisagé *" full><Input name="sector" value={formData.sector || ""} onChange={onTextChange} placeholder="Ex. informatique, santé, commerce…" maxLength={150} data-testid="eval-etudes-filiere" /></Field><Field label="Financement prévu" full><Input name="financialGuarantee" value={formData.financialGuarantee || ""} onChange={onTextChange} placeholder="Épargne, garant, bourse…" maxLength={255} /></Field><p className="md:col-span-2 text-xs leading-5 text-slate-600">À l’étape Documents, joignez vos <strong>diplômes</strong> et <strong>relevés de notes</strong> (ou confirmez qu’ils sont prêts) — indispensables à l’évaluation préalable études.</p></>}
+                  {formData.projectType === "tourisme" && <><Field label="Votre statut *" full><Select value={formData.visitorStatus || ""} onValueChange={(value) => update("visitorStatus", value)}><SelectTrigger data-testid="eval-visiteurs-statut"><SelectValue placeholder="Chef d’entreprise, employé ou particulier" /></SelectTrigger><SelectContent>{VISITOR_STATUS_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select>{formData.visitorStatus ? <p className="mt-1.5 text-xs leading-5 text-slate-600">{VISITOR_STATUS_OPTIONS.find((option) => option.value === formData.visitorStatus)?.hint}</p> : null}</Field><Field label="Motif du séjour *" full><Input name="visitReason" value={formData.visitReason || ""} onChange={onTextChange} placeholder="Visite familiale, tourisme, événement…" maxLength={255} data-testid="eval-visiteurs-motif" /></Field><Field label="Historique de voyages (facultatif)"><Input name="travelHistory" value={formData.travelHistory || ""} onChange={onTextChange} placeholder="Pays visités et années" maxLength={255} /></Field><Field label="Attaches dans le pays de résidence (facultatif)" full><Textarea name="socialTies" value={formData.socialTies || ""} onChange={onTextChange} placeholder="Emploi, entreprise, famille ou autres obligations" maxLength={2000} /></Field></>}
                   {formData.destinationCountry === "Canada" && <div className="md:col-span-2 rounded-xl border border-red-100 bg-red-50 p-4"><h4 className="font-black text-red-950">Questions Canada</h4><div className="mt-3 grid gap-4 md:grid-cols-2"><Field label="Test de langue ou niveau estimé"><Input name="canadaLanguageTest" value={formData.canadaLanguageTest || ""} onChange={onTextChange} placeholder="TEF, IELTS, niveau estimé…" maxLength={255} /></Field>{formData.projectType === "etudes" && <Field label="Projet d’études"><Input name="canadaStudyPlan" value={formData.canadaStudyPlan || ""} onChange={onTextChange} placeholder="Programme et objectif professionnel" maxLength={255} /></Field>}</div><p className="mt-3 text-xs text-red-900">Ces réponses servent à préparer un entretien ; elles ne confirment aucune admissibilité ou décision.</p></div>}
                   {formData.destinationCountry === "Luxembourg" && <div className="md:col-span-2 rounded-xl border border-amber-100 bg-amber-50 p-4"><h4 className="font-black text-amber-950">Questions Luxembourg</h4><div className="mt-3 grid gap-4 md:grid-cols-2"><Field label="Situation vis-à-vis d’un employeur"><Select value={formData.luxEmployerStatus || ""} onValueChange={(value) => update("luxEmployerStatus", value)}><SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger><SelectContent><SelectItem value="aucun">Aucun employeur identifié</SelectItem><SelectItem value="candidatures">Candidatures en cours</SelectItem><SelectItem value="contact">Contact ou entretien en cours</SelectItem><SelectItem value="offre">Offre ou proposition reçue</SelectItem></SelectContent></Select></Field><Field label="Situation ADEM / autorisation"><Input name="luxAademStatus" value={formData.luxAademStatus || ""} onChange={onTextChange} placeholder="À confirmer avec le conseiller" maxLength={255} /></Field></div><p className="mt-3 text-xs text-amber-900">Toute procédure liée à un employeur, à l’ADEM ou à une autorisation reste soumise aux règles officielles et à validation humaine.</p></div>}
                   {formData.destinationCountry === "France" && <div className="md:col-span-2 rounded-xl border border-blue-100 bg-blue-50 p-4"><h4 className="font-black text-blue-950">Question France</h4><Field label="Situation actuelle : admission, candidature ou employeur"><Input name="franceProjectStatus" value={formData.franceProjectStatus || ""} onChange={onTextChange} placeholder="Décrivez uniquement les éléments déjà obtenus ou en cours" maxLength={255} /></Field><p className="mt-3 text-xs text-blue-900">Le type de séjour, les ressources et les pièces définitives seront confirmés sur la source officielle et par un conseiller.</p></div>}
                   {formData.destinationCountry === "Belgique" && <div className="md:col-span-2 rounded-xl border border-blue-100 bg-blue-50 p-4"><h4 className="font-black text-blue-950">Question Belgique</h4><Field label="Région concernée si elle est connue"><Select value={formData.belgiumRegion || ""} onValueChange={(value) => update("belgiumRegion", value)}><SelectTrigger><SelectValue placeholder="À confirmer" /></SelectTrigger><SelectContent><SelectItem value="bruxelles">Bruxelles-Capitale</SelectItem><SelectItem value="flandre">Flandre</SelectItem><SelectItem value="wallonie">Wallonie</SelectItem><SelectItem value="inconnue">Je ne sais pas encore</SelectItem></SelectContent></Select></Field><p className="mt-3 text-xs text-blue-900">Les règles peuvent varier selon la région, l’établissement ou l’employeur : aucune procédure n’est confirmée automatiquement.</p></div>}
                   {formData.destinationCountry === "Allemagne" && <div className="md:col-span-2 rounded-xl border border-blue-100 bg-blue-50 p-4"><h4 className="font-black text-blue-950">Questions Allemagne</h4><div className="mt-3 grid gap-4 md:grid-cols-2"><Field label="Niveau d’allemand ou d’anglais"><Input name="germanyLanguageLevel" value={formData.germanyLanguageLevel || ""} onChange={onTextChange} placeholder="Ex. A2, B1, anglais professionnel" maxLength={255} /></Field><Field label="Situation de la qualification"><Input name="germanyRecognitionStatus" value={formData.germanyRecognitionStatus || ""} onChange={onTextChange} placeholder="À vérifier, traduction disponible, reconnaissance en cours…" maxLength={255} /></Field></div><p className="mt-3 text-xs text-blue-900">La reconnaissance dépend notamment du métier ; l’équipe vérifie les critères applicables avant toute démarche.</p></div>}
+                  {programSections.length > 0 && <div className="md:col-span-2" data-testid="public-dynamic-sections"><DynamicFormSections sections={programSections} values={programAnswers} onChange={(key, value) => setProgramAnswers((previous) => ({ ...previous, [key]: value }))} idPrefix="pub" /></div>}
                   {formData.destinationCountry && <div className="md:col-span-2 rounded-2xl border border-violet-200 bg-violet-50 p-4"><div className="flex items-start gap-3"><Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-violet-700" aria-hidden="true" /><div><h4 className="font-black text-violet-950">Adapter les questions à votre projet</h4><p className="mt-1 text-sm leading-6 text-violet-950">Vous pouvez demander quelques questions de préparation adaptées à vos réponses. Elles aident à organiser l’échange avec le conseiller, sans confirmer une procédure ni un résultat.</p></div></div><label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-violet-100 bg-white p-3 text-sm text-slate-800"><input type="checkbox" checked={Boolean(formData.geminiAnalysisConsent)} onChange={(event) => { setFormData((previous) => ({ ...previous, geminiAnalysisConsent: event.target.checked })); if (!event.target.checked) { setOrientationPreview(null); setDynamicResponses([]); } }} className="mt-1 h-4 w-4 accent-[#0B2A52]" /><span><strong>J’accepte l’adaptation des questions à partir de mes réponses déclarées.</strong><br /><span className="text-xs leading-5 text-slate-600">N’indiquez pas de numéro de document, coordonnées bancaires, adresse précise, information médicale ou autre donnée sensible. Les fichiers joints ne sont pas utilisés pour cette préparation.</span></span></label><Button type="button" variant="outline" className="mt-3 w-full gap-2 border-violet-200 bg-white text-violet-900 hover:bg-violet-100" onClick={requestOrientationPreview} disabled={!formData.geminiAnalysisConsent || previewGeminiOrientation.isPending}>{previewGeminiOrientation.isPending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}{previewGeminiOrientation.isPending ? "Préparation des questions…" : "Personnaliser mes questions"}</Button>{previewGeminiOrientation.isPending && <p role="status" aria-live="polite" className="mt-3 flex items-center gap-2 rounded-xl border border-violet-200 bg-white p-3 text-xs text-violet-950"><LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />Préparation personnalisée en cours. Vos pièces jointes ne sont pas concernées.</p>}{orientationPreview && <div className="mt-3 rounded-xl border border-violet-200 bg-white p-4" aria-live="polite"><h5 className="font-black text-violet-950">Questions complémentaires</h5>{dynamicResponses.length > 0 ? <div className="mt-3 space-y-4">{dynamicResponses.map((response, index) => <label key={response.question} className="block text-sm font-semibold text-slate-800">{response.question}<Textarea value={response.answer} onChange={(event) => setDynamicResponses((previous) => previous.map((item, itemIndex) => itemIndex === index ? { ...item, answer: event.target.value.slice(0, 1000) } : item))} maxLength={1000} className="mt-2 bg-white" placeholder="Réponse facultative, à compléter uniquement si vous disposez de l’information." /></label>)}</div> : <p className="mt-2 text-sm text-slate-700">Aucune précision complémentaire n’est nécessaire à cette étape. Vous pouvez poursuivre le questionnaire.</p>}<p className="mt-3 text-xs leading-5 text-slate-600">Les éléments ci-dessus restent préparatoires et seront revus par un conseiller avec les sources officielles.</p></div>}</div>}
                 </div>}
-                {currentStep === 3 && <div className="space-y-5"><div className="rounded-2xl border border-[#D8A928]/35 bg-amber-50/70 p-4"><div className="flex gap-3"><ClipboardList className="mt-0.5 h-5 w-5 shrink-0 text-[#9A7200]" /><div><h4 className="font-black text-slate-950">Catalogue documentaire — {formData.destinationCountry || "sélectionnez un pays"}</h4><p className="mt-1 text-sm text-slate-600">Préparez les pièces pertinentes. La liste finale est confirmée par l’équipe selon votre cas et la procédure officielle.</p></div></div><div className="mt-4 grid gap-2 sm:grid-cols-2">{requirements.map((item) => <div key={`${item.category}-${item.label}`} className="rounded-xl border border-amber-100 bg-white p-3"><span className="text-[11px] font-black uppercase tracking-wide text-[#9A7200]">{item.category} · {item.priority}</span><p className="mt-1 flex gap-2 text-sm font-bold text-slate-900"><FileText className="h-4 w-4 shrink-0 text-blue-700" />{item.label}</p><p className="mt-1 text-xs leading-5 text-slate-600">{item.detail}</p></div>)}</div></div><div className="rounded-2xl border border-blue-100 bg-slate-50 p-4" data-testid="evaluation-docs-privacy"><div className="flex items-start gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-700" /><div><h4 className="font-black text-slate-950">Dépôt sécurisé facultatif</h4><p className="mt-1 text-xs leading-5 text-slate-600">Ajoutez au maximum 5 fichiers PDF, JPG ou PNG de 10 Mo. Ils sont envoyés après la création du dossier, puis restent à vérifier par l’équipe.</p><ul className="mt-3 space-y-1.5 text-xs leading-5 text-slate-700"><li><strong>Qui y a accès :</strong> {DOCUMENT_VAULT_POLICY.access.fr}</li><li><strong>Pourquoi elles sont demandées :</strong> pour préparer votre dossier et permettre au conseiller de vérifier la cohérence avec la procédure — jamais pour une publication publique.</li><li><strong>Confidentialité :</strong>{" "}<a href={DOCUMENT_VAULT_POLICY.privacyPath} className="font-bold text-blue-800 underline underline-offset-2 hover:text-blue-950">Politique de confidentialité</a></li></ul></div></div><div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]"><Select value={selectedDocumentType} onValueChange={(value) => setSelectedDocumentType(value as typeof selectedDocumentType)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="passport">Passeport</SelectItem><SelectItem value="cv">CV</SelectItem><SelectItem value="diploma">Diplôme</SelectItem><SelectItem value="certificate">Attestation</SelectItem><SelectItem value="bank_statement">Ressources financières</SelectItem><SelectItem value="language_test">Test de langue</SelectItem><SelectItem value="other">Autre pièce</SelectItem></SelectContent></Select><Label className="flex cursor-pointer items-center justify-center gap-2 rounded-md bg-[#0B2A52] px-4 py-2 text-sm font-bold text-white hover:bg-[#163d73]"><UploadCloud className="h-4 w-4" />Ajouter<input className="sr-only" type="file" accept="application/pdf,image/jpeg,image/png" multiple onChange={(event) => { addDocuments(event.target.files); event.target.value = ""; }} /></Label></div>{selectedDocuments.length > 0 && <ul className="mt-3 space-y-2" aria-label="Documents sélectionnés">{selectedDocuments.map((item, index) => <li key={`${item.file.name}-${index}`} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"><span className="min-w-0 truncate"><strong>{item.file.name}</strong> <span className="text-slate-500">({Math.ceil(item.file.size / 1024)} Ko)</span></span><Button type="button" variant="ghost" size="sm" onClick={() => setSelectedDocuments((items) => items.filter((_, itemIndex) => itemIndex !== index))}>Retirer</Button></li>)}</ul>}</div><Field label="Lien vers votre CV (optionnel)"><Input name="cvLink" type="url" value={formData.cvLink || ""} onChange={onTextChange} placeholder="https://drive.google.com/..." maxLength={500} /><p className="mt-1.5 text-xs leading-5 text-slate-600">Si vous préférez un lien plutôt qu’un fichier : utilisez un partage privé. Seule l’équipe affectée à votre dossier le consulte.</p></Field></div>}
-                {currentStep === 4 && <div className="space-y-4"><div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4"><div className="flex gap-3"><MailCheck className="mt-0.5 h-5 w-5 text-emerald-700" /><div><h4 className="font-black text-emerald-950">Vérifiez votre évaluation avant l’envoi</h4><p className="mt-1 text-sm text-emerald-900">Utilisez Modifier pour corriger une étape. Aucun résultat automatique, visa, admission ou emploi n’est garanti.</p></div></div></div><SummarySection title="Projet" onEdit={() => setCurrentStep(0)} lines={[formData.projectType, formData.destinationCountry, COUNTRY_GUIDANCE[formData.destinationCountry] || "Orientation à confirmer"]} /><SummarySection title="Profil" onEdit={() => setCurrentStep(1)} lines={[formData.fullName, formData.email, formData.whatsappPhone, formData.nationality]} /><SummarySection title="Critères" onEdit={() => setCurrentStep(2)} lines={[formData.sector, formData.languages, formData.financialGuarantee, formData.franceProjectStatus, formData.belgiumRegion, formData.germanyLanguageLevel, formData.germanyRecognitionStatus, dynamicResponses.filter((response) => response.answer.trim()).length ? `${dynamicResponses.filter((response) => response.answer.trim()).length} réponse(s) complémentaire(s)` : ""].filter(Boolean) as string[]} /><SummarySection title="Documents" onEdit={() => setCurrentStep(3)} lines={[`${selectedDocuments.length} pièce(s) sélectionnée(s)`, formData.cvLink ? "Lien CV indiqué" : "Aucun lien CV indiqué"]} /><p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-700">Après soumission, l’équipe examine les informations déclarées et les pièces séparément. Seule une réponse relue et validée par un conseiller sera envoyée par e-mail et visible dans votre espace.</p></div>}
+                {currentStep === 3 && <div className="space-y-5"><div className="rounded-2xl border border-[#D8A928]/35 bg-amber-50/70 p-4"><div className="flex gap-3"><ClipboardList className="mt-0.5 h-5 w-5 shrink-0 text-[#9A7200]" /><div><h4 className="font-black text-slate-950">Catalogue documentaire — {formData.destinationCountry || "sélectionnez un pays"}</h4><p className="mt-1 text-sm text-slate-600">{formData.projectType === "tourisme" ? "Formulaire visiteurs : les pièces ci-dessous restent facultatives à ce stade ; le conseiller confirmera la liste selon votre statut." : formData.projectType === "etudes" ? "Pour l’évaluation études, diplômes et relevés de notes sont obligatoires (fichier ou confirmation de disponibilité)." : "Pour l’évaluation travail, un CV actualisé est obligatoire. Les autres pièces aident le conseiller."}</p></div></div><div className="mt-4 grid gap-2 sm:grid-cols-2">{requirements.map((item) => <div key={`${item.category}-${item.label}`} className="rounded-xl border border-amber-100 bg-white p-3"><span className="text-[11px] font-black uppercase tracking-wide text-[#9A7200]">{item.category} · {item.priority}</span><p className="mt-1 flex gap-2 text-sm font-bold text-slate-900"><FileText className="h-4 w-4 shrink-0 text-blue-700" />{item.label}</p><p className="mt-1 text-xs leading-5 text-slate-600">{item.detail}</p></div>)}</div></div><div className="rounded-2xl border border-blue-100 bg-slate-50 p-4" data-testid="evaluation-docs-privacy"><div className="flex items-start gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-700" /><div><h4 className="font-black text-slate-950">{formData.projectType === "tourisme" ? "Dépôt sécurisé (facultatif)" : formData.projectType === "etudes" ? "Dépôt sécurisé — diplômes & relevés" : "Dépôt sécurisé — CV obligatoire"}</h4><p className="mt-1 text-xs leading-5 text-slate-600">Ajoutez au maximum 5 fichiers PDF, JPG ou PNG de 10 Mo. Ils sont envoyés après la création du dossier, puis restent à vérifier par l’équipe.</p><ul className="mt-3 space-y-1.5 text-xs leading-5 text-slate-700"><li><strong>Qui y a accès :</strong> {DOCUMENT_VAULT_POLICY.access.fr}</li><li><strong>Pourquoi elles sont demandées :</strong> pour préparer votre dossier et permettre au conseiller de vérifier la cohérence avec la procédure — jamais pour une publication publique.</li><li><strong>Confidentialité :</strong>{" "}<a href={DOCUMENT_VAULT_POLICY.privacyPath} className="font-bold text-blue-800 underline underline-offset-2 hover:text-blue-950">Politique de confidentialité</a></li></ul></div></div><div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]"><Select value={selectedDocumentType} onValueChange={(value) => setSelectedDocumentType(value as EvaluationDocumentType)}><SelectTrigger data-testid="eval-document-type"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="passport">Passeport</SelectItem><SelectItem value="cv">CV</SelectItem><SelectItem value="diploma">Diplôme</SelectItem><SelectItem value="educational_transcript">Relevé de notes</SelectItem><SelectItem value="certificate">Attestation</SelectItem><SelectItem value="bank_statement">Ressources financières</SelectItem><SelectItem value="language_test">Test de langue</SelectItem><SelectItem value="other">Autre pièce</SelectItem></SelectContent></Select><Label className="flex cursor-pointer items-center justify-center gap-2 rounded-md bg-[#0B2A52] px-4 py-2 text-sm font-bold text-white hover:bg-[#163d73]"><UploadCloud className="h-4 w-4" />Ajouter<input className="sr-only" type="file" accept="application/pdf,image/jpeg,image/png" multiple onChange={(event) => { addDocuments(event.target.files); event.target.value = ""; }} /></Label></div>{selectedDocuments.length > 0 && <ul className="mt-3 space-y-2" aria-label="Documents sélectionnés">{selectedDocuments.map((item, index) => <li key={`${item.file.name}-${index}`} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"><span className="min-w-0 truncate"><strong>{item.file.name}</strong> <span className="text-slate-500">({Math.ceil(item.file.size / 1024)} Ko · {item.documentType})</span></span><Button type="button" variant="ghost" size="sm" onClick={() => setSelectedDocuments((items) => items.filter((_, itemIndex) => itemIndex !== index))}>Retirer</Button></li>)}</ul>}</div>{formData.projectType === "etudes" && <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-sm text-slate-800" data-testid="eval-etudes-transcript-ready"><input type="checkbox" checked={Boolean(formData.transcriptAvailable)} onChange={(event) => setFormData((prev) => ({ ...prev, transcriptAvailable: event.target.checked }))} className="mt-1 h-4 w-4 accent-[#0B2A52]" /><span><strong>Mes relevés de notes sont prêts</strong> (je les joins ici ou je les déposerai dès que le conseiller le demandera).</span></label>}{formData.projectType === "travail" ? <Field label="Lien vers votre CV (si pas de fichier) *"><Input name="cvLink" type="url" value={formData.cvLink || ""} onChange={onTextChange} placeholder="https://drive.google.com/..." maxLength={500} data-testid="eval-travail-cv-link" /><p className="mt-1.5 text-xs leading-5 text-slate-600">Obligatoire si vous n’avez pas ajouté de fichier CV. Utilisez un partage privé.</p></Field> : formData.projectType === "etudes" ? null : <Field label="Lien documentaire (optionnel)"><Input name="cvLink" type="url" value={formData.cvLink || ""} onChange={onTextChange} placeholder="https://drive.google.com/..." maxLength={500} /><p className="mt-1.5 text-xs leading-5 text-slate-600">Facultatif pour un visa visiteurs. Partage privé uniquement.</p></Field>}</div>}
+                {currentStep === 4 && <div className="space-y-4"><div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4"><div className="flex gap-3"><MailCheck className="mt-0.5 h-5 w-5 text-emerald-700" /><div><h4 className="font-black text-emerald-950">Vérifiez votre évaluation avant l’envoi</h4><p className="mt-1 text-sm text-emerald-900">Utilisez Modifier pour corriger une étape. Aucun résultat automatique, visa, admission ou emploi n’est garanti.</p></div></div></div><SummarySection title="Projet" onEdit={() => setCurrentStep(0)} lines={[formData.projectType === "travail" ? "Visa travail" : formData.projectType === "etudes" ? "Visa études" : "Visa visiteurs", formData.destinationCountry, COUNTRY_GUIDANCE[formData.destinationCountry] || "Orientation à confirmer"]} /><SummarySection title="Profil" onEdit={() => setCurrentStep(1)} lines={[formData.fullName, formData.email, formData.whatsappPhone, formData.nationality]} /><SummarySection title="Critères" onEdit={() => setCurrentStep(2)} lines={[formData.projectType === "travail" ? [formData.sector && `Métier : ${formData.sector}`, formData.yearsOfExperience !== undefined && formData.yearsOfExperience !== null ? `Expérience : ${formData.yearsOfExperience} an(s)` : "", formData.languages && `Langues : ${formData.languages}`] : formData.projectType === "etudes" ? [formData.educationLevel && `Niveau obtenu : ${formData.educationLevel}`, formData.studyCycle ? `Cycle visé : ${STUDY_CYCLE_LABELS[formData.studyCycle]}` : "", formData.sector && `Filière : ${formData.sector}`, formData.financialGuarantee && `Financement : ${formData.financialGuarantee}`] : [formData.visitorStatus ? `Statut : ${VISITOR_STATUS_LABELS[formData.visitorStatus]}` : "", formData.visitReason && `Motif : ${formData.visitReason}`, formData.travelHistory && `Voyages : ${formData.travelHistory}`, formData.socialTies && `Attaches : ${formData.socialTies}`], formData.franceProjectStatus, formData.belgiumRegion, formData.germanyLanguageLevel, formData.germanyRecognitionStatus, dynamicResponses.filter((response) => response.answer.trim()).length ? `${dynamicResponses.filter((response) => response.answer.trim()).length} réponse(s) complémentaire(s)` : ""].flat().filter(Boolean) as string[]} /><SummarySection title="Documents" onEdit={() => setCurrentStep(3)} lines={[`${selectedDocuments.length} pièce(s) sélectionnée(s)`, formData.projectType === "travail" && formData.cvLink ? "Lien CV indiqué" : "", formData.projectType === "etudes" && formData.transcriptAvailable ? "Relevés confirmés prêts" : "", formData.projectType === "tourisme" ? "Pièces facultatives (formulaire visiteurs)" : ""].filter(Boolean) as string[]} /><p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-700">Après soumission, l’équipe examine les informations déclarées et les pièces séparément selon le type de visa. Seule une réponse relue et validée par un conseiller sera envoyée par e-mail et visible dans votre espace.</p></div>}
               </motion.section>
             </AnimatePresence>
-            <div className="mt-7 flex items-center justify-between gap-3 border-t border-slate-100 pt-5"><Button type="button" variant="outline" onClick={previous} disabled={currentStep === 0} className="gap-2"><ChevronLeft className="h-4 w-4" />Précédent</Button>{currentStep < STEPS.length - 1 ? <Button type="button" onClick={next} className="gap-2 bg-[#0B2A52] text-white hover:bg-[#163d73]">Continuer<ChevronRight className="h-4 w-4" /></Button> : <Button type="submit" disabled={isSubmitting} className="bg-[#D8A928] text-slate-950 hover:bg-[#c6971f]">{isSubmitting ? "Envoi…" : "Soumettre l’évaluation"}</Button>}</div>
+            <div className="mt-7 flex items-center justify-between gap-3 border-t border-slate-100 pt-5"><Button type="button" variant="outline" onClick={previous} disabled={currentStep === 0} className="gap-2"><ChevronLeft className="h-4 w-4" />Précédent</Button>{currentStep < STEPS.length - 1 ? <Button type="button" onClick={next} className="gap-2 bg-[#0B2A52] text-white hover:bg-[#163d73]">Continuer<ChevronRight className="h-4 w-4" /></Button> : <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting} data-testid="evaluation-submit" className="gap-2 bg-[#D8A928] text-slate-950 hover:bg-[#c6971f]">{isSubmitting && <LoaderCircle className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />}{isSubmitting ? (uploadProgress ? `Envoi des documents (${Math.min(uploadProgress.done + 1, uploadProgress.total)}/${uploadProgress.total})…` : "Envoi de votre évaluation…") : "Soumettre l’évaluation"}</Button>}</div>
+            <p role="status" aria-live="polite" className="sr-only" data-testid="evaluation-submit-status">{isSubmitting ? (uploadProgress ? `Envoi des documents : ${Math.min(uploadProgress.done + 1, uploadProgress.total)} sur ${uploadProgress.total}` : "Envoi de votre évaluation en cours") : ""}</p>
           </form>
         )}
         {!isSuccessVisible && <div className="mt-5 grid gap-2 sm:grid-cols-2"><button type="button" onClick={() => window.open(`https://wa.me/237698104832?text=${encodeURIComponent(summary)}`, "_blank")} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-3 text-sm font-bold text-white transition-transform duration-150 hover:-translate-y-0.5 hover:bg-emerald-800 active:scale-[0.98]"><MessageCircleMore className="h-4 w-4" />Partager au conseiller WhatsApp</button><button type="button" onClick={async () => { try { await navigator.clipboard.writeText(summary); toast.success("Récapitulatif copié"); } catch { toast.error("Copie non disponible sur cet appareil"); } }} className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-800 px-4 py-3 text-sm font-bold text-white transition-transform duration-150 hover:-translate-y-0.5 hover:bg-slate-900 active:scale-[0.98]"><MailCheck className="h-4 w-4" />Copier le récapitulatif</button></div>}

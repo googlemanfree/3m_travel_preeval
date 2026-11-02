@@ -7,9 +7,12 @@ import {
   buildClientAccessLinkWhatsApp,
   buildAgreementSignatureReminderWhatsApp,
   buildAgreementSignedWhatsApp,
+  buildBilanConfirmationReminderWhatsApp,
+  buildDocumentReminderWhatsApp,
   buildDossierCreatedWhatsApp,
   buildPaymentReceiptApprovedWhatsApp,
   buildProcedureStageWhatsApp,
+  buildSecondAgreementSignatureReminderWhatsApp,
   sendWhatsAppMessage,
 } from "../whatsappService";
 import { toE164WhatsApp } from "../../shared/whatsappPhone";
@@ -147,5 +150,55 @@ export async function notifyAgreementSignedWhatsApp(input: {
   return safeSend(
     input.phone,
     buildAgreementSignedWhatsApp({ candidateName: input.candidateName, dossierNumber: input.dossierNumber }),
+  );
+}
+
+export async function notifySecondAgreementSignatureReminderWhatsApp(input: {
+  phone?: string | null;
+  candidateName: string;
+  dossierNumber: string;
+  employerName?: string | null;
+}): Promise<WhatsAppNotifyResult> {
+  return safeSend(
+    input.phone,
+    buildSecondAgreementSignatureReminderWhatsApp({
+      candidateName: input.candidateName,
+      dossierNumber: input.dossierNumber,
+      employerName: input.employerName,
+    }),
+  );
+}
+
+export async function notifyBilanConfirmationReminderWhatsApp(input: {
+  phone?: string | null;
+  candidateName: string;
+  dossierNumber: string;
+}): Promise<WhatsAppNotifyResult> {
+  return safeSend(
+    input.phone,
+    buildBilanConfirmationReminderWhatsApp({
+      candidateName: input.candidateName,
+      dossierNumber: input.dossierNumber,
+    }),
+  );
+}
+
+export async function notifyDocumentReminderWhatsApp(input: {
+  phone?: string | null;
+  candidateName: string;
+  stage: number;
+  missing: number;
+  replace: number;
+  firstLabel?: string | null;
+}): Promise<WhatsAppNotifyResult> {
+  return safeSend(
+    input.phone,
+    buildDocumentReminderWhatsApp({
+      candidateName: input.candidateName,
+      stage: input.stage,
+      missing: input.missing,
+      replace: input.replace,
+      firstLabel: input.firstLabel,
+    }),
   );
 }

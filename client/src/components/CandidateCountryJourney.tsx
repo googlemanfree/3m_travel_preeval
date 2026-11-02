@@ -18,6 +18,9 @@ type Props = {
   procedureLabel?: string | null;
   dossierStatus?: string | null;
   evaluationStatus?: string | null;
+  /** Visa ou programme et domaine choisis dans l'évaluation : les étapes s'y adaptent. */
+  programId?: string | null;
+  domainId?: string | null;
   evaluationClientConfirmed?: boolean;
   /** Bilan PDF disponible (envoyé par l’agence) — active le bouton de confirmation. */
   bilanAvailable?: boolean;
@@ -27,7 +30,7 @@ type Props = {
   documents?: Array<{ documentName?: string | null; documentType?: string | null; documentUrl?: string | null; verificationStatus?: string | null }>;
 };
 
-export function CandidateCountryJourney({ destination, visaType, procedureLabel, dossierStatus, evaluationStatus, evaluationClientConfirmed, bilanAvailable = false, evaluationReportPdfUrl = null, activationRequested, paymentConfirmed, documents = [] }: Props) {
+export function CandidateCountryJourney({ destination, visaType, procedureLabel, programId, domainId, dossierStatus, evaluationStatus, evaluationClientConfirmed, bilanAvailable = false, evaluationReportPdfUrl = null, activationRequested, paymentConfirmed, documents = [] }: Props) {
   const [previewDocument, setPreviewDocument] = useState<{ title: string; url: string; fileType: string } | null>(null);
   const [isPdfExporting, setIsPdfExporting] = useState(false);
   const { toast } = useToast();
@@ -51,7 +54,7 @@ export function CandidateCountryJourney({ destination, visaType, procedureLabel,
     },
     onError: (error) => toast({ title: "Confirmation impossible", description: error.message, variant: "destructive" }),
   });
-  const journey = getEnrichedCandidateJourney(destination, visaType, procedureLabel);
+  const journey = getEnrichedCandidateJourney(destination, visaType, procedureLabel, programId, domainId);
   const signedBilanUrl = evaluationReportPdfUrl || dossierQuery.data?.data?.evaluationReportPdfUrl || null;
   const bilanReady = Boolean(
     bilanAvailable

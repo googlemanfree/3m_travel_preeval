@@ -2,6 +2,8 @@ import { BriefcaseBusiness, HeartHandshake, Landmark, Plane, Stethoscope, Ticket
 import { Link } from "wouter";
 import { ServicePageShell, ServiceSection } from "@/components/ServicePageShell";
 import ProofGallerySection from "@/components/ProofGallerySection";
+import { ChecklistSection, FaqSection } from "@/components/PageEnrichment";
+import { SCHENGEN_COMMON_ERRORS, SCHENGEN_FAQ } from "@/data/contentCampaignPages";
 import { getServiceVisual } from "@/data/premiumVisuals";
 
 const purposes = [
@@ -89,6 +91,9 @@ export default function Schengen() {
           </Link>
         </div>
       </ServiceSection>
+
+      <ChecklistSection title="Les erreurs qui font refuser un dossier" introduction="Ce que les consulats relèvent le plus souvent : à vérifier avant le dépôt." items={SCHENGEN_COMMON_ERRORS} tone="slate" testId="schengen-errors" />
+      <FaqSection title="Questions sur le visa Schengen" items={SCHENGEN_FAQ} tone="white" testId="schengen-faq" />
 
       <ProofGallerySection
         initialFilter="visas"

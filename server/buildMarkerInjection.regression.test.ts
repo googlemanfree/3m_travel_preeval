@@ -50,8 +50,10 @@ describe("balise de build posée à la compilation", () => {
     const injected = injectBuildMarker(indexHtml, "abcdef12");
     expect(extractBuildMarker(injected)).toBe("abcdef12");
     expect(injected.replace("abcdef12", original ?? "")).toBe(indexHtml);
-    // La révision du service worker est une autre valeur : elle ne doit pas bouger.
-    expect(injected).toContain("2026-10-12-canada-blank-guard-v1");
+    // La révision du service worker est une autre valeur : elle ne doit pas bouger (quelle que soit sa valeur actuelle).
+    const swRevision = /const SW_REVISION = '([^']+)'/.exec(indexHtml)?.[1];
+    expect(swRevision).toBeTruthy();
+    expect(injected).toContain(swRevision as string);
     expect(injectBuildMarker("<html><head></head></html>", "abcdef12")).toBe("<html><head></head></html>");
   });
 

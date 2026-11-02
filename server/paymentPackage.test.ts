@@ -177,8 +177,9 @@ describe("branchement dans les deux validations de paiement", () => {
   it("la validation en un clic (fiche candidat) et le changement de statut de paiement envoient le lot", () => {
     const management = read("server/routers/adminCandidateManagement.ts");
     const confirm = management.slice(management.indexOf("confirmPaymentForCandidate: publicProcedure"), management.indexOf("sendReceiptAndProtocol: publicProcedure"));
-    expect(confirm).toContain("sendReceiptAndProtocol(db, reference");
-    expect(confirm.indexOf("sendReceiptAndProtocol(")).toBeGreaterThan(confirm.indexOf("paymentAuditLogs).values"));
+    expect(confirm).toContain("runOpeningPaymentAutomation(db, reference");
+    expect(confirm.indexOf("runOpeningPaymentAutomation(")).toBeGreaterThan(confirm.indexOf("paymentAuditLogs).values"));
+    expect(read("server/services/openingPaymentAutomation.ts")).toContain("sendReceiptAndProtocol(db, reference");
     expect(confirm).toContain("packageError");
     const application = read("server/routers/application.ts");
     expect(application).toContain('input.paymentStatus === "SUCCESS" && application.paymentStatus !== "SUCCESS"');

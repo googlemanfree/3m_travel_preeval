@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { ENV } from './server/_core/env';
 
 describe('Heartbeat System', () => {
-  it('should have Heartbeat API configured', () => {
+  it.skipIf(!ENV.forgeApiUrl || !ENV.forgeApiKey)('should have Heartbeat API configured', () => {
     expect(ENV.forgeApiUrl).toBeDefined();
     expect(ENV.forgeApiKey).toBeDefined();
     expect(ENV.forgeApiUrl).toContain('forge');

@@ -233,6 +233,32 @@ async function applyEffects(tx: Tx, target: { evaluationId: number; versionNumbe
   }
 }
 
+/** Réponses du formulaire dynamique : détails du projet (clés → texte) complétés par les colonnes que le formulaire remplit lui aussi. */
+function formAnswers(json: string | null | undefined, columns: Record<string, string | null | undefined>): Record<string, string> | null {
+  if (!json) return null;
+  try {
+    const parsed: unknown = JSON.parse(json);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    const answers: Record<string, string> = {};
+    for (const [key, value] of Object.entries(columns)) if (typeof value === "string" && value.trim()) answers[key] = value.trim();
+    for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) if (typeof value === "string") answers[key] = value;
+    return typeof answers.programId === "string" ? answers : null;
+  } catch {
+    return null;
+  }
+}
+
+function programIdFromDetails(json: string | null | undefined): string | null {
+  if (!json) return null;
+  try {
+    const parsed: unknown = JSON.parse(json);
+    const id = parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>).programId : null;
+    return typeof id === "string" && id ? id : null;
+  } catch {
+    return null;
+  }
+}
+
 export class DrizzleValidationStore implements ValidationStore {
   constructor(private readonly db: Db) {}
 
@@ -246,6 +272,18 @@ export class DrizzleValidationStore implements ValidationStore {
         destinationCategory: evaluations.destinationCategory,
         visaType: evaluations.visaType,
         projectType: evaluations.projectType,
+        projectDetailsJson: evaluations.projectDetailsJson,
+        educationLevel: evaluations.educationLevel,
+        diplomaTitle: evaluations.diplomaTitle,
+        graduationYear: evaluations.graduationYear,
+        fieldOfStudy: evaluations.fieldOfStudy,
+        employmentStatus: evaluations.employmentStatus,
+        currentJobTitle: evaluations.currentJobTitle,
+        yearsOfExperience: evaluations.yearsOfExperience,
+        industrySector: evaluations.industrySector,
+        frenchLevel: evaluations.frenchLevel,
+        englishLevel: evaluations.englishLevel,
+        languageTestsTaken: evaluations.languageTestsTaken,
         cvFileUrl: evaluations.cvFileUrl,
         cvFileName: evaluations.cvFileName,
       })
@@ -261,6 +299,12 @@ export class DrizzleValidationStore implements ValidationStore {
       candidateCountry: row.destinationCountry?.trim() || COUNTRY_BY_CATEGORY[row.destinationCategory] || "",
       visaType: row.visaType?.trim() || null,
       projectType: row.projectType?.trim() || null,
+      programId: programIdFromDetails(row.projectDetailsJson),
+      projectDetails: formAnswers(row.projectDetailsJson, {
+        educationLevel: row.educationLevel, diplomaTitle: row.diplomaTitle, graduationYear: row.graduationYear, fieldOfStudy: row.fieldOfStudy,
+        employmentStatus: row.employmentStatus, currentJobTitle: row.currentJobTitle, yearsOfExperience: row.yearsOfExperience, industrySector: row.industrySector,
+        frenchLevel: row.frenchLevel, englishLevel: row.englishLevel, languageTestsTaken: row.languageTestsTaken,
+      }),
       cvOnFile: cvFileUrl !== null,
       cvFileName: cvFileUrl !== null ? (row.cvFileName?.trim() || null) : null,
       cvFileUrl,

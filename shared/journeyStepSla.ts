@@ -86,6 +86,9 @@ export function buildJourneyStepSla(input: {
   destination?: string | null;
   visaType?: string | null;
   procedureLabel?: string | null;
+  /** Visa ou programme et domaine choisis dans l'évaluation : adaptent les étapes. */
+  programId?: string | null;
+  domainId?: string | null;
   internalStatus?: string | null;
   paymentConfirmed?: boolean;
   evaluationStatus?: string | null;
@@ -96,12 +99,10 @@ export function buildJourneyStepSla(input: {
   now?: Date;
 }): JourneyStepSlaSnapshot {
   const now = input.now ?? new Date();
-  const journey = getEnrichedCandidateJourney(
-    input.destination,
-    input.visaType,
-    input.procedureLabel ?? input.visaType,
-  );
+  const journey = getEnrichedCandidateJourney(input.destination, input.visaType, input.procedureLabel ?? input.visaType, input.programId, input.domainId);
   const progress = describeDossierProgress({
+    programId: input.programId,
+    domainId: input.domainId,
     destination: input.destination,
     visaType: input.visaType,
     procedureLabel: input.procedureLabel ?? input.visaType,

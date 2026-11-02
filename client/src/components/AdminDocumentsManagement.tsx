@@ -11,7 +11,11 @@ import AdminDocumentsByCandidate from "./AdminDocumentsByCandidate";
 import { AdminCandidatesToRemind } from "./AdminCandidatesToRemind";
 import { groupDocumentsByCandidate, type CandidateDocumentGroup } from "@/lib/documentGroups";
 import { toast } from "sonner";
+import { getAdminSessionToken } from "@/lib/adminSession";
 import { trpc } from "@/lib/trpc";
+import { DOCUMENT_REJECTION_REASONS, composeRejectionComment, type DocumentRejectionCode } from "@shared/documentRejectionReasons";
+import { summarizeWaiting, waitingInfo } from "@shared/documentWaiting";
+import { AdminDocumentInsightsCard } from "@/components/AdminDocumentInsights";
 
 interface Document {
   id: number;
@@ -39,7 +43,7 @@ interface Document {
 }
 
 export function AdminDocumentsManagement() {
-  const sessionToken = typeof window !== "undefined" ? sessionStorage.getItem("adminSessionToken") || "" : "";
+  const sessionToken = getAdminSessionToken();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [sourceFilter, setSourceFilter] = useState<"all" | "client" | "candidate" | "agency">("all");
@@ -51,6 +55,7 @@ export function AdminDocumentsManagement() {
   const [rejectingDocId, setRejectingDocId] = useState<number | null>(null);
   const [rejectingDocSource, setRejectingDocSource] = useState<"client" | "candidate" | "agency">("client");
   const [rejectionReason, setRejectionReason] = useState("");
+  const [rejectionCode, setRejectionCode] = useState<DocumentRejectionCode | null>(null);
   const [previewingDoc, setPreviewingDoc] = useState<Document | null>(null);
   const [previewAcknowledged, setPreviewAcknowledged] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -62,7 +67,7 @@ export function AdminDocumentsManagement() {
   const [uploadCandidateId, setUploadCandidateId] = useState("");
   const [uploadTargetSearch, setUploadTargetSearch] = useState("");
   const [uploadConfirmationOpen, setUploadConfirmationOpen] = useState(false);
-  const [uploadDocumentType, setUploadDocumentType] = useState("autre");
+  const [uploadDocumentType, setUploadDocumentType] = useState("");
   const [viewMode, setViewMode] = useState<"candidates" | "list">("candidates");
   const [comparisonDocuments, setComparisonDocuments] = useState<{ previous: Document; current: Document } | null>(null);
   useEffect(() => {
@@ -75,10 +80,6 @@ export function AdminDocumentsManagement() {
   const [isRecognizing, setIsRecognizing] = useState(false);
   const [staleOnly, setStaleOnly] = useState(false);
 
-  const approveDocumentMutation = trpc.admin.approveDocument.useMutation();
-  const rejectDocumentMutation = trpc.admin.rejectDocument.useMutation();
-  const approveCandidateFileMutation = trpc.admin.approveCandidateFile.useMutation();
-  const rejectCandidateFileMutation = trpc.admin.rejectCandidateFile.useMutation();
   const updateDocumentStatusMutation = trpc.admin.updateDocumentStatus.useMutation();
   const saveMarkerAnnotationsMutation = trpc.admin.savePassportMarkerAnnotations.useMutation();
   const uploadDocumentForCandidateMutation = trpc.admin.uploadDocumentForCandidate.useMutation();
@@ -167,6 +168,18 @@ export function AdminDocumentsManagement() {
     setRejectingDocId(doc.id);
     setRejectingDocSource(doc.source);
     setRejectionReason("");
+    setRejectionCode(null);
+  };
+
+  // Choisir un motif standard remplit le commentaire (modifiable) ; un second clic sur le même motif le retire.
+  const pickRejectionReason = (code: DocumentRejectionCode) => {
+    if (rejectionCode === code) {
+      setRejectionCode(null);
+      setRejectionReason("");
+      return;
+    }
+    setRejectionCode(code);
+    setRejectionReason(composeRejectionComment(code));
   };
 
   const submitRejection = async () => {
@@ -193,6 +206,7 @@ export function AdminDocumentsManagement() {
       });
       setRejectingDocId(null);
       setRejectionReason("");
+      setRejectionCode(null);
       await new Promise(resolve => setTimeout(resolve, 500));
       refetch();
     } catch (error) {
@@ -271,6 +285,7 @@ export function AdminDocumentsManagement() {
     return matchesSearch && matchesStatus && matchesClassification && matchesSource && matchesType && matchesDossier;
   });
 
+  const waitingSummary = summarizeWaiting(documents);
   const documentTypes = Array.from(new Set(documents.map((document) => document.documentType).filter(Boolean))).sort((a, b) => a.localeCompare(b, "fr"));
   const uploadTargets = [
     ...(candidateDirectory?.candidates ?? []).filter((candidate: any) => candidate.source !== "AGENCY_PHYSICAL").map((candidate: any) => ({ value: `candidate:${candidate.internalId}`, label: `${candidate.fullName} · ${candidate.folderCode}` })),
@@ -423,6 +438,10 @@ export function AdminDocumentsManagement() {
     const targetId = Number(rawTargetId);
     if (!targetId || !["candidate", "agency"].includes(targetKind) || !droppedFiles.length) {
       toast.error("Sélectionnez un dossier et au moins un fichier.");
+      return;
+    }
+    if (!uploadDocumentType.trim()) {
+      toast.error("Précisez le type de document", { description: "CV, passeport, diplôme… — obligatoire avant le dépôt." });
       return;
     }
     if (!confirmed) {
@@ -732,13 +751,13 @@ export function AdminDocumentsManagement() {
                 <p className="mt-2 text-sm font-semibold text-slate-900">Déposez vos fichiers ici</p><p className="text-xs text-slate-500">PDF, images ou Word · 10 Mo maximum par fichier</p>
                 <label className="mt-3 inline-flex cursor-pointer items-center rounded-md border border-blue-200 bg-white px-3 py-2 text-sm font-medium text-blue-800 hover:bg-blue-50">Sélectionner des fichiers<input type="file" multiple className="sr-only" accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx" onChange={(event) => event.currentTarget.files && acceptDroppedFiles(event.currentTarget.files)} /></label>
               </div>
-              <div className="grid gap-2 sm:grid-cols-2"><div className="space-y-2"><Input value={uploadTargetSearch} onChange={(event) => setUploadTargetSearch(event.target.value)} placeholder="Rechercher un nom ou numéro…" aria-label="Rechercher un dossier destinataire" maxLength={200} /><select value={uploadCandidateId} onChange={(event) => setUploadCandidateId(event.target.value)} aria-label="Dossier destinataire du document" className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"><option value="">Choisir le dossier destinataire</option>{visibleUploadTargets.map((target) => <option key={target.value} value={target.value}>{target.label}</option>)}{visibleUploadTargets.length === 0 && <option value="" disabled>Aucun dossier trouvé</option>}</select></div><select value={uploadDocumentType} onChange={(event) => setUploadDocumentType(event.target.value)} className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"><option value="autre">Autre document</option><option value="cv">CV</option><option value="passeport">Passeport</option><option value="diplome">Diplôme</option><option value="justificatif_domicile">Justificatif de domicile</option><option value="justificatif_paiement">Justificatif de paiement</option><option value="document_remis_main_propre">Document remis en main propre</option></select></div>
+              <div className="grid gap-2 sm:grid-cols-2"><div className="space-y-2"><Input value={uploadTargetSearch} onChange={(event) => setUploadTargetSearch(event.target.value)} placeholder="Rechercher un nom ou numéro…" aria-label="Rechercher un dossier destinataire" maxLength={200} /><select value={uploadCandidateId} onChange={(event) => setUploadCandidateId(event.target.value)} aria-label="Dossier destinataire du document" className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"><option value="">Choisir le dossier destinataire</option>{visibleUploadTargets.map((target) => <option key={target.value} value={target.value}>{target.label}</option>)}{visibleUploadTargets.length === 0 && <option value="" disabled>Aucun dossier trouvé</option>}</select></div><select value={uploadDocumentType} onChange={(event) => setUploadDocumentType(event.target.value)} aria-label="Type de document à téléverser" data-testid="admin-upload-document-type" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" required><option value="">Choisir le type de document…</option><option value="cv">CV</option><option value="passeport">Passeport</option><option value="diplome">Diplôme</option><option value="releve_notes">Relevé de notes</option><option value="photo">Photo d’identité</option><option value="justificatif_domicile">Justificatif de domicile</option><option value="justificatif_paiement">Justificatif de paiement</option><option value="extrait_naissance">Acte de naissance</option><option value="casier_judiciaire">Casier judiciaire</option><option value="document_remis_main_propre">Document remis en main propre</option><option value="autre">Autre document</option></select></div>
               <div role="status" aria-live="polite" className={`rounded-lg border p-3 ${selectedUploadTarget ? (selectedUploadTarget.value.startsWith("agency:") ? "border-amber-300 bg-amber-50 text-amber-950" : "border-blue-200 bg-blue-50 text-blue-950") : "border-red-200 bg-red-50 text-red-900"}`}>
                 <p className="text-xs font-semibold uppercase tracking-wide">Dossier source du dépôt</p>
                 {selectedUploadTarget ? <><p className="mt-1 font-semibold">{selectedUploadTarget.label}</p><p className="mt-1 text-xs">{selectedUploadTarget.value.startsWith("agency:") ? "Pré-dossier ouvert en agence : les pièces seront conservées uniquement dans ce dossier." : "Compte candidat en ligne : les pièces seront conservées uniquement dans ce dossier."}</p></> : <p className="mt-1 text-sm font-medium">Sélectionnez un candidat ou un pré-dossier avant de déposer un fichier.</p>}
               </div>
               {droppedFiles.length > 0 && <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-2">{droppedFiles.map((file, index) => { const recognition = recognitionByFile[`${file.name}-${file.size}`]; return <div key={`${file.name}-${index}`} className="flex items-start justify-between gap-2 text-xs"><div className="min-w-0"><p className="truncate font-medium">{file.name} · {(file.size / 1024 / 1024).toFixed(2)} Mo</p>{recognition ? <p className="mt-0.5 text-violet-700">IA : {recognition.documentType} · {recognition.confidence}% — {recognition.suggestedFolder}. À confirmer avant dépôt.</p> : <p className="mt-0.5 text-slate-500">{isRecognizing ? "Analyse IA en cours…" : "Analyse IA en attente"}</p>}</div><button type="button" onClick={() => { setDroppedFiles((current) => current.filter((_, currentIndex) => currentIndex !== index)); setRecognitionByFile((current) => { const next = { ...current }; delete next[`${file.name}-${file.size}`]; return next; }); }} aria-label={`Retirer ${file.name}`} className="text-slate-500 hover:text-red-600"><X className="h-3.5 w-3.5" /></button></div>; })}</div>}
-              <Button type="button" onClick={() => void handleAdminDropUpload()} disabled={isLoading || !selectedUploadTarget || !droppedFiles.length} className="w-full gap-2"><Upload className="h-4 w-4" />Déposer dans le dossier sélectionné</Button>
+              <Button type="button" onClick={() => void handleAdminDropUpload()} disabled={isLoading || !selectedUploadTarget || !droppedFiles.length || !uploadDocumentType} className="w-full gap-2" data-testid="admin-upload-submit"><Upload className="h-4 w-4" />Déposer dans le dossier sélectionné</Button>
             </CardContent>
           </Card>
           <Card className="border-violet-100 bg-violet-50/30">
@@ -804,6 +823,18 @@ export function AdminDocumentsManagement() {
 
           <CardContent className="space-y-4">
             {/* Filtres et tri */}
+            <AdminDocumentInsightsCard sessionToken={sessionToken} />
+            {waitingSummary.pending > 0 && (
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs" data-testid="documents-waiting-queue">
+                <span className="font-semibold text-slate-800">File de vérification :</span>
+                <span data-testid="waiting-pending">{waitingSummary.pending} en attente</span>
+                <span className={waitingSummary.late > 0 ? "font-semibold text-amber-700" : "text-slate-500"} data-testid="waiting-late">{waitingSummary.late} depuis plus de 48 h</span>
+                <span className={waitingSummary.overdue > 0 ? "font-semibold text-rose-700" : "text-slate-500"} data-testid="waiting-overdue">{waitingSummary.overdue} depuis plus de 7 jours</span>
+                <Button type="button" size="sm" variant="outline" className="ml-auto h-7" data-testid="waiting-oldest-first" onClick={() => { setFilterStatus("pending"); setSortBy("uploadedAt"); setSortDirection("asc"); }}>
+                  Traiter les plus anciennes d’abord
+                </Button>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
               <Input
                 placeholder="Chercher par dossier, candidat, document ou IA..."
@@ -955,6 +986,12 @@ export function AdminDocumentsManagement() {
                               {doc.verificationStatus === "pending" && "En attente"}
                               {doc.verificationStatus === "rejected" && "Rejeté"}
                             </Badge>
+                            {doc.verificationStatus === "pending" && (() => {
+                              const waiting = waitingInfo(doc.submittedAt);
+                              if (!waiting) return null;
+                              const tone = waiting.level === "overdue" ? "text-rose-700" : waiting.level === "late" ? "text-amber-700" : "text-slate-500";
+                              return <span className={`text-[10px] font-semibold ${tone}`} data-testid={`doc-waiting-${doc.id}`}>{waiting.label}</span>;
+                            })()}
                             {doc.humanVerified ? (
                               <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700" title={`Vérifié par ${doc.verifiedByAdmin || "un administrateur"}`}>
                                 <CheckCircle2 className="w-3 h-3" /> Vérification humaine
@@ -1052,7 +1089,7 @@ export function AdminDocumentsManagement() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setUploadConfirmationOpen(false)}>Annuler</Button>
-              <Button type="button" disabled={!selectedUploadTarget || !droppedFiles.length || isLoading} onClick={() => void handleAdminDropUpload(true)}><Upload className="mr-2 h-4 w-4" />Confirmer et déposer</Button>
+              <Button type="button" disabled={!selectedUploadTarget || !droppedFiles.length || !uploadDocumentType || isLoading} onClick={() => void handleAdminDropUpload(true)}><Upload className="mr-2 h-4 w-4" />Confirmer et déposer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -1227,8 +1264,22 @@ export function AdminDocumentsManagement() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
+              <div role="group" aria-label="Motifs standard" className="flex flex-wrap gap-2" data-testid="rejection-reason-presets">
+                {DOCUMENT_REJECTION_REASONS.map((reason) => (
+                  <button
+                    key={reason.code}
+                    type="button"
+                    aria-pressed={rejectionCode === reason.code}
+                    data-testid={`rejection-reason-${reason.code}`}
+                    onClick={() => pickRejectionReason(reason.code)}
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold ${rejectionCode === reason.code ? "border-red-600 bg-red-600 text-white" : "border-slate-300 bg-white text-slate-700 hover:border-red-400"}`}
+                  >
+                    {reason.label}
+                  </button>
+                ))}
+              </div>
               <Textarea
-                placeholder="Raison du rejet (ex: Document illisible, informations manquantes, etc.)"
+                placeholder="Raison du rejet : choisissez un motif ci-dessus ou précisez ici ce que le candidat doit corriger"
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 maxLength={2000}

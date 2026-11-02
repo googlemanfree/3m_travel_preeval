@@ -5,6 +5,8 @@ import { procedures107Complete } from "@/data/procedures107Complete";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ChecklistSection, CommitmentsSection, FaqSection, StepsSection } from "@/components/PageEnrichment";
+import { DOC_COMMON_ERRORS, DOC_FAMILIES, DOC_FAQ, DOC_FORMALITIES, DOC_FORMAT_RULES } from "@/data/contentCampaignDocs";
 
 export default function DocumentCompliancePage() {
   const [query, setQuery] = useState("");
@@ -69,6 +71,14 @@ export default function DocumentCompliancePage() {
             </div>
           </div>
         </div>
+      </div>
+
+      <div data-testid="compliance-guide">
+        <CommitmentsSection title="Les six familles de pièces" introduction="Quel que soit le pays, un dossier se compose de ces ensembles ; la liste ci-dessus précise ce qui est attendu pour la destination choisie." items={DOC_FAMILIES} tone="slate" testId="compliance-families" />
+        <ChecklistSection title="Bien préparer vos fichiers" introduction="Une pièce illisible est la première cause de renvoi d’un dossier." items={DOC_FORMAT_RULES} tone="white" testId="compliance-format" />
+        <StepsSection title="Traduction, légalisation, apostille" introduction="Trois formalités que l’on confond souvent : demandez-nous laquelle s’applique avant de payer quoi que ce soit." steps={DOC_FORMALITIES} tone="slate" testId="compliance-formalities" />
+        <ChecklistSection title="Les erreurs qui font renvoyer un dossier" items={DOC_COMMON_ERRORS} tone="blue" testId="compliance-errors" />
+        <FaqSection title="Questions sur les documents" items={DOC_FAQ} testId="compliance-faq" />
       </div>
     </main>
   );

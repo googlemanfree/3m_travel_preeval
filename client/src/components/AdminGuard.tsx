@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { AlertCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AdminNotificationBell from "@/components/AdminNotificationBell";
+import AdminTwoFactorNotice from "@/components/AdminTwoFactorNotice";
 import { trpc } from "@/lib/trpc";
 
 interface AdminGuardProps {
@@ -35,6 +36,7 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
     localStorage.setItem("adminSessionToken", restoredToken);
     sessionStorage.setItem("adminName", admin.fullName);
     sessionStorage.setItem("adminEmail", admin.email);
+    localStorage.setItem("adminEmail", admin.email);
     setSessionToken(restoredToken);
   }, [platformBootstrap.data]);
   useEffect(() => {
@@ -155,6 +157,7 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
       <div className="fixed top-3 right-4 z-[60] bg-white rounded-full shadow-md border border-gray-100">
         <AdminNotificationBell />
       </div>
+      <AdminTwoFactorNotice sessionToken={sessionToken} />
       {children}
     </>
   );

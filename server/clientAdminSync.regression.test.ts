@@ -47,7 +47,7 @@ describe("sync admin ↔ client — garde-fous dynamiques", () => {
     // Une seule CandidateCountryJourney (onglet dossier), pas en overview.
     expect(page.match(/<CandidateCountryJourney\b/g)?.length).toBe(1);
     const caseDocs = read("client/src/components/CaseDocumentsPanel.tsx");
-    expect(caseDocs).toContain("Aucune pièce synchronisée pour le moment");
+    expect(caseDocs).toContain("Aucune pièce dans le coffre pour le moment");
     expect(caseDocs).toContain("publication agence vers l’espace client");
     expect(caseDocs).not.toContain("Dès qu’un document est déposé (par vous ou en agence), il apparaît ici");
   });

@@ -4,7 +4,8 @@ import { resolve } from "node:path";
 import { buildEvaluationResponseTemplate, getEvaluationResponseTemplates } from "./services/evaluationResponseTemplates";
 
 const root = resolve(import.meta.dirname, "..");
-const read = (path: string) => readFileSync(resolve(root, path), "utf8");
+// Fins de ligne normalisées : le test passe aussi bien sur un poste Windows (CRLF) que sur Linux (LF).
+const read = (path: string) => readFileSync(resolve(root, path), "utf8").replace(/\r\n/g, "\n");
 
 describe("pilotage administratif des évaluations 2026", () => {
   it("propose des modèles neutres par projet, toujours destinés à la relecture", () => {
@@ -83,15 +84,15 @@ describe("reprise et aperçu du bilan", () => {
     const router = read("server/routers/unifiedRequests.ts");
     const editor = read("client/src/components/EvaluationDeliveryEditor.tsx");
     expect(router).toContain("contentJson: evaluationBilanVersions.contentJson");
-    expect(editor).toContain("const resumeVersion = (version: any)");
-    expect(editor).toContain("Reprendre l’évaluation");
-    expect(editor).toContain("setRecommendations(joinLines");
-    expect(editor).toContain("lg:flex-row");
+    expect(editor).toContain("draft.bilanSource || draft.bilanHtml");
+    expect(editor).toContain("setBaseline(stored)");
+    expect(editor).toContain("setText((current) => (current === baseline ? stored : current))");
+    expect(editor).toContain("lg:grid-cols-2");
     expect(editor).toContain("lg:overflow-hidden");
-    expect(editor).toContain("lg:min-w-[640px]");
+    expect(editor).toContain("lg:min-h-0");
     expect(editor).not.toContain("sm:grid-cols-4");
-    expect(editor).toContain("Tester SMTP");
-    expect(editor).toContain("lg:min-w-[640px]");
+    expect(editor).not.toContain("Tester SMTP");
+    expect(editor).toContain("lg:min-h-0");
   });
 
   it("tolère l’indisponibilité de la table legacy sans bloquer le pilotage", () => {
@@ -134,9 +135,9 @@ describe("reprise et aperçu du bilan", () => {
     expect(router).toContain("return {\n        recipient:");
     const previewBlock = router.slice(router.indexOf("previewEvaluationDeliveryEmail"), router.indexOf("previewEvaluationDeliveryPdf"));
     expect(previewBlock).not.toContain("sendEmail(");
-    expect(editor).toContain("sandbox=\"\" srcDoc={emailPreview.html}");
-    expect(editor).toContain("Destinataire :");
-    expect(editor).toContain("Objet :");
+    expect(editor).toContain("sandbox=\"\" srcDoc={previewDocument}");
+    expect(editor).toContain("Aperçu en direct");
+    expect(editor).toContain("bilan-live-preview");
     expect(editor).toContain("isLoading ?");
     expect(editor).not.toContain("isLoading || isFetching ?");
   });

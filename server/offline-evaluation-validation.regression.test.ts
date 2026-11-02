@@ -35,7 +35,7 @@ describe("validation d’évaluation hors ligne", () => {
   it("conserve les aperçus avant envoi dans l’éditeur de bilan", () => {
     expect(editorSource).toContain("Aperçu");
     expect(editorSource).toContain("PDF");
-    expect(editorSource).toContain("Valider et envoyer");
+    expect(editorSource).toContain("Envoyer (espace client + e-mail)");
   });
 });
 

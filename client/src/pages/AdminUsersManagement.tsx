@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
+import { getAdminSessionToken } from "@/lib/adminSession";
 import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,7 +49,7 @@ function ViewUserButton({ userId }: { userId: number }) {
 }
 
 export default function AdminUsersManagement() {
-  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
+  const sessionToken = getAdminSessionToken();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 20;
@@ -119,7 +120,7 @@ export default function AdminUsersManagement() {
           u.email,
           u.name || "N/A",
           u.applicationCount,
-          u.lastApplication?.dossierNumber || "N/A",
+          u.lastApplication?.displayReference || u.lastApplication?.dossierNumber || "N/A",
           getLastApplicationStatus(u),
           new Date(u.createdAt).toLocaleDateString("fr-FR"),
         ].join(",")
@@ -274,7 +275,7 @@ export default function AdminUsersManagement() {
                         </td>
                         <td className="px-6 py-4">
                           <span className="text-sm text-gray-600">
-                            {user.lastApplication?.dossierNumber || "—"}
+                            {user.lastApplication?.displayReference || user.lastApplication?.dossierNumber || "—"}
                           </span>
                         </td>
                         <td className="px-6 py-4">

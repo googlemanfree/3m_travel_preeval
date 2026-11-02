@@ -339,7 +339,8 @@ export function registerCandidateUploadRoute(app: import("express").Express) {
           candidateFileId,
         });
       }
-      if (candidate.dossierStatus === "nouveau" || candidate.dossierStatus === "evaluation") {
+      // Déposer une pièce n'ouvre jamais le dossier : un pré-compte (« nouveau ») le reste jusqu'à la preuve de paiement.
+      if (candidate.dossierStatus === "evaluation") {
         await db.update(candidates).set({ dossierStatus: "documents" }).where(eq(candidates.id, candidateId));
       }
       const normalizedCandidateEmail = candidate.email.trim().toLowerCase();

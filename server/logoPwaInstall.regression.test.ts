@@ -3,7 +3,8 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const root = resolve(import.meta.dirname, "..");
-const read = (path: string) => readFileSync(resolve(root, path), "utf8");
+// Fins de ligne normalisées : le test passe aussi bien sur un poste Windows (CRLF) que sur Linux (LF).
+const read = (path: string) => readFileSync(resolve(root, path), "utf8").replace(/\r\n/g, "\n");
 
 describe("logo de navigation et installation PWA", () => {
   it("anime le chargement du logo et fournit un retour de survol accessible", () => {

@@ -85,6 +85,8 @@ export default function AdminClientSpaceLivePreview() {
                 dossierStatus={data.candidate.dossierStatus}
                 destination={data.candidate.destination}
                 visaType={data.candidate.visaType}
+                programId={data.candidate.programId}
+                domainId={data.candidate.domainId}
                 paymentConfirmed={data.payment.confirmed}
               />
               <section className="rounded-xl border border-amber-200 bg-amber-50/80 p-4">

@@ -32,7 +32,13 @@ describe("questions adaptées au pays et au type de visa (au-delà du Canada)", 
   it("le Canada et l'e-Visa gardent leurs questions ; un pays sans catalogue n'en reçoit pas d'inventées", () => {
     expect(keys("etudes", "Canada", "Visa études")).toContain("canadaDli");
     expect(keys("etudes", "Canada", "Visa études")).not.toContain("admissionLetter");
-    expect(keys("travail", "Japon", "Visa travail")).toEqual(["selectedProcedure"]);
+    // Un pays sans catalogue dédié reçoit uniquement les questions génériques adaptées à sa langue et à son projet
+    // (shared/countryEvaluationProfile.ts) : aucune question propre à une règle d'entrée qu'on ne connaît pas.
+    const japan = keys("travail", "Japon", "Visa travail");
+    expect(japan[0]).toBe("selectedProcedure");
+    expect(japan).toEqual(["selectedProcedure", "workRoute", "diplomaRecognitionStatus", "languageProof_ja", "priorVisaRefusal", "priorStayInCountry", "contactInCountry"]);
+    expect(japan).not.toContain("canadaDli");
+    expect(japan).not.toContain("admissionLetter");
   });
 
   it("chaque question a une clé unique, un libellé français et des options non vides", () => {

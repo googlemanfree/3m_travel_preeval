@@ -20,7 +20,7 @@ describe("client communication wording", () => {
   it("keeps technical wording confined to the admin editor surfaces", () => {
     const editor = readProjectFile("client/src/components/EvaluationDeliveryEditor.tsx");
     const adminDashboard = readProjectFile("client/src/pages/AdminAIEvaluationDashboard.tsx");
-    expect(editor).toContain("proposition IA à relire");
+    expect(editor).not.toContain("proposition IA");
     expect(adminDashboard).toContain("Brouillon IA disponible");
   });
 });

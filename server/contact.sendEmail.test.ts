@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { sendEmail } from "./_core/email";
 
-describe("Email Service", () => {
+// Vérification de configuration : exécutée là où la clé Resend est fournie (production, CI avec secrets), ignorée en local.
+describe.skipIf(!process.env.RESEND_API_KEY)("Email Service", () => {
   beforeAll(() => {
     // Vérifier que RESEND_API_KEY est défini
     if (!process.env.RESEND_API_KEY) {

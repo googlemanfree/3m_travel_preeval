@@ -9,9 +9,17 @@ import { TRPCError } from "@trpc/server";
 
 // Stockage en mémoire des tentatives (dans un vrai système, utiliser Redis)
 const loginAttempts: Map<string, { count: number; lockedUntil: Date | null }> = new Map();
+const exemptLoginAlerts: Map<string, { count: number; alertedAt: Date | null }> = new Map();
 
 const MAX_ATTEMPTS = 3;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
+const EXEMPT_ALERT_THRESHOLD = 3;
+const EXEMPT_ALERT_COOLDOWN = 15 * 60 * 1000;
+
+/** Évite qu’un même e-mail utilisé sur plusieurs espaces partage son verrouillage. */
+export function scopedLoginIdentifier(scope: string, identifier: string): string {
+  return `${scope}:${identifier.trim().toLowerCase()}`;
+}
 
 /**
  * Enregistre une tentative de connexion infructueuse
@@ -41,10 +49,83 @@ export function recordFailedAttempt(identifier: string): void {
 }
 
 /**
+ * Ralentissement progressif (sans jamais bloquer) : à partir de la 3e erreur récente sur un identifiant, chaque nouvelle tentative
+ * attend 1 s de plus, jusqu'à 5 s. Un usage normal ne le voit pas ; tester des milliers de mots de passe devient impraticable.
+ */
+const recentFailures: Map<string, { count: number; lastAt: number }> = new Map();
+const SLOWDOWN_WINDOW_MS = 15 * 60 * 1000;
+const SLOWDOWN_START = 3;
+const SLOWDOWN_STEP_MS = 1000;
+const SLOWDOWN_MAX_MS = 5000;
+
+export function recordSlowdownFailure(identifier: string, now: number = Date.now()): void {
+  const current = recentFailures.get(identifier);
+  const count = current && now - current.lastAt < SLOWDOWN_WINDOW_MS ? current.count + 1 : 1;
+  recentFailures.set(identifier, { count, lastAt: now });
+  // Borne la mémoire : on oublie les identifiants inactifs.
+  if (recentFailures.size > 5000) {
+    Array.from(recentFailures.entries()).forEach(([key, value]) => { if (now - value.lastAt >= SLOWDOWN_WINDOW_MS) recentFailures.delete(key); });
+  }
+}
+
+const attemptsInFlight: Set<string> = new Set();
+
+/**
+ * Une seule tentative de connexion à la fois par identifiant : sans cela, des tentatives lancées en parallèle contourneraient le
+ * ralentissement. Un humain ne déclenche jamais ce refus ; il ne vise que les essais automatisés simultanés.
+ */
+export async function runExclusiveLogin<T>(identifier: string, attempt: () => Promise<T>): Promise<T> {
+  if (attemptsInFlight.has(identifier)) {
+    throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Une tentative de connexion est déjà en cours pour ce compte. Patientez quelques secondes." });
+  }
+  attemptsInFlight.add(identifier);
+  try {
+    return await attempt();
+  } finally {
+    attemptsInFlight.delete(identifier);
+  }
+}
+
+export function resetSlowdown(identifier: string): void {
+  recentFailures.delete(identifier);
+}
+
+/** Attente (en millisecondes) à appliquer avant de traiter la prochaine tentative. */
+export function slowdownDelayMs(identifier: string, now: number = Date.now()): number {
+  const current = recentFailures.get(identifier);
+  if (!current || now - current.lastAt >= SLOWDOWN_WINDOW_MS) return 0;
+  if (current.count < SLOWDOWN_START) return 0;
+  return Math.min(SLOWDOWN_MAX_MS, (current.count - SLOWDOWN_START + 1) * SLOWDOWN_STEP_MS);
+}
+
+/**
  * Réinitialise les tentatives après une connexion réussie
  */
 export function resetLoginAttempts(identifier: string): void {
   loginAttempts.delete(identifier);
+}
+
+/**
+ * Compte les échecs du compte exempté sans jamais le verrouiller.
+ * Retourne true une seule fois par fenêtre de 15 minutes lorsque le seuil est atteint.
+ */
+export function recordExemptLoginAttempt(identifier: string): boolean {
+  const now = new Date();
+  const current = exemptLoginAlerts.get(identifier);
+  if (current?.alertedAt && now.getTime() - current.alertedAt.getTime() >= EXEMPT_ALERT_COOLDOWN) {
+    exemptLoginAlerts.delete(identifier);
+  }
+
+  const refreshed = exemptLoginAlerts.get(identifier) || { count: 0, alertedAt: null };
+  const count = refreshed.count + 1;
+  const shouldAlert = count >= EXEMPT_ALERT_THRESHOLD && !refreshed.alertedAt;
+  exemptLoginAlerts.set(identifier, { count, alertedAt: shouldAlert ? now : refreshed.alertedAt });
+  return shouldAlert;
+}
+
+/** Réinitialise le compteur d’alerte après une connexion réussie. */
+export function resetExemptLoginAttempts(identifier: string): void {
+  exemptLoginAlerts.delete(identifier);
 }
 
 /**
@@ -87,4 +168,15 @@ export function getRemainingAttempts(identifier: string): number {
   }
 
   return Math.max(0, MAX_ATTEMPTS - current.count);
+}
+
+/** Retourne uniquement l’état nécessaire à l’interface de connexion. */
+export function getLoginAttemptStatus(identifier: string): { remainingAttempts: number; maxAttempts: number; lockedUntil: Date | null } {
+  const current = loginAttempts.get(identifier);
+  const remainingAttempts = getRemainingAttempts(identifier);
+  return {
+    remainingAttempts,
+    maxAttempts: MAX_ATTEMPTS,
+    lockedUntil: current?.lockedUntil ?? null,
+  };
 }

@@ -89,21 +89,21 @@ describe("formulaire d'évaluation — progression et brouillon", () => {
   it("affiche une progression accessible sur les six sections, section par section", () => {
     expect(form).toContain("Progression du formulaire");
     expect(form).toContain('role="progressbar"');
-    expect(form).toContain("sectionProgress / 6");
-    expect(form).toContain("sectionsDone[i]");
-    for (const label of ["État civil", "Études", "Expérience", "Langues", "Projet", "Historique"]) {
-      expect(form).toContain(`"${label}"`);
-    }
+    // Une étape par bloc réellement affiché : la progression suit le formulaire dynamique.
+    expect(form).toContain("progressPercent");
+    expect(form).toContain("progressSteps");
+    for (const label of ["Études", "Expérience", "Langues"]) expect(form).toContain(`${label}`);
+    for (const label of ["Projet", "État civil", "Historique"]) expect(form).toContain(`'${label}'`);
   });
 
   it("ne part pas de 17 % : « Historique » n'est acquis qu'une fois les cinq autres sections complétées", () => {
-    expect(form).toContain("return [...done, done.every(Boolean)];");
+    expect(form).toContain("{ label: 'Historique', done: steps.every((step) => step.done) }");
     expect(form).not.toContain("const s6 = 1");
   });
 
   it("sauvegarde le brouillon avec délai, le restaure, l'efface après envoi réussi ou sur demande", () => {
     expect(form).toContain("const DRAFT_KEY = 'eval_draft'");
-    expect(form).toContain("localStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), owner: draftOwner, form }))");
+    expect(form).toContain("localStorage.setItem(DRAFT_KEY, JSON.stringify({ version: 1, savedAt, owner: draftOwner, form }))");
     expect(form).toContain("localStorage.getItem(DRAFT_KEY)");
     expect(form).toContain("Brouillon restauré");
     expect(form).toContain("localStorage.removeItem(DRAFT_KEY)");
@@ -120,7 +120,7 @@ describe("formulaire d'évaluation — progression et brouillon", () => {
   });
 
   it("laisse un projet choisi dans l'URL primer sur un ancien brouillon", () => {
-    expect(form).toContain("isEvaluationProjectType(projectFromUrl) && saved.form.projectType !== projectFromUrl");
+    expect(form).toContain("normalizedProjectFromUrl && saved.form.projectType !== normalizedProjectFromUrl");
   });
 
   it("ne sérialise jamais le fichier CV dans le brouillon", () => {

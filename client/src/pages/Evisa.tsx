@@ -328,6 +328,7 @@ export default function Evisa() {
                 animate={{ opacity: 1 }}
                 className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
               >
+                <h2 className="sr-only md:col-span-2 lg:col-span-3">Destinations e-Visa</h2>
                 {filtered.map((d, index) => (
                   <motion.div
                     key={d.country}

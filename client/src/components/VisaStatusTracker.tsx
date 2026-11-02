@@ -233,11 +233,46 @@ export const VisaStatusTracker: React.FC<VisaStatusTrackerProps> = ({
 
       {/* Action Buttons */}
       <div className="flex gap-3 pt-4">
-        <Button className="flex-1 bg-indigo-600 hover:bg-indigo-700">
-          📞 Contacter le Support
+        <Button
+          type="button"
+          className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+          onClick={() => {
+            const message = encodeURIComponent(
+              `Bonjour 3M TRAVEL AGENCY, je souhaite un point sur mon dossier ${dossierStatus.dossierNumber} (${dossierStatus.destination} — ${dossierStatus.visaType}).`,
+            );
+            window.open(`https://wa.me/237698104832?text=${message}`, "_blank", "noopener,noreferrer");
+          }}
+        >
+          Contacter le Support
         </Button>
-        <Button variant="outline" className="flex-1">
-          📥 Télécharger le Rapport
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1"
+          onClick={() => {
+            const lines = [
+              `Dossier ${dossierStatus.dossierNumber}`,
+              `Candidat : ${dossierStatus.candidateName}`,
+              `Destination : ${dossierStatus.destination}`,
+              `Visa : ${dossierStatus.visaType}`,
+              `Statut : ${dossierStatus.overallStatus}`,
+              `Progression : ${dossierStatus.progressPercentage}%`,
+              `Mis à jour : ${new Date(dossierStatus.lastUpdated).toLocaleString("fr-FR")}`,
+              "",
+              "Étapes :",
+              ...dossierStatus.steps.map((step) => `- [${step.status}] ${step.name} — ${step.description}`),
+              dossierStatus.notes ? `\nNotes : ${dossierStatus.notes}` : "",
+            ];
+            const blob = new Blob([lines.filter(Boolean).join("\n")], { type: "text/plain;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement("a");
+            anchor.href = url;
+            anchor.download = `rapport-dossier-${dossierStatus.dossierNumber}.txt`;
+            anchor.click();
+            URL.revokeObjectURL(url);
+          }}
+        >
+          Télécharger le Rapport
         </Button>
       </div>
     </div>

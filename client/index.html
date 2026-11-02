@@ -1,10 +1,22 @@
 <!doctype html>
+<!-- Rebuild sentinel: promotes the current WebDev checkpoint to production. -->
 <html lang="fr">
 
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>3M TRAVEL AGENCY | Voyages, Visas, Études &amp; Mobilité Internationale</title>
+    <title>3M Travel Agency | Agence de voyage, visas et mobilité</title>
+    <meta name="description" content="Agence de voyage à Yaoundé et Ottawa : billets, hôtels, visas, études à l’étranger et préparation de dossiers de mobilité internationale." />
+    <meta name="keywords" content="agence de voyage Yaoundé, visas Cameroun, études à l’étranger, mobilité internationale, billets d’avion, 3M Travel Agency" />
+    <link rel="canonical" href="https://www.3mtravelagency.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="3M TRAVEL AGENCY" />
+    <meta property="og:title" content="3M Travel Agency | Agence de voyage, visas et mobilité" />
+    <meta property="og:description" content="Billets, hôtels, visas, études à l’étranger et préparation de dossiers depuis Yaoundé et Ottawa." />
+    <meta property="og:url" content="https://www.3mtravelagency.com/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="3M Travel Agency | Agence de voyage, visas et mobilité" />
+    <meta name="twitter:description" content="Billets, hôtels, visas, études à l’étranger et préparation de dossiers depuis Yaoundé et Ottawa." />
     <meta name="3m-build-marker" content="admin-bilan-online-reference-2026-09-04-v1" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -42,7 +54,7 @@
             return;
           }
 
-          const SW_REVISION = '2026-10-15-nouveau-logo-v58';
+          const SW_REVISION = '2026-10-15-logo-partage-wordmark-v60';
           navigator.serviceWorker.register('/sw.js?revision=' + SW_REVISION, { updateViaCache: 'none' }).then(registration => {
             // Toujours rechercher une nouvelle version après un déploiement :
             // cela évite qu’une ancienne page ou un ancien bundle reste affiché.
@@ -97,10 +109,13 @@
     <!-- Polices premium lisibles (Manrope corps + Sora titres), chargées sans bloquer le premier rendu. -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" /></noscript>
-    <!-- Analytics différé : aucune requête tierce ne concurrence le premier affichage. -->
+    <!-- Mesure d'audience : chargée UNIQUEMENT après consentement du visiteur (bandeau cookies, clé 3m-analytics-consent), jamais avant. -->
     <script>
       window.addEventListener('load', function () {
-        var loadAnalytics = function () {
+        var loaded = false;
+        window.__load3mAnalytics = function () {
+          if (loaded) return;
+          loaded = true;
           window.dataLayer = window.dataLayer || [];
           window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
           window.gtag('js', new Date());
@@ -115,8 +130,11 @@
           umami.dataset.websiteId = '%VITE_ANALYTICS_WEBSITE_ID%';
           document.body.appendChild(umami);
         };
-        if ('requestIdleCallback' in window) window.requestIdleCallback(loadAnalytics, { timeout: 2500 });
-        else window.setTimeout(loadAnalytics, 2500);
+        var consent = null;
+        try { consent = window.localStorage.getItem('3m-analytics-consent'); } catch (e) { consent = null; }
+        if (consent !== 'granted') return;
+        if ('requestIdleCallback' in window) window.requestIdleCallback(window.__load3mAnalytics, { timeout: 2500 });
+        else window.setTimeout(window.__load3mAnalytics, 2500);
       }, { once: true });
     </script>
   </head>

@@ -11,6 +11,7 @@ import {
   ExternalLink,
   FileText,
   Globe2,
+  Loader2,
   Search,
   Share2,
   ShieldCheck,
@@ -31,6 +32,7 @@ import {
 } from "@shared/procedureGuideEnrichment";
 import { summarizePdfResource } from "@shared/publishedGuideSummaries";
 import { PublishedGuideSummaryPanel } from "@/components/PublishedGuideSummaryPanel";
+import { toast } from "sonner";
 
 const CATEGORY_FILTERS = [
   { id: "all", label: "Tout" },
@@ -141,6 +143,7 @@ export default function ProcedureResourceGuide() {
   const [categoryFilter, setCategoryFilter] = useState<(typeof CATEGORY_FILTERS)[number]["id"]>("all");
   const [countryFilter, setCountryFilter] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [openCategories, setOpenCategories] = useState<string[]>([]);
   const query = searchQuery.trim().toLowerCase();
   const shareUrl = typeof window !== "undefined" ? getProcedureGuideUrl(window.location.origin) : "/guide-procedures";
@@ -201,21 +204,32 @@ export default function ProcedureResourceGuide() {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2200);
+      toast.success("Lien du guide copié", { description: "Vous pouvez maintenant le partager où vous voulez." });
     } catch {
       setCopied(false);
+      toast.error("Copie impossible", { description: "Utilisez le bouton de partage ou copiez le lien manuellement." });
     }
   };
 
   const shareGuide = async () => {
-    if (navigator.share) {
-      await navigator.share({
-        title: "Guides & procédures 3M TRAVEL AGENCY",
-        text: "Retrouvez les procédures et ressources PDF 3M TRAVEL AGENCY.",
-        url: shareUrl,
-      });
-      return;
+    setIsSharing(true);
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Guides & procédures 3M TRAVEL AGENCY",
+          text: "Retrouvez les procédures et ressources PDF 3M TRAVEL AGENCY.",
+          url: shareUrl,
+        });
+        toast.success("Partage prêt", { description: "Le guide a été transmis au menu de partage de votre appareil." });
+        return;
+      }
+      await copyShareLink();
+    } catch {
+      // L’annulation du menu natif de partage n’est pas une erreur utilisateur.
+      toast.info("Partage annulé");
+    } finally {
+      setIsSharing(false);
     }
-    await copyShareLink();
   };
 
   return (
@@ -235,16 +249,19 @@ export default function ProcedureResourceGuide() {
             à vérifier avant toute démarche.
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <Button onClick={copyShareLink} className="rounded-xl bg-white text-blue-900 hover:bg-blue-50">
+            <Button onClick={copyShareLink} className="rounded-xl bg-white text-blue-900 hover:bg-blue-50" aria-label="Copier le lien du guide des procédures">
               {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               {copied ? "Lien copié" : "Copier le lien client"}
             </Button>
             <Button
               onClick={shareGuide}
+              disabled={isSharing}
+              aria-busy={isSharing}
               variant="outline"
               className="rounded-xl border-white/40 bg-white/10 text-white hover:bg-white/20"
             >
-              <Share2 className="h-4 w-4" /> Partager le guide
+              {isSharing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Share2 className="h-4 w-4" aria-hidden="true" />}
+              {isSharing ? "Partage en cours…" : "Partager le guide"}
             </Button>
             <a
               href="/procedures"

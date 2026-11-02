@@ -42,7 +42,9 @@ describe("en-têtes de sécurité", () => {
     for (const path of ["/", "/procedures", "/flights", "/blog/etudes/canada"]) {
       const headers = headersFor(path);
       expect(headers["X-Frame-Options"], path).toBeUndefined();
-      expect(headers["Content-Security-Policy"], path).toBeUndefined();
+      // CSP minimale (objets et <base>) sans frame-ancestors : l'aperçu de l'hébergeur reste possible.
+      expect(headers["Content-Security-Policy"], path).toBe("object-src 'none'; base-uri 'self'");
+      expect(headers["Content-Security-Policy"], path).not.toContain("frame-ancestors");
     }
   });
 
@@ -51,7 +53,7 @@ describe("en-têtes de sécurité", () => {
       expect(isPrivatePath(path), path).toBe(true);
       const headers = headersFor(path);
       expect(headers["X-Frame-Options"], path).toBe("SAMEORIGIN");
-      expect(headers["Content-Security-Policy"], path).toBe("frame-ancestors 'self'");
+      expect(headers["Content-Security-Policy"], path).toBe("frame-ancestors 'self'; object-src 'none'; base-uri 'self'");
     }
     expect(isPrivatePath("/administration-publique")).toBe(false);
     expect(isPrivatePath("/loginx")).toBe(false);

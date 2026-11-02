@@ -66,7 +66,7 @@ describe("post-évaluation confiance — prochaine étape, docs, analytics, avis
     expect(privacy).toContain("Qui peut consulter vos documents");
     expect(privacy).toContain("jusqu’à 5 ans");
     expect(privacy).toContain("partenaires B2B");
-    expect(prerender).toContain("consultation limitée à votre compte et à l’équipe 3M affectée");
+    expect(prerender).toContain("vous (Mon espace) et les conseillers 3M affectés à votre dossier");
     expect(read("shared/documentVaultPolicy.ts")).toContain("jusqu’à 5 ans après clôture");
   });
 

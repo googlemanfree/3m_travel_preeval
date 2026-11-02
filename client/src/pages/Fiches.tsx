@@ -344,6 +344,7 @@ export default function Fiches() {
 
       {/* Filtres */}
       <section className="bg-white border-b border-gray-200 sticky top-16 z-40 shadow-sm">
+        <h2 className="sr-only">Rechercher et filtrer les fiches</h2>
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">
             {/* Recherche */}
@@ -419,6 +420,7 @@ export default function Fiches() {
 
       {/* Grille des fiches */}
       <section className="max-w-7xl mx-auto px-4 py-8">
+        <h2 className="mb-4 text-xl font-black text-gray-900" data-testid="fiches-results-title">Fiches disponibles</h2>
         {filtered.length === 0 ? (
           <div className="text-center py-20 text-gray-500">
             <Search className="w-12 h-12 mx-auto mb-4 text-gray-300" />
