@@ -11,7 +11,8 @@ const stylesSource = readFileSync(resolve(process.cwd(), "client/src/index.css")
 describe("retours d’interface", () => {
   it("prévoit une fermeture de secours pour l’indicateur de navigation", () => {
     expect(progressSource).toContain("fallbackTimeout");
-    expect(progressSource).toContain('aria-valuetext="Navigation en cours"');
+    // Le texte annoncé peut être précisé (annonce de page), mais « Navigation en cours » reste le repli lu par les lecteurs d’écran.
+    expect(progressSource).toContain('aria-valuetext={announcement || "Navigation en cours"}');
   });
 
   it("configure des notifications lisibles et fermables", () => {
