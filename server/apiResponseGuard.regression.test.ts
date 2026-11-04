@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { normalizeApiResponse } from "../client/src/lib/apiResponseGuard";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 describe("garde-fou des réponses API", () => {
   it("convertit un document HTML inattendu en erreur JSON structurée", async () => {
@@ -28,5 +30,12 @@ describe("garde-fou des réponses API", () => {
       headers: { "content-type": "application/json" },
     });
     expect(await normalizeApiResponse(response)).toBe(response);
+  });
+
+  it("prévoit une récupération unique quand le client reçoit une réponse tRPC obsolète", () => {
+    const main = readFileSync(resolve(process.cwd(), "client/src/main.tsx"), "utf8");
+    expect(main).toContain('3m_api_transform_error_reload_attempted');
+    expect(main).toContain('recoverFromApiTransformError();');
+    expect(main).toContain('clearStaleClientCaches().finally(() => window.location.reload())');
   });
 });

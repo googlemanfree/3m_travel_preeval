@@ -94,6 +94,23 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
   startLogin();
 };
 
+const API_TRANSFORM_RELOAD_KEY = "3m_api_transform_error_reload_attempted";
+
+const recoverFromApiTransformError = () => {
+  if (typeof window === "undefined") return;
+  try {
+    if (sessionStorage.getItem(API_TRANSFORM_RELOAD_KEY)) return;
+    sessionStorage.setItem(API_TRANSFORM_RELOAD_KEY, "1");
+  } catch {
+    return;
+  }
+  toast.info("Actualisation de la connexion", {
+    description: "La réponse du serveur a changé. Actualisation automatique en cours…",
+    duration: 4000,
+  });
+  void clearStaleClientCaches().finally(() => window.location.reload());
+};
+
 // Gestionnaire global pour les erreurs de transformation de réponse
 const handleResponseError = (error: unknown) => {
   if (typeof window === "undefined") return;
@@ -101,6 +118,7 @@ const handleResponseError = (error: unknown) => {
   // Erreur de transformation JSON
   if (error instanceof Error && error.message.includes("Unable to transform response")) {
     console.error("[Response Transform Error]", error);
+    recoverFromApiTransformError();
     return "Erreur de communication avec le serveur. Veuillez réessayer.";
   }
   
