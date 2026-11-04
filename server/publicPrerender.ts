@@ -957,6 +957,7 @@ export function composePublicPrerender(template: string, url: string) {
   const head = [
     `<title>${esc(current.title)}</title>`,
     `<meta name="description" content="${esc(current.description)}" />`,
+    ...(path === "/canada" ? [`<link rel="preload" as="image" href="https://files.manuscdn.com/user_upload_by_module/session_file/310519663571863877/PFwsgxteRQDjfsGU.webp" type="image/webp" fetchpriority="high" />`] : []),
     ...(current.keywords?.length ? [`<meta name="keywords" content="${esc(current.keywords.join(", "))}" />`] : []),
     robot,
     `<link rel="canonical" href="${canonicalAttr}" />`,
