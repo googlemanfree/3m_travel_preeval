@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Banknote, Building2, Check, Clock, CreditCard, Landmark, LoaderCircle, MessageCircle, Smartphone } from "lucide-react";
+import { Banknote, Building2, Check, Clock, CreditCard, Landmark, MessageCircle, Smartphone } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { COMPANY_PROFILE } from "@/lib/companyContacts";
 import {
@@ -106,13 +106,7 @@ export default function PaymentMethodsPanel() {
   const [openId, setOpenId] = useState<string | null>(null);
 
   return (
-    <div data-testid="payment-methods" aria-busy={query.isLoading ? "true" : "false"}>
-      {query.isLoading && (
-        <div role="status" aria-live="polite" data-testid="payment-methods-loading" className="mb-4 flex items-center gap-3 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-4 text-sm font-semibold text-blue-900">
-          <LoaderCircle className="h-5 w-5 animate-spin text-blue-700" aria-hidden="true" />
-          <span>Chargement des moyens de paiement sécurisés…</span>
-        </div>
-      )}
+    <div data-testid="payment-methods">
       <ul className="grid gap-3 md:grid-cols-2">
         {methods.map((method) => {
           const Icon = METHOD_ICONS[method.id];
