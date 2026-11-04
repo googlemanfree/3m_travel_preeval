@@ -9,7 +9,8 @@ import { PlaneTakeoff, Building2, MapPinned, BriefcaseBusiness, HeartHandshake, 
 import { trpc } from "@/lib/trpc";
 import { SimulatorRetryBoundary } from "@/components/SimulatorRetryBoundary";
 
-const createCanadaScoreSimulator = () => React.lazy(() => import("@/components/CanadaScoreSimulator"));
+// Calculatrice « comme canada.ca » (grille IRCC du 3 novembre 2026) : remplace l'ancien simulateur à étapes.
+const createCanadaScoreSimulator = () => React.lazy(() => import("@/components/CrsOfficialCalculator"));
 
 const pathways = [
   { title: "Entrée express", icon: PlaneTakeoff, tag: "Résidence permanente", text: "IRCC gère trois programmes : Catégorie de l’expérience canadienne, Programme des travailleurs qualifiés (fédéral) et Programme des travailleurs de métiers spécialisés. Le profil est classé dans un bassin et une invitation dépend des rondes et du classement." },
@@ -95,7 +96,8 @@ const supportSteps = [
 
 export default function Canada() {
   const [scoreCompleted, setScoreCompleted] = useState(false);
-  const [showSimulator, setShowSimulator] = useState(false);
+  // Affichée d'emblée : l'ancien bouton « Ouvrir le simulateur » laissait croire que la calculatrice ne s'affichait pas.
+  const [showSimulator, setShowSimulator] = useState(true);
   const [simulatorAttempt, setSimulatorAttempt] = useState(0);
   const CanadaScoreSimulator = useMemo(createCanadaScoreSimulator, [simulatorAttempt]);
   const reportSimulatorFailure = trpc.simulatorDiagnostics.reportFailure.useMutation();

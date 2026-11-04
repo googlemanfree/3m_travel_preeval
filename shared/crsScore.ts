@@ -1,12 +1,15 @@
 /**
- * Calcul du score CRS (Comprehensive Ranking System) d'Entrée express, aussi fidèle que possible à la grille officielle
- * d'IRCC. Chaque barème ci-dessous vient de deux pages officielles de canada.ca, recoupées le 2026-09-27 (les deux
- * donnent des chiffres identiques) :
- *  - https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/eligibility/criteria-comprehensive-ranking-system/grid.htm
+ * Calcul du score CRS (Comprehensive Ranking System) d'Entrée express, fidèle à la grille officielle d'IRCC EN VIGUEUR
+ * DEPUIS LE 3 NOVEMBRE 2026, relue sur canada.ca le 2026-11-04 et recoupée avec l'outil officiel « Vérifiez votre note »
+ * (les résultats de l'outil servent de cas de référence dans les tests) :
  *  - https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/check-score/crs-criteria.html
- * Les points d'emploi réservé (« arranged employment ») ont été retirés par IRCC le 25 mars 2025 : ils n'existent plus
- * dans ce calcul, volontairement. Rien ici n'est un chiffre estimé ou arrondi « à vue d'œil » : une valeur absente de la
- * grille officielle n'est jamais complétée par une supposition.
+ *  - https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/changes.html
+ *  - https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/check-score.html
+ * Ce qui a changé le 3 novembre 2026 : la note est désormais sur 1 270 ; l'expérience de travail canadienne devient le « facteur
+ * d'intégration au marché du travail » (durée + points de profession à salaire élevé), ou, à la place, une offre d'emploi
+ * valide dans une profession à salaire élevé (jamais les deux : IRCC retient le plus avantageux). Aucune EIMT n'est requise.
+ * Rien ici n'est un chiffre estimé ou arrondi « à vue d'œil » : une valeur absente de la grille officielle n'est jamais
+ * complétée par une supposition.
  */
 
 export type MaritalStatus = "with_spouse" | "without_spouse";
@@ -14,10 +17,15 @@ export type EducationLevel = "less_than_secondary" | "secondary" | "one_year_pos
 export type ExperienceYears = 0 | 1 | 2 | 3 | 4 | 5;
 export type CanadianEducationLevel = "none" | "one_or_two_years" | "three_years_or_more";
 
+/** Niveau de rémunération d'une profession à salaire élevé (rapport au salaire médian moyen) : 1,3 ×, 1,5 × ou 2 ×. */
+export type HighWageLevel = "none" | "1.3" | "1.5" | "2";
+
 export type SpouseProfile = {
   education: EducationLevel;
   /** CLB de la première langue officielle du conjoint, appliqué uniformément à l'oral, l'écrit, la lecture et l'écoute. */
   firstLanguageClb: number;
+  /** Niveaux CLB par compétence du conjoint (prioritaires sur `firstLanguageClb` quand ils sont fournis). */
+  firstLanguageAbilities?: LanguageAbilities;
   canadianExperienceYears: ExperienceYears;
 };
 
@@ -42,6 +50,10 @@ export type CrsProfile = {
   secondLanguageAbilities?: LanguageAbilities;
   firstOfficialLanguage?: "english" | "french";
   canadianExperienceYears: ExperienceYears;
+  /** Au moins 12 mois d'expérience canadienne dans des professions à salaire élevé, au niveau le plus favorable atteint (facteur d'intégration au marché du travail). */
+  highWageExperience?: HighWageLevel;
+  /** Offre d'emploi valide dans une profession à salaire élevé, selon son niveau ; retenue seulement si elle vaut plus que l'expérience canadienne. */
+  jobOffer?: HighWageLevel;
   /** Expérience professionnelle ACQUISE HORS DU CANADA, pour la transférabilité des compétences (jamais comptée comme expérience canadienne). */
   foreignExperienceYears: ExperienceYears;
   hasTradeCertificate: boolean;
@@ -56,7 +68,15 @@ export type CrsBreakdown = {
   education: number;
   firstLanguage: number;
   secondLanguage: number;
+  /** Points de durée de l'expérience canadienne (« work-length ») : une des composantes du facteur d'intégration au marché du travail. */
   canadianExperience: number;
+  /** Points supplémentaires pour au moins 12 mois dans des professions à salaire élevé (70 / 40 / 20). */
+  highWageExperience: number;
+  /** Points de l'offre d'emploi à salaire élevé (100 / 70 / 50), même s'ils n'ont pas été retenus. */
+  jobOfferPoints: number;
+  /** Facteur d'intégration au marché du travail : le plus élevé entre (durée + salaire élevé) et l'offre d'emploi. */
+  labourMarketIntegration: number;
+  labourMarketSource: "work" | "job_offer" | "none";
   coreHumanCapital: number;
   coreHumanCapitalMax: number;
   spouseEducation: number;
@@ -68,6 +88,10 @@ export type CrsBreakdown = {
   transferabilityForeignExperienceLanguage: number;
   transferabilityForeignExperienceCanadianExperience: number;
   transferabilityCertificate: number;
+  /** Sous-total « études » (langue + expérience canadienne), plafonné à 50 comme dans la grille. */
+  transferabilityEducation: number;
+  /** Sous-total « expérience étrangère » (langue + expérience canadienne), plafonné à 50. */
+  transferabilityForeignExperience: number;
   skillTransferability: number;
   canadianEducationBonus: number;
   frenchBonus: number;
@@ -191,6 +215,29 @@ export function canadianExperiencePoints(years: ExperienceYears, withSpouse: boo
   return withSpouse ? row.withSpouse : row.withoutSpouse;
 }
 
+// ─── Facteur d'intégration au marché du travail (nouveau le 3 novembre 2026) ──────────────────────────────────────
+
+/** Points de profession à salaire élevé : au moins 12 mois à ≥ 2 × / 1,5 × / 1,3 × le salaire médian moyen. Identiques avec ou sans conjoint. */
+const HIGH_WAGE_EXPERIENCE_POINTS: Record<HighWageLevel, number> = { none: 0, "1.3": 20, "1.5": 40, "2": 70 };
+/** Offre d'emploi valide dans une profession à salaire élevé. Identique avec ou sans conjoint. */
+const JOB_OFFER_POINTS: Record<HighWageLevel, number> = { none: 0, "1.3": 50, "1.5": 70, "2": 100 };
+
+export const highWageExperiencePoints = (level: HighWageLevel | undefined): number => HIGH_WAGE_EXPERIENCE_POINTS[level ?? "none"] ?? 0;
+export const jobOfferPoints = (level: HighWageLevel | undefined): number => JOB_OFFER_POINTS[level ?? "none"] ?? 0;
+
+/**
+ * Facteur d'intégration au marché du travail : IRCC compare les points de l'expérience canadienne (durée + salaire élevé, max 140 avec
+ * conjoint / 150 sans) et ceux d'une offre d'emploi valide (max 100) et retient le plus élevé — jamais la somme.
+ */
+export function labourMarketIntegration(profile: Pick<CrsProfile, "canadianExperienceYears" | "highWageExperience" | "jobOffer">, withSpouse: boolean): { workLength: number; highWage: number; jobOffer: number; total: number; source: "work" | "job_offer" | "none" } {
+  const workLength = canadianExperiencePoints(profile.canadianExperienceYears, withSpouse);
+  const highWage = highWageExperiencePoints(profile.highWageExperience);
+  const jobOffer = jobOfferPoints(profile.jobOffer);
+  const work = workLength + highWage;
+  if (jobOffer > work) return { workLength, highWage, jobOffer, total: jobOffer, source: "job_offer" };
+  return { workLength, highWage, jobOffer, total: work, source: work > 0 ? "work" : "none" };
+}
+
 // ─── Facteurs du conjoint (max 40, seulement si maritalStatus = with_spouse) ─────────────────────────────────────
 
 const SPOUSE_EDUCATION_TABLE: Record<EducationLevel, number> = {
@@ -216,16 +263,22 @@ const SPOUSE_EXPERIENCE_TABLE: Record<ExperienceYears, number> = { 0: 0, 1: 5, 2
 export function spouseFactorPoints(spouse: SpouseProfile | null): { education: number; language: number; experience: number; total: number } {
   if (!spouse) return { education: 0, language: 0, experience: 0, total: 0 };
   const education = SPOUSE_EDUCATION_TABLE[spouse.education];
-  const abilityRow = SPOUSE_LANGUAGE_PER_ABILITY.find((entry) => spouse.firstLanguageClb >= entry.minClb) ?? SPOUSE_LANGUAGE_PER_ABILITY.at(-1)!;
-  const language = cap(abilityRow.points * 4, 20);
+  const spouseAbilityPoints = (clb: number) => (SPOUSE_LANGUAGE_PER_ABILITY.find((entry) => clb >= entry.minClb) ?? SPOUSE_LANGUAGE_PER_ABILITY.at(-1)!).points;
+  const language = spouse.firstLanguageAbilities
+    ? cap(Object.values(spouse.firstLanguageAbilities).reduce((total, clb) => total + spouseAbilityPoints(clb), 0), 20)
+    : cap(spouseAbilityPoints(spouse.firstLanguageClb) * 4, 20);
   const experience = SPOUSE_EXPERIENCE_TABLE[spouse.canadianExperienceYears];
   return { education, language, experience, total: cap(education + language + experience, 40) };
 }
 
 // ─── Transférabilité des compétences (max 100 au total, identique avec ou sans conjoint) ────────────────────────
 
-const HIGH_TRANSFERABILITY_EDUCATION = new Set<EducationLevel>(["two_or_more_credentials", "bachelor_or_three_year", "master_or_professional", "doctoral"]);
-const isPostSecondaryOneOrTwoYears = (level: EducationLevel) => level === "one_year_postsecondary" || level === "two_year_postsecondary";
+/**
+ * Grille IRCC : « diplôme postsecondaire d'un an ou plus » (une licence seule en fait partie) = 13 / 25 ; « deux diplômes ou plus dont un de trois ans
+ * ou plus », maîtrise ou diplôme professionnel, doctorat = 25 / 50. Vérifié sur l'outil officiel : licence seule + CLB 9 = 25, non 50.
+ */
+const HIGH_TRANSFERABILITY_EDUCATION = new Set<EducationLevel>(["two_or_more_credentials", "master_or_professional", "doctoral"]);
+const isPostSecondaryOneOrTwoYears = (level: EducationLevel) => level === "one_year_postsecondary" || level === "two_year_postsecondary" || level === "bachelor_or_three_year";
 
 /** Éducation + bonne maîtrise linguistique (CLB 7+ requis pour tout point ; CLB 9+ sur les quatre compétences double le montant). */
 export function transferabilityEducationLanguage(education: EducationLevel, bestClb: number): number {
@@ -267,7 +320,7 @@ export function transferabilityCertificate(hasTradeCertificate: boolean, bestClb
   return bestClb >= 7 ? 50 : 25;
 }
 
-export type SkillTransferability = { educationLanguage: number; educationExperience: number; foreignExperienceLanguage: number; foreignExperienceCanadianExperience: number; certificate: number; total: number };
+export type SkillTransferability = { educationLanguage: number; educationExperience: number; foreignExperienceLanguage: number; foreignExperienceCanadianExperience: number; certificate: number; education: number; foreignExperience: number; total: number };
 
 export function skillTransferabilityPoints(profile: Pick<CrsProfile, "education" | "frenchClb" | "englishClb" | "canadianExperienceYears" | "foreignExperienceYears" | "hasTradeCertificate"> & Pick<CrsProfile, "firstLanguageAbilities">): SkillTransferability {
   const bestClb = profile.firstLanguageAbilities
@@ -278,8 +331,11 @@ export function skillTransferabilityPoints(profile: Pick<CrsProfile, "education"
   const foreignExperienceLanguage = cap(transferabilityForeignExperienceLanguage(profile.foreignExperienceYears, bestClb), 50);
   const foreignExperienceCanadianExperience = cap(transferabilityForeignExperienceCanadianExperience(profile.foreignExperienceYears, profile.canadianExperienceYears), 50);
   const certificate = cap(transferabilityCertificate(profile.hasTradeCertificate, bestClb), 50);
-  const total = cap(educationLanguage + educationExperience + foreignExperienceLanguage + foreignExperienceCanadianExperience + certificate, 100);
-  return { educationLanguage, educationExperience, foreignExperienceLanguage, foreignExperienceCanadianExperience, certificate, total };
+  // Plafonds de la grille : « études » et « expérience étrangère » valent chacune 50 au plus (langue + expérience canadienne confondues), le total 100.
+  const education = cap(educationLanguage + educationExperience, 50);
+  const foreignExperience = cap(foreignExperienceLanguage + foreignExperienceCanadianExperience, 50);
+  const total = cap(education + foreignExperience + certificate, 100);
+  return { educationLanguage, educationExperience, foreignExperienceLanguage, foreignExperienceCanadianExperience, certificate, education, foreignExperience, total };
 }
 
 // ─── Points additionnels (max 600, dominé par la nomination provinciale) ─────────────────────────────────────────
@@ -307,9 +363,10 @@ export function computeCrsScore(profile: CrsProfile): CrsBreakdown {
   const secondLanguage = profile.secondLanguageAbilities
     ? secondLanguagePointsByAbility(profile.secondLanguageAbilities, withSpouse)
     : secondLanguagePoints(Math.min(profile.frenchClb, profile.englishClb), withSpouse);
-  const canadianExperience = canadianExperiencePoints(profile.canadianExperienceYears, withSpouse);
-  const coreHumanCapitalMax = withSpouse ? 460 : 500;
-  const coreHumanCapital = cap(age + education + firstLanguage + secondLanguage + canadianExperience, coreHumanCapitalMax);
+  const labour = labourMarketIntegration(profile, withSpouse);
+  const canadianExperience = labour.workLength;
+  const coreHumanCapitalMax = withSpouse ? CRS_CORE_MAX_WITH_SPOUSE : CRS_CORE_MAX_WITHOUT_SPOUSE;
+  const coreHumanCapital = cap(age + education + firstLanguage + secondLanguage + labour.total, coreHumanCapitalMax);
 
   const spouse = spouseFactorPoints(withSpouse ? profile.spouse : null);
   const transferability = skillTransferabilityPoints(profile);
@@ -321,27 +378,37 @@ export function computeCrsScore(profile: CrsProfile): CrsBreakdown {
     : frenchBonusPoints(profile.frenchClb, profile.englishClb);
   const siblingBonus = profile.hasSiblingInCanada ? 15 : 0;
   const provincialNomination = profile.hasProvincialNomination ? 600 : 0;
-  const additionalPoints = canadianEducationBonus + frenchBonus + siblingBonus + provincialNomination;
+  // « Points supplémentaires (jusqu'à un maximum de 600 points) » : le sous-total est plafonné (vérifié sur l'outil officiel : 670 → 600).
+  const additionalPoints = cap(canadianEducationBonus + frenchBonus + siblingBonus + provincialNomination, 600);
 
-  const total = cap(coreHumanCapital + spouse.total + transferability.total + additionalPoints, 1200);
+  const total = cap(coreHumanCapital + spouse.total + transferability.total + additionalPoints, CRS_TOTAL_MAX);
 
   return {
-    age, education, firstLanguage, secondLanguage, canadianExperience, coreHumanCapital, coreHumanCapitalMax,
+    age, education, firstLanguage, secondLanguage, canadianExperience,
+    highWageExperience: labour.highWage, jobOfferPoints: labour.jobOffer, labourMarketIntegration: labour.total, labourMarketSource: labour.source,
+    coreHumanCapital, coreHumanCapitalMax,
     spouseEducation: spouse.education, spouseLanguage: spouse.language, spouseExperience: spouse.experience, spouseFactors: spouse.total,
     transferabilityEducationLanguage: transferability.educationLanguage,
     transferabilityEducationExperience: transferability.educationExperience,
     transferabilityForeignExperienceLanguage: transferability.foreignExperienceLanguage,
     transferabilityForeignExperienceCanadianExperience: transferability.foreignExperienceCanadianExperience,
     transferabilityCertificate: transferability.certificate,
+    transferabilityEducation: transferability.education,
+    transferabilityForeignExperience: transferability.foreignExperience,
     skillTransferability: transferability.total,
     canadianEducationBonus, frenchBonus, siblingBonus, provincialNomination, additionalPoints,
     total,
   };
 }
 
+/** Maxima officiels depuis le 3 novembre 2026 : 570 (sans conjoint) ou 530 (avec) pour le capital humain, 1 270 au total. */
+export const CRS_CORE_MAX_WITHOUT_SPOUSE = 570;
+export const CRS_CORE_MAX_WITH_SPOUSE = 530;
+export const CRS_TOTAL_MAX = 1270;
+
 export const CRS_SOURCE = {
   organization: "Immigration, Réfugiés et Citoyenneté Canada (IRCC)",
-  url: "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/eligibility/criteria-comprehensive-ranking-system/grid.htm",
-  verifiedAt: "2026-09-27",
-  note: "Les points d'emploi réservé ont été retirés par IRCC le 25 mars 2025 ; ce calcul ne les inclut plus.",
+  url: "https://www.canada.ca/fr/immigration-refugies-citoyennete/services/immigrer-canada/entree-express/verifier-note/criteries-scg.html",
+  verifiedAt: "2026-11-04",
+  note: "Grille en vigueur depuis le 3 novembre 2026 : note sur 1 270, facteur d'intégration au marché du travail (expérience canadienne ou offre d'emploi à salaire élevé, jamais les deux), aucune EIMT exigée pour l'offre d'emploi.",
 } as const;

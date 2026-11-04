@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { CartesianGrid, Legend, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from "recharts";
 import { CEC_SIX_MONTH_CRS_HISTORY, CRS_HISTORY_SOURCE, LATEST_INVITATION_ROUNDS, LATEST_ROUNDS_VERIFIED_AT } from "@/data/crsHistoricalRounds";
 import { SafeResponsiveChart } from "@/components/SafeResponsiveChart";
-import { computeCrsScore, CRS_SOURCE, type CanadianEducationLevel, type CrsProfile, type EducationLevel, type ExperienceYears, type LanguageAbilities, type MaritalStatus } from "@shared/crsScore";
+import { computeCrsScore, CRS_SOURCE, CRS_TOTAL_MAX, type CanadianEducationLevel, type CrsProfile, type EducationLevel, type ExperienceYears, type LanguageAbilities, type MaritalStatus } from "@shared/crsScore";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { useLocation } from "wouter";
 import { convertLanguageScores, isSupportedTestForLanguage, LANGUAGE_TEST_OPTIONS, LANGUAGE_TEST_SOURCE, type LanguageScores, type LanguageTestType } from "@shared/languageTests";
@@ -610,7 +610,7 @@ export default function CanadaScoreSimulator() {
   const handleShareWhatsApp = () => {
     const link = shareLink || shareProfile();
     trackEvent("crs_share_whatsapp");
-    const message = `Bonjour, voici ma simulation CRS Canada 3M TRAVEL AGENCY : ${scores.total}/1200 points. Programme : ${selectedProgramData.label}. Résultat indicatif à vérifier : ${link}`;
+    const message = `Bonjour, voici ma simulation CRS Canada 3M TRAVEL AGENCY : ${scores.total}/${CRS_TOTAL_MAX} points. Programme : ${selectedProgramData.label}. Résultat indicatif à vérifier : ${link}`;
     window.open(`https://wa.me/237698104832?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
   };
 
@@ -705,7 +705,7 @@ export default function CanadaScoreSimulator() {
           ...(maritalStatus === "with_spouse" ? [["Facteurs du conjoint", `${scores.spouseFactors} pts`, "40 pts"]] : []),
           ["Transférabilité des compétences", `${scores.skillTransferability} pts`, "100 pts"],
           ["Points additionnels (études canadiennes, français, fratrie, PNP)", `${scores.additionalPoints} pts`, "600 pts et plus"],
-          ["Total simulé", `${scores.total} pts`, "1200 pts"],
+          ["Total simulé", `${scores.total} pts`, `${CRS_TOTAL_MAX} pts`],
         ],
         styles: { fontSize: 9, cellPadding: 3 },
         headStyles: { fillColor: [30, 64, 175] },
@@ -874,7 +874,7 @@ export default function CanadaScoreSimulator() {
         anchor.click();
         URL.revokeObjectURL(downloadUrl);
         const subject = encodeURIComponent("Votre simulation CRS Canada — 3M TRAVEL AGENCY");
-        const body = encodeURIComponent(`Bonjour ${fullName || ""},\n\nVotre PDF de simulation CRS vient d’être téléchargé. Joignez-le à ce courriel avant l’envoi.\n\nScore indicatif : ${scores.total}/1200 points.`);
+        const body = encodeURIComponent(`Bonjour ${fullName || ""},\n\nVotre PDF de simulation CRS vient d’être téléchargé. Joignez-le à ce courriel avant l’envoi.\n\nScore indicatif : ${scores.total}/${CRS_TOTAL_MAX} points.`);
         window.location.href = `mailto:${encodeURIComponent(recipient)}?subject=${subject}&body=${body}`;
         setEmailSendSuccess(true);
         window.setTimeout(() => setEmailSendSuccess(false), 5000);
@@ -895,7 +895,7 @@ export default function CanadaScoreSimulator() {
 
   const handleCopyScoreLink = async () => {
     const link = shareLink || shareProfile();
-    const text = `Score CRS Canada : ${scores.total}/1200 points. Programme : ${selectedProgramData.label}. Résultat indicatif : ${link}`;
+    const text = `Score CRS Canada : ${scores.total}/${CRS_TOTAL_MAX} points. Programme : ${selectedProgramData.label}. Résultat indicatif : ${link}`;
     try {
       await navigator.clipboard.writeText(text);
     } catch {
@@ -928,7 +928,7 @@ export default function CanadaScoreSimulator() {
       "Simulation CRS Canada — 3M TRAVEL AGENCY",
       `Programme visé : ${selectedProgramData.label}`,
       `Volet : ${selectedProgramData.streams.find((stream) => stream.value === programStream)?.label ?? programStream}`,
-      `Score estimé : ${scores.total} / 1200 points`,
+      `Score estimé : ${scores.total} / ${CRS_TOTAL_MAX} points`,
       `Catégorie comparée : ${selectedCategory === "all" ? "3 dernières rondes (global)" : categoryExplanations[selectedCategory]}`,
       `Dernier seuil : ${latestThreshold} points`,
       `Écart : ${scoreDiff >= 0 ? "+" : ""}${scoreDiff} points`,
@@ -1320,7 +1320,7 @@ export default function CanadaScoreSimulator() {
               <Award className="w-4 h-4" /> Score CRS Indicatif
             </span>
             <div className="text-4xl md:text-5xl font-extrabold text-blue-900">
-              {scores.total} <span className="text-lg font-normal text-gray-600">/ 1200 pts</span>
+              {scores.total} <span className="text-lg font-normal text-gray-600">/ {CRS_TOTAL_MAX} pts</span>
             </div>
             <p className="text-sm text-gray-600 max-w-md">
               {isThresholdMet
@@ -1530,7 +1530,7 @@ export default function CanadaScoreSimulator() {
               <div className="flex shrink-0 items-center gap-3 rounded-xl bg-blue-700 px-4 py-3 text-white shadow-sm">
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-100">Score CRS indicatif</p>
-                  <p className="text-3xl font-black leading-none">{scores.total}<span className="ml-1 text-sm font-medium text-blue-100">/1200</span></p>
+                  <p className="text-3xl font-black leading-none">{scores.total}<span className="ml-1 text-sm font-medium text-blue-100">/{CRS_TOTAL_MAX}</span></p>
                 </div>
                 <Award className="h-8 w-8 text-amber-300" aria-hidden="true" />
               </div>

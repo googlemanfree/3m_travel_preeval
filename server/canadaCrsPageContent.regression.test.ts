@@ -11,7 +11,17 @@ describe("/canada/crs — contenu éditorial autour de la calculatrice", () => {
     expect(source).toContain("Facteurs liés au capital humain");
     expect(source).toContain("Compétences linguistiques, par compétence");
     expect(source).toContain("Transférabilité des compétences");
-    expect(source).toContain("plus accordés depuis le 25 mars 2025");
+    // Grille du 3 novembre 2026 : l'offre d'emploi revient (facteur d'intégration), la note est sur 1 270 ; l'ancienne affirmation est fausse.
+    expect(source).toContain("facteur d’intégration sur le marché du travail");
+    expect(source).toContain("1 270");
+    expect(source).not.toContain("plus accordés depuis le 25 mars 2025");
+    expect(source).not.toContain("ne sont plus accordés au SCG");
+  });
+
+  it("monte la calculatrice « comme canada.ca » (et plus l'ancien simulateur à étapes)", () => {
+    expect(source).toContain('import CrsOfficialCalculator from "@/components/CrsOfficialCalculator"');
+    expect(source).toContain("<CrsOfficialCalculator />");
+    expect(source).not.toContain("CanadaScoreSimulator");
   });
 
   it("donne des leviers concrets si le score est sous le seuil, avec un lien vers les parcours détaillés", () => {
