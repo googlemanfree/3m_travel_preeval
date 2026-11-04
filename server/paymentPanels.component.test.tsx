@@ -7,6 +7,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 const state = vi.hoisted(() => ({
   publicData: undefined as any,
+  publicLoading: false,
   mutate: undefined as any,
   mutation: { isPending: false, data: undefined as any, error: null as any },
   authenticated: true,
@@ -15,7 +16,7 @@ const state = vi.hoisted(() => ({
 vi.mock("@/lib/trpc", () => ({
   trpc: {
     paymentInstructions: {
-      getPublic: { useQuery: () => ({ data: state.publicData }) },
+      getPublic: { useQuery: () => ({ data: state.publicData, isLoading: state.publicLoading }) },
       requestManualPayment: { useMutation: () => ({ mutate: state.mutate, ...state.mutation }) },
     },
   },
@@ -36,6 +37,7 @@ const agency = { address: "Yaoundé", hours: "8h–17h", whatsappNumber: "237698
 
 const reset = () => {
   state.publicData = { instructions: EMPTY_PAYMENT_INSTRUCTIONS, onlineEnabled: false, agency };
+  state.publicLoading = false;
   state.mutate = vi.fn();
   state.mutation = { isPending: false, data: undefined, error: null };
   state.authenticated = true;
@@ -47,6 +49,13 @@ afterEach(() => {
 reset();
 
 describe("panneau des moyens de paiement", () => {
+  it("rassure pendant le chargement des coordonnées publiques", () => {
+    state.publicLoading = true;
+    render(<PaymentMethodsPanel />);
+    expect(screen.getByTestId("payment-methods-loading").textContent).toContain("Chargement des moyens de paiement sécurisés");
+    expect(screen.getByTestId("payment-methods").getAttribute("aria-busy")).toBe("true");
+  });
+
   it("sans réglages : le paiement en ligne est « bientôt », les coordonnées « sur demande », aucun compte affiché", () => {
     render(<PaymentMethodsPanel />);
     expect(screen.getByTestId("method-card").textContent).toContain("Bientôt disponible");
