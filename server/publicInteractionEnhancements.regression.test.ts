@@ -33,5 +33,9 @@ describe("public interaction enhancements", () => {
     expect(employers).toContain("Effacer la recherche");
     expect(employers).toContain("languagesSummary");
     expect(employers).toContain('id="partner-profile-results"');
+    expect(employers).toContain('data-testid="partner-sector-filter"');
+    expect(employers).toContain("sectorCounts");
+    expect(employers).toContain("aria-pressed={sector === value}");
+    expect(employers).toContain("sans recharger la page");
   });
 });
