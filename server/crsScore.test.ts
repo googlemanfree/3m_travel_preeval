@@ -124,9 +124,12 @@ describe("transférabilité des compétences (plafond 100 au total, 50 par sous-
   const base = { education: "bachelor_or_three_year" as EducationLevel, frenchClb: 0, englishClb: 0, canadianExperienceYears: 0 as const, foreignExperienceYears: 0 as const, hasTradeCertificate: false };
 
   it("études + langue : rien sous CLB 7, la moitié à CLB 7-8, le maximum à CLB 9+", () => {
+    // Une licence seule est « un diplôme postsecondaire d'un an ou plus » : 13 / 25 (vérifié sur l'outil officiel). 25 / 50 : deux diplômes dont un de 3 ans, maîtrise, doctorat.
     expect(skillTransferabilityPoints({ ...base, englishClb: 6 }).educationLanguage).toBe(0);
-    expect(skillTransferabilityPoints({ ...base, englishClb: 7 }).educationLanguage).toBe(25);
-    expect(skillTransferabilityPoints({ ...base, englishClb: 9 }).educationLanguage).toBe(50);
+    expect(skillTransferabilityPoints({ ...base, englishClb: 7 }).educationLanguage).toBe(13);
+    expect(skillTransferabilityPoints({ ...base, englishClb: 9 }).educationLanguage).toBe(25);
+    expect(skillTransferabilityPoints({ ...base, education: "master_or_professional", englishClb: 7 }).educationLanguage).toBe(25);
+    expect(skillTransferabilityPoints({ ...base, education: "two_or_more_credentials", englishClb: 9 }).educationLanguage).toBe(50);
     expect(skillTransferabilityPoints({ ...base, education: "secondary", englishClb: 9 }).educationLanguage).toBe(0);
     expect(skillTransferabilityPoints({ ...base, education: "one_year_postsecondary", englishClb: 7 }).educationLanguage).toBe(13);
     expect(skillTransferabilityPoints({ ...base, education: "one_year_postsecondary", englishClb: 9 }).educationLanguage).toBe(25);
@@ -134,9 +137,22 @@ describe("transférabilité des compétences (plafond 100 au total, 50 par sous-
 
   it("études + expérience canadienne : rien sans expérience, la moitié à 1 an, le maximum à 2 ans et plus", () => {
     expect(skillTransferabilityPoints({ ...base, canadianExperienceYears: 0 }).educationExperience).toBe(0);
-    expect(skillTransferabilityPoints({ ...base, canadianExperienceYears: 1 }).educationExperience).toBe(25);
-    expect(skillTransferabilityPoints({ ...base, canadianExperienceYears: 2 }).educationExperience).toBe(50);
-    expect(skillTransferabilityPoints({ ...base, canadianExperienceYears: 5 }).educationExperience).toBe(50);
+    expect(skillTransferabilityPoints({ ...base, canadianExperienceYears: 1 }).educationExperience).toBe(13);
+    expect(skillTransferabilityPoints({ ...base, canadianExperienceYears: 2 }).educationExperience).toBe(25);
+    expect(skillTransferabilityPoints({ ...base, canadianExperienceYears: 5 }).educationExperience).toBe(25);
+    expect(skillTransferabilityPoints({ ...base, education: "master_or_professional", canadianExperienceYears: 1 }).educationExperience).toBe(25);
+    expect(skillTransferabilityPoints({ ...base, education: "master_or_professional", canadianExperienceYears: 2 }).educationExperience).toBe(50);
+  });
+
+  it("les sous-totaux « études » et « expérience étrangère » sont plafonnés à 50 chacun (langue + expérience canadienne)", () => {
+    const maxed = skillTransferabilityPoints({ education: "doctoral", frenchClb: 0, englishClb: 10, canadianExperienceYears: 5, foreignExperienceYears: 3, hasTradeCertificate: false });
+    expect(maxed.educationLanguage).toBe(50);
+    expect(maxed.educationExperience).toBe(50);
+    expect(maxed.education).toBe(50);
+    expect(maxed.foreignExperience).toBe(50);
+    expect(maxed.total).toBe(100);
+    const education = skillTransferabilityPoints({ education: "doctoral", frenchClb: 0, englishClb: 10, canadianExperienceYears: 5, foreignExperienceYears: 0, hasTradeCertificate: false });
+    expect(education.total).toBe(50);
   });
 
   it("expérience étrangère + langue, et expérience étrangère + expérience canadienne : mêmes paliers (1-2 ans / 3 ans et plus)", () => {
@@ -161,8 +177,8 @@ describe("transférabilité des compétences (plafond 100 au total, 50 par sous-
   });
 
   it("prend le meilleur des deux langues (français ou anglais), jamais une moyenne inventée", () => {
-    expect(skillTransferabilityPoints({ ...base, frenchClb: 9, englishClb: 2 }).educationLanguage).toBe(50);
-    expect(skillTransferabilityPoints({ ...base, frenchClb: 2, englishClb: 9 }).educationLanguage).toBe(50);
+    expect(skillTransferabilityPoints({ ...base, frenchClb: 9, englishClb: 2 }).educationLanguage).toBe(25);
+    expect(skillTransferabilityPoints({ ...base, frenchClb: 2, englishClb: 9 }).educationLanguage).toBe(25);
   });
 });
 
@@ -183,18 +199,18 @@ describe("score total (computeCrsScore) : cohérence de bout en bout", () => {
     hasSiblingInCanada: false, hasProvincialNomination: false, spouse: null, ...overrides,
   });
 
-  it("le plafond du capital humain de base est bien 500 sans conjoint et 460 avec conjoint (vérifié : somme des maximums officiels de chaque sous-facteur)", () => {
-    const withoutSpouseMax = computeCrsScore(profile({ age: 25, education: "doctoral", frenchClb: 10, englishClb: 10, canadianExperienceYears: 5 }));
-    expect(withoutSpouseMax.coreHumanCapitalMax).toBe(500);
-    expect(withoutSpouseMax.coreHumanCapital).toBe(500);
-    const withSpouseMax = computeCrsScore(profile({ age: 25, education: "doctoral", frenchClb: 10, englishClb: 10, canadianExperienceYears: 5, maritalStatus: "with_spouse", spouse: { education: "doctoral", firstLanguageClb: 10, canadianExperienceYears: 5 } }));
-    expect(withSpouseMax.coreHumanCapitalMax).toBe(460);
-    expect(withSpouseMax.coreHumanCapital).toBe(460);
+  it("le plafond du capital humain de base est bien 570 sans conjoint et 530 avec conjoint depuis le 3 novembre 2026 (somme des maximums officiels de chaque sous-facteur)", () => {
+    const withoutSpouseMax = computeCrsScore(profile({ age: 25, education: "doctoral", frenchClb: 10, englishClb: 10, canadianExperienceYears: 5, highWageExperience: "2" }));
+    expect(withoutSpouseMax.coreHumanCapitalMax).toBe(570);
+    expect(withoutSpouseMax.coreHumanCapital).toBe(570);
+    const withSpouseMax = computeCrsScore(profile({ age: 25, education: "doctoral", frenchClb: 10, englishClb: 10, canadianExperienceYears: 5, highWageExperience: "2", maritalStatus: "with_spouse", spouse: { education: "doctoral", firstLanguageClb: 10, canadianExperienceYears: 5 } }));
+    expect(withSpouseMax.coreHumanCapitalMax).toBe(530);
+    expect(withSpouseMax.coreHumanCapital).toBe(530);
   });
 
   it("un profil déclaré « avec conjoint » sans données de conjoint saisies retombe sur le barème sans conjoint (jamais de 0 injustifié)", () => {
     const result = computeCrsScore(profile({ maritalStatus: "with_spouse", spouse: null, age: 30 }));
-    expect(result.coreHumanCapitalMax).toBe(500);
+    expect(result.coreHumanCapitalMax).toBe(570);
     expect(result.spouseFactors).toBe(0);
   });
 
@@ -205,13 +221,14 @@ describe("score total (computeCrsScore) : cohérence de bout en bout", () => {
     expect(withNomination.provincialNomination).toBe(600);
   });
 
-  it("le score total ne dépasse jamais 1200, même pour un profil maximal sur tous les facteurs", () => {
+  it("le score total ne dépasse jamais 1 270, même pour un profil maximal sur tous les facteurs", () => {
     const maxed = computeCrsScore({
       age: 25, maritalStatus: "with_spouse", education: "doctoral", frenchClb: 10, englishClb: 10,
-      canadianExperienceYears: 5, foreignExperienceYears: 5, hasTradeCertificate: true, canadianEducation: "three_years_or_more",
+      canadianExperienceYears: 5, highWageExperience: "2", foreignExperienceYears: 5, hasTradeCertificate: true, canadianEducation: "three_years_or_more",
       hasSiblingInCanada: true, hasProvincialNomination: true, spouse: { education: "doctoral", firstLanguageClb: 10, canadianExperienceYears: 5 },
     });
-    expect(maxed.total).toBe(1200);
+    expect(maxed.total).toBe(1270);
+    expect(maxed.additionalPoints).toBe(600);
   });
 
   it("un profil faible (âge élevé, aucune langue testée, aucune expérience) obtient un score bas, sans plancher artificiel", () => {
@@ -219,15 +236,27 @@ describe("score total (computeCrsScore) : cohérence de bout en bout", () => {
     expect(weak.total).toBe(0);
   });
 
-  it("aucun point d'emploi réservé (« arranged employment ») : IRCC les a retirés le 25 mars 2025, ce calcul ne doit jamais en inventer", () => {
-    const result = computeCrsScore(profile({ hasProvincialNomination: false }));
-    expect(Object.keys(result)).not.toContain("arrangedEmployment");
-    expect(Object.keys(result)).not.toContain("jobOffer");
+  it("sans offre d'emploi déclarée, aucun point d'offre n'est inventé ; avec une offre valide, IRCC retient la plus avantageuse des deux voies", () => {
+    expect(computeCrsScore(profile()).jobOfferPoints).toBe(0);
+    expect(computeCrsScore(profile()).labourMarketIntegration).toBe(0);
+    const offer = computeCrsScore(profile({ jobOffer: "2" }));
+    expect(offer.labourMarketIntegration).toBe(100);
+    expect(offer.labourMarketSource).toBe("job_offer");
+    const experienceWins = computeCrsScore(profile({ jobOffer: "1.3", canadianExperienceYears: 3 }));
+    expect(experienceWins.labourMarketIntegration).toBe(64);
+    expect(experienceWins.labourMarketSource).toBe("work");
   });
 
   it("le détail retourné se recompose exactement en le total (aucun point ne se perd ni n'apparaît de nulle part)", () => {
     const result = computeCrsScore(profile({ hasProvincialNomination: true, hasSiblingInCanada: true, canadianEducation: "one_or_two_years", frenchClb: 8 }));
     expect(result.coreHumanCapital + result.spouseFactors + result.skillTransferability + result.additionalPoints).toBe(result.total);
-    expect(result.canadianEducationBonus + result.frenchBonus + result.siblingBonus + result.provincialNomination).toBe(result.additionalPoints);
+    // Les points supplémentaires sont plafonnés à 600 (grille officielle) : la somme des composantes peut les dépasser, jamais le sous-total.
+    expect(Math.min(600, result.canadianEducationBonus + result.frenchBonus + result.siblingBonus + result.provincialNomination)).toBe(result.additionalPoints);
+    expect(result.additionalPoints).toBe(600);
+  });
+
+  it("sans nomination, les points supplémentaires s'additionnent tels quels (aucun plafond artificiel)", () => {
+    const result = computeCrsScore(profile({ hasSiblingInCanada: true, canadianEducation: "three_years_or_more" }));
+    expect(result.additionalPoints).toBe(45);
   });
 });

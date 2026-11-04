@@ -1,11 +1,11 @@
-import React, { Suspense } from "react";
+import React from "react";
 import { Link } from "wouter";
 import { ExternalLink, ShieldCheck, Languages, GraduationCap, BriefcaseBusiness, Users, Repeat, Building2, Compass, TrendingUp, Sparkles, UsersRound } from "lucide-react";
 import { ServicePageShell, ServiceSection } from "@/components/ServicePageShell";
 import { SimulatorRetryBoundary } from "@/components/SimulatorRetryBoundary";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-const CanadaScoreSimulator = React.lazy(() => import("@/components/CanadaScoreSimulator"));
+import CrsOfficialCalculator from "@/components/CrsOfficialCalculator";
 
 const IRCC_CALCULATOR_URL = "https://www.canada.ca/fr/immigration-refugies-citoyennete/services/immigrer-canada/entree-express/verifier-note.html#calculatrice";
 const IRCC_CRS_CRITERIA_URL = "https://www.canada.ca/fr/immigration-refugies-citoyennete/services/immigrer-canada/entree-express/comment-systeme-classement-fonctionne.html";
@@ -14,16 +14,17 @@ const crsFactors = [
   { icon: Users, title: "Facteurs liés au capital humain", text: "Âge, niveau d’études, compétences linguistiques (première et, le cas échéant, seconde langue officielle) et expérience de travail qualifiée, avec ou sans époux(se)/conjoint(e) de fait inclus dans la demande." },
   { icon: Languages, title: "Compétences linguistiques, par compétence", text: "Un test de langue reconnu (IELTS, CELPIP, TEF, TCF…) note séparément la compréhension écrite, l’expression écrite, la compréhension orale et l’expression orale. C’est souvent le facteur le plus rapide à améliorer." },
   { icon: GraduationCap, title: "Études et équivalences", text: "Le niveau de diplôme compte, ainsi qu’une évaluation comparative des études (ECA) lorsque le diplôme a été obtenu hors du Canada." },
-  { icon: BriefcaseBusiness, title: "Expérience de travail qualifiée", text: "L’expérience canadienne et l’expérience étrangère qualifiée (NOC TEER 0, 1, 2 ou 3) sont valorisées différemment selon leur durée et leur localisation." },
+  { icon: BriefcaseBusiness, title: "Expérience de travail et offre d’emploi", text: "Depuis le 3 novembre 2026, l’expérience canadienne (durée + points pour une profession à salaire élevé) ou une offre d’emploi valide dans une profession à salaire élevé forme le « facteur d’intégration sur le marché du travail » : IRCC retient le plus avantageux, jamais les deux. L’expérience étrangère qualifiée (TEER 0, 1, 2 ou 3) compte pour la transférabilité." },
   { icon: Repeat, title: "Transférabilité des compétences", text: "La combinaison de plusieurs facteurs (ex. langue + études, ou langue + expérience canadienne) peut apporter des points supplémentaires, plafonnés par catégorie." },
-  { icon: Building2, title: "Points supplémentaires", text: "Une nomination provinciale (PNP), des études au Canada ou un frère/une sœur citoyen(ne) ou résident(e) permanent(e) peuvent ajouter des points. Les points liés à une offre d’emploi ne sont plus accordés depuis le 25 mars 2025." },
+  { icon: Building2, title: "Points supplémentaires", text: "Une nomination provinciale (PNP), des études au Canada, des compétences en français ou un frère/une sœur citoyen(ne) ou résident(e) permanent(e) peuvent ajouter des points, jusqu’à 600 au total. La note maximale est de 1 270 points." },
 ];
 
 const crsFaq = [
   { question: "Le score calculé ici est-il exactement celui d’IRCC ?", answer: "Cette calculatrice donne une estimation indicative basée sur le barème public du Système de classement global (SCG/CRS). Le calcul officiel dépend de justificatifs précis (résultats de test, diplômes, preuves d’expérience) qu’IRCC seul peut valider au moment du dépôt du profil." },
   { question: "Pourquoi dois-je renseigner chaque compétence linguistique séparément ?", answer: "IRCC note la compréhension écrite, l’expression écrite, la compréhension orale et l’expression orale indépendamment, puis combine les quatre résultats. Un score global ne reflète pas toujours cette répartition : c’est pourquoi la calculatrice reprend le même détail que l’outil officiel." },
   { question: "Mon score est sous le seuil d’une ronde récente, dois-je abandonner mon projet ?", answer: "Non. Les seuils varient à chaque ronde selon la taille du bassin de candidats et le programme ciblé (Entrée express général, Candidats des provinces, Catégorie de l’expérience canadienne, tirages catégoriels). Améliorer un résultat de langue, obtenir une évaluation comparative des études, cumuler de l’expérience qualifiée ou explorer une nomination provinciale peut faire évoluer votre classement." },
-  { question: "Puis-je garder une trace de ma simulation ?", answer: "Oui : la calculatrice sauvegarde votre brouillon sur cet appareil, propose un lien partageable, un partage WhatsApp/Facebook et un récapitulatif par e-mail. Le téléchargement du rapport PDF complet est réservé aux candidats ayant créé un compte 3M TRAVEL AGENCY, pour assurer le suivi de votre dossier." },
+  { question: "Puis-je garder une trace de ma simulation ?", answer: "Oui : la calculatrice mémorise vos réponses sur cet appareil, vous permet de copier le résultat et de l’envoyer à un conseiller 3M TRAVEL AGENCY par WhatsApp. Pour un suivi complet de votre dossier, faites évaluer votre profil Canada." },
+  { question: "Qu’est-ce qui a changé dans le calcul le 3 novembre 2026 ?", answer: "IRCC a remplacé les points d’expérience canadienne par le « facteur d’intégration sur le marché du travail » : durée de l’expérience canadienne plus points pour les professions à salaire élevé, ou, à la place, une offre d’emploi valide dans une profession à salaire élevé (50, 70 ou 100 points). IRCC retient le plus avantageux des deux. Aucune EIMT n’est plus exigée pour l’offre d’emploi, et la note maximale passe à 1 270 points. IRCC recalcule les profils existants, ce qui peut prendre jusqu’à deux semaines." },
 ];
 
 export default function CanadaCrsPage() {
@@ -36,7 +37,7 @@ export default function CanadaCrsPage() {
       primaryLabel="Commencer la calculatrice CRS"
       officialHref={IRCC_CALCULATOR_URL}
       officialLabel="Ouvrir la calculatrice IRCC"
-      notice="Résultat indicatif uniquement : le système Entrée express et les instructions officielles d’IRCC ont toujours préséance. Les points d’offre d’emploi ne sont plus accordés au SCG depuis le 25 mars 2025."
+      notice="Résultat indicatif uniquement : le système Entrée express et les instructions officielles d’IRCC ont toujours préséance. Barème IRCC en vigueur depuis le 3 novembre 2026 : note sur 1 270 et facteur d’intégration sur le marché du travail."
     >
       <section className="relative isolate overflow-hidden bg-[#071d39] px-4 py-14 text-white sm:px-6 lg:px-8">
         <img src="/manus-storage/canada-hero-original_5fe49ae0.jpg" alt="Ville canadienne au bord de l’eau" className="absolute inset-0 -z-20 h-full w-full object-cover opacity-35" />
@@ -52,11 +53,9 @@ export default function CanadaCrsPage() {
       </section>
 
       <div id="calculatrice-crs" className="scroll-mt-24">
-        <ServiceSection tone="blue" title="Calculatrice CRS Canada" introduction="Choisissez le parcours Canada dans le formulaire, puis renseignez chaque compétence linguistique séparément. Le résultat et le PDF détaillent les points obtenus et les leviers d’amélioration.">
+        <ServiceSection tone="blue" title="Calculatrice CRS Canada" introduction="Les questions, leur ordre et la présentation du résultat sont ceux de l’outil officiel d’IRCC « Vérifiez votre note ». Renseignez chaque compétence linguistique séparément : le résultat détaille les points obtenus et ce qui pourrait les augmenter.">
           <SimulatorRetryBoundary label="La calculatrice CRS Canada" onRetry={() => window.location.reload()} onFailure={() => undefined}>
-            <Suspense fallback={<div className="rounded-2xl border border-blue-200 bg-white p-6 text-sm font-semibold text-blue-900" role="status">Chargement de la calculatrice CRS…</div>}>
-              <CanadaScoreSimulator />
-            </Suspense>
+            <CrsOfficialCalculator />
           </SimulatorRetryBoundary>
         </ServiceSection>
       </div>

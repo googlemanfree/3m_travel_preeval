@@ -29,9 +29,10 @@ const DEFAULT_PROFILE: CrsProfile = {
   hasSiblingInCanada: false, hasProvincialNomination: false, spouse: null,
 };
 
-const totalText = () => screen.getByText((_, element) => element?.tagName === "DIV" && /\/ 1200 pts/.test(element.textContent ?? "") && Boolean(element.textContent?.match(/^\d+/)));
+const totalText = () => screen.getByText((_, element) => element?.tagName === "DIV" && /\/ 1270 pts/.test(element.textContent ?? "") && Boolean(element.textContent?.match(/^\d+/)));
 
-beforeEach(() => {});
+// Le simulateur mémorise un brouillon : sans nettoyage, la nomination cochée d'un test fausse les suivants (points supplémentaires plafonnés à 600).
+beforeEach(() => { window.localStorage.clear(); });
 afterEach(cleanup);
 
 describe("simulateur CRS Canada : le composant utilise bien le calcul officiel", () => {
@@ -39,7 +40,7 @@ describe("simulateur CRS Canada : le composant utilise bien le calcul officiel",
     render(<CanadaScoreSimulator />);
     const expected = computeCrsScore(DEFAULT_PROFILE).total;
     expect(totalText().textContent).toContain(String(expected));
-    expect(totalText().textContent).toContain("/ 1200 pts");
+    expect(totalText().textContent).toContain("/ 1270 pts");
   });
 
   it("changer l'âge recalcule le score affiché avec le vrai barème, pas une estimation par tranche", () => {

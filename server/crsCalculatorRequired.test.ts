@@ -9,6 +9,7 @@ const root = resolve(import.meta.dirname, "..");
 const read = (file: string) => readFileSync(resolve(root, file), "utf8");
 
 const SINGLE = {
+  crs_highwage: "none", crs_joboffer: "none",
   crs_age: "29", crs_marital: "without_spouse", crs_education: "master_or_professional", crs_french: "7", crs_english: "9",
   crs_canadian_exp: "0", crs_foreign_exp: "3", crs_trade_cert: "non", crs_canadian_edu: "none", crs_sibling: "non", crs_pnp: "non",
 };
@@ -65,6 +66,24 @@ describe("calculateur CRS obligatoire — Canada, résidence permanente", () => 
     expect(missingCrsAnswers({ country: "Canada", projectType: "etudes", details: { programId: "etudes-cursus" } })).toEqual([]);
     expect(missingCrsAnswers({ country: "Allemagne", projectType: "immigration", details: { programId: "immigration-points" } })).toEqual([]);
     expect(missingCrsAnswers({ country: "Canada", projectType: "immigration", details: null })).toEqual([]);
+  });
+
+  it("facteur d'intégration (3 novembre 2026) : une offre d'emploi à salaire élevé compte, mais jamais en plus de l'expérience canadienne", () => {
+    const none = crsSummaryFromAnswers(SINGLE)!;
+    expect(none.breakdown.labourMarketIntegration).toBe(0);
+    const offer = crsSummaryFromAnswers({ ...SINGLE, crs_joboffer: "2" })!;
+    expect(offer.breakdown.labourMarketIntegration).toBe(100);
+    expect(offer.total - none.total).toBe(100);
+    const experience = crsSummaryFromAnswers({ ...SINGLE, crs_canadian_exp: "3", crs_highwage: "1.5", crs_joboffer: "1.3" })!;
+    expect(experience.breakdown.labourMarketIntegration).toBe(64 + 40);
+    expect(experience.max).toBe(1270);
+  });
+
+  it("une évaluation enregistrée avant le 3 novembre 2026 (sans les deux nouvelles questions) se calcule toujours", () => {
+    const { crs_highwage: _a, crs_joboffer: _b, ...legacy } = SINGLE;
+    expect(crsSummaryFromAnswers(legacy)?.total).toBe(crsSummaryFromAnswers(SINGLE)?.total);
+    // mais un nouveau dépôt doit répondre aux deux questions
+    expect(missingCrsAnswers({ country: "Canada", projectType: "immigration", details: { programId: "immigration-points", ...legacy } }).length).toBe(2);
   });
 
   it("les réponses du calculateur survivent au nettoyage serveur et un faux champ est écarté", () => {
