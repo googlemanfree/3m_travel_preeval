@@ -151,6 +151,7 @@ import PageTransition from "./components/PageTransition";
 import PageLoadingFallback from "./components/PageLoadingFallback";
 import ChunkReloadNotice from "./components/ChunkReloadNotice";
 import NavigationProgress from "./components/NavigationProgress";
+import ScrollRevealManager from "./components/ScrollRevealManager";
 import PwaStatusNotice from "./components/PwaStatusNotice";
 
 const FlightFavorites = lazyWithTimeout(() => import("./pages/FlightFavorites"));
@@ -675,6 +676,7 @@ function AppShell() {
                     <>
                       {/* Header global visible sur toutes les pages avec barre de progression de chargement */}
                       <NavigationProgress />
+                      <ScrollRevealManager />
                       <Navbar />
                       {/* Contenu des pages avec transition douce entre les routes */}
                       <div className={`app-content flex min-w-0 flex-1 flex-col ${!location.startsWith("/admin") ? "secondary-page-surface" : ""}`}>

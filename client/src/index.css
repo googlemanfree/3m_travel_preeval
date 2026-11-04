@@ -1303,3 +1303,77 @@ html.high-contrast .btn-submit { color: #ffffff !important; background: #082b5c 
 [data-admin-guichet="true"] [data-admin-guichet-panel] {
   font-size: 1.05rem;
 }
+
+/* ── Animations premium du site public ─────────────────────────────────────────────────────────────────────
+   Tout est facultatif : sans JavaScript, avec « réduire les animations » ou le réglage Animations = désactivé,
+   le contenu s'affiche tel quel. L'état masqué n'existe que lorsque lib/scrollReveal.ts a posé data-sr. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-sr="hidden"] {
+    opacity: 0;
+    transform: translate3d(0, 22px, 0) scale(0.992);
+  }
+
+  [data-sr="shown"] {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity calc(640ms * var(--motion-scale, 1)) var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) var(--sr-delay, 0ms),
+      transform calc(760ms * var(--motion-scale, 1)) var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) var(--sr-delay, 0ms);
+  }
+
+  /* Titre de page : léger glissement (transform seule, jamais d'opacité : le LCP n'est pas retardé). */
+  .page-transition-shell h1 {
+    animation: sr-rise-soft calc(720ms * var(--motion-scale, 1)) var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) both;
+  }
+
+  @keyframes sr-rise-soft {
+    from { transform: translate3d(0, 12px, 0); }
+    to { transform: none; }
+  }
+
+  /* Barres de progression (évaluation, dossier) : le remplissage glisse au lieu de sauter. */
+  .secondary-page-surface [role="progressbar"] > * {
+    transition: transform 700ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), width 700ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+  }
+}
+
+html.motion-disabled [data-sr],
+html.motion-disabled .page-transition-shell h1 {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+@media print {
+  [data-sr] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Cartes cliquables : relief au survol (pointeur fin uniquement, pages publiques uniquement). */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .secondary-page-surface a[href][class*="rounded-2xl"][class*="border"],
+  .secondary-page-surface article[class*="rounded-2xl"][class*="border"] {
+    transition: transform 240ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), box-shadow 240ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), border-color 200ms ease;
+  }
+
+  .secondary-page-surface a[href][class*="rounded-2xl"][class*="border"]:hover,
+  .secondary-page-surface article[class*="rounded-2xl"][class*="border"]:hover {
+    transform: translateY(-4px);
+    border-color: rgba(213, 168, 75, 0.5);
+    box-shadow: 0 26px 54px -30px rgba(6, 26, 54, 0.5);
+  }
+
+  /* Les images d'une carte se rapprochent doucement, sans déborder (le cadre reste fixe). */
+  .secondary-page-surface a[href][class*="rounded-2xl"][class*="overflow-hidden"] img,
+  .secondary-page-surface article[class*="rounded-2xl"][class*="overflow-hidden"] img {
+    transition: transform 700ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+  }
+
+  .secondary-page-surface a[href][class*="rounded-2xl"][class*="overflow-hidden"]:hover img,
+  .secondary-page-surface article[class*="rounded-2xl"][class*="overflow-hidden"]:hover img {
+    transform: scale(1.045);
+  }
+}
