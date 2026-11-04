@@ -864,6 +864,16 @@ export function composePublicPrerender(template: string, url: string) {
       addressCountry: "CM",
     },
   };
+  const webPageNode = {
+    "@type": "WebPage",
+    "@id": `${canonical}#webpage`,
+    url: canonical,
+    name: current.title,
+    description: current.description,
+    inLanguage: isEnPath ? "en" : "fr-FR",
+    isPartOf: { "@id": `${ORIGIN}/#website` },
+    publisher: { "@id": `${ORIGIN}/#organization` },
+  };
   const structuredData = path === "/" || path === "/en"
     ? { "@context": "https://schema.org", "@graph": [
         organizationNode,
@@ -883,6 +893,26 @@ export function composePublicPrerender(template: string, url: string) {
           { "@type": "AboutPage", "@id": `${ORIGIN}/about#webpage`, url: FOUNDER.aboutUrl, name: current.title, description: current.description, mainEntity: { "@id": `${ORIGIN}/about#aureol-donfack` }, about: { "@id": `${ORIGIN}/about#aureol-donfack` }, isPartOf: { "@id": `${ORIGIN}/#website` } },
           breadcrumb,
         ] }
+    : path === "/evaluation"
+      ? { "@context": "https://schema.org", "@graph": [
+          {
+            ...webPageNode,
+            mainEntity: { "@id": `${canonical}#evaluation-service` },
+          },
+          {
+            "@type": "Service",
+            "@id": `${canonical}#evaluation-service`,
+            name: "Évaluation de projet de mobilité internationale",
+            description: current.description,
+            serviceType: "Pré-évaluation administrative de visa et mobilité internationale",
+            provider: { "@id": `${ORIGIN}/#organization` },
+            areaServed: { "@type": "Place", name: "Afrique et candidats accompagnés à distance" },
+            url: canonical,
+          },
+          breadcrumb,
+        ] }
+    : path === "/login"
+      ? { "@context": "https://schema.org", "@graph": [webPageNode] }
     : path === "/procedures"
       ? { "@context": "https://schema.org", "@graph": [
           { "@type": "FAQPage", mainEntity: PUBLIC_FAQ_ITEMS.map(({ question, answer }) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },
