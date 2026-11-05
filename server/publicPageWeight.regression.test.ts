@@ -14,6 +14,24 @@ describe("poids des pages publiques : les bibliothèques PDF ne se chargent qu'�
     expect(config).toMatch(/pdfjs-dist[\s\S]{0,200}jspdf[\s\S]{0,200}return undefined/);
   });
 
+  it("un chunk par panneau d'administration n'est permis que s'il est réservé au code admin (sinon l'accueil les précharge)", () => {
+    // Mesuré (2026-11-05) : la règle « un chunk admin-<fichier> » sans garde-fou faisait précharger 77 chunks (≈ 5,2 Mo de JS,
+    // 1,6 Mo gzip) sur chaque page publique, car Rollup y rangeait aussi du code partagé (Button, trpc…) exigé par l'entrée.
+    // Avec le garde-fou « importé uniquement par du code admin » : 7 préchargements, ≈ 3,0 Mo (0,87 Mo gzip).
+    if (/`admin-\$\{/.test(config)) {
+      expect(config).toMatch(/getModuleInfo/);
+      expect(config).toMatch(/adminOnly\(/);
+    }
+  });
+
+  it("TensorFlow reste hors du chargement initial : chunk à part, importé dynamiquement par la vérification du portrait", () => {
+    expect(config).toMatch(/@tensorflow/);
+    const portrait = source("client/src/lib/portraitVerification.ts");
+    expect(portrait).not.toMatch(/^import\s+[^;]*from\s+["']@tensorflow/m);
+    expect(portrait).toMatch(/import\(["']@tensorflow\/tfjs["']\)/);
+    expect(portrait).toMatch(/import\(["']@tensorflow-models\/blazeface["']\)/);
+  });
+
   it("les chunks lourds réservés à quelques pages restent isolés", () => {
     expect(config).toMatch(/portrait-vendor/);
     expect(config).toMatch(/recharts-vendor/);
