@@ -661,12 +661,15 @@ export const applicationRouter = router({
           paymentTransactionId: applications.paymentTransactionId,
           paymentDate: applications.paymentDate,
           paymentMethod: applications.paymentMethod,
+          visaType: applications.visaType,
         })
         .from(applications)
         .where(eq(applications.dossierNumber, input.dossierNumber))
         .limit(1);
       if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
-      return app;
+      const { visaType, ...publicApp } = app;
+      // Même règle que l'initiation du paiement : montant du dossier, sinon celui proposé selon le visa.
+      return { ...publicApp, paymentAmount: app.paymentAmount ?? proposedOpeningFee(visaType) };
     }),
 
   /** Lister tous les dossiers (admin) */

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import PaymentReceipt from "@/components/PaymentReceipt";
 import { CheckCircle, Download, MessageCircle, Home, Loader2, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { DEFAULT_OPENING_FEE_XAF } from "@shared/openingFee";
 
 export default function PaymentSuccess() {
   const params = new URLSearchParams(window.location.search);
@@ -76,7 +77,7 @@ export default function PaymentSuccess() {
                   candidateName={application.fullName}
                   email={application.email}
                   destination={application.destination}
-                  amount={application.paymentAmount || 65000}
+                  amount={application.paymentAmount || DEFAULT_OPENING_FEE_XAF}
                   currency={application.paymentCurrency || "XAF"}
                   transactionId={application.paymentTransactionId || "N/A"}
                   paymentDate={application.paymentDate ? new Date(application.paymentDate) : new Date()}

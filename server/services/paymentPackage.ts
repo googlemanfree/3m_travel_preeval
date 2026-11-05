@@ -50,7 +50,7 @@ async function loadDossier(db: Db, reference: PaymentReference): Promise<Loaded>
       email: dossier.email,
       fullName: dossier.fullName,
       dossierNumber: `3M-AGN-${String(dossier.id).padStart(4, "0")}`,
-      amount: audited || 65000,
+      amount: audited || proposedOpeningFee(dossier.visaType),
       currency: "XAF",
       paymentDate: dossier.lastStatusChangeAt ?? dossier.updatedAt ?? dossier.createdAt ?? new Date(),
       paymentMethod: "Paiement en agence / validation administrative",
