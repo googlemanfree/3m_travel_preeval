@@ -84,8 +84,14 @@ def render(name: str, html: str, css: str, box):
     return buffer.getvalue()
 
 
+# Mention légale réellement peinte dans le pied de page (contrôlée par un test contre shared/brandLetterhead.ts).
+legal_match = re.search(r'<div class="abs legal">(.*?)</div>', base, re.S)
+legal_text = re.sub(r"\s+", " ", re.sub(r"&nbsp;|<[^>]+>", " ", legal_match.group(1))).strip() if legal_match else ""
+legal_text = re.sub(r"\s*·\s*", " · ", legal_text)
+
 lines = [
     "/* Fichier généré par docs/brand/v3/build-assets.py : ne pas modifier à la main. */",
+    f"/* Mention légale peinte : {legal_text} */",
     "/* Bandeaux du papier à en-tête v3 (JPEG, fond blanc), peints par shared/brandLetterhead.ts. */",
     "",
 ]

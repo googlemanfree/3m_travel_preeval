@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { jsPDF } from "jspdf";
 import { describe, expect, it } from "vitest";
@@ -91,5 +91,20 @@ describe("habillage automatique des e-mails existants", () => {
     expect(shouldBrandEmail({ to: "equipe@3mtravelagency.com" })).toBe(false);
     expect(shouldBrandEmail({ to: "candidat@gmail.com", brand: false })).toBe(false);
     expect(shouldBrandEmail({ to: "" })).toBe(false);
+  });
+});
+
+describe("identité légale peinte dans les bandeaux", () => {
+  const legalLine = `${BRAND.legalName} · RC : ${BRAND.rc} · NIU : ${BRAND.niu}`;
+
+  it("le pied de page des PDF (images générées) porte la mention légale officielle", () => {
+    const generated = readFileSync(resolve(process.cwd(), "shared/brandLetterheadAssets.ts"), "utf8");
+    expect(generated).toContain(`Mention légale peinte : ${legalLine} */`);
+  });
+
+  it("la source du papier à en-tête porte la même mention", () => {
+    const html = readFileSync(resolve(process.cwd(), "docs/brand/v3/entete.html"), "utf8");
+    const text = html.replace(/&nbsp;|<[^>]+>/g, " ").replace(/\s*·\s*/g, " · ").replace(/\s+/g, " ");
+    expect(text).toContain(legalLine);
   });
 });
