@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { AlertCircle, CheckCircle2, Copy, ExternalLink, MessageCircle, RotateCcw, Sparkles } from "lucide-react";
+import { AlertCircle, CheckCircle2, Copy, ExternalLink, MessageCircle, Printer, RotateCcw, Sparkles } from "lucide-react";
 import { ALL_CRS_TESTS, CRS_ABILITIES, CRS_TEST_BANDS, CRS_TEST_LABELS, secondLanguageTests, type CrsAbility, type CrsLanguageTest } from "@shared/crsLanguageTests";
 import { EMPTY_CRS_ANSWERS, MARITAL_OPTIONS, buildCrsProfileFromOfficialAnswers, countsAsWithSpouse, isMarried, type CrsOfficialAnswers } from "@shared/crsOfficialAnswers";
 import { CRS_SOURCE, CRS_TOTAL_MAX, computeCrsScore, type CrsBreakdown, type CrsProfile } from "@shared/crsScore";
@@ -324,7 +324,13 @@ export default function CrsOfficialCalculator() {
       )}
 
       {submitted && breakdown && result.complete && (
-        <section aria-labelledby="crs-results-title" className="space-y-4 rounded-2xl border-2 border-blue-300 bg-white p-5 shadow-md" data-testid="crs-results">
+        <section id="crs-print-area" aria-labelledby="crs-results-title" className="space-y-4 rounded-2xl border-2 border-blue-300 bg-white p-5 shadow-md" data-testid="crs-results">
+          {/* Impression / PDF : seule cette zone est imprimée ; l'en-tête ci-dessous n'apparaît qu'à l'impression. */}
+          <style>{`.crs-print-only{display:none}@media print{body *{visibility:hidden!important}#crs-print-area,#crs-print-area *{visibility:visible!important}#crs-print-area{position:absolute;left:0;top:0;width:100%;border:0;box-shadow:none}.crs-no-print{display:none!important}.crs-print-only{display:block!important}}`}</style>
+          <div className="crs-print-only" data-testid="crs-print-header">
+            <p className="text-lg font-black">3M TRAVEL AGENCY — Estimation du score CRS (Entrée express)</p>
+            <p className="text-xs text-slate-600">Établie le {new Date().toLocaleDateString("fr-FR")} avec la grille IRCC du 3 novembre 2026. Estimation indicative : en cas de divergence, le système Entrée express d’IRCC prévaut.</p>
+          </div>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h3 id="crs-results-title" className="text-xl font-black text-slate-950">Vos résultats</h3>
@@ -359,7 +365,8 @@ export default function CrsOfficialCalculator() {
 
           <p className="text-[11px] leading-5 text-slate-500">Grille IRCC en vigueur depuis le 3 novembre 2026, relue le {new Date(CRS_SOURCE.verifiedAt).toLocaleDateString("fr-FR")}. {CRS_SOURCE.note} Les niveaux de langue sont convertis avec les tranches de notes officielles. Résultat indicatif : en cas de divergence, le système Entrée express prévaut. <a className="underline" href={CRS_SOURCE.url} target="_blank" rel="noreferrer noopener">Voir les critères du SCG sur Canada.ca</a></p>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="crs-no-print flex flex-wrap gap-3">
+            <button type="button" onClick={() => window.print()} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-800 hover:bg-slate-50" data-testid="crs-print"><Printer className="h-4 w-4" aria-hidden="true" />Enregistrer en PDF / imprimer</button>
             <a href={`https://wa.me/237698104832?text=${encodeURIComponent(`${summaryText} Je souhaite l’avis d’un conseiller 3M TRAVEL AGENCY.`)}`} target="_blank" rel="noreferrer noopener" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-black text-white hover:bg-emerald-800" data-testid="crs-share-whatsapp"><MessageCircle className="h-4 w-4" aria-hidden="true" />Demander l’avis d’un conseiller (WhatsApp)</a>
             <button type="button" onClick={copyResult} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-800 hover:bg-slate-50" data-testid="crs-copy"><Copy className="h-4 w-4" aria-hidden="true" />{copied ? "Résultat copié" : "Copier le résultat"}</button>
             <a href="/evaluation?destination=canada" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-black text-white hover:bg-blue-800">Faire évaluer mon profil Canada</a>

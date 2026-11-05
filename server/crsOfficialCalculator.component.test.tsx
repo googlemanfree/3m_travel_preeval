@@ -127,6 +127,22 @@ describe("calculatrice CRS « comme canada.ca »", () => {
     expect(decodeURIComponent(share.href)).toContain("469 / 1270");
   });
 
+  it("permet d'imprimer ou d'enregistrer le résultat en PDF : seule la zone de résultat s'imprime, avec date et avertissement", () => {
+    render(<CrsOfficialCalculator />);
+    fillReferenceProfile();
+    calculate();
+    const printed: number[] = [];
+    (window as any).print = () => printed.push(1);
+    fireEvent.click(screen.getByTestId("crs-print"));
+    expect(printed).toHaveLength(1);
+    expect(screen.getByTestId("crs-results").id).toBe("crs-print-area");
+    const header = screen.getByTestId("crs-print-header");
+    expect(header.textContent).toContain("3M TRAVEL AGENCY");
+    expect(header.textContent).toContain("grille IRCC du 3 novembre 2026");
+    expect(document.querySelector(".crs-no-print")).not.toBeNull();
+    expect(document.querySelector("style")?.textContent ?? "").toContain("@media print");
+  });
+
   it("retrouve les réponses saisies après un rechargement (mémoire locale)", () => {
     const { unmount } = render(<CrsOfficialCalculator />);
     choose("crs-q1", "single");
