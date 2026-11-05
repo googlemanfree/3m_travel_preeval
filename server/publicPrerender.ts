@@ -102,7 +102,7 @@ const LOCAL_BUSINESS_STRUCTURED_DATA = {
 
 const ORIGIN = OFFICIAL_SITE_ORIGIN;
 const SITE = BRAND_PUBLIC_NAME;
-const LEGAL = "RCCM CM-NSI-01-2026-B13-01038 · NIU M092618996818Q";
+const LEGAL = "RC/YAO/2019/A/2567 · NIU M092618996818Q";
 const SOCIAL_IMAGE_ALT = `Aperçu ${BRAND_PUBLIC_NAME}`;
 /** Métadonnées d'accueil courtes, descriptives et alignées sur les recherches locales et internationales. */
 const HOME_TITLE = `${BRAND_PUBLIC_NAME} | Agence de voyage, visas et mobilité`;
@@ -314,7 +314,7 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
     title: `Mentions légales | ${SITE}`,
     description: "Mentions légales 3M TRAVEL AGENCY : éditeur, RC et NIU, directeur de publication, hébergeur et contact.",
     heading: "Mentions légales",
-    lead: "Éditeur 3M Group SARL (enseigne 3M TRAVEL AGENCY), SARL unipersonnelle au capital de 1 000 000 FCFA, RCCM CM-NSI-01-2026-B13-01038, NIU M092618996818Q.",
+    lead: "Éditeur 3M Group SARL (enseigne 3M TRAVEL AGENCY), SARL unipersonnelle au capital de 1 000 000 FCFA, RC/YAO/2019/A/2567, NIU M092618996818Q.",
   },
   "/conditions-utilisation": { title: `Conditions d’utilisation | ${SITE}`, description: "Conditions d’utilisation des services et informations de responsabilité.", heading: "Conditions d’utilisation", lead: "Les services d’accompagnement ne remplacent ni les autorités compétentes ni les décisions de partenaires externes." },
   "/accessibilite": { title: `Accessibilité | ${SITE}`, description: "Engagements et informations d’accessibilité du site 3M TRAVEL AGENCY : ce qui est déjà en place et comment signaler une difficulté.", heading: "Accessibilité", lead: "Nous cherchons à rendre le site utilisable par le plus grand nombre ; signalez-nous toute difficulté rencontrée." },
@@ -572,7 +572,7 @@ const routeSpecificPrerender = (path: string) => {
   }
   if (path === "/mentions-legales") {
     const yaounde = COMPANY_PROFILE.offices.cameroon;
-    return `<section aria-label="Mentions légales"><h2>Mentions légales</h2><p>Éditeur : ${esc(COMPANY_PROFILE.legalDisplayName)}. ${esc(COMPANY_PROFILE.legalForm)}, capital ${esc(COMPANY_PROFILE.shareCapital)}. RCCM ${esc(COMPANY_PROFILE.legalIdentifiers.registration)}, NIU ${esc(COMPANY_PROFILE.legalIdentifiers.taxpayerId)}. Siège : ${yaounde.addressLines.map(esc).join(", ")}.</p><p>Directeur de la publication : ${esc(COMPANY_FOUNDER.name)}. Hébergeur : ${esc(COMPANY_PROFILE.hosting.providerName)}. Contact : <a href="mailto:${esc(COMPANY_PROFILE.publicEmail)}">${esc(COMPANY_PROFILE.publicEmail)}</a>.</p><p>${esc(COMPANY_PROFILE.groupRole)}</p><p>Le domaine officiel est www.3mtravelagency.com ; 3mtravelagency.click doit renvoyer en 301 vers le .com.</p><p><a href="/conditions-utilisation">Conditions d’utilisation</a> · <a href="/politique-confidentialite">Politique de confidentialité</a></p></section>`;
+    return `<section aria-label="Mentions légales"><h2>Mentions légales</h2><p>Éditeur : ${esc(COMPANY_PROFILE.legalDisplayName)}. ${esc(COMPANY_PROFILE.legalForm)}, capital ${esc(COMPANY_PROFILE.shareCapital)}. RC ${esc(COMPANY_PROFILE.legalIdentifiers.registration)}, NIU ${esc(COMPANY_PROFILE.legalIdentifiers.taxpayerId)}. Siège : ${yaounde.addressLines.map(esc).join(", ")}.</p><p>Directeur de la publication : ${esc(COMPANY_FOUNDER.name)}. Hébergeur : ${esc(COMPANY_PROFILE.hosting.providerName)}. Contact : <a href="mailto:${esc(COMPANY_PROFILE.publicEmail)}">${esc(COMPANY_PROFILE.publicEmail)}</a>.</p><p>${esc(COMPANY_PROFILE.groupRole)}</p><p>Le domaine officiel est www.3mtravelagency.com ; 3mtravelagency.click doit renvoyer en 301 vers le .com.</p><p><a href="/conditions-utilisation">Conditions d’utilisation</a> · <a href="/politique-confidentialite">Politique de confidentialité</a></p></section>`;
   }
   if (path === "/politique-confidentialite") {
     const yaounde = COMPANY_PROFILE.offices.cameroon;

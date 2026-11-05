@@ -108,7 +108,7 @@ describe("contrôle et mise en forme", () => {
     expect(fragment).toContain("ne constitue pas");
     expect(renderBilanFragment({ html: "<p>x</p>", title: "T", candidateName: "A", score: 0 })).not.toContain("Indice de préparation");
     const page = renderBilanStandalone({ html: "<p>x</p>", title: "T", candidateName: "A" });
-    expect(page).toContain("CM-NSI-01-2026-B13-01038");
+    expect(page).toContain("RC/YAO/2019/A/2567");
     expect(page).toContain("Accompagnement visa et mobilité internationale");
   });
 });

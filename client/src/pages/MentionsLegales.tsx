@@ -41,7 +41,7 @@ export default function MentionsLegales() {
               <li>Forme juridique : {COMPANY_PROFILE.legalForm}</li>
               <li>Capital social : {COMPANY_PROFILE.shareCapital}</li>
               <li>
-                Immatriculation (RCCM) : {COMPANY_PROFILE.legalIdentifiers.registration} — {identity.registryAuthority}
+                Immatriculation (RC) :{COMPANY_PROFILE.legalIdentifiers.registration} — {identity.registryAuthority}
               </li>
               <li>NIU : {COMPANY_PROFILE.legalIdentifiers.taxpayerId}</li>
               <li>Siège : {yaounde.addressLines.join(", ")}</li>

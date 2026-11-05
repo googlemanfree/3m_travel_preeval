@@ -38,7 +38,7 @@ describe("papier à en-tête officiel", () => {
 
   it("les coordonnées légales et l'identité sont celles de l'agence, échappées dans l'e-mail", () => {
     const html = renderBrandedEmailHtml({ title: "<b>Titre</b>", bodyHtml: "<p>ok</p>", reference: "3M-AGN-0001" });
-    expect(html).toContain("CM-NSI-01-2026-B13-01038");
+    expect(html).toContain("RC/YAO/2019/A/2567");
     expect(html).toContain("M092618996818Q");
     expect(html).toContain("3M Group SARL");
     expect(html).toContain("&lt;b&gt;Titre&lt;/b&gt;");
@@ -68,7 +68,7 @@ describe("papier à en-tête officiel", () => {
     expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
     const html = buildPaymentReceiptEmailHtml(input);
     expect(html).toContain("Visa travail · Canada");
-    expect(html).toContain("CM-NSI-01-2026-B13-01038");
+    expect(html).toContain("RC/YAO/2019/A/2567");
   });
 });
 
@@ -79,7 +79,7 @@ describe("habillage automatique des e-mails existants", () => {
     const framed = frameLegacyEmailHtml(legacy);
     expect(framed).toContain("Contenu d'origine");
     expect(framed).toContain("Accompagnement visa et mobilité internationale");
-    expect(framed).toContain("CM-NSI-01-2026-B13-01038");
+    expect(framed).toContain("RC/YAO/2019/A/2567");
     expect(framed.startsWith(BRAND_EMAIL_MARKER)).toBe(true);
     expect(framed.match(/<html/g)?.length).toBe(1);
     expect(frameLegacyEmailHtml(framed)).toBe(framed);

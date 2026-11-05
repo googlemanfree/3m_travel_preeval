@@ -24,7 +24,7 @@ describe("accueil : bloc Pourquoi 3M basé sur des faits vérifiables", () => {
   it("s’appuie sur le profil légal réel de l’agence, sans taux de succès inventé", () => {
     expect(home).toContain("COMPANY_PROFILE");
     expect(home).toContain("legalIdentifiers.registration");
-    expect(company).toContain("CM-NSI-01-2026-B13-01038");
+    expect(company).toContain("RC/YAO/2019/A/2567");
     expect(home).not.toContain("Expertise réglementée");
     expect(home).not.toContain("Taux de succès");
     expect(home).not.toContain("98%");

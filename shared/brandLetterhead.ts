@@ -21,7 +21,7 @@ export const BRAND = {
   email: "hello@3mtravelagency.com",
   /** En-tête : uniquement l'accompagnement visa et mobilité internationale (aucun autre service de l'agence n'y figure). */
   tagline: ["Accompagnement visa et mobilité internationale", "Études · Travail · Voyages · Visas · Immigration"],
-  rc: "CM-NSI-01-2026-B13-01038",
+  rc: "RC/YAO/2019/A/2567",
   niu: "M092618996818Q",
   cameroon: {
     title: "CAMEROUN",

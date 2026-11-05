@@ -1,6 +1,6 @@
 # 3M Group SARL
 **Société à Responsabilité Limitée au capital enregistré**  
-**Registre du Commerce :** CM-NSI-01-2026-B13-01038 | **Numéro d'Identifiant Unique (NIU) :** M092618996818Q  
+**Registre du Commerce :** RC/YAO/2019/A/2567 | **Numéro d'Identifiant Unique (NIU) :** M092618996818Q  
 **Siège social :** Biyem-Assi, Montée Chapelle Obili (à 10 mètres du Collège EHS), Yaoundé – République du Cameroun  
 **Téléphones / WhatsApp :** +237 698 104 832 / +237 620 996 045  
 **Courriel officiel :** hello@3mtravelagency.com | **Portail Web sécurisé :** [www.3mtravelagency.com](https://www.3mtravelagency.com)
@@ -25,7 +25,7 @@
 
 **D'UNE PART, L'AGENCE MANDATAIRE :**
 * **Dénomination sociale :** 3M Group SARL
-* **Immatriculation légale :** CM-NSI-01-2026-B13-01038 — NIU : M092618996818Q
+* **Immatriculation légale :** RC/YAO/2019/A/2567 — NIU : M092618996818Q
 * **Siège social :** Yaoundé, Cameroun
 * **Représentée par :** La Direction Générale des Opérations et son Conseiller Validateur habilité,  
 ci-après dénommée **« L'AGENCE »**.
@@ -63,7 +63,7 @@ Conformément aux stipulations du Reçu Officiel de paiement, les frais confirm�
 * **Date et heure de validation :** `{{DATE_HEURE_PAIEMENT}}`
 * **Conseiller validateur habilité :** `{{CONSEILLER_EMAIL}}`
 * **Empreinte cryptographique de sécurité :** `{{EMPREINTE_SHA}}`
-2.2. Le Reçu de Confirmation de Paiement officiel portant les mentions CM-NSI-01-2026-B13-01038 et NIU M092618996818Q demeure archivé en permanence dans l'Espace Client du CANDIDAT comme justificatif comptable et juridique indiscutable.
+2.2. Le Reçu de Confirmation de Paiement officiel portant les mentions RC/YAO/2019/A/2567 et NIU M092618996818Q demeure archivé en permanence dans l'Espace Client du CANDIDAT comme justificatif comptable et juridique indiscutable.
 
 #### ARTICLE 3 : CARACTÈRE STRICTEMENT NON REMBOURSABLE DES FRAIS
 3.1. Conformément aux termes formels du Reçu de paiement, **ces frais sont strictement non remboursables une fois le traitement administratif engagé**, car ils rémunèrent les diligences, expertises, vérifications techniques et mobilisations opérationnelles déjà réalisées par l'équipe avant et pendant la soumission.  
