@@ -1,3 +1,4 @@
+import { scrollBehavior } from "@/lib/motion";
 import { useEffect, useState } from 'react';
 import { Plane } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,7 +17,7 @@ export function ScrollToTop() {
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
-      behavior: 'smooth',
+      behavior: scrollBehavior(),
     });
   };
 

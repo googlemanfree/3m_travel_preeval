@@ -1,3 +1,4 @@
+import { scrollBehavior } from "@/lib/motion";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { trpc } from "@/lib/trpc";
@@ -791,7 +792,7 @@ export default function Flights() {
   useEffect(() => {
     if (window.location.hash !== "#3m-booking") return;
     const scrollToBooking = () => {
-      document.getElementById("3m-booking")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("3m-booking")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
     };
     const frame = window.requestAnimationFrame(scrollToBooking);
     const retry = window.setTimeout(scrollToBooking, 180);
@@ -974,7 +975,7 @@ export default function Flights() {
     searchStartedAtRef.current = Date.now();
     setIsSearchSubmitting(true);
     setSearchEnabled(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: scrollBehavior() });
   }
 
   // Devis ou suivi de tarif : le formulaire d'accompagnement s'ouvre déjà rempli avec le parcours, les dates et le relevé.
@@ -997,7 +998,7 @@ export default function Flights() {
     searchStartedAtRef.current = Date.now();
     setIsSearchSubmitting(true);
     setSearchEnabled(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: scrollBehavior() });
   }
 
   return (
@@ -1481,7 +1482,7 @@ export default function Flights() {
             <button
               type="button"
               onClick={() => {
-                document.querySelector('[data-testid="flight-search-panel"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
+                document.querySelector('[data-testid="flight-search-panel"]')?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
               }}
               className="touch-target inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-center text-sm font-bold text-[#1E3A8A] transition active:scale-[0.98]"
             >

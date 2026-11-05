@@ -1,7 +1,6 @@
 import { useEffect } from "react";
-import { useReducedMotion } from "framer-motion";
 import { useLocation } from "wouter";
-import { useAnimationPreferences } from "@/contexts/AnimationPreferencesContext";
+import { useMotionAllowed } from "@/hooks/useMotionAllowed";
 import { createRevealSession, isRevealRoute } from "@/lib/scrollReveal";
 
 /**
@@ -10,11 +9,10 @@ import { createRevealSession, isRevealRoute } from "@/lib/scrollReveal";
  */
 export default function ScrollRevealManager() {
   const [location] = useLocation();
-  const systemReducedMotion = useReducedMotion();
-  const { animationsEnabled } = useAnimationPreferences();
+  const motionAllowed = useMotionAllowed();
 
   useEffect(() => {
-    if (systemReducedMotion || !animationsEnabled || !isRevealRoute(location)) return;
+    if (!motionAllowed || !isRevealRoute(location)) return;
     if (typeof window === "undefined" || typeof window.IntersectionObserver === "undefined") return;
 
     let session: ReturnType<typeof createRevealSession> | null = null;
@@ -32,7 +30,7 @@ export default function ScrollRevealManager() {
       timers.forEach((timer) => window.clearTimeout(timer));
       session?.stop();
     };
-  }, [location, systemReducedMotion, animationsEnabled]);
+  }, [location, motionAllowed]);
 
   return null;
 }

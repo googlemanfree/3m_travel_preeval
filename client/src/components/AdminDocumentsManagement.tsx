@@ -1,3 +1,4 @@
+import { scrollBehavior } from "@/lib/motion";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -319,7 +320,7 @@ export function AdminDocumentsManagement() {
       setUploadCandidateId(`${match.source === "AGENCY_PHYSICAL" ? "agency" : "candidate"}:${match.internalId}`);
       setUploadDocumentType("document_remis_main_propre");
     }
-    document.getElementById("admin-quick-upload")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    document.getElementById("admin-quick-upload")?.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
   };
 
   const toggleDocumentSelection = (document: Document) => {

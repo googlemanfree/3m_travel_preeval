@@ -1,3 +1,4 @@
+import { scrollBehavior } from "@/lib/motion";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ export function FlightQuoteRequest({ prefill = null }: { prefill?: QuotePrefill 
 
   // Une demande venue d'une offre amène le visiteur directement sur le formulaire, déjà rempli.
   useEffect(() => {
-    if (prefill && typeof sectionRef.current?.scrollIntoView === "function") sectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (prefill && typeof sectionRef.current?.scrollIntoView === "function") sectionRef.current.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
   }, [prefill]);
 
   const requestQuote = trpc.contact.sendContactEmail.useMutation({

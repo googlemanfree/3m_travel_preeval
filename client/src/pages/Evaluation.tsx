@@ -1,3 +1,4 @@
+import { scrollBehavior } from "@/lib/motion";
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -495,7 +496,7 @@ export default function Evaluation() {
     const cvMandatory = dynamicForm.cv === 'required';
     if (cvMandatory && !cvFile) {
       setCvAnalysisNotice(CV_REQUIRED_MESSAGE);
-      document.getElementById('cv-upload')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.getElementById('cv-upload')?.scrollIntoView({ behavior: scrollBehavior(), block: 'center' });
       return setFormError(CV_REQUIRED_MESSAGE);
     }
 

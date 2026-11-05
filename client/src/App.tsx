@@ -152,6 +152,7 @@ import PageLoadingFallback from "./components/PageLoadingFallback";
 import ChunkReloadNotice from "./components/ChunkReloadNotice";
 import NavigationProgress from "./components/NavigationProgress";
 import ScrollRevealManager from "./components/ScrollRevealManager";
+import MotionPreferenceBridge from "./components/MotionPreferenceBridge";
 import PwaStatusNotice from "./components/PwaStatusNotice";
 
 const FlightFavorites = lazyWithTimeout(() => import("./pages/FlightFavorites"));
@@ -662,6 +663,7 @@ function AppShell() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light" switchable>
         <AnimationPreferencesProvider>
+          <MotionPreferenceBridge>
           <FontSizePreferencesProvider>
             <LanguageProvider>
               <TooltipProvider>
@@ -699,6 +701,7 @@ function AppShell() {
               </TooltipProvider>
             </LanguageProvider>
           </FontSizePreferencesProvider>
+          </MotionPreferenceBridge>
         </AnimationPreferencesProvider>
       </ThemeProvider>
     </ErrorBoundary>

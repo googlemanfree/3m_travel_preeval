@@ -1,3 +1,4 @@
+import { scrollBehavior } from "@/lib/motion";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   Bell, Briefcase, CalendarClock, CheckCircle2, ClipboardCheck, CreditCard, ExternalLink, Eye, FileCheck2, FileText,
@@ -1313,7 +1314,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             const scrollToTarget = () => {
               const focusNode = document.getElementById(target.focusId)
                 || document.getElementById("candidate-360-tabs");
-              focusNode?.scrollIntoView({ behavior: "smooth", block: "start" });
+              focusNode?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
               if (focusNode instanceof HTMLElement) {
                 focusNode.setAttribute("data-cockpit-focus", "true");
                 window.setTimeout(() => focusNode.removeAttribute("data-cockpit-focus"), 2400);

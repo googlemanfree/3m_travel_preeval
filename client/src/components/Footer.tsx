@@ -1,3 +1,4 @@
+import { scrollBehavior } from "@/lib/motion";
 import { Link } from "wouter";
 import { useEffect, useState, type FormEvent } from "react";
 import { motion, useReducedMotion } from "framer-motion";
@@ -401,7 +402,7 @@ export default function Footer() {
       {showBackToTop && (
         <button
           type="button"
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          onClick={() => window.scrollTo({ top: 0, behavior: scrollBehavior() })}
           className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-4 z-40 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/25 bg-[#123665]/95 px-3 py-2 text-xs font-semibold text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-[#1a4a86] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 motion-reduce:scroll-auto motion-reduce:transition-none md:bottom-6 md:left-6"
           aria-label={language === "fr" ? "Revenir en haut de la page" : "Back to top"}
           data-testid="footer-back-to-top"

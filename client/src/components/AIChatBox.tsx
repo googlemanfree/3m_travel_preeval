@@ -1,3 +1,4 @@
+import { scrollBehavior } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -159,7 +160,7 @@ export function AIChatBox({
       requestAnimationFrame(() => {
         viewport.scrollTo({
           top: viewport.scrollHeight,
-          behavior: 'smooth'
+          behavior: scrollBehavior()
         });
       });
     }

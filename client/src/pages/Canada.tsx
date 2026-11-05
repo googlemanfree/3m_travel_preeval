@@ -1,3 +1,4 @@
+import { scrollBehavior } from "@/lib/motion";
 import React, { Suspense, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -245,7 +246,7 @@ export default function Canada() {
               onClick={() => {
                 setScoreCompleted(true);
                 const el = document.getElementById("voies-canada");
-                if (el) el.scrollIntoView({ behavior: "smooth" });
+                if (el) el.scrollIntoView({ behavior: scrollBehavior() });
               }}
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-black text-white shadow transition hover:bg-blue-800"
             >
@@ -280,7 +281,7 @@ export default function Canada() {
                 onClick={() => {
                   setScoreCompleted(true);
                   const el = document.getElementById("voies-canada");
-                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                  if (el) el.scrollIntoView({ behavior: scrollBehavior() });
                 }}
                 className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-700 px-6 py-3 text-sm font-black text-white shadow-md transition hover:bg-blue-800"
               >

@@ -2,6 +2,7 @@
  * Dashboard Administrateur — 3M TRAVEL AGENCY
  * Gestion unifiée des candidats (dossiers en ligne + dossiers agence)
  */
+import { scrollBehavior } from "@/lib/motion";
 import { isPreDossierStatus } from "@shared/candidateStatus";
 import React, { lazy, Suspense, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
 import { trpc } from "@/lib/trpc";
@@ -517,7 +518,7 @@ export function CandidateDetailModal({
   // Ouvre un onglet de la fiche 360° depuis le panneau latéral et y amène l'écran : la fiche est plus bas que les boutons.
   const open360Tab = (tab: typeof candidate360Tab) => {
     setCandidate360Tab(tab);
-    window.setTimeout(() => document.getElementById("candidate-360-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+    window.setTimeout(() => document.getElementById("candidate-360-tabs")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 60);
   };
   const [rollbackDialogOpen, setRollbackDialogOpen] = useState(false);
   const [rollbackReason, setRollbackReason] = useState("");
@@ -1046,7 +1047,7 @@ export function CandidateDetailModal({
                     onTreatNow={(target) => {
                       if (target.tab === "evaluation" || target.key === "evaluation_missing" || target.key === "evaluation_pending" || target.key === "request_evaluation" || target.key === "review_evaluation" || target.key === "validate_evaluation") {
                         setEvaluationEditorOpen(true);
-                        document.getElementById("predossier-evaluation-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                        document.getElementById("predossier-evaluation-panel")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
                         toast({ title: "Évaluation", description: "Ouvrez ou validez l’évaluation pour lever ce bloqueur." });
                         return;
                       }
@@ -1065,7 +1066,7 @@ export function CandidateDetailModal({
                         toast({ title: "E-mails", description: `Module e-mails ouvert pour ${candidate.folderCode}.` });
                         return;
                       }
-                      document.getElementById("predossier-treatment-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      document.getElementById("predossier-treatment-panel")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
                       toast({
                         title: "Traitement pré-dossier",
                         description:
@@ -1914,7 +1915,7 @@ export default function AdminDashboard() {
   const setActiveAdminTab = useCallback((tab: string) => {
     setActiveAdminTabState(tab);
     rememberAdminTab(tab);
-    if (typeof window !== "undefined") window.requestAnimationFrame(() => document.getElementById("admin-workspace")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    if (typeof window !== "undefined") window.requestAnimationFrame(() => document.getElementById("admin-workspace")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }));
   }, []);
   useEffect(() => {
     // Lien direct (?tab=candidates) : le contenu apparaît tout de suite, sans descendre dans la page.

@@ -1,3 +1,4 @@
+import { scrollBehavior } from "@/lib/motion";
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -101,7 +102,7 @@ export default function Home() {
       window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#evaluation-multi`);
     }
     const scrollToEvaluation = () => {
-      document.getElementById("evaluation-multi")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("evaluation-multi")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
     };
     const frame = window.requestAnimationFrame(scrollToEvaluation);
     const retry = window.setTimeout(scrollToEvaluation, 420);
@@ -633,7 +634,7 @@ export default function Home() {
           type="button"
           aria-label="Retour en haut de la page"
           title="Retour en haut"
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          onClick={() => window.scrollTo({ top: 0, behavior: scrollBehavior() })}
           className={`fixed left-4 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full border border-blue-200 bg-white/95 text-blue-800 shadow-lg backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:bg-blue-700 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-95 md:bottom-6 md:left-6 ${
             showStickyCta
               ? "bottom-[calc(4.25rem+env(safe-area-inset-bottom))] md:bottom-6"

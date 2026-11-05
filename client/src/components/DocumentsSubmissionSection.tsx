@@ -1,3 +1,4 @@
+import { scrollBehavior } from "@/lib/motion";
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -188,7 +189,7 @@ export function DocumentsSubmissionSection({
                           onClick={() => {
                             setSelectedDocType(doc.id);
                             // Scroll to uploader
-                            document.getElementById("specific-doc-uploader")?.scrollIntoView({ behavior: "smooth" });
+                            document.getElementById("specific-doc-uploader")?.scrollIntoView({ behavior: scrollBehavior() });
                           }}
                           className="ml-2 text-xs border-green-300 text-green-800 hover:bg-green-100"
                         >
@@ -202,7 +203,7 @@ export function DocumentsSubmissionSection({
                           size="sm"
                           onClick={() => {
                             setSelectedDocType(doc.id);
-                            document.getElementById("specific-doc-uploader")?.scrollIntoView({ behavior: "smooth" });
+                            document.getElementById("specific-doc-uploader")?.scrollIntoView({ behavior: scrollBehavior() });
                           }}
                           className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
                         >

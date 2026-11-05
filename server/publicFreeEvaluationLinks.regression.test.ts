@@ -16,7 +16,7 @@ describe("accès public au formulaire d’évaluation gratuite", () => {
     expect(home).toContain('id="evaluation-multi"');
     expect(home).toContain("SimpleMultiProjectForm");
     expect(home).toContain('hash !== "#evaluation-multi" && hash !== "#evaluation"');
-    expect(home).toContain('scrollIntoView({ behavior: "smooth", block: "start" })');
+    expect(home).toContain("scrollIntoView({ behavior: scrollBehavior(), block: \"start\" })");
     expect(home).toContain("window.setTimeout(scrollToEvaluation, 420)");
     expect(home).toContain('id="evaluation-multi"');
     expect(home).not.toContain('id="evaluation"');

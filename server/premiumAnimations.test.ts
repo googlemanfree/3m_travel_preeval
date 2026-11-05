@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { REVEAL_CLEANUP_MS, REVEAL_FAILSAFE_MS, REVEAL_MAX_STAGGER_STEPS, REVEAL_STAGGER_MS, createRevealSession, isRevealRoute, planReveals } from "../client/src/lib/scrollReveal";
@@ -122,9 +122,35 @@ describe("câblage et styles", () => {
   it("le gestionnaire est monté dans l'application et respecte les préférences", () => {
     expect(read("client/src/App.tsx")).toContain("<ScrollRevealManager />");
     const manager = read("client/src/components/ScrollRevealManager.tsx");
-    expect(manager).toContain("useReducedMotion");
-    expect(manager).toContain("animationsEnabled");
+    expect(manager).toContain("useMotionAllowed");
     expect(manager).toContain("isRevealRoute");
+    const hook = read("client/src/hooks/useMotionAllowed.ts");
+    expect(hook).toContain("useReducedMotion");
+    expect(hook).toContain("animationsEnabled");
+  });
+
+  it("toutes les animations framer-motion suivent le réglage du site : MotionConfig global, « Désactivé » = mouvement coupé", () => {
+    const app = read("client/src/App.tsx");
+    expect(app).toContain("<MotionPreferenceBridge>");
+    expect(app).toContain("</MotionPreferenceBridge>");
+    // Le pont est à l'intérieur du fournisseur de préférences (il en lit la valeur).
+    expect(app.indexOf("<AnimationPreferencesProvider>")).toBeLessThan(app.indexOf("<MotionPreferenceBridge>"));
+    const bridge = read("client/src/components/MotionPreferenceBridge.tsx");
+    expect(bridge).toContain("MotionConfig");
+    expect(bridge).toContain('animationsEnabled ? "user" : "always"');
+  });
+
+  it("aucun défilement ne force `smooth` : tous passent par scrollBehavior(), qui respecte le réglage et le système", () => {
+    const offenders: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(resolve(root, dir), { withFileTypes: true })) {
+        const rel = `${dir}/${entry.name}`;
+        if (entry.isDirectory()) walk(rel);
+        else if (/\.(tsx?|jsx?)$/.test(entry.name) && !rel.endsWith("lib/motion.ts") && /behavior:\s*["']smooth["']/.test(read(rel))) offenders.push(rel);
+      }
+    };
+    walk("client/src");
+    expect(offenders).toEqual([]);
   });
 
   it("l'état masqué n'existe que sous data-sr, uniquement si l'utilisateur n'a pas demandé de réduire les animations", () => {

@@ -1,3 +1,4 @@
+import { scrollBehavior } from "@/lib/motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { ArrowRight, Compass } from "lucide-react";
@@ -64,7 +65,7 @@ export default function MobilityOrientationTool() {
   useEffect(() => {
     if (!complete) return;
     trackEvent("mobility_orientation_result", { goal: complete.goal });
-    resultRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    resultRef.current?.scrollIntoView?.({ behavior: scrollBehavior(), block: "start" });
   }, [complete?.goal, complete?.status, complete?.language, complete?.timeline, complete?.funds]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = <K extends keyof Answers>(key: K, value: Answers[K]) => setDraft((current) => ({ ...current, [key]: value }));

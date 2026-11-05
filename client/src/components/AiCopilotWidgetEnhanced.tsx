@@ -1,3 +1,4 @@
+import { scrollBehavior } from "@/lib/motion";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquare, X, Send, Loader, Sparkles, ThumbsUp, ThumbsDown, Zap, FileText, Phone, Download, ExternalLink } from "lucide-react";
@@ -132,7 +133,7 @@ export default function AiCopilotWidgetEnhanced() {
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
-      behavior: "smooth",
+      behavior: scrollBehavior(),
     });
   }, [messages, chatMutation.isPending]);
 

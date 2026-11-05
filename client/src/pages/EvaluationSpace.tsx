@@ -1,3 +1,4 @@
+import { scrollBehavior } from "@/lib/motion";
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -614,7 +615,7 @@ export default function EvaluationSpace() {
    */
   const openProtocol = () => {
     switchToSection("dossier");
-    const reveal = () => document.getElementById("client-agreement-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const reveal = () => document.getElementById("client-agreement-card")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
     window.setTimeout(reveal, 120);
     window.setTimeout(reveal, 500);
   };
@@ -731,7 +732,7 @@ export default function EvaluationSpace() {
   const actOnNextStep = (step: NextStep) => {
     if (step.action.kind === "evaluation") openEvaluation();
     else if (step.action.kind === "section") { if (step.id === "agreement") openProtocol(); else switchToSection(step.action.section); }
-    else if (step.action.kind === "anchor") document.getElementById(step.action.elementId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    else if (step.action.kind === "anchor") document.getElementById(step.action.elementId)?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
     else if (step.action.kind === "link") {
       if (/^https?:\/\//i.test(step.action.href)) window.open(step.action.href, "_blank", "noopener,noreferrer");
       else setLocation(step.action.href);
@@ -1700,7 +1701,7 @@ export default function EvaluationSpace() {
                           <Download className="mr-2 h-4 w-4" />Télécharger le formulaire
                         </Button>
                       ) : null}
-                      <Button type="button" variant="outline" className="border-teal-300 text-teal-900" onClick={() => document.getElementById("client-document-dropzone")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
+                      <Button type="button" variant="outline" className="border-teal-300 text-teal-900" onClick={() => document.getElementById("client-document-dropzone")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" })}>
                         Déposer le PDF rempli
                       </Button>
                     </div>

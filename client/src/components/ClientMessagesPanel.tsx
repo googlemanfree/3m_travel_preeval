@@ -1,3 +1,4 @@
+import { scrollBehavior } from "@/lib/motion";
 import { useEffect, useRef, useState } from "react";
 import { MessageCircle, Search, Send, UserRound, Headphones, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,7 @@ export default function ClientMessagesPanel() {
   });
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    messagesEndRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "nearest" });
   }, [messagesQuery.data]);
 
   const handleSubmit = (event: React.FormEvent) => {

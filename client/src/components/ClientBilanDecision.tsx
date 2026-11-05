@@ -1,3 +1,4 @@
+import { scrollBehavior } from "@/lib/motion";
 import React, { useState } from "react";
 import { CheckCircle2, FolderOpen, MessageCircleQuestion, Phone } from "lucide-react";
 import { toast } from "sonner";
@@ -30,7 +31,7 @@ export function ClientBilanDecision({ enabled = true }: { enabled?: boolean }) {
   // Une question avant de valider : on amène le candidat à la prise de rendez-vous en ligne de la même page, sinon au formulaire de contact.
   const talkToAdvisor = () => {
     const target = document.querySelector('[data-testid="client-remote-support"]');
-    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (target) target.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
     else window.location.assign("/contact");
   };
   const data = query.data;

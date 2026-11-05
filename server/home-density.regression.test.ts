@@ -11,7 +11,7 @@ describe("accueil allégé et accès CRS", () => {
     expect(home).toContain("<HeroSectionVIP");
     expect(home).toContain('href="/canada#simulateur-crs-canada"');
     expect(home).toContain('aria-label="Retour en haut de la page"');
-    expect(home).toContain('window.scrollTo({ top: 0, behavior: "smooth" })');
+    expect(home).toContain("window.scrollTo({ top: 0, behavior: scrollBehavior() })");
     expect(home).toContain('hover:-translate-y-1 hover:border-blue-500');
     expect(home).toContain('initial={{ opacity: 0, y: 18 }}');
     expect(home).toContain('whileInView={{ opacity: 1, y: 0 }}');
