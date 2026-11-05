@@ -41,13 +41,4 @@ describe("public interaction enhancements", () => {
     expect(employers).toContain("secteur(s) sélectionné(s)");
     expect(employers).toContain("sans recharger la page");
   });
-
-  it("guides CRS completion in real time", () => {
-    const crs = read("client/src/components/CrsOfficialCalculator.tsx");
-
-    expect(crs).toContain('data-testid="crs-live-validation"');
-    expect(crs).toContain('aria-live="polite"');
-    expect(crs).toContain("Validation en temps réel");
-    expect(crs).toContain("Toutes les réponses nécessaires sont renseignées");
-  });
 });

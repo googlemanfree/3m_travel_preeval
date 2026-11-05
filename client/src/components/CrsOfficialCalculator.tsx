@@ -128,9 +128,6 @@ export default function CrsOfficialCalculator() {
   const breakdown = result.complete ? computeCrsScore(result.profile) : null;
   const levers = result.complete && breakdown ? improvementLevers(result.profile, breakdown) : [];
   const firstTest = ALL_CRS_TESTS.includes(answers.firstTest as CrsLanguageTest) ? (answers.firstTest as CrsLanguageTest) : null;
-  const liveValidationMessage = result.complete
-    ? "Toutes les réponses nécessaires sont renseignées. Vous pouvez calculer votre résultat."
-    : `${result.missing.length} réponse${result.missing.length > 1 ? "s" : ""} ${result.missing.length > 1 ? "restent" : "reste"} à renseigner avant le calcul.`;
 
   const summaryText = breakdown
     ? `Mon score CRS estimé (grille IRCC du 3 novembre 2026) : ${breakdown.total} / ${CRS_TOTAL_MAX}. Facteurs de base ${breakdown.coreHumanCapital}, conjoint ${breakdown.spouseFactors}, transfert des compétences ${breakdown.skillTransferability}, points supplémentaires ${breakdown.additionalPoints}.`
@@ -160,16 +157,6 @@ export default function CrsOfficialCalculator() {
           <strong>Nouveau depuis le 3 novembre 2026 :</strong> l’expérience de travail canadienne devient le « facteur d’intégration sur le marché du travail » (durée + points pour une profession à salaire élevé), ou, à la place, une offre d’emploi valide dans une profession à salaire élevé — jamais les deux : IRCC retient le plus avantageux. Plus aucune EIMT n’est exigée pour l’offre d’emploi.
         </p>
         <p className="mt-2 text-xs leading-5 text-slate-600">Cet outil sert uniquement de repère. En cas de divergence avec le résultat du système électronique Entrée express, c’est ce dernier qui prévaut. <a className="font-semibold text-blue-800 underline" href={IRCC_TOOL_URL} target="_blank" rel="noreferrer noopener">Ouvrir l’outil officiel d’IRCC</a></p>
-      </div>
-
-      <div
-        role="status"
-        aria-live="polite"
-        data-testid="crs-live-validation"
-        className={`rounded-xl border p-3 text-sm ${result.complete ? "border-emerald-200 bg-emerald-50 text-emerald-950" : "border-amber-200 bg-amber-50 text-amber-950"}`}
-      >
-        <span className="font-bold">Validation en temps réel : </span>{liveValidationMessage}
-        {!result.complete && <span className="ml-1">Les questions manquantes sont listées après le bouton de calcul.</span>}
       </div>
 
       <form className="space-y-3" onSubmit={(event) => { event.preventDefault(); setSubmitted(true); }} noValidate>
