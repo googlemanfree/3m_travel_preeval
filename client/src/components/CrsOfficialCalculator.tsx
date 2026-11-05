@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { AlertCircle, CheckCircle2, Copy, ExternalLink, MessageCircle, Printer, RotateCcw, Sparkles } from "lucide-react";
+import { AlertCircle, CheckCircle2, Copy, Download, ExternalLink, Info, MessageCircle, Printer, RotateCcw, Sparkles } from "lucide-react";
 import { ALL_CRS_TESTS, CRS_ABILITIES, CRS_TEST_BANDS, CRS_TEST_LABELS, secondLanguageTests, type CrsAbility, type CrsLanguageTest } from "@shared/crsLanguageTests";
 import { EMPTY_CRS_ANSWERS, MARITAL_OPTIONS, buildCrsProfileFromOfficialAnswers, countsAsWithSpouse, isMarried, type CrsOfficialAnswers } from "@shared/crsOfficialAnswers";
-import { CRS_SOURCE, CRS_TOTAL_MAX, computeCrsScore, type CrsBreakdown, type CrsProfile } from "@shared/crsScore";
+import { CRS_SOURCE, CRS_TOTAL_MAX, computeCrsScore } from "@shared/crsScore";
+import { improvementLevers, resultSections } from "@/lib/crsResultModel";
+import { CRS_TIPS, tipSummary } from "@/lib/crsTips";
 
 /**
  * Calculatrice CRS « comme canada.ca » : les mêmes questions, dans le même ordre, avec les mêmes conditions que l'outil officiel d'IRCC
@@ -43,11 +45,30 @@ const JOB_OFFER_LEVELS = [
 
 const selectClass = "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200";
 
-function Question({ id, label, help, children }: { id: string; label: string; help?: React.ReactNode; children: React.ReactNode }) {
+/** Une question et son infobulle : survol (texte court) ou clic / clavier (explication complète), y compris sur téléphone. */
+function Question({ id, label, children }: { id: string; label: string; children: React.ReactNode }) {
+  const tip = CRS_TIPS[id];
+  const [open, setOpen] = useState(false);
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4">
-      <label htmlFor={id} className="block text-sm font-bold leading-6 text-slate-900">{label}</label>
-      {help ? <div className="mt-1 text-xs leading-5 text-slate-600">{help}</div> : null}
+      <div className="flex items-start justify-between gap-3">
+        <label htmlFor={id} className="block text-sm font-bold leading-6 text-slate-900">{label}</label>
+        {tip ? (
+          <button
+            type="button"
+            onClick={() => setOpen((value) => !value)}
+            aria-expanded={open}
+            aria-controls={`${id}-tip`}
+            aria-label={open ? "Masquer l’aide de cette question" : "Afficher l’aide de cette question"}
+            title={tipSummary(tip)}
+            className="crs-no-print mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-blue-800 transition hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+            data-testid={`${id}-tip-button`}
+          >
+            <Info className="h-4 w-4" aria-hidden="true" />
+          </button>
+        ) : null}
+      </div>
+      {tip && open ? <p id={`${id}-tip`} role="note" className="mt-2 rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs leading-5 text-slate-700" data-testid={`${id}-tip`}>{tip}</p> : null}
       {children}
     </div>
   );
@@ -84,82 +105,11 @@ function LanguageBlock({ idPrefix, test, bands, tests, onTest, onBand }: { idPre
 
 const fmt = (value: number) => value.toLocaleString("fr-FR");
 
-type Line = { label: string; points: number; sub?: boolean };
-function resultSections(b: CrsBreakdown, withSpouse: boolean): Array<{ title: string; lines: Line[]; subtotalLabel: string; subtotal: number }> {
-  return [
-    {
-      title: "Facteurs de base/du capital humain",
-      lines: [
-        { label: "Âge", points: b.age },
-        { label: "Niveau de scolarité", points: b.education },
-        { label: "Langues officielles", points: b.firstLanguage + b.secondLanguage },
-        { label: "Première langue officielle", points: b.firstLanguage, sub: true },
-        { label: "Deuxième langue officielle", points: b.secondLanguage, sub: true },
-        { label: "Facteur d’intégration sur le marché du travail", points: b.labourMarketIntegration },
-      ],
-      subtotalLabel: "Sous-total – Facteurs de base/du capital humain",
-      subtotal: b.coreHumanCapital,
-    },
-    {
-      title: "Facteurs de l’époux ou du conjoint de fait",
-      lines: withSpouse
-        ? [{ label: "Niveau de scolarité", points: b.spouseEducation }, { label: "Première langue officielle", points: b.spouseLanguage }, { label: "Expérience de travail au Canada", points: b.spouseExperience }]
-        : [{ label: "Sans objet : le barème « sans conjoint » s’applique", points: 0 }],
-      subtotalLabel: "Sous-total – Facteurs de l’époux",
-      subtotal: b.spouseFactors,
-    },
-    {
-      title: "Facteurs liés au transfert des compétences",
-      lines: [
-        { label: "Études (jusqu’à un maximum de 50 points)", points: b.transferabilityEducation },
-        { label: "A) Maîtrise d’une langue officielle et niveau de scolarité", points: b.transferabilityEducationLanguage, sub: true },
-        { label: "B) Expérience de travail au Canada et niveau de scolarité", points: b.transferabilityEducationExperience, sub: true },
-        { label: "Expérience de travail à l’étranger (jusqu’à un maximum de 50 points)", points: b.transferabilityForeignExperience },
-        { label: "A) Maîtrise d’une langue officielle et expérience de travail à l’étranger", points: b.transferabilityForeignExperienceLanguage, sub: true },
-        { label: "B) Expérience de travail au Canada et à l’étranger", points: b.transferabilityForeignExperienceCanadianExperience, sub: true },
-        { label: "Certificat de compétence (pour les personnes exerçant un métier spécialisé)", points: b.transferabilityCertificate },
-      ],
-      subtotalLabel: "Sous-total – Facteurs liés au transfert des compétences (maximum 100)",
-      subtotal: b.skillTransferability,
-    },
-    {
-      title: "Points supplémentaires (jusqu’à un maximum de 600 points)",
-      lines: [
-        { label: "Désignation provinciale", points: b.provincialNomination },
-        { label: "Études au Canada", points: b.canadianEducationBonus },
-        { label: "Frère/sœur au Canada", points: b.siblingBonus },
-        { label: "Compétences linguistiques en français", points: b.frenchBonus },
-      ],
-      subtotalLabel: "Sous-total – Points supplémentaires",
-      subtotal: b.additionalPoints,
-    },
-  ];
-}
-
-/** Gains possibles, calculés avec la même grille : jamais une promesse, seulement l'écart que produirait chaque changement. */
-function improvementLevers(profile: CrsProfile, current: CrsBreakdown): Array<{ label: string; gain: number }> {
-  const levers: Array<{ label: string; modified: CrsProfile }> = [];
-  const first = profile.firstLanguageAbilities;
-  if (first && Object.values(first).some((clb) => clb < 9)) {
-    levers.push({ label: "Atteindre le niveau CLB 9 dans les quatre compétences de votre première langue officielle", modified: { ...profile, firstLanguageAbilities: { speaking: Math.max(first.speaking, 9), listening: Math.max(first.listening, 9), reading: Math.max(first.reading, 9), writing: Math.max(first.writing, 9) } } });
-  }
-  const second = profile.secondLanguageAbilities;
-  if (profile.firstOfficialLanguage === "english" && second && Object.values(second).some((clb) => clb < 7)) {
-    levers.push({ label: "Passer un test de français (TEF ou TCF Canada) et atteindre le NCLC 7 dans les quatre compétences", modified: { ...profile, secondLanguageAbilities: { speaking: Math.max(second.speaking, 7), listening: Math.max(second.listening, 7), reading: Math.max(second.reading, 7), writing: Math.max(second.writing, 7) } } });
-  }
-  if (profile.canadianExperienceYears < 5) {
-    levers.push({ label: "Acquérir une année de plus d’expérience de travail qualifié au Canada", modified: { ...profile, canadianExperienceYears: (profile.canadianExperienceYears + 1) as CrsProfile["canadianExperienceYears"] } });
-  }
-  if (!profile.hasProvincialNomination) levers.push({ label: "Obtenir une désignation d’une province ou d’un territoire (+600 points)", modified: { ...profile, hasProvincialNomination: true } });
-  return levers
-    .map(({ label, modified }) => ({ label, gain: computeCrsScore(modified).total - current.total }))
-    .filter((lever) => lever.gain > 0);
-}
-
 export default function CrsOfficialCalculator() {
   const [answers, setAnswers] = useState<CrsOfficialAnswers>(EMPTY_CRS_ANSWERS);
   const [submitted, setSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [pdfState, setPdfState] = useState<"idle" | "working" | "error">("idle");
 
   useEffect(() => {
     try {
@@ -186,6 +136,17 @@ export default function CrsOfficialCalculator() {
     try { await navigator.clipboard.writeText(summaryText); setCopied(true); window.setTimeout(() => setCopied(false), 2500); } catch { setCopied(false); }
   };
   const reset = () => { setAnswers(EMPTY_CRS_ANSWERS); setSubmitted(false); };
+  const downloadPdf = async () => {
+    if (!breakdown) return;
+    setPdfState("working");
+    try {
+      const { downloadCrsPdf } = await import("@/lib/crsPdf");
+      await downloadCrsPdf({ breakdown, withSpouse, levers });
+      setPdfState("idle");
+    } catch {
+      setPdfState("error");
+    }
+  };
 
   return (
     <section aria-labelledby="crs-official-title" className="space-y-5" data-testid="crs-official-calculator">
@@ -214,13 +175,13 @@ export default function CrsOfficialCalculator() {
             )}
           </>
         )}
-        <Question id="crs-q3" label="3) Quel âge avez-vous ?" help="Si vous avez été invité à présenter une demande, indiquez votre âge à la date de l’invitation ; sinon, votre âge actuel.">
+        <Question id="crs-q3" label="3) Quel âge avez-vous ?">
           <Choice id="crs-q3" value={answers.age} onChange={(value) => set("age", value)} options={AGE_CHOICES} />
         </Question>
-        <Question id="crs-q4" label="4) Quel niveau d’études avez-vous atteint ?" help="Indiquez le niveau le plus élevé pour lequel vous avez obtenu un diplôme canadien ou une évaluation des diplômes d’études (EDE) si vous avez étudié hors du Canada (EDE d’un organisme approuvé, datant de moins de cinq ans). Un « diplôme professionnel » vise la médecine, la médecine vétérinaire, la médecine dentaire, l’optométrie, le droit, la chiropractie ou la pharmacie.">
+        <Question id="crs-q4" label="4) Quel niveau d’études avez-vous atteint ?">
           <Choice id="crs-q4" value={answers.education} onChange={(value) => set("education", value)} options={EDUCATION_CHOICES} />
         </Question>
-        <Question id="crs-q4b" label="4b) Avez-vous obtenu un certificat, grade ou diplôme canadien ?" help="Répondez « Oui » seulement si : l’anglais ou le français langue seconde ne représentait pas plus de la moitié des études ; vous n’aviez pas à retourner dans votre pays après l’obtention du diplôme ; vous avez étudié dans un établissement au Canada (pas un campus étranger) ; études à temps plein d’au moins huit mois, avec présence physique au Canada (sauf exceptions de 2020 à 2022).">
+        <Question id="crs-q4b" label="4b) Avez-vous obtenu un certificat, grade ou diplôme canadien ?">
           <Choice id="crs-q4b" value={answers.canadianCredential} onChange={(value) => set("canadianCredential", value)} options={YES_NO} />
         </Question>
         {answers.canadianCredential === "yes" && (
@@ -229,7 +190,7 @@ export default function CrsOfficialCalculator() {
           </Question>
         )}
 
-        <Question id="crs-q5i" label="5) Langues officielles : i. Vos résultats de test linguistique ont-ils moins de deux ans ?" help="Les résultats doivent dater de moins de deux ans pour tous les programmes d’Entrée express, même si l’anglais ou le français est votre langue maternelle.">
+        <Question id="crs-q5i" label="5) Langues officielles : i. Vos résultats de test linguistique ont-ils moins de deux ans ?">
           <Choice id="crs-q5i" value={answers.languageTestRecent} onChange={(value) => set("languageTestRecent", value)} options={YES_NO} />
         </Question>
         {answers.languageTestRecent === "no" && (
@@ -243,17 +204,17 @@ export default function CrsOfficialCalculator() {
               <LanguageBlock idPrefix="crs-first" test={answers.firstTest} bands={answers.firstBands} tests={ALL_CRS_TESTS} onTest={(value) => setAnswers((previous) => ({ ...previous, firstTest: value, firstBands: EMPTY_CRS_ANSWERS.firstBands, secondTest: "", secondBands: EMPTY_CRS_ANSWERS.secondBands }))} onBand={(ability, value) => setBand("firstBands", ability, value)} />
             </Question>
             {firstTest && (
-              <Question id="crs-second-test" label="5) iii. Avez-vous d’autres résultats linguistiques ? Si oui, quel test avez-vous passé pour votre seconde langue officielle ?" help="Les résultats doivent aussi dater de moins de deux ans.">
+              <Question id="crs-second-test" label="5) iii. Avez-vous d’autres résultats linguistiques ? Si oui, quel test avez-vous passé pour votre seconde langue officielle ?">
                 <LanguageBlock idPrefix="crs-second" test={answers.secondTest} bands={answers.secondBands} tests={secondLanguageTests(firstTest)} onTest={(value) => setAnswers((previous) => ({ ...previous, secondTest: value, secondBands: EMPTY_CRS_ANSWERS.secondBands }))} onBand={(ability, value) => setBand("secondBands", ability, value)} />
               </Question>
             )}
           </>
         )}
 
-        <Question id="crs-q6i" label="6) Expérience de travail : i. Au cours des 10 dernières années, combien d’années d’expérience de travail qualifié au Canada avez-vous accumulées ?" help="Travail rémunéré à temps plein (ou l’équivalent à temps partiel), au Canada, pour un employeur canadien. Un emploi qualifié relève des catégories TEER 0, 1, 2 ou 3 de la CNP.">
+        <Question id="crs-q6i" label="6) Expérience de travail : i. Au cours des 10 dernières années, combien d’années d’expérience de travail qualifié au Canada avez-vous accumulées ?">
           <Choice id="crs-q6i" value={answers.canadianWorkYears} onChange={(value) => set("canadianWorkYears", value)} options={YEARS_CHOICES} />
         </Question>
-        <Question id="crs-q6ii" label="6) ii. Au cours des 10 dernières années, avez-vous au moins 1 an (ou 1 560 heures) d’expérience de travail qualifié au Canada dans un ou plusieurs emplois de la CNP figurant sur la liste des professions à salaire élevé ?" help="L’expérience peut provenir de plusieurs emplois et de plusieurs codes CNP (jusqu’à 30 heures par semaine au total).">
+        <Question id="crs-q6ii" label="6) ii. Au cours des 10 dernières années, avez-vous au moins 1 an (ou 1 560 heures) d’expérience de travail qualifié au Canada dans un ou plusieurs emplois de la CNP figurant sur la liste des professions à salaire élevé ?">
           <Choice id="crs-q6ii" value={answers.highWageExperience} onChange={(value) => set("highWageExperience", value)} options={[{ value: "yes", label: "Oui" }, { value: "no", label: "Non" }]} />
         </Question>
         {answers.highWageExperience === "yes" && (
@@ -271,10 +232,10 @@ export default function CrsOfficialCalculator() {
         <Question id="crs-q6v" label="6) v. Au cours des 10 dernières années, combien d’années d’expérience de travail qualifié à l’étranger avez-vous accumulées au total ?">
           <Choice id="crs-q6v" value={answers.foreignWorkYears} onChange={(value) => set("foreignWorkYears", value)} options={FOREIGN_YEARS_CHOICES} />
         </Question>
-        <Question id="crs-q7" label="7) Possédez-vous un certificat de compétence d’une province, d’un territoire ou d’un organisme fédéral canadien ?" help="Un certificat de compétence permet d’exercer certains métiers spécialisés au Canada. Seuls les provinces, les territoires et un organisme fédéral peuvent le délivrer. Ce n’est pas une désignation provinciale.">
+        <Question id="crs-q7" label="7) Possédez-vous un certificat de compétence d’une province, d’un territoire ou d’un organisme fédéral canadien ?">
           <Choice id="crs-q7" value={answers.certificate} onChange={(value) => set("certificate", value)} options={YES_NO} />
         </Question>
-        <Question id="crs-q8" label="8) Avez-vous une offre d’emploi valide pour un emploi dans une catégorie de la CNP figurant dans la liste des professions à salaire élevé ?" help="Une offre valide est à temps plein, pour un emploi qualifié dans une profession à salaire élevé, pour un an à compter de votre résidence permanente. Une offre n’est pas valide si l’employeur est une ambassade, un haut-commissariat ou un consulat au Canada, ou figure sur la liste des employeurs non admissibles. Aucune EIMT n’est exigée.">
+        <Question id="crs-q8" label="8) Avez-vous une offre d’emploi valide pour un emploi dans une catégorie de la CNP figurant dans la liste des professions à salaire élevé ?">
           <Choice id="crs-q8" value={answers.jobOffer} onChange={(value) => set("jobOffer", value)} options={[{ value: "yes", label: "Oui" }, { value: "no", label: "Non" }]} />
         </Question>
         {answers.jobOffer === "yes" && (
@@ -287,7 +248,7 @@ export default function CrsOfficialCalculator() {
         <Question id="crs-q9" label="9) Avez-vous un certificat de désignation d’une province ou d’un territoire ?">
           <Choice id="crs-q9" value={answers.nomination} onChange={(value) => set("nomination", value)} options={YES_NO} />
         </Question>
-        <Question id="crs-q10i" label="10) Est-ce que vous ou votre époux/conjoint de fait (si celui-ci vous accompagne au Canada) avez au moins un frère ou une sœur habitant au Canada qui est un citoyen ou un résident permanent ?" help="Le frère ou la sœur doit avoir 18 ans ou plus, être lié par le sang, le mariage, l’union de fait ou l’adoption, et avoir un parent en commun avec vous ou votre conjoint.">
+        <Question id="crs-q10i" label="10) Est-ce que vous ou votre époux/conjoint de fait (si celui-ci vous accompagne au Canada) avez au moins un frère ou une sœur habitant au Canada qui est un citoyen ou un résident permanent ?">
           <Choice id="crs-q10i" value={answers.sibling} onChange={(value) => set("sibling", value)} options={YES_NO} />
         </Question>
 
@@ -300,7 +261,7 @@ export default function CrsOfficialCalculator() {
             <Question id="crs-q12" label="12) Au cours des dix dernières années, combien d’années d’expérience de travail qualifié au Canada votre époux ou conjoint de fait possède-t-il ?">
               <Choice id="crs-q12" value={answers.spouseCanadianWorkYears} onChange={(value) => set("spouseCanadianWorkYears", value)} options={YEARS_CHOICES} />
             </Question>
-            <Question id="crs-q13" label="13) i) Votre époux ou conjoint de fait a-t-il passé un test linguistique ? Si oui, lequel ?" help="Les résultats doivent dater de moins de deux ans.">
+            <Question id="crs-q13" label="13) i) Votre époux ou conjoint de fait a-t-il passé un test linguistique ? Si oui, lequel ?">
               <LanguageBlock idPrefix="crs-spouse" test={answers.spouseTest} bands={answers.spouseBands} tests={ALL_CRS_TESTS} onTest={(value) => setAnswers((previous) => ({ ...previous, spouseTest: value, spouseBands: EMPTY_CRS_ANSWERS.spouseBands }))} onBand={(ability, value) => setBand("spouseBands", ability, value)} />
             </Question>
           </>
@@ -365,8 +326,10 @@ export default function CrsOfficialCalculator() {
 
           <p className="text-[11px] leading-5 text-slate-500">Grille IRCC en vigueur depuis le 3 novembre 2026, relue le {new Date(CRS_SOURCE.verifiedAt).toLocaleDateString("fr-FR")}. {CRS_SOURCE.note} Les niveaux de langue sont convertis avec les tranches de notes officielles. Résultat indicatif : en cas de divergence, le système Entrée express prévaut. <a className="underline" href={CRS_SOURCE.url} target="_blank" rel="noreferrer noopener">Voir les critères du SCG sur Canada.ca</a></p>
 
+          {pdfState === "error" && <p role="alert" className="crs-no-print rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950" data-testid="crs-pdf-error">Le PDF n’a pas pu être généré sur cet appareil. Utilisez « Imprimer » puis « Enregistrer au format PDF », ou copiez le résultat.</p>}
           <div className="crs-no-print flex flex-wrap gap-3">
-            <button type="button" onClick={() => window.print()} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-800 hover:bg-slate-50" data-testid="crs-print"><Printer className="h-4 w-4" aria-hidden="true" />Enregistrer en PDF / imprimer</button>
+            <button type="button" onClick={downloadPdf} disabled={pdfState === "working"} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-black text-white hover:bg-slate-800 disabled:opacity-60" data-testid="crs-download-pdf"><Download className="h-4 w-4" aria-hidden="true" />{pdfState === "working" ? "Préparation du PDF…" : "Télécharger le PDF"}</button>
+            <button type="button" onClick={() => window.print()} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-800 hover:bg-slate-50" data-testid="crs-print"><Printer className="h-4 w-4" aria-hidden="true" />Imprimer</button>
             <a href={`https://wa.me/237698104832?text=${encodeURIComponent(`${summaryText} Je souhaite l’avis d’un conseiller 3M TRAVEL AGENCY.`)}`} target="_blank" rel="noreferrer noopener" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-black text-white hover:bg-emerald-800" data-testid="crs-share-whatsapp"><MessageCircle className="h-4 w-4" aria-hidden="true" />Demander l’avis d’un conseiller (WhatsApp)</a>
             <button type="button" onClick={copyResult} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-800 hover:bg-slate-50" data-testid="crs-copy"><Copy className="h-4 w-4" aria-hidden="true" />{copied ? "Résultat copié" : "Copier le résultat"}</button>
             <a href="/evaluation?destination=canada" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-black text-white hover:bg-blue-800">Faire évaluer mon profil Canada</a>

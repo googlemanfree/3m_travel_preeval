@@ -143,6 +143,46 @@ describe("calculatrice CRS « comme canada.ca »", () => {
     expect(document.querySelector("style")?.textContent ?? "").toContain("@media print");
   });
 
+  it("chaque question a une infobulle : survol (titre) et explication complète au clic ou au clavier", () => {
+    render(<CrsOfficialCalculator />);
+    const button = screen.getByTestId("crs-q3-tip-button");
+    expect(button.getAttribute("title")?.length ?? 0).toBeGreaterThan(20);
+    expect(button.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByTestId("crs-q3-tip")).toBeNull();
+    fireEvent.click(button);
+    expect(button.getAttribute("aria-expanded")).toBe("true");
+    expect(button.getAttribute("aria-controls")).toBe("crs-q3-tip");
+    expect(screen.getByTestId("crs-q3-tip").textContent).toContain("45 ans");
+    fireEvent.click(button);
+    expect(screen.queryByTestId("crs-q3-tip")).toBeNull();
+  });
+
+  it("les questions conditionnelles (conjoint, salaire élevé, offre d'emploi) ont aussi leur infobulle", () => {
+    render(<CrsOfficialCalculator />);
+    choose("crs-q1", "married");
+    choose("crs-q2i", "no");
+    choose("crs-q2ii", "yes");
+    choose("crs-q6ii", "yes");
+    choose("crs-q8", "yes");
+    for (const id of ["crs-q2i", "crs-q2ii", "crs-q11", "crs-q12", "crs-q13", "crs-q6iii", "crs-q8a"]) {
+      expect(screen.queryByTestId(`${id}-tip-button`), `infobulle manquante : ${id}`).not.toBeNull();
+    }
+  });
+
+  it("l'infobulle n'est jamais imprimée (bouton masqué à l'impression)", () => {
+    render(<CrsOfficialCalculator />);
+    expect(screen.getByTestId("crs-q1-tip-button").className).toContain("crs-no-print");
+  });
+
+  it("propose un téléchargement PDF distinct de l'impression, et annonce un échec de génération", async () => {
+    render(<CrsOfficialCalculator />);
+    fillReferenceProfile();
+    calculate();
+    expect(screen.getByTestId("crs-download-pdf")).toBeTruthy();
+    expect(screen.getByTestId("crs-print")).toBeTruthy();
+    expect(screen.queryByTestId("crs-pdf-error")).toBeNull();
+  });
+
   it("retrouve les réponses saisies après un rechargement (mémoire locale)", () => {
     const { unmount } = render(<CrsOfficialCalculator />);
     choose("crs-q1", "single");
