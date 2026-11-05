@@ -1,8 +1,8 @@
 # 3M Group SARL
-**Société à Responsabilité Limitée au capital enregistré**
-**Registre du Commerce :** CM-NSI-01-2026-B13-01038 | **Numéro d'Identifiant Unique (NIU) :** M092618996818Q
-**Siège social :** Biyem-Assi, Montée Chapelle Obili (à 10 mètres du Collège EHS), Yaoundé – République du Cameroun
-**Téléphones / WhatsApp :** +237 698 104 832 / +237 620 996 045
+**Société à Responsabilité Limitée au capital enregistré**  
+**Registre du Commerce :** RC/YAO/2019/A/2567 | **Numéro d'Identifiant Unique (NIU) :** M092618996818Q  
+**Siège social :** Biyem-Assi, Montée Chapelle Obili (à 10 mètres du Collège EHS), Yaoundé – République du Cameroun  
+**Téléphones / WhatsApp :** +237 698 104 832 / +237 620 996 045  
 **Courriel officiel :** hello@3mtravelagency.com | **Portail Web sécurisé :** [www.3mtravelagency.com](https://www.3mtravelagency.com)
 
 ---
@@ -25,8 +25,8 @@
 
 **D'UNE PART, L'AGENCE MANDATAIRE :**
 * **Dénomination :** 3M Group SARL
-* **Immatriculation légale :** CM-NSI-01-2026-B13-01038 — NIU : M092618996818Q
-* **Représentée par :** La Direction Générale des Opérations et de la Mobilité Internationale,
+* **Immatriculation légale :** RC/YAO/2019/A/2567 — NIU : M092618996818Q
+* **Représentée par :** La Direction Générale des Opérations et de la Mobilité Internationale,  
 ci-après désignée **« L'AGENCE »**.
 
 **D'AUTRE PART, LE REQUÉRANT SÉLECTIONNÉ :**
@@ -37,7 +37,7 @@ ci-après désignée **« L'AGENCE »**.
 * **Identifiant Espace Client Unique (UID) :** `{{CLIENT_ESPACE_ID}}`
 * **Référence Dossier Post-Sélection :** `{{DOSSIER_REF_LUX_2026}}`
 * **Employeur / Entreprise Partenaire d'Accueil :** `{{EMPLOYEUR_LUXEMBOURG_NOM}}`
-* **Intitulé du Poste / Métier Retenu :** `{{POSTE_RETENU}}`
+* **Intitulé du Poste / Métier Retenu :** `{{POSTE_RETENU}}`  
 ci-après désigné **« LE CANDIDAT »**.
 
 ---
@@ -60,7 +60,7 @@ L'AGENCE reçoit mandat exclusif d'assister, coordonner et représenter le CANDI
 5. **Préparation à l'Installation :** Fourniture de la feuille de route d'arrivée (déclaration d'arrivée communale dans les 3 jours ouvrables, immatriculation au Centre Commun de la Sécurité Sociale - CCSS, ouverture de compte bancaire).
 
 #### ARTICLE 2 : RÈGLEMENTATION ADEM & INTERDICTION DE FRAIS EMPLOYEUR
-2.1. Les parties rappellent expressément que les frais relatifs à l'autorisation de recrutement ADEM et aux démarches légales inhérentes à l'entreprise luxembourgeoise sont supportés en totalité par ladite entreprise.
+2.1. Les parties rappellent expressément que les frais relatifs à l'autorisation de recrutement ADEM et aux démarches légales inhérentes à l'entreprise luxembourgeoise sont supportés en totalité par ladite entreprise.  
 2.2. LE CANDIDAT signe lui-même son contrat de travail officiel. L'AGENCE n'est en aucun cas habilitée à signer à la place du travailleur.
 
 #### ARTICLE 3 : CHOIX IRREVOCABLE DE LA FORMULE TARIFAIRE
@@ -79,7 +79,7 @@ LE CANDIDAT déclare opter expressément pour l'une des trois modalités financi
 [ ] FORMULE 3 : FORMULE SORTIE DE VISA GARANTI — 2 875 000 FCFA (+25%)
     * Acompte d'engagement opérationnel (à la signature du Protocole N° 02) : 1 000 000 FCFA
     * Solde de garantie contractuelle : 1 875 000 FCFA
-    * Condition résolutoire : Ce solde n'est exigible QUE et STRICTEMENT après apposition
+    * Condition résolutoire : Ce solde n'est exigible QUE et STRICTEMENT après apposition 
       effective de la vignette du Visa National Type D dans le passeport du CANDIDAT.
 ```
 
@@ -96,7 +96,7 @@ LE CANDIDAT s'engage à :
 3. Ne dissimuler aucun antécédent judiciaire, médical ou migratoire (interdiction de territoire Schengen, antécédents d'expulsion, séjour irrégulier passé).
 
 #### ARTICLE 6 : CLAUSE DE SOUVERAINETÉ INSTITUTIONNELLE ET GARANTIE
-6.1. L'AGENCE met en œuvre une obligation de rigueur, de conformité et d'expertise optimale. Toutefois, la décision finale d'octroi de l'autorisation de séjour et du visa relève de la compétence régalienne exclusive de la Direction de l'Immigration du Luxembourg et de la chancellerie diplomatique belge.
+6.1. L'AGENCE met en œuvre une obligation de rigueur, de conformité et d'expertise optimale. Toutefois, la décision finale d'octroi de l'autorisation de séjour et du visa relève de la compétence régalienne exclusive de la Direction de l'Immigration du Luxembourg et de la chancellerie diplomatique belge.  
 6.2. En cas de refus consulaire formel non imputable à une faute, une fausse déclaration, une pièce falsifiée ou un renoncement volontaire du CANDIDAT :
 * **En Formule 3 (Sortie de Visa Garanti) :** Le solde de 1 875 000 FCFA est immédiatement annulé, sans aucune réclamation possible de L'AGENCE.
 * **En Formules 1 et 2 :** L'AGENCE prend en charge à ses frais exclusifs la procédure de recours gracieux ou, à défaut, le redéploiement complet et prioritaire de la procédure vers un autre pays cible convenu avec LE CANDIDAT.

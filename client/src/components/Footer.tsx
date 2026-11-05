@@ -386,7 +386,7 @@ export default function Footer() {
           <div className="max-w-2xl text-sm leading-relaxed text-slate-300 sm:text-right">
             <p>
               <span className="font-medium text-white">{COMPANY_PROFILE.legalName}</span>
-              {" — "}RCCM : {COMPANY_PROFILE.legalIdentifiers.registration} | NIU : {COMPANY_PROFILE.legalIdentifiers.taxpayerId}
+              {" — "}RC : {COMPANY_PROFILE.legalIdentifiers.registration} | NIU : {COMPANY_PROFILE.legalIdentifiers.taxpayerId}
             </p>
             <p className="mt-1">
               <Link href="/about" className="font-semibold text-slate-100 underline-offset-2 hover:underline">

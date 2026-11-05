@@ -40,7 +40,7 @@ Immigration 2026
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 nn ARMÉNIE
 
@@ -184,7 +184,7 @@ Immigration 2026
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 nn AZERBAÏDJAN
 
@@ -356,7 +356,7 @@ Immigration 2026
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 nn BULGARIE
 
@@ -487,7 +487,7 @@ Immigration 2026
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 nn CHYPRE
 
@@ -627,7 +627,7 @@ Immigration 2026
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 nn GÉORGIE
 
@@ -757,7 +757,7 @@ Immigration 2026
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 nn GRÈCE
 
@@ -2222,7 +2222,7 @@ Guide complet 2026
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038   |   NIU : M092618996818Q
+RC/YAO/2019/A/2567   |   NIU : M092618996818Q
 
 RÉSIDENCE PERMANENTE
 
@@ -2383,7 +2383,7 @@ Guide complet 2026
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038   |   NIU : M092618996818Q
+RC/YAO/2019/A/2567   |   NIU : M092618996818Q
 
 RÉSIDENCE PERMANENTE
 🇳🇿
@@ -2533,7 +2533,7 @@ Immigration 2026
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 nn ROUMANIE
 
@@ -2667,7 +2667,7 @@ nn
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 ALLEMAGNE
 
@@ -2854,7 +2854,7 @@ nn
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 AUTRICHE
 
@@ -3030,7 +3030,7 @@ nn
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 BELGIQUE
 
@@ -3196,7 +3196,7 @@ Sciences, Médecine, Pharmacie, Ingénierie, Économie, Vétérinai`,
     eligibilityConditions: `onomie · Droit Sciences de l'environnement 04 — Conditions d'Admission Niveau requis | Baccalaureat camerounais reconnu. Equivalence automatique avec le systeme LMD europeen. Langue d'instruction | Programmes en anglais disponibles dans toutes les universites. Pas d'examen de langue francaise exige pour les pays non-francophones. Dossier academique | Releves de notes, diplomes traduits en anglais, lettre de motivation, 2 lettres de recommandation. Numerus clausus | Pas de quota pour etudiants af`,
     practicalTips: `3M Travel | Selon profil, confirmé par écrit | Oui | Signature mandat. Conseiller dedie. Frais d'inscription universitaire | 100 000 – 150 000 F | Oui | Payer avant obtention lettre d'acceptation. Frais de visa etudiant | ≈ 60 EUR / 40 000 F | Oui | Ambassade Bulgarie a Yaounde. Frais de scolarite (1ere annee) | 1 500 – 8 000 EUR | Oui | Selon filiere et universite choisie. Logement (9 mois) | 1 800 – 3 600 EUR | Oui `,
     rawText: `3M TRAVEL AGENCY SARL
-CM-NSI-01-2026-B13-01038  |  NIU : M092618996818Q
+RC/YAO/2019/A/2567  |  NIU : M092618996818Q
 GUIDE DE PROCEDURE
 VISA D'ÉTUDES
 🇧🇬  BULGARIE
@@ -3404,7 +3404,7 @@ nn
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 DANEMARK
 
@@ -3577,7 +3577,7 @@ nn
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 ESPAGNE
 
@@ -3738,7 +3738,7 @@ nn
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 FINLANDE
 
@@ -3905,7 +3905,7 @@ Finnois + Suédois + Ma`,
     eligibilityConditions: `rielle Sciences de l'informatique Economie 04 — Conditions d'Admission Niveau requis | Baccalaureat camerounais reconnu. Equivalence automatique avec le systeme LMD europeen. Langue d'instruction | Programmes en anglais disponibles dans toutes les universites. Pas d'examen de langue francaise exige pour les pays non-francophones. Dossier academique | Releves de notes, diplomes traduits en anglais, lettre de motivation, 2 lettres de recommandation. Numerus clausus | Pas de quota pour etudiants af`,
     practicalTips: ``,
     rawText: `3M TRAVEL AGENCY SARL
-CM-NSI-01-2026-B13-01038  |  NIU : M092618996818Q
+RC/YAO/2019/A/2567  |  NIU : M092618996818Q
 GUIDE DE PROCEDURE
 VISA D'ÉTUDES
 🇭🇺  HONGRIE
@@ -3981,7 +3981,7 @@ nn
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 ITALIE
 
@@ -4146,7 +4146,7 @@ nn Langue
     eligibilityConditions: `Ingenierie de l'information Droit europeen 04 — Conditions d'Admission Niveau requis | Baccalaureat camerounais reconnu. Equivalence automatique avec le systeme LMD europeen. Langue d'instruction | Programmes en anglais disponibles dans toutes les universites. Pas d'examen de langue francaise exige pour les pays non-francophones. Dossier academique | Releves de notes, diplomes traduits en anglais, lettre de motivation, 2 lettres de recommandation. Numerus clausus | Pas de quota pour etudiants af`,
     practicalTips: ``,
     rawText: `3M TRAVEL AGENCY SARL
-CM-NSI-01-2026-B13-01038  |  NIU : M092618996818Q
+RC/YAO/2019/A/2567  |  NIU : M092618996818Q
 GUIDE DE PROCEDURE
 VISA D'ÉTUDES
 🇱🇻  LETTONIE
@@ -4216,7 +4216,7 @@ nn
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 LUXEMBOURG
 
@@ -4385,7 +4385,7 @@ nn
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 MALTE
 
@@ -4561,7 +4561,7 @@ nn
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 PAYS-BAS
 
@@ -4718,7 +4718,7 @@ n Erasmus University Rotterdam
     eligibilityConditions: `erie Biotechnologie · Chimie Environnement 04 — Conditions d'Admission Niveau requis | Baccalaureat camerounais reconnu. Equivalence automatique avec le systeme LMD europeen. Langue d'instruction | Programmes en anglais disponibles dans toutes les universites. Pas d'examen de langue francaise exige pour les pays non-francophones. Dossier academique | Releves de notes, diplomes traduits en anglais, lettre de motivation, 2 lettres de recommandation. Numerus clausus | Pas de quota pour etudiants af`,
     practicalTips: `3M Travel | Selon profil, confirmé par écrit | Oui | Signature mandat. Conseiller dedie. Frais d'inscription | 100 000 – 200 000 F | Oui | Varsovie et Cracovie selon universite. Frais de visa etudiant | ≈ 80 EUR / 52 000 F | Oui | Ambassade Pologne a Yaounde. Scolarite (1ere annee) | 2 000 – 7 000 EUR | Oui | Selon filiere et universite. Logement (9 mois) | 2 700 – 4 500 EUR | Oui | Residence U 200-300 EUR/mois. Studi`,
     rawText: `3M TRAVEL AGENCY SARL
-CM-NSI-01-2026-B13-01038  |  NIU : M092618996818Q
+RC/YAO/2019/A/2567  |  NIU : M092618996818Q
 GUIDE DE PROCEDURE
 VISA D'ÉTUDES
 🇵🇱  POLOGNE
@@ -4786,7 +4786,7 @@ nn
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 PORTUGAL
 
@@ -4966,7 +4966,7 @@ nn
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 RÉPUBLIQUE TCHÈQUE
 
@@ -5117,7 +5117,7 @@ VŠE est la référence pour les études économiques en Tchéquie. Son`,
     eligibilityConditions: `Economie · Droit Arts et Sciences sociales 04 — Conditions d'Admission Niveau requis | Baccalaureat camerounais reconnu. Equivalence automatique avec le systeme LMD europeen. Langue d'instruction | Programmes en anglais disponibles dans toutes les universites. Pas d'examen de langue francaise exige pour les pays non-francophones. Dossier academique | Releves de notes, diplomes traduits en anglais, lettre de motivation, 2 lettres de recommandation. Numerus clausus | Pas de quota pour etudiants af`,
     practicalTips: ``,
     rawText: `3M TRAVEL AGENCY SARL
-CM-NSI-01-2026-B13-01038  |  NIU : M092618996818Q
+RC/YAO/2019/A/2567  |  NIU : M092618996818Q
 GUIDE DE PROCEDURE
 VISA D'ÉTUDES
 🇷🇴  ROUMANIE
@@ -5174,7 +5174,7 @@ Numerus clausus | Pas de quota pour etudiants afr`,
     eligibilityConditions: `Droit europeen Sciences de l'environnement 04 — Conditions d'Admission Niveau requis | Baccalaureat camerounais reconnu. Equivalence automatique avec le systeme LMD europeen. Langue d'instruction | Programmes en anglais disponibles dans toutes les universites. Pas d'examen de langue francaise exige pour les pays non-francophones. Dossier academique | Releves de notes, diplomes traduits en anglais, lettre de motivation, 2 lettres de recommandation. Numerus clausus | Pas de quota pour etudiants af`,
     practicalTips: ``,
     rawText: `3M TRAVEL AGENCY SARL
-CM-NSI-01-2026-B13-01038  |  NIU : M092618996818Q
+RC/YAO/2019/A/2567  |  NIU : M092618996818Q
 GUIDE DE PROCEDURE
 VISA D'ÉTUDES
 🇸🇰  SLOVAQUIE
@@ -5239,7 +5239,7 @@ nn
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 SUÈDE
 
@@ -6521,7 +6521,7 @@ Type de permis | Durée | Offre emploi | Conditions & Avantages
     eligibilityConditions: `cessible. Type de permis | Durée | Offre emploi | Conditions 📋 Carte de Sejour Travailleur | 1 an renouv. | Contrat de travail | Casier judiciaire + diplomes + passeport + photos. Renouvellement annuel. 🌟 Permis Travail Qualifie | 2 ans renouv. | Offre emploi | Diplome superieur + experience. Secteurs mines, BTP, sante, enseignement. 👶 Regroupement Familial | 1 an renouv. | Non (conjoint) | Apres 1 an de residence legale. Conjoint autorise a travailler. Secteur | Postes/an | Salaire brut | Permi`,
     practicalTips: `Selon profil, confirmé par écrit | Oui | Signature mandat. Attribution conseiller dedie. Constitution dossier | Inclus | Oui | CV, lettre motivation, mise en conformite. Frais visa Gabon a Yaounde | ≈ 60 000 XAF / 55 000 F | Oui | Payables a l'ambassade Gabon a Yaounde. Traduction documents (si requis) | 20 000–60 000 F | Selon | Si documents en langue etrangere. Carte de sejour (apres arrivee) | ≈ 100 000 XAF | Oui |`,
     rawText: `3M TRAVEL AGENCY SARL
-CM-NSI-01-2026-B13-01038  |  NIU : M092618996818Q
+RC/YAO/2019/A/2567  |  NIU : M092618996818Q
 GUIDE DE PROCEDURE
 VISA DE TRAVAIL
 🇬🇦  GABON
@@ -6606,7 +6606,7 @@ Type de permis | Durée | Offre emploi | Conditions & Avantages
     eligibilityConditions: `codifiée Type de permis | Durée | Offre emploi | Conditions 🌟 Critical Skills Permit | 2 ans renouv. | Offre emploi | Diplome Bac+3 + salaire ≥ 32 000 EUR/an. Métiers penurie. Famille incluse. RP apres 2 ans. 📋 General Employment Permit | 2 ans renouv. | Obligatoire | Pour postes standard. Salaire min 30 000 EUR/an. Liste metiers autorises. 🔵 Stamp 4 (Residence Perm.) | Illimité | Non | Apres 5 ans. Acces total marche travail irlandais + UE. Secteur | Postes/an | Salaire brut | Permis | Atout Ca`,
     practicalTips: `Selon profil, confirmé par écrit | Oui | Signature mandat. Attribution conseiller dedie. Constitution dossier complet | Inclus | Oui | CV anglais, lettre motivation, mise en conformite. Frais consulaires visa | ≈ 100 EUR / 65 000 F | Oui | Frais ambassade. Payables sur place. Traduction assermentee diplomes | 40 000–100 000 F | Oui | Traducteur certifie anglais. Test IELTS (si requis) | 67 000 F | Selon | Niveau 6.0 m`,
     rawText: `3M TRAVEL AGENCY SARL
-CM-NSI-01-2026-B13-01038  |  NIU : M092618996818Q
+RC/YAO/2019/A/2567  |  NIU : M092618996818Q
 GUIDE DE PROCEDURE
 VISA DE TRAVAIL
 🇮🇪  IRLANDE
@@ -6721,7 +6721,7 @@ Le budget de 3 000 000 FCFA couvre l'intégralité de votre procédure visa trav
     eligibilityConditions: `africain. Type de permis | Durée | Offre emploi | Conditions 📋 Class G — Emploi | 2 ans renouv. | Contrat emploi | Pour employe specifique. Demande employeur. Delai 60-90 jours. 🌟 Class I — Investisseur | 3 ans renouv. | Business plan | Capital min 100 000 USD. Liberte totale marche travail. 🔬 Special Pass | 3 mois | Contrat | Pour missions courtes. Renouvelable max 6 mois. 🔵 Permanent Residence | Illimite | Non | Apres 7 ans residence legale continue. Secteur | Postes/an | Salaire brut | Permis`,
     practicalTips: ``,
     rawText: `3M TRAVEL AGENCY SARL
-CM-NSI-01-2026-B13-01038  |  NIU : M092618996818Q
+RC/YAO/2019/A/2567  |  NIU : M092618996818Q
 GUIDE DE PROCEDURE
 VISA DE TRAVAIL
 🇰🇪  KENYA
@@ -7007,7 +7007,7 @@ Descri`,
     eligibilityConditions: `AirAsia). Type de permis | Durée | Offre emploi | Conditions 🌟 Employment Pass Cat. 1 | 5 ans renouv. | Offre emploi | Salaire ≥ MYR 10 000/mois. Profils hautement qualifies. 📋 Employment Pass Cat. 2 | 2 ans renouv. | Offre emploi | Salaire MYR 5 000–9 999/mois. Diplome Bac+3. 📄 Employment Pass Cat. 3 | 12 mois renouv. | Contrat | Salaire MYR 3 000–4 999/mois. Competences specifiques. 🔵 Resident Pass (Long term) | 5 ans renouv. | Non | Apres 3 ans employment pass. Liberte emploi totale. Secteur `,
     practicalTips: ``,
     rawText: `3M TRAVEL AGENCY SARL
-CM-NSI-01-2026-B13-01038  |  NIU : M092618996818Q
+RC/YAO/2019/A/2567  |  NIU : M092618996818Q
 GUIDE DE PROCEDURE
 VISA DE TRAVAIL
 🇲🇾  MALAISIE
@@ -7213,7 +7213,7 @@ nn
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038 • NIU : M092618996818Q
+RC/YAO/2019/A/2567 • NIU : M092618996818Q
 
 NORVÈGE
 
@@ -7791,7 +7791,7 @@ Talent exceptionnel tech, arts, science. Approbati`,
     eligibilityConditions: `Schengen. Type de permis | Durée | Offre emploi | Conditions 📋 Permis Travail Ordinaire | 1 an renouv. | Contrat emploi | Pour tout travailleur etranger. DTSS Dakar. Delai 4-8 semaines. 🌟 Permis Travail Qualifie | 2 ans renouv. | Offre emploi | Diplome Bac+3 + experience. Secteurs strategiques. 🤝 Permis CEDEAO | Facilite | Non | Ressortissants CEDEAO : procedure simplifiee. Cameroun = zone CEMAC non CEDEAO mais accordas bilateraux. Secteur | Postes/an | Salaire brut | Permis | Atout Camerounais `,
     practicalTips: ``,
     rawText: `3M TRAVEL AGENCY SARL
-CM-NSI-01-2026-B13-01038  |  NIU : M092618996818Q
+RC/YAO/2019/A/2567  |  NIU : M092618996818Q
 GUIDE DE PROCEDURE
 VISA DE TRAVAIL
 🇸🇳  SÉNÉGAL
@@ -11730,7 +11730,7 @@ Guide complet 2026
 
 3M TRAVEL AGENCY SARL
 
-CM-NSI-01-2026-B13-01038   |   NIU : M092618996818Q
+RC/YAO/2019/A/2567   |   NIU : M092618996818Q
 
 VISA TRAVAIL
 & VISA VISITEUR

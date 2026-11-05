@@ -1,8 +1,8 @@
 # 3M Group SARL
-**Société à Responsabilité Limitée au capital enregistré**
-**Registre du Commerce :** CM-NSI-01-2026-B13-01038 | **Numéro d'Identifiant Unique (NIU) :** M092618996818Q
-**Siège social :** Biyem-Assi, Montée Chapelle Obili (à 10 mètres du Collège EHS), Yaoundé – République du Cameroun
-**Téléphones / WhatsApp :** +237 698 104 832 / +237 620 996 045
+**Société à Responsabilité Limitée au capital enregistré**  
+**Registre du Commerce :** RC/YAO/2019/A/2567 | **Numéro d'Identifiant Unique (NIU) :** M092618996818Q  
+**Siège social :** Biyem-Assi, Montée Chapelle Obili (à 10 mètres du Collège EHS), Yaoundé – République du Cameroun  
+**Téléphones / WhatsApp :** +237 698 104 832 / +237 620 996 045  
 **Courriel officiel :** hello@3mtravelagency.com | **Portail Web sécurisé :** [www.3mtravelagency.com](https://www.3mtravelagency.com)
 
 ---
@@ -25,9 +25,9 @@
 
 **D'UNE PART, L'AGENCE MANDATAIRE :**
 * **Dénomination sociale :** 3M Group SARL
-* **Immatriculation légale :** CM-NSI-01-2026-B13-01038 — NIU : M092618996818Q
+* **Immatriculation légale :** RC/YAO/2019/A/2567 — NIU : M092618996818Q
 * **Siège social :** Yaoundé, Cameroun
-* **Représentée par :** La Direction Générale des Opérations et son Conseiller Validateur habilité,
+* **Représentée par :** La Direction Générale des Opérations et son Conseiller Validateur habilité,  
 ci-après dénommée **« L'AGENCE »**.
 
 **D'AUTRE PART, LE CLIENT / CANDIDAT :**
@@ -36,7 +36,7 @@ ci-après dénommée **« L'AGENCE »**.
 * **Projet / Destination retenu :** `{{DESTINATION_PROJET}}`
 * **Numéro de CNI / Passeport :** `{{CLIENT_NUMERO_PIECE}}`
 * **Numéro de Téléphone / WhatsApp :** `{{CLIENT_TELEPHONE_WHATSAPP}}`
-* **Adresse courriel certifiée :** `{{CLIENT_EMAIL}}`
+* **Adresse courriel certifiée :** `{{CLIENT_EMAIL}}`  
 ci-après dénommé **« LE CANDIDAT »** ou **« LE CLIENT »**.
 
 ---
@@ -63,27 +63,27 @@ Conformément aux stipulations du Reçu Officiel de paiement, les frais confirm�
 * **Date et heure de validation :** `{{DATE_HEURE_PAIEMENT}}`
 * **Conseiller validateur habilité :** `{{CONSEILLER_EMAIL}}`
 * **Empreinte cryptographique de sécurité :** `{{EMPREINTE_SHA}}`
-2.2. Le Reçu de Confirmation de Paiement officiel portant les mentions CM-NSI-01-2026-B13-01038 et NIU M092618996818Q demeure archivé en permanence dans l'Espace Client du CANDIDAT comme justificatif comptable et juridique indiscutable.
+2.2. Le Reçu de Confirmation de Paiement officiel portant les mentions RC/YAO/2019/A/2567 et NIU M092618996818Q demeure archivé en permanence dans l'Espace Client du CANDIDAT comme justificatif comptable et juridique indiscutable.
 
 #### ARTICLE 3 : CARACTÈRE STRICTEMENT NON REMBOURSABLE DES FRAIS
-3.1. Conformément aux termes formels du Reçu de paiement, **ces frais sont strictement non remboursables une fois le traitement administratif engagé**, car ils rémunèrent les diligences, expertises, vérifications techniques et mobilisations opérationnelles déjà réalisées par l'équipe avant et pendant la soumission.
+3.1. Conformément aux termes formels du Reçu de paiement, **ces frais sont strictement non remboursables une fois le traitement administratif engagé**, car ils rémunèrent les diligences, expertises, vérifications techniques et mobilisations opérationnelles déjà réalisées par l'équipe avant et pendant la soumission.  
 3.2. La recherche auprès des employeurs partenaires peut aboutir ou non en raison des aléas économiques et des exigences propres à chaque entreprise d'accueil. En conséquence, les frais d'ouverture et de traitement demeurent acquis à L'AGENCE dès le début des diligences, sauf disposition impérative contraire expressément actée.
 
 #### ARTICLE 4 : OBLIGATION DE MOYENS & ABSENCE DE GARANTIE DE RÉSULTAT
-4.1. Conformément à la mention légale figurant sur le Reçu administratif, **ce document et le présent protocole ne garantissent ni emploi, ni contrat de travail, ni visa, ni résultat absolu**.
-4.2. L'AGENCE est tenue à une stricte obligation de moyens professionnels renforcés dans la prospection et la transmission du profil.
+4.1. Conformément à la mention légale figurant sur le Reçu administratif, **ce document et le présent protocole ne garantissent ni emploi, ni contrat de travail, ni visa, ni résultat absolu**.  
+4.2. L'AGENCE est tenue à une stricte obligation de moyens professionnels renforcés dans la prospection et la transmission du profil.  
 4.3. Les décisions d'employeurs, d'agences de placement partenaires et des autorités publiques de l'immigration restent totalement et souverainement indépendantes de 3M Group SARL.
 
 #### ARTICLE 5 : CLAUSE DE RÉORIENTATION SANS FRAIS COMPLÉMENTAIRES
 Dans l'hypothèse où la prospection menée auprès des agences partenaires au Grand-Duché de Luxembourg n'aboutirait pas à une sélection dans un délai raisonnable de 90 jours ouvrés, L'AGENCE s'engage à faire bénéficier LE CLIENT d'une **réorientation sans aucun frais d'ouverture supplémentaire** vers une destination internationale alternative compatible avec son profil (notamment Canada, Suisse, ou États membres de l'Espace Schengen).
 
 #### ARTICLE 6 : CLAUSE DE TRANSPARENCE ADEM & PROTECTION CONTRE LA FRAUDE
-6.1. L'AGENCE réitère formellement que l'ensemble des formalités relatives à la déclaration de vacance de poste et au certificat de main-d'œuvre étrangère délivré par l'Agence pour le Développement de l'Emploi (ADEM) au Luxembourg incombent exclusivement à l'employeur recruteur. Aucun frais à ce titre ne peut être facturé au CANDIDAT.
+6.1. L'AGENCE réitère formellement que l'ensemble des formalités relatives à la déclaration de vacance de poste et au certificat de main-d'œuvre étrangère délivré par l'Agence pour le Développement de l'Emploi (ADEM) au Luxembourg incombent exclusivement à l'employeur recruteur. Aucun frais à ce titre ne peut être facturé au CANDIDAT.  
 6.2. Le contrat de travail final sera obligatoirement conclu et signé en personne par LE CANDIDAT directement avec l'entreprise d'accueil luxembourgeoise.
 
 #### ARTICLE 7 : CONDITION DE TRANSITION VERS LE PROTOCOLE D'ACCORD N° 02
-7.1. Après obtention effective d'un contrat de travail ou d'une lettre d'invitation/promesse d'embauche émise par un employeur luxembourgeois et validation du projet par LE CLIENT, **un protocole d'accord distinct (Protocole N° 02) devra obligatoirement être signé pour lancer la procédure complète d'accompagnement au visa**.
-7.2. Toute prestation consulaire ou tout frais d'honoraires ultérieurs fera l'objet de cet accord distinct.
+7.1. Après obtention effective d'un contrat de travail ou d'une lettre d'invitation/promesse d'embauche émise par un employeur luxembourgeois et validation du projet par LE CLIENT, **un protocole d'accord distinct (Protocole N° 02) devra obligatoirement être signé pour lancer la procédure complète d'accompagnement au visa**.  
+7.2. Toute prestation consulaire ou tout frais d'honoraires ultérieurs fera l'objet de cet accord distinct.  
 7.3. C'est à la conclusion dudit Protocole N° 02 que LE CLIENT choisira librement son barème de règlement financier parmi les options officielles de l'agence (Règlement Intégral à 2 300 000 FCFA, Règlement par Tranches à 2 645 000 FCFA, ou Formule Sortie de Visa Garanti à 2 875 000 FCFA).
 
 #### ARTICLE 8 : VALEUR PROBANTE DE LA SIGNATURE ÉLECTRONIQUE

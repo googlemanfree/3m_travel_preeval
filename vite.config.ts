@@ -253,17 +253,8 @@ export default defineConfig({
             return "vendor";
           }
           if (id.includes("node_modules")) {
-            if (id.includes("/react/") || id.includes("/react-dom/") || id.includes("/scheduler/")) {
-              return "react-vendor";
-            }
-            if (id.includes("@radix-ui") || id.includes("/cmdk/") || id.includes("/vaul/") || id.includes("react-day-picker") || id.includes("react-easy-crop") || id.includes("react-resizable-panels")) {
-              return "ui-vendor";
-            }
-            if (id.includes("@tensorflow/tfjs") || id.includes("/tfjs-core/") || id.includes("/tfjs-converter/") || id.includes("/tfjs-backend")) {
-              return "tensorflow-vendor";
-            }
-            if (id.includes("@tensorflow-models") || id.includes("blazeface")) {
-              return "portrait-models-vendor";
+            if (id.includes("@tensorflow") || id.includes("/tfjs/") || id.includes("blazeface")) {
+              return "portrait-vendor";
             }
             // Bibliothèques PDF : laissées au découpage automatique. Un chunk manuel commun leur faisait imposer un import
             // (effet de bord) à CHAQUE page, soit ~450 Ko compressés téléchargés même sur l'accueil.
@@ -286,12 +277,6 @@ export default defineConfig({
               return "icons-vendor";
             }
             return "vendor";
-          }
-          // Le dashboard admin importe de nombreux panneaux. Un chunk par
-          // panneau garde les routes publiques légères et évite un chunk
-          // admin monolithique qui dépassait le seuil d’1 Mo.
-          if (id.includes("/client/src/pages/AdminDashboard") || id.includes("/client/src/components/Admin")) {
-            return `admin-${path.basename(id, path.extname(id))}`;
           }
         },
       },

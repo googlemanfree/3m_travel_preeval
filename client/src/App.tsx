@@ -591,10 +591,7 @@ function AppShell() {
   );
   const isAdminRoute = pathnameOnly === "/admin" || pathnameOnly.startsWith("/admin/");
   const showFloatingTools = widgetsVisible && !isAdminRoute && location !== "/contact" && !isAccessRoute;
-  // L’évaluation reste une route d’accès candidat, mais doit afficher les
-  // mentions légales pour que l’identité de l’éditeur soit vérifiable avant
-  // toute soumission.
-  const showPublicFooter = !isAdminRoute && (!isAccessRoute || pathnameOnly === "/evaluation");
+  const showPublicFooter = !isAdminRoute;
   /** Widgets flottants après le premier paint : ils ne doivent pas concurrencer le hero / le LCP. */
   const [floatingToolsReady, setFloatingToolsReady] = React.useState(false);
   React.useEffect(() => {

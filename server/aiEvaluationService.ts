@@ -90,7 +90,7 @@ Aureol DONFACK - PDG
 3M Group SARL
 Yaoundé, Cameroun
 +237 698 104 832 | hello@3mtravelagency.com
-CM-NSI-01-2026-B13-01038 | NIU: M092618996818Q
+RC/YAO/2019/A/2567 | NIU: M092618996818Q
 
 "Votre mobilité, notre expertise. Votre réussite, notre mission."`;
 
@@ -227,7 +227,7 @@ Aureol DONFACK - PDG
 3M Group SARL
 Yaoundé, Cameroun
 +237 698 104 832 | hello@3mtravelagency.com
-CM-NSI-01-2026-B13-01038 | NIU: M092618996818Q
+RC/YAO/2019/A/2567 | NIU: M092618996818Q
 
 "Votre mobilité, notre expertise. Votre réussite, notre mission."`;
 }

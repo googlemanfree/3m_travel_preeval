@@ -95,7 +95,7 @@ function buildResultEmailHtml(fullName: string, result: ReturnType<typeof comput
       <p style="font-size:12px;color:#666;text-align:center;">
         3M Group SARL — "Votre mobilité, notre expertise. Votre réussite, notre mission."<br/>
         +237 698 104 832 | hello@3mtravelagency.com | www.3mtravelagency.com<br/>
-        CM-NSI-01-2026-B13-01038
+        RC/YAO/2019/A/2567
       </p>
     </div>
   </div>`;
