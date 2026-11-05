@@ -625,7 +625,7 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
     <div class="footer">
       <p class="brand-signature"><strong>3M Group SARL</strong></p>
       <p>Yaoundé, Cameroun | +237 698 104 832 | hello@3mtravelagency.com</p>
-      <p>RC/YAO/2019/A/2567 | NIU: M092618996818Q</p>
+      <p>CM-NSI-01-2026-B13-01038 | NIU: M092618996818Q</p>
       <p style="margin-top: 15px; font-style: italic;">"Votre mobilité, notre expertise. Votre réussite, notre mission."</p>
     </div>
   </div>
@@ -732,7 +732,7 @@ Aureol DONFACK - PDG
 3M Group SARL
 Yaoundé, Cameroun
 +237 698 104 832 | hello@3mtravelagency.com
-RC/YAO/2019/A/2567 | NIU: M092618996818Q
+CM-NSI-01-2026-B13-01038 | NIU: M092618996818Q
 
 "Votre mobilité, notre expertise. Votre réussite, notre mission."
   `;

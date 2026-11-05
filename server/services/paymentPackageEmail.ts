@@ -21,7 +21,7 @@ export function buildPaymentPackageEmail(input: { fullName: string; dossierNumbe
 <p style="text-align:center;margin:20px 0"><a href="${escapeHtml(site)}/mon-espace?section=signatures" style="display:inline-block;background:#1d4ed8;color:#ffffff;padding:13px 28px;border-radius:10px;text-decoration:none;font-weight:bold">Lire et signer le protocole</a></p>
 <p style="font-size:12px;color:#64748b">Conservez ces deux documents. Une question ? Répondez à ce message ou écrivez-nous sur WhatsApp au +237 6 98 10 48 32.</p>
 </div>
-<p style="text-align:center;font-size:11px;color:#94a3b8;margin:12px 0 0">3M TRAVEL AGENCY — RC/YAO/2019/A/2567 · NIU : M092618996818Q · Yaoundé, Cameroun</p>
+<p style="text-align:center;font-size:11px;color:#94a3b8;margin:12px 0 0">3M TRAVEL AGENCY — CM-NSI-01-2026-B13-01038 · NIU : M092618996818Q · Yaoundé, Cameroun</p>
 </div>`;
   return { subject: oneLine(`Reçu de paiement et Protocole d’accord N°01 — Dossier ${dossier}`), html };
 }

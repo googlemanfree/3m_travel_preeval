@@ -39,7 +39,7 @@ export default function PolitiqueConfidentialite() {
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">1. Objet</h2>
             <p className="text-gray-700 leading-relaxed">
-              3M Group SARL (RC/YAO/2019/A/2567, NIU M092618996818Q), sise à Yaoundé, Biyem-Assi, Montée Chapelle Obili, accorde une importance particulière à la protection des données personnelles de ses clients et visiteurs.
+              3M Group SARL (CM-NSI-01-2026-B13-01038, NIU M092618996818Q), sise à Yaoundé, Biyem-Assi, Montée Chapelle Obili, accorde une importance particulière à la protection des données personnelles de ses clients et visiteurs.
             </p>
           </div>
 

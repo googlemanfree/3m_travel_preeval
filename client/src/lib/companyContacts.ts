@@ -67,7 +67,7 @@ export const COMPANY_PROFILE = {
   },
   founder: COMPANY_FOUNDER,
   legalIdentifiers: {
-    registration: "RC/YAO/2019/A/2567",
+    registration: "CM-NSI-01-2026-B13-01038",
     taxpayerId: "M092618996818Q",
     country: "Cameroun",
     registryAuthority: "RCCM — greffe du tribunal de commerce de Yaoundé (OHADA)",

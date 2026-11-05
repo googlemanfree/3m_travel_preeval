@@ -534,7 +534,7 @@ export interface ProtocolTwoVariables {
 }
 
 const LETTERHEAD = `3M Group SARL — Société à Responsabilité Limitée au capital enregistré
-Registre du Commerce : RC/YAO/2019/A/2567 | Numéro d'Identifiant Unique (NIU) : M092618996818Q
+Registre du Commerce : CM-NSI-01-2026-B13-01038 | Numéro d'Identifiant Unique (NIU) : M092618996818Q
 Siège social : Biyem-Assi, Montée Chapelle Obili (à 10 mètres du Collège EHS), Yaoundé – République du Cameroun
 Téléphones / WhatsApp : +237 698 104 832 / +237 620 996 045 | Courriel : hello@3mtravelagency.com | www.3mtravelagency.com
 
@@ -573,7 +573,7 @@ ${clauses.titleSuffix}
 (Destination : ${profile.destinationLabel} — Programme : ${program})
 
 IDENTIFICATION DES PARTIES
-D'une part, L'AGENCE MANDATAIRE : 3M Group SARL, RC/YAO/2019/A/2567, NIU M092618996818Q, représentée par la Direction Générale des Opérations et son Conseiller Validateur habilité, ci-après « L'AGENCE ».
+D'une part, L'AGENCE MANDATAIRE : 3M Group SARL, CM-NSI-01-2026-B13-01038, NIU M092618996818Q, représentée par la Direction Générale des Opérations et son Conseiller Validateur habilité, ci-après « L'AGENCE ».
 D'autre part, LE CLIENT / CANDIDAT : ${vars.clientNomComplet}, Dossier n° ${vars.dossierRef}, Projet/Destination : ${vars.destinationProjet}${visaType ? `, Type de procédure : ${visaType}` : ""}, Pièce d'identité : ${vars.clientNumeroPiece ?? "à compléter"}, Téléphone/WhatsApp : ${vars.clientTelephoneWhatsapp ?? "à compléter"}, Email : ${vars.clientEmail ?? "à compléter"}, ci-après « LE CANDIDAT » ou « LE CLIENT ».
 
 PRÉAMBULE ET CONTEXTE
@@ -658,7 +658,7 @@ MANDAT D'ACCOMPAGNEMENT CONTRACTUEL ET PROCÉDURE DE VISA
 (Procédure Post-Sélection — Destination : ${profile.destinationLabel} — Programme : ${program})
 
 IDENTIFICATION DES PARTIES
-D'une part, L'AGENCE : 3M Group SARL, RC/YAO/2019/A/2567, NIU M092618996818Q, ci-après « L'AGENCE ».
+D'une part, L'AGENCE : 3M Group SARL, CM-NSI-01-2026-B13-01038, NIU M092618996818Q, ci-après « L'AGENCE ».
 D'autre part, LE REQUÉRANT SÉLECTIONNÉ : ${vars.clientNomComplet}, Passeport : ${vars.clientNumeroPasseport ?? "à compléter"}, Téléphone/WhatsApp : ${vars.clientTelephoneWhatsapp ?? "à compléter"}, Email : ${vars.clientEmail ?? "à compléter"}, Identifiant Espace Client : ${vars.clientEspaceId ?? "à compléter"}, Dossier : ${vars.dossierRef}, ${partnerLabel} : ${vars.employeurNom}, ${projectLabel} : ${vars.posteRetenu}, ci-après « LE CANDIDAT ».
 
 PRÉAMBULE

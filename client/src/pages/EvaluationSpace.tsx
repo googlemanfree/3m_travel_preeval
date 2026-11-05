@@ -1837,7 +1837,7 @@ export default function EvaluationSpace() {
               <div className="border-b border-amber-500 px-5 py-4 text-xs text-slate-600"><p>Dossier : <strong>{activeDossier?.dossierNumber ?? "—"}</strong></p><p>Candidat : <strong>{cProfile.fullName}</strong></p></div>
               <div className="max-h-64 overflow-y-auto whitespace-pre-line px-5 py-5 text-sm leading-6 text-slate-700">{INITIAL_AGREEMENT_PROTOCOL}</div>
               <div className="mt-3 border-t border-slate-200 px-5 pt-4"><p className="font-bold text-blue-950">Signature électronique du candidat</p><p className="mt-2 text-sm text-slate-700">Signataire : <strong>{agreementSignatureName || "—"}</strong></p>{agreementSignatureDataUrl && <img src={agreementSignatureDataUrl} alt="Aperçu de votre signature" className="mt-3 h-20 max-w-[220px] rounded border border-slate-200 bg-white object-contain p-2" />}<p className="mt-3 text-xs text-slate-500">La date et l’adresse IP seront ajoutées automatiquement lors de la validation sécurisée.</p></div>
-              <div className="mt-5 border-t-2 border-amber-500 px-5 pt-3 text-[11px] text-slate-500">3M TRAVEL AGENCY — RC/YAO/2019/A/2567 | NIU : M092618996818Q<br />Yaoundé, Cameroun · hello@3mtravelagency.com · +237 698 104 832</div>
+              <div className="mt-5 border-t-2 border-amber-500 px-5 pt-3 text-[11px] text-slate-500">3M TRAVEL AGENCY — CM-NSI-01-2026-B13-01038 | NIU : M092618996818Q<br />Yaoundé, Cameroun · hello@3mtravelagency.com · +237 698 104 832</div>
             </div>
           </div>
           <DialogFooter>

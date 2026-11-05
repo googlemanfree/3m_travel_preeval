@@ -21,7 +21,7 @@ export const BRAND = {
   email: "hello@3mtravelagency.com",
   /** En-tête : uniquement l'accompagnement visa et mobilité internationale (aucun autre service de l'agence n'y figure). */
   tagline: ["Accompagnement visa et mobilité internationale", "Études · Travail · Voyages · Visas · Immigration"],
-  rc: "RC/YAO/2019/A/2567",
+  rc: "CM-NSI-01-2026-B13-01038",
   niu: "M092618996818Q",
   cameroon: {
     title: "CAMEROUN",
@@ -261,7 +261,7 @@ ${input.reference ? `<p style="margin:0 0 14px;font:12px Arial,Helvetica,sans-se
 ${input.bodyHtml}${cta}
 ${input.noteHtml ? `<p style="margin:18px 0 0;font:12px/1.55 Arial,Helvetica,sans-serif;color:${muted}">${input.noteHtml}</p>` : ""}
 </td></tr>
-<tr><td style="padding:14px 0 0;line-height:0;font-size:0"><img src="${escapeBrandHtml(BRAND.footerImageUrl)}" width="640" alt="${escapeBrandHtml([BRAND.legalName, `RC : ${BRAND.rc}`, `NIU : ${BRAND.niu}`, ...BRAND.cameroon.lines, ...BRAND.canada.lines, BRAND.email, BRAND.website].join(" · "))}" style="display:block;width:100%;height:auto;border:0"></td></tr>
+<tr><td style="padding:14px 0 0;line-height:0;font-size:0"><img src="${escapeBrandHtml(BRAND.footerImageUrl)}" width="640" alt="${escapeBrandHtml([BRAND.legalName, `RCCM : ${BRAND.rc}`, `NIU : ${BRAND.niu}`, ...BRAND.cameroon.lines, ...BRAND.canada.lines, BRAND.email, BRAND.website].join(" · "))}" style="display:block;width:100%;height:auto;border:0"></td></tr>
 <tr><td style="padding:4px 28px 12px;font:11px/1.5 Arial,Helvetica,sans-serif;color:${muted};text-align:center">© ${new Date().getFullYear()} ${escapeBrandHtml(BRAND.legalName)}</td></tr>
 </table></td></tr></table></body></html>`;
 }

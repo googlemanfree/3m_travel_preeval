@@ -16,7 +16,7 @@ describe("buildSignedAgreementEmail", () => {
     expect(subject).toContain("3M-2026-1001");
     expect(subject).toContain("signé");
     expect(html).toContain("3M TRAVEL AGENCY");
-    expect(html).toContain("RC/YAO/2019/A/2567");
+    expect(html).toContain("CM-NSI-01-2026-B13-01038");
     expect(html).toContain("NIU : M092618996818Q");
     expect(html).toContain("Protocole d’accord N°01 — signé");
     expect(html).toContain("Jean Dupont");

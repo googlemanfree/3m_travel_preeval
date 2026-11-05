@@ -1155,7 +1155,7 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated, onOpenC
               <div className="mx-auto max-w-2xl bg-white p-6 shadow-sm">
                 <div className="rounded-t-lg bg-[#0f2460] px-5 py-4 text-white"><p className="text-lg font-black tracking-wide">3M TRAVEL AGENCY</p><p className="text-xs text-blue-100">Protocole d’accord N°01 — accompagnement administratif</p></div>
                 <div className="min-h-[260px] whitespace-pre-line px-5 py-6 text-sm leading-6 text-slate-700">{agreementContent}</div>
-                <div className="border-t-2 border-amber-500 px-5 pt-3 text-[11px] text-slate-500">3M TRAVEL AGENCY — RC/YAO/2019/A/2567 | NIU : M092618996818Q<br />Yaoundé, Cameroun · hello@3mtravelagency.com · +237 698 104 832</div>
+                <div className="border-t-2 border-amber-500 px-5 pt-3 text-[11px] text-slate-500">3M TRAVEL AGENCY — CM-NSI-01-2026-B13-01038 | NIU : M092618996818Q<br />Yaoundé, Cameroun · hello@3mtravelagency.com · +237 698 104 832</div>
               </div>
             </div>}
           </div>

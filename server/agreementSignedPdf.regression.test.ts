@@ -22,7 +22,7 @@ describe("protocole d’accord — signature espace client → PDF mail", () => 
     expect(pdf).toContain("AgreementProtocolSignature");
     // Papier à en-tête officiel partagé : en-tête, pied de page et mentions légales (RC/NIU) viennent de shared/brandLetterhead.
     expect(pdf).toContain("applyLetterhead(doc, letterhead)");
-    expect(read("shared/brandLetterhead.ts")).toContain("RC/YAO/2019/A/2567");
+    expect(read("shared/brandLetterhead.ts")).toContain("CM-NSI-01-2026-B13-01038");
     expect(pdf).toContain("exemplaire signé");
     expect(pdf).toContain("addImage(dataUrl, \"PNG\"");
     expect(pdf).toContain("protocole-01-signe.pdf");

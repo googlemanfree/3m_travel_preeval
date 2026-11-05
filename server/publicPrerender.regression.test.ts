@@ -9,7 +9,8 @@ describe("pré-rendu public indexable", () => {
     const rendered = composePublicPrerender(template, "/procedures");
     expect(rendered.status).toBe(200);
     expect(rendered.html).toContain("<h1>Procédures par destination</h1>");
-    expect(rendered.html).toContain("RC/YAO/2019/A/2567 · NIU M092618996818Q");
+    expect(rendered.html).toContain("CM-NSI-01-2026-B13-01038 · NIU M092618996818Q");
+    expect(rendered.html).not.toContain("RC/YAO/2019/A/2567");
     expect(rendered.html).toContain('<link rel="canonical" href="https://www.3mtravelagency.com/procedures" />');
     expect((rendered.html.match(/<title>/g) ?? []).length).toBe(1);
   });

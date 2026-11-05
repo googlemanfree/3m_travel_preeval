@@ -28,7 +28,7 @@ describe("bilan imprimable et téléchargeable", () => {
     expect(page).toContain(".bilan-bar { display: none !important; }");
     expect(page).toContain("window.print()");
     expect(page).toContain("3M TRAVEL");
-    expect(page).toContain("RC : RC/YAO/2019/A/2567");
+    expect(page).toContain("RCCM : CM-NSI-01-2026-B13-01038");
     expect(page).toContain("100 000");
     expect((page.match(/<body/g) ?? []).length).toBe(1);
     expect(page).not.toContain("<!--3m-brand-->");

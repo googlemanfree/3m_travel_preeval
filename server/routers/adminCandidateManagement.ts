@@ -2771,7 +2771,7 @@ export const adminCandidateManagementRouter = router({
     </div>
     <div style="border-top:2px solid #f1f5f9;padding:20px 30px;text-align:center;background:#fafbfc;">
       <p style="margin:0 0 6px;font-size:12px;color:#94a3b8;">Ce document est une preuve officielle de votre engagement. Conservez-le précieusement.</p>
-      <p style="margin:0 0 4px;font-size:11px;color:#94a3b8;">3M TRAVEL AGENCY — RC/YAO/2019/A/2567 | NIU : M092618996818Q</p>
+      <p style="margin:0 0 4px;font-size:11px;color:#94a3b8;">3M TRAVEL AGENCY — CM-NSI-01-2026-B13-01038 | NIU : M092618996818Q</p>
       <p style="margin:0 0 4px;font-size:11px;color:#94a3b8;">Yaoundé, Cameroun • hello@3mtravelagency.com</p>
       <p style="margin:0;font-size:11px;color:#c7cdd6;">Document généré le ${generatedOn}</p>
     </div>
