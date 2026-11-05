@@ -38,11 +38,10 @@ export default function MentionsLegales() {
               <li>
                 Enseigne commerciale : <strong>{COMPANY_PROFILE.publicName}</strong>
               </li>
+              <li>Forme juridique : {COMPANY_PROFILE.legalForm}</li>
+              <li>Capital social : {COMPANY_PROFILE.shareCapital}</li>
               <li>
-                Société mère : <strong>{GROUP_LEGAL_NAME}</strong>
-              </li>
-              <li>
-                Immatriculation : {COMPANY_PROFILE.legalIdentifiers.registration} — {identity.registryAuthority}
+                Immatriculation (RCCM) : {COMPANY_PROFILE.legalIdentifiers.registration} — {identity.registryAuthority}
               </li>
               <li>NIU : {COMPANY_PROFILE.legalIdentifiers.taxpayerId}</li>
               <li>Siège : {yaounde.addressLines.join(", ")}</li>

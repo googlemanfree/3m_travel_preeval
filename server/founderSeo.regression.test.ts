@@ -14,7 +14,7 @@ describe("SEO fondateur — Aureol DONFACK / 3M Group SARL", () => {
   it("centralise le fondateur et le nom de groupe dans companyContacts", () => {
     expect(GROUP_LEGAL_NAME).toBe("3M Group SARL");
     expect(COMPANY_PROFILE.groupLegalName).toBe("3M Group SARL");
-    expect(COMPANY_PROFILE.legalName).toBe("3M Travel Agency SARL");
+    expect(COMPANY_PROFILE.legalName).toBe("3M Group SARL");
     expect(COMPANY_FOUNDER.name).toBe("Aureol DONFACK");
     expect(COMPANY_FOUNDER.organization).toBe("3M Group SARL");
     expect(COMPANY_FOUNDER.aboutPath).toBe("/about");

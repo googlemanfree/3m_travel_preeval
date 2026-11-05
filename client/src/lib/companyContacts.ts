@@ -44,16 +44,19 @@ export const COMPANY_FOUNDER = {
 export const COMPANY_PROFILE = {
   publicName: BRAND_PUBLIC_NAME,
   /** Nom légal d’exploitation (contrats, reçus, footer, RCCM). */
-  legalName: "3M Travel Agency SARL",
+  legalName: "3M Group SARL",
   /**
    * Formule d’affichage publique : raison sociale + enseigne.
    * Évite la confusion OHADA / marque commerciale sur contact, mentions et preuves.
    */
-  legalDisplayName: "3M Travel Agency SARL, enseigne 3M TRAVEL AGENCY",
-  /** Groupe dirigé par le fondateur — société mère / holding. */
+  legalDisplayName: "3M Group SARL, enseigne 3M TRAVEL AGENCY",
+  /** Société dirigée par le fondateur : c'est la personne morale immatriculée (RCCM, NIU), pas une holding distincte. */
   groupLegalName: GROUP_LEGAL_NAME,
   groupRole:
-    "3M Group SARL est la société mère ; 3M Travel Agency SARL exploite l’enseigne commerciale 3M TRAVEL AGENCY (contrats, reçus et registre).",
+    "3M Group SARL, société à responsabilité limitée unipersonnelle, exploite l’enseigne commerciale 3M TRAVEL AGENCY (contrats, reçus et registre). Les services de la marque (3M Travel, 3M Tech et autres) sont rendus par cette société.",
+  /** Éléments d'état civil de la société, lus sur le RCCM et les statuts. La date d'immatriculation (mise à jour 2026) n'est pas affichée : 3M existe depuis 2019. */
+  legalForm: "Société à responsabilité limitée unipersonnelle (SARL unipersonnelle)",
+  shareCapital: "1 000 000 FCFA",
   publicEmail: "hello@3mtravelagency.com",
   website: "https://www.3mtravelagency.com",
   /** Hébergeur du site public (mentions légales). */
@@ -64,8 +67,8 @@ export const COMPANY_PROFILE = {
   },
   founder: COMPANY_FOUNDER,
   legalIdentifiers: {
-    registration: "RC/YAO/2019/A/2567",
-    taxpayerId: "M112417203369H",
+    registration: "CM-NSI-01-2026-B13-01038",
+    taxpayerId: "M092618996818Q",
     country: "Cameroun",
     registryAuthority: "RCCM — greffe du tribunal de commerce de Yaoundé (OHADA)",
     /** Portail officiel OHADA / Cameroun pour orienter une vérification externe. */

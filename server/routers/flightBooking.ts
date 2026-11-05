@@ -1159,7 +1159,7 @@ export const flightBookingRouter = router({
             </tbody>
           </table>
           <div class="footer">
-            <p>Document officiel certifié généré par le système sécurisé de 3M Travel Agency SARL — Tous droits réservés.</p>
+            <p>Document officiel certifié généré par le système sécurisé de 3M Group SARL — Tous droits réservés.</p>
           </div>
         </body>
         </html>

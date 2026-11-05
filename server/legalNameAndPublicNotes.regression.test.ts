@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 const read = (relativePath: string) => readFileSync(resolve(process.cwd(), relativePath), "utf8");
 
 describe("raison sociale officielle", () => {
-  it("n'emploie plus « 3M Travel & Services SARL » : le nom légal est « 3M Travel Agency SARL » (le nom commercial sans SARL reste libre)", () => {
+  it("n'emploie plus « 3M Travel & Services SARL » : le nom légal est « 3M Group SARL » (le nom commercial sans SARL reste libre)", () => {
     let output = "";
     try {
       output = execFileSync("git", ["grep", "-l", "-i", "-E", "Services,? SARL", "--", "client", "server", ":(exclude)server/legalNameAndPublicNotes.regression.test.ts", "shared", "docs/protocole-accord-01-luxembourg.md", "docs/protocole-accord-02-luxembourg.md"], { encoding: "utf8" });
@@ -21,7 +21,7 @@ describe("raison sociale officielle", () => {
     const privacy = read("client/src/pages/PolitiqueConfidentialite.tsx");
     const terms = read("client/src/pages/ConditionsUtilisation.tsx");
     expect(privacy).not.toContain("modèle de base");
-    expect(privacy).toContain("3M Travel Agency SARL");
+    expect(privacy).toContain("3M Group SARL");
     expect(terms).not.toContain("modèle de base");
     expect(terms).toContain("Marque publique :");
   });

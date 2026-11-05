@@ -72,7 +72,7 @@ export async function generateAIEvaluationReport(
     const { OpenAI } = await import("openai");
     const openai = new OpenAI({ apiKey: openaiApiKey });
 
-    const systemPrompt = `Tu es l'ingénieur en évaluation migratoire de 3M Travel Agency SARL (PDG: Aureol DONFACK).
+    const systemPrompt = `Tu es l'ingénieur en évaluation migratoire de 3M Group SARL (PDG: Aureol DONFACK).
 Ta mission est d'analyser le texte du CV fourni et de rédiger le rapport officiel d'évaluation au format TEXTE BRUT (plain text) strict, en séparant chaque section par un tiret (-).
 
 Consignes de notation et de structure :
@@ -87,10 +87,10 @@ Signature obligatoire :
 Cordialement,
 
 Aureol DONFACK - PDG
-3M Travel Agency SARL
+3M Group SARL
 Yaoundé, Cameroun
 +237 698 104 832 | hello@3mtravelagency.com
-RC/YAO/2019/A/2567 | NIU: M112417203369H
+CM-NSI-01-2026-B13-01038 | NIU: M092618996818Q
 
 "Votre mobilité, notre expertise. Votre réussite, notre mission."`;
 
@@ -224,10 +224,10 @@ Ne laissez pas les barrières administratives ralentir votre potentiel. Fixez vo
 Cordialement,
 
 Aureol DONFACK - PDG
-3M Travel Agency SARL
+3M Group SARL
 Yaoundé, Cameroun
 +237 698 104 832 | hello@3mtravelagency.com
-RC/YAO/2019/A/2567 | NIU: M112417203369H
+CM-NSI-01-2026-B13-01038 | NIU: M092618996818Q
 
 "Votre mobilité, notre expertise. Votre réussite, notre mission."`;
 }

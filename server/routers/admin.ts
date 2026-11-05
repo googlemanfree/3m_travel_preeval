@@ -2778,7 +2778,7 @@ export const adminRouter = router({
                   <a href="https://3mtravelagency.com/mon-espace?section=documents" style="display: inline-block; background: #1E3A8A; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0;">Accéder à mes documents</a>`}
                 </div>
                 <div style="background: #f8faff; padding: 20px 28px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb;">
-                  <p>3M TRAVEL AGENCY — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
+                  <p>3M TRAVEL AGENCY — CM-NSI-01-2026-B13-01038 | NIU : M092618996818Q</p>
                   <p>Yaoundé, Cameroun | +237 620-996-045 | hello@3mtravelagency.com</p>
                 </div>
               </div>

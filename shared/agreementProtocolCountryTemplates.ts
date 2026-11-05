@@ -409,7 +409,7 @@ export function protocolOneKindClauses(kind: ProtocolVisaKind, profile: CountryP
     return {
       titleSuffix: "MANDAT D'OUVERTURE DE DOSSIER ÉTUDES ET TRAITEMENT ADMINISTRATIF",
       noGuarantee:
-        "Ce document et le présent protocole ne garantissent ni admission scolaire, ni place en établissement, ni visa études, ni résultat absolu. L'AGENCE est tenue à une stricte obligation de moyens professionnels dans la préparation du dossier académique. Les décisions des établissements et des autorités d'immigration restent totalement et souverainement indépendantes de 3M Travel Agency SARL.",
+        "Ce document et le présent protocole ne garantissent ni admission scolaire, ni place en établissement, ni visa études, ni résultat absolu. L'AGENCE est tenue à une stricte obligation de moyens professionnels dans la préparation du dossier académique. Les décisions des établissements et des autorités d'immigration restent totalement et souverainement indépendantes de 3M Group SARL.",
       transparency: `L'AGENCE réitère que les frais d'inscription, de scolarité et les formalités propres à ${profile.employmentAuthority} incombent à l'établissement ou au candidat selon les règles publiées : aucun frais « caché » d'admission ne peut être inventé par L'AGENCE. Tout engagement officiel avec l'établissement sera conclu par LE CANDIDAT, jamais par L'AGENCE à sa place.`,
       transition:
         "Après obtention effective d'une proposition concrète (lettre d'admission, confirmation d'inscription ou équivalent) et validation du projet par LE CLIENT, un protocole d'accord distinct (Protocole N° 02) devra être signé pour lancer la procédure complète d'accompagnement visa études. Toute prestation ou frais d'honoraires ultérieurs feront l'objet de cet accord distinct.",
@@ -419,7 +419,7 @@ export function protocolOneKindClauses(kind: ProtocolVisaKind, profile: CountryP
     return {
       titleSuffix: "MANDAT D'OUVERTURE DE DOSSIER VISITEURS / SÉJOUR TEMPORAIRE",
       noGuarantee:
-        "Ce document et le présent protocole ne garantissent ni visa, ni entrée sur le territoire, ni durée de séjour, ni résultat absolu. L'AGENCE est tenue à une stricte obligation de moyens professionnels dans la préparation du dossier de séjour temporaire. Les décisions des autorités consulaires et d'immigration restent totalement et souverainement indépendantes de 3M Travel Agency SARL.",
+        "Ce document et le présent protocole ne garantissent ni visa, ni entrée sur le territoire, ni durée de séjour, ni résultat absolu. L'AGENCE est tenue à une stricte obligation de moyens professionnels dans la préparation du dossier de séjour temporaire. Les décisions des autorités consulaires et d'immigration restent totalement et souverainement indépendantes de 3M Group SARL.",
       transparency: `L'AGENCE réitère qu'aucun frais d'employeur ni de « placement » ne s'applique à une procédure visiteurs. Les justificatifs (statut, motif, hébergement, attaches, retour) incombent au CANDIDAT ; les formalités officielles relèvent de ${profile.immigrationAuthority}. Aucune promesse d'emploi n'est associée à ce mandat.`,
       transition:
         "Après validation du projet de séjour et, le cas échéant, obtention des justificatifs complémentaires demandés, un protocole d'accord distinct (Protocole N° 02) pourra être signé si un accompagnement consulaire étendu est requis. Toute prestation ou frais d'honoraires ultérieurs feront l'objet de cet accord distinct.",
@@ -429,7 +429,7 @@ export function protocolOneKindClauses(kind: ProtocolVisaKind, profile: CountryP
     return {
       titleSuffix: "MANDAT D'OUVERTURE DE DOSSIER REGROUPEMENT FAMILIAL",
       noGuarantee:
-        "Ce document et le présent protocole ne garantissent ni approbation du regroupement, ni visa, ni délai d'instruction, ni résultat absolu. L'AGENCE est tenue à une stricte obligation de moyens professionnels dans la préparation du dossier familial. Les décisions des autorités d'immigration restent totalement et souverainement indépendantes de 3M Travel Agency SARL.",
+        "Ce document et le présent protocole ne garantissent ni approbation du regroupement, ni visa, ni délai d'instruction, ni résultat absolu. L'AGENCE est tenue à une stricte obligation de moyens professionnels dans la préparation du dossier familial. Les décisions des autorités d'immigration restent totalement et souverainement indépendantes de 3M Group SARL.",
       transparency: `L'AGENCE réitère que les pièces d'état civil, preuves de lien et garanties du membre de famille incombent aux parties concernées. Les formalités auprès de ${profile.immigrationAuthority} ne peuvent donner lieu à des frais inventés par L'AGENCE.`,
       transition:
         "Après constitution du dossier familial et validation du projet par LE CLIENT, un protocole d'accord distinct (Protocole N° 02) pourra être signé pour l'accompagnement jusqu'au dépôt consulaire. Toute prestation ou frais d'honoraires ultérieurs feront l'objet de cet accord distinct.",
@@ -438,7 +438,7 @@ export function protocolOneKindClauses(kind: ProtocolVisaKind, profile: CountryP
   return {
     titleSuffix: "MANDAT D'OUVERTURE DE DOSSIER, DE TRAITEMENT ADMINISTRATIF ET DE SOUMISSION PARTENAIRES",
     noGuarantee:
-      "Ce document et le présent protocole ne garantissent ni emploi, ni contrat de travail, ni visa, ni résultat absolu. L'AGENCE est tenue à une stricte obligation de moyens professionnels dans la prospection et la transmission du profil. Les décisions des employeurs, partenaires et autorités publiques d'immigration restent totalement et souverainement indépendantes de 3M Travel Agency SARL.",
+      "Ce document et le présent protocole ne garantissent ni emploi, ni contrat de travail, ni visa, ni résultat absolu. L'AGENCE est tenue à une stricte obligation de moyens professionnels dans la prospection et la transmission du profil. Les décisions des employeurs, partenaires et autorités publiques d'immigration restent totalement et souverainement indépendantes de 3M Group SARL.",
     transparency: `L'AGENCE réitère que les formalités relatives à la déclaration de poste ouvert (vacance de poste) et aux certificats délivrés par ${profile.employmentAuthority} incombent exclusivement à l'employeur ou à l'établissement recruteur : aucun frais à ce titre ne peut être facturé au CANDIDAT. Le contrat ou l'engagement final sera obligatoirement conclu et signé en personne par LE CANDIDAT, jamais par L'AGENCE à sa place.`,
     transition:
       "Après obtention effective d'une proposition concrète (contrat de travail, promesse d'embauche ou équivalent selon la procédure) et validation du projet par LE CLIENT, un protocole d'accord distinct (Protocole N° 02) devra être signé pour lancer la procédure complète d'accompagnement. Toute prestation ou frais d'honoraires ultérieurs feront l'objet de cet accord distinct, qui précisera le barème de règlement financier applicable à cette destination.",
@@ -533,8 +533,8 @@ export interface ProtocolTwoVariables {
   dateDuJour: string;
 }
 
-const LETTERHEAD = `3M Travel Agency SARL — Société à Responsabilité Limitée au capital enregistré
-Registre du Commerce : RC/YAO/2019/A/2567 | Numéro d'Identifiant Unique (NIU) : M112417203369H
+const LETTERHEAD = `3M Group SARL — Société à Responsabilité Limitée au capital enregistré
+Registre du Commerce : CM-NSI-01-2026-B13-01038 | Numéro d'Identifiant Unique (NIU) : M092618996818Q
 Siège social : Biyem-Assi, Montée Chapelle Obili (à 10 mètres du Collège EHS), Yaoundé – République du Cameroun
 Téléphones / WhatsApp : +237 698 104 832 / +237 620 996 045 | Courriel : hello@3mtravelagency.com | www.3mtravelagency.com
 
@@ -573,7 +573,7 @@ ${clauses.titleSuffix}
 (Destination : ${profile.destinationLabel} — Programme : ${program})
 
 IDENTIFICATION DES PARTIES
-D'une part, L'AGENCE MANDATAIRE : 3M Travel Agency SARL, RC/YAO/2019/A/2567, NIU M112417203369H, représentée par la Direction Générale des Opérations et son Conseiller Validateur habilité, ci-après « L'AGENCE ».
+D'une part, L'AGENCE MANDATAIRE : 3M Group SARL, CM-NSI-01-2026-B13-01038, NIU M092618996818Q, représentée par la Direction Générale des Opérations et son Conseiller Validateur habilité, ci-après « L'AGENCE ».
 D'autre part, LE CLIENT / CANDIDAT : ${vars.clientNomComplet}, Dossier n° ${vars.dossierRef}, Projet/Destination : ${vars.destinationProjet}${visaType ? `, Type de procédure : ${visaType}` : ""}, Pièce d'identité : ${vars.clientNumeroPiece ?? "à compléter"}, Téléphone/WhatsApp : ${vars.clientTelephoneWhatsapp ?? "à compléter"}, Email : ${vars.clientEmail ?? "à compléter"}, ci-après « LE CANDIDAT » ou « LE CLIENT ».
 
 PRÉAMBULE ET CONTEXTE
@@ -604,7 +604,7 @@ Article 8 — Valeur probante de la signature électronique
 L'acceptation numérique du présent protocole dans l'Espace Client, combinée aux données du Reçu de Confirmation de Paiement horodaté, constitue un contrat bilatéral parfait et juridiquement opposable.
 
 Fait à Yaoundé, sous format numérique certifié, le ${vars.dateDuJour}.
-Pour 3M Travel Agency SARL : Conseiller ${vars.conseillerEmail} — Empreinte : ${vars.empreinteSha}
+Pour 3M Group SARL : Conseiller ${vars.conseillerEmail} — Empreinte : ${vars.empreinteSha}
 Pour LE CLIENT : ${vars.clientNomComplet} — Statut : Lu et approuvé — IP : ${vars.clientIpAddress}`;
 }
 
@@ -658,7 +658,7 @@ MANDAT D'ACCOMPAGNEMENT CONTRACTUEL ET PROCÉDURE DE VISA
 (Procédure Post-Sélection — Destination : ${profile.destinationLabel} — Programme : ${program})
 
 IDENTIFICATION DES PARTIES
-D'une part, L'AGENCE : 3M Travel Agency SARL, RC/YAO/2019/A/2567, NIU M112417203369H, ci-après « L'AGENCE ».
+D'une part, L'AGENCE : 3M Group SARL, CM-NSI-01-2026-B13-01038, NIU M092618996818Q, ci-après « L'AGENCE ».
 D'autre part, LE REQUÉRANT SÉLECTIONNÉ : ${vars.clientNomComplet}, Passeport : ${vars.clientNumeroPasseport ?? "à compléter"}, Téléphone/WhatsApp : ${vars.clientTelephoneWhatsapp ?? "à compléter"}, Email : ${vars.clientEmail ?? "à compléter"}, Identifiant Espace Client : ${vars.clientEspaceId ?? "à compléter"}, Dossier : ${vars.dossierRef}, ${partnerLabel} : ${vars.employeurNom}, ${projectLabel} : ${vars.posteRetenu}, ci-après « LE CANDIDAT ».
 
 PRÉAMBULE

@@ -18,7 +18,7 @@ describe("client communication and report previews", () => {
     expect(service).toContain("logo-3m-hd.webp");
     expect(service).toContain("brand-logo");
     expect(service).toContain("#0B1F4B");
-    expect(service).toContain("3M Travel Agency SARL");
+    expect(service).toContain("3M Group SARL");
   });
 
   it("shows a live preview of the bilan before final send", () => {

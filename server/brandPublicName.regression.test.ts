@@ -50,7 +50,7 @@ describe("marque publique 3M TRAVEL AGENCY", () => {
   });
 
   it("conserve la dénomination juridique dans le profil société", () => {
-    expect(contacts).toContain('legalName: "3M Travel Agency SARL"');
+    expect(contacts).toContain('legalName: "3M Group SARL"');
     expect(contacts).toContain("3M Group SARL");
   });
 });

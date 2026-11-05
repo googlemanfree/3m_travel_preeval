@@ -14,10 +14,10 @@ describe("confiance 10/10 — preuves, tarifs, contacts, indexation", () => {
     const html = composePublicPrerender(shell, "/").html;
     expect(home).toContain('data-testid="home-legal-registration-proof"');
     expect(home).toContain("registryPortalUrl");
-    expect(company).toContain("RC/YAO/2019/A/2567");
+    expect(company).toContain("CM-NSI-01-2026-B13-01038");
     expect(company).toContain("rccm.ohada.org");
     expect(html).toContain("Preuve d’enregistrement vérifiable");
-    expect(html).toContain("RC/YAO/2019/A/2567");
+    expect(html).toContain("CM-NSI-01-2026-B13-01038");
     expect(html).toContain("rccm.ohada.org");
   });
 

@@ -1,6 +1,6 @@
-# 3M Travel Agency SARL
+# 3M Group SARL
 **Société à Responsabilité Limitée au capital enregistré**  
-**Registre du Commerce :** RC/YAO/2019/A/2567 | **Numéro d'Identifiant Unique (NIU) :** M112417203369H  
+**Registre du Commerce :** CM-NSI-01-2026-B13-01038 | **Numéro d'Identifiant Unique (NIU) :** M092618996818Q  
 **Siège social :** Biyem-Assi, Montée Chapelle Obili (à 10 mètres du Collège EHS), Yaoundé – République du Cameroun  
 **Téléphones / WhatsApp :** +237 698 104 832 / +237 620 996 045  
 **Courriel officiel :** hello@3mtravelagency.com | **Portail Web sécurisé :** [www.3mtravelagency.com](https://www.3mtravelagency.com)
@@ -10,7 +10,7 @@
 ```
 ====================================================================================================
                         RÉPUBLIQUE DU CAMEROUN — PAIX - TRAVAIL - PATRIE
-                                  3M Travel Agency SARL
+                                  3M Group SARL
                     DÉPARTEMENT IMMIGRATION & MOBILITÉ PROFESSIONNELLE INTERNATIONALE
 ====================================================================================================
 ```
@@ -24,8 +24,8 @@
 ### IDENTIFICATION DES PARTIES CONTRACTANTES
 
 **D'UNE PART, L'AGENCE MANDATAIRE :**
-* **Dénomination :** 3M Travel Agency SARL
-* **Immatriculation légale :** RC/YAO/2019/A/2567 — NIU : M112417203369H
+* **Dénomination :** 3M Group SARL
+* **Immatriculation légale :** CM-NSI-01-2026-B13-01038 — NIU : M092618996818Q
 * **Représentée par :** La Direction Générale des Opérations et de la Mobilité Internationale,  
 ci-après désignée **« L'AGENCE »**.
 
@@ -108,7 +108,7 @@ Toutes les pièces contractuelles, décisions administratives (avis ADEM, avis f
 
 Fait à Yaoundé, sous forme de contrat électronique opposable, le `{{DATE_DU_JOUR}}`.
 
-| Pour la Société 3M Travel Agency SARL | Pour LE CANDIDAT TITULAIRE |
+| Pour la Société 3M Group SARL | Pour LE CANDIDAT TITULAIRE |
 | :--- | :--- |
 | **Direction Générale & Département Juridique** | **Mention obligatoire :** *« Bon pour accord, lu et approuvé »* |
 | *(Signature électronique certifiée & Sceau officiel)* | *(Signature électronique / Validation sécurisée Espace Client)* |

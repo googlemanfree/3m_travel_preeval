@@ -68,7 +68,7 @@ export function getConfirmationEmailHTML(params: ConfirmationEmailParams): strin
 
     <div class="footer">
       <p>© ${new Date().getFullYear()} 3M TRAVEL AGENCY - Votre mobilité, notre expertise</p>
-      <p>RC/YAO/2019/A/2567 | NIU : M112417203369H | Yaoundé, Biyem-Assi</p>
+      <p>CM-NSI-01-2026-B13-01038 | NIU : M092618996818Q | Yaoundé, Biyem-Assi</p>
     </div>
   </div>
 </body>
@@ -103,6 +103,6 @@ BESOIN D'AIDE ?
 
 ---
 © ${new Date().getFullYear()} 3M TRAVEL AGENCY - Votre mobilité, notre expertise
-RC/YAO/2019/A/2567 | NIU : M112417203369H | Yaoundé, Biyem-Assi
+CM-NSI-01-2026-B13-01038 | NIU : M092618996818Q | Yaoundé, Biyem-Assi
   `.trim();
 }

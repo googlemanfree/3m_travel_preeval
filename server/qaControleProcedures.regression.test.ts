@@ -116,7 +116,7 @@ describe("QA contrôle — procédures, évaluation, vols, marque", () => {
 
   it("marque publique vs dénomination juridique et coordonnées canoniques", () => {
     expect(company).toContain('export const BRAND_PUBLIC_NAME = "3M TRAVEL AGENCY"');
-    expect(company).toContain('legalName: "3M Travel Agency SARL"');
+    expect(company).toContain('legalName: "3M Group SARL"');
     expect(company).toContain("+237 698 104 832");
     expect(company).toContain("+1 672 897 2999");
     expect(company).toContain("hello@3mtravelagency.com");

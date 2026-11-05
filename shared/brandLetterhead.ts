@@ -15,14 +15,14 @@ export type PdfLike = any;
 
 export const BRAND = {
   commercialName: "3M TRAVEL AGENCY",
-  legalName: "3M Travel Agency SARL",
+  legalName: "3M Group SARL",
   website: "www.3mtravelagency.com",
   siteUrl: "https://www.3mtravelagency.com",
   email: "hello@3mtravelagency.com",
   /** En-tête : uniquement l'accompagnement visa et mobilité internationale (aucun autre service de l'agence n'y figure). */
   tagline: ["Accompagnement visa et mobilité internationale", "Études · Travail · Voyages · Visas · Immigration"],
-  rc: "RC/YAO/2019/A/2567",
-  niu: "M112417203369H",
+  rc: "CM-NSI-01-2026-B13-01038",
+  niu: "M092618996818Q",
   cameroon: {
     title: "CAMEROUN",
     lines: ["Yaoundé — Biyem-Assi, Montée Chapelle Obili, à 10 m de EHS", "WhatsApp : +237 698 104 832 · Appels : +237 620 996 045"],

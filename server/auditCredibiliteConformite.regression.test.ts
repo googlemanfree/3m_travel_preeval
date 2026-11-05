@@ -22,7 +22,7 @@ describe("audit crédibilité / conformité (17 oct 2026)", () => {
   });
 
   it("affiche raison sociale + enseigne + rôle de la société mère", () => {
-    expect(COMPANY_PROFILE.legalName).toBe("3M Travel Agency SARL");
+    expect(COMPANY_PROFILE.legalName).toBe("3M Group SARL");
     expect(COMPANY_PROFILE.legalDisplayName).toContain("enseigne 3M TRAVEL AGENCY");
     expect(COMPANY_PROFILE.groupRole).toContain("3M Group SARL");
     expect(read("client/src/pages/Contact.tsx")).toContain("legalDisplayName");

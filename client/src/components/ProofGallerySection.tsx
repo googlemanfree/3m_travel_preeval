@@ -257,8 +257,8 @@ export default function ProofGallerySection({
           </p>
           <p className="mx-auto mt-2 max-w-2xl text-center text-xs font-semibold text-slate-500" data-testid="proof-brand-note">
             {t(
-              "Marque publique : 3M TRAVEL AGENCY — raison sociale 3M Travel Agency SARL (tout filigrane « Travel & Services » sur d’anciens extraits désigne la même agence).",
-              "Public brand: 3M TRAVEL AGENCY — legal name 3M Travel Agency SARL (any legacy “Travel & Services” watermark refers to the same agency).",
+              "Marque publique : 3M TRAVEL AGENCY — raison sociale 3M Group SARL (tout filigrane « Travel & Services » sur d’anciens extraits désigne la même agence).",
+              "Public brand: 3M TRAVEL AGENCY — legal name 3M Group SARL (any legacy “Travel & Services” watermark refers to the same agency).",
             )}
           </p>
           {!lockFilter && (
