@@ -9,6 +9,7 @@ import { BarChart3, CreditCard, CheckCircle2, Clock, XCircle, Download, Eye, Mai
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { paymentAuditLogsToCsv } from "@shared/paymentAuditCsv";
+import { proposedOpeningFee } from "@shared/openingFee";
 import AdminPaymentProofBadge from "@/components/AdminPaymentProofBadge";
 import AdminOpeningFeeDialog from "@/components/AdminOpeningFeeDialog";
 import { INITIAL_AGREEMENT_PROTOCOL } from "@shared/agreementProtocolContent";
@@ -167,8 +168,8 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated, onOpenC
     displayReference: app.displayReference,
     fullName: app.fullName,
     email: app.email,
-    amount: app.paymentAmount || app.paymentExpectedAmount || 65000,
-    expectedAmount: app.paymentExpectedAmount || app.paymentAmount || 65000,
+    amount: app.paymentAmount || app.paymentExpectedAmount || proposedOpeningFee(app.visaType),
+    expectedAmount: app.paymentExpectedAmount || app.paymentAmount || proposedOpeningFee(app.visaType),
     confirmedAmount: app.paymentConfirmedAmount,
     openingFeeConfirmed: Boolean(app.openingFeeConfirmed),
     currency: app.paymentCurrency || "XAF",

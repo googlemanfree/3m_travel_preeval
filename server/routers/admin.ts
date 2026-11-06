@@ -81,6 +81,7 @@ import {
   parseClientPreviewToken,
 } from "../../shared/clientPreviewToken";
 import { randomBytes } from "node:crypto";
+import { proposedOpeningFee } from "../../shared/openingFee";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 
 function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
@@ -4600,7 +4601,7 @@ export const adminRouter = router({
         receiptApproval: receiptApproval ? { id: receiptApproval.id, approvedByName: receiptApproval.approvedByName, approvedByEmail: receiptApproval.approvedByEmail, approvedAt: receiptApproval.approvedAt, signatureLabel: receiptApproval.signatureLabel, signatureHash: receiptApproval.signatureHash } : null,
       } : {
         status: (sourceRecord as typeof agencyDossiers.$inferSelect).initialPaymentStatus === "paid" ? "SUCCESS" : (sourceRecord as typeof agencyDossiers.$inferSelect).initialPaymentStatus === "pending" ? "PENDING" : "NOT_PAID",
-        amount: latestAgencyPaymentAudit?.amount ? Number.parseFloat(String(latestAgencyPaymentAudit.amount)) : 65000,
+        amount: latestAgencyPaymentAudit?.amount ? Number.parseFloat(String(latestAgencyPaymentAudit.amount)) : proposedOpeningFee((sourceRecord as typeof agencyDossiers.$inferSelect).visaType),
         currency: "XAF",
         method: latestAgencyPaymentAudit?.action === "confirmed" || latestAgencyPaymentAudit?.action === "confirmed_again" ? "AGENCE" : null,
         reference: latestAgencyPaymentAudit?.details ?? null,

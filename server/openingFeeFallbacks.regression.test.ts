@@ -11,6 +11,13 @@ describe("frais d'ouverture : aucun montant de repli écrit en dur dans les écr
     "client/src/pages/CinetPayPayment.tsx",
     "client/src/pages/PaymentSuccess.tsx",
     "server/services/paymentPackage.ts",
+    // Écritures financières et e-mails du back-office : le montant propre au dossier (ou proposé selon le visa), jamais 65 000 d'office.
+    "server/routers/adminCandidateManagement.ts",
+    "server/routers/adminDossier.ts",
+    "server/routers/admin.ts",
+    "client/src/components/AdminPaymentManagement.tsx",
+    "client/src/components/DossierProgressBar.tsx",
+    "client/src/components/PaymentModal.tsx",
   ];
 
   it.each(files)("%s n'écrit pas 65000 en dur", (file) => {
