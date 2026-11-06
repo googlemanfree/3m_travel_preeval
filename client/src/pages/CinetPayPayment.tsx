@@ -6,6 +6,7 @@ import { AlertCircle, CheckCircle, Loader, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trpc } from '@/lib/trpc';
 import PaymentFallbackPanel from '@/components/PaymentFallbackPanel';
+import { DEFAULT_OPENING_FEE_XAF } from '@shared/openingFee';
 
 type PaymentStatus = 'idle' | 'registering' | 'opening' | 'waiting' | 'success' | 'failed' | 'error';
 
@@ -17,7 +18,7 @@ export default function CinetPayPayment() {
   const [status, setStatus] = useState<PaymentStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const transactionIdRef = useRef<string>('');
-  const paymentAmountRef = useRef<number>(65000);
+  const paymentAmountRef = useRef<number>(DEFAULT_OPENING_FEE_XAF);
 
   const { data: application, isLoading, error: loadError } = trpc.application.getApplicationByDossierNumber.useQuery(
     { dossierNumber: dossierNumber || '' },
@@ -164,7 +165,7 @@ export default function CinetPayPayment() {
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-600 mb-1">Montant à payer</p>
                 <p className="text-3xl font-bold text-blue-600">
-                  {(application.paymentAmount ?? 65000).toLocaleString()} {PAYMENT_CURRENCY}
+                  {(application.paymentAmount ?? DEFAULT_OPENING_FEE_XAF).toLocaleString()} {PAYMENT_CURRENCY}
                 </p>
               </div>
 
@@ -247,7 +248,7 @@ export default function CinetPayPayment() {
             <PaymentFallbackPanel
               reference={dossierNumber}
               kind="dossier"
-              amount={application.paymentAmount ?? 65000}
+              amount={application.paymentAmount ?? DEFAULT_OPENING_FEE_XAF}
               name={application.fullName}
               reason={status === 'failed' || status === 'error' ? 'failed' : 'alternatives'}
             />

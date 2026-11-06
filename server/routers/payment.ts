@@ -236,7 +236,7 @@ export const paymentRouter = router({
         return {
           dossierNumber: application.dossierNumber,
           paymentStatus: application.paymentStatus,
-          paymentAmount: application.paymentAmount,
+          paymentAmount: application.paymentAmount ?? proposedOpeningFee(application.visaType),
           paymentCurrency: application.paymentCurrency,
           paymentDate: application.paymentDate,
           paymentMethod: application.paymentMethod,

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle2, CreditCard, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { DEFAULT_OPENING_FEE_XAF } from "@shared/openingFee";
 
 interface PaymentSectionProps {
   dossierNumber: string;
@@ -70,7 +71,8 @@ export function PaymentSection({
   }
 
   const isPaid = paymentStatus?.isPaid;
-  const paymentAmount = paymentStatus?.paymentAmount || 65000;
+  // Le serveur renvoie le montant du dossier, ou celui proposé selon le visa quand il n'est pas encore fixé.
+  const paymentAmount = paymentStatus?.paymentAmount || DEFAULT_OPENING_FEE_XAF;
   const paymentCurrency = paymentStatus?.paymentCurrency || "XAF";
 
   return (
