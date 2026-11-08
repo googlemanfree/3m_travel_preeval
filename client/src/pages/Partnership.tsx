@@ -60,7 +60,7 @@ export default function Partnership() {
   const [previewKind, setPreviewKind] = useState<PartnershipKind | null>(null);
   const preview = trpc.partnership.previewProtocol.useQuery({ kind: previewKind ?? "travel_agency" }, { enabled: previewKind !== null, staleTime: 10 * 60_000 });
   const submit = trpc.partnership.submit.useMutation({
-    onSuccess: (result) => { setDone({ reference: result.reference, alreadyReceived: result.alreadyReceived }); setError(""); window.scrollTo({ top: document.getElementById("candidature")?.offsetTop ?? 0, behavior: scrollBehavior() }); },
+    onSuccess: (result) => { setDone({ reference: result.reference, alreadyReceived: result.alreadyReceived }); setError(""); toast.success(result.alreadyReceived ? t("Votre candidature est déjà enregistrée.", "Your application is already registered.") : t("Votre candidature a bien été envoyée.", "Your application was sent successfully.")); window.scrollTo({ top: document.getElementById("candidature")?.offsetTop ?? 0, behavior: scrollBehavior() }); },
     onError: (mutationError) => { setError(mutationError.message); toast.error(mutationError.message); },
   });
   const agency = form.kind === "travel_agency";
@@ -261,7 +261,7 @@ export default function Partnership() {
               <p className="mt-2 text-sm leading-6">{t(`Votre référence : ${done.reference}. Nous vous répondons par e-mail après vérification. Si votre candidature est retenue, vous recevrez le protocole d’accord à lire et à signer en ligne, avec vos conditions.`, `Your reference: ${done.reference}. We will reply by email after checking. If your application is accepted you will receive the agreement to read and sign online, with your terms.`)}</p>
             </div>
           ) : (
-            <form onSubmit={onSubmit} noValidate className="mt-4 space-y-5">
+            <form onSubmit={onSubmit} noValidate className="mt-4 space-y-5" aria-busy={submit.isPending}>
               <fieldset>
                 <legend className="text-sm font-bold text-slate-900">{t("Je candidate comme", "I apply as")}</legend>
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -336,6 +336,12 @@ export default function Partnership() {
               </div>
 
               {error ? <p className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-900" role="alert" data-testid="partnership-error">{error}</p> : null}
+              {submit.isPending ? (
+                <div className="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm font-semibold text-blue-950" role="status" aria-live="polite" data-testid="partnership-loading">
+                  <Loader2 className="h-5 w-5 shrink-0 animate-spin text-blue-700" aria-hidden="true" />
+                  <span>{t("Votre candidature est en cours d’envoi… Ne fermez pas cette page.", "Your application is being sent… Please keep this page open.")}</span>
+                </div>
+              ) : null}
               <Button type="submit" disabled={submit.isPending} className="min-h-12 w-full text-base font-black" data-testid="partnership-submit">
                 {submit.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />{t("Envoi…", "Sending…")}</> : t("Envoyer ma candidature", "Send my application")}
               </Button>
