@@ -16,7 +16,7 @@ import { extractBuildMarker, parseBuildMarker } from "../server/publicBuildMarke
 
 export type Witness = { path: string; status: number; location?: string };
 export type MarkerVerdict = "exact" | "descendant" | "older" | "built-after" | "built-before" | "unknown" | "no-marker";
-export type VerifyOptions = { base: string; expect?: string; sitemapCount?: number; strict?: boolean };
+export type VerifyOptions = { base: string; expect?: string; sitemapCount?: number };
 
 export const DEFAULT_BASE_URL = "https://www.3mtravelagency.com";
 
@@ -111,8 +111,6 @@ export function parseArgs(argv: string[]): VerifyOptions {
     } else if (flag === "--sitemap-count" && value) {
       options.sitemapCount = Number(value);
       index += 1;
-    } else if (flag === "--strict") {
-      options.strict = true;
     }
   }
   return options;
@@ -155,9 +153,6 @@ export async function runVerification(options: VerifyOptions) {
   const lines: string[] = [];
   let failures = 0;
   let inconclusive = false;
-  if (options.strict && !options.expect) {
-    throw new Error("Le mode strict exige --expect <commit> pour bloquer un déploiement non conforme.");
-  }
   const cacheBuster = `cb=${Date.now()}`;
   const record = (ok: boolean, label: string, detail: string) => {
     lines.push(`${ok ? "OK    " : "ECART "} ${label} : ${detail}`);
@@ -173,11 +168,7 @@ export async function runVerification(options: VerifyOptions) {
     const verdict = compareMarker(marker, expected, gitIsAncestor, () => gitCommitTime(expected));
     const label = `commit ${expected.slice(0, 8)}`;
     if (verdict === "exact") record(true, label, `en ligne (balise ${marker})`);
-    else if (verdict === "descendant") {
-      record(!options.strict, label, options.strict
-        ? `écart strict : le build en ligne (${marker}) est un descendant, pas le commit exact attendu`
-        : `en ligne, contenu dans le build ${marker}`);
-    }
+    else if (verdict === "descendant") record(true, label, `en ligne, contenu dans le build ${marker}`);
     else if (verdict === "older") record(false, label, `absent du build en ligne (${marker}) : publication non effective`);
     else if (verdict === "built-after") record(true, label, `probable : build sans git daté du ${marker}, postérieur au commit (à recouper avec les routes témoins)`);
     else if (verdict === "built-before") record(false, label, `le build en ligne (${marker}) est antérieur au commit : publication non effective`);

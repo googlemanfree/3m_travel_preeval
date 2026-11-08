@@ -16,20 +16,7 @@ async function startServer() {
       ? path.resolve(__dirname, "public")
       : path.resolve(__dirname, "..", "dist", "public");
 
-  app.use(
-    express.static(staticPath, {
-      setHeaders: (res, filePath) => {
-        if (path.basename(filePath) === "build-commit.json") {
-          res.setHeader(
-            "Cache-Control",
-            "no-store, no-cache, must-revalidate, proxy-revalidate"
-          );
-          res.setHeader("Pragma", "no-cache");
-          res.setHeader("Expires", "0");
-        }
-      },
-    })
-  );
+  app.use(express.static(staticPath));
 
   // Handle client-side routing - serve index.html for all routes
   app.get("*", (_req, res) => {

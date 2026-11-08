@@ -231,7 +231,6 @@ export default function ProofGallerySection({
   return (
     <section
       ref={sectionRef}
-      id="preuves-dossiers"
       aria-labelledby="proof-gallery-title"
       className={className}
       data-testid="proof-gallery-section"

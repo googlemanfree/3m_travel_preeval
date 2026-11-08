@@ -213,12 +213,6 @@ export function serveStatic(app: Express) {
     index: false,
     redirect: false,
     setHeaders: (res, filePath) => {
-      if (path.basename(filePath) === "build-commit.json") {
-        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-        res.setHeader("Pragma", "no-cache");
-        res.setHeader("Expires", "0");
-        return;
-      }
       // Les bundles Vite portent un hash de contenu et peuvent être conservés
       // longtemps par le navigateur et le CDN sans risque de version périmée.
       if (filePath.includes(`${path.sep}assets${path.sep}`)) {

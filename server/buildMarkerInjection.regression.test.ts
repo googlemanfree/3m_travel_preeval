@@ -104,20 +104,6 @@ describe("vérification d’un déploiement (scripts/verify-deploy.ts)", () => {
     expect(parseArgs([])).toEqual({ base: "https://www.3mtravelagency.com" });
     expect(parseArgs(["--base", "https://staging.example.org//", "--expect", "origin/main", "--sitemap-count", "204"]))
       .toEqual({ base: "https://staging.example.org", expect: "origin/main", sitemapCount: 204 });
-    expect(parseArgs(["--strict", "--expect", "abcdef12"]))
-      .toEqual({ base: "https://www.3mtravelagency.com", expect: "abcdef12", strict: true });
-  });
-
-  it("refuse le mode strict sans commit attendu", async () => {
-    await expect(import("../scripts/verify-deploy").then(({ runVerification }) => runVerification({ base: "https://example.org", strict: true })))
-      .rejects.toThrow("Le mode strict exige --expect");
-  });
-
-  it("branche le build strict et les en-têtes anti-cache du marqueur", () => {
-    expect(read("package.json")).toContain('"build": "BUILD_STRICT_MARKER=1 node scripts/prepare-build-marker.mjs');
-    expect(read("scripts/prepare-build-marker.mjs")).toContain("Publication bloquée pour éviter un marqueur périmé");
-    expect(read("server/_core/vite.ts")).toContain('path.basename(filePath) === "build-commit.json"');
-    expect(read("server/index.ts")).toContain('path.basename(filePath) === "build-commit.json"');
   });
 
   it("garde des routes témoins alignées sur le code : redirections, pages 200 et vraies 404", () => {

@@ -130,7 +130,6 @@ export default function HeroSectionVIP({
         {/* Voile discret : la photo reste dominante ; le texte garde un contraste lisible. */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#07162c]/28 via-[#0a1d3a]/18 to-[#07162c]/55" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,22,44,.42)_0%,rgba(7,22,44,.18)_50%,transparent_82%)]" />
-        <div className="fx-aurora" aria-hidden="true" data-testid="hero-aurora" />
       </div>
 
       <div className="group relative z-10 mx-auto w-full max-w-5xl px-5 py-10 text-white sm:px-10 sm:py-14 md:px-14">
@@ -141,7 +140,7 @@ export default function HeroSectionVIP({
           custom={0}
           className="mb-5 flex justify-center sm:mb-6"
         >
-          <div className="fx-float h-[6.5rem] w-[6.5rem] overflow-hidden rounded-full border-[3px] border-amber-200/80 bg-white shadow-[0_16px_48px_rgba(0,0,0,0.5)] ring-2 ring-white/40 transition-transform duration-200 ease-out group-hover:scale-[1.04] group-hover:rotate-1 motion-reduce:transition-none sm:h-[7.5rem] sm:w-[7.5rem] md:h-[8.5rem] md:w-[8.5rem] lg:h-[9.5rem] lg:w-[9.5rem]">
+          <div className="h-[6.5rem] w-[6.5rem] overflow-hidden rounded-full border-[3px] border-amber-200/80 bg-white shadow-[0_16px_48px_rgba(0,0,0,0.5)] ring-2 ring-white/40 transition-transform duration-200 ease-out group-hover:scale-[1.04] group-hover:rotate-1 motion-reduce:transition-none sm:h-[7.5rem] sm:w-[7.5rem] md:h-[8.5rem] md:w-[8.5rem] lg:h-[9.5rem] lg:w-[9.5rem]">
             <img
               src={logoUrl}
               srcSet="/logo-3m.webp 480w, /logo-3m-hd.webp 1024w"
@@ -224,7 +223,7 @@ export default function HeroSectionVIP({
             <a
               href="/#evaluation-multi"
               aria-label={t("Évaluer mon projet gratuitement", "Evaluate my project for free")}
-              data-testid="hero-eval-cta" data-magnetic
+              data-testid="hero-eval-cta"
               className={`group/cta relative ${heroButtonSize} flex w-full items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 px-6 py-4 text-center font-bold uppercase tracking-wide text-white shadow-lg shadow-orange-950/20 transition-[transform,box-shadow,background-color] duration-200 ease-out hover:-translate-y-0.5 hover:scale-[1.03] hover:from-orange-300 hover:via-orange-500 hover:to-amber-400 hover:shadow-[0_14px_32px_-10px_rgba(249,115,22,0.5)] hover:ring-2 hover:ring-orange-200/70 focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 active:scale-[0.98] motion-reduce:transition-none sm:w-auto`}
             >
               <span
@@ -244,7 +243,6 @@ export default function HeroSectionVIP({
           <Button
             asChild
             variant="outline"
-            data-magnetic
             className={`group/cta relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl border border-slate-300 bg-white px-6 py-4 text-center font-bold uppercase tracking-wide text-slate-900 shadow-sm transition-[transform,box-shadow,border-color,background-color] duration-200 ease-out hover:-translate-y-0.5 hover:scale-[1.03] hover:border-slate-400 hover:bg-slate-50 hover:ring-2 hover:ring-slate-200 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 active:scale-[0.98] motion-reduce:transition-none`}
           >
             <a href={advisorWhatsApp} target="_blank" rel="noopener noreferrer">
