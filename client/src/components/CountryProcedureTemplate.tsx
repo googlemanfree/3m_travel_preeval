@@ -5,6 +5,8 @@ import { AlertTriangle, CheckCircle2, Phone, Mail, Globe, MapPin, ShieldCheck } 
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import type { CountryProcedure } from "@/data/countryProcedures/types";
+import type { CandidateGuide } from "@/data/candidateGuides/types";
+import CandidateGuideDocument from "@/components/CandidateGuideDocument";
 import ConsultationRequestForm from "@/components/ConsultationRequestForm";
 import DocumentProcessIllustration from "@/components/illustrations/DocumentProcessIllustration";
 import { INTERNATIONAL_BRAND } from "@/data/internationalBrand";
@@ -16,7 +18,9 @@ import { INTERNATIONAL_BRAND } from "@/data/internationalBrand";
  * un nouveau pays, créer un fichier de données suivant le même modèle
  * (types.ts) et l'utiliser avec ce composant.
  */
-export default function CountryProcedureTemplate({ data }: { data: CountryProcedure }) {
+export default function CountryProcedureTemplate({ data, guide }: { data: CountryProcedure; guide?: CandidateGuide }) {
+  // Avec un guide complet (20 rubriques), les anciens blocs étapes, frais et paiement sont remplacés pour ne pas se contredire.
+  const legacy = !guide;
   const whatsappHref = `https://wa.me/${data.contact.phones[0].replace(/[^\d]/g, "")}?text=${encodeURIComponent(
     `Bonjour, je souhaite une consultation gratuite pour la procédure ${data.country} (${data.visaType}).`
   )}`;
@@ -42,7 +46,7 @@ export default function CountryProcedureTemplate({ data }: { data: CountryProced
         </section>
 
         <section>
-          <h2 className="mb-4 text-xl font-bold text-blue-900">01 — Introduction & Vision Globale</h2>
+          <h2 className="mb-4 text-xl font-bold text-blue-900">{legacy ? "01 — " : ""}Introduction & Vision Globale</h2>
           <Card className="p-6">
             <p className="text-gray-700 mb-4">{data.intro.vision}</p>
             <dl className="space-y-3 text-sm">
@@ -76,7 +80,7 @@ export default function CountryProcedureTemplate({ data }: { data: CountryProced
         {/* 02 — Alerte anti-arnaque */}
         <section>
           <h2 className="text-xl font-bold text-red-700 mb-4 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5" /> 02 — Alerte Officielle : Arnaques Confirmées
+            <AlertTriangle className="w-5 h-5" /> {legacy ? "02 — " : ""}Alerte Officielle : Arnaques Confirmées
           </h2>
           <Card className="p-6 border-2 border-red-200">
             <p className="text-gray-800 mb-4">{data.fraudAlert.summary}</p>
@@ -104,7 +108,10 @@ export default function CountryProcedureTemplate({ data }: { data: CountryProced
           </Card>
         </section>
 
-        {/* 03 — Vue d'ensemble des étapes */}
+        {guide ? <CandidateGuideDocument guide={guide} /> : null}
+
+        {/* 03 — Vue d'ensemble des étapes (remplacée par le guide complet quand il existe) */}
+        {legacy ? <>
         <section>
           <h2 className="text-xl font-bold text-blue-900 mb-4">03 — Les {data.steps.length} Étapes de la Procédure</h2>
           <div className="space-y-3">
@@ -147,6 +154,7 @@ export default function CountryProcedureTemplate({ data }: { data: CountryProced
             ))}
           </Accordion>
         </section>
+        </> : null}
 
         {/* 05 — Protection anti-arnaque */}
         <section>
@@ -164,7 +172,8 @@ export default function CountryProcedureTemplate({ data }: { data: CountryProced
           </Card>
         </section>
 
-        {/* 06 — Frais */}
+        {/* 06 — Frais et 07 — Paiement (remplacés par les rubriques 09 à 11 du guide complet quand il existe) */}
+        {legacy ? <>
         <section>
           <h2 className="text-xl font-bold text-blue-900 mb-4">06 — Estimation des Frais — Budget Global {data.totalBudgetLabel}</h2>
           <Card className="overflow-hidden">
@@ -208,10 +217,11 @@ export default function CountryProcedureTemplate({ data }: { data: CountryProced
           </div>
           <p className="text-sm text-gray-500 mt-3 bg-blue-50 rounded-lg p-3">{data.paymentNote}</p>
         </section>
+        </> : null}
 
         {/* 08 — FAQ */}
         <section>
-          <h2 className="text-xl font-bold text-blue-900 mb-4">08 — Foire Aux Questions</h2>
+          <h2 className="text-xl font-bold text-blue-900 mb-4">{legacy ? "08 — " : ""}Foire Aux Questions</h2>
           <Accordion type="single" collapsible className="space-y-3">
             {data.faq.map((item, i) => (
               <AccordionItem key={i} value={`faq-${i}`} className="bg-white border border-gray-200 rounded-lg px-4">
