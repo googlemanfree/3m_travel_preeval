@@ -50,6 +50,17 @@ describe("plan d'apparition", () => {
     expect(plan.map((item) => item.element.id)).toEqual(["ok"]);
   });
 
+  it("laisse à framer-motion les éléments qu'il pilote déjà (style en ligne) : pas deux animations concurrentes", () => {
+    const el = page(
+      `<section id="fm" style="opacity: 0; transform: translateY(18px)"><p>x</p></section>` +
+      `<section id="grid"><div class="grid grid-cols-2"><article id="driven" style="opacity:0;transform:translateY(20px)">a</article><article id="free">b</article></div></section>`,
+    );
+    const ids = planReveals(el, { isBelowFold: below }).map((item) => item.element.id);
+    expect(ids).not.toContain("fm");
+    expect(ids).not.toContain("driven");
+    expect(ids).toContain("free");
+  });
+
   it("une section imbriquée n'est pas animée deux fois", () => {
     const el = page(`<section id="outer"><section id="inner"><p>x</p></section></section>`);
     expect(planReveals(el, { isBelowFold: below }).map((item) => item.element.id)).toEqual(["outer"]);

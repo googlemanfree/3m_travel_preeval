@@ -1337,6 +1337,36 @@ html.high-contrast .btn-submit { color: #ffffff !important; background: #082b5c 
   }
 }
 
+/* Filet doré sous les titres de section : il se trace à l'entrée dans l'écran (navigateurs avec animation-timeline ;
+   les autres le voient déjà tracé — aucun état caché). Retour tactile sur les boutons d'action. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .secondary-page-surface .premium-gold-rule {
+      transform-origin: left center;
+      animation: gold-rule-draw linear both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 80%;
+    }
+    @keyframes gold-rule-draw {
+      from { transform: scaleX(0); opacity: 0.4; }
+      to { transform: scaleX(1); opacity: 1; }
+    }
+  }
+
+  .premium-action {
+    transition: background-color 200ms ease, box-shadow 200ms ease, transform 160ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+  }
+  .premium-action:active {
+    transform: translateY(1px) scale(0.985);
+  }
+}
+
+html.motion-disabled .premium-gold-rule,
+html.motion-disabled .premium-action:active {
+  animation: none !important;
+  transform: none !important;
+}
+
 html.motion-disabled [data-sr],
 html.motion-disabled .page-transition-shell h1 {
   opacity: 1 !important;
