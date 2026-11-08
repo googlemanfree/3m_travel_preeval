@@ -9,6 +9,7 @@ const state = vi.hoisted(() => ({
   list: { data: [] as any[], isLoading: false, error: null as any },
   counts: { data: { toReview: 1, awaitingSignature: 2, toCountersign: 3 } },
   detail: { data: undefined as any, isLoading: false, error: null as any },
+  statement: { data: undefined as any, isLoading: false, error: null as any },
   mutations: {} as Record<string, ReturnType<typeof vi.fn>>,
   mutation: (name: string) => () => {
     const slot = (state as any).mutations;
@@ -20,6 +21,11 @@ const state = vi.hoisted(() => ({
 vi.mock("@/lib/trpc", () => ({
   trpc: {
     useUtils: () => ({ partnership: { adminGet: { invalidate: vi.fn() }, adminList: { invalidate: vi.fn() }, adminCounts: { invalidate: vi.fn() }, adminPdfUrl: { fetch: vi.fn() } }, partnershipSpace: { adminStatement: { invalidate: vi.fn() } } }),
+    partnershipSpace: {
+      adminStatement: { useQuery: () => state.statement },
+      adminMarkPayout: { useMutation: state.mutation("markPayout") },
+      adminSendSpaceLink: { useMutation: state.mutation("sendLink") },
+    },
     partnership: {
       adminList: { useQuery: () => state.list },
       adminCounts: { useQuery: () => state.counts },
@@ -28,11 +34,6 @@ vi.mock("@/lib/trpc", () => ({
       adminIssueProtocol: { useMutation: state.mutation("issue") },
       adminResendLink: { useMutation: state.mutation("resend") },
       adminCountersign: { useMutation: state.mutation("countersign") },
-    },
-    partnershipSpace: {
-      adminStatement: { useQuery: () => ({ data: { available: false }, isLoading: false, error: null }) },
-      adminMarkPayout: { useMutation: state.mutation("markPayout") },
-      adminSendSpaceLink: { useMutation: state.mutation("sendSpaceLink") },
     },
   },
 }));
@@ -124,5 +125,84 @@ describe("console admin du programme de partenariat", () => {
     expect(suspend.disabled).toBe(true);
     fireEvent.change(screen.getByLabelText(/Motif/), { target: { value: "Promesse de visa relevée" } });
     expect(suspend.disabled).toBe(false);
+  });
+});
+
+describe("relevé de commissions et versements dans la console", () => {
+  const month = (overrides: Record<string, unknown>) => ({ period: "2026-11", paymentsCount: 2, baseXaf: 165_000, commissionXaf: 24_750, dueAt: "2026-12-30T23:59:59.000Z", paid: false, paidAt: null, paidAmountXaf: null, paidReference: null, deltaXaf: 0, ...overrides });
+  const activePartner = { status: "active", referralCode: "ABC234", countersignedBy: "admin@3mtravelagency.com", countersignedAt: new Date("2026-11-09T09:00:00Z"), commissionRateBps: 1500, termMonths: 12, attributionMonths: 12, paymentDelayDays: 30, territory: "Sénégal" };
+  const withStatement = () => {
+    state.statement = {
+      data: {
+        available: true,
+        currentPeriod: "2027-01",
+        csv: "﻿Relevé",
+        statement: {
+          lines: [],
+          termEndsAt: "2027-11-09T09:00:00.000Z",
+          totals: { referrals: 4, paidReferrals: 4, earnedXaf: 54_750, paidOutXaf: 15_000, dueXaf: 39_750, overdueXaf: 24_750 },
+          months: [
+            month({ period: "2027-01", paymentsCount: 1, baseXaf: 100_000, commissionXaf: 15_000, dueAt: "2027-03-02T23:59:59.000Z" }),
+            month({}),
+            month({ period: "2026-10", paymentsCount: 1, baseXaf: 100_000, commissionXaf: 0, paid: true, paidAt: "2026-11-20T10:00:00.000Z", paidAmountXaf: 15_000, paidReference: "VIR-9", deltaXaf: 15_000 }),
+          ],
+        },
+      },
+      isLoading: false,
+      error: null,
+    };
+  };
+  beforeEach(() => { state.statement = { data: undefined, isLoading: false, error: null }; });
+
+  it("résume le relevé et signale un mois versé dont le montant a changé depuis", () => {
+    withStatement();
+    open(activePartner);
+    const panel = screen.getByTestId("admin-partnership-statement").textContent ?? "";
+    expect(panel).toContain("4 client(s) orienté(s)");
+    expect(panel).toContain("dont");
+    expect(panel).toContain("échu");
+    expect(panel).toMatch(/Écart de .*15.000.*XAF/);
+    expect(screen.getByTestId("admin-partnership-csv")).toBeTruthy();
+  });
+
+  it("ne propose « Marquer versé » que pour un mois terminé et non encore versé", () => {
+    withStatement();
+    open(activePartner);
+    expect(screen.getByTestId("admin-partnership-pay-2026-11")).toBeTruthy();
+    expect(screen.queryByTestId("admin-partnership-pay-2027-01")).toBeNull();
+    expect(screen.queryByTestId("admin-partnership-pay-2026-10")).toBeNull();
+    expect(screen.getByTestId("admin-partnership-month-2027-01").textContent).toContain("Mois en cours");
+  });
+
+  it("exige une référence de transaction avant de confirmer un versement", () => {
+    withStatement();
+    open(activePartner);
+    fireEvent.click(screen.getByTestId("admin-partnership-pay-2026-11"));
+    const confirm = screen.getByTestId("admin-partnership-pay-confirm") as HTMLButtonElement;
+    expect(screen.getByTestId("admin-partnership-pay-form").textContent).toMatch(/novembre 2026/);
+    expect(confirm.disabled).toBe(true);
+    fireEvent.change(screen.getByTestId("admin-partnership-pay-ref"), { target: { value: "OM-77881" } });
+    expect(confirm.disabled).toBe(false);
+    fireEvent.click(confirm);
+    expect(state.mutations.markPayout.mock.calls[0][0]).toMatchObject({ id: 1, period: "2026-11", reference: "OM-77881", method: "mobile_money" });
+  });
+
+  it("permet d'envoyer un nouveau lien d'espace au partenaire", () => {
+    withStatement();
+    open(activePartner);
+    fireEvent.click(screen.getByTestId("admin-partnership-space-link"));
+    expect(state.mutations.sendLink.mock.calls[0][0]).toMatchObject({ id: 1 });
+  });
+
+  it("annonce que la migration 0099 reste à appliquer plutôt qu'une erreur technique", () => {
+    state.statement = { data: undefined, isLoading: false, error: { message: "L’espace partenaire n’est pas encore activé : la migration 0099 doit être appliquée." } };
+    open(activePartner);
+    expect(screen.getAllByRole("alert").map((node) => node.textContent).join(" ")).toContain("migration 0099");
+  });
+
+  it("n'affiche aucun relevé pour une candidature non active", () => {
+    withStatement();
+    open({ status: "partner_signed", partnerSignatureName: "Awa Ndiaye", partnerSignedAt: new Date("2026-11-08T09:00:00Z"), commissionRateBps: 1500, termMonths: 12, attributionMonths: 12, paymentDelayDays: 30, territory: "Sénégal" });
+    expect(screen.queryByTestId("admin-partnership-statement")).toBeNull();
   });
 });
