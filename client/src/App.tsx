@@ -155,6 +155,7 @@ import ChunkReloadNotice from "./components/ChunkReloadNotice";
 import NavigationProgress from "./components/NavigationProgress";
 import ScrollRevealManager from "./components/ScrollRevealManager";
 import ReadingProgress from "./components/ReadingProgress";
+import PremiumPointerEffects from "./components/PremiumPointerEffects";
 import MotionPreferenceBridge from "./components/MotionPreferenceBridge";
 import PwaStatusNotice from "./components/PwaStatusNotice";
 
@@ -685,6 +686,7 @@ function AppShell() {
                       <NavigationProgress />
                       <ScrollRevealManager />
                       <ReadingProgress />
+                      <PremiumPointerEffects />
                       <Navbar />
                       {/* Contenu des pages avec transition douce entre les routes */}
                       <div className={`app-content flex min-w-0 flex-1 flex-col ${!location.startsWith("/admin") ? "secondary-page-surface" : ""}`}>

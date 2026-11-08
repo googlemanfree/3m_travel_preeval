@@ -569,6 +569,7 @@ export default function Home() {
       <FlightBookingFAQ />
 
       <section className="relative overflow-hidden py-16" style={{ background: "linear-gradient(135deg, #061a36 0%, #0a3264 48%, #165dff 100%)" }} data-testid="home-final-cta" aria-labelledby="home-final-cta-title">
+        <div className="fx-aurora" aria-hidden="true" />
         <div className="relative z-10 mx-auto max-w-4xl px-4 text-center">
           <p className="font-[Georgia,Cambria,'Times_New_Roman',serif] text-2xl font-normal tracking-tight text-amber-200 sm:text-3xl">
             {INTERNATIONAL_BRAND.publicName}
@@ -579,7 +580,7 @@ export default function Home() {
             {t(INTERNATIONAL_BRAND.heroSupport.fr, INTERNATIONAL_BRAND.heroSupport.en)}
           </p>
           <div className="mt-8 flex w-full flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-            <a href="#evaluation-multi" className="w-full max-w-[22rem] sm:w-auto">
+            <a href="#evaluation-multi" data-magnetic className="w-full max-w-[22rem] sm:w-auto">
               <Button size="lg" className="min-h-12 w-full bg-white px-8 font-bold text-[#1e3a8a] shadow-xl transition-transform hover:bg-[#dbeafe] active:scale-[0.97]">
                 {t(INTERNATIONAL_BRAND.cta.evaluate.fr, INTERNATIONAL_BRAND.cta.evaluate.en)} <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
               </Button>
@@ -588,6 +589,7 @@ export default function Home() {
               href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour 3M TRAVEL AGENCY, je souhaite parler à un conseiller.")}`}
               target="_blank"
               rel="noopener noreferrer"
+              data-magnetic
               className="w-full max-w-[22rem] sm:w-auto"
             >
               <Button size="lg" variant="outline" className="min-h-12 w-full border-white px-8 font-semibold text-white transition-transform hover:bg-white/10 active:scale-[0.97]">

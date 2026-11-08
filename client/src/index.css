@@ -1361,6 +1361,107 @@ html.high-contrast .btn-submit { color: #ffffff !important; background: #082b5c 
   }
 }
 
+/* ── Mouvement premium : aurore lumineuse, logo flottant, halo au curseur, sortie du hero ───────────────────────
+   Transform / opacité uniquement (composités par le GPU) ; rien n'est caché : sans ces règles la page est complète. */
+@media (prefers-reduced-motion: no-preference) {
+  .fx-aurora {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .fx-aurora::before,
+  .fx-aurora::after {
+    content: "";
+    position: absolute;
+    width: 46vmax;
+    height: 46vmax;
+    border-radius: 50%;
+    will-change: transform;
+  }
+  .fx-aurora::before {
+    left: -14vmax;
+    top: -18vmax;
+    background: radial-gradient(circle, rgba(239, 211, 138, 0.2), transparent 62%);
+    animation: fx-drift-a 24s ease-in-out infinite alternate;
+  }
+  .fx-aurora::after {
+    right: -16vmax;
+    bottom: -20vmax;
+    background: radial-gradient(circle, rgba(43, 115, 255, 0.28), transparent 62%);
+    animation: fx-drift-b 30s ease-in-out infinite alternate;
+  }
+  @keyframes fx-drift-a {
+    to { transform: translate3d(16vmax, 10vmax, 0) scale(1.16); }
+  }
+  @keyframes fx-drift-b {
+    to { transform: translate3d(-18vmax, -8vmax, 0) scale(1.12); }
+  }
+
+  .fx-float {
+    animation: fx-float 7s ease-in-out infinite;
+  }
+  @keyframes fx-float {
+    0%, 100% { translate: 0 0; }
+    50% { translate: 0 -8px; }
+  }
+
+  /* Sur petit écran, une seule lueur : moins de surface à peindre. */
+  @media (max-width: 767px) {
+    .fx-aurora::after { display: none; }
+  }
+
+  @supports (animation-timeline: view()) {
+    /* Le contenu du hero s'éloigne et s'estompe légèrement quand on le quitte (jamais en dessous de 40 % d'opacité). */
+    [data-testid="home-hero"] > .group {
+      animation: hero-exit linear both;
+      animation-timeline: view();
+      animation-range: exit 0% exit 85%;
+    }
+    @keyframes hero-exit {
+      to { transform: translate3d(0, -44px, 0) scale(0.985); opacity: 0.4; }
+    }
+  }
+}
+
+/* Halo doré qui suit le curseur (valeurs --mx / --my posées par lib/pointerEffects.ts) : souris et stylet seulement. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .secondary-page-surface .premium-surface:not([class*="absolute"]):not([class*="fixed"]):not([class*="sticky"]),
+  .secondary-page-surface [data-spotlight]:not([class*="absolute"]):not([class*="fixed"]):not([class*="sticky"]) {
+    position: relative;
+  }
+  .secondary-page-surface .premium-surface::after,
+  .secondary-page-surface [data-spotlight]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 260ms ease;
+    background: radial-gradient(280px circle at var(--mx, 50%) var(--my, 50%), rgba(213, 168, 75, 0.15), transparent 70%);
+  }
+  .secondary-page-surface .premium-surface:hover::after,
+  .secondary-page-surface [data-spotlight]:hover::after {
+    opacity: 1;
+  }
+}
+
+html.high-contrast .premium-surface::after,
+html.high-contrast [data-spotlight]::after,
+html.motion-disabled .premium-surface::after,
+html.motion-disabled [data-spotlight]::after,
+html.motion-disabled .fx-aurora {
+  display: none !important;
+}
+html.motion-disabled .fx-float,
+html.motion-disabled [data-testid="home-hero"] > .group {
+  animation: none !important;
+  translate: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
 html.motion-disabled .premium-gold-rule,
 html.motion-disabled .premium-action:active {
   animation: none !important;

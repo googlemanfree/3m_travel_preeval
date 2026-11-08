@@ -171,7 +171,16 @@ describe("câblage et styles", () => {
     expect(block).toContain("html.motion-disabled [data-sr]");
     expect(block).toContain("@media print");
     // Aucune règle ne masque un élément sans l'attribut posé par le script.
-    expect(block.match(/opacity:\s*0;/g)?.length).toBe(1);
+    // Seule exception : le halo de survol (pseudo-élément ::after purement décoratif, sans texte), mesuré à part.
+    const haloStart = block.indexOf("Halo doré qui suit le curseur");
+    const haloEnd = block.indexOf("html.high-contrast .premium-surface::after");
+    expect(haloStart).toBeGreaterThan(0);
+    expect(haloEnd).toBeGreaterThan(haloStart);
+    const halo = block.slice(haloStart, haloEnd);
+    expect(halo.match(/opacity:\s*0;/g)?.length).toBe(1);
+    expect(halo).toMatch(/::after \{[^}]*opacity:\s*0;/);
+    const rest = block.slice(0, haloStart) + block.slice(haloEnd);
+    expect(rest.match(/opacity:\s*0;/g)?.length).toBe(1);
   });
 
   it("le titre de page glisse sans jamais passer par l'opacité (le LCP n'est pas retardé)", () => {
