@@ -99,7 +99,6 @@ const PartnerInvitationActivation = lazyWithTimeout(() => import("./pages/Partne
 const PlacementPartnerPortal = lazyWithTimeout(() => import("./pages/PlacementPartnerPortal"));
 const Partnership = lazyWithTimeout(() => import("./pages/Partnership"));
 const PartnershipSignature = lazyWithTimeout(() => import("./pages/PartnershipSignature"));
-const PartnershipSpace = lazyWithTimeout(() => import("./pages/PartnershipSpace"));
 import PartnersHub from "./pages/PartnersHub";
 const AdminEvaluation = lazyWithTimeout(() => import("./pages/AdminEvaluation"));
 const AdminLogin = lazyWithTimeout(() => import("./pages/AdminLogin"));
@@ -155,6 +154,8 @@ import PageLoadingFallback from "./components/PageLoadingFallback";
 import ChunkReloadNotice from "./components/ChunkReloadNotice";
 import NavigationProgress from "./components/NavigationProgress";
 import ScrollRevealManager from "./components/ScrollRevealManager";
+import ReadingProgress from "./components/ReadingProgress";
+import PremiumPointerEffects from "./components/PremiumPointerEffects";
 import MotionPreferenceBridge from "./components/MotionPreferenceBridge";
 import PwaStatusNotice from "./components/PwaStatusNotice";
 
@@ -237,7 +238,6 @@ function Router() {
       <Route path={"/partenaires/activation"} component={PartnerInvitationActivation} />
       <Route path={"/partenariat"} component={Partnership} />
       <Route path={"/partenariat/signature"} component={PartnershipSignature} />
-      <Route path={"/partenariat/espace"} component={PartnershipSpace} />
       <Route path={"/agences-placement"} component={PlacementPartnerPortal} />
       <Route path={"/employeurs"} component={EmployerPortal} />
       <Route path={"/traduction/order"} component={TranslationOrder} />
@@ -685,6 +685,8 @@ function AppShell() {
                       {/* Header global visible sur toutes les pages avec barre de progression de chargement */}
                       <NavigationProgress />
                       <ScrollRevealManager />
+                      <ReadingProgress />
+                      <PremiumPointerEffects />
                       <Navbar />
                       {/* Contenu des pages avec transition douce entre les routes */}
                       <div className={`app-content flex min-w-0 flex-1 flex-col ${!location.startsWith("/admin") ? "secondary-page-surface" : ""}`}>

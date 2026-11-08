@@ -9,7 +9,6 @@ export * from "./footerEngagementSchema";
 export * from "./newsletterSchema";
 export * from "./partnerModuleSchema";
 export * from "./partnershipSchema";
-export * from "./partnershipSpaceSchema";
 export * from "./privacyCvthequeSchema";
 export * from "./recruitmentSchema";
 export * from "./evaluationFormSchema";

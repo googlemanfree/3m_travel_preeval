@@ -9,6 +9,7 @@ import { PremiumCoverImage } from "@/components/PremiumCoverImage";
 import { PremiumAtmosphere } from "@/components/PremiumAtmosphere";
 import { IllustrativeDestinationStrip } from "@/components/IllustrativeDestinationStrip";
 import { setPageSeo } from "@/lib/pageSeo";
+import HomeLiveStrips from "@/components/HomeLiveStrips";
 import { INTERNATIONAL_BRAND } from "@/data/internationalBrand";
 import { buildFreeEvaluationHref } from "@/components/PublicEvaluationCTA";
 import {
@@ -233,6 +234,7 @@ export default function DestinationsHub() {
         </section>
       </div>
       <ChecklistSection title="Ce qui compte pour choisir une destination" introduction="Six points à examiner avec votre conseiller avant de vous engager dans une procédure." items={DESTINATIONS_CRITERIA} tone="white" testId="destinations-criteria" />
+      <HomeLiveStrips bands={["procedures", "proofs"]} proofsHref="/#preuves-dossiers" />
       <FaqSection items={DESTINATIONS_FAQ} tone="slate" testId="destinations-faq" />
     </main>
     </PremiumAtmosphere>

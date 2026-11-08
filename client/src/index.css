@@ -1337,6 +1337,137 @@ html.high-contrast .btn-submit { color: #ffffff !important; background: #082b5c 
   }
 }
 
+/* Filet doré sous les titres de section : il se trace à l'entrée dans l'écran (navigateurs avec animation-timeline ;
+   les autres le voient déjà tracé — aucun état caché). Retour tactile sur les boutons d'action. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .secondary-page-surface .premium-gold-rule {
+      transform-origin: left center;
+      animation: gold-rule-draw linear both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 80%;
+    }
+    @keyframes gold-rule-draw {
+      from { transform: scaleX(0); opacity: 0.4; }
+      to { transform: scaleX(1); opacity: 1; }
+    }
+  }
+
+  .premium-action {
+    transition: background-color 200ms ease, box-shadow 200ms ease, transform 160ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+  }
+  .premium-action:active {
+    transform: translateY(1px) scale(0.985);
+  }
+}
+
+/* ── Mouvement premium : aurore lumineuse, logo flottant, halo au curseur, sortie du hero ───────────────────────
+   Transform / opacité uniquement (composités par le GPU) ; rien n'est caché : sans ces règles la page est complète. */
+@media (prefers-reduced-motion: no-preference) {
+  .fx-aurora {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .fx-aurora::before,
+  .fx-aurora::after {
+    content: "";
+    position: absolute;
+    width: 46vmax;
+    height: 46vmax;
+    border-radius: 50%;
+    will-change: transform;
+  }
+  .fx-aurora::before {
+    left: -14vmax;
+    top: -18vmax;
+    background: radial-gradient(circle, rgba(239, 211, 138, 0.2), transparent 62%);
+    animation: fx-drift-a 24s ease-in-out infinite alternate;
+  }
+  .fx-aurora::after {
+    right: -16vmax;
+    bottom: -20vmax;
+    background: radial-gradient(circle, rgba(43, 115, 255, 0.28), transparent 62%);
+    animation: fx-drift-b 30s ease-in-out infinite alternate;
+  }
+  @keyframes fx-drift-a {
+    to { transform: translate3d(16vmax, 10vmax, 0) scale(1.16); }
+  }
+  @keyframes fx-drift-b {
+    to { transform: translate3d(-18vmax, -8vmax, 0) scale(1.12); }
+  }
+
+  .fx-float {
+    animation: fx-float 7s ease-in-out infinite;
+  }
+  @keyframes fx-float {
+    0%, 100% { translate: 0 0; }
+    50% { translate: 0 -8px; }
+  }
+
+  /* Sur petit écran, une seule lueur : moins de surface à peindre. */
+  @media (max-width: 767px) {
+    .fx-aurora::after { display: none; }
+  }
+
+  @supports (animation-timeline: view()) {
+    /* Le contenu du hero s'éloigne et s'estompe légèrement quand on le quitte (jamais en dessous de 40 % d'opacité). */
+    [data-testid="home-hero"] > .group {
+      animation: hero-exit linear both;
+      animation-timeline: view();
+      animation-range: exit 0% exit 85%;
+    }
+    @keyframes hero-exit {
+      to { transform: translate3d(0, -44px, 0) scale(0.985); opacity: 0.4; }
+    }
+  }
+}
+
+/* Halo doré qui suit le curseur (valeurs --mx / --my posées par lib/pointerEffects.ts) : souris et stylet seulement. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .secondary-page-surface .premium-surface:not([class*="absolute"]):not([class*="fixed"]):not([class*="sticky"]),
+  .secondary-page-surface [data-spotlight]:not([class*="absolute"]):not([class*="fixed"]):not([class*="sticky"]) {
+    position: relative;
+  }
+  .secondary-page-surface .premium-surface::after,
+  .secondary-page-surface [data-spotlight]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 260ms ease;
+    background: radial-gradient(280px circle at var(--mx, 50%) var(--my, 50%), rgba(213, 168, 75, 0.15), transparent 70%);
+  }
+  .secondary-page-surface .premium-surface:hover::after,
+  .secondary-page-surface [data-spotlight]:hover::after {
+    opacity: 1;
+  }
+}
+
+html.high-contrast .premium-surface::after,
+html.high-contrast [data-spotlight]::after,
+html.motion-disabled .premium-surface::after,
+html.motion-disabled [data-spotlight]::after,
+html.motion-disabled .fx-aurora {
+  display: none !important;
+}
+html.motion-disabled .fx-float,
+html.motion-disabled [data-testid="home-hero"] > .group {
+  animation: none !important;
+  translate: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+html.motion-disabled .premium-gold-rule,
+html.motion-disabled .premium-action:active {
+  animation: none !important;
+  transform: none !important;
+}
+
 html.motion-disabled [data-sr],
 html.motion-disabled .page-transition-shell h1 {
   opacity: 1 !important;
@@ -1377,3 +1508,92 @@ html.motion-disabled .page-transition-shell h1 {
     transform: scale(1.045);
   }
 }
+
+/* Bandeaux défilants de l'accueil (actualités, procédures, preuves) : boucle CSS pure, pause au survol / au focus / par bouton.
+   Sans animation (réglage système, réglage du site ou impression) : liste défilable à la main, sans copie. */
+.live-marquee {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 4%, #000 96%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 4%, #000 96%, transparent 100%);
+}
+.live-marquee::-webkit-scrollbar { display: none; }
+.live-marquee[data-moving="true"] { overflow: hidden; }
+.live-marquee__track {
+  --marquee-gap: 0.75rem;
+  display: flex;
+  width: max-content;
+  gap: var(--marquee-gap);
+  padding: 0.25rem 0;
+}
+.live-marquee__group {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--marquee-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.live-marquee__item { flex-shrink: 0; }
+
+@keyframes live-marquee-slide {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(calc(-50% - var(--marquee-gap) / 2), 0, 0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .live-marquee[data-moving="true"] .live-marquee__track {
+    animation: live-marquee-slide var(--marquee-duration, 60s) linear infinite;
+    will-change: transform;
+  }
+  .live-marquee[data-moving="true"][data-paused="true"] .live-marquee__track,
+  .live-marquee[data-moving="true"]:focus-within .live-marquee__track {
+    animation-play-state: paused;
+  }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .live-marquee[data-moving="true"]:hover .live-marquee__track { animation-play-state: paused; }
+}
+
+html.motion-disabled .live-marquee__track { animation: none !important; }
+
+@media print {
+  .live-marquee { overflow: visible; -webkit-mask-image: none; mask-image: none; }
+  .live-marquee__track { width: auto; flex-wrap: wrap; animation: none !important; }
+  .live-marquee__group[aria-hidden="true"] { display: none; }
+}
+
+/* Traits de liaison entre les étapes du parcours (accueil, 5 colonnes seulement) : un filet relie chaque pastille numérotée à la suivante,
+   et un reflet doré y circule (mouvement seulement si les animations ne sont pas réduites). Décoratif : pseudo-élément, aucun texte. */
+@media (min-width: 1024px) {
+  .journey-connectors > li { position: relative; }
+  .journey-connectors > li:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    top: calc(1rem + 1.375rem - 1px);
+    left: 2.75rem;
+    width: calc(100% - 2.75rem + 0.75rem + 1rem);
+    height: 2px;
+    border-radius: 2px;
+    pointer-events: none;
+    background: linear-gradient(90deg, rgba(67, 56, 202, 0.28) 0%, rgba(213, 168, 75, 0.85) 50%, rgba(67, 56, 202, 0.28) 100%);
+    background-size: 100% 100%;
+  }
+}
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .journey-connectors > li:not(:last-child)::after {
+    background: linear-gradient(90deg, rgba(67, 56, 202, 0.28) 0%, rgba(67, 56, 202, 0.28) 38%, rgba(213, 168, 75, 0.95) 50%, rgba(67, 56, 202, 0.28) 62%, rgba(67, 56, 202, 0.28) 100%);
+    background-size: 300% 100%;
+    animation: journey-glow 4.8s linear infinite;
+  }
+  .journey-connectors > li:nth-child(2)::after { animation-delay: 0.6s; }
+  .journey-connectors > li:nth-child(3)::after { animation-delay: 1.2s; }
+  .journey-connectors > li:nth-child(4)::after { animation-delay: 1.8s; }
+}
+@keyframes journey-glow {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+html.motion-disabled .journey-connectors > li::after { animation: none !important; }
+@media print { .journey-connectors > li::after { display: none; } }

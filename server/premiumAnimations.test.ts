@@ -50,6 +50,17 @@ describe("plan d'apparition", () => {
     expect(plan.map((item) => item.element.id)).toEqual(["ok"]);
   });
 
+  it("laisse à framer-motion les éléments qu'il pilote déjà (style en ligne) : pas deux animations concurrentes", () => {
+    const el = page(
+      `<section id="fm" style="opacity: 0; transform: translateY(18px)"><p>x</p></section>` +
+      `<section id="grid"><div class="grid grid-cols-2"><article id="driven" style="opacity:0;transform:translateY(20px)">a</article><article id="free">b</article></div></section>`,
+    );
+    const ids = planReveals(el, { isBelowFold: below }).map((item) => item.element.id);
+    expect(ids).not.toContain("fm");
+    expect(ids).not.toContain("driven");
+    expect(ids).toContain("free");
+  });
+
   it("une section imbriquée n'est pas animée deux fois", () => {
     const el = page(`<section id="outer"><section id="inner"><p>x</p></section></section>`);
     expect(planReveals(el, { isBelowFold: below }).map((item) => item.element.id)).toEqual(["outer"]);
@@ -160,7 +171,16 @@ describe("câblage et styles", () => {
     expect(block).toContain("html.motion-disabled [data-sr]");
     expect(block).toContain("@media print");
     // Aucune règle ne masque un élément sans l'attribut posé par le script.
-    expect(block.match(/opacity:\s*0;/g)?.length).toBe(1);
+    // Seule exception : le halo de survol (pseudo-élément ::after purement décoratif, sans texte), mesuré à part.
+    const haloStart = block.indexOf("Halo doré qui suit le curseur");
+    const haloEnd = block.indexOf("html.high-contrast .premium-surface::after");
+    expect(haloStart).toBeGreaterThan(0);
+    expect(haloEnd).toBeGreaterThan(haloStart);
+    const halo = block.slice(haloStart, haloEnd);
+    expect(halo.match(/opacity:\s*0;/g)?.length).toBe(1);
+    expect(halo).toMatch(/::after \{[^}]*opacity:\s*0;/);
+    const rest = block.slice(0, haloStart) + block.slice(haloEnd);
+    expect(rest.match(/opacity:\s*0;/g)?.length).toBe(1);
   });
 
   it("le titre de page glisse sans jamais passer par l'opacité (le LCP n'est pas retardé)", () => {
