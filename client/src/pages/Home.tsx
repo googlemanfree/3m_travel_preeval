@@ -16,6 +16,7 @@ import { PublicFAQ } from "@/components/PublicFAQ";
 import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
 import { ReviewsErrorBoundary } from "@/components/ReviewsErrorBoundary";
 import ProofGallerySection from "@/components/ProofGallerySection";
+import HomeLiveStrips from "@/components/HomeLiveStrips";
 import ServicesOverviewSection from "@/components/ServicesOverviewSection";
 import QuickActionsSection from "@/components/QuickActionsSection";
 import HomePrimaryPathsSection from "@/components/HomePrimaryPathsSection";
@@ -160,6 +161,9 @@ export default function Home() {
       <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
         <HomePrimaryPathsSection />
       </motion.div>
+
+      {/* Bandeaux défilants : actualités, procédures accompagnées, visas et dossiers obtenus (preuves masquées). */}
+      <HomeLiveStrips />
 
       {/* Preuves + avis tôt : confiance avant le détail B2B. */}
       <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
