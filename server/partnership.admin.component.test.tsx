@@ -19,7 +19,7 @@ const state = vi.hoisted(() => ({
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
-    useUtils: () => ({ partnership: { adminGet: { invalidate: vi.fn() }, adminList: { invalidate: vi.fn() }, adminCounts: { invalidate: vi.fn() }, adminPdfUrl: { fetch: vi.fn() } } }),
+    useUtils: () => ({ partnership: { adminGet: { invalidate: vi.fn() }, adminList: { invalidate: vi.fn() }, adminCounts: { invalidate: vi.fn() }, adminPdfUrl: { fetch: vi.fn() } }, partnershipSpace: { adminStatement: { invalidate: vi.fn() } } }),
     partnership: {
       adminList: { useQuery: () => state.list },
       adminCounts: { useQuery: () => state.counts },
@@ -28,6 +28,11 @@ vi.mock("@/lib/trpc", () => ({
       adminIssueProtocol: { useMutation: state.mutation("issue") },
       adminResendLink: { useMutation: state.mutation("resend") },
       adminCountersign: { useMutation: state.mutation("countersign") },
+    },
+    partnershipSpace: {
+      adminStatement: { useQuery: () => ({ data: { available: false }, isLoading: false, error: null }) },
+      adminMarkPayout: { useMutation: state.mutation("markPayout") },
+      adminSendSpaceLink: { useMutation: state.mutation("sendSpaceLink") },
     },
   },
 }));
