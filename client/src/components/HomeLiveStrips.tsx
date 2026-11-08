@@ -109,14 +109,21 @@ export default function HomeLiveStrips({ bands = ALL_BANDS, proofsHref = "#preuv
   const procedureItems: MarqueeItem[] = buildProcedureStrip().map((entry) => ({
     key: `procedure-${entry.href}`,
     node: (
-      <a href={entry.href} className={`${cardBase} flex items-center gap-3 whitespace-nowrap`}>
+      <span className={`${cardBase} flex items-center gap-3 whitespace-nowrap`}>
         <span className="text-2xl leading-none" aria-hidden="true">{entry.flag}</span>
         <span>
           <span className="block text-sm font-black text-slate-950">{entry.name}</span>
           <span className="block text-xs font-semibold text-slate-600">{entry.kind[lang]}</span>
         </span>
-      </a>
+      </span>
     ),
+    detail: {
+      eyebrow: t("Procédure accompagnée", "Supported procedure"),
+      title: `${entry.name} — ${entry.kind[lang]}`,
+      description: t(`Découvrez les étapes, les pièces à préparer et les points de vigilance pour votre projet ${entry.kind.fr.toLowerCase()} vers ${entry.name}. Les conditions dépendent de votre profil et des règles officielles en vigueur.`, `Discover the steps, documents and key points for your ${entry.kind.en.toLowerCase()} project to ${entry.name}. Requirements depend on your profile and the official rules in force.`),
+      href: entry.href,
+      linkLabel: t("Ouvrir la procédure", "Open procedure"),
+    },
   }));
 
   const proofItems: MarqueeItem[] = buildProofStrip().map((photo) => ({

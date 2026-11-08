@@ -58,6 +58,14 @@ describe("bandeau défilant", () => {
     expect(marquee.dataset.paused).toBe("false");
   });
 
+  it("ouvre les détails d'une procédure dans une modale accessible", async () => {
+    render(<LiveMarquee items={[{ key: "canada", node: <span>Canada — Travail</span>, detail: { eyebrow: "Procédure accompagnée", title: "Canada — Travail", description: "Étapes et pièces à préparer.", href: "/procedures/canada-travail", linkLabel: "Ouvrir la procédure" } }]} label="Procédures" testId="procedures" />);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    fireEvent.click(screen.getByTestId("procedures-detail-canada"));
+    expect(screen.getByRole("dialog").textContent).toContain("Étapes et pièces à préparer.");
+    expect(screen.getByRole("link", { name: "Ouvrir la procédure" }).getAttribute("href")).toBe("/procedures/canada-travail");
+  });
+
   it("mouvement réduit : aucune copie, aucun bouton, liste défilable à la main", () => {
     allowed = false;
     const { container } = render(<LiveMarquee items={items} label="Test" testId="m" />);

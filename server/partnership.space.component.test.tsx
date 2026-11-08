@@ -67,6 +67,8 @@ describe("page /partenariat/espace", () => {
     const totals = screen.getByTestId("partnership-space-totals").textContent ?? "";
     expect(totals).toContain("Clients orientés");
     expect(totals.replace(/\s/g, "")).toContain("39750XAF");
+    expect(screen.getByTestId("partnership-space-stat-payments").textContent).toContain("Paiements validés");
+    expect(screen.getByTestId("partnership-space-stat-link").textContent).toContain("Actif");
     expect(screen.getByTestId("partnership-space-status").textContent).toBe("Partenaire actif");
   });
 

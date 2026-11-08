@@ -2,8 +2,11 @@ import { useState, type CSSProperties, type ReactNode } from "react";
 import { Pause, Play } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useMotionAllowed } from "@/hooks/useMotionAllowed";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-export type MarqueeItem = { key: string; node: ReactNode };
+export type MarqueeDetail = { title: string; eyebrow?: string; description: string; href: string; linkLabel?: string };
+export type MarqueeItem = { key: string; node: ReactNode; detail?: MarqueeDetail };
 
 /** Durée d'un tour complet : proportionnelle au nombre d'éléments pour garder une vitesse de lecture constante. */
 export function marqueeDuration(count: number, secondsPerItem = 6): number {
@@ -21,10 +24,19 @@ export function LiveMarquee({ items, label, secondsPerItem = 6, testId }: { item
   const { t } = useLanguage();
   const motionAllowed = useMotionAllowed();
   const [paused, setPaused] = useState(false);
+  const [selectedDetail, setSelectedDetail] = useState<MarqueeDetail | null>(null);
   if (items.length === 0) return null;
 
-  const moving = motionAllowed && items.length > 1;
+  const interactive = items.some((item) => Boolean(item.detail));
+  const moving = motionAllowed && items.length > 1 && !interactive;
   const style = { "--marquee-duration": `${marqueeDuration(items.length, secondsPerItem)}s` } as CSSProperties;
+
+  const renderItem = (item: MarqueeItem) => item.detail ? (
+    <button type="button" className="block w-full text-left" onMouseEnter={() => setPaused(true)} onFocus={() => setPaused(true)} onPointerDown={() => setPaused(true)} onClick={() => setSelectedDetail(item.detail!)} data-testid={testId ? `${testId}-detail-${item.key}` : undefined}>
+      {item.node}
+      <span className="sr-only">{t("Afficher les détails", "Show details")}</span>
+    </button>
+  ) : item.node;
 
   return (
     <div className="relative" data-testid={testId}>
@@ -32,7 +44,7 @@ export function LiveMarquee({ items, label, secondsPerItem = 6, testId }: { item
         <div className="live-marquee__track">
           <ul className="live-marquee__group" aria-label={label}>
             {items.map((item) => (
-              <li key={item.key} className="live-marquee__item">{item.node}</li>
+              <li key={item.key} className="live-marquee__item">{renderItem(item)}</li>
             ))}
           </ul>
           {moving && (
@@ -57,6 +69,19 @@ export function LiveMarquee({ items, label, secondsPerItem = 6, testId }: { item
           <span>{paused ? t("Reprendre", "Resume") : t("Pause", "Pause")}</span>
         </button>
       )}
+      <Dialog open={Boolean(selectedDetail)} onOpenChange={(open) => !open && setSelectedDetail(null)}>
+        <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            {selectedDetail?.eyebrow ? <p className="text-xs font-black uppercase tracking-wider text-blue-700">{selectedDetail.eyebrow}</p> : null}
+            <DialogTitle>{selectedDetail?.title}</DialogTitle>
+            <DialogDescription>{selectedDetail?.description}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:justify-between">
+            <DialogClose asChild><Button type="button" variant="outline">{t("Fermer", "Close")}</Button></DialogClose>
+            {selectedDetail ? <a href={selectedDetail.href} className="inline-flex min-h-10 items-center justify-center rounded-lg bg-blue-800 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-800">{selectedDetail.linkLabel ?? t("Ouvrir la fiche", "Open the page")}</a> : null}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

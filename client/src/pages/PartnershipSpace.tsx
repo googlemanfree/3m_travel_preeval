@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CheckCircle2, Copy, FileSignature, Loader2, Printer, ShieldAlert, Wallet } from "lucide-react";
+import { BadgeCheck, CheckCircle2, CircleDollarSign, Copy, FileSignature, Link2, Loader2, Printer, ShieldAlert, Users, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -71,17 +71,24 @@ export default function PartnershipSpace() {
             ) : null}
 
             {data.totals ? (
-              <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5" aria-label={t("Chiffres clés", "Key figures")} data-testid="partnership-space-totals">
-                {([
-                  [t("Clients orientés", "Clients referred"), String(data.totals.referrals)],
-                  [t("Paiements validés", "Validated payments"), String(data.totals.paidReferrals)],
-                  [t("Commissions acquises", "Commissions earned"), formatXaf(data.totals.earnedXaf)],
-                  [t("Déjà versé", "Already paid"), formatXaf(data.totals.paidOutXaf)],
-                  [t("Reste à verser", "Still to be paid"), formatXaf(data.totals.dueXaf)],
-                ] as Array<[string, string]>).map(([label, value]) => (
-                  <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</p>
-                    <p className="mt-1 text-xl font-black text-slate-950">{value}</p>
+              <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-label={t("Chiffres clés", "Key figures")} data-testid="partnership-space-totals">
+                {[
+                  { key: "referrals", label: t("Clients orientés", "Clients referred"), value: String(data.totals.referrals), helper: t("Dossiers rattachés à votre code", "Files linked to your code"), icon: Users, card: "border-blue-100 bg-blue-50/70", iconClass: "bg-blue-100 text-blue-800" },
+                  { key: "payments", label: t("Paiements validés", "Validated payments"), value: String(data.totals.paidReferrals), helper: t("Paiements confirmés par 3M", "Payments confirmed by 3M"), icon: BadgeCheck, card: "border-emerald-100 bg-emerald-50/70", iconClass: "bg-emerald-100 text-emerald-800" },
+                  { key: "earned", label: t("Commissions acquises", "Commissions earned"), value: formatXaf(data.totals.earnedXaf), helper: t("Sur les paiements éligibles", "On eligible payments"), icon: CircleDollarSign, card: "border-violet-100 bg-violet-50/70", iconClass: "bg-violet-100 text-violet-800" },
+                  { key: "paid", label: t("Déjà versé", "Already paid"), value: formatXaf(data.totals.paidOutXaf), helper: t("Versements enregistrés", "Recorded payouts"), icon: CheckCircle2, card: "border-teal-100 bg-teal-50/70", iconClass: "bg-teal-100 text-teal-800" },
+                  { key: "due", label: t("Reste à verser", "Still to be paid"), value: formatXaf(data.totals.dueXaf), helper: data.totals.overdueXaf > 0 ? t(`${formatXaf(data.totals.overdueXaf)} échu`, `${formatXaf(data.totals.overdueXaf)} overdue`) : t("À suivre dans le relevé", "Track it in the statement"), icon: Wallet, card: "border-amber-100 bg-amber-50/70", iconClass: "bg-amber-100 text-amber-800" },
+                  { key: "link", label: t("Lien de recommandation", "Referral link"), value: data.referralLink ? t("Actif", "Active") : t("À créer", "To create"), helper: data.referralCode ? `${t("Code", "Code")} ${data.referralCode}` : t("Aucun code actif", "No active code"), icon: Link2, card: "border-sky-100 bg-sky-50/70", iconClass: "bg-sky-100 text-sky-800" },
+                ].map(({ key, label, value, helper, icon: Icon, card, iconClass }) => (
+                  <div key={key} className={`rounded-2xl border p-4 shadow-sm ${card}`} data-testid={`partnership-space-stat-${key}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-600">{label}</p>
+                        <p className="mt-1 text-xl font-black text-slate-950">{value}</p>
+                      </div>
+                      <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconClass}`}><Icon className="h-5 w-5" aria-hidden="true" /></span>
+                    </div>
+                    <p className="mt-2 text-xs font-semibold text-slate-600">{helper}</p>
                   </div>
                 ))}
               </section>
