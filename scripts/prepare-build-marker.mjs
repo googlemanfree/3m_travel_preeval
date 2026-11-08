@@ -45,7 +45,7 @@ function commitFromExistingMetadata() {
   }
 }
 
-const commit = firstCommitFromEnv() ?? commitFromGit() ?? commitFromExistingMetadata();
+const commit = firstCommitFromEnv() ?? commitFromExistingMetadata() ?? commitFromGit();
 if (!commit) {
   console.warn("[build-marker] Aucun commit Git détecté ; le marqueur restera nogit.");
   process.exit(0);
