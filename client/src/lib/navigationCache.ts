@@ -23,9 +23,24 @@ function normalizeRoute(href: string): string | null {
   }
 }
 
+function versionedRoute(route: string): string {
+  if (typeof window === "undefined") return route;
+  try {
+    const url = new URL(route, window.location.origin);
+    const marker = document
+      .querySelector<HTMLMetaElement>('meta[name="3m-build-marker"]')
+      ?.content?.trim();
+    if (marker) url.searchParams.set("__3m_build", marker);
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return route;
+  }
+}
+
 function evictOldestEntry() {
   if (routePrefetchCache.size < MAX_ENTRIES) return;
-  const oldestKey = routePrefetchCache.keys().next().value as string | undefined;
+  const oldestKey = routePrefetchCache.keys().next().value as
+    string | undefined;
   if (oldestKey) routePrefetchCache.delete(oldestKey);
 }
 
@@ -37,24 +52,33 @@ function evictOldestEntry() {
 export function prefetchRoute(href: string): void {
   const route = normalizeRoute(href);
   if (!route) return;
+  const requestRoute = versionedRoute(route);
 
   const now = Date.now();
-  const cached = routePrefetchCache.get(route);
+  const cached = routePrefetchCache.get(requestRoute);
   if (cached && cached.expiresAt > now) return;
-  if (cached) routePrefetchCache.delete(route);
+  if (cached) routePrefetchCache.delete(requestRoute);
 
   evictOldestEntry();
 
-  const promise = fetch(route, {
+  const promise = fetch(requestRoute, {
     method: "GET",
     credentials: "include",
-    cache: "force-cache",
-    headers: { "X-3M-Prefetch": "1" },
+    cache: "no-store",
+    headers: {
+      "X-3M-Prefetch": "1",
+      "X-3M-Build":
+        document.querySelector<HTMLMetaElement>('meta[name="3m-build-marker"]')
+          ?.content ?? "unknown",
+    },
   })
     .then(() => undefined)
     .catch(() => undefined);
 
-  routePrefetchCache.set(route, { promise, expiresAt: now + CACHE_TTL_MS });
+  routePrefetchCache.set(requestRoute, {
+    promise,
+    expiresAt: now + CACHE_TTL_MS,
+  });
 }
 
 /**
@@ -64,9 +88,10 @@ export function prefetchRoute(href: string): void {
 export function addPrefetchHint(href: string): void {
   const route = normalizeRoute(href);
   if (!route || prefetchedLinks.has(route)) return;
+  const requestRoute = versionedRoute(route);
 
   const existing = document.head.querySelector<HTMLLinkElement>(
-    `link[rel="prefetch"][href="${CSS.escape(route)}"]`,
+    `link[rel="prefetch"][href="${CSS.escape(requestRoute)}"]`
   );
   if (existing) {
     prefetchedLinks.add(route);
@@ -75,7 +100,7 @@ export function addPrefetchHint(href: string): void {
 
   const link = document.createElement("link");
   link.rel = "prefetch";
-  link.href = route;
+  link.href = requestRoute;
   link.as = "document";
   link.setAttribute("data-3m-route-prefetch", "true");
   document.head.appendChild(link);
@@ -84,9 +109,17 @@ export function addPrefetchHint(href: string): void {
 
 export function prefetchNavigation(href: string): void {
   if (typeof navigator !== "undefined") {
-    const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    const connection = (
+      navigator as Navigator & {
+        connection?: { saveData?: boolean; effectiveType?: string };
+      }
+    ).connection;
     if (connection?.saveData) return;
-    if (connection?.effectiveType && /^(slow-)?2g$/i.test(connection.effectiveType)) return;
+    if (
+      connection?.effectiveType &&
+      /^(slow-)?2g$/i.test(connection.effectiveType)
+    )
+      return;
   }
 
   const warm = () => {
@@ -94,11 +127,15 @@ export function prefetchNavigation(href: string): void {
     prefetchRoute(href);
   };
 
-  const idleWindow = typeof window !== "undefined"
-    ? (window as Window & {
-      requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
-    })
-    : null;
+  const idleWindow =
+    typeof window !== "undefined"
+      ? (window as Window & {
+          requestIdleCallback?: (
+            callback: IdleRequestCallback,
+            options?: IdleRequestOptions
+          ) => number;
+        })
+      : null;
   if (idleWindow?.requestIdleCallback) {
     idleWindow.requestIdleCallback(() => warm(), { timeout: 1500 });
     return;
@@ -110,6 +147,6 @@ export function clearNavigationCache(): void {
   routePrefetchCache.clear();
   document
     .querySelectorAll<HTMLLinkElement>('link[data-3m-route-prefetch="true"]')
-    .forEach((link) => link.remove());
+    .forEach(link => link.remove());
   prefetchedLinks.clear();
 }
