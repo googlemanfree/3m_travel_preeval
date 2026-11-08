@@ -10,6 +10,7 @@ import {
   Award,
   AlertCircle,
 } from "lucide-react";
+import { OPENING_FEE_UNKNOWN_LABEL, formatXaf } from "@shared/openingFee";
 import { PaymentModal } from "./PaymentModal";
 import { SecureDocumentUpload } from "./SecureDocumentUpload";
 
@@ -41,6 +42,8 @@ export interface DossierProgressBarProps {
   submittedToAgenciesAt?: Date;
   dossierNumber?: string;
   email?: string;
+  /** Montant fixé pour ce dossier (il varie selon le profil) ; sans lui, aucun montant n'est affiché ni proposé au paiement. */
+  amount?: number;
   onPaymentSuccess?: () => void;
 }
 
@@ -80,7 +83,7 @@ const STEPS = [
   {
     id: "paye",
     label: "Paiement Confirmé",
-    description: "65 000 XAF reçu",
+    description: "Frais d'ouverture reçus",
     icon: CheckCircle2,
     color: "bg-emerald-100 text-emerald-600",
     borderColor: "border-emerald-300",
@@ -175,8 +178,10 @@ export function DossierProgressBar({
   submittedToAgenciesAt,
   dossierNumber = "",
   email = "",
+  amount,
   onPaymentSuccess,
 }: DossierProgressBarProps) {
+  const feeLabel = amount ? formatXaf(amount) : OPENING_FEE_UNKNOWN_LABEL;
   const status = normalizeProgressStatus(rawStatus);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const currentStepIndex = useMemo(() => {
@@ -339,14 +344,14 @@ export function DossierProgressBar({
             <>
               <p>✓ Votre bilan d'éligibilité a été envoyé</p>
               <p>⏳ Veuillez consulter votre email</p>
-              <p>💳 Procédez au paiement de 65 000 XAF pour finaliser</p>
+              <p>💳 Procédez au paiement des frais d'ouverture ({feeLabel}) pour finaliser</p>
             </>
           )}
           {status === "en_attente_paiement" && (
             <>
               <p>✓ Bilan reçu avec succès</p>
               <p>⏳ En attente de votre paiement</p>
-              <p>💳 Montant à payer : 65 000 XAF</p>
+              <p>💳 Montant à payer : {feeLabel}</p>
             </>
           )}
           {status === "paye" && (
@@ -437,13 +442,13 @@ export function DossierProgressBar({
         viewport={{ once: true }}
         className="mt-6 flex gap-3"
       >
-        {status === "en_attente_paiement" && (
+        {status === "en_attente_paiement" && Boolean(amount) && (
           <button
             onClick={() => setIsPaymentModalOpen(true)}
             className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 px-4 rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
           >
             <DollarSign className="w-5 h-5" />
-            Payer 65 000 XAF
+            Payer {feeLabel}
           </button>
         )}
         {status === "en_attente_documents" && (
@@ -465,14 +470,16 @@ export function DossierProgressBar({
       </motion.div>
 
       {/* Modal de paiement */}
-      <PaymentModal
-        isOpen={isPaymentModalOpen}
-        onClose={() => setIsPaymentModalOpen(false)}
-        dossierNumber={dossierNumber}
-        email={email}
-        amount={65000}
-        onPaymentSuccess={onPaymentSuccess}
-      />
+      {amount ? (
+        <PaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          dossierNumber={dossierNumber}
+          email={email}
+          amount={amount}
+          onPaymentSuccess={onPaymentSuccess}
+        />
+      ) : null}
     </div>
   );
 }

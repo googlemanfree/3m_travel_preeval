@@ -86,6 +86,7 @@ import { jinkoHotelSearchRouter } from "./routers/jinkoHotelSearch";
 import { footerEngagementRouter } from "./routers/footerEngagement";
 import { placementPortalRouter } from "./routers/placementPortal";
 import { partnerModuleRouter } from "./routers/partnerModule";
+import { partnershipRouter } from "./routers/partnership";
 import { cvthequeRouter } from "./routers/cvtheque";
 import { privacyCenterRouter } from "./routers/privacyCenter";
 import { recruitmentRouter } from "./routers/recruitment";
@@ -232,6 +233,7 @@ export const appRouter = router({
   footerEngagement: footerEngagementRouter,
   placementPortal: placementPortalRouter,
   partnerModule: partnerModuleRouter,
+  partnership: partnershipRouter,
   cvtheque: cvthequeRouter,
   privacyCenter: privacyCenterRouter,
   recruitment: recruitmentRouter,

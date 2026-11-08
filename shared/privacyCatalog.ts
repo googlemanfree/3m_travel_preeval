@@ -6,7 +6,7 @@
  * au lieu d'afficher une durée définitive. Aucune mention de conformité à une réglementation n'est affichée ici.
  */
 
-export type PrivacyNoticeKey = "cvtheque_candidate" | "partner_registration" | "partner_invitation" | "cvtheque_search" | "document_transmission";
+export type PrivacyNoticeKey = "cvtheque_candidate" | "partner_registration" | "partner_invitation" | "cvtheque_search" | "document_transmission" | "partnership_application";
 
 export type PrivacyNotice = {
   title: string;
@@ -49,6 +49,21 @@ export const PRIVACY_NOTICES: Record<PrivacyNoticeKey, PrivacyNotice> = {
     access: ["Vous", "Le gestionnaire de votre organisation (rôle et permissions)", "Les administrateurs de 3M autorisés"],
     recipients: ["Aucun tiers"],
     retention: "Tant que le compte est actif ; journaux de sécurité conservés une durée limitée.",
+    retentionValidated: false,
+    rights: RIGHTS,
+  },
+  partnership_application: {
+    title: "Votre candidature de partenariat et votre protocole d’accord",
+    collected: [
+      "Identité, e-mail, téléphone, pays et ville",
+      "Pour une agence : raison sociale, numéro d’immatriculation, identifiant fiscal et licence éventuels, site, représentant",
+      "Vos canaux de recommandation et votre volume estimé, votre message",
+      "À la signature : le nom saisi, la date, l’adresse IP et, si vous la tracez, votre signature manuscrite",
+    ],
+    purpose: "Examiner votre candidature, vous proposer et conserver le protocole d’accord signé, suivre les clients que vous orientez et calculer vos commissions.",
+    access: ["Vous", "Les administrateurs de 3M autorisés"],
+    recipients: ["Aucun tiers, sauf obligation légale"],
+    retention: "Le temps de l’examen de la candidature ; pour un protocole signé, pendant sa durée puis le délai légal de conservation des contrats et des pièces comptables.",
     retentionValidated: false,
     rights: RIGHTS,
   },

@@ -1,5 +1,5 @@
 ﻿import { publicProcedure, router } from "../_core/trpc";
-import { proposedOpeningFee } from "../../shared/openingFee";
+import { DEFAULT_OPENING_FEE_XAF, proposedOpeningFee } from "../../shared/openingFee";
 import { PRE_DOSSIER_STATUSES, isActivatedStatus } from "../../shared/candidateStatus";
 import { TRPCError } from "@trpc/server";
 import crypto from "node:crypto";
@@ -1531,8 +1531,8 @@ export const adminCandidateManagementRouter = router({
         action: "confirmed",
         paymentId: candidate.id,
         candidateEmail: candidate.email,
-        amount: `${input.confirmedAmount ?? 65000} XAF`,
-        details: `Paiement d'ouverture confirmé pour ${accountReference(candidate.id)} depuis le dialogue d'activation · ${record.reference ?? "sans référence"}${record.proofFileUrl ? " · preuve jointe" : ""}${record.referenceOnly ? ` · SUR RÉFÉRENCE SEULE, photo indisponible (${record.noProofReason}) : à rapprocher du relevé` : ""}${record.additionalPayment ? ` · seconde procédure : ${record.additionalPayment.reference} (${record.additionalPayment.confirmedAmount ?? 65000} XAF)` : ""}.`,
+        amount: `${input.confirmedAmount ?? proposedOpeningFee(candidate.visaType)} XAF`,
+        details: `Paiement d'ouverture confirmé pour ${accountReference(candidate.id)} depuis le dialogue d'activation · ${record.reference ?? "sans référence"}${record.proofFileUrl ? " · preuve jointe" : ""}${record.referenceOnly ? ` · SUR RÉFÉRENCE SEULE, photo indisponible (${record.noProofReason}) : à rapprocher du relevé` : ""}${record.additionalPayment ? ` · seconde procédure : ${record.additionalPayment.reference} (${record.additionalPayment.confirmedAmount ?? proposedOpeningFee(candidate.visaType)} XAF)` : ""}.`,
       });
       if (record.additionalPayment) {
         await db.insert(paymentAuditLogs).values({
@@ -1541,7 +1541,7 @@ export const adminCandidateManagementRouter = router({
           action: "confirmed",
           paymentId: candidate.id,
           candidateEmail: candidate.email,
-          amount: `${record.additionalPayment.confirmedAmount ?? 65000} XAF`,
+          amount: `${record.additionalPayment.confirmedAmount ?? proposedOpeningFee(candidate.visaType)} XAF`,
           details: `Second paiement d'ouverture confirmé pour une seconde procédure de ${accountReference(candidate.id)} · ${record.additionalPayment.reference}.`,
         });
       }
@@ -2279,7 +2279,8 @@ export const adminCandidateManagementRouter = router({
       if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Identifiant candidat invalide." });
       const validatedAt = new Date();
       const referenceLabel = input.paymentReference?.trim() || "VALIDATION_MANUELLE";
-      const amount = input.confirmedAmount ?? 65000;
+      // Sans montant saisi : le montant propre au dossier (fixé ou proposé selon le visa), jamais un montant unique pour tous.
+      let amount = input.confirmedAmount ?? 0;
       let dossierNumber: string;
       let candidateEmail: string;
       let fullName: string;
@@ -2295,6 +2296,7 @@ export const adminCandidateManagementRouter = router({
         dossierNumber = application.dossierNumber;
         candidateEmail = application.email;
         fullName = application.fullName;
+        if (input.confirmedAmount === undefined) amount = application.paymentAmount ?? application.paymentExpectedAmount ?? proposedOpeningFee(application.visaType);
         await db.update(applications).set({
           paymentStatus: "SUCCESS",
           paymentDate: application.paymentDate ?? validatedAt,
@@ -2315,6 +2317,7 @@ export const adminCandidateManagementRouter = router({
         dossierNumber = `3M-AGN-${reference.id.toString().padStart(4, "0")}`;
         candidateEmail = dossier.email;
         fullName = dossier.fullName;
+        if (input.confirmedAmount === undefined) amount = proposedOpeningFee(dossier.visaType);
         const auditNote = `[Paiement confirmé] ${referenceLabel} · ${admin.email || "Administrateur"} · ${validatedAt.toISOString()}`;
         await db.update(agencyDossiers).set({
           initialPaymentStatus: "paid",
@@ -2381,7 +2384,7 @@ export const adminCandidateManagementRouter = router({
 
       let fullName = "";
       let dossierNumber = "";
-      let amount = "65000";
+      let amount = String(DEFAULT_OPENING_FEE_XAF); // toujours remplacé ci-dessous par le montant propre au dossier
       let paymentMethod = "Paiement en agence";
       let paymentReference: string | null = null;
       let paid = false;
@@ -2408,7 +2411,7 @@ export const adminCandidateManagementRouter = router({
           .orderBy(desc(paymentAuditLogs.createdAt))
           .limit(1);
         const audited = latestAudit?.amount ? String(latestAudit.amount).replace(/[^0-9]/g, "") : "";
-        amount = audited || "65000";
+        amount = audited || String(proposedOpeningFee(dossier.visaType));
         paymentMethod = "Espèces / Mobile Money — agence";
         paymentReference = latestAudit?.details?.match(/(?:référence|reference)\s*[:：]?\s*([A-Z0-9_-]+)/i)?.[1]
           ?? latestAudit?.details?.match(/\b(OM|MTN|VIR|TX)[-A-Z0-9]+/i)?.[0]
@@ -2468,7 +2471,7 @@ export const adminCandidateManagementRouter = router({
       let candidateEmail = "";
       let fullName = "";
       let phone: string | null = null;
-      let amount = "65000";
+      let amount = String(DEFAULT_OPENING_FEE_XAF); // toujours remplacé ci-dessous par le montant propre au dossier
       let currency = "XAF";
       if (reference.source === "agency") {
         const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
@@ -2478,6 +2481,7 @@ export const adminCandidateManagementRouter = router({
         candidateEmail = dossier.email;
         fullName = dossier.fullName;
         phone = dossier.phone || null;
+        amount = String(proposedOpeningFee(dossier.visaType));
         const [latestAudit] = await db.select().from(paymentAuditLogs).where(and(eq(paymentAuditLogs.paymentId, dossier.id), eq(paymentAuditLogs.candidateEmail, dossier.email))).orderBy(desc(paymentAuditLogs.createdAt)).limit(1);
         amount = latestAudit?.amount ? String(latestAudit.amount).replace(/[^0-9]/g, "") || amount : amount;
       } else {
@@ -2603,7 +2607,7 @@ export const adminCandidateManagementRouter = router({
       let email = "";
       let fullName = "";
       let dossierNumber = input.candidateId;
-      let amount = 65000;
+      let amount: number = DEFAULT_OPENING_FEE_XAF; // toujours remplacé ci-dessous par le montant propre au dossier
       let currency = "XAF";
       let paymentDate = new Date();
       let paymentMethod = "Validation administrative";
@@ -2622,6 +2626,7 @@ export const adminCandidateManagementRouter = router({
         paymentMethod = "Paiement en agence / validation administrative";
         destination = dossier.destination;
         visaType = dossier.visaType;
+        amount = proposedOpeningFee(dossier.visaType);
         const [latestAudit] = await db.select().from(paymentAuditLogs).where(and(eq(paymentAuditLogs.paymentId, dossier.id), eq(paymentAuditLogs.candidateEmail, dossier.email))).orderBy(desc(paymentAuditLogs.createdAt)).limit(1);
         if (latestAudit?.amount) amount = Number(String(latestAudit.amount).replace(/[^0-9]/g, "")) || amount;
         paymentReference = latestAudit?.details?.includes("·") ? "Validation manuelle / agence" : null;
@@ -2632,7 +2637,7 @@ export const adminCandidateManagementRouter = router({
         email = application.email;
         fullName = application.fullName;
         dossierNumber = application.dossierNumber;
-        amount = Number(application.paymentConfirmedAmount ?? application.paymentAmount ?? amount);
+        amount = Number(application.paymentConfirmedAmount ?? application.paymentAmount ?? proposedOpeningFee(application.visaType));
         currency = application.paymentCurrency ?? currency;
         paymentDate = application.paymentDate ?? application.paymentValidatedAt ?? paymentDate;
         paymentMethod = application.paymentMethod || paymentMethod;
@@ -3365,7 +3370,7 @@ export const adminCandidateManagementRouter = router({
         fullName = record.fullName;
         dossierNumber = record.dossierNumber;
         destination = record.destination || "International";
-        amount = record.paymentAmount ?? 65000;
+        amount = record.paymentConfirmedAmount ?? record.paymentAmount ?? record.paymentExpectedAmount ?? proposedOpeningFee(record.visaType);
       } else {
         const record = (await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
         if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });

@@ -135,6 +135,11 @@ export default function PartnersHub() {
             <a href={PARTNER_ROUTES.registerNeed} data-testid="partners-cta-need" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-blue-300 bg-blue-50 px-5 py-3 text-sm font-black text-blue-950 hover:bg-blue-100">{en ? "Submit a recruitment need" : "Transmettre un besoin de recrutement"}</a>
             <a href={PARTNER_ROUTES.login} data-testid="partners-cta-login" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-900 hover:bg-slate-50">{en ? "Sign in" : "Se connecter"}</a>
           </div>
+          <div className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 p-4" data-testid="partners-partnership-card">
+            <p className="font-black text-slate-900">{en ? "Travel agency or individual?" : "Agence de voyage ou particulier ?"}</p>
+            <p className="mt-1 text-sm text-slate-700">{en ? "Refer clients to 3M under a written partnership agreement, with your commission set before you sign." : "Orientez des clients vers 3M dans le cadre d’un protocole d’accord écrit, avec votre commission fixée avant de signer."}</p>
+            <a href="/partenariat" data-testid="partners-cta-partnership" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-black text-blue-800 underline underline-offset-2">{en ? "Become a partner" : "Devenir partenaire"} <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
+          </div>
           <p className="mt-4 text-xs leading-5 text-slate-500">{en ? "Access is free of registration fees and subject to administrative validation. An inscription alone never makes a company an “official partner”; no name or logo is published without written authorisation." : "L’accès est sans frais d’inscription et soumis à validation administrative. Une simple inscription ne fait jamais d’une entreprise un « partenaire officiel » ; aucun nom ni logo n’est publié sans autorisation écrite."}</p>
         </div>
       </section>

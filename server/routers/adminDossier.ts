@@ -6,6 +6,7 @@ import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { sendDossierConfirmationEmail } from '../emailService';
 import { assertApplicationCanEnterStatus } from '../utils/applicationGates';
 import { randomBytes } from 'node:crypto';
+import { proposedOpeningFee } from '../../shared/openingFee';
 
 // Générer un numéro de dossier unique au format #3M-AAAA-XXXX
 async function generateDossierNumber(): Promise<string> {
@@ -112,7 +113,7 @@ export const adminDossierRouter = router({
               input.fullName,
               existingApplication.dossierNumber,
               input.destinationCountry,
-              65000,
+              existingApplication.paymentAmount ?? proposedOpeningFee(input.visaType),
             );
           } catch (emailError) {
             console.warn('Erreur envoi email:', emailError);
@@ -179,7 +180,7 @@ export const adminDossierRouter = router({
             input.fullName,
             dossierNumber,
             input.destinationCountry,
-            65000
+            proposedOpeningFee(input.visaType)
           );
         } catch (emailError) {
           console.warn('Erreur envoi email:', emailError);

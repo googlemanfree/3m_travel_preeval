@@ -1,0 +1,66 @@
+-- Programme de partenariat « agence de voyage / particulier » : candidature, protocole d'accord, signatures, activation.
+-- Uniquement de NOUVELLES tables : aucune table existante n'est modifiée, donc rien ne casse si cette migration n'est pas
+-- encore appliquée (les écrans concernés affichent alors un message clair).
+
+CREATE TABLE IF NOT EXISTS partnership_applications (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  kind ENUM('travel_agency', 'individual') NOT NULL,
+  status ENUM('submitted', 'in_review', 'protocol_issued', 'partner_signed', 'active', 'rejected', 'suspended') NOT NULL DEFAULT 'submitted',
+  contact_name VARCHAR(255) NOT NULL,
+  email VARCHAR(320) NOT NULL,
+  phone VARCHAR(50) NULL,
+  country VARCHAR(100) NOT NULL,
+  city VARCHAR(120) NULL,
+  company_name VARCHAR(255) NULL,
+  representative_role VARCHAR(160) NULL,
+  legal_registration VARCHAR(120) NULL,
+  tax_id VARCHAR(80) NULL,
+  licence_number VARCHAR(120) NULL,
+  website VARCHAR(255) NULL,
+  years_active INT NULL,
+  channels VARCHAR(255) NULL,
+  volume_band VARCHAR(10) NULL,
+  message TEXT NULL,
+  consent_privacy_at TIMESTAMP NOT NULL,
+  code_of_conduct_at TIMESTAMP NOT NULL,
+  source_ip VARCHAR(64) NULL,
+  admin_note TEXT NULL,
+  rejection_reason VARCHAR(500) NULL,
+  commission_rate_bps INT NULL,
+  term_months INT NULL,
+  attribution_months INT NULL,
+  payment_delay_days INT NULL,
+  territory VARCHAR(200) NULL,
+  protocol_version VARCHAR(40) NULL,
+  protocol_text MEDIUMTEXT NULL,
+  protocol_fingerprint VARCHAR(64) NULL,
+  protocol_issued_at TIMESTAMP NULL,
+  protocol_issued_by VARCHAR(320) NULL,
+  sign_token_hash VARCHAR(128) NULL,
+  sign_token_expires_at TIMESTAMP NULL,
+  partner_signed_at TIMESTAMP NULL,
+  partner_signature_name VARCHAR(255) NULL,
+  partner_signature_ip VARCHAR(64) NULL,
+  partner_signature_key VARCHAR(512) NULL,
+  partner_signed_pdf_key VARCHAR(512) NULL,
+  countersigned_at TIMESTAMP NULL,
+  countersigned_by VARCHAR(320) NULL,
+  final_pdf_key VARCHAR(512) NULL,
+  ambassador_id INT NULL,
+  referral_code VARCHAR(16) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_partnership_email_kind (email, kind),
+  INDEX idx_partnership_status (status, created_at)
+);
+
+-- Historique horodaté de chaque dossier (visible de l'administration uniquement).
+CREATE TABLE IF NOT EXISTS partnership_events (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  application_id INT NOT NULL,
+  kind VARCHAR(40) NOT NULL,
+  summary VARCHAR(500) NOT NULL,
+  actor VARCHAR(320) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_partnership_events_application (application_id, created_at)
+);

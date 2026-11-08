@@ -21,7 +21,7 @@ interface PaymentModalProps {
   onClose: () => void;
   dossierNumber: string;
   email: string;
-  amount?: number; // Default: 65000 XAF
+  amount: number; // Montant fixé pour ce dossier (il varie selon le profil : jamais de montant par défaut)
   onPaymentSuccess?: () => void;
 }
 
@@ -30,7 +30,7 @@ export function PaymentModal({
   onClose,
   dossierNumber,
   email,
-  amount = 65000,
+  amount,
   onPaymentSuccess,
 }: PaymentModalProps) {
   const [step, setStep] = useState<"confirm" | "processing" | "success" | "error">(
