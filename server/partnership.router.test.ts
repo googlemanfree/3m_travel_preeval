@@ -21,6 +21,7 @@ vi.mock("drizzle-orm", async () => {
     and: (...parts: unknown[]) => ({ op: "and", parts }),
     desc: (column: unknown) => ({ op: "desc", column }),
     inArray: (column: unknown, values: unknown[]) => ({ op: "in", column, values }),
+    isNull: (column: unknown) => ({ op: "isNull", column }),
   };
 });
 
@@ -30,6 +31,7 @@ const matches = (table: any, row: any, predicate: any): boolean => {
   if (predicate.op === "and") return predicate.parts.every((part: any) => matches(table, row, part));
   if (predicate.op === "eq") return row[keyOf(table, predicate.column)] === predicate.value;
   if (predicate.op === "in") return predicate.values.includes(row[keyOf(table, predicate.column)]);
+  if (predicate.op === "isNull") return row[keyOf(table, predicate.column)] == null;
   return true;
 };
 
@@ -101,7 +103,7 @@ vi.mock("./routers/adminAuth", () => ({ requireValidAdminSession: async () => ({
 vi.mock("./routers/adminNotifications", () => ({ notifyAdmins: async (input: any) => { state.notified.push(input); } }));
 vi.mock("./routers/placementPortal", () => ({ hashToken: (value: string) => createHash("sha256").update(value).digest("hex") }));
 
-import { ambassadors, partnershipApplications, partnershipEvents } from "../drizzle/schema";
+import { ambassadors, partnershipApplications, partnershipEvents, partnershipSpaceLinks } from "../drizzle/schema";
 import { partnershipRouter } from "./routers/partnership";
 
 let ip = 0;
@@ -288,6 +290,22 @@ describe("signature du partenaire et contresignature de 3M", () => {
     expect(rows(ambassadors)[0]).toMatchObject({ commissionRateBps: 1500, status: "active", referralCode: result.referralCode, email: row.email });
     expect(state.stored.some((item) => item.key.endsWith("protocole-signe-final.pdf"))).toBe(true);
     expect(state.emails.at(-1).html).toContain(result.referralCode);
+    // L'activation crée aussi l'espace partenaire : un seul lien actif, envoyé dans le même e-mail.
+    expect(rows(partnershipSpaceLinks)).toHaveLength(1);
+    expect(result.spaceLink).toContain("/partenariat/espace?token=");
+    expect(state.emails.at(-1).html).toContain("/partenariat/espace?token=");
+  });
+
+  it("l'activation réussit même si l'espace partenaire (migration 0099) n'est pas encore disponible", async () => {
+    const { id, token } = await issued();
+    await sign(token);
+    const original = state.tables.get(partnershipSpaceLinks);
+    state.tables.set(partnershipSpaceLinks, new Proxy([], { get() { throw new Error("ER_NO_SUCH_TABLE: Table 'partnership_space_links' doesn't exist"); } }) as any);
+    const result = await caller().adminCountersign({ sessionToken: SESSION, id });
+    state.tables.set(partnershipSpaceLinks, original ?? []);
+    expect(rows(partnershipApplications)[0].status).toBe("active");
+    expect(result.spaceLink).toBeNull();
+    expect(state.emails.at(-1).html).not.toContain("/partenariat/espace");
   });
 
   it("un ambassadeur déjà inscrit garde son code mais passe au taux du protocole", async () => {
