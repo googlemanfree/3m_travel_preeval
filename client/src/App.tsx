@@ -97,6 +97,8 @@ const ServiceStatus = lazyWithTimeout(() => import("./pages/ServiceStatus"));
 const EmployerPortal = lazyWithTimeout(() => import("./pages/EmployerPortal"));
 const PartnerInvitationActivation = lazyWithTimeout(() => import("./pages/PartnerInvitationActivation"));
 const PlacementPartnerPortal = lazyWithTimeout(() => import("./pages/PlacementPartnerPortal"));
+const Partnership = lazyWithTimeout(() => import("./pages/Partnership"));
+const PartnershipSignature = lazyWithTimeout(() => import("./pages/PartnershipSignature"));
 import PartnersHub from "./pages/PartnersHub";
 const AdminEvaluation = lazyWithTimeout(() => import("./pages/AdminEvaluation"));
 const AdminLogin = lazyWithTimeout(() => import("./pages/AdminLogin"));
@@ -232,6 +234,8 @@ function Router() {
       <Route path={"/etat-du-service"} component={ServiceStatus} />
       <Route path={"/partenaires"} component={PartnersHub} />
       <Route path={"/partenaires/activation"} component={PartnerInvitationActivation} />
+      <Route path={"/partenariat"} component={Partnership} />
+      <Route path={"/partenariat/signature"} component={PartnershipSignature} />
       <Route path={"/agences-placement"} component={PlacementPartnerPortal} />
       <Route path={"/employeurs"} component={EmployerPortal} />
       <Route path={"/traduction/order"} component={TranslationOrder} />

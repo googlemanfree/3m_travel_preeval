@@ -8,6 +8,7 @@ export * from "./richTextSchema";
 export * from "./footerEngagementSchema";
 export * from "./newsletterSchema";
 export * from "./partnerModuleSchema";
+export * from "./partnershipSchema";
 export * from "./privacyCvthequeSchema";
 export * from "./recruitmentSchema";
 export * from "./evaluationFormSchema";

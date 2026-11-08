@@ -209,6 +209,7 @@ import { AdminSimulatorHealth } from "@/components/AdminSimulatorHealth";
 import { AdminFooterEngagement } from "@/components/AdminFooterEngagement";
 import { AdminPlacementPipeline } from "@/components/AdminPlacementPipeline";
 import { AdminPartnerModule } from "@/components/AdminPartnerModule";
+import { AdminPartnership } from "@/components/AdminPartnership";
 import { AdminCvthequeReview } from "@/components/AdminCvthequeReview";
 import { AdminRecruitmentInbox } from "@/components/AdminRecruitmentInbox";
 import { AdminEvaluationJourneyBoard } from "@/components/AdminEvaluationJourneyBoard";
@@ -2835,6 +2836,7 @@ export default function AdminDashboard() {
           </TabsContent>
           <TabsContent value="partners" className="space-y-6">
             <div id="admin-placement-pipeline"><AdminPlacementPipeline sessionToken={sessionToken} onOpenCandidate={(adminCandidateRef) => setSelectedCandidateId(adminCandidateRef)} /></div>
+            <div id="admin-partnership"><AdminPartnership sessionToken={sessionToken} /></div>
             <div id="admin-partner-module"><AdminPartnerModule sessionToken={sessionToken} /></div>
             <div id="admin-cvtheque-review"><AdminCvthequeReview sessionToken={sessionToken} /></div>
             <div id="admin-recruitment-inbox"><AdminRecruitmentInbox sessionToken={sessionToken} /></div>
