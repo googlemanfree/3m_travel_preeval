@@ -9,6 +9,8 @@ import ProcedureTrustFooter from "@/components/ProcedureTrustFooter";
 import { getCountryPhotos } from "@/data/countryPhotos";
 import { getCountryFacts } from "@/data/countryFacts";
 import { ProcedureBlueprint } from "@/components/ProcedureBlueprint";
+import CandidateGuideDocument from "@/components/CandidateGuideDocument";
+import { getCandidateGuide } from "@/data/candidateGuides";
 import { clampSeoDescription, clampSeoTitle } from "@/lib/seoText";
 
 interface DestinationFormationPageProps {
@@ -40,6 +42,7 @@ export default function DestinationFormationPage({ slug }: DestinationFormationP
   }
 
   const sources = DESTINATION_OFFICIAL_SOURCES[destination.slug] ?? [];
+  const guide = getCandidateGuide(destination.slug);
   const photos = getCountryPhotos(destination.slug);
   const facts = getCountryFacts(destination.slug);
   const heroPhoto = photos[0];
@@ -136,6 +139,12 @@ export default function DestinationFormationPage({ slug }: DestinationFormationP
         <div className="mt-8">
           <ProcedureBlueprint countryName={destination.name} visaType="travail" slug={destination.slug} locale="fr" evaluationUrl={evalLink} officialUrl={sources[0]?.url ?? null} />
         </div>
+
+        {guide ? (
+          <div className="mt-8" data-testid="destination-candidate-guide">
+            <CandidateGuideDocument guide={guide} />
+          </div>
+        ) : null}
 
         <section className="mt-8 rounded-2xl bg-blue-900 p-6 text-white sm:p-10">
           <h2 className="text-xl font-black">3M TRAVEL AGENCY vous accompagne</h2>

@@ -55,8 +55,18 @@ export const REVEAL_CLEANUP_MS = 1100;
 
 const INTERACTIVE_SELECTOR = "form, input, select, textarea, [role='dialog'], [contenteditable='true']";
 
+/**
+ * Un élément déjà piloté par framer-motion (opacité ou transformation posées en style en ligne) garde sa propre animation :
+ * y ajouter l'apparition CSS ferait deux animations concurrentes sur les mêmes propriétés (saccades, double délai).
+ */
+function isDrivenByInlineMotion(element: HTMLElement): boolean {
+  const { opacity, transform } = element.style;
+  return opacity !== "" || (transform !== "" && transform !== "none");
+}
+
 function isProtected(element: HTMLElement, anchorTarget: HTMLElement | null): boolean {
   if (element.closest("[data-no-reveal]")) return true;
+  if (isDrivenByInlineMotion(element)) return true;
   if (element.matches(INTERACTIVE_SELECTOR) || element.querySelector(INTERACTIVE_SELECTOR)) return true;
   if (anchorTarget && (element === anchorTarget || element.contains(anchorTarget) || anchorTarget.contains(element))) return true;
   return false;
