@@ -69,10 +69,18 @@ function StripHeader({ id, icon, title, linkHref, linkLabel }: { id: string; ico
   );
 }
 
-export default function HomeLiveStrips() {
+export type LiveStripBand = "news" | "procedures" | "proofs";
+const ALL_BANDS: readonly LiveStripBand[] = ["news", "procedures", "proofs"];
+
+/**
+ * Trois bandeaux défilants. `bands` choisit ceux à afficher (un bandeau déjà redondant avec la page est omis) ;
+ * `proofsHref` pointe vers la galerie de preuves (ancre locale sur l'accueil, `/#preuves-dossiers` ailleurs).
+ */
+export default function HomeLiveStrips({ bands = ALL_BANDS, proofsHref = "#preuves-dossiers" }: { bands?: readonly LiveStripBand[]; proofsHref?: string } = {}) {
   const { t, language } = useLanguage();
   const lang = language === "en" ? "en" : "fr";
-  const updates = trpc.adminContent.publicUpdates.useQuery(undefined, { retry: false });
+  const showNews = bands.includes("news");
+  const updates = trpc.adminContent.publicUpdates.useQuery(undefined, { retry: false, enabled: showNews });
   const published = updates.data ?? [];
 
   const newsItems: MarqueeItem[] = published.length > 0
@@ -114,7 +122,7 @@ export default function HomeLiveStrips() {
   const proofItems: MarqueeItem[] = buildProofStrip().map((photo) => ({
     key: `proof-${photo.src}`,
     node: (
-      <a href="#preuves-dossiers" className={`${cardBase} w-48 overflow-hidden p-0`}>
+      <a href={proofsHref} className={`${cardBase} w-48 overflow-hidden p-0`}>
         <span className="block aspect-[4/3] overflow-hidden bg-slate-100">
           <img src={photo.src} alt={photo.alt} width={192} height={144} loading="lazy" decoding="async" className="h-full w-full object-cover" />
         </span>
@@ -131,7 +139,7 @@ export default function HomeLiveStrips() {
       <div className="mx-auto max-w-6xl space-y-10 px-4">
         <h2 id="home-live-title" className="sr-only">{t("Actualités, procédures et dossiers traités", "News, procedures and processed files")}</h2>
 
-        <div>
+        {showNews && <div>
           <StripHeader
             id="home-live-news-title"
             icon={<Newspaper className="h-5 w-5 text-blue-700" aria-hidden="true" />}
@@ -143,9 +151,9 @@ export default function HomeLiveStrips() {
           {published.length > 0 && (
             <p className="mt-3 text-xs text-slate-600">{t("Mises à jour rédigées par notre équipe, avec leur date. Vérifiez toujours auprès de l'autorité concernée avant de déposer un dossier.", "Updates written by our team, with their date. Always check with the relevant authority before filing.")}</p>
           )}
-        </div>
+        </div>}
 
-        <div>
+        {bands.includes("procedures") && <div>
           <StripHeader
             id="home-live-procedures-title"
             icon={<ArrowRight className="h-5 w-5 text-blue-700" aria-hidden="true" />}
@@ -154,19 +162,19 @@ export default function HomeLiveStrips() {
             linkLabel={t("Toutes les procédures", "All procedures")}
           />
           <LiveMarquee items={procedureItems} label={t("Procédures par destination", "Procedures by destination")} secondsPerItem={3} testId="live-strip-procedures" />
-        </div>
+        </div>}
 
-        <div>
+        {bands.includes("proofs") && <div>
           <StripHeader
             id="home-live-proofs-title"
             icon={<BadgeCheck className="h-5 w-5 text-amber-700" aria-hidden="true" />}
             title={t("Visas et dossiers obtenus", "Visas and files obtained")}
-            linkHref="#preuves-dossiers"
+            linkHref={proofsHref}
             linkLabel={t("Voir les preuves", "See the proofs")}
           />
           <LiveMarquee items={proofItems} label={t("Preuves de dossiers traités", "Proofs of processed files")} secondsPerItem={6} testId="live-strip-proofs" />
           <p className="mt-3 text-xs text-slate-600">{t("Documents publiés avec les informations personnelles masquées. Chaque dossier est unique : un exemple passé ne garantit ni visa ni délai.", "Documents published with personal information masked. Every file is unique: a past example guarantees neither a visa nor a timeline.")}</p>
-        </div>
+        </div>}
       </div>
     </section>
   );

@@ -294,7 +294,7 @@ export default function Home() {
               {PRESENTATION_JOURNEY_INTRO.title[lang]}
             </h3>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{PRESENTATION_JOURNEY_INTRO.lead[lang]}</p>
-            <ol className="mt-5 grid gap-3 sm:mt-6 sm:grid-cols-2 lg:grid-cols-5">
+            <ol className="journey-connectors mt-5 grid gap-3 sm:mt-6 sm:grid-cols-2 lg:grid-cols-5">
               {PRESENTATION_JOURNEY_STEPS.map((step) => (
                 <li key={step.id} className="min-w-0 rounded-xl border border-white bg-white p-3.5 shadow-sm sm:p-4">
                   <div className="flex items-center justify-between gap-2">
@@ -303,7 +303,7 @@ export default function Home() {
                       <TooltipTrigger asChild>
                         <button
                           type="button"
-                          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-indigo-700 transition hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+                          className="relative z-[2] inline-flex min-h-11 min-w-11 items-center justify-center rounded-full bg-white text-indigo-700 transition hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
                           aria-label={lang === "fr" ? `Explication : ${step.short.fr}` : `Explanation: ${step.short.en}`}
                         >
                           <Info className="h-4 w-4" aria-hidden="true" />

@@ -8,6 +8,9 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 vi.mock("@/lib/trpc", () => ({ trpc: new Proxy({}, { get: () => new Proxy({}, { get: () => ({ useQuery: () => ({ data: undefined, isLoading: false }), useMutation: () => ({ mutate: () => undefined, isPending: false }) }) }) }) }));
 
+// Les bandeaux défilants lisent le réglage « Animations » : ici, pas de fournisseur de préférences, donc mouvement coupé.
+vi.mock("@/hooks/useMotionAllowed", () => ({ useMotionAllowed: () => false }));
+
 // Le rendu de 107 destinations est lent sous jsdom : marge large, indépendante de la configuration globale.
 vi.setConfig({ testTimeout: 120000 });
 

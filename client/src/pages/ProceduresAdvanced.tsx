@@ -25,6 +25,7 @@ import { IllustrativeDestinationStrip } from '@/components/IllustrativeDestinati
 import { getServiceVisual } from '@/data/premiumVisuals';
 import { BRAND_PUBLIC_NAME } from '@/lib/companyContacts';
 import { setPageSeo } from '@/lib/pageSeo';
+import HomeLiveStrips from '@/components/HomeLiveStrips';
 // CanadaScoreSimulator déplacé vers la section /canada dédiée
 
 const HUB_ENTRIES = [
@@ -921,6 +922,7 @@ export default function ProceduresAdvanced() {
           </motion.div>
         )}
       </div>
+      <HomeLiveStrips bands={["news", "proofs"]} proofsHref="/#preuves-dossiers" />
     </main>
     </PremiumAtmosphere>
   );
