@@ -11,12 +11,113 @@ import {
   partnershipTermsProblem,
   type PartnershipStatus,
 } from "@shared/partnershipProgram";
+import { formatXaf } from "@shared/openingFee";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 type Props = { sessionToken: string };
+
+type PayoutMethod = "bank_transfer" | "mobile_money" | "cash" | "other";
+const PAYOUT_METHOD_LABELS: Record<PayoutMethod, string> = { bank_transfer: "Virement bancaire", mobile_money: "Mobile Money", cash: "Espèces", other: "Autre" };
+const monthLabel = (period: string) => {
+  const [year, month] = period.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" });
+};
+
+/** Relevé de commissions d'un partenaire actif : mois à verser, versements saisis, export CSV, lien d'espace. */
+function StatementPanel({ id, reference, sessionToken }: { id: number; reference: string; sessionToken: string }) {
+  const utils = trpc.useUtils();
+  const query = trpc.partnershipSpace.adminStatement.useQuery({ sessionToken, id }, { retry: false, refetchOnWindowFocus: false });
+  const [paying, setPaying] = useState<string | null>(null);
+  const [form, setForm] = useState<{ reference: string; method: PayoutMethod; note: string }>({ reference: "", method: "mobile_money", note: "" });
+  const [link, setLink] = useState<string | null>(null);
+  const refresh = () => { void utils.partnershipSpace.adminStatement.invalidate({ sessionToken, id }); };
+  const mark = trpc.partnershipSpace.adminMarkPayout.useMutation({
+    onSuccess: (result) => { toast.success(result.emailSent ? `Versement enregistré (${formatXaf(result.amountXaf)}) et partenaire prévenu.` : `Versement enregistré (${formatXaf(result.amountXaf)}), e-mail non envoyé.`); setPaying(null); setForm({ reference: "", method: "mobile_money", note: "" }); refresh(); },
+    onError: (error: { message: string }) => toast.error(error.message),
+  });
+  const sendLink = trpc.partnershipSpace.adminSendSpaceLink.useMutation({
+    onSuccess: (result) => { setLink(result.link); toast.success(result.emailSent ? "Nouveau lien d’espace envoyé au partenaire." : "Lien créé, e-mail non envoyé : copiez-le ci-dessous."); },
+    onError: (error: { message: string }) => toast.error(error.message),
+  });
+  const data = query.data;
+  const downloadCsv = () => {
+    if (!data || !data.available) return;
+    const url = URL.createObjectURL(new Blob([data.csv], { type: "text/csv;charset=utf-8" }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `releve-commissions-${reference}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  if (query.isLoading) return <p className="text-sm text-slate-600">Chargement du relevé…</p>;
+  if (query.error?.message?.includes("migration 0099")) return <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" role="alert">Le relevé et l’espace partenaire seront disponibles dès l’application de la migration 0099.</p>;
+  if (!data || !data.available) return <p className="text-sm text-slate-600">Relevé indisponible : les conditions du protocole sont incomplètes.</p>;
+  const { statement } = data;
+
+  return (
+    <div className="space-y-3 rounded-xl border border-slate-200 p-4" data-testid="admin-partnership-statement">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="font-black text-slate-950">Relevé de commissions et versements</p>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" onClick={downloadCsv} className="min-h-10" data-testid="admin-partnership-csv">Exporter en CSV</Button>
+          <Button type="button" variant="outline" onClick={() => sendLink.mutate({ sessionToken, id })} disabled={sendLink.isPending} className="min-h-10" data-testid="admin-partnership-space-link">Envoyer un lien d’espace</Button>
+        </div>
+      </div>
+      {link ? <p className="break-all rounded-lg bg-slate-50 p-2 font-mono text-xs text-slate-700">Lien de l’espace partenaire : {link}</p> : null}
+      <p className="text-sm text-slate-700">
+        {statement.totals.referrals} client(s) orienté(s) · {statement.totals.paidReferrals} paiement(s) validé(s) · acquis <strong>{formatXaf(statement.totals.earnedXaf)}</strong> · versé <strong>{formatXaf(statement.totals.paidOutXaf)}</strong> · reste <strong>{formatXaf(statement.totals.dueXaf)}</strong>
+        {statement.totals.overdueXaf > 0 ? <span className="font-bold text-amber-800"> · dont {formatXaf(statement.totals.overdueXaf)} échu</span> : null}
+      </p>
+      {statement.months.length === 0 ? <p className="text-sm text-slate-500">Aucune commission pour le moment.</p> : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[36rem] text-left text-sm">
+            <thead className="text-xs uppercase tracking-wider text-slate-500"><tr><th className="py-2 pr-3">Mois</th><th className="py-2 pr-3">Paiements</th><th className="py-2 pr-3">Base</th><th className="py-2 pr-3">Commission</th><th className="py-2 pr-3">Échéance</th><th className="py-2">Versement</th></tr></thead>
+            <tbody>
+              {statement.months.map((month) => {
+                const ended = month.period < data.currentPeriod;
+                return (
+                  <tr key={month.period} className="border-t border-slate-100" data-testid={`admin-partnership-month-${month.period}`}>
+                    <td className="py-2 pr-3 font-bold capitalize">{monthLabel(month.period)}</td>
+                    <td className="py-2 pr-3">{month.paymentsCount}</td>
+                    <td className="py-2 pr-3">{formatXaf(month.baseXaf)}</td>
+                    <td className="py-2 pr-3 font-bold">{formatXaf(month.commissionXaf)}</td>
+                    <td className="py-2 pr-3">{new Date(month.dueAt).toLocaleDateString("fr-FR")}</td>
+                    <td className="py-2">
+                      {month.paid ? (
+                        <span className="text-emerald-800">Versé le {month.paidAt ? new Date(month.paidAt).toLocaleDateString("fr-FR") : "—"} · {formatXaf(month.paidAmountXaf ?? 0)}{month.paidReference ? ` · ${month.paidReference}` : ""}{month.deltaXaf !== 0 ? <span className="block font-bold text-amber-800">Écart de {formatXaf(Math.abs(month.deltaXaf))} avec le recalcul (remboursement tardif ?)</span> : null}</span>
+                      ) : month.commissionXaf <= 0 ? <span className="text-slate-500">—</span> : !ended ? <span className="text-slate-500">Mois en cours</span> : (
+                        <Button type="button" size="sm" onClick={() => setPaying(paying === month.period ? null : month.period)} className="min-h-9" data-testid={`admin-partnership-pay-${month.period}`}>Marquer versé</Button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {paying ? (
+        <div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50/50 p-3" data-testid="admin-partnership-pay-form">
+          <p className="text-sm font-bold text-slate-900">Verser la commission de {monthLabel(paying)} : {formatXaf(statement.months.find((month) => month.period === paying)?.commissionXaf ?? 0)}</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="sm:col-span-2"><Label htmlFor="pay-ref">Référence de la transaction *</Label><Input id="pay-ref" value={form.reference} onChange={(e) => setForm({ ...form, reference: e.target.value })} maxLength={120} className="mt-1" data-testid="admin-partnership-pay-ref" /></div>
+            <div><Label htmlFor="pay-method">Mode</Label><select id="pay-method" value={form.method} onChange={(e) => setForm({ ...form, method: e.target.value as PayoutMethod })} className="mt-1 min-h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm">{(Object.keys(PAYOUT_METHOD_LABELS) as PayoutMethod[]).map((key) => <option key={key} value={key}>{PAYOUT_METHOD_LABELS[key]}</option>)}</select></div>
+          </div>
+          <div><Label htmlFor="pay-note">Note (facultatif)</Label><Input id="pay-note" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} maxLength={500} className="mt-1" /></div>
+          <div className="flex gap-2">
+            <Button type="button" disabled={form.reference.trim().length < 3 || mark.isPending} onClick={() => mark.mutate({ sessionToken, id, period: paying, reference: form.reference.trim(), method: form.method, note: form.note.trim() || undefined })} className="min-h-10" data-testid="admin-partnership-pay-confirm">Confirmer le versement</Button>
+            <Button type="button" variant="outline" onClick={() => setPaying(null)} className="min-h-10">Annuler</Button>
+          </div>
+          <p className="text-xs text-slate-600">Le montant versé est figé à la valeur calculée à cet instant ; le partenaire est prévenu par e-mail.</p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 const TONE: Record<PartnershipStatus, string> = {
   submitted: "bg-sky-100 text-sky-900",
@@ -134,7 +235,9 @@ function Detail({ id, sessionToken, onChanged }: { id: number; sessionToken: str
         </div>
       ) : null}
 
-      {row.status === "rejected" && row.rejectionReason ? <p className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">Motif du refus : {row.rejectionReason}</p> : null}
+      {["active", "suspended"].includes(row.status) ? <StatementPanel id={id} reference={row.reference} sessionToken={sessionToken} /> : null}
+
+      {row.status === "rejected" && row.rejectionReason ?<p className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">Motif du refus : {row.rejectionReason}</p> : null}
 
       {canIssue ? (
         <div className="space-y-3 rounded-xl border border-slate-200 p-4">
