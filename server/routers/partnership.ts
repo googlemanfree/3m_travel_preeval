@@ -33,7 +33,6 @@ import {
   partnershipVariablesFromRow,
   protocolFingerprint,
 } from "../services/partnershipProtocol";
-import { issueSpaceLink } from "../services/partnershipSpaceLink";
 import { requireValidAdminSession } from "./adminAuth";
 import { notifyAdmins } from "./adminNotifications";
 import { hashToken } from "./placementPortal";
@@ -41,32 +40,32 @@ import { hashToken } from "./placementPortal";
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
 
 const SITE_URL = (process.env.SITE_URL || "https://www.3mtravelagency.com").replace(/\/$/, "");
-export const esc = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const esc = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const OPEN_STATUSES: PartnershipStatus[] = ["submitted", "in_review", "protocol_issued", "partner_signed", "active"];
 const SIGNATURE_PNG_MAX_BYTES = 400_000;
 
 /** Une migration non appliquée ne doit jamais casser le reste du site : message clair, pas d'erreur technique. */
-export async function guarded<T>(label: string, work: () => Promise<T>, migration: "0098" | "0099" = "0098"): Promise<T> {
+async function guarded<T>(label: string, work: () => Promise<T>): Promise<T> {
   try {
     return await work();
   } catch (error) {
     if (error instanceof TRPCError) throw error;
     const detail = error instanceof Error ? error.message : String(error);
     if (/ER_NO_SUCH_TABLE|doesn't exist/i.test(detail)) {
-      throw new TRPCError({ code: "PRECONDITION_FAILED", message: migration === "0099" ? "L’espace partenaire n’est pas encore activé : la migration 0099 doit être appliquée." : "Le programme de partenariat n’est pas encore activé : la migration 0098 doit être appliquée." });
+      throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le programme de partenariat n’est pas encore activé : la migration 0098 doit être appliquée." });
     }
     logger.error(`partnership.${label}`, {}, error);
     throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Opération impossible pour le moment. Réessayez dans quelques instants." });
   }
 }
 
-export async function requireDb(): Promise<Db> {
+async function requireDb(): Promise<Db> {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
   return db;
 }
 
-export async function logEvent(db: Db, applicationId: number, kind: string, summary: string, actor?: string | null) {
+async function logEvent(db: Db, applicationId: number, kind: string, summary: string, actor?: string | null) {
   try {
     await db.insert(partnershipEvents).values({ applicationId, kind, summary: summary.slice(0, 500), actor: actor ? actor.slice(0, 320) : null });
   } catch (error) {
@@ -74,13 +73,13 @@ export async function logEvent(db: Db, applicationId: number, kind: string, summ
   }
 }
 
-export async function loadApplication(db: Db, id: number): Promise<PartnershipApplicationRow> {
+async function loadApplication(db: Db, id: number): Promise<PartnershipApplicationRow> {
   const [row] = await db.select().from(partnershipApplications).where(eq(partnershipApplications.id, id)).limit(1);
   if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier de partenariat introuvable." });
   return row;
 }
 
-export const adminActor =(admin: { email?: string | null } | undefined | null) => (admin?.email || "Administrateur").slice(0, 320);
+const adminActor = (admin: { email?: string | null } | undefined | null) => (admin?.email || "Administrateur").slice(0, 320);
 
 const submissionGuard = createSubmissionGuard({
   perClient: { limit: 5, windowMs: 60 * 60_000 },
@@ -90,7 +89,7 @@ const submissionGuard = createSubmissionGuard({
 /** Lecture et signature par lien personnel : un lien deviné ou rejoué en rafale est freiné. */
 const signingLimiter = createFixedWindowLimiter({ limit: 30, windowMs: 10 * 60_000 });
 
-export function assertSigningRate(ctx: { req?: unknown }) {
+function assertSigningRate(ctx: { req?: unknown }) {
   const key = clientKeyOf(ctx?.req as never);
   if (key === null) return;
   const decision = signingLimiter.check(key);
@@ -144,7 +143,7 @@ const termsInput = z.object({
   territory: z.string().trim().max(200),
 });
 
-export function emailShell(paragraphs: string[], cta?: { label: string; url: string }) {
+function emailShell(paragraphs: string[], cta?: { label: string; url: string }) {
   const body = paragraphs.map((paragraph) => `<p style="margin:0 0 12px;font:14px/1.6 Arial,Helvetica,sans-serif;color:#1f2937">${paragraph}</p>`).join("");
   const button = cta
     ? `<p style="margin:18px 0"><a href="${esc(cta.url)}" style="display:inline-block;background:#17375e;color:#ffffff;text-decoration:none;font:bold 14px Arial,Helvetica,sans-serif;padding:12px 22px;border-radius:8px">${esc(cta.label)}</a></p><p style="margin:0 0 12px;font:12px/1.5 Arial,Helvetica,sans-serif;color:#64748b">Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br>${esc(cta.url)}</p>`
@@ -152,7 +151,7 @@ export function emailShell(paragraphs: string[], cta?: { label: string; url: str
   return `${body}${button}`;
 }
 
-export async function trySend(label: string, applicationId: number, mail: { to: string; subject: string; html: string; attachments?: Array<{ filename: string; content: Buffer; contentType?: string }> }) {
+async function trySend(label: string, applicationId: number, mail: { to: string; subject: string; html: string; attachments?: Array<{ filename: string; content: Buffer; contentType?: string }> }) {
   try {
     await sendEmail(mail);
     return true;
@@ -555,13 +554,6 @@ export const partnershipRouter = router({
     }).where(eq(partnershipApplications.id, row.id));
     await logEvent(db, row.id, "active", `Contresigné par ${adminActor(admin)} ; suivi de parrainage activé (code ${referral.referralCode}, ${formatCommissionRate(row.commissionRateBps ?? 0)}).`, adminActor(admin));
 
-    // L'espace partenaire (migration 0099) ne doit jamais empêcher l'activation : sans lui, le partenaire est actif et 3M peut envoyer le lien plus tard.
-    let spaceLink: string | null = null;
-    try {
-      spaceLink = (await issueSpaceLink(db, row.id)).link;
-    } catch (error) {
-      logger.error("partnership.space_link_failed", { applicationId: row.id }, error);
-    }
     const referralLink = `${SITE_URL}/?ref=${encodeURIComponent(referral.referralCode)}`;
     const emailSent = await trySend("active", row.id, {
       to: row.email,
@@ -570,12 +562,11 @@ export const partnershipRouter = router({
         `Bonjour ${esc(row.contactName)},`,
         `3M a contresigné votre protocole d’accord <strong>${esc(reference)}</strong> : votre partenariat est actif. L’exemplaire signé par les deux parties est joint à ce message.`,
         `Votre code partenaire : <strong>${esc(referral.referralCode)}</strong>. Votre lien personnel : ${esc(referralLink)}`,
-        ...(spaceLink ? ["Votre espace partenaire réunit votre code, vos conditions, le suivi des clients orientés et le relevé de vos commissions. Ne transmettez pas ce lien : il donne accès à votre relevé."] : []),
         "Rappel : vous ne promettez aucun résultat, vous n’encaissez aucune somme au nom de 3M, et vous respectez la charte de communication annexée au protocole.",
-      ], spaceLink ? { label: "Ouvrir mon espace partenaire", url: spaceLink } : undefined),
+      ]),
       attachments: [{ filename: `protocole-partenariat-${reference}-signe.pdf`, content: pdf, contentType: "application/pdf" }],
     });
-    return { ok: true as const, referralCode: referral.referralCode, emailSent, spaceLink };
+    return { ok: true as const, referralCode: referral.referralCode, emailSent };
   })),
 
   /** Lien temporaire de téléchargement de l'exemplaire signé (final si contresigné, sinon signé par le partenaire). */

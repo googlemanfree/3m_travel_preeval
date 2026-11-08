@@ -1,14 +1,12 @@
 // @vitest-environment jsdom
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 (globalThis as any).React = React;
 
 const state = vi.hoisted(() => ({
   submit: vi.fn(),
-  submitOptions: null as any,
-  submitPending: false,
   sign: vi.fn(),
   preview: { data: undefined as any, isLoading: false, isError: false },
   signing: { data: undefined as any, isLoading: false, isError: false },
@@ -17,7 +15,7 @@ const state = vi.hoisted(() => ({
 vi.mock("@/lib/trpc", () => ({
   trpc: {
     partnership: {
-      submit: { useMutation: (options: any) => { state.submitOptions = options; return { mutate: state.submit, isPending: state.submitPending }; } },
+      submit: { useMutation: () => ({ mutate: state.submit, isPending: false }) },
       sign: { useMutation: () => ({ mutate: state.sign, isPending: false }) },
       previewProtocol: { useQuery: () => state.preview },
       getForSigning: { useQuery: () => state.signing },
@@ -32,8 +30,6 @@ import PartnershipSignature from "../client/src/pages/PartnershipSignature";
 
 beforeEach(() => {
   state.submit.mockReset();
-  state.submitOptions = null;
-  state.submitPending = false;
   state.sign.mockReset();
   state.preview = { data: undefined, isLoading: false, isError: false };
   state.signing = { data: undefined, isLoading: false, isError: false };
@@ -115,21 +111,6 @@ describe("page publique /partenariat", () => {
       email: "awa@teranga.test", country: "Sénégal", consentPrivacy: true, codeOfConduct: true, hp: "",
     });
     expect(state.submit.mock.calls[0][0].isAdult).toBeUndefined();
-  });
-
-  it("affiche un état de chargement accessible pendant l'envoi", () => {
-    state.submitPending = true;
-    render(<Partnership />);
-    expect(screen.getByTestId("partnership-loading").textContent).toContain("Votre candidature est en cours d’envoi");
-    expect(screen.getByTestId("partnership-apply").querySelector("form")?.getAttribute("aria-busy")).toBe("true");
-    expect((screen.getByTestId("partnership-submit") as HTMLButtonElement).disabled).toBe(true);
-  });
-
-  it("affiche une confirmation et une notification après l'envoi réussi", () => {
-    render(<Partnership />);
-    expect(screen.queryByTestId("partnership-success")).toBeNull();
-    state.submitOptions.onSuccess({ reference: "PAR-2026-0042", alreadyReceived: false });
-    return waitFor(() => expect(screen.getByTestId("partnership-success").textContent).toContain("Candidature reçue."));
   });
 
   it("envoie la candidature d'un particulier majeur sans aucune donnée d'agence", () => {
