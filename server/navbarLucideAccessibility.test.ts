@@ -4,7 +4,7 @@ import path from "node:path";
 
 const source = fs.readFileSync(
   path.join(process.cwd(), "client/src/components/Navbar.tsx"),
-  "utf8",
+  "utf8"
 );
 
 describe("Navbar avec icônes Lucide", () => {
@@ -20,9 +20,27 @@ describe("Navbar avec icônes Lucide", () => {
   it("préserve les contrôles tactiles et les libellés accessibles", () => {
     expect(source).toContain("min-h-11");
     expect(source).toContain("touch-target");
-    expect(source).toContain('mainNav: { fr: "Navigation principale", en: "Main navigation" }');
-    expect(source).toContain('mobileNav: { fr: "Navigation mobile", en: "Mobile navigation" }');
+    expect(source).toContain(
+      'mainNav: { fr: "Navigation principale", en: "Main navigation" }'
+    );
+    expect(source).toContain(
+      'mobileNav: { fr: "Navigation mobile", en: "Mobile navigation" }'
+    );
     expect(source).toContain("aria-label={copy(NAV_COPY.mainNav)}");
     expect(source).toContain("aria-label={copy(NAV_COPY.mobileNav)}");
+  });
+
+  it("intègre une recherche de destinations dans les menus desktop et mobile", () => {
+    expect(source).toContain('id="desktop-nav-search"');
+    expect(source).toContain('id="mobile-nav-search"');
+    expect(source).toMatch(/action="\/destinations"\s+method="get"/);
+    expect(source).toContain("destinationQuickLinks");
+    expect(source).toContain("matchingDestinations");
+  });
+
+  it("préserve les interactions premium accessibles des boutons de recherche", () => {
+    expect(source).toContain("hover:-translate-y-0.5");
+    expect(source).toContain("active:scale-95");
+    expect(source).toContain('aria-live="polite"');
   });
 });
