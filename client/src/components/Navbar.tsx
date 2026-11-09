@@ -158,7 +158,7 @@ const nativeLinkClass = (highlight?: boolean) =>
     : "min-h-11 w-auto shrink-0 justify-start px-1.5 py-2.5 text-[12px] xl:text-[13px] font-bold xl:px-2 text-slate-900 hover:text-[#0a2b5c] hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-3";
 
 const authButtonClass =
-  "inline-flex h-12 w-[132px] items-center justify-center rounded-xl px-3 text-center text-sm font-black transition-all duration-200 active:scale-95 whitespace-nowrap";
+  "inline-flex h-12 w-[104px] xl:w-[132px] items-center justify-center rounded-xl px-3 text-center text-sm font-black transition-all duration-200 active:scale-95 whitespace-nowrap";
 const mobileAuthButtonClass =
   "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-center font-bold transition-all duration-200";
 
