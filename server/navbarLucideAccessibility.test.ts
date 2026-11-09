@@ -43,4 +43,12 @@ describe("Navbar avec icônes Lucide", () => {
     expect(source).toContain("active:scale-95");
     expect(source).toContain('aria-live="polite"');
   });
+
+  it("place la recherche sur la ligne d’actions et prend en charge le raccourci slash", () => {
+    expect(source).toContain('aria-keyshortcuts="/"');
+    expect(source).toContain("desktopNavSearchRef.current?.focus()");
+    expect(source).toContain("mobileNavSearchRef.current?.focus()");
+    expect(source).toContain('item.href !== "/evisas"');
+    expect(source).toContain('href="/evisas"');
+  });
 });

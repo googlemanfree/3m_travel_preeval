@@ -168,6 +168,8 @@ export default function Navbar() {
   const [logoLoaded, setLogoLoaded] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const profileTriggerRef = useRef<HTMLButtonElement>(null);
+  const desktopNavSearchRef = useRef<HTMLInputElement>(null);
+  const mobileNavSearchRef = useRef<HTMLInputElement>(null);
 
   const getInitial = (name: string | undefined) =>
     name ? name.charAt(0).toUpperCase() : "C";
@@ -220,6 +222,9 @@ export default function Navbar() {
           .includes(normalizedSearch)
       )
     : destinationQuickLinks;
+  const desktopMenuItems = filteredMenuItems.filter(
+    item => item.href !== "/evisas"
+  );
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -232,6 +237,24 @@ export default function Navbar() {
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
   }, [isMenuOpen, isProfileOpen]);
+
+  useEffect(() => {
+    const handleSearchShortcut = (event: KeyboardEvent) => {
+      if (event.key !== "/" || event.defaultPrevented) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.matches("input, textarea, select, [contenteditable='true']"))
+        return;
+      event.preventDefault();
+      if (window.matchMedia("(min-width: 1024px)").matches) {
+        desktopNavSearchRef.current?.focus();
+        return;
+      }
+      setIsMenuOpen(true);
+      window.requestAnimationFrame(() => mobileNavSearchRef.current?.focus());
+    };
+    window.addEventListener("keydown", handleSearchShortcut);
+    return () => window.removeEventListener("keydown", handleSearchShortcut);
+  }, []);
 
   return (
     <header
@@ -267,39 +290,45 @@ export default function Navbar() {
             <span className="sr-only">3M TRAVEL AGENCY</span>
           </a>
 
+          <form
+            action="/destinations"
+            method="get"
+            className="order-2 hidden min-w-0 max-w-[24rem] flex-1 items-center gap-2 rounded-xl border border-blue-100 bg-white px-3 py-1.5 shadow-sm transition duration-200 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-200 lg:flex"
+          >
+            <Search
+              className="h-4 w-4 shrink-0 text-blue-700"
+              aria-hidden="true"
+            />
+            <label className="sr-only" htmlFor="desktop-nav-search">
+              {copy(NAV_COPY.searchDestinations)}
+            </label>
+            <input
+              ref={desktopNavSearchRef}
+              id="desktop-nav-search"
+              name="search"
+              value={menuSearch}
+              onChange={event => setMenuSearch(event.target.value)}
+              placeholder={copy(NAV_COPY.searchPlaceholder)}
+              aria-keyshortcuts="/"
+              className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400"
+            />
+            <kbd className="hidden rounded-md border border-blue-100 bg-blue-50 px-1.5 py-0.5 text-[10px] font-black text-blue-700 xl:inline">
+              /
+            </kbd>
+            <button
+              type="submit"
+              aria-label={copy(NAV_COPY.searchSubmit)}
+              className="touch-target inline-flex h-9 min-h-9 w-9 items-center justify-center rounded-lg text-blue-700 transition duration-200 hover:-translate-y-0.5 hover:bg-blue-50 active:scale-95"
+            >
+              <Search className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </form>
+
           <nav
             aria-label={copy(NAV_COPY.mainNav)}
-            className="order-3 hidden min-w-0 basis-full items-center justify-between gap-0.5 overflow-x-auto rounded-2xl border border-gray-100/80 bg-gray-50/80 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:flex"
+            className="order-4 hidden min-w-0 basis-full items-center justify-between gap-0.5 overflow-x-auto rounded-2xl border border-gray-100/80 bg-gray-50/80 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:flex"
           >
-            <form
-              action="/destinations"
-              method="get"
-              className="hidden min-w-[13rem] max-w-[18rem] flex-1 items-center gap-2 rounded-xl border border-blue-100 bg-white px-3 py-1.5 shadow-sm transition duration-200 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-200 lg:flex"
-            >
-              <Search
-                className="h-4 w-4 shrink-0 text-blue-700"
-                aria-hidden="true"
-              />
-              <label className="sr-only" htmlFor="desktop-nav-search">
-                {copy(NAV_COPY.searchDestinations)}
-              </label>
-              <input
-                id="desktop-nav-search"
-                name="search"
-                value={menuSearch}
-                onChange={event => setMenuSearch(event.target.value)}
-                placeholder={copy(NAV_COPY.searchPlaceholder)}
-                className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400"
-              />
-              <button
-                type="submit"
-                aria-label={copy(NAV_COPY.searchSubmit)}
-                className="touch-target inline-flex h-9 min-h-9 w-9 items-center justify-center rounded-lg text-blue-700 transition duration-200 hover:-translate-y-0.5 hover:bg-blue-50 active:scale-95"
-              >
-                <Search className="h-4 w-4" aria-hidden="true" />
-              </button>
-            </form>
-            {filteredMenuItems.map(item => {
+            {desktopMenuItems.map(item => {
               const Icon = item.icon;
               return (
                 <a
@@ -322,7 +351,17 @@ export default function Navbar() {
             })}
           </nav>
 
-          <div className="order-2 ml-auto hidden flex-wrap items-center justify-end gap-1.5 lg:flex">
+          <div className="order-3 ml-auto hidden flex-wrap items-center justify-end gap-1.5 lg:flex">
+            <a
+              href="/evisas"
+              onMouseEnter={() => handleNavigationIntent("/evisas")}
+              onFocus={() => handleNavigationIntent("/evisas")}
+              onClick={handleNavigationClick}
+              aria-label={copy({ fr: "E-Visa", en: "e-Visa" })}
+              className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#c39231] to-[#e8c56f] px-3 text-sm font-black text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:from-[#b1832b] hover:to-[#d5a84b] hover:shadow-md active:scale-95"
+            >
+              <Smartphone className="h-4 w-4" aria-hidden="true" /> E-Visa
+            </a>
             <a
               href="/panier"
               onMouseEnter={() => handleNavigationIntent("/panier")}
@@ -604,11 +643,13 @@ export default function Navbar() {
                 </label>
                 <div className="flex min-h-12 items-center gap-2 rounded-xl border border-blue-100 bg-white px-3 transition duration-200 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200">
                   <input
+                    ref={mobileNavSearchRef}
                     id="mobile-nav-search"
                     name="search"
                     value={menuSearch}
                     onChange={event => setMenuSearch(event.target.value)}
                     placeholder={copy(NAV_COPY.searchPlaceholder)}
+                    aria-keyshortcuts="/"
                     className="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none placeholder:text-slate-400"
                   />
                   <button
