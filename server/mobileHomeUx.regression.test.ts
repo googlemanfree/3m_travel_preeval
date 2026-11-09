@@ -19,7 +19,7 @@ describe("UX mobile accueil — navigation, hero et zones tactiles", () => {
   it("garde un header téléphone compact sur une seule ligne", () => {
     expect(navbar).toContain("flex-nowrap items-center gap-x-2");
     expect(navbar).toContain("order-2 ml-auto flex shrink-0 items-center");
-    expect(navbar).toContain("<select value={language}");
+    expect(navbar.replace(/\s+/g, " ")).toContain("<select value={language}");
     expect(navbar).toContain("min-h-10 max-w-[8.5rem]");
     expect(navbar).toContain("FR · Français");
     expect(navbar).toContain("mobile-scroll-region max-h-[min(70dvh,calc(100dvh-4.5rem))]");
