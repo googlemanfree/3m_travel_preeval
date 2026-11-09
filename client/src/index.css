@@ -1597,3 +1597,46 @@ html.motion-disabled .live-marquee__track { animation: none !important; }
 }
 html.motion-disabled .journey-connectors > li::after { animation: none !important; }
 @media print { .journey-connectors > li::after { display: none; } }
+
+/* ── En-tête qui se resserre au défilement + retour au toucher sur les cartes ─────────────────────────────────────
+   Navbar.tsx pose data-scrolled="true" au-delà de 48 px de défilement (retour à "false" sous 4 px).
+   Le resserrement est une mise en page (jamais caché) ; seules les transitions sont soumises aux préférences de mouvement. */
+.premium-header[data-scrolled="true"] > div > div {
+  padding-block: 0.4rem;
+  row-gap: 0.3rem;
+}
+.premium-header[data-scrolled="true"] [data-testid="navbar-brand-wordmark"] img {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+.premium-header[data-scrolled="true"] {
+  box-shadow: 0 14px 34px -22px rgba(6, 26, 54, 0.9);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .premium-header > div > div {
+    transition: padding-block 220ms cubic-bezier(0.23, 1, 0.32, 1), row-gap 220ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .premium-header [data-testid="navbar-brand-wordmark"] img {
+    transition: width 220ms cubic-bezier(0.23, 1, 0.32, 1), height 220ms cubic-bezier(0.23, 1, 0.32, 1), transform 300ms ease;
+  }
+}
+html.motion-disabled .premium-header > div > div,
+html.motion-disabled .premium-header [data-testid="navbar-brand-wordmark"] img {
+  transition: none !important;
+}
+
+/* Écran tactile : la carte s'enfonce légèrement sous le doigt (le survol n'existe pas au toucher). */
+@media (hover: none) and (prefers-reduced-motion: no-preference) {
+  .secondary-page-surface .premium-surface,
+  .secondary-page-surface .glass-card {
+    transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 140ms ease;
+  }
+  .secondary-page-surface .premium-surface:not([class*="absolute"]):not([class*="fixed"]):not([class*="sticky"]):active,
+  .secondary-page-surface .glass-card:not([class*="absolute"]):not([class*="fixed"]):not([class*="sticky"]):active {
+    transform: scale(0.985);
+  }
+}
+html.motion-disabled .premium-surface:active,
+html.motion-disabled .glass-card:active {
+  transform: none !important;
+}

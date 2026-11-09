@@ -176,7 +176,28 @@ export default function Navbar() {
   const [recentSearchHrefs, setRecentSearchHrefs] = useState<string[]>([]);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [logoLoaded, setLogoLoaded] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
+
+  // En-tête qui se resserre dès qu'on quitte le haut de page (seuil avec hystérésis : pas de scintillement).
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      setScrolled(previous =>
+        previous ? window.scrollY > 4 : window.scrollY > 48
+      );
+    };
+    const onScroll = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, []);
   const profileTriggerRef = useRef<HTMLButtonElement>(null);
   const desktopNavSearchRef = useRef<HTMLInputElement>(null);
   const mobileNavSearchRef = useRef<HTMLInputElement>(null);
@@ -356,6 +377,7 @@ export default function Navbar() {
   return (
     <header
       data-testid="site-header"
+      data-scrolled={scrolled ? "true" : "false"}
       className="glass-nav premium-header tablet-compact-header sticky top-0 z-50 transition-all duration-200"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -391,7 +413,7 @@ export default function Navbar() {
             action="/destinations"
             method="get"
             onSubmit={rememberTypedSearch}
-            className={`relative order-2 hidden min-w-0 max-w-[24rem] flex-1 items-center gap-2 rounded-xl border border-blue-100 bg-white px-3 py-1.5 transition duration-200 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-200 lg:flex ${searchShortcutActive ? "scale-[1.02] border-[#c39231] shadow-[0_0_0_5px_rgba(195,146,49,0.18)]" : "shadow-sm"}`}
+            className={`relative order-2 hidden min-w-0 max-w-[24rem] flex-1 items-center gap-2 rounded-xl border border-blue-100 bg-white px-3 py-1.5 transition duration-200 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-200 lg:flex${searchShortcutActive ? "scale-[1.02] border-[#c39231] shadow-[0_0_0_5px_rgba(195,146,49,0.18)]" : "shadow-sm"}`}
           >
             <Search
               className="h-4 w-4 shrink-0 text-blue-700"

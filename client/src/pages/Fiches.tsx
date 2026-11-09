@@ -17,6 +17,7 @@ import { getAllResources, type PdfResource } from "@shared/pdfResources";
 import { getDestinationDetailForProcedure, isDestinationRecentlyUpdated } from "@/lib/publicDestinationCatalog";
 import { useLocation } from "wouter";
 import { PremiumCoverImage } from "@/components/PremiumCoverImage";
+import CountUp from "@/components/CountUp";
 import { getServiceVisual } from "@/data/premiumVisuals";
 
 const VISA_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
@@ -325,8 +326,8 @@ export default function Fiches() {
           <p className="text-lg text-blue-100 max-w-3xl mb-6">
             Toutes les informations extraites de nos documents officiels — conditions d'éligibilité,
             documents requis, étapes, délais, coûts et conseils pratiques pour{" "}
-            <strong className="text-white">{dedupedData.length} procédures</strong> dans{" "}
-            <strong className="text-white">{countries.length - 1} pays</strong>.
+            <strong className="text-white"><CountUp value={dedupedData.length} /> procédures</strong> dans{" "}
+            <strong className="text-white"><CountUp value={countries.length - 1} /> pays</strong>.
           </p>
           <div className="flex flex-wrap gap-3">
             {Object.entries(typeStats).map(([type, count]) => {
