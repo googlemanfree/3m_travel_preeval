@@ -51,4 +51,18 @@ describe("Navbar avec icônes Lucide", () => {
     expect(source).toContain('item.href !== "/evisas"');
     expect(source).toContain('href="/evisas"');
   });
+
+  it("propose des destinations populaires en autocomplétion", () => {
+    expect(source).toContain("desktopSuggestions");
+    expect(source).toContain('role="listbox"');
+    expect(source).toContain('role="option"');
+    expect(source).toContain("popularDestinations");
+  });
+
+  it("anime le ciblage slash et distingue visuellement E-Visa au survol", () => {
+    expect(source).toContain("searchShortcutActive");
+    expect(source).toContain("rgba(195,146,49,0.18)");
+    expect(source).toContain("hover:scale-[1.03]");
+    expect(source).toContain("group-hover:rotate-6");
+  });
 });

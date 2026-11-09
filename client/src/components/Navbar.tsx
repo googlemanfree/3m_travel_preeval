@@ -144,6 +144,10 @@ const NAV_COPY = {
   },
   searchSubmit: { fr: "Lancer la recherche", en: "Run search" },
   searchResults: { fr: "Résultats de navigation", en: "Navigation results" },
+  popularDestinations: {
+    fr: "Destinations populaires",
+    en: "Popular destinations",
+  },
   searchEmpty: { fr: "Aucun lien correspondant", en: "No matching link" },
 } satisfies Record<string, NavCopy>;
 
@@ -165,6 +169,8 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [menuSearch, setMenuSearch] = useState("");
+  const [isDesktopSearchFocused, setIsDesktopSearchFocused] = useState(false);
+  const [searchShortcutActive, setSearchShortcutActive] = useState(false);
   const [logoLoaded, setLogoLoaded] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const profileTriggerRef = useRef<HTMLButtonElement>(null);
@@ -225,6 +231,18 @@ export default function Navbar() {
   const desktopMenuItems = filteredMenuItems.filter(
     item => item.href !== "/evisas"
   );
+  const desktopSuggestions = matchingDestinations.slice(0, 5);
+
+  const focusSearchFromShortcut = () => {
+    setSearchShortcutActive(true);
+    window.setTimeout(() => setSearchShortcutActive(false), 650);
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      desktopNavSearchRef.current?.focus();
+      return;
+    }
+    setIsMenuOpen(true);
+    window.requestAnimationFrame(() => mobileNavSearchRef.current?.focus());
+  };
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -245,12 +263,7 @@ export default function Navbar() {
       if (target?.matches("input, textarea, select, [contenteditable='true']"))
         return;
       event.preventDefault();
-      if (window.matchMedia("(min-width: 1024px)").matches) {
-        desktopNavSearchRef.current?.focus();
-        return;
-      }
-      setIsMenuOpen(true);
-      window.requestAnimationFrame(() => mobileNavSearchRef.current?.focus());
+      focusSearchFromShortcut();
     };
     window.addEventListener("keydown", handleSearchShortcut);
     return () => window.removeEventListener("keydown", handleSearchShortcut);
@@ -293,7 +306,7 @@ export default function Navbar() {
           <form
             action="/destinations"
             method="get"
-            className="order-2 hidden min-w-0 max-w-[24rem] flex-1 items-center gap-2 rounded-xl border border-blue-100 bg-white px-3 py-1.5 shadow-sm transition duration-200 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-200 lg:flex"
+            className={`relative order-2 hidden min-w-0 max-w-[24rem] flex-1 items-center gap-2 rounded-xl border border-blue-100 bg-white px-3 py-1.5 transition duration-200 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-200 lg:flex ${searchShortcutActive ? "scale-[1.02] border-[#c39231] shadow-[0_0_0_5px_rgba(195,146,49,0.18)]" : "shadow-sm"}`}
           >
             <Search
               className="h-4 w-4 shrink-0 text-blue-700"
@@ -308,6 +321,10 @@ export default function Navbar() {
               name="search"
               value={menuSearch}
               onChange={event => setMenuSearch(event.target.value)}
+              onFocus={() => setIsDesktopSearchFocused(true)}
+              onBlur={() =>
+                window.setTimeout(() => setIsDesktopSearchFocused(false), 120)
+              }
               placeholder={copy(NAV_COPY.searchPlaceholder)}
               aria-keyshortcuts="/"
               className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400"
@@ -322,6 +339,40 @@ export default function Navbar() {
             >
               <Search className="h-4 w-4" aria-hidden="true" />
             </button>
+            {isDesktopSearchFocused && (
+              <div
+                role="listbox"
+                aria-label={copy(NAV_COPY.searchResults)}
+                className="absolute left-0 right-0 top-[calc(100%+0.55rem)] z-[60] rounded-2xl border border-blue-100 bg-white/98 p-2 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-top-1 duration-150"
+              >
+                <p className="px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">
+                  {menuSearch
+                    ? copy(NAV_COPY.searchResults)
+                    : copy(NAV_COPY.popularDestinations)}
+                </p>
+                {desktopSuggestions.map(item => (
+                  <a
+                    key={item.href}
+                    role="option"
+                    href={item.href}
+                    onMouseDown={event => event.preventDefault()}
+                    onClick={handleNavigationClick}
+                    className="flex min-h-11 items-center justify-between rounded-xl px-3 py-2 text-sm font-bold text-slate-700 transition duration-150 hover:-translate-y-0.5 hover:bg-blue-50 hover:text-blue-800 active:scale-[0.98]"
+                  >
+                    <span>{copy(item.label)}</span>
+                    <MapPin
+                      className="h-4 w-4 text-blue-500"
+                      aria-hidden="true"
+                    />
+                  </a>
+                ))}
+                {!desktopSuggestions.length && (
+                  <span className="block px-2 py-2 text-sm font-semibold text-slate-500">
+                    {copy(NAV_COPY.searchEmpty)}
+                  </span>
+                )}
+              </div>
+            )}
           </form>
 
           <nav
@@ -358,9 +409,13 @@ export default function Navbar() {
               onFocus={() => handleNavigationIntent("/evisas")}
               onClick={handleNavigationClick}
               aria-label={copy({ fr: "E-Visa", en: "e-Visa" })}
-              className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#c39231] to-[#e8c56f] px-3 text-sm font-black text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:from-[#b1832b] hover:to-[#d5a84b] hover:shadow-md active:scale-95"
+              className="group inline-flex h-12 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#b98525] via-[#d5a84b] to-[#f0d88f] px-3 text-sm font-black text-white shadow-[0_8px_18px_-10px_rgba(195,146,49,0.85)] ring-1 ring-[#f4dc9c]/70 transition duration-200 hover:-translate-y-0.5 hover:scale-[1.03] hover:from-[#9f6f16] hover:via-[#c39231] hover:to-[#e8c56f] hover:shadow-[0_12px_24px_-10px_rgba(159,111,22,0.9)] focus-visible:ring-2 focus-visible:ring-[#c39231] active:scale-[0.98]"
             >
-              <Smartphone className="h-4 w-4" aria-hidden="true" /> E-Visa
+              <Smartphone
+                className="h-4 w-4 transition-transform duration-200 group-hover:rotate-6"
+                aria-hidden="true"
+              />{" "}
+              E-Visa
             </a>
             <a
               href="/panier"
@@ -632,7 +687,7 @@ export default function Navbar() {
               <form
                 action="/destinations"
                 method="get"
-                className="mb-4 space-y-2 rounded-2xl border border-blue-100 bg-blue-50/70 p-3 shadow-sm transition duration-200 focus-within:border-blue-400 focus-within:bg-white focus-within:shadow-md"
+                className={`mb-4 space-y-2 rounded-2xl border border-blue-100 bg-blue-50/70 p-3 transition duration-200 focus-within:border-blue-400 focus-within:bg-white focus-within:shadow-md ${searchShortcutActive ? "scale-[1.015] border-[#c39231] shadow-[0_0_0_5px_rgba(195,146,49,0.18)]" : "shadow-sm"}`}
               >
                 <label
                   className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.08em] text-blue-900"
