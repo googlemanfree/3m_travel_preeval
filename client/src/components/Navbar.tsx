@@ -144,6 +144,7 @@ const NAV_COPY = {
   },
   searchSubmit: { fr: "Lancer la recherche", en: "Run search" },
   searchResults: { fr: "Résultats de navigation", en: "Navigation results" },
+  recentSearches: { fr: "Recherches récentes", en: "Recent searches" },
   popularDestinations: {
     fr: "Destinations populaires",
     en: "Popular destinations",
@@ -170,7 +171,10 @@ export default function Navbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [menuSearch, setMenuSearch] = useState("");
   const [isDesktopSearchFocused, setIsDesktopSearchFocused] = useState(false);
+  const [isMobileSearchFocused, setIsMobileSearchFocused] = useState(false);
   const [searchShortcutActive, setSearchShortcutActive] = useState(false);
+  const [recentSearchHrefs, setRecentSearchHrefs] = useState<string[]>([]);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [logoLoaded, setLogoLoaded] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const profileTriggerRef = useRef<HTMLButtonElement>(null);
@@ -228,10 +232,90 @@ export default function Navbar() {
           .includes(normalizedSearch)
       )
     : destinationQuickLinks;
+  const recentDestinations = recentSearchHrefs.map(href => {
+    const knownDestination = destinationQuickLinks.find(
+      item => item.href === href
+    );
+    if (knownDestination) return knownDestination;
+    const encodedTerm = href.match(/[?&]search=([^&]+)/)?.[1];
+    const term = encodedTerm
+      ? decodeURIComponent(encodedTerm.replace(/\+/g, " "))
+      : href;
+    return { href, label: { fr: term, en: term } };
+  });
+  const suggestionDestinations = normalizedSearch
+    ? matchingDestinations
+    : [
+        ...recentDestinations,
+        ...destinationQuickLinks.filter(
+          item => !recentSearchHrefs.includes(item.href)
+        ),
+      ];
   const desktopMenuItems = filteredMenuItems.filter(
     item => item.href !== "/evisas"
   );
-  const desktopSuggestions = matchingDestinations.slice(0, 5);
+  const desktopSuggestions = suggestionDestinations.slice(0, 5);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(
+        "3m-recent-destination-searches"
+      );
+      if (stored) setRecentSearchHrefs(JSON.parse(stored));
+    } catch {
+      // Le header reste utilisable si le stockage local est indisponible.
+    }
+  }, []);
+
+  const rememberSearch = (href: string) => {
+    setRecentSearchHrefs(previous => {
+      const next = [href, ...previous.filter(item => item !== href)].slice(
+        0,
+        5
+      );
+      try {
+        window.localStorage.setItem(
+          "3m-recent-destination-searches",
+          JSON.stringify(next)
+        );
+      } catch {
+        // Le stockage local peut être bloqué par le navigateur.
+      }
+      return next;
+    });
+  };
+
+  const selectSuggestion = (href: string) => {
+    rememberSearch(href);
+    handleNavigationClick();
+    window.location.assign(href);
+  };
+
+  const handleSearchKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (!desktopSuggestions.length) return;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveSuggestionIndex(
+        index => (index + 1) % desktopSuggestions.length
+      );
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveSuggestionIndex(index =>
+        index <= 0 ? desktopSuggestions.length - 1 : index - 1
+      );
+    } else if (event.key === "Enter" && activeSuggestionIndex >= 0) {
+      event.preventDefault();
+      selectSuggestion(desktopSuggestions[activeSuggestionIndex].href);
+    }
+  };
+
+  const rememberTypedSearch = () => {
+    const term = menuSearch.trim();
+    if (term)
+      rememberSearch(`/destinations?search=${encodeURIComponent(term)}`);
+  };
 
   const focusSearchFromShortcut = () => {
     setSearchShortcutActive(true);
@@ -306,6 +390,7 @@ export default function Navbar() {
           <form
             action="/destinations"
             method="get"
+            onSubmit={rememberTypedSearch}
             className={`relative order-2 hidden min-w-0 max-w-[24rem] flex-1 items-center gap-2 rounded-xl border border-blue-100 bg-white px-3 py-1.5 transition duration-200 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-200 lg:flex ${searchShortcutActive ? "scale-[1.02] border-[#c39231] shadow-[0_0_0_5px_rgba(195,146,49,0.18)]" : "shadow-sm"}`}
           >
             <Search
@@ -320,13 +405,26 @@ export default function Navbar() {
               id="desktop-nav-search"
               name="search"
               value={menuSearch}
-              onChange={event => setMenuSearch(event.target.value)}
-              onFocus={() => setIsDesktopSearchFocused(true)}
+              onChange={event => {
+                setMenuSearch(event.target.value);
+                setActiveSuggestionIndex(-1);
+              }}
+              onKeyDown={handleSearchKeyDown}
+              onFocus={() => {
+                setIsDesktopSearchFocused(true);
+                setActiveSuggestionIndex(-1);
+              }}
               onBlur={() =>
                 window.setTimeout(() => setIsDesktopSearchFocused(false), 120)
               }
               placeholder={copy(NAV_COPY.searchPlaceholder)}
               aria-keyshortcuts="/"
+              aria-controls="desktop-nav-suggestions"
+              aria-activedescendant={
+                activeSuggestionIndex >= 0
+                  ? `desktop-nav-suggestion-${activeSuggestionIndex}`
+                  : undefined
+              }
               className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400"
             />
             <kbd className="hidden rounded-md border border-blue-100 bg-blue-50 px-1.5 py-0.5 text-[10px] font-black text-blue-700 xl:inline">
@@ -342,22 +440,31 @@ export default function Navbar() {
             {isDesktopSearchFocused && (
               <div
                 role="listbox"
+                id="desktop-nav-suggestions"
                 aria-label={copy(NAV_COPY.searchResults)}
                 className="absolute left-0 right-0 top-[calc(100%+0.55rem)] z-[60] rounded-2xl border border-blue-100 bg-white/98 p-2 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-top-1 duration-150"
               >
                 <p className="px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">
                   {menuSearch
                     ? copy(NAV_COPY.searchResults)
-                    : copy(NAV_COPY.popularDestinations)}
+                    : recentDestinations.length
+                      ? copy(NAV_COPY.recentSearches)
+                      : copy(NAV_COPY.popularDestinations)}
                 </p>
-                {desktopSuggestions.map(item => (
+                {desktopSuggestions.map((item, index) => (
                   <a
                     key={item.href}
+                    id={`desktop-nav-suggestion-${index}`}
                     role="option"
+                    aria-selected={activeSuggestionIndex === index}
                     href={item.href}
                     onMouseDown={event => event.preventDefault()}
-                    onClick={handleNavigationClick}
-                    className="flex min-h-11 items-center justify-between rounded-xl px-3 py-2 text-sm font-bold text-slate-700 transition duration-150 hover:-translate-y-0.5 hover:bg-blue-50 hover:text-blue-800 active:scale-[0.98]"
+                    onMouseEnter={() => setActiveSuggestionIndex(index)}
+                    onClick={() => {
+                      rememberSearch(item.href);
+                      handleNavigationClick();
+                    }}
+                    className={`flex min-h-11 items-center justify-between rounded-xl px-3 py-2 text-sm font-bold text-slate-700 transition duration-150 hover:-translate-y-0.5 hover:bg-blue-50 hover:text-blue-800 active:scale-[0.98] ${activeSuggestionIndex === index ? "bg-blue-50 text-blue-800 ring-1 ring-blue-200" : ""}`}
                   >
                     <span>{copy(item.label)}</span>
                     <MapPin
@@ -687,6 +794,7 @@ export default function Navbar() {
               <form
                 action="/destinations"
                 method="get"
+                onSubmit={rememberTypedSearch}
                 className={`mb-4 space-y-2 rounded-2xl border border-blue-100 bg-blue-50/70 p-3 transition duration-200 focus-within:border-blue-400 focus-within:bg-white focus-within:shadow-md ${searchShortcutActive ? "scale-[1.015] border-[#c39231] shadow-[0_0_0_5px_rgba(195,146,49,0.18)]" : "shadow-sm"}`}
               >
                 <label
@@ -702,9 +810,29 @@ export default function Navbar() {
                     id="mobile-nav-search"
                     name="search"
                     value={menuSearch}
-                    onChange={event => setMenuSearch(event.target.value)}
+                    onChange={event => {
+                      setMenuSearch(event.target.value);
+                      setActiveSuggestionIndex(-1);
+                    }}
+                    onKeyDown={handleSearchKeyDown}
+                    onFocus={() => {
+                      setIsMobileSearchFocused(true);
+                      setActiveSuggestionIndex(-1);
+                    }}
+                    onBlur={() =>
+                      window.setTimeout(
+                        () => setIsMobileSearchFocused(false),
+                        120
+                      )
+                    }
                     placeholder={copy(NAV_COPY.searchPlaceholder)}
                     aria-keyshortcuts="/"
+                    aria-controls="mobile-nav-suggestions"
+                    aria-activedescendant={
+                      activeSuggestionIndex >= 0
+                        ? `mobile-nav-suggestion-${activeSuggestionIndex}`
+                        : undefined
+                    }
                     className="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none placeholder:text-slate-400"
                   />
                   <button
@@ -715,21 +843,28 @@ export default function Navbar() {
                     <Search className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </div>
-                {normalizedSearch && (
+                {(isMobileSearchFocused || normalizedSearch) && (
                   <div
+                    id="mobile-nav-suggestions"
+                    role="listbox"
                     aria-live="polite"
                     aria-label={copy(NAV_COPY.searchResults)}
                     className="flex flex-wrap gap-2"
                   >
-                    {matchingDestinations.map(item => (
+                    {suggestionDestinations.map((item, index) => (
                       <a
                         key={item.href}
+                        id={`mobile-nav-suggestion-${index}`}
+                        role="option"
+                        aria-selected={activeSuggestionIndex === index}
                         href={item.href}
                         onClick={() => {
+                          rememberSearch(item.href);
                           handleNavigationClick();
                           closeMenu();
                         }}
-                        className="min-h-11 rounded-full border border-blue-200 bg-white px-3 py-2 text-sm font-bold text-blue-800 transition duration-200 hover:-translate-y-0.5 hover:border-blue-500 hover:bg-blue-50 active:scale-95"
+                        onMouseEnter={() => setActiveSuggestionIndex(index)}
+                        className={`min-h-11 rounded-full border border-blue-200 bg-white px-3 py-2 text-sm font-bold text-blue-800 transition duration-200 hover:-translate-y-0.5 hover:border-blue-500 hover:bg-blue-50 active:scale-95 ${activeSuggestionIndex === index ? "border-blue-500 bg-blue-50 ring-1 ring-blue-200" : ""}`}
                       >
                         {copy(item.label)}
                       </a>

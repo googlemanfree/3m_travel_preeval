@@ -65,4 +65,19 @@ describe("Navbar avec icônes Lucide", () => {
     expect(source).toContain("hover:scale-[1.03]");
     expect(source).toContain("group-hover:rotate-6");
   });
+
+  it("permet de parcourir les suggestions au clavier et de valider avec Entrée", () => {
+    expect(source).toContain('event.key === "ArrowDown"');
+    expect(source).toContain('event.key === "ArrowUp"');
+    expect(source).toContain('event.key === "Enter"');
+    expect(source).toContain("activeSuggestionIndex");
+    expect(source).toContain("aria-activedescendant");
+  });
+
+  it("mémorise les recherches récentes sans bloquer le navigateur", () => {
+    expect(source).toContain("3m-recent-destination-searches");
+    expect(source).toContain("localStorage.setItem");
+    expect(source).toContain("recentSearches");
+    expect(source).toContain("rememberTypedSearch");
+  });
 });
