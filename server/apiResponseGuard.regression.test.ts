@@ -24,6 +24,20 @@ describe("garde-fou des réponses API", () => {
     expect(await response.json()).toEqual([{ result: { data: { json: { candidate: { id: 7 } } } } }]);
   });
 
+  it("ré-encapsule aussi un JSON brut servi avec un Content-Type texte", async () => {
+    const response = await normalizeApiResponse(new Response('{"candidate":{"id":7}}', {
+      status: 200,
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    }));
+    expect(response.headers.get("content-type")).toContain("application/json");
+    expect(await response.json()).toEqual([{ result: { data: { json: { candidate: { id: 7 } } } } }]);
+  });
+
+  it("ré-encapsule un JSON brut sans Content-Type", async () => {
+    const response = await normalizeApiResponse(new Response('{"candidate":{"id":7}}', { status: 200 }));
+    expect(await response.json()).toEqual([{ result: { data: { json: { candidate: { id: 7 } } } } }]);
+  });
+
   it("laisse passer une réponse JSON valide sans la modifier", async () => {
     const response = new Response('{"result":{"data":null}}', {
       status: 200,

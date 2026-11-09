@@ -231,6 +231,10 @@ const trpcClient = trpc.createClient({
               ...(init ?? {}),
               credentials: "include",
               cache: "no-store",
+              headers: {
+                ...(init?.headers ?? {}),
+                Accept: "application/json",
+              },
             });
             return normalizeApiResponse(response);
           } catch (error) {
