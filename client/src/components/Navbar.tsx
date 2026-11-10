@@ -413,7 +413,7 @@ export default function Navbar() {
             action="/destinations"
             method="get"
             onSubmit={rememberTypedSearch}
-            className={`relative order-2 hidden min-w-0 max-w-[24rem] flex-1 items-center gap-2 rounded-xl border border-blue-100 bg-white px-3 py-1.5 transition duration-200 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-200 lg:flex${searchShortcutActive ? "scale-[1.02] border-[#c39231] shadow-[0_0_0_5px_rgba(195,146,49,0.18)]" : "shadow-sm"}`}
+            className={`relative order-2 hidden min-w-0 max-w-[24rem] flex-1 items-center gap-2 rounded-xl border border-blue-100 bg-white px-3 py-1.5 transition duration-200 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-200 md:flex ${searchShortcutActive ? "scale-[1.02] border-[#c39231] shadow-[0_0_0_5px_rgba(195,146,49,0.18)]" : "shadow-sm"}`}
           >
             <Search
               className="h-4 w-4 shrink-0 text-blue-700"
@@ -758,6 +758,42 @@ export default function Navbar() {
             </motion.button>
           </div>
         </div>
+      </div>
+
+      <div className="border-t border-blue-100/70 bg-white/90 px-4 py-2.5 shadow-sm backdrop-blur-xl md:hidden dark:border-white/10 dark:bg-slate-950/90">
+        <form
+          action="/destinations"
+          method="get"
+          onSubmit={rememberTypedSearch}
+          className={`flex min-h-12 items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50/70 px-3 transition duration-200 focus-within:border-blue-400 focus-within:bg-white focus-within:shadow-md ${searchShortcutActive ? "scale-[1.015] border-[#c39231] shadow-[0_0_0_5px_rgba(195,146,49,0.18)]" : "shadow-sm"}`}
+        >
+          <Search
+            className="h-4 w-4 shrink-0 text-blue-700"
+            aria-hidden="true"
+          />
+          <label className="sr-only" htmlFor="mobile-visible-nav-search">
+            {copy(NAV_COPY.searchDestinations)}
+          </label>
+          <input
+            id="mobile-visible-nav-search"
+            name="search"
+            value={menuSearch}
+            onChange={event => {
+              setMenuSearch(event.target.value);
+              setActiveSuggestionIndex(-1);
+            }}
+            placeholder={copy(NAV_COPY.searchPlaceholder)}
+            aria-keyshortcuts="/"
+            className="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none placeholder:text-slate-400"
+          />
+          <button
+            type="submit"
+            aria-label={copy(NAV_COPY.searchSubmit)}
+            className="touch-target inline-flex h-10 min-h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-700 text-white transition duration-200 hover:bg-blue-800 active:scale-95"
+          >
+            <Search className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </form>
       </div>
 
       <AnimatePresence>
