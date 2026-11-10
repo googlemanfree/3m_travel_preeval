@@ -80,4 +80,10 @@ describe("Navbar avec icônes Lucide", () => {
     expect(source).toContain("recentSearches");
     expect(source).toContain("rememberTypedSearch");
   });
+
+  it("affiche une inscription directement dans la barre mobile", () => {
+    expect(source).toContain('href="/register"');
+    expect(source).toContain("aria-label={copy(NAV_COPY.register)}");
+    expect(source).toContain("sm:text-xs");
+  });
 });

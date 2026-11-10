@@ -13,7 +13,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import React from "react";
 import { useLocation } from "wouter";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
-import { CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, FileText, LoaderCircle, MailCheck, MessageCircleMore, Pencil, ShieldCheck, Sparkles, UploadCloud } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, FileText, LoaderCircle, Lock, LogIn, MailCheck, MessageCircleMore, Pencil, ShieldCheck, Sparkles, UploadCloud, UserPlus } from "lucide-react";
 import { CountrySelect } from "@/components/CountryPicker";
 import { DynamicFormSections } from "@/components/DynamicFormSections";
 import { DynamicProjectChoice } from "@/components/DynamicProjectChoice";
@@ -153,7 +153,7 @@ export function visaTypeFor(project: ProjectType, country: string): string {
   return "autre";
 }
 
-export function SimpleMultiProjectForm() {
+function AuthenticatedSimpleMultiProjectForm() {
   const [location, setLocation] = useLocation();
   const { isAuthenticated, candidate } = useCandidateAuth();
   const searchParams = new URLSearchParams(location.split("?")[1] || "");
@@ -554,6 +554,57 @@ export function SimpleMultiProjectForm() {
         <p className="mt-5 text-center text-sm text-slate-600">Évaluation gratuite · Réponse sous 24 h ouvrées · Informations confidentielles</p>
       </Card>
     </motion.div>
+  );
+}
+
+export function SimpleMultiProjectForm() {
+  const [location] = useLocation();
+  const { isAuthenticated } = useCandidateAuth();
+
+  if (isAuthenticated) {
+    return <AuthenticatedSimpleMultiProjectForm />;
+  }
+
+  const returnPath = typeof window === "undefined"
+    ? "/#evaluation-multi"
+    : `${window.location.pathname}${window.location.search}#evaluation-multi`;
+  const encodedReturnPath = encodeURIComponent(returnPath || `${location}#evaluation-multi`);
+
+  return (
+    <section
+      aria-labelledby="evaluation-registration-gate-title"
+      data-testid="evaluation-registration-gate"
+      className="mx-auto w-full max-w-3xl rounded-3xl border border-blue-100 bg-white p-5 text-center shadow-xl shadow-blue-900/10 sm:p-8"
+    >
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+        <Lock className="h-7 w-7" aria-hidden="true" />
+      </div>
+      <h2 id="evaluation-registration-gate-title" className="mt-4 text-xl font-black text-slate-950 sm:text-2xl">
+        Créez votre compte avant de commencer
+      </h2>
+      <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+        L’évaluation complète nécessite un espace candidat sécurisé. Inscrivez-vous ou connectez-vous pour répondre à toutes les étapes, déposer les pièces demandées et suivre votre bilan.
+      </p>
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <a
+          href={`/register?from=${encodedReturnPath}`}
+          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-700 px-5 py-3 text-sm font-black text-white shadow-md transition hover:-translate-y-0.5 hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 active:scale-95"
+        >
+          <UserPlus className="h-4 w-4" aria-hidden="true" />
+          Créer mon compte
+        </a>
+        <a
+          href={`/login?redirect=1&from=${encodedReturnPath}`}
+          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 border-blue-700 px-5 py-3 text-sm font-black text-blue-800 transition hover:-translate-y-0.5 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 active:scale-95"
+        >
+          <LogIn className="h-4 w-4" aria-hidden="true" />
+          Se connecter
+        </a>
+      </div>
+      <p className="mt-4 text-xs leading-5 text-slate-500">
+        Aucun dossier d’évaluation ne peut être commencé ou envoyé sans compte candidat.
+      </p>
+    </section>
   );
 }
 
