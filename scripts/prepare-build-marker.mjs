@@ -9,6 +9,7 @@ const commitPattern = /^[0-9a-f]{7,40}$/i;
 function firstCommitFromEnv() {
   for (const key of [
     "PUBLIC_BUILD_COMMIT",
+    "RAILWAY_GIT_COMMIT_SHA",
     "GIT_COMMIT",
     "SOURCE_COMMIT",
     "COMMIT_SHA",

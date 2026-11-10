@@ -111,7 +111,7 @@ export function readCommitFromGitFiles(root: string, fsApi: { existsSync(p: stri
 
 /** Commit fourni par la plateforme de déploiement, quand elle l'expose dans l'environnement. */
 export function commitFromEnv(env: Record<string, string | undefined>): string | undefined {
-  for (const key of ["GIT_COMMIT", "SOURCE_COMMIT", "COMMIT_SHA", "GITHUB_SHA", "VERCEL_GIT_COMMIT_SHA", "RENDER_GIT_COMMIT"]) {
+  for (const key of ["RAILWAY_GIT_COMMIT_SHA", "GIT_COMMIT", "SOURCE_COMMIT", "COMMIT_SHA", "GITHUB_SHA", "VERCEL_GIT_COMMIT_SHA", "RENDER_GIT_COMMIT"]) {
     const value = env[key]?.trim();
     if (value && COMMIT_ONLY.test(value)) return value.slice(0, 8);
   }
