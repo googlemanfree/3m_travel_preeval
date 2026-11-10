@@ -13,8 +13,12 @@ describe("récupération globale des chunks et du cache client", () => {
     expect(helper).toContain("export async function clearStaleClientCaches");
     expect(helper).toContain("serviceWorker?.getRegistrations?.()");
     expect(helper).toContain("caches.keys()");
-    expect(boundary).toContain("await clearStaleClientCaches()");
-    expect(bootstrap).toContain("clearStaleClientCaches().finally(() => window.location.reload())");
+    expect(helper).toContain("reloadAfterChunkFailure");
+    expect(helper).toContain('__chunk_recovery');
+    expect(helper).toContain("clearChunkReloadAttempt");
+    expect(boundary).toContain("reloadAfterChunkFailure()");
+    expect(bootstrap).toContain("reloadAfterChunkFailure()");
+    expect(bootstrap).toContain("clearChunkReloadAttempt()");
   });
 
   it("n’affiche plus un diagnostic trompeur de mise à jour obligatoire", () => {
@@ -25,4 +29,3 @@ describe("récupération globale des chunks et du cache client", () => {
 });
 
 export {};
-

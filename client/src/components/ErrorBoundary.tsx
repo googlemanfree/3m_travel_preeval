@@ -1,6 +1,6 @@
 import { AlertTriangle, RotateCcw, PhoneCall, MessageCircle } from "lucide-react";
 import { Component, ReactNode } from "react";
-import { CHUNK_RELOAD_NOTICE_KEY, clearStaleClientCaches } from "@/lib/lazyWithTimeout";
+import { CHUNK_RELOAD_FLAG_KEY, reloadAfterChunkFailure } from "@/lib/lazyWithTimeout";
 
 interface Props {
   children: ReactNode;
@@ -21,18 +21,6 @@ function isChunkLoadError(error: Error): boolean {
   );
 }
 
-const RELOAD_FLAG_KEY = "3m_chunk_error_reload_attempted";
-
-async function reloadPageAfterChunkFailure() {
-  try {
-    sessionStorage.setItem(CHUNK_RELOAD_NOTICE_KEY, "network");
-  } catch {
-    // Le rechargement reste possible si le stockage est indisponible.
-  }
-  await clearStaleClientCaches();
-  window.location.reload();
-}
-
 class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -46,17 +34,17 @@ class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error) {
     if (isChunkLoadError(error)) {
       try {
-        const alreadyAttempted = sessionStorage.getItem(RELOAD_FLAG_KEY);
+        const alreadyAttempted = sessionStorage.getItem(CHUNK_RELOAD_FLAG_KEY);
         if (!alreadyAttempted) {
-          sessionStorage.setItem(RELOAD_FLAG_KEY, "1");
-          void reloadPageAfterChunkFailure();
+          sessionStorage.setItem(CHUNK_RELOAD_FLAG_KEY, "1");
+          void reloadAfterChunkFailure();
         }
       } catch {
-        void reloadPageAfterChunkFailure();
+        void reloadAfterChunkFailure();
       }
     } else {
       try {
-        sessionStorage.removeItem(RELOAD_FLAG_KEY);
+        sessionStorage.removeItem(CHUNK_RELOAD_FLAG_KEY);
       } catch {
         // Le stockage de session peut être indisponible en mode privé.
       }
@@ -67,7 +55,7 @@ class ErrorBoundary extends Component<Props, State> {
     try {
       // Autorise une nouvelle tentative manuelle tout en conservant la limite
       // d’un seul rechargement automatique par session.
-      sessionStorage.removeItem(RELOAD_FLAG_KEY);
+      sessionStorage.removeItem(CHUNK_RELOAD_FLAG_KEY);
     } catch {
       // Le navigateur peut bloquer le stockage en mode privé.
     }
@@ -75,7 +63,7 @@ class ErrorBoundary extends Component<Props, State> {
       this.setState({ hasError: false, error: null });
       return;
     }
-    void reloadPageAfterChunkFailure();
+    void reloadAfterChunkFailure();
   };
 
   render() {

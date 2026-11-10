@@ -25,8 +25,8 @@ describe("chunk recovery feedback contracts", () => {
 
     expect(boundary).toContain("handleManualRetry");
     expect(boundary).toContain("Réessayer la page");
-    expect(boundary).toContain("CHUNK_RELOAD_NOTICE_KEY");
-    expect(boundary).toContain("reloadPageAfterChunkFailure");
+    expect(boundary).toContain("CHUNK_RELOAD_FLAG_KEY");
+    expect(boundary).toContain("reloadAfterChunkFailure");
   });
 
   it("notifies before and after a network-triggered reload", () => {
@@ -35,7 +35,7 @@ describe("chunk recovery feedback contracts", () => {
     const app = readProjectFile("client/src/App.tsx");
 
     expect(main).toContain('toast.info("Problème réseau détecté"');
-    expect(main).toContain("CHUNK_RELOAD_NOTICE_KEY");
+    expect(main).toContain("reloadAfterChunkFailure");
     expect(notice).toContain("Rechargement automatique terminé");
     expect(notice).toContain("problème réseau");
     expect(app).toContain("<ChunkReloadNotice />");

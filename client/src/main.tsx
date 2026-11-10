@@ -7,7 +7,7 @@ import superjson from "superjson";
 
 import App from "./App";
 import { toast } from "sonner";
-import { CHUNK_RELOAD_NOTICE_KEY, clearStaleClientCaches } from "./lib/lazyWithTimeout";
+import { CHUNK_RELOAD_FLAG_KEY, reloadAfterChunkFailure, clearChunkReloadAttempt, clearStaleClientCaches } from "./lib/lazyWithTimeout";
 import { startLogin } from "./const";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { translateApiErrorMessage } from "./lib/apiErrorTranslator";
@@ -41,15 +41,14 @@ window.addEventListener("unhandledrejection", (event) => {
     /dynamically imported module/i.test(message);
 
   if (isChunkError) {
-    const alreadyAttempted = sessionStorage.getItem("3m_chunk_error_reload_attempted");
+    const alreadyAttempted = sessionStorage.getItem(CHUNK_RELOAD_FLAG_KEY);
     if (!alreadyAttempted) {
-      sessionStorage.setItem("3m_chunk_error_reload_attempted", "1");
-      sessionStorage.setItem(CHUNK_RELOAD_NOTICE_KEY, "network");
+      sessionStorage.setItem(CHUNK_RELOAD_FLAG_KEY, "1");
       toast.info("Problème réseau détecté", {
         description: "Une page n’a pas pu être chargée. Rechargement automatique en cours…",
         duration: 5000,
       });
-      void clearStaleClientCaches().finally(() => window.location.reload());
+      void reloadAfterChunkFailure();
     }
   }
 });
@@ -263,6 +262,7 @@ createRoot(document.getElementById("root")!).render(
 // Signale que React a pris la main : le CSS peut alors masquer le pré-rendu SEO
 // sans laisser une page blanche pendant le téléchargement du bundle.
 requestAnimationFrame(() => {
+  clearChunkReloadAttempt();
   document.documentElement.classList.add("app-ready");
   document.documentElement.classList.remove("app-boot-slow");
 });

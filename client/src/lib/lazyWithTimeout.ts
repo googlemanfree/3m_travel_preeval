@@ -2,6 +2,7 @@ import { ComponentType, LazyExoticComponent, lazy } from "react";
 
 export const LAZY_PAGE_TIMEOUT_MS = 15_000;
 export const CHUNK_RELOAD_NOTICE_KEY = "3m_chunk_reload_notice";
+export const CHUNK_RELOAD_FLAG_KEY = "3m_chunk_error_reload_attempted";
 
 export async function clearStaleClientCaches(): Promise<void> {
   if (typeof window === "undefined") return;
@@ -17,6 +18,33 @@ export async function clearStaleClientCaches(): Promise<void> {
   } catch {
     // Le chargement peut continuer même si Cache Storage est indisponible.
   }
+}
+
+/** Re-fetch the HTML shell after a stale/missing lazy chunk. */
+export async function reloadAfterChunkFailure(): Promise<void> {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(CHUNK_RELOAD_NOTICE_KEY, "network");
+  } catch {
+    // Le rechargement reste possible si le stockage est indisponible.
+  }
+  await clearStaleClientCaches();
+  const url = new URL(window.location.href);
+  url.searchParams.set("__chunk_recovery", String(Date.now()));
+  window.location.replace(url.toString());
+}
+
+export function clearChunkReloadAttempt(): void {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.removeItem(CHUNK_RELOAD_FLAG_KEY);
+  } catch {
+    // Le stockage peut être indisponible en navigation privée.
+  }
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has("__chunk_recovery")) return;
+  url.searchParams.delete("__chunk_recovery");
+  window.history.replaceState(window.history.state, "", url.toString());
 }
 const LAZY_PAGE_TIMEOUT_MESSAGE =
   "Failed to fetch dynamically imported module: page load timed out after 15000ms";
