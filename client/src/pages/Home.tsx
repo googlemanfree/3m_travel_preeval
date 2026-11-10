@@ -114,7 +114,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="premium-page-shell min-h-screen font-sans">
+    <main className="premium-page-shell min-h-screen font-sans" data-railway-autodeploy-test="2026-11-10">
       <div
         className="fixed inset-x-0 top-0 z-[70] h-1 bg-white/20"
         role="progressbar"
