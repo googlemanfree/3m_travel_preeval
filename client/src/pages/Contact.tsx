@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Clock, Send, MessageSquare, Zap, AlertCircle, CheckCircle, Facebook, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -13,6 +13,17 @@ import { trpc } from '@/lib/trpc';
 import { COMPANY_FOUNDER, COMPANY_PROFILE, GROUP_LEGAL_NAME } from '@/lib/companyContacts';
 import { officeMapEmbedUrl, officeMapsUrl } from '@/lib/officeContacts';
 import { INTERNATIONAL_BRAND } from '@/data/internationalBrand';
+import {
+  CONTACT_DRAFT_STORAGE_KEY,
+  CONTACT_QUEUE_STORAGE_KEY,
+  type ContactFormDraft,
+  queueAction,
+  readLocalDraft,
+  readQueuedAction,
+  removeLocalDraft,
+  removeQueuedAction,
+  writeLocalDraft,
+} from '@/lib/offlineSync';
 
 export default function Contact() {
   const heroVisual = getServiceVisual('services');
@@ -28,7 +39,7 @@ export default function Contact() {
       imageAlt: heroVisual.alt,
     });
   }, [heroVisual.desktop, heroVisual.alt]);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ContactFormDraft>({
     name: '',
     email: '',
     phone: '',
@@ -41,8 +52,26 @@ export default function Contact() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  const [offlineQueued, setOfflineQueued] = useState(false);
+  const draftReadyRef = useRef(false);
+  const syncInFlightRef = useRef(false);
 
   const sendContactEmailMutation = trpc.contact.sendContactEmail.useMutation();
+
+  useEffect(() => {
+    const savedDraft = readLocalDraft<ContactFormDraft>(CONTACT_DRAFT_STORAGE_KEY);
+    const queuedAction = readQueuedAction<ContactFormDraft>(CONTACT_QUEUE_STORAGE_KEY);
+    if (savedDraft) setFormData(savedDraft);
+    setOfflineQueued(Boolean(queuedAction));
+    draftReadyRef.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!draftReadyRef.current) return;
+    const hasContent = Object.values(formData).some(value => value.trim());
+    if (hasContent) writeLocalDraft(CONTACT_DRAFT_STORAGE_KEY, formData);
+    else removeLocalDraft(CONTACT_DRAFT_STORAGE_KEY);
+  }, [formData]);
 
   const contactInfo = [
     {
@@ -112,6 +141,37 @@ export default function Contact() {
   };
   const hasFieldErrors = Object.values(fieldErrors).some(Boolean);
 
+  const syncQueuedContact = async () => {
+    if (syncInFlightRef.current || typeof navigator === 'undefined' || !navigator.onLine) return;
+    const queuedAction = readQueuedAction<ContactFormDraft>(CONTACT_QUEUE_STORAGE_KEY);
+    if (!queuedAction) {
+      setOfflineQueued(false);
+      return;
+    }
+    syncInFlightRef.current = true;
+    setIsLoading(true);
+    try {
+      await sendContactEmailMutation.mutateAsync(queuedAction.payload);
+      removeQueuedAction(CONTACT_QUEUE_STORAGE_KEY);
+      removeLocalDraft(CONTACT_DRAFT_STORAGE_KEY);
+      setOfflineQueued(false);
+      setSubmitted(true);
+      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+      window.setTimeout(() => setSubmitted(false), 4000);
+    } catch {
+      // La file reste intacte : le prochain événement online retentera l’envoi.
+    } finally {
+      syncInFlightRef.current = false;
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener('online', syncQueuedContact);
+    if (navigator.onLine) void syncQueuedContact();
+    return () => window.removeEventListener('online', syncQueuedContact);
+  }, [sendContactEmailMutation]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setHasAttemptedSubmit(true);
@@ -120,18 +180,33 @@ export default function Contact() {
       setError('Vérifiez les champs signalés avant d’envoyer votre message.');
       return;
     }
+    if (!navigator.onLine) {
+      queueAction(CONTACT_QUEUE_STORAGE_KEY, formData);
+      setOfflineQueued(true);
+      setError('Votre message est enregistré sur cet appareil et sera envoyé automatiquement dès le retour de la connexion.');
+      return;
+    }
     setIsLoading(true);
 
     try {
       await sendContactEmailMutation.mutateAsync(formData);
       setSubmitted(true);
+      removeLocalDraft(CONTACT_DRAFT_STORAGE_KEY);
+      removeQueuedAction(CONTACT_QUEUE_STORAGE_KEY);
+      setOfflineQueued(false);
       setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
       setTimeout(() => {
         setSubmitted(false);
       }, 3000);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue';
-      setError(errorMessage);
+      if (/fetch|network|connexion|offline/i.test(errorMessage) || !navigator.onLine) {
+        queueAction(CONTACT_QUEUE_STORAGE_KEY, formData);
+        setOfflineQueued(true);
+        setError('Connexion indisponible : votre message est conservé et sera envoyé automatiquement dès la reconnexion.');
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -409,6 +484,21 @@ export default function Contact() {
                     <p className="text-green-800 font-semibold">Message envoyé avec succès!</p>
                     <p className="text-green-700 text-sm">Objectif : réponse sous 24 heures ouvrées (jours ouvrés Yaoundé).</p>
                   </div>
+                </motion.div>
+              )}
+
+              {offlineQueued && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-6 flex gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <Zap className="flex-shrink-0 text-blue-700" size={20} />
+                  <p className="text-sm leading-6 text-blue-900">
+                    Brouillon enregistré sur cet appareil. L’envoi sera synchronisé automatiquement dès que la connexion sera rétablie.
+                  </p>
                 </motion.div>
               )}
 

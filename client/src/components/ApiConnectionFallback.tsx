@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, RefreshCw, WifiOff, X } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  RefreshCw,
+  WifiOff,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const API_NETWORK_ERROR_EVENT = "3m:api-network-error";
@@ -8,21 +14,42 @@ export default function ApiConnectionFallback() {
   const [visible, setVisible] = useState(
     () => typeof navigator !== "undefined" && !navigator.onLine
   );
+  const [reconnected, setReconnected] = useState(false);
 
   useEffect(() => {
     const show = () => setVisible(true);
-    const hide = () => setVisible(false);
+    const announceReconnect = () => {
+      setVisible(false);
+      setReconnected(true);
+      window.setTimeout(() => setReconnected(false), 4200);
+    };
     window.addEventListener(API_NETWORK_ERROR_EVENT, show);
     window.addEventListener("offline", show);
-    window.addEventListener("online", hide);
+    window.addEventListener("online", announceReconnect);
     return () => {
       window.removeEventListener(API_NETWORK_ERROR_EVENT, show);
       window.removeEventListener("offline", show);
-      window.removeEventListener("online", hide);
+      window.removeEventListener("online", announceReconnect);
     };
   }, []);
 
-  if (!visible) return null;
+  if (!visible && !reconnected) return null;
+
+  if (reconnected) {
+    return (
+      <div
+        className="fixed bottom-4 left-4 z-[101] flex max-w-sm items-center gap-2 rounded-xl border border-emerald-200 bg-white/95 px-4 py-3 text-sm font-semibold text-emerald-800 shadow-lg backdrop-blur-md"
+        role="status"
+        aria-live="polite"
+      >
+        <CheckCircle2
+          className="h-5 w-5 shrink-0 text-emerald-600"
+          aria-hidden="true"
+        />
+        Connexion rétablie. Vos brouillons en attente sont synchronisés.
+      </div>
+    );
+  }
 
   return (
     <aside
@@ -50,6 +77,12 @@ export default function ApiConnectionFallback() {
             Certaines informations ne peuvent pas être chargées pour le moment.
             Vérifiez votre connexion puis réessayez ; vos données déjà saisies
             restent dans votre navigateur.
+          </p>
+          <p className="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">
+            <strong className="text-slate-900">Disponible hors ligne :</strong>{" "}
+            consulter les pages déjà ouvertes et continuer à rédiger vos
+            brouillons. Les envois, paiements, connexions et mises à jour de
+            dossier reprendront dès la reconnexion.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button
