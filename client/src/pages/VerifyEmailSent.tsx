@@ -2,35 +2,62 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Mail, CheckCircle2, ArrowRight } from "lucide-react";
+import { Mail, ArrowRight } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import EmailDeliveryHelp from "@/components/EmailDeliveryHelp";
+import { useResendCooldown } from "@/hooks/useResendCooldown";
+import { readCooldownEnd } from "@/lib/emailDeliveryHelp";
 
 export default function VerifyEmailSent() {
   const [, setLocation] = useLocation();
-  const [resendSuccess, setResendSuccess] = React.useState(false);
   const searchParams = new URLSearchParams(window.location.search);
   const email = searchParams.get("email") || localStorage.getItem("registrationEmail") || "";
   const from = searchParams.get("from");
   const requiresEvaluation = localStorage.getItem("registrationEvaluationDeclaration") !== "yes";
   const loginPath = `/login${from ? `?redirect=1&from=${encodeURIComponent(from)}` : ""}`;
+  const registerPath = `/register${from ? `?from=${encodeURIComponent(from)}` : ""}`;
+  const cooldownKey = email ? `verification:${email}` : "";
+  const cooldown = useResendCooldown(cooldownKey);
+  // `sent=0` : le serveur a créé le compte mais n'a pas réussi à expédier le premier e-mail (panne d'envoi).
+  const firstSendFailed = searchParams.get("sent") === "0";
+  const [sentAt, setSentAt] = React.useState<number | null>(null);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(
+    firstSendFailed ? "Votre compte est créé, mais le premier e-mail n’a pas pu partir. Cliquez sur « Renvoyer l’e-mail de confirmation »." : null
+  );
+
+  // L'inscription vient d'envoyer un premier e-mail : on laisse le temps à la boîte de le recevoir avant un nouvel envoi
+  // (chaque envoi remplace le lien précédent). Si ce premier envoi a échoué, le bouton reste immédiatement disponible.
+  React.useEffect(() => {
+    if (!firstSendFailed && cooldownKey && readCooldownEnd(cooldownKey) === 0) cooldown.markSent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cooldownKey]);
 
   const resendMutation = trpc.candidate.resendVerificationEmail.useMutation({
     onSuccess: () => {
-      setResendSuccess(true);
-      setTimeout(() => setResendSuccess(false), 3000);
-      toast.success("Si le compte existe, un nouveau lien d’activation a été envoyé.");
+      setErrorMessage(null);
+      setSentAt(Date.now());
+      cooldown.markSent();
+      toast.success("Nouvel e-mail envoyé. Utilisez le dernier message reçu.");
     },
-    onError: () => toast.error("Impossible de renvoyer le lien pour le moment. Réessayez plus tard."),
+    onError: error => {
+      const tooMany = /trop de demandes/i.test(error.message);
+      setErrorMessage(
+        tooMany
+          ? error.message
+          : "L’e-mail n’a pas pu partir pour le moment. Réessayez dans un instant ou écrivez-nous sur WhatsApp."
+      );
+    },
   });
 
   const handleResendEmail = () => {
     if (!email) {
       toast.error("Adresse e-mail introuvable. Veuillez recommencer l’inscription.");
-      setLocation(`/register${from ? `?from=${encodeURIComponent(from)}` : ""}`);
+      setLocation(registerPath);
       return;
     }
+    setErrorMessage(null);
     resendMutation.mutate({ email });
   };
 
@@ -103,30 +130,22 @@ export default function VerifyEmailSent() {
             </div>
           </div>
 
-          {/* Success Message */}
-          {resendSuccess && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex items-center gap-2"
-            >
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
-              <p className="text-green-900 font-semibold">Email renvoyé avec succès !</p>
-            </motion.div>
-          )}
+          {/* Renvoi, vérifications et aide : bloc commun avec « mot de passe oublié » */}
+          <div className="mb-6">
+            <EmailDeliveryHelp
+              email={email}
+              kind="verification"
+              onResend={handleResendEmail}
+              isSending={resendMutation.isPending}
+              secondsLeft={cooldown.secondsLeft}
+              sentAt={sentAt}
+              errorMessage={errorMessage}
+              onChangeEmail={() => setLocation(registerPath)}
+            />
+          </div>
 
           {/* Buttons */}
           <div className="space-y-3">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleResendEmail}
-              disabled={resendMutation.isPending}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {resendMutation.isPending ? "Envoi en cours..." : "Renvoyer l'email de confirmation"}
-            </motion.button>
-
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
