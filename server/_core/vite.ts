@@ -180,9 +180,10 @@ export function serveStatic(app: Express) {
     try {
       const template = await fs.promises.readFile(path.resolve(distPath, "index.html"), "utf-8");
       const rendered = composePublicPrerender(template, req.originalUrl);
-      // Les pages publiques sont déterministes pour un build donné. Un cache CDN
-      // court évite de recalculer le prérendu lourd à chaque visite.
-      const cacheControl = rendered.noindex ? "private, no-store" : "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400";
+      // Les pages publiques sont déterministes pour un build donné. Le navigateur revalide à chaque visite (ETag → 304,
+      // quasi gratuit) : avec l'ancien cache de 5 minutes doublé d'une revalidation différée d'un jour, un visiteur voyait
+      // l'ancienne version du site jusqu'à un jour après un déploiement. Un cache partagé de 60 s suffit à absorber les rafales.
+      const cacheControl = rendered.noindex ? "private, no-store" : "public, max-age=0, s-maxage=60, must-revalidate";
       res.status(200).set({
         "Content-Type": "text/html",
         "Cache-Control": cacheControl,
@@ -230,7 +231,7 @@ export function serveStatic(app: Express) {
     try {
       const template = await fs.promises.readFile(path.resolve(distPath, "index.html"), "utf-8");
       const rendered = composePublicPrerender(template, req.originalUrl);
-      const cacheControl = rendered.noindex ? "private, no-store" : "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400";
+      const cacheControl = rendered.noindex ? "private, no-store" : "public, max-age=0, s-maxage=60, must-revalidate";
       res.status(rendered.status).set({ "Content-Type": "text/html", "Cache-Control": cacheControl, "X-3M-Build": getPublicBuildMarker(), "X-3M-Route-Source": "express-prerender" }).send(rendered.html);
     } catch (error) {
       console.error("[SEO prerender] Unable to render public shell", error);

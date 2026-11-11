@@ -1,6 +1,7 @@
-import { AlertTriangle, RotateCcw, PhoneCall, MessageCircle } from "lucide-react";
-import { Component, ReactNode } from "react";
+import { AlertTriangle, RotateCcw, PhoneCall, MessageCircle, Copy, Check } from "lucide-react";
+import { Component, ErrorInfo, ReactNode } from "react";
 import { CHUNK_RELOAD_FLAG_KEY, reloadAfterChunkFailure } from "@/lib/lazyWithTimeout";
+import { buildClientErrorReport, formatErrorDetails, sendClientErrorReport, type ClientErrorReport } from "@/lib/clientErrorReport";
 
 interface Props {
   children: ReactNode;
@@ -9,6 +10,8 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  report: ClientErrorReport | null;
+  copied: boolean;
 }
 
 function isChunkLoadError(error: Error): boolean {
@@ -24,14 +27,28 @@ function isChunkLoadError(error: Error): boolean {
 class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, report: null, copied: false };
   }
 
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+  static getDerivedStateFromError(error: Error): Partial<State> {
+    return { hasError: true, error, copied: false };
   }
 
-  componentDidCatch(error: Error) {
+  private handleCopyDetails = async () => {
+    if (!this.state.report) return;
+    try {
+      await navigator.clipboard.writeText(formatErrorDetails(this.state.report));
+      this.setState({ copied: true });
+    } catch {
+      // Presse-papiers refusé : la référence reste affichée et peut être recopiée à la main.
+    }
+  };
+
+  componentDidCatch(error: Error, info?: ErrorInfo) {
+    // Référence citée au support + envoi discret au serveur : on sait enfin quelle page et quel composant ont planté.
+    const report = buildClientErrorReport(error, info?.componentStack);
+    this.setState({ report });
+    sendClientErrorReport(report);
     if (isChunkLoadError(error)) {
       try {
         const alreadyAttempted = sessionStorage.getItem(CHUNK_RELOAD_FLAG_KEY);
@@ -60,7 +77,7 @@ class ErrorBoundary extends Component<Props, State> {
       // Le navigateur peut bloquer le stockage en mode privé.
     }
     if (this.state.error && !isChunkLoadError(this.state.error)) {
-      this.setState({ hasError: false, error: null });
+      this.setState({ hasError: false, error: null, report: null, copied: false });
       return;
     }
     void reloadAfterChunkFailure();
@@ -92,7 +109,9 @@ class ErrorBoundary extends Component<Props, State> {
                 Réessayer la page
               </button>
               <a
-                href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%2C%20je%20rencontre%20un%20souci%20technique%20sur%20le%20site."
+                href={`https://wa.me/237698104832?text=${encodeURIComponent(
+                  `Bonjour 3M Travel, je rencontre un souci technique sur le site.${this.state.report ? ` Référence : ${this.state.report.reference} (page ${this.state.report.path}).` : ""}`
+                )}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-700 text-white font-medium hover:bg-emerald-800 transition shadow-lg cursor-pointer"
@@ -101,6 +120,23 @@ class ErrorBoundary extends Component<Props, State> {
                 WhatsApp Support
               </a>
             </div>
+
+            {this.state.report ? (
+              <div className="mb-4 flex w-full flex-col items-center gap-2 rounded-xl border border-border bg-muted/40 px-4 py-3" data-testid="error-reference">
+                <p className="text-xs text-muted-foreground">
+                  Référence à communiquer au support : <strong className="font-mono text-foreground" data-testid="error-reference-code">{this.state.report.reference}</strong>
+                </p>
+                <button
+                  type="button"
+                  onClick={this.handleCopyDetails}
+                  data-testid="error-copy-details"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-border px-3 text-xs font-semibold hover:bg-muted"
+                >
+                  {this.state.copied ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
+                  {this.state.copied ? "Détails copiés" : "Copier les détails"}
+                </button>
+              </div>
+            ) : null}
 
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <PhoneCall size={14} />

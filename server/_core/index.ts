@@ -13,6 +13,7 @@ import { registerAgencyDossierUploadRoute } from "../routers/agencyDossierUpload
 import { registerOpeningPaymentProofUploadRoute } from "../routers/openingPaymentProofUpload";
 import { registerAdminDossierExportRoute } from "../routers/adminDossierExport";
 import { registerPublicHealthRoute } from "../publicHealth";
+import { registerClientErrorRoute } from "./clientErrorReport";
 import { registerCinetPayWebhook } from "../routers/cinetpayWebhook";
 import { handleEvaluationJob } from "../scheduled/evaluationJob";
 import { handleEvaluationBilanJob } from "../scheduled/evaluationBilanJob";
@@ -85,6 +86,7 @@ async function startServer() {
   registerOpeningPaymentProofUploadRoute(app);
   registerAdminDossierExportRoute(app);
   registerPublicHealthRoute(app);
+  registerClientErrorRoute(app);
   registerCinetPayWebhook(app);
   // Les anciennes routes /api/documents/{upload,download,list,delete} (documentsRoutes.ts) ne sont PLUS montées : elles
   // n'exigeaient aucune authentification (lecture, liste et suppression de pièces par simple code de dossier, dépôt

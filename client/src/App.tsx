@@ -75,7 +75,6 @@ const Ressources = lazyWithTimeout(() => import("./pages/Ressources"));
 const ResourceCountryPage = lazyWithTimeout(() => import("./pages/ResourceCountryPage"));
 const CountryGuides = lazyWithTimeout(() => import("./pages/CountryGuides"));
 const CountryGuide = lazyWithTimeout(() => import("./pages/CountryGuide"));
-const GlobalSearch = lazyWithTimeout(() => import("./pages/GlobalSearch"));
 const DocumentChecklistTool = lazyWithTimeout(() => import("./pages/DocumentChecklistTool"));
 const MobilityOrientationTool = lazyWithTimeout(() => import("./pages/MobilityOrientationTool"));
 const BudgetSimulatorTool = lazyWithTimeout(() => import("./pages/BudgetSimulatorTool"));
@@ -312,7 +311,6 @@ function Router() {
       <Route path={"/procedures/autriche-formation"} component={ProcedureAutricheSuisseFormation} />
       <Route path={"/procedures/suisse-formation"} component={ProcedureAutricheSuisseFormation} />
       <Route path="/destinations" component={DestinationsHub} />
-      <Route path="/search" component={GlobalSearch} />
       <Route path="/procedures/pays-bas">{() => <DestinationFormationPage slug="pays-bas" />}</Route>
       <Route path="/procedures/belgique">{() => <DestinationFormationPage slug="belgique" />}</Route>
       <Route path="/procedures/france">{() => <DestinationFormationPage slug="france" />}</Route>
