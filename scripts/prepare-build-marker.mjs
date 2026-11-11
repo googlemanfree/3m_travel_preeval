@@ -50,9 +50,27 @@ function commitFromExistingMetadata() {
   }
 }
 
+// WebDev peut construire dans une image sans .git et sans variable de commit.
+// Son identifiant de checkpoint est alors injecté dans ce fichier généré.
+// Il est utilisé uniquement après les variables de plateforme et Git, jamais
+// avant une valeur plus fiable.
+function commitFromWebDevMetadata() {
+  try {
+    const metadata = resolve(root, "client/public/__manus__/version.json");
+    const parsed = JSON.parse(readFileSync(metadata, "utf8"));
+    return typeof parsed.version === "string" &&
+      commitPattern.test(parsed.version)
+      ? parsed.version.slice(0, 8).toLowerCase()
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 const strictBuild = process.env.BUILD_STRICT_MARKER === "1";
 const envCommit = firstCommitFromEnv();
 const gitCommit = commitFromGit();
+const webDevCommit = commitFromWebDevMetadata();
 if (strictBuild && envCommit && gitCommit && envCommit !== gitCommit) {
   console.error(
     `[build-marker] Commit attendu ${envCommit} différent du HEAD Git ${gitCommit}. Publication bloquée.`
@@ -63,10 +81,11 @@ if (strictBuild && envCommit && gitCommit && envCommit !== gitCommit) {
 const commit =
   envCommit ??
   gitCommit ??
+  webDevCommit ??
   (strictBuild ? undefined : commitFromExistingMetadata());
 if (!commit) {
   const message =
-    "[build-marker] Aucun commit fiable détecté (PUBLIC_BUILD_COMMIT/GIT_COMMIT ou .git). Publication bloquée pour éviter un marqueur périmé.";
+    "[build-marker] Aucun identifiant de build fiable détecté (variables de plateforme, .git ou métadonnées WebDev). Publication bloquée pour éviter un marqueur périmé.";
   if (strictBuild) {
     console.error(message);
     process.exit(1);
