@@ -81,7 +81,14 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(fetch(event.request));
     return;
   }
-  
+
+  // Le marqueur de version doit toujours venir du réseau : servi depuis le cache, il affichait l'ancien commit
+  // (et faisait croire à un déploiement raté) jusqu'à la prochaine montée de version du cache.
+  if (url.pathname === '/build-commit.json') {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   // Les API contiennent des sessions, dossiers et informations candidates : ne
   // jamais les mémoriser dans Cache Storage et ne jamais substituer une réponse
   // JSON hors ligne. Une réponse partielle ou associée à une ancienne session

@@ -249,6 +249,7 @@ import { ADMIN_PROCEDURE_TYPES, normalizeAdminProcedureType } from "@shared/doss
 import { POPULAR_DESTINATION_NAMES, getCandidateDestinationOption } from "@shared/candidateDestinationOptions";
 import { resourceLibraryPathForCountry } from "@shared/countryResourceCatalog";
 import { CountrySelect } from "@/components/CountryPicker";
+import PanelErrorBoundary from "@/components/PanelErrorBoundary";
 
 const EvaluationDeliveryEditor = lazy(() => import("@/components/EvaluationDeliveryEditor").then(({ EvaluationDeliveryEditor: Editor }) => ({ default: Editor })));
 
@@ -1301,6 +1302,7 @@ export function CandidateDetailModal({
                 )}
               </>
             ) : (
+              <PanelErrorBoundary label="fiche candidat" resetKey={(candidate as any)?.id}>
               <Candidate360Workspace
                 sessionToken={sessionToken}
                 candidate={candidate as any}
@@ -1323,6 +1325,7 @@ export function CandidateDetailModal({
                 initialTab={candidate360Tab}
                 onTabChange={setCandidate360Tab}
               />
+              </PanelErrorBoundary>
             )}
 
             </div>
