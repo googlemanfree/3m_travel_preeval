@@ -64,6 +64,8 @@ describe("balise de build posée à la compilation", () => {
     expect(viteConfig).toContain("execFileSync");
     expect(viteConfig).not.toContain("execSync(");
     expect(read("scripts/prepare-build-marker.mjs")).toContain('"RAILWAY_GIT_COMMIT_SHA"');
+    expect(read("scripts/prepare-build-marker.mjs")).toContain("client/public/__manus__/version.json");
+    expect(read("scripts/prepare-build-marker.mjs")).toContain("commitFromSourceFingerprint");
     expect(read("server/publicBuildMarker.ts")).toContain('"RAILWAY_GIT_COMMIT_SHA"');
     expect(read("package.json")).toContain('"verify:deploy": "tsx scripts/verify-deploy.ts"');
   });

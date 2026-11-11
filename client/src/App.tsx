@@ -159,6 +159,7 @@ import ReadingProgress from "./components/ReadingProgress";
 import PremiumPointerEffects from "./components/PremiumPointerEffects";
 import MotionPreferenceBridge from "./components/MotionPreferenceBridge";
 import PwaStatusNotice from "./components/PwaStatusNotice";
+import ApiConnectionFallback from "./components/ApiConnectionFallback";
 
 const FlightFavorites = lazyWithTimeout(() => import("./pages/FlightFavorites"));
 const AdminAIEvaluationDashboard = lazyWithTimeout(() => import("./pages/AdminAIEvaluationDashboard"));
@@ -679,6 +680,7 @@ function AppShell() {
                   <MultiServiceCartProvider>
                   <SessionLoader isLoading={!sessionRestored} />
                   <Toaster />
+                  <ApiConnectionFallback />
                   <CookieConsent />
                   <ChunkReloadNotice />
                   <PwaStatusNotice />

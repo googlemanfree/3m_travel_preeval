@@ -13,6 +13,7 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import { translateApiErrorMessage } from "./lib/apiErrorTranslator";
 import { normalizeApiResponse } from "./lib/apiResponseGuard";
 import { adminLoginUrl, clearAdminSession, getAdminSessionToken, isAdminSessionError } from "./lib/adminSession";
+import { API_NETWORK_ERROR_EVENT } from "./components/ApiConnectionFallback";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -124,6 +125,7 @@ const handleResponseError = (error: unknown) => {
   // Erreur réseau générale
   if (error instanceof Error && (error.message.includes("fetch") || error.message.includes("network"))) {
     console.error("[Network Error]", error);
+    window.dispatchEvent(new Event(API_NETWORK_ERROR_EVENT));
     return "Erreur de connexion réseau. Vérifiez votre connexion Internet.";
   }
   
