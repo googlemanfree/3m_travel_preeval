@@ -118,6 +118,7 @@ import { ambassadorRouter } from "./routers/ambassador";
 import { schedulerAdminRouter } from "./routers/schedulerAdmin";
 import { adminPassportIdentityRouter } from "./routers/adminPassportIdentity";
 import { adminDocumentInsightsRouter } from "./routers/adminDocumentInsights";
+import { globalSearchRouter } from "./routers/globalSearch";
 
 // evaluationRouterNew (routers/evaluationRouter.ts, ex-`evaluationV2`) a été RETIRÉ : `create` était public,
 // sans authentification ni consentement, et insérait dans la même table `evaluations` que le vrai parcours
@@ -291,6 +292,7 @@ export const appRouter = router({
   exchangeRates: exchangeRatesRouter,
   newsletter: newsletterRouter,
   ambassador: ambassadorRouter,
+  globalSearch: globalSearchRouter,
 });
 
 export type AppRouter = typeof appRouter;

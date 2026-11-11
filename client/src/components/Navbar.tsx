@@ -32,6 +32,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
+import { WORLD_DESTINATION_DIRECTORY } from "@/data/worldDestinationDirectory";
 
 type NavCopy = { fr: string; en: string };
 
@@ -109,6 +110,14 @@ const destinationQuickLinks: { href: string; label: NavCopy }[] = [
     label: { fr: "Allemagne", en: "Germany" },
   },
 ];
+
+const worldDestinationLinks = WORLD_DESTINATION_DIRECTORY.map(country => ({
+  href: country.href,
+  label: {
+    fr: `${country.flag} ${country.name}`,
+    en: `${country.flag} ${country.name}`,
+  },
+}));
 
 const NAV_COPY = {
   mainNav: { fr: "Navigation principale", en: "Main navigation" },
@@ -247,7 +256,7 @@ export default function Navbar() {
       )
     : menuItems;
   const matchingDestinations = normalizedSearch
-    ? destinationQuickLinks.filter(item =>
+    ? [...destinationQuickLinks, ...worldDestinationLinks].filter(item =>
         `${item.label.fr} ${item.label.en}`
           .toLocaleLowerCase()
           .includes(normalizedSearch)
@@ -336,7 +345,7 @@ export default function Navbar() {
     event.preventDefault();
     const term = menuSearch.trim();
     if (!term) return;
-    selectSuggestion(`/destinations?search=${encodeURIComponent(term)}`);
+    selectSuggestion(`/search?q=${encodeURIComponent(term)}`);
   };
 
   const focusSearchFromShortcut = () => {
