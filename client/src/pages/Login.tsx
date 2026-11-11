@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { useResendCooldown } from "@/hooks/useResendCooldown";
 import { usePasswordStrength } from "@/hooks/usePasswordStrength";
 import { resolveCandidateReturnPath } from "@/lib/candidateRedirect";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -38,6 +39,8 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [showResendModal, setShowResendModal] = useState(false);
   const [resendEmail, setResendEmail] = useState("");
+  const [resendSentTo, setResendSentTo] = useState<string | null>(null);
+  const resendCooldown = useResendCooldown(resendEmail.trim() ? `verification:${resendEmail.trim().toLowerCase()}` : "");
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
   const [modalAnnouncement, setModalAnnouncement] = useState("");
@@ -112,13 +115,14 @@ export default function Login() {
   });
 
   const resendVerificationMutation = trpc.candidate.resendVerificationEmail.useMutation({
-    onSuccess: () => {
-      toast.success("Email de vérification renvoyé ! Vérifiez votre boîte de réception.");
-      setShowResendModal(false);
-      setResendEmail("");
+    onSuccess: (data) => {
+      // La fenêtre reste ouverte : le candidat voit l'état de l'envoi, le délai avant un nouvel essai et les vérifications utiles.
+      toast.success(t("Demande envoyée. Utilisez le dernier e-mail reçu et regardez aussi vos spams.", "Request sent. Use the latest email you receive and check your spam folder too."));
+      setResendSentTo(resendEmail.trim());
+      resendCooldown.markSent((data as { retryAfterSeconds?: number } | undefined)?.retryAfterSeconds);
     },
     onError: (err) => {
-      toast.error(err.message || "Erreur lors de l'envoi de l'email.");
+      toast.error(/trop de demandes/i.test(err.message) ? err.message : t("L’e-mail n’a pas pu partir pour le moment. Réessayez dans un instant.", "The email could not be sent right now. Please try again shortly."));
     },
   });
 
@@ -538,15 +542,25 @@ export default function Login() {
                   </p>
                 </div>
 
+                {resendSentTo && resendSentTo.toLowerCase() === resendEmail.trim().toLowerCase() ? (
+                  <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900" role="status" data-testid="login-resend-status">
+                    {t("Si un compte existe avec cette adresse, l’e-mail est parti. Cherchez « 3M TRAVEL AGENCY » (noreply@3mtravelagency.com), y compris dans les spams. Seul le dernier e-mail reçu fonctionne.", "If an account exists for this address, the email is on its way. Look for “3M TRAVEL AGENCY” (noreply@3mtravelagency.com), including in spam. Only the latest email you receive works.")}
+                  </p>
+                ) : null}
+
                 <Button
                   type="submit"
-                  disabled={resendVerificationMutation.isPending}
-                  className="w-full bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold py-3 rounded-xl transition-all active:scale-[0.98]"
+                  disabled={resendVerificationMutation.isPending || resendCooldown.secondsLeft > 0}
+                  className="w-full bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold py-3 rounded-xl transition-all active:scale-[0.98] disabled:opacity-60"
                 >
                   {resendVerificationMutation.isPending ? (
                     <span className="flex items-center gap-2">
                       <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       {t("Envoi en cours…", "Sending…")}
+                    </span>
+                  ) : resendCooldown.secondsLeft > 0 ? (
+                    <span className="flex items-center gap-2" aria-live="polite">
+                      <Mail className="w-4 h-4" /> {t(`Renvoyer dans ${resendCooldown.secondsLeft} s`, `Resend in ${resendCooldown.secondsLeft} s`)}
                     </span>
                   ) : (
                     <span className="flex items-center gap-2">

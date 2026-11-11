@@ -144,7 +144,7 @@ export default function Register() {
           : "Compte créé. Utilisez le renvoi sécurisé si l’e-mail n’arrive pas.",
       );
       window.setTimeout(() => {
-        navigate(`/verify-email-sent?email=${encodeURIComponent(form.email)}${from ? `&from=${encodeURIComponent(from)}` : ""}`);
+        navigate(`/verify-email-sent?email=${encodeURIComponent(form.email)}${activationEmailSent ? "" : "&sent=0"}${from ? `&from=${encodeURIComponent(from)}` : ""}`);
       }, 1600);
     },
     onError: (err) => {

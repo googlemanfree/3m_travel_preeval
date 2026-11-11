@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { toast } from "sonner";
+import EmailDeliveryHelp from "@/components/EmailDeliveryHelp";
+import { useResendCooldown } from "@/hooks/useResendCooldown";
 
 const LOGO_URL = "/logo-3m.webp";
 
@@ -26,6 +28,9 @@ export default function VerifyEmailLink() {
   const [countdown, setCountdown] = useState(4);
   const [email, setEmail] = useState("");
   const [isResending, setIsResending] = useState(false);
+  const [resendSentAt, setResendSentAt] = useState<number | null>(null);
+  const [resendError, setResendError] = useState<string | null>(null);
+  const resendCooldown = useResendCooldown(email.trim() ? `verification:${email.trim().toLowerCase()}` : "");
   const [nextPath, setNextPath] = useState(redirect === "/dashboard" ? "/mon-espace" : redirect);
   const [requiresEvaluation, setRequiresEvaluation] = useState(false);
   const priorEvaluationRecognized = candidateData?.candidate?.evaluationDeclarationStatus === "validated";
@@ -79,13 +84,20 @@ export default function VerifyEmailLink() {
   });
 
   const resendMutation = trpc.candidate.resendVerificationEmail.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       setIsResending(false);
-      toast.success("Si le compte existe, un nouveau lien d’activation a été envoyé.");
+      setResendError(null);
+      setResendSentAt(Date.now());
+      resendCooldown.markSent((data as { retryAfterSeconds?: number } | undefined)?.retryAfterSeconds);
+      toast.success("Si le compte existe, un nouveau lien d’activation a été envoyé. Utilisez le dernier e-mail reçu.");
     },
-    onError: () => {
+    onError: (error) => {
       setIsResending(false);
-      toast.error("Impossible de renvoyer le lien pour le moment.");
+      setResendError(
+        /trop de demandes/i.test(error.message)
+          ? error.message
+          : "Impossible de renvoyer le lien pour le moment. Réessayez dans un instant ou écrivez-nous sur WhatsApp."
+      );
     },
   });
 
@@ -95,6 +107,7 @@ export default function VerifyEmailLink() {
       return;
     }
     setIsResending(true);
+    setResendError(null);
     resendMutation.mutate({ email: email.toLowerCase().trim() });
   };
 
@@ -391,13 +404,15 @@ export default function VerifyEmailLink() {
                       maxLength={320}
                       className="w-full px-4 py-2 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-white text-gray-900"
                     />
-                    <Button
-                      onClick={resendVerificationEmail}
-                      disabled={isResending || resendMutation.isPending || !email.trim()}
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-2 rounded-lg transition-all duration-200 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isResending ? "Envoi en cours..." : "Renvoyer l'email"}
-                    </Button>
+                    <EmailDeliveryHelp
+                      email={email}
+                      kind="verification"
+                      onResend={resendVerificationEmail}
+                      isSending={isResending || resendMutation.isPending}
+                      secondsLeft={resendCooldown.secondsLeft}
+                      sentAt={resendSentAt}
+                      errorMessage={resendError}
+                    />
                   </div>
                 </motion.div>
 
