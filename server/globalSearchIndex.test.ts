@@ -19,4 +19,10 @@ describe("global search index", () => {
     const results = searchInternalSite("Allemagne");
     expect(results[0]?.title).toContain("Allemagne");
   });
+
+  it("filters results by country and visa type", () => {
+    const results = searchInternalSite("", 20, { country: "Canada", visaType: "travail" });
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.every((item) => item.country === "Canada" && item.visaType === "travail")).toBe(true);
+  });
 });

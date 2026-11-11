@@ -45,10 +45,15 @@ export const globalSearchRouter = router({
           source: "Wikipédia",
           results: parsed.data.pages.map(page => ({
             title: page.title,
-            description:
-              page.description ??
+            summary: (
               page.excerpt ??
-              "Article public à vérifier sur la source.",
+              page.description ??
+              "Article public à vérifier sur la source."
+            )
+              .replace(/<[^>]+>/g, " ")
+              .replace(/\s+/g, " ")
+              .trim()
+              .slice(0, 260),
             href: `https://${input.language}.wikipedia.org/wiki/${encodeURIComponent(page.key ?? page.title.replaceAll(" ", "_"))}`,
             thumbnail: page.thumbnail?.source ?? null,
           })),
