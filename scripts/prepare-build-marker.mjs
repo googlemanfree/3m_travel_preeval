@@ -50,9 +50,25 @@ function commitFromExistingMetadata() {
   }
 }
 
+function commitFromWebDevMetadata() {
+  try {
+    const metadataPath = resolve(root, "client/public/__manus__/version.json");
+    if (!existsSync(metadataPath)) return undefined;
+    const parsed = JSON.parse(readFileSync(metadataPath, "utf8"));
+    const value =
+      typeof parsed.version === "string" ? parsed.version.trim() : "";
+    return commitPattern.test(value)
+      ? value.slice(0, 8).toLowerCase()
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 const strictBuild = process.env.BUILD_STRICT_MARKER === "1";
 const envCommit = firstCommitFromEnv();
 const gitCommit = commitFromGit();
+const webDevCommit = commitFromWebDevMetadata();
 if (strictBuild && envCommit && gitCommit && envCommit !== gitCommit) {
   console.error(
     `[build-marker] Commit attendu ${envCommit} différent du HEAD Git ${gitCommit}. Publication bloquée.`
@@ -63,10 +79,11 @@ if (strictBuild && envCommit && gitCommit && envCommit !== gitCommit) {
 const commit =
   envCommit ??
   gitCommit ??
+  webDevCommit ??
   (strictBuild ? undefined : commitFromExistingMetadata());
 if (!commit) {
   const message =
-    "[build-marker] Aucun commit fiable détecté (PUBLIC_BUILD_COMMIT/GIT_COMMIT ou .git). Publication bloquée pour éviter un marqueur périmé.";
+    "[build-marker] Aucun commit fiable détecté (PUBLIC_BUILD_COMMIT/GIT_COMMIT, .git ou client/public/__manus__/version.json). Publication bloquée pour éviter un marqueur périmé.";
   if (strictBuild) {
     console.error(message);
     process.exit(1);
