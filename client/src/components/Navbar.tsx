@@ -275,6 +275,7 @@ export default function Navbar() {
   const desktopMenuItems = filteredMenuItems.filter(
     item => item.href !== "/evisas"
   );
+  const searchSuggestions = suggestionDestinations.slice(0, 5);
   const desktopSuggestions = suggestionDestinations.slice(0, 5);
 
   useEffect(() => {
@@ -313,29 +314,29 @@ export default function Navbar() {
   };
 
   const handleSearchKeyDown = (
-    event: React.KeyboardEvent<HTMLInputElement>
+    event: React.KeyboardEvent<HTMLInputElement>,
+    suggestions: typeof searchSuggestions
   ) => {
-    if (!desktopSuggestions.length) return;
+    if (!suggestions.length) return;
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      setActiveSuggestionIndex(
-        index => (index + 1) % desktopSuggestions.length
-      );
+      setActiveSuggestionIndex(index => (index + 1) % suggestions.length);
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
       setActiveSuggestionIndex(index =>
-        index <= 0 ? desktopSuggestions.length - 1 : index - 1
+        index <= 0 ? suggestions.length - 1 : index - 1
       );
     } else if (event.key === "Enter" && activeSuggestionIndex >= 0) {
       event.preventDefault();
-      selectSuggestion(desktopSuggestions[activeSuggestionIndex].href);
+      selectSuggestion(suggestions[activeSuggestionIndex].href);
     }
   };
 
-  const rememberTypedSearch = () => {
+  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     const term = menuSearch.trim();
-    if (term)
-      rememberSearch(`/destinations?search=${encodeURIComponent(term)}`);
+    if (!term) return;
+    selectSuggestion(`/destinations?search=${encodeURIComponent(term)}`);
   };
 
   const focusSearchFromShortcut = () => {
@@ -412,7 +413,7 @@ export default function Navbar() {
           <form
             action="/destinations"
             method="get"
-            onSubmit={rememberTypedSearch}
+            onSubmit={handleSearchSubmit}
             className={`relative order-2 hidden min-w-0 max-w-[24rem] flex-1 items-center gap-2 rounded-xl border border-blue-100 bg-white px-3 py-1.5 transition duration-200 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-200 md:flex ${searchShortcutActive ? "scale-[1.02] border-[#c39231] shadow-[0_0_0_5px_rgba(195,146,49,0.18)]" : "shadow-sm"}`}
           >
             <Search
@@ -431,7 +432,9 @@ export default function Navbar() {
                 setMenuSearch(event.target.value);
                 setActiveSuggestionIndex(-1);
               }}
-              onKeyDown={handleSearchKeyDown}
+              onKeyDown={event =>
+                handleSearchKeyDown(event, desktopSuggestions)
+              }
               onFocus={() => {
                 setIsDesktopSearchFocused(true);
                 setActiveSuggestionIndex(-1);
@@ -764,7 +767,7 @@ export default function Navbar() {
         <form
           action="/destinations"
           method="get"
-          onSubmit={rememberTypedSearch}
+          onSubmit={handleSearchSubmit}
           className={`flex min-h-12 items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50/70 px-3 transition duration-200 focus-within:border-blue-400 focus-within:bg-white focus-within:shadow-md ${searchShortcutActive ? "scale-[1.015] border-[#c39231] shadow-[0_0_0_5px_rgba(195,146,49,0.18)]" : "shadow-sm"}`}
         >
           <Search
@@ -865,7 +868,7 @@ export default function Navbar() {
               <form
                 action="/destinations"
                 method="get"
-                onSubmit={rememberTypedSearch}
+                onSubmit={handleSearchSubmit}
                 className={`mb-4 space-y-2 rounded-2xl border border-blue-100 bg-blue-50/70 p-3 transition duration-200 focus-within:border-blue-400 focus-within:bg-white focus-within:shadow-md ${searchShortcutActive ? "scale-[1.015] border-[#c39231] shadow-[0_0_0_5px_rgba(195,146,49,0.18)]" : "shadow-sm"}`}
               >
                 <label
@@ -885,7 +888,9 @@ export default function Navbar() {
                       setMenuSearch(event.target.value);
                       setActiveSuggestionIndex(-1);
                     }}
-                    onKeyDown={handleSearchKeyDown}
+                    onKeyDown={event =>
+                      handleSearchKeyDown(event, searchSuggestions)
+                    }
                     onFocus={() => {
                       setIsMobileSearchFocused(true);
                       setActiveSuggestionIndex(-1);
