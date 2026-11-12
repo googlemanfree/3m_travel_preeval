@@ -250,6 +250,7 @@ import { POPULAR_DESTINATION_NAMES, getCandidateDestinationOption } from "@share
 import { resourceLibraryPathForCountry } from "@shared/countryResourceCatalog";
 import { CountrySelect } from "@/components/CountryPicker";
 import PanelErrorBoundary from "@/components/PanelErrorBoundary";
+import AdminDossierSignals from "@/components/AdminDossierSignals";
 
 const EvaluationDeliveryEditor = lazy(() => import("@/components/EvaluationDeliveryEditor").then(({ EvaluationDeliveryEditor: Editor }) => ({ default: Editor })));
 
@@ -3740,6 +3741,10 @@ export default function AdminDashboard() {
                                   {journey.stepNumber != null ? `${journey.stepNumber}/${journey.stepCount} · ` : ""}{journey.stepLabel}
                                 </span>
                               )}
+                              {(journey?.publishedGuide?.pdfUrl || resourceLibraryHref || journey?.publishedGuide?.officialPortalUrl || journey?.publishedGuide?.summaryOverview) && (
+                              <details className="max-w-[220px]" data-testid="admin-journey-resources" onClick={(event) => event.stopPropagation()}>
+                                <summary className="cursor-pointer select-none text-[10px] font-semibold text-blue-800 hover:underline">Ressources du dossier</summary>
+                                <div className="mt-1 flex flex-col gap-1">
                               {journey?.publishedGuide?.pdfUrl && (
                                 <a
                                   href={journey.publishedGuide.pdfUrl}
@@ -3782,6 +3787,9 @@ export default function AdminDashboard() {
                                   {journey.publishedGuide.summaryOverview}
                                 </span>
                               )}
+                                </div>
+                              </details>
+                              )}
                               {journey?.nextStepLabel && (
                                 <span className="max-w-[200px] text-[10px] text-slate-500">Suite : {journey.nextStepLabel}</span>
                               )}
@@ -3819,6 +3827,11 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={candidate.status} />
+                        <AdminDossierSignals
+                          paymentStatus={pendingInlineChanges[candidate.id]?.paymentStatus ?? candidate.paymentStatus}
+                          agreementSigned={candidate.agreementSigned}
+                          checklistPercent={candidate.checklistPercent}
+                        />
                       </td>
                       <td className="px-4 py-3 hidden lg:table-cell">
                         {(() => {
