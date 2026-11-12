@@ -402,6 +402,7 @@ export default function ProcedureResourceGuide() {
                 <button
                   key={country}
                   type="button"
+                  aria-pressed={active}
                   onClick={() => setCountryFilter(active ? null : country)}
                   className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
                     active

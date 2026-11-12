@@ -132,7 +132,7 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
-    scroll-padding-top: 6rem;
+    scroll-padding-top: 9rem; /* > hauteur de l’en-tête fixe (≈ 131 px) : un contrôle atteint au clavier ou par ancre ne reste pas masqué */
     text-rendering: optimizeLegibility;
   }
   * {

@@ -489,7 +489,7 @@ export default function ProceduresAdvanced() {
             {/* Type de Visa Tabs & Comparateur */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <Tabs value={visaType} onValueChange={(v) => setVisaType(v as any)} className="w-full sm:w-auto flex-1">
-                <TabsList className="grid w-full grid-cols-2 gap-1 bg-slate-100 sm:grid-cols-4">
+                <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-slate-100 sm:grid-cols-4">
                   <TabsTrigger value="tous" className="min-h-10 text-xs sm:text-sm">Tous ({PUBLIC_PROCEDURES.length})</TabsTrigger>
                   <TabsTrigger value="travail" className="min-h-10 text-xs sm:text-sm">Travail ({VISA_COUNTS.travail ?? 0})</TabsTrigger>
                   <TabsTrigger value="etudes" className="min-h-10 text-xs sm:text-sm">Études ({VISA_COUNTS.etudes ?? 0})</TabsTrigger>
