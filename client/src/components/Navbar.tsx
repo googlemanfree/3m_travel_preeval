@@ -745,7 +745,7 @@ export default function Navbar() {
                 className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1 rounded-xl bg-blue-600 px-2.5 text-[11px] font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 active:scale-95 sm:px-3 sm:text-xs"
               >
                 <PenLine className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <span>{copy(NAV_COPY.register)}</span>
+                <span className="max-[359px]:sr-only">{copy(NAV_COPY.register)}</span>
               </a>
             )}
             <motion.button
