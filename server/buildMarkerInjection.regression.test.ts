@@ -63,9 +63,10 @@ describe("balise de build posée à la compilation", () => {
     expect(viteConfig).toContain('name: "3m-build-marker"');
     expect(viteConfig).toContain("execFileSync");
     expect(viteConfig).not.toContain("execSync(");
-    expect(read("scripts/prepare-build-marker.mjs")).toContain('"RAILWAY_GIT_COMMIT_SHA"');
-    expect(read("scripts/prepare-build-marker.mjs")).toContain("client/public/__manus__/version.json");
-    expect(read("scripts/prepare-build-marker.mjs")).toContain("commitFromSourceFingerprint");
+    expect(read("scripts/build-marker-resolve.mjs")).toContain('"RAILWAY_GIT_COMMIT_SHA"');
+    // Ni métadonnées WebDev ni empreinte de fichiers : un commit est un SHA Git (voir buildMarkerScript.regression.test.ts).
+    expect(read("scripts/build-marker-resolve.mjs")).not.toContain("version.json");
+    expect(read("scripts/prepare-build-marker.mjs")).not.toContain("commitFromSourceFingerprint");
     expect(read("server/publicBuildMarker.ts")).toContain('"RAILWAY_GIT_COMMIT_SHA"');
     expect(read("package.json")).toContain('"verify:deploy": "tsx scripts/verify-deploy.ts"');
   });
@@ -119,7 +120,7 @@ describe("vérification d’un déploiement (scripts/verify-deploy.ts)", () => {
 
   it("branche le build strict et les en-têtes anti-cache du marqueur", () => {
     expect(read("package.json")).toContain('"build": "BUILD_STRICT_MARKER=1 node scripts/prepare-build-marker.mjs');
-    expect(read("scripts/prepare-build-marker.mjs")).toContain("Publication bloquée pour éviter un marqueur périmé");
+    expect(read("scripts/build-marker-resolve.mjs")).toContain("Publication bloquée");
     expect(read("server/_core/vite.ts")).toContain('path.basename(filePath) === "build-commit.json"');
     expect(read("server/index.ts")).toContain('path.basename(filePath) === "build-commit.json"');
   });
