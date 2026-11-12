@@ -317,6 +317,18 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
     toast({ title: "Collage mis en forme", description: "Titres, listes, gras et tableaux sont conservés ; styles parasites et images retirés." });
   };
   const pickSkeleton = (kind: SkeletonKind) => { setText(bilanSkeleton(kind)); };
+  /** Bilan vide : un clic colle le contenu du presse-papiers (le navigateur demande l'autorisation) ; à défaut, on place le curseur dans le champ. */
+  const pasteFromClipboard = async () => {
+    try {
+      const pasted = (await navigator.clipboard.readText()).trim();
+      if (pasted) { setText(pasted); toast({ title: "Bilan collé", description: "Relisez-le, puis validez et envoyez." }); return; }
+      toast({ title: "Presse-papiers vide", description: "Copiez d'abord le bilan (Word, e-mail, document), puis réessayez.", variant: "destructive" });
+    } catch {
+      toast({ title: "Collage automatique refusé par le navigateur", description: "Cliquez dans le champ « Bilan » et collez avec Ctrl+V.", variant: "destructive" });
+    }
+    (document.getElementById("bilan-input") as HTMLTextAreaElement | null)?.focus();
+  };
+  const suggestedSkeleton: SkeletonKind = projectKind;
   const history = trpc.unifiedRequests.listEvaluationDeliveryHistory.useQuery({ sessionToken, sourceRecordId: recordId }, { enabled: open && Boolean(sessionToken) && alreadySent, refetchOnWindowFocus: false });
   const resend = trpc.unifiedRequests.resendEvaluationHistory.useMutation();
   const lastSent = (history.data as Array<{ id: number; status: string }> | undefined)?.find((item) => item.status === "sent");
@@ -405,6 +417,16 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
               </div>
 
               <div className="shrink-0 rounded-xl border border-slate-200 bg-white p-3" data-testid="bilan-actions">
+                {!text.trim() && !locked && (
+                  <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50 p-3" data-testid="bilan-empty-help">
+                    <p className="text-sm font-semibold text-blue-950">Les boutons s'activent dès que le bilan contient du texte.</p>
+                    <p className="mt-1 text-xs text-blue-900">Collez le bilan déjà rédigé, ou partez d'un canevas (structure sans contenu inventé) à compléter.</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <Button type="button" size="sm" className="bg-blue-700 hover:bg-blue-800" onClick={() => void pasteFromClipboard()} data-testid="bilan-paste-clipboard">Coller le bilan copié</Button>
+                      <Button type="button" size="sm" variant="outline" className="border-blue-300 text-blue-900" onClick={() => pickSkeleton(suggestedSkeleton)} data-testid="bilan-use-skeleton">Partir du canevas adapté au dossier</Button>
+                    </div>
+                  </div>
+                )}
                 {blockers.length > 0
                   ? <ul className="mb-2 list-disc space-y-0.5 pl-5 text-xs text-rose-900" data-testid="bilan-blockers" aria-label="À corriger avant validation">{blockers.map((line) => <li key={line}>{needles[line] ? <button type="button" className="text-left underline decoration-dotted underline-offset-2" onClick={() => locate(needles[line])} data-testid="bilan-blocker-locate">{line}</button> : line}</li>)}</ul>
                   : <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-emerald-800" data-testid="bilan-ready"><CheckCircle2 className="h-4 w-4" />Aucun blocage : vous pouvez valider et envoyer.</p>}
