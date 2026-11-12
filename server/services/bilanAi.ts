@@ -68,7 +68,46 @@ export function takeAiSlot(adminId: number, now: number = Date.now()): boolean {
 }
 export function resetAiSlots(): void { calls.clear(); }
 
-export const bilanAiAvailable = (): boolean => Boolean(process.env.PERPLEXITY_API_KEY?.trim());
+/** L'assistant fonctionne dès qu'UN fournisseur est configuré : Perplexity en priorité, sinon OpenAI. */
+export const bilanAiAvailable = (): boolean => Boolean(process.env.PERPLEXITY_API_KEY?.trim() || process.env.OPENAI_API_KEY?.trim());
+
+/** Repli : mêmes consignes et même format de réponse, via l'API OpenAI (aucune recherche web, aucune source extérieure). */
+export async function askOpenAi(messages: Array<{ role: string; content: string }>, options: { fetcher?: typeof fetch; timeoutMs?: number } = {}): Promise<string> {
+  const key = process.env.OPENAI_API_KEY?.trim();
+  if (!key) throw new Error("OPENAI_API_KEY manquante");
+  const fetcher = options.fetcher ?? fetch;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 45_000);
+  try {
+    const response = await fetcher("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: process.env.OPENAI_BILAN_MODEL?.trim() || "gpt-4o-mini", messages, temperature: 0.2, max_tokens: 4000 }),
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new Error(`OpenAI a répondu ${response.status}`);
+    const data = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const content = data.choices?.[0]?.message?.content;
+    if (!content || !content.trim()) throw new Error("Réponse vide de l'assistant");
+    return cleanAiOutput(content);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Choisit le fournisseur disponible ; si Perplexity échoue et qu'OpenAI est configuré, bascule dessus au lieu de bloquer l'administrateur. */
+export async function askBilanAssistant(messages: Array<{ role: string; content: string }>, options: { fetcher?: typeof fetch; timeoutMs?: number } = {}): Promise<string> {
+  const hasPerplexity = Boolean(process.env.PERPLEXITY_API_KEY?.trim());
+  const hasOpenAi = Boolean(process.env.OPENAI_API_KEY?.trim());
+  if (hasPerplexity) {
+    try {
+      return await askPerplexity(messages, options);
+    } catch (error) {
+      if (!hasOpenAi) throw error;
+    }
+  }
+  return askOpenAi(messages, options);
+}
 
 export async function askPerplexity(messages: Array<{ role: string; content: string }>, options: { fetcher?: typeof fetch; timeoutMs?: number } = {}): Promise<string> {
   const key = process.env.PERPLEXITY_API_KEY?.trim();

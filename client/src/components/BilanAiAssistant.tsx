@@ -21,7 +21,7 @@ export function BilanAiAssistant({ sessionToken, text, fullName, disabled = fals
   });
   if (!status.data) return null;
   if (!status.data.available) {
-    return <p className="mt-2 rounded-md border border-slate-200 bg-slate-50 p-2 text-xs text-slate-600" data-testid="bilan-ai-off">Assistant de relecture non activé : la clé Perplexity doit être ajoutée à la configuration du serveur.</p>;
+    return <p className="mt-2 rounded-md border border-slate-200 bg-slate-50 p-2 text-xs text-slate-600" data-testid="bilan-ai-off">Assistant de relecture facultatif, non activé sur ce serveur (clé Perplexity ou OpenAI à ajouter). Vous pouvez rédiger, valider et envoyer le bilan sans lui.</p>;
   }
   const tooShort = text.trim().length < 30;
   return (

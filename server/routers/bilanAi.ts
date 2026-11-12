@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { inspectBilan, toBilanHtml } from "../../shared/bilanContent";
 import { publicProcedure, router } from "../_core/trpc";
-import { BILAN_AI_MAX_CHARS, BILAN_AI_MODE_KEYS, BILAN_AI_MODES, askPerplexity, bilanAiAvailable, buildBilanAiMessages, pseudonymizeBilan, takeAiSlot } from "../services/bilanAi";
+import { BILAN_AI_MAX_CHARS, BILAN_AI_MODE_KEYS, BILAN_AI_MODES, askBilanAssistant, bilanAiAvailable, buildBilanAiMessages, pseudonymizeBilan, takeAiSlot } from "../services/bilanAi";
 import { requireValidAdminSession } from "./adminAuth";
 
 const session = z.string().min(1).max(512);
@@ -16,11 +16,11 @@ export const bilanAiRouter = router({
 
   improve: publicProcedure.input(z.object({ sessionToken: session, mode: z.enum(BILAN_AI_MODE_KEYS), text: z.string().min(30).max(BILAN_AI_MAX_CHARS), fullName: z.string().trim().max(255).nullish() })).mutation(async ({ input }) => {
     const admin = await requireValidAdminSession(input.sessionToken);
-    if (!bilanAiAvailable()) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "L'assistant n'est pas activé : la clé PERPLEXITY_API_KEY doit être ajoutée à la configuration du serveur." });
+    if (!bilanAiAvailable()) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "L'assistant n'est pas activé : la clé PERPLEXITY_API_KEY doit être ajoutée à la configuration du serveur (ou, à défaut, OPENAI_API_KEY). La rédaction et l'envoi du bilan fonctionnent sans elle." });
     if (!takeAiSlot(admin.id)) throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Limite atteinte : 20 propositions par heure. Réessayez plus tard." });
     let proposal: string;
     try {
-      proposal = await askPerplexity(buildBilanAiMessages(input.mode, pseudonymizeBilan(input.text, input.fullName)));
+      proposal = await askBilanAssistant(buildBilanAiMessages(input.mode, pseudonymizeBilan(input.text, input.fullName)));
     } catch {
       throw new TRPCError({ code: "BAD_GATEWAY", message: "L'assistant n'a pas répondu. Réessayez dans un instant ; votre texte n'est pas modifié." });
     }
