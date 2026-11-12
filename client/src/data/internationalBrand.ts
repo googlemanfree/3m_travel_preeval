@@ -36,8 +36,8 @@ export const INTERNATIONAL_BRAND = {
   },
   /** Ligne de confiance sous les CTA. */
   heroTrust: {
-    fr: "Sans compte pour démarrer et envoyer l’évaluation — compte ensuite pour le suivi et le dépôt de CV • Informations vérifiables",
-    en: "No account to start and submit the assessment — account afterwards for follow-up and CV upload • Verifiable information",
+    fr: "Informations vérifiables · Bureaux à Yaoundé et Ottawa · Décisions finales : autorités, établissements et employeurs",
+    en: "Verifiable information · Offices in Yaoundé and Ottawa · Final decisions: authorities, schools and employers",
   },
   /** Alias utilisés par d’autres pages (promesse courte). */
   promiseLine: {

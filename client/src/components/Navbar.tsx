@@ -165,6 +165,15 @@ const mobileAuthButtonClass =
 export default function Navbar() {
   const { candidate, logout } = useCandidateAuth();
   const { language, setLanguage } = useLanguage();
+  // Sous 480 px, le sélecteur de langue n’affiche que « FR » / « EN » : sinon le bouton du menu sort de l’écran.
+  const [compactLanguage, setCompactLanguage] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 479px)");
+    const sync = () => setCompactLanguage(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
   const copy = (value: NavCopy) => value[language];
   const { totalItems } = useMultiServiceCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -721,8 +730,8 @@ export default function Navbar() {
                 aria-label={copy(NAV_COPY.languageGroup)}
                 className="min-h-10 max-w-[8.5rem] cursor-pointer appearance-none bg-transparent pr-1 outline-none"
               >
-                <option value="fr">FR · Français</option>
-                <option value="en">EN · English</option>
+                <option value="fr">{compactLanguage ? "FR" : "FR · Français"}</option>
+                <option value="en">{compactLanguage ? "EN" : "EN · English"}</option>
               </select>
             </label>
             <ThemeToggle compact />

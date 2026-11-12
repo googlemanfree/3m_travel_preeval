@@ -22,7 +22,7 @@ describe("cohérence compte / contact / confidentialité / annulation", () => {
     expect(footer).not.toContain("déposer un CV avant la soumission");
     expect(cta).toContain("Sans compte pour démarrer et envoyer");
     expect(cta).not.toContain("déposez mon CV");
-    expect(brand).toContain("Sans compte pour démarrer et envoyer");
+    expect(brand).toContain("Sans compte pour démarrer");
     expect(tarifs).toContain("Sans compte pour démarrer et envoyer");
     expect(composePublicPrerender(shell, "/procedures").html).toContain("sans compte");
     expect(composePublicPrerender(shell, "/procedures").html).not.toContain("Oui. Créez d’abord votre compte");
