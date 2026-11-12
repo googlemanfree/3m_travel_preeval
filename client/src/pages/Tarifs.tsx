@@ -18,8 +18,8 @@ import { setPageSeo } from "@/lib/pageSeo";
 const SERVICE_OPTIONS = [
   {
     name: "Évaluation gratuite",
-    detail: "Première orientation sur votre projet. Formulaire rapide sans compte pour démarrer et envoyer ; compte ensuite pour le suivi et le dépôt de CV.",
-    points: ["Sans engagement de procédure", "Sans compte pour démarrer et envoyer", "Compte ensuite pour le suivi et le dépôt de CV"],
+    detail: "Première orientation sur votre projet par un conseiller 3M, à partir d’un formulaire rapide.",
+    points: ["Sans engagement de procédure", "Sans compte pour démarrer et envoyer", "Réponse indicative sous 24 h ouvrées"],
     accent: "border-blue-200 bg-blue-50",
   },
   {
@@ -205,7 +205,7 @@ export default function Tarifs() {
                   ))}
                 </ul>
                 <PublicEvaluationCTA
-                  hint
+                  hint={index === 0}
                   hintClassName="text-center text-xs leading-5 text-slate-600"
                   className="mt-8 inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-700 px-4 py-3 text-sm font-black !text-white transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                 >

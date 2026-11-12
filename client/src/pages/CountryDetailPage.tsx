@@ -257,7 +257,6 @@ export default function CountryDetailPage() {
           </picture>
           <div className="absolute inset-0 bg-gradient-to-r from-blue-950/95 via-indigo-950/80 to-blue-900/55" />
           <div className="absolute -right-10 -top-8 text-[9rem] leading-none opacity-[0.08] grayscale pointer-events-none">{regionBadge}</div>
-          <div className="absolute right-8 bottom-5 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/80 backdrop-blur-md">{regionLabel}</div>
           <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
             <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 min-w-0 w-full md:w-auto md:flex-1">
@@ -300,7 +299,7 @@ export default function CountryDetailPage() {
               </div>
             </div>
 
-            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:w-[336px] md:shrink-0">
+            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:w-64 md:shrink-0 md:grid-cols-1 lg:w-72">
               <Button
                 onClick={toggleFavorite}
                 variant="outline"

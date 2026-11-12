@@ -364,7 +364,7 @@ export default function Evisa() {
       </section>
 
       {/* Requirements Section */}
-      <section className="bg-blue-50 px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <section className="bg-blue-50 section-pad px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-5xl">
           <PremiumReveal>
             <h2 className="premium-section-title mb-4 text-center text-3xl">
@@ -398,7 +398,7 @@ export default function Evisa() {
       </section>
 
       {/* Guarantee block */}
-      <section className="px-4 py-12 sm:px-6 lg:px-8">
+      <section className="section-pad-tight px-4 sm:px-6 lg:px-8">
         <PremiumReveal className="mx-auto max-w-4xl">
           <Card className="flex gap-4 border-l-4 border-blue-600 bg-blue-50 p-6 sm:p-7">
             <Shield className="shrink-0 text-blue-700" size={32} />
@@ -413,7 +413,7 @@ export default function Evisa() {
       </section>
 
       {/* FAQ Section */}
-      <section className="bg-slate-50 px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <section className="bg-slate-50 section-pad px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl">
           <PremiumReveal>
             <h2 className="premium-section-title mb-10 text-center text-3xl">
@@ -440,7 +440,7 @@ export default function Evisa() {
         lockFilter
         collapsedCount={3}
         hideWhenEmpty
-        className="bg-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
+        className="bg-white section-pad px-4 sm:px-6 lg:px-8"
         titleFr="Preuves de visas et autorisations"
         titleEn="Proofs of visas and authorisations"
         leadFr="Extraits anonymisés obtenus avec l’accompagnement 3M pour des projets de voyage."
@@ -448,7 +448,7 @@ export default function Evisa() {
       />
 
       {/* CTA Section */}
-      <section className="bg-blue-50 px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <section className="bg-blue-50 section-pad px-4 sm:px-6 lg:px-8">
         <PremiumReveal className="mx-auto max-w-4xl text-center">
           <h2 className="premium-section-title mb-6 text-3xl">
             Besoin d’un e-Visa ?
