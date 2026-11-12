@@ -1164,6 +1164,12 @@ html.text-size-xlarge {
     padding-block: clamp(2rem, 1.5rem + 2.2vw, 3.25rem);
   }
 
+  /* En-tête de page secondaire : même respiration au-dessus et en dessous du titre sur toutes les pages. */
+  .page-hero-pad {
+    padding-top: clamp(3.5rem, 2.5rem + 3vw, 5rem);
+    padding-bottom: clamp(2.75rem, 2rem + 3vw, 4.5rem);
+  }
+
   .section-head {
     margin-inline: auto;
     margin-bottom: clamp(1.5rem, 1rem + 2vw, 2.5rem);

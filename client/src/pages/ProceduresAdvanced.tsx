@@ -272,7 +272,7 @@ export default function ProceduresAdvanced() {
   return (
     <PremiumAtmosphere washVisual={heroVisual} washOpacity={14}>
     <main className="min-h-screen text-slate-900" data-testid="procedures-premium-hub">
-      <section className="relative overflow-hidden px-4 pb-14 pt-16 text-white sm:px-6 lg:px-8">
+      <section className="page-hero-pad relative overflow-hidden px-4 text-white sm:px-6 lg:px-8">
         <PremiumCoverImage
           visual={heroVisual}
           priority
@@ -322,6 +322,7 @@ export default function ProceduresAdvanced() {
         title="Corridors en images"
         lead="Visuels premium du catalogue 3M — pour situer l’ambiance avant de filtrer l’annuaire."
         className="border-b border-slate-200/60 bg-white/45"
+        widthClassName="max-w-7xl"
       />
 
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">

@@ -215,7 +215,7 @@ export default function Contact() {
   return (
     <main className="premium-page-shell min-h-screen">
 
-      <section className="relative overflow-hidden px-4 pb-16 pt-20 text-white sm:px-6 sm:pb-20 lg:px-8">
+      <section className="page-hero-pad relative overflow-hidden px-4 text-white sm:px-6 lg:px-8">
         <PremiumCoverImage
           visual={heroVisual}
           priority
@@ -268,7 +268,7 @@ export default function Contact() {
         </div>
       </section>
 
-      <section className="px-4 pb-12 sm:px-6 lg:px-8">
+      <section className="px-4 pb-12 pt-8 sm:px-6 sm:pt-10 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <OfficeContactPanel />
           <aside
@@ -276,7 +276,7 @@ export default function Contact() {
             aria-label="Numéros Yaoundé : WhatsApp et fixe"
             data-testid="contact-yaounde-numbers"
           >
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-800">Numéros Yaoundé — même logique que l’accueil</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-800">Numéros Yaoundé : WhatsApp et fixe</p>
             <ul className="mt-2 space-y-1.5">
               <li>
                 <strong>WhatsApp {cameroon.whatsappDisplay}</strong> — canal principal pour messages, dossiers et urgences
@@ -335,7 +335,7 @@ export default function Contact() {
       </section>
 
       {/* Google Maps Section */}
-      <section id="carte-yaounde" className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section id="carte-yaounde" className="section-pad px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <h2 className="premium-section-title mb-8 text-center text-3xl">
             Nos localisations
@@ -397,7 +397,7 @@ export default function Contact() {
       </section>
 
       {/* Contact Info Cards */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
+      <section className="section-pad px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {contactInfo.map((info, index) => {
@@ -446,7 +446,7 @@ export default function Contact() {
       </section>
 
       {/* Contact Form Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section className="section-pad px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0 }}
@@ -648,7 +648,7 @@ export default function Contact() {
       </section>
 
       {/* Quick Contact Options */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
+      <section className="section-pad px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">
             Autres moyens de nous contacter
@@ -753,7 +753,7 @@ export default function Contact() {
       />
 
       {/* FAQ Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section className="section-pad px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">
             Questions fréquentes

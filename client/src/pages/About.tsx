@@ -162,7 +162,7 @@ export default function About() {
   return (
     <main className="premium-page-shell min-h-screen">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(founderJsonLd) }} />
-      <section className="relative overflow-hidden px-4 pb-16 pt-20 text-white sm:px-6 lg:px-8">
+      <section className="page-hero-pad relative overflow-hidden px-4 text-white sm:px-6 lg:px-8">
         <PremiumCoverImage
           visual={heroVisual}
           priority
@@ -190,7 +190,7 @@ export default function About() {
         </div>
       </section>
 
-      <section className="bg-white px-4 py-16 sm:px-6 lg:px-8" aria-labelledby="founder-heading" id="aureol-donfack">
+      <section className="section-pad bg-white px-4 sm:px-6 lg:px-8" aria-labelledby="founder-heading" id="aureol-donfack">
         <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
           <figure className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 shadow-sm">
             <picture>
@@ -276,7 +276,7 @@ export default function About() {
         </div>
       </section>
 
-      <section className="border-y border-blue-100 bg-slate-50 px-4 py-14 sm:px-6 lg:px-8" aria-labelledby="founder-bio-heading">
+      <section className="border-y border-blue-100 section-pad-tight bg-slate-50 px-4 sm:px-6 lg:px-8" aria-labelledby="founder-bio-heading">
         <div className="mx-auto grid max-w-5xl items-center gap-8 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8 lg:grid-cols-[220px_minmax(0,1fr)]">
           <figure className="mx-auto w-full max-w-[220px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-sm">
             <img
@@ -303,7 +303,7 @@ export default function About() {
         </div>
       </section>
 
-      <section className="scroll-mt-24 border-t border-blue-100 bg-blue-50/70 px-4 py-16 transition-colors duration-300 sm:px-6 lg:px-8 motion-reduce:transition-none" aria-labelledby="founder-publications-heading">
+      <section className="scroll-mt-24 border-t border-blue-100 section-pad bg-blue-50/70 px-4 transition-colors duration-300 sm:px-6 lg:px-8 motion-reduce:transition-none" aria-labelledby="founder-publications-heading">
         <div className="mx-auto max-w-6xl">
           <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Actualités & publications</p>
           <h2 id="founder-publications-heading" className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
@@ -349,7 +349,7 @@ export default function About() {
         </div>
       </section>
 
-      <section className="bg-slate-50/80 px-4 py-16 sm:px-6 lg:px-8" aria-labelledby="operating-principles-heading">
+      <section className="section-pad bg-slate-50/80 px-4 sm:px-6 lg:px-8" aria-labelledby="operating-principles-heading">
         <div className="mx-auto max-w-6xl">
           <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Méthode internationale</p>
           <h2 id="operating-principles-heading" className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
@@ -372,7 +372,7 @@ export default function About() {
         </div>
       </section>
 
-      <section className="px-4 py-16 sm:px-6 lg:px-8" aria-labelledby="process-heading">
+      <section className="section-pad px-4 sm:px-6 lg:px-8" aria-labelledby="process-heading">
         <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1.1fr_.9fr] lg:items-start">
           <div>
             <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Notre manière de travailler</p>
@@ -416,7 +416,7 @@ export default function About() {
 
       <FaqSection title="Questions sur l’agence" introduction="Ce que l’on nous demande le plus souvent avant de nous faire confiance." items={ABOUT_FAQ} tone="slate" testId="about-faq" />
 
-      <section className="bg-slate-950 px-4 py-16 text-center sm:px-6 lg:px-8" aria-labelledby="about-final-cta-heading">
+      <section className="section-pad bg-slate-950 px-4 text-center sm:px-6 lg:px-8" aria-labelledby="about-final-cta-heading">
         <h2 id="about-final-cta-heading" className="text-3xl font-black text-white">Parlons de votre projet</h2>
         <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-slate-300">Commencez par une évaluation gratuite. Elle n’engage aucune procédure et permet de recevoir une première orientation humaine.</p>
         <PublicEvaluationCTA

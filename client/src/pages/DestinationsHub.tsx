@@ -94,7 +94,7 @@ export default function DestinationsHub() {
   return (
     <PremiumAtmosphere washVisual={heroVisual} washOpacity={16}>
     <main className="premium-page-shell min-h-screen text-slate-900">
-      <section className="relative overflow-hidden px-4 pb-14 pt-16 text-white sm:px-6 lg:px-8">
+      <section className="page-hero-pad relative overflow-hidden px-4 text-white sm:px-6 lg:px-8">
         <PremiumCoverImage
           visual={heroVisual}
           priority

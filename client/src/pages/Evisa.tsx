@@ -220,7 +220,7 @@ export default function Evisa() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <section className="relative overflow-hidden px-4 pb-16 pt-20 text-white sm:px-6 sm:pb-20 lg:px-8">
+      <section className="page-hero-pad relative overflow-hidden px-4 text-white sm:px-6 lg:px-8">
         <PremiumCoverImage
           visual={heroVisual}
           priority

@@ -49,7 +49,7 @@ export function ServicePageShell({
   return (
     <PremiumAtmosphere washVisual={heroVisual ?? null} washOpacity={12}>
       <main className="min-h-screen text-slate-900">
-        <section className="relative overflow-hidden border-b border-blue-900/30 px-4 pb-16 pt-20 text-white sm:px-6 sm:pb-20 lg:px-8">
+        <section className="relative overflow-hidden page-hero-pad border-b border-blue-900/30 px-4 text-white sm:px-6 lg:px-8">
           {heroVisual ? (
             <>
               <PremiumCoverImage
@@ -129,7 +129,7 @@ export function ServiceSection({ title, introduction, children, tone = "white" }
     blue: "bg-blue-50/75 backdrop-blur-[1px]",
   };
   return (
-    <section className={`${tones[tone]} px-4 py-16 sm:px-6 sm:py-20 lg:px-8`}>
+    <section className={`${tones[tone]} section-pad px-4 sm:px-6 lg:px-8`}>
       <div className="mx-auto max-w-7xl">
         <PremiumReveal>
           <div className="max-w-3xl">

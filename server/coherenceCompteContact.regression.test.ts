@@ -42,7 +42,7 @@ describe("cohérence compte / contact / confidentialité / annulation", () => {
     expect(html).toContain("698 104 832");
     expect(html).toContain("620 996 045");
     expect(html).toContain("appels vocaux uniquement");
-    expect(html).toContain("même logique que l’accueil");
+    expect(html).toContain("Numéros Yaoundé : WhatsApp et fixe");
   });
 
   it("expose le texte complet de la politique de confidentialité aux extracteurs (lead riche + sections)", () => {

@@ -66,7 +66,7 @@ export default function Tarifs() {
     <TooltipProvider delayDuration={180}>
     <PremiumAtmosphere washVisual={heroVisual} washOpacity={12}>
     <main className="min-h-screen">
-      <section className="relative overflow-hidden px-4 pb-14 pt-16 text-white sm:px-6 lg:px-8">
+      <section className="page-hero-pad relative overflow-hidden px-4 text-white sm:px-6 lg:px-8">
         <PremiumCoverImage
           visual={heroVisual}
           priority
