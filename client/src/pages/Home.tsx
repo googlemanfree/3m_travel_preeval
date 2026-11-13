@@ -637,7 +637,7 @@ export default function Home() {
               {t("Évaluer mon projet — gratuit", "Evaluate my project — free")}
             </a>
             <p className="px-1 text-center text-[11px] leading-4 text-slate-600">
-              {t("Sans compte pour démarrer — gratuit", "No account to start — free")}
+              {t("Compte requis avant l’évaluation complète", "An account is required before the full evaluation")}
             </p>
           </div>
         </div>
