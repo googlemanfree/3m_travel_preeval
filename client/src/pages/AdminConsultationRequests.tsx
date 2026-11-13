@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import Navbar from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -112,7 +111,6 @@ export default function AdminConsultationRequests() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      <Navbar />
       <div className="max-w-6xl mx-auto px-4 py-10">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">📋 Demandes de consultation</h1>
 
