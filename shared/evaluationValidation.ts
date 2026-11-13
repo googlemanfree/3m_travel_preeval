@@ -466,6 +466,16 @@ export type ClientReport = {
   remarks: string;
   validUntil: string | null;
   legalDisclaimer: string;
+  /** Bilan automatisé (projet travail) : sections détaillées, rendues à la place de la mise en page standard. Absent pour les bilans rédigés par un administrateur. */
+  automated?: {
+    runId: number;
+    gridVersion: number;
+    verdictLabel: string;
+    sections: Array<{ id: string; title: string; paragraphs: string[]; bullets: string[]; table?: Array<[string, string]> }>;
+    pdfAvailable: boolean;
+    /** Vrai si un administrateur a relu et validé ce bilan avant publication. */
+    reviewedByAgency: boolean;
+  };
 };
 
 /**

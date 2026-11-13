@@ -100,9 +100,20 @@ export const isValidSource = (source: SourceRef | undefined | null): source is S
   Boolean(source && isHttps(source.url) && source.title.trim().length > 0 && isIsoDate(source.consultedAt));
 
 /** Applique les règles d'honnêteté : une offre ou un repère sans source valide n'est jamais publié comme tel. */
-export function sanitizeSearchResult(result: SearchResult | null | undefined): SearchResult {
-  const offers = (result?.offers ?? []).filter((offer) => offer.title.trim() && offer.employer.trim() && isValidSource(offer.source));
-  const salaries = (result?.salaries ?? []).filter((salary) => salary.label.trim() && salary.amount.trim() && salary.period.trim() && isValidSource(salary.source));
+export const DEFAULT_MAX_SOURCE_AGE_DAYS = 180;
+
+/** Politique de fraîcheur configurable : une source consultée il y a plus de `maxAgeDays` n'est pas présentée (elle est écartée, pas rajeunie). */
+export function isFreshSource(source: SourceRef, now: Date, maxAgeDays = DEFAULT_MAX_SOURCE_AGE_DAYS): boolean {
+  const consulted = Date.parse(source.consultedAt);
+  if (Number.isNaN(consulted) || consulted > now.getTime() + 86_400_000) return false; // date future : invraisemblable
+  return now.getTime() - consulted <= maxAgeDays * 86_400_000;
+}
+
+export function sanitizeSearchResult(result: SearchResult | null | undefined, options: { now?: Date; maxAgeDays?: number } = {}): SearchResult {
+  const now = options.now ?? new Date();
+  const usable = (source: SourceRef) => isValidSource(source) && isFreshSource(source, now, options.maxAgeDays);
+  const offers = (result?.offers ?? []).filter((offer) => offer.title.trim() && offer.employer.trim() && usable(offer.source));
+  const salaries = (result?.salaries ?? []).filter((salary) => salary.label.trim() && salary.amount.trim() && salary.period.trim() && usable(salary.source));
   return { offers, salaries };
 }
 
@@ -131,7 +142,7 @@ export type OrientationOutcome = {
   searchErrors: string[];
 };
 
-export async function buildOrientations(input: { facts: CandidateFacts; priorityCountry?: string; search?: SourceSearch | null; now?: Date }): Promise<OrientationOutcome> {
+export async function buildOrientations(input: { facts: CandidateFacts; priorityCountry?: string; search?: SourceSearch | null; now?: Date; maxSourceAgeDays?: number }): Promise<OrientationOutcome> {
   const { facts } = input;
   const priority = input.priorityCountry && DESTINATIONS[input.priorityCountry] ? input.priorityCountry : "Luxembourg";
   const canadaRule = evaluateCanadaRule(facts);
@@ -152,7 +163,7 @@ export async function buildOrientations(input: { facts: CandidateFacts; priority
     if (input.search) {
       try {
         const raw = await input.search({ country, jobTitle: facts.metierVise });
-        found = sanitizeSearchResult(raw);
+        found = sanitizeSearchResult(raw, { now: input.now, maxAgeDays: input.maxSourceAgeDays });
         const rejected = raw.offers.length + raw.salaries.length - found.offers.length - found.salaries.length;
         if (rejected > 0) sourcesIncomplete = true;
       } catch (error) {

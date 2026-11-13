@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildExtractionUserPrompt, extractFacts, parseCefr, parseEducationLevel, parseModelJson, parseYears, sanitizeUntrusted, type ExtractionInput, type ExtractionOutput } from "./services/bilanAuto/extraction";
+import { unionYears, buildExtractionUserPrompt, extractFacts, parseCefr, parseEducationLevel, parseModelJson, parseYears, sanitizeUntrusted, type ExtractionInput, type ExtractionOutput } from "./services/bilanAuto/extraction";
 import { scoreFacts } from "./services/bilanAuto/scoring";
 import { decideOutcome, checkEditorialCharter } from "./services/bilanAuto/controls";
 
@@ -53,6 +53,32 @@ describe("normalisation du formulaire", () => {
     expect(parseCefr("courant")).toBe("C1");
     expect(parseCefr("langue maternelle")).toBe("natif");
     expect(parseCefr("")).toBeNull();
+  });
+});
+
+describe("périodes d'emploi et études en cours", () => {
+  it("ne compte pas deux fois les emplois qui se chevauchent", () => {
+    const now = new Date("2026-11-13T00:00:00Z");
+    expect(unionYears([{ debut: "2020-01", fin: "2022-12" }, { debut: "2021-01", fin: "2021-12" }], now).years).toBe(3);
+    expect(unionYears([{ debut: "2020-01", fin: "2020-12" }, { debut: "2020-06", fin: "2021-05" }], now).years).toBe(1.4);
+    expect(unionYears([{ debut: "2020-01", fin: "2020-12" }, { debut: "2022-01", fin: "2022-12" }], now).years).toBe(2);
+    expect(unionYears([{ debut: "2025-11", fin: null }], now).years).toBe(1.1);
+  });
+  it("ignore et signale les périodes incohérentes", () => {
+    const now = new Date("2026-11-13T00:00:00Z");
+    expect(unionYears([{ debut: "2022-05", fin: "2021-01" }, { debut: "2030-01", fin: null }], now)).toEqual({ years: null, ignored: 2 });
+  });
+  it("utilise l'union des périodes du CV plutôt qu'une durée additionnée", async () => {
+    const run = async () => cvOutput({ dureeAnnees: { value: 9, evidence: null }, periodes: [{ debut: "2018-01", fin: "2022-12" }, { debut: "2019-01", fin: "2021-12" }] as never });
+    const outcome = await extractFacts(baseInput({ form: { ...baseInput().form, yearsOfExperience: "5" } }), run);
+    expect(outcome.ok && outcome.build.facts.experience.dureeAnnees.value).toBe(5);
+    expect(outcome.ok && outcome.build.facts.experience.dureeAnnees.provenance).toBe("declare");
+  });
+  it("des études en cours ne sont jamais comptées comme un diplôme obtenu", async () => {
+    const run = async () => cvOutput({ niveau: { value: "bac_plus_5_plus", evidence: "Master 2 en cours" }, niveauStatut: "en_cours" });
+    const outcome = await extractFacts(baseInput({ form: { ...baseInput().form, educationLevel: "" } }), run);
+    expect(outcome.ok && outcome.build.facts.formation.niveau.value).toBeNull();
+    expect(outcome.ok && outcome.build.notes.join(" ")).toMatch(/Études en cours/);
   });
 });
 
@@ -149,6 +175,16 @@ describe("fusion formulaire / CV / pièces avec provenance", () => {
 function pre(over: Partial<Parameters<typeof decideOutcome>[0]["preconditions"]> = {}) {
   return { evaluationSubmitted: true, cvStored: true, cvAttachedToAccount: true, cvConsent: true, cvReadable: true, technicalError: null, gridApproved: true, ...over };
 }
+
+describe("fichier illisible ou non conforme", () => {
+  it("ni texte ni fichier exploitable : aucun appel au modèle, complément « version lisible », aucun refus", async () => {
+    let called = 0;
+    const outcome = await extractFacts(baseInput({ cvText: null, cvFile: null }), async () => { called += 1; return cvOutput(); });
+    expect(called).toBe(0);
+    expect(outcome.ok && outcome.cvReadable).toBe(false);
+    if (outcome.ok) expect(decideOutcome({ preconditions: pre({ cvReadable: false }), score: scoreFacts(outcome.build.facts) }).complementItems[0].id).toBe("cv_lisible");
+  });
+});
 
 describe("issues A / B / C", () => {
   it("A quand tout est suffisant", async () => {

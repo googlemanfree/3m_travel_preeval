@@ -20,6 +20,7 @@ export * from "./studyCatalogSchema";
 export * from "./jobOffersSchema";
 export * from "./stayProgramsSchema";
 export * from "./remoteSupportSchema";
+export * from "./bilanAutoSchema";
 
 /**
  * Core user table backing auth flow.

@@ -48,6 +48,27 @@ describe("règle Canada : BTS minimum et moins de 40 ans", () => {
   });
 });
 
+describe("fraîcheur des sources", () => {
+  const now = new Date("2026-11-13T10:00:00Z");
+  it("écarte une source périmée ou datée du futur, garde une source récente", () => {
+    const old: SourceRef = { ...source, consultedAt: "2025-01-01" };
+    const future: SourceRef = { ...source, consultedAt: "2027-01-01" };
+    const result = sanitizeSearchResult({ offers: [{ title: "A", employer: "B", source: old }, { title: "A", employer: "B", source: future }, { title: "A", employer: "B", source }], salaries: [{ label: "x", amount: "1", period: "mois", source: old }] }, { now });
+    expect(result.offers).toHaveLength(1);
+    expect(result.salaries).toHaveLength(0);
+  });
+  it("la durée de fraîcheur est configurable", () => {
+    const aged: SourceRef = { ...source, consultedAt: "2026-06-01" };
+    expect(sanitizeSearchResult({ offers: [{ title: "A", employer: "B", source: aged }], salaries: [] }, { now, maxAgeDays: 90 }).offers).toHaveLength(0);
+    expect(sanitizeSearchResult({ offers: [{ title: "A", employer: "B", source: aged }], salaries: [] }, { now, maxAgeDays: 365 }).offers).toHaveLength(1);
+  });
+  it("source périmée : le salaire redevient « à documenter »", async () => {
+    const outcome = await buildOrientations({ facts: facts("bac_plus_2", 30), now, search: async () => ({ offers: [], salaries: [{ label: "Technicien", amount: "3000", period: "mois brut", source: { ...source, consultedAt: "2024-01-01" } }] }) });
+    expect(outcome.proposals[0].salary).toMatch(/à documenter/i);
+    expect(outcome.sourcesIncomplete).toBe(true);
+  });
+});
+
 describe("orientations", () => {
   it("Luxembourg prioritaire, au moins quatre alternatives, Canada ajouté par la règle", async () => {
     const outcome = await buildOrientations({ facts: facts("bac_plus_2", 30) });

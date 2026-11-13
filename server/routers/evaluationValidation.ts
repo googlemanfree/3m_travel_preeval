@@ -24,6 +24,7 @@ import {
   type ValidationFlowErrorCode,
 } from "../services/evaluationValidationCore";
 import { isMissingTableError } from "../services/evaluationValidationStore";
+import { getPublishedBilanPdfUrl, triggerBilanAuto } from "../services/bilanAuto/runtime";
 import { buildDefaultDeps, runAiDraft, type AiDraftRunOptions } from "../services/structuredEvaluationPipeline";
 import { requireValidAdminSession } from "./adminAuth";
 import type { candidateProcedure as CandidateProcedure } from "./candidate";
@@ -249,7 +250,21 @@ export function createEvaluationValidationRouter(ports: ValidationRouterPorts, c
             fileName,
             upload: () => ports.storeCv({ evaluationId: input.evaluationId, fileName, mimeType: checked.mime, bytes: checked.bytes }),
           });
+          triggerBilanAuto(input.evaluationId);
           return { cv };
+        }),
+      ),
+
+    /** Lien signé (durée limitée) vers le PDF du bilan automatisé publié ; réservé au propriétaire de l'évaluation. */
+    myBilanPdfUrl: candidateProc
+      .input(z.object({ evaluationId }))
+      .query(({ ctx, input }) =>
+        guard(async () => {
+          const candidate = { id: ctx.candidate.id, email: ctx.candidate.email };
+          if (!(await ports.ownsEvaluation(candidate, input.evaluationId))) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
+          const url = await getPublishedBilanPdfUrl(input.evaluationId, ctx.candidate.id);
+          if (!url) throw new TRPCError({ code: "NOT_FOUND", message: "Le PDF n'est pas disponible." });
+          return { url };
         }),
       ),
 
@@ -261,6 +276,7 @@ export function createEvaluationValidationRouter(ports: ValidationRouterPorts, c
           if (!(await ports.ownsEvaluation(candidate, input.evaluationId))) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
           const deps = await ports.resolveDeps();
           await submitCandidateReply(deps, input.evaluationId, { answers: input.answers, note: input.note });
+          triggerBilanAuto(input.evaluationId);
           const [latest, latestPublished, context] = await Promise.all([deps.store.getLatestCase(input.evaluationId), deps.store.getLatestPublishedCase(input.evaluationId), deps.store.loadEvaluationContext(input.evaluationId)]);
           return { view: buildCandidateView({ latest, latestPublished, cv: { onFile: context?.cvOnFile === true, fileName: context?.cvFileName ?? null } }) };
         }),

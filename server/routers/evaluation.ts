@@ -1,4 +1,5 @@
 ﻿import { z } from "zod";
+import { triggerBilanAuto } from "../services/bilanAuto/runtime";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
@@ -409,6 +410,7 @@ export const evaluationRouter = router({
         console.warn("[MultiProjectEvaluation] Livraison formulaire pays non effectuée:", formErr);
       }
 
+      triggerBilanAuto(evaluationId);
       return { success: true, evaluationId, documentUploadToken: createEvaluationUploadToken(evaluationId, input.email), message: "Votre évaluation est reçue et placée en revue humaine.", dossierCode, reviewDeadline, emailSent };
     }),
 
@@ -425,6 +427,7 @@ export const evaluationRouter = router({
     const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-150) || "document";
     const stored = await storagePut(`evaluation-documents/${input.evaluationId}/${Date.now()}-${safeName}`, buffer, input.mimeType);
     const result = await db.insert(clientDocuments).values({ evaluationId: input.evaluationId, candidateEmail: input.email.toLowerCase(), documentType: input.documentType, documentName: safeName, documentUrl: stored.url, fileSize: buffer.length, source: "online", receivedByAdmin: false }).$returningId();
+    triggerBilanAuto(input.evaluationId);
     return { success: true, documentId: result[0]?.id, documentName: safeName };
   }),
 

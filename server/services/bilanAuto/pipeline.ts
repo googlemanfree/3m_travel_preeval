@@ -67,6 +67,8 @@ export type EvaluationInputs = {
   priorityCountry: string | null;
   /** Évaluation soumise (formulaire finalisé), pas un simple brouillon. */
   submitted: boolean;
+  /** Périmètre de la première version : projet TRAVAIL uniquement. */
+  projectIsWork: boolean;
   cvConsent: boolean;
   form: FormAnswers;
   cv: { key: string | null; fileName: string | null; sha256: string | null; stored: boolean; attachedToAccount: boolean; text: string | null; file: ExtractionFile | null };
@@ -102,7 +104,8 @@ export type PipelineDeps = {
   config: PipelineConfig;
   workerId: string;
   now: () => Date;
-  loadInputs: (evaluationId: number) => Promise<EvaluationInputs | null>;
+  /** `content: false` : sans télécharger les fichiers (déclenchement) ; `true` : lecture complète (traitement). */
+  loadInputs: (evaluationId: number, options?: { content?: boolean }) => Promise<EvaluationInputs | null>;
   runExtraction: ExtractionRunner;
   search: SourceSearch | null;
   renderPdf: (report: BilanReport) => Promise<Buffer>;
@@ -111,6 +114,8 @@ export type PipelineDeps = {
   mailer: Mailer;
   portalUrl: string;
   breaker?: CircuitBreaker;
+  /** Appelé quand le fournisseur d'e-mail a accepté le message de publication (aligne l'état du parcours existant). */
+  onPublicationEmailAccepted?: (run: RunRecord) => Promise<void>;
 };
 
 // ── Version des entrées et clé d'idempotence ──────────────────────────────
@@ -125,6 +130,7 @@ export function snapshotOf(inputs: EvaluationInputs, referenceDate: string, rubr
     form,
     cv: { key: inputs.cv.key, fileName: inputs.cv.fileName, sha256: inputs.cv.sha256 },
     documents: inputs.documents.map((doc) => ({ id: doc.id, kind: doc.kind, key: doc.key, sha256: doc.sha256 })),
+    consents: { cv: inputs.cvConsent },
     referenceDate,
     rubricVersion,
     promptVersion: PROMPT_VERSION,
@@ -133,7 +139,15 @@ export function snapshotOf(inputs: EvaluationInputs, referenceDate: string, rubr
 
 /** Empreinte des seules entrées qui changent le résultat (la date de référence n'en fait pas partie : un simple jour qui passe ne relance rien). */
 export function inputVersionOf(snapshot: InputSnapshot): string {
-  const { referenceDate: _ignored, ...stable } = snapshot;
+  // Identité d'un fichier = sa clé de stockage (unique par dépôt) : l'empreinte, lue plus tard, ne change pas la version.
+  const stable = {
+    form: snapshot.form,
+    cv: { key: snapshot.cv.key, fileName: snapshot.cv.fileName },
+    documents: snapshot.documents.map((doc) => ({ id: doc.id, kind: doc.kind, key: doc.key })),
+    consents: snapshot.consents,
+    rubricVersion: snapshot.rubricVersion,
+    promptVersion: snapshot.promptVersion,
+  };
   return createHash("sha256").update(JSON.stringify(stable)).digest("hex").slice(0, 24);
 }
 
@@ -165,9 +179,10 @@ export type SubmitResult =
 export async function submitForAnalysis(deps: PipelineDeps, evaluationId: number, options: { force?: boolean; actor?: string } = {}): Promise<SubmitResult> {
   const { store, config } = deps;
   if (!config.enabled) return { status: "disabled", reason: "Le traitement automatique est désactivé (BILAN_AUTO_ENABLED)." };
-  const inputs = await deps.loadInputs(evaluationId);
+  const inputs = await deps.loadInputs(evaluationId, { content: false });
   if (!inputs) return { status: "not_ready", reason: "Évaluation introuvable." };
   if (config.allowlistEmails && !config.allowlistEmails.includes(inputs.email.trim().toLowerCase())) return { status: "not_allowed", reason: "Dossier hors de la liste de test." };
+  if (!inputs.projectIsWork) return { status: "not_allowed", reason: "Projet hors périmètre (travail uniquement) : parcours inchangé." };
   if (!inputs.submitted) return { status: "not_ready", reason: "Le formulaire n'est pas finalisé." };
   if (!inputs.cv.stored) return { status: "not_ready", reason: "Le CV n'est pas encore stocké." };
   if (!inputs.cv.attachedToAccount || inputs.candidateId === null) return { status: "not_ready", reason: "Le CV ou l'évaluation n'est pas rattaché à un compte candidat." };
@@ -246,7 +261,7 @@ export async function processRun(deps: PipelineDeps, claimed: RunRecord): Promis
       return await setState(deps, run, "retry_pending", { nextAttemptAt: new Date(now.getTime() + 5 * 60_000), lockedBy: null, lockedAt: null });
     }
 
-    const inputs = await deps.loadInputs(run.evaluationId);
+    const inputs = await deps.loadInputs(run.evaluationId, { content: true });
     if (!inputs) throw new Error("Évaluation introuvable pendant le traitement");
     const snapshot = snapshotOf(inputs, run.inputSnapshot.referenceDate, run.rubricVersion);
     if (inputVersionOf(snapshot) !== run.inputVersion) {
@@ -257,8 +272,8 @@ export async function processRun(deps: PipelineDeps, claimed: RunRecord): Promis
       return run;
     }
 
-    // 1. Extraction
-    run = await setState(deps, run, "extracting");
+    // 1. Extraction (les empreintes de fichiers, connues maintenant, complètent l'instantané sans changer la version)
+    run = await setState(deps, run, "extracting", { inputSnapshot: snapshot });
     const extraction = await extractFacts(
       {
         form: inputs.form,
@@ -272,7 +287,7 @@ export async function processRun(deps: PipelineDeps, claimed: RunRecord): Promis
     );
     if ("error" in extraction) { deps.breaker?.failure(now); throw new Error(extraction.error); }
     deps.breaker?.success();
-    const { facts, injectionSuspected, unreadableDocuments } = extraction.build;
+    const { facts, injectionSuspected, unreadableDocuments, notes } = extraction.build;
 
     // 2. Notation (règles déterministes)
     run = await setState(deps, run, "scoring");
@@ -296,7 +311,7 @@ export async function processRun(deps: PipelineDeps, claimed: RunRecord): Promis
       gridApproved,
     };
     let decision = decideOutcome({ preconditions, score });
-    const flags = [...score.rubrics.flatMap((rubric) => rubric.subCriteria.flatMap((sub) => sub.flags)), ...(injectionSuspected ? ["Consigne détectée dans un contenu du dossier : ignorée"] : []), ...orientations.searchErrors];
+    const flags = [...score.rubrics.flatMap((rubric) => rubric.subCriteria.flatMap((sub) => sub.flags)), ...(injectionSuspected ? ["Consigne détectée dans un contenu du dossier : ignorée"] : []), ...notes, ...orientations.searchErrors];
     const common = { facts, scoreResult: score, orientations, previous, flags, model: "forge-llm", costEur: config.costPerRunEstimateEur, score: score.calculable ? score.total : null, scoreMax: score.max, thresholdReached: score.calculable ? score.thresholdReached : null };
 
     if (decision.code === "B") {
@@ -498,6 +513,7 @@ export async function processOutbox(deps: PipelineDeps, limit = 20): Promise<{ s
       await deps.store.updateOutbox(entry.id, { state: "accepted_by_provider", providerMessageId: result.messageId ?? null, lastError: null });
       await deps.store.updateRun(run.id, { notificationState: "accepted_by_provider" });
       await deps.store.addEvent({ runId: run.id, evaluationId: run.evaluationId, actor: "systeme", action: "notification_accepted", detail: entry.kind, at: deps.now() });
+      if (entry.kind === "bilan_publie") await deps.onPublicationEmailAccepted?.(run).catch(() => undefined);
       sent += 1;
     } catch (error) {
       const message = (error instanceof Error ? error.message : String(error)).slice(0, 300);
@@ -526,4 +542,17 @@ export async function applyDeliveryEvent(deps: Pick<PipelineDeps, "store" | "now
     }
   }
   return false;
+}
+
+/** Contrôle d'accès : le PDF d'un bilan publié n'est accessible qu'au candidat auquel il appartient. */
+export function pdfKeyForCandidate(run: Pick<RunRecord, "state" | "candidateId" | "pdfKey"> | undefined, candidateId: number): string | null {
+  if (!run || run.state !== "published" || run.candidateId === null || run.candidateId !== candidateId) return null;
+  return run.pdfKey;
+}
+
+/** Suppression des données de bilan d'un candidat (demande de suppression). Les fichiers PDF sont à retirer du stockage par l'appelant. */
+export async function eraseBilanData(deps: Pick<PipelineDeps, "store" | "now">, candidateId: number, actor: string): Promise<{ runs: number; pdfKeys: string[] }> {
+  const result = await deps.store.eraseCandidate(candidateId);
+  await deps.store.addEvent({ runId: null, evaluationId: 0, actor, action: "erase_candidate_data", detail: `candidat ${candidateId} : ${result.runs} traitement(s), ${result.pdfKeys.length} fichier(s) PDF à retirer du stockage`, at: deps.now() });
+  return result;
 }

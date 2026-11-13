@@ -90,4 +90,14 @@ export class MemoryBilanAutoStore implements BilanAutoStore {
   }
 
   async listOutbox(runId: number) { return this.outbox.filter((entry) => entry.runId === runId).map((entry) => this.clone(entry)); }
+
+  async eraseCandidate(candidateId: number) {
+    const mine = this.runs.filter((run) => run.candidateId === candidateId);
+    const ids = new Set(mine.map((run) => run.id));
+    const pdfKeys = mine.map((run) => run.pdfKey).filter((key): key is string => Boolean(key));
+    this.runs = this.runs.filter((run) => !ids.has(run.id));
+    this.events = this.events.filter((event) => event.runId === null || !ids.has(event.runId));
+    this.outbox = this.outbox.filter((entry) => !ids.has(entry.runId));
+    return { runs: ids.size, pdfKeys };
+  }
 }

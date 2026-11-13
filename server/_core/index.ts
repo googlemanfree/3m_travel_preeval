@@ -17,6 +17,7 @@ import { registerClientErrorRoute } from "./clientErrorReport";
 import { registerCinetPayWebhook } from "../routers/cinetpayWebhook";
 import { handleEvaluationJob } from "../scheduled/evaluationJob";
 import { handleEvaluationBilanJob } from "../scheduled/evaluationBilanJob";
+import { startBilanAutoWorker } from "../services/bilanAuto/runtime";
 import { handleComplianceMonthlyReportJob } from "../scheduled/complianceMonthlyReportJob";
 import { handlePassportPendingWeeklyAlertJob } from "../scheduled/passportPendingWeeklyAlertJob";
 import { handleExternalLinkCheckJob } from "../scheduled/externalLinkCheckJob";
@@ -214,6 +215,7 @@ async function startServer() {
     initScheduledJobsCron(port);
     startCountryGuidesRefresh();
     startActivationGuard();
+    startBilanAutoWorker();
   });
 }
 

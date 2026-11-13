@@ -27,7 +27,7 @@ const cvJson = (over: Record<string, unknown> = {}) => JSON.stringify({
 function inputs(over: Partial<EvaluationInputs> = {}): EvaluationInputs {
   return {
     evaluationId: 1, candidateId: 7, email: "awa@example.org", fullName: "Awa Ndiaye", dossierRef: "3M-0001", priorityCountry: "Luxembourg",
-    submitted: true, cvConsent: true,
+    submitted: true, projectIsWork: true, cvConsent: true,
     form: { fullName: "Awa Ndiaye", email: "awa@example.org", phone: "+237600000000", dateOfBirth: "1995-04-02", educationLevel: "Licence", yearsOfExperience: "5-10 ans", frenchLevel: "B2", englishLevel: "B1", destinationCountry: "Luxembourg", currentJobTitle: "Électricien", passportDeclared: true, languageTestsTaken: "DELF B2", completenessFields: { a: 1, b: 2, c: 3 } },
     cv: { key: "cv/awa-1.pdf", fileName: "cv.pdf", sha256: "abc", stored: true, attachedToAccount: true, text: "CV de Awa Ndiaye, électricienne.", file: null },
     documents: [], ...over,
@@ -394,6 +394,13 @@ describe("historique, correction et notifications", () => {
 });
 
 describe("autres parcours", () => {
+  it("un projet hors travail (études, tourisme, e-Visa…) n'entre jamais dans la file", async () => {
+    const h = harness();
+    h.state.inputs = inputs({ projectIsWork: false });
+    expect((await submitForAnalysis(h.deps, 1)).status).toBe("not_allowed");
+    expect(await h.store.listRuns({})).toHaveLength(0);
+  });
+
   it("aucun traitement n'existe pour une évaluation hors liste : les autres projets ne sont pas touchés", async () => {
     const h = harness({ config: { allowlistEmails: ["test@3m.test"] } });
     expect((await submitForAnalysis(h.deps, 1)).status).toBe("not_allowed");

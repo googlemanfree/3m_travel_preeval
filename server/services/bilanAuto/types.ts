@@ -65,6 +65,7 @@ export type InputSnapshot = {
   form: Record<string, string | number | boolean | null>;
   cv: { key: string | null; fileName: string | null; sha256: string | null };
   documents: Array<{ id: string; kind: string; key: string | null; sha256: string | null }>;
+  consents: { cv: boolean };
   referenceDate: string;
   rubricVersion: string;
   promptVersion: string;
@@ -165,4 +166,6 @@ export interface BilanAutoStore {
   claimOutbox(now: Date, limit: number): Promise<OutboxEntry[]>;
   updateOutbox(id: number, patch: Partial<Pick<OutboxEntry, "state" | "attempts" | "providerMessageId" | "lastError">>): Promise<void>;
   listOutbox(runId: number): Promise<OutboxEntry[]>;
+  /** Suppression des données de bilan d'un candidat (traitements, journal, outbox). Renvoie les fichiers PDF à effacer du stockage. */
+  eraseCandidate(candidateId: number): Promise<{ runs: number; pdfKeys: string[] }>;
 }
