@@ -15,6 +15,7 @@ import { configFromEnv, type EvaluationInputs, type Mailer, type PipelineDeps, t
 import { DrizzleBilanAutoStore } from "./drizzleStore";
 import { parseModelJson, type ExtractionRunner } from "./extraction";
 import { renderPdf } from "./reportPdf";
+import { DrizzleSourcesStore, makeReferentialSearch } from "./sources";
 import type { BilanReport, RunRecord } from "./types";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
@@ -208,7 +209,7 @@ export async function createProductionDeps(workerId = `worker-${process.pid}`): 
   const publisher = makePublisher(validation, () => new Date());
   return {
     store, config: configFromEnv(), workerId, now: () => new Date(),
-    loadInputs: makeLoadInputs(db), runExtraction: runExtractionWithForge, search: null,
+    loadInputs: makeLoadInputs(db), runExtraction: runExtractionWithForge, search: makeReferentialSearch(new DrizzleSourcesStore(db)),
     renderPdf, storePdf: async (key, bytes) => storagePut(key, bytes, "application/pdf"),
     publisher, mailer: smtpMailer, portalUrl,
     onPublicationEmailAccepted: publisher.markNotified,

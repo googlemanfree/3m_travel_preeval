@@ -14,7 +14,7 @@ import { CEFR_LEVELS, EDUCATION_RANK, type CandidateFacts } from "../../../share
 export type SourceRef = { url: string; title: string; consultedAt: string };
 
 export type OrientationItem =
-  | { kind: "offre_reperee"; title: string; employer: string; city?: string; source: SourceRef }
+  | { kind: "offre_reperee"; title: string; employer: string; city?: string; remote: "confirmee" | "non_confirmee"; source: SourceRef }
   | { kind: "poste_a_cibler"; title: string; missions: string[] }
   | { kind: "repere_salarial"; label: string; amount: string; period: string; source: SourceRef };
 
@@ -90,7 +90,7 @@ export function ageFromBirthDate(raw: string | null | undefined, now: Date): num
 
 // ── Sources et éléments ───────────────────────────────────────────────────
 
-export type SearchResult = { offers: Array<{ title: string; employer: string; city?: string; source: SourceRef }>; salaries: Array<{ label: string; amount: string; period: string; source: SourceRef }> };
+export type SearchResult = { offers: Array<{ title: string; employer: string; city?: string; remote?: "confirmee" | "non_confirmee"; source: SourceRef }>; salaries: Array<{ label: string; amount: string; period: string; source: SourceRef }> };
 /** Recherche de sources (offres, repères salariaux). Peut échouer : le bilan est alors produit avec « à documenter ». */
 export type SourceSearch = (input: { country: string; jobTitle: string | null }) => Promise<SearchResult>;
 
@@ -172,7 +172,7 @@ export async function buildOrientations(input: { facts: CandidateFacts; priority
       }
     }
     const items: OrientationItem[] = [
-      ...found.offers.map((offer): OrientationItem => ({ kind: "offre_reperee", ...offer })),
+      ...found.offers.map((offer): OrientationItem => ({ kind: "offre_reperee", ...offer, remote: offer.remote ?? "non_confirmee" })),
       {
         kind: "poste_a_cibler",
         title: facts.metierVise ?? "Poste à préciser avec votre conseiller",

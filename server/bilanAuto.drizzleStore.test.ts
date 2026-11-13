@@ -27,14 +27,14 @@ describe.skipIf(!URL)("store MySQL du bilan automatisé", () => {
     const dbModule = await import("./db");
     db = (await dbModule.getDb())!;
     const guard = await import("./services/bilanAuto/schemaGuard");
-    for (const table of ["bilan_auto_outbox", "bilan_auto_events", "bilan_auto_runs"]) await db.execute(sql.raw(`DROP TABLE IF EXISTS ${table}`));
+    for (const table of ["bilan_auto_sources", "bilan_auto_outbox", "bilan_auto_events", "bilan_auto_runs"]) await db.execute(sql.raw(`DROP TABLE IF EXISTS ${table}`));
     guard.resetBilanAutoSchemaGuardForTests();
     expect(await guard.ensureBilanAutoTables()).toBe(true);
     expect(await guard.ensureBilanAutoTables()).toBe(true); // idempotent
     const { DrizzleBilanAutoStore } = await import("./services/bilanAuto/drizzleStore");
     store = new DrizzleBilanAutoStore(db);
   });
-  afterAll(async () => { for (const table of ["bilan_auto_outbox", "bilan_auto_events", "bilan_auto_runs"]) await db.execute(sql.raw(`DROP TABLE IF EXISTS ${table}`)); });
+  afterAll(async () => { for (const table of ["bilan_auto_sources", "bilan_auto_outbox", "bilan_auto_events", "bilan_auto_runs"]) await db.execute(sql.raw(`DROP TABLE IF EXISTS ${table}`)); });
 
   it("insère, relit avec les JSON, et refuse une seconde insertion de la même clé d'idempotence", async () => {
     const first = await store.insertRun({ ...base("k-1"), facts: { ok: true } as never, flags: ["a"] });
@@ -89,5 +89,21 @@ describe.skipIf(!URL)("store MySQL du bilan automatisé", () => {
     expect(await store.eraseCandidate(99)).toEqual({ runs: 1, pdfKeys: ["bilan-auto/6/x.pdf"] });
     expect(await store.getRun(run.id)).toBeNull();
     expect(await store.listEvents(run.id)).toHaveLength(0);
+  });
+
+  it("référentiel de sources : création, filtre par pays et activation, suppression", async () => {
+    const { DrizzleSourcesStore, SourceInputSchema, makeReferentialSearch } = await import("./services/bilanAuto/sources");
+    const sources = new DrizzleSourcesStore(db);
+    const parsed = SourceInputSchema.parse({ country: "Luxembourg", kind: "salaire", occupation: "Technicien de maintenance", amountMin: 3000, amountMax: 3500, currency: "EUR", period: "mois", grossOrNet: "brut", url: "https://example.org/s", title: "Observatoire", observedAt: new Date().toISOString().slice(0, 10) });
+    const created = await sources.create({ ...parsed, createdBy: "admin@3m.test" });
+    expect(created.id).toBeGreaterThan(0);
+    expect(created.active).toBe(true);
+    expect((await sources.list({ country: "Pologne" })).length).toBe(0);
+    const found = await makeReferentialSearch(sources)({ country: "Luxembourg", jobTitle: "Technicienne de maintenance" });
+    expect(found.salaries[0].amount).toMatch(/brut/);
+    await sources.setActive(created.id, false);
+    expect((await makeReferentialSearch(sources)({ country: "Luxembourg", jobTitle: "Technicienne de maintenance" })).salaries).toHaveLength(0);
+    await sources.remove(created.id);
+    expect(await sources.list()).toHaveLength(0);
   });
 });

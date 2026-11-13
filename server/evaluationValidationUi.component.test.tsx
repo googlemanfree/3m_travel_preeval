@@ -62,6 +62,8 @@ vi.mock("@/lib/trpc", () => ({
       startReevaluation: mutation("startReevaluation"),
       respondToInfoRequest: mutation("respondToInfoRequest"),
       attachCv: mutation("attachCv"),
+      // frise de suivi du bilan automatisé : inactive dans ces scénarios (aucun traitement)
+      myBilanProgress: { useQuery: () => ({ data: { progress: null } }) },
     },
   },
 }));
