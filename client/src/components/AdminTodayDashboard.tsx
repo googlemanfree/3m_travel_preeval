@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { AlertTriangle, ClipboardCheck, Download, FileSignature, GitBranch, MessageSquareWarning, RefreshCw, Timer } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +39,10 @@ function Metric({ label, value, icon: Icon, tone }: { label: string; value: numb
   return <div className="rounded-xl border border-slate-200 bg-white p-3"><div className="flex items-center justify-between gap-2"><span className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</span><Icon className={`h-4 w-4 ${tone}`} aria-hidden="true" /></div><p className="mt-2 text-2xl font-black text-slate-950">{value}</p></div>;
 }
 
-export function buildTodayItems(candidates: TodayCandidate[]): TodayItem[] {
+const TONE_PRIORITY: Record<TodayItem["tone"], number> = { rose: 0, amber: 1, violet: 2, blue: 3 };
+
+/** Tous les signaux, regroupés par dossier et classés du plus urgent au moins urgent (plus de coupe arbitraire). */
+export function buildAllTodayItems(candidates: TodayCandidate[]): TodayItem[] {
   const items: TodayItem[] = [];
   for (const candidate of candidates) {
     if (candidate.journeySla?.tone === "overdue") items.push({ candidate, label: "SLA dépassé", detail: candidate.journeySla.label ?? "Échéance à traiter", tone: "rose" });
@@ -77,11 +81,26 @@ export function buildTodayItems(candidates: TodayCandidate[]): TodayItem[] {
       });
     }
   }
-  return items.slice(0, 12);
+  const groups = new Map<string, TodayItem[]>();
+  for (const item of items) {
+    const key = String(item.candidate.id);
+    groups.set(key, [...(groups.get(key) ?? []), item]);
+  }
+  const urgency = (group: TodayItem[]) => Math.min(...group.map((item) => TONE_PRIORITY[item.tone]));
+  return Array.from(groups.values())
+    .map((group) => [...group].sort((left, right) => TONE_PRIORITY[left.tone] - TONE_PRIORITY[right.tone]))
+    .sort((left, right) => urgency(left) - urgency(right))
+    .flat();
+}
+
+export function buildTodayItems(candidates: TodayCandidate[], limit = 12): TodayItem[] {
+  return buildAllTodayItems(candidates).slice(0, limit);
 }
 
 export default function AdminTodayDashboard({ candidates, isRefreshing, lastUpdatedAt, onRefresh, onOpen }: { candidates: TodayCandidate[]; isRefreshing: boolean; lastUpdatedAt?: Date | null; onRefresh: () => void; onOpen: (candidateId: string) => void }) {
-  const items = buildTodayItems(candidates);
+  const allItems = useMemo(() => buildAllTodayItems(candidates), [candidates]);
+  const [shown, setShown] = useState(12);
+  const items = allItems.slice(0, shown);
   const count = (predicate: (candidate: TodayCandidate) => boolean) => candidates.filter(predicate).length;
   const overdue = count((candidate) => candidate.journeySla?.tone === "overdue");
   const soon = count((candidate) => candidate.journeySla?.tone === "soon");
@@ -96,7 +115,7 @@ export default function AdminTodayDashboard({ candidates, isRefreshing, lastUpda
 
   const exportCsv = () => {
     const csv = todayQueueToCsv(
-      items.map((item) => ({
+      allItems.map((item) => ({
         label: item.label,
         fullName: item.candidate.fullName,
         folderCode: item.candidate.folderCode,
@@ -109,5 +128,5 @@ export default function AdminTodayDashboard({ candidates, isRefreshing, lastUpda
     downloadTextFile(`file-du-jour-3m-${stamp}.csv`, csv);
   };
 
-  return <Card data-testid="admin-today-dashboard" className="border-indigo-200 shadow-sm"><CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><CardTitle className="flex items-center gap-2 text-xl text-slate-950"><Timer className="h-5 w-5 text-indigo-700" />File du jour — à traiter maintenant</CardTitle><p className="mt-1 text-sm text-slate-600">Une seule file des dossiers à arbitrer (SLA, clarifications, reçus, protocoles, checklist). Actualisation manuelle.</p><p className="mt-1 text-xs text-slate-500" aria-live="polite" data-testid="today-last-updated">{isRefreshing ? "Actualisation en cours…" : syncLabel}</p></div><div className="flex flex-wrap gap-2"><Button type="button" variant="outline" onClick={exportCsv} disabled={items.length === 0} className="gap-2" data-testid="today-export-csv"><Download className="h-4 w-4" aria-hidden="true" />Exporter CSV</Button><Button type="button" variant="outline" onClick={onRefresh} disabled={isRefreshing} className="gap-2"><RefreshCw className={isRefreshing ? "h-4 w-4 animate-spin" : "h-4 w-4"} aria-hidden="true" />{isRefreshing ? "Actualisation…" : "Actualiser"}</Button></div></CardHeader><CardContent className="space-y-4"><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Compteurs file du jour"><Metric label="SLA dépassés" value={overdue} icon={AlertTriangle} tone="text-rose-700" /><Metric label="SLA sous 24 h" value={soon} icon={Timer} tone="text-amber-700" /><Metric label="Clarifications" value={clarifications} icon={MessageSquareWarning} tone="text-violet-700" /><Metric label="Photos passeport" value={passportPhotos} icon={ClipboardCheck} tone="text-amber-700" /><Metric label="Reçus à préparer" value={receiptMissing} icon={ClipboardCheck} tone="text-orange-700" /><Metric label="Protocole N°01" value={protocolOne} icon={FileSignature} tone="text-blue-700" /><Metric label="Protocole N°02" value={protocolTwo} icon={FileSignature} tone="text-violet-700" /><Metric label="Checklist < 80 %" value={checklist} icon={ClipboardCheck} tone="text-amber-700" /><Metric label="Multi-procédures" value={siblings} icon={GitBranch} tone="text-violet-700" /></div>{items.length === 0 ? <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-900" data-testid="today-empty">Aucune priorité critique dans la vue actuelle.</p> : <div className="space-y-2" data-testid="today-priority-list">{items.map((item, index) => <button key={`${item.candidate.id}-${item.label}-${index}`} type="button" onClick={() => onOpen(item.candidate.id)} className={`flex w-full items-start justify-between gap-3 rounded-xl border p-3 text-left transition hover:shadow-sm ${toneClasses[item.tone]}`} data-testid="today-priority-item"><span className="min-w-0"><span className="block text-sm font-bold">{item.label}</span><span className="block truncate text-sm">{item.candidate.fullName} · {item.candidate.folderCode}</span><span className="block text-xs opacity-80">{item.detail}{item.candidate.destinationCountry ? ` · ${item.candidate.destinationCountry}` : ""}</span></span><Badge className="shrink-0 bg-white/80 text-slate-800">Ouvrir</Badge></button>)}</div>}</CardContent></Card>;
+  return <Card data-testid="admin-today-dashboard" className="border-indigo-200 shadow-sm"><CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><CardTitle className="flex items-center gap-2 text-xl text-slate-950"><Timer className="h-5 w-5 text-indigo-700" />File du jour — à traiter maintenant</CardTitle><p className="mt-1 text-sm text-slate-600">Une seule file des dossiers à arbitrer (SLA, clarifications, reçus, protocoles, checklist). Actualisation manuelle.</p><p className="mt-1 text-xs text-slate-500" aria-live="polite" data-testid="today-last-updated">{isRefreshing ? "Actualisation en cours…" : syncLabel}</p></div><div className="flex flex-wrap gap-2"><Button type="button" variant="outline" onClick={exportCsv} disabled={allItems.length === 0} className="gap-2" data-testid="today-export-csv"><Download className="h-4 w-4" aria-hidden="true" />Exporter CSV</Button><Button type="button" variant="outline" onClick={onRefresh} disabled={isRefreshing} className="gap-2"><RefreshCw className={isRefreshing ? "h-4 w-4 animate-spin" : "h-4 w-4"} aria-hidden="true" />{isRefreshing ? "Actualisation…" : "Actualiser"}</Button></div></CardHeader><CardContent className="space-y-4"><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Compteurs file du jour"><Metric label="SLA dépassés" value={overdue} icon={AlertTriangle} tone="text-rose-700" /><Metric label="SLA sous 24 h" value={soon} icon={Timer} tone="text-amber-700" /><Metric label="Clarifications" value={clarifications} icon={MessageSquareWarning} tone="text-violet-700" /><Metric label="Photos passeport" value={passportPhotos} icon={ClipboardCheck} tone="text-amber-700" /><Metric label="Reçus à préparer" value={receiptMissing} icon={ClipboardCheck} tone="text-orange-700" /><Metric label="Protocole N°01" value={protocolOne} icon={FileSignature} tone="text-blue-700" /><Metric label="Protocole N°02" value={protocolTwo} icon={FileSignature} tone="text-violet-700" /><Metric label="Checklist < 80 %" value={checklist} icon={ClipboardCheck} tone="text-amber-700" /><Metric label="Multi-procédures" value={siblings} icon={GitBranch} tone="text-violet-700" /></div>{items.length === 0 ? <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-900" data-testid="today-empty">Aucune priorité critique dans la vue actuelle.</p> : <div className="space-y-2" data-testid="today-priority-list">{items.map((item, index) => <button key={`${item.candidate.id}-${item.label}-${index}`} type="button" onClick={() => onOpen(item.candidate.id)} className={`flex w-full items-start justify-between gap-3 rounded-xl border p-3 text-left transition hover:shadow-sm ${toneClasses[item.tone]}`} data-testid="today-priority-item"><span className="min-w-0"><span className="block text-sm font-bold">{item.label}</span>{(index === 0 || items[index - 1].candidate.id !== item.candidate.id) ? <span className="block truncate text-sm">{item.candidate.fullName} · {item.candidate.folderCode}</span> : <span className="block truncate text-xs opacity-70">Même dossier : {item.candidate.fullName}</span>}<span className="block text-xs opacity-80">{item.detail}{item.candidate.destinationCountry ? ` · ${item.candidate.destinationCountry}` : ""}</span></span><Badge className="shrink-0 bg-white/80 text-slate-800">Ouvrir</Badge></button>)}{allItems.length > shown && <Button type="button" variant="outline" className="w-full" onClick={() => setShown((count) => count + 12)} data-testid="today-show-more">Afficher les {Math.min(12, allItems.length - shown)} suivants ({allItems.length - shown} restants)</Button>}</div>}</CardContent></Card>;
 }

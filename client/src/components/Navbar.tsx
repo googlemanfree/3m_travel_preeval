@@ -5,6 +5,7 @@ import ThemeToggle from "./ThemeToggle";
 import { prefetchNavigation } from "@/lib/navigationCache";
 import { notifyNavigationStart } from "./NavigationProgress";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useLocation } from "wouter";
 import { COMPANY_PROFILE } from "@/lib/companyContacts";
 import {
   BookOpen,
@@ -165,6 +166,9 @@ const mobileAuthButtonClass =
 export default function Navbar() {
   const { candidate, logout } = useCandidateAuth();
   const { language, setLanguage } = useLanguage();
+  // Dans l'administration, l'en-tête du site public est réduit (voir index.css) : plus de menu public ni de boutons visiteur.
+  const [routePath] = useLocation();
+  const inAdminArea = routePath.startsWith("/admin");
   // Sous 480 px, le sélecteur de langue n’affiche que « FR » / « EN » : sinon le bouton du menu sort de l’écran.
   const [compactLanguage, setCompactLanguage] = useState(false);
   useEffect(() => {
@@ -387,6 +391,7 @@ export default function Navbar() {
   return (
     <header
       data-testid="site-header"
+      data-admin-area={inAdminArea ? "true" : "false"}
       data-scrolled={scrolled ? "true" : "false"}
       className="glass-nav premium-header tablet-compact-header sticky top-0 z-50 transition-all duration-200"
     >

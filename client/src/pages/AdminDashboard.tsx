@@ -3581,15 +3581,16 @@ export default function AdminDashboard() {
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">N° Dossier</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Candidat</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden md:table-cell">Destination</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden lg:table-cell">Source</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden 2xl:table-cell">Destination</th>
+                  {/* Source, Score et Date ne s'affichent qu'à partir de 1536 px : la colonne utile « Prochaine action » reste visible sans défilement horizontal. */}
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden 2xl:table-cell">Source</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Activation</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Paiement</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Étape de la procédure</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Statut</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden lg:table-cell">Prochaine action</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden sm:table-cell">Score</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden xl:table-cell">Date</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden 2xl:table-cell">Score</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden 2xl:table-cell">Date</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Action</th>
                 </tr>
               </thead>
@@ -3702,10 +3703,10 @@ export default function AdminDashboard() {
                           <div className="mt-1"><EvaluationDeclarationBadge status={candidate.evaluationDeclarationStatus as EvaluationDeclarationStatus | undefined} bilanSent={isBilanSent(candidate, null)} /></div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 hidden md:table-cell">
+                      <td className="px-4 py-3 hidden 2xl:table-cell">
                         <span className="text-gray-700 text-xs">{candidate.destinationCountry}</span>
                       </td>
-                      <td className="px-4 py-3 hidden lg:table-cell">
+                      <td className="px-4 py-3 hidden 2xl:table-cell">
                         <SourceBadge source={candidate.source} />
                       </td>
                       <td className="px-4 py-3">
@@ -3851,7 +3852,7 @@ export default function AdminDashboard() {
                           );
                         })()}
                       </td>
-                      <td className="px-4 py-3 hidden sm:table-cell">
+                      <td className="px-4 py-3 hidden 2xl:table-cell">
                         {candidate.scoringTotal !== null ? (
                           <div className="flex items-center gap-1.5">
                             <div className="w-16 bg-gray-200 rounded-full h-1.5">
@@ -3869,7 +3870,7 @@ export default function AdminDashboard() {
                           <span className="text-xs text-gray-400">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 hidden xl:table-cell">
+                      <td className="px-4 py-3 hidden 2xl:table-cell">
                         <span className="text-xs text-gray-500">
                           {new Date(candidate.createdAt).toLocaleDateString("fr-FR")}
                         </span>

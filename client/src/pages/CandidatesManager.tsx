@@ -53,6 +53,7 @@ import { AISummary } from "@/components/AISummary";
 import { InterviewQuestions } from "@/components/InterviewQuestions";
 import { PDFExporter } from "@/components/PDFExporter";
 import AdminPortraitReviewPanel from "@/components/AdminPortraitReviewPanel";
+import { DOSSIER_STAGES, dossierStageMeta, dossierStageOf, dossierStatusLabel, formatDestinationLabel } from "@shared/dossierStages";
 import { CandidateCountryJourney } from "@/components/CandidateCountryJourney";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
@@ -80,11 +81,13 @@ interface Candidate {
   scoringTotal: number;
   scoringBadge: "excellent" | "bon" | "moyen" | "faible";
   status: string;
+  stage?: string;
+  statusLabel?: string;
   paymentStatus: string;
   createdAt: string;
   adminNotes?: string;
   documentsCount?: number;
-  source?: "web" | "agence";
+  source?: "web" | "agence" | "compte";
   avatarUrl?: string | null;
   avatarVerificationStatus: "missing" | "pending" | "verified" | "rejected";
   avatarVerificationReason?: string | null;
@@ -154,18 +157,6 @@ const mockCandidates: Candidate[] = [
 ];
 
 // ─── HELPER FUNCTIONS ───────────────────────────────────────────────────────
-
-const getStatusColor = (status: string) => {
-  const colors: Record<string, string> = {
-    nouveau: "bg-blue-100 text-blue-800",
-    en_evaluation: "bg-purple-100 text-purple-800",
-    documents_requis: "bg-yellow-100 text-yellow-800",
-    en_attente: "bg-orange-100 text-orange-800",
-    approuve: "bg-green-100 text-green-800",
-    refuse: "bg-red-100 text-red-800",
-  };
-  return colors[status] || "bg-gray-100 text-gray-800";
-};
 
 const getScoreColor = (badge: string) => {
   const colors: Record<string, string> = {
@@ -485,7 +476,7 @@ export default function CandidatesManager() {
       page,
       pageSize,
     };
-  }, [searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy, page]);
+  }, [searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy, page, pageSize]);
   const { data, isLoading, error } = trpc.adminCandidateManagement.list.useQuery(filterInput);
   const savedViewsQuery = trpc.adminSavedViews.list.useQuery();
   const utils = trpc.useUtils();
@@ -686,8 +677,11 @@ export default function CandidatesManager() {
           >
             <p className="text-gray-600 text-sm">Total candidatures</p>
             <p className="text-3xl font-bold text-gray-900 mt-2">
-              {totalCandidates}
+              {data?.stats.scopeTotal ?? totalCandidates}
             </p>
+            {(data?.stats.withoutDossierCount ?? 0) > 0 && (
+              <p className="mt-1 text-xs text-gray-500">dont {data?.stats.withoutDossierCount} compte(s) sans dossier</p>
+            )}
           </motion.div>
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -697,7 +691,7 @@ export default function CandidatesManager() {
           >
             <p className="text-gray-600 text-sm">En évaluation</p>
             <p className="text-3xl font-bold text-gray-900 mt-2">
-              {candidates.filter((c) => c.status === "en_evaluation").length}
+              {data?.stats.stageCounts.evaluation ?? 0}
             </p>
           </motion.div>
           <motion.div
@@ -708,7 +702,7 @@ export default function CandidatesManager() {
           >
             <p className="text-gray-600 text-sm">Approuvées</p>
             <p className="text-3xl font-bold text-gray-900 mt-2">
-              {candidates.filter((c) => c.status === "approuve").length}
+              {data?.stats.stageCounts.approuve ?? 0}
             </p>
           </motion.div>
           <motion.div
@@ -719,7 +713,7 @@ export default function CandidatesManager() {
           >
             <p className="text-gray-600 text-sm">Payées</p>
             <p className="text-3xl font-bold text-gray-900 mt-2">
-              {candidates.filter((c) => c.paymentStatus === "paye").length}
+              {data?.stats.paidCount ?? 0}
             </p>
           </motion.div>
         </div>
@@ -744,21 +738,25 @@ export default function CandidatesManager() {
               />
             </div>
 
+            <div>
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Étape</p>
             <Select value={statusFilter} onValueChange={(value) => { setStatusFilter(value); resetToFirstPage(); }}>
-              <SelectTrigger aria-label="Filtrer par statut">
-                <SelectValue placeholder="Statut" />
+              <SelectTrigger aria-label="Filtrer par étape">
+                <SelectValue placeholder="Étape" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="tous">Tous les statuts</SelectItem>
-                <SelectItem value="nouveau">Nouveau</SelectItem>
-                <SelectItem value="en_evaluation">En évaluation</SelectItem>
-                <SelectItem value="documents_requis">Documents requis</SelectItem>
-                <SelectItem value="en_attente">En attente</SelectItem>
-                <SelectItem value="approuve">Approuvé</SelectItem>
-                <SelectItem value="refuse">Refusé</SelectItem>
+                <SelectItem value="tous">Toutes les étapes</SelectItem>
+                {DOSSIER_STAGES.map((stage) => (
+                  <SelectItem key={stage.id} value={stage.id}>
+                    {stage.label}{data?.stats ? ` (${data.stats.stageCounts[stage.id] ?? 0})` : ""}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
+            </div>
 
+            <div>
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Paiement</p>
             <Select value={paymentFilter} onValueChange={(value) => { setPaymentFilter(value); resetToFirstPage(); }}>
               <SelectTrigger aria-label="Filtrer par paiement">
                 <SelectValue placeholder="Paiement" />
@@ -770,7 +768,10 @@ export default function CandidatesManager() {
                 <SelectItem value="non_paye">Non payé</SelectItem>
               </SelectContent>
             </Select>
+            </div>
 
+            <div>
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Score</p>
             <Select value={scoreFilter} onValueChange={(value) => { setScoreFilter(value); resetToFirstPage(); }}>
               <SelectTrigger aria-label="Filtrer par score">
                 <SelectValue placeholder="Score" />
@@ -783,7 +784,10 @@ export default function CandidatesManager() {
                 <SelectItem value="faible">Faible</SelectItem>
               </SelectContent>
             </Select>
+            </div>
 
+            <div>
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Destination</p>
             <Select value={destinationFilter} onValueChange={(value) => { setDestinationFilter(value); resetToFirstPage(); }}>
               <SelectTrigger aria-label="Filtrer par destination"><SelectValue placeholder="Destination" /></SelectTrigger>
               <SelectContent>
@@ -792,7 +796,10 @@ export default function CandidatesManager() {
                 {destinations.map(destination => <SelectItem key={destination} value={destination}>{destination}</SelectItem>)}
               </SelectContent>
             </Select>
+            </div>
 
+            <div>
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Tri</p>
             <Select value={sortBy} onValueChange={(value) => { setSortBy(value as "createdAt" | "fullName" | "score"); resetToFirstPage(); }}>
               <SelectTrigger aria-label="Trier les candidats"><SelectValue placeholder="Trier" /></SelectTrigger>
               <SelectContent>
@@ -801,6 +808,7 @@ export default function CandidatesManager() {
                 <SelectItem value="score">Score décroissant</SelectItem>
               </SelectContent>
             </Select>
+            </div>
           </div>
           <div className="flex items-center justify-between mt-4 text-sm">
             <p className="font-medium text-gray-700">
@@ -875,10 +883,15 @@ export default function CandidatesManager() {
                         <p className="text-xs text-gray-500">
                           {candidate.applicationNumber}
                         </p>
+                        {candidate.source === "compte" && (
+                          <span className="mt-1 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700" title="Compte inscrit qui n’a pas encore de dossier ouvert">
+                            Compte sans dossier
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-700">
-                      {candidate.destination}
+                      {formatDestinationLabel(candidate.destination)}
                     </td>
                     <td className="px-6 py-4">
                       <div
@@ -889,19 +902,20 @@ export default function CandidatesManager() {
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(candidate.status)}`}
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${dossierStageMeta(dossierStageOf(candidate.status)).tone}`}
+                        title={`Étape : ${dossierStageMeta(dossierStageOf(candidate.status)).label}`}
                       >
-                        {candidate.status}
+                        {candidate.statusLabel ?? dossierStatusLabel(candidate.status)}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <span
                         className={`text-sm font-semibold ${
                           candidate.paymentStatus === "paye"
-                            ? "text-green-600"
+                            ? "text-green-700"
                             : candidate.paymentStatus === "en_attente"
-                              ? "text-orange-600"
-                              : "text-red-600"
+                              ? "text-orange-700"
+                              : "text-red-700"
                         }`}
                       >
                         {candidate.paymentStatus === "paye"
@@ -917,8 +931,10 @@ export default function CandidatesManager() {
                           size="sm"
                           variant="ghost"
                           onClick={() => handleViewDetails(candidate)}
+                          aria-label={`Ouvrir la fiche de ${candidate.fullName}`}
+                          title="Ouvrir la fiche"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-4 h-4" aria-hidden="true" />
                         </Button>
                         <Button
                           size="sm"
@@ -926,18 +942,18 @@ export default function CandidatesManager() {
                           title="Renvoyer l’e-mail de confirmation"
                           aria-label={`Renvoyer l’e-mail de confirmation à ${candidate.fullName}`}
                           onClick={() => resendConfirmationMutation.mutate({ candidateId: String(candidate.id) })}
-                          disabled={resendConfirmationMutation.isPending || !candidate.email}
+                          disabled={resendConfirmationMutation.isPending || !candidate.email || candidate.source === "compte"}
                         >
                           {resendConfirmationMutation.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Mail className="w-4 h-4" />}
                         </Button>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button size="sm" variant="ghost">
-                              <MoreVertical className="w-4 h-4" />
+                            <Button size="sm" variant="ghost" aria-label={`Autres actions pour ${candidate.fullName}`} title="Autres actions">
+                              <MoreVertical className="w-4 h-4" aria-hidden="true" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleViewDetails(candidate, "info")}>
+                            <DropdownMenuItem disabled={candidate.source === "compte"} onClick={() => handleViewDetails(candidate, "info")}>
                               <Edit className="w-4 h-4 mr-2" />
                               Modifier
                             </DropdownMenuItem>
@@ -947,7 +963,7 @@ export default function CandidatesManager() {
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               className="text-red-600"
-                              disabled={archiveCandidateMutation.isPending}
+                              disabled={archiveCandidateMutation.isPending || candidate.source === "compte"}
                               onClick={() => handleArchiveCandidate(candidate)}
                             >
                               <Trash2 className="w-4 h-4 mr-2" />
@@ -976,7 +992,7 @@ export default function CandidatesManager() {
               <div className="flex items-center gap-2">
                 <span>Page {page} sur {totalPages}</span>
                 <Select value={String(pageSize)} onValueChange={(value) => { setPageSize(Number(value) as CandidatePageSize); resetToFirstPage(); }}>
-                  <SelectTrigger className="h-8 w-[148px]"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-8 w-[148px]" aria-label="Dossiers par page"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {CANDIDATE_PAGE_SIZES.map(size => <SelectItem key={size} value={String(size)}>{size} dossiers / page</SelectItem>)}
                   </SelectContent>
