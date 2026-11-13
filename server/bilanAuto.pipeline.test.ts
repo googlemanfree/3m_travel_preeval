@@ -394,6 +394,15 @@ describe("historique, correction et notifications", () => {
 });
 
 describe("autres parcours", () => {
+  it("projet et visa contradictoires : aucun traitement tant que ce n'est pas clarifié", async () => {
+    const h = harness();
+    h.state.inputs = inputs({ projectConflict: true });
+    const result = await submitForAnalysis(h.deps, 1);
+    expect(result.status).toBe("not_allowed");
+    expect("reason" in result && result.reason).toMatch(/contradictoires/);
+    expect(await h.store.listRuns({})).toHaveLength(0);
+  });
+
   it("un projet hors travail (études, tourisme, e-Visa…) n'entre jamais dans la file", async () => {
     const h = harness();
     h.state.inputs = inputs({ projectIsWork: false });

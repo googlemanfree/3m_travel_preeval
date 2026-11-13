@@ -1,4 +1,5 @@
 ﻿import { z } from "zod";
+import { canonicalCountry, normalizeDestination } from "../../shared/dataCoherence";
 import { triggerBilanAuto } from "../services/bilanAuto/runtime";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, router } from "../_core/trpc";
@@ -224,7 +225,7 @@ const multiProjectEvaluationInput = z.object({
 
 export const evaluationRouter = router({
   geminiOrientationPreview: publicProcedure.input(z.object({ destinationCountry: z.string().min(2).max(80), projectType: z.enum(["travail", "etudes", "tourisme"]), nationality: z.string().max(120).optional(), age: z.number().int().min(16).max(100).optional(), sector: z.string().max(300).optional(), yearsOfExperience: z.number().min(0).max(80).optional(), educationLevel: z.string().max(120).optional(), languages: z.string().max(500).optional(), financialGuarantee: z.string().max(500).optional(), countryDetails: z.record(z.string(), z.union([z.string().max(1000), z.number(), z.boolean()])).default({}), consent: z.literal(true) })).mutation(async ({ input }) => {
-    const alternatives = (orientationAlternativeCandidates[input.destinationCountry] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== input.destinationCountry);
+    const alternatives = (orientationAlternativeCandidates[canonicalCountry(input.destinationCountry)?.name ?? input.destinationCountry] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== input.destinationCountry);
     return generateGeminiEvaluationDraft({ destinationCountry: input.destinationCountry, projectType: input.projectType, nationality: input.nationality, age: input.age, sector: input.sector, yearsOfExperience: input.yearsOfExperience, educationLevel: input.educationLevel, languages: input.languages, financialGuarantee: input.financialGuarantee, countryDetails: input.countryDetails, alternativeCountries: alternatives }).catch((error: unknown) => {
       // Service d'IA indisponible ou non configuré : message clair, le candidat poursuit avec le questionnaire standard.
       logger.warn("evaluation.orientation_preview.unavailable", { reason: error instanceof Error ? error.message.slice(0, 200) : "inconnu" });
@@ -247,6 +248,9 @@ export const evaluationRouter = router({
       if (missingCrsAnswers({ country: input.destinationCountry, projectType: input.projectType, details: publicDetails, overrides: formOverrides }).length > 0) {
         throw new TRPCError({ code: "BAD_REQUEST", message: CRS_REQUIRED_MESSAGE });
       }
+      // Pays, zone et code de visa viennent du pays canonique et du projet (plus de liste de pays codée en dur, plus de zone saisie librement).
+      const destination = normalizeDestination({ destinationCountry: input.destinationCountry, destinationCategory: input.destinationCategory, projectType: input.projectType });
+      if (destination.corrections.length > 0) logger.info("evaluation.destination_normalized", { corrections: destination.corrections });
       const dossierCode = generateDossierCode();
       const reviewDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000);
       // Créer un enregistrement d'évaluation multi-projets
@@ -257,9 +261,9 @@ export const evaluationRouter = router({
         nationality: input.nationality,
         cityOfResidence: input.currentCity,
         dateOfBirth: undefined,
-        destinationCategory: input.destinationCategory,
-        destinationCountry: input.destinationCountry,
-        visaType: (input.destinationCountry === "Canada" ? (input.projectType === "travail" ? "canada_travail" : input.projectType === "etudes" ? "canada_etude" : "canada_tourisme") : ["France", "Belgique", "Allemagne", "Luxembourg"].includes(input.destinationCountry) ? (`schengen_${input.projectType === "etudes" ? "etude" : input.projectType}` as const) : "autre") as any,
+        destinationCategory: destination.destinationCategory,
+        destinationCountry: destination.destinationCountry || input.destinationCountry,
+        visaType: destination.visaType,
         projectType: input.projectType,
         projectDetailsJson: JSON.stringify({
           destinationCountry: input.destinationCountry,
@@ -313,7 +317,7 @@ export const evaluationRouter = router({
       // (interne, soumise au consentement) tourne en arrière-plan. Ne lève jamais : la soumission du candidat prime.
       await openStructuredEvaluation(evaluationId);
       if (input.geminiAnalysisConsent) {
-        const alternatives = (orientationAlternativeCandidates[input.destinationCountry] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== input.destinationCountry);
+        const alternatives = (orientationAlternativeCandidates[canonicalCountry(input.destinationCountry)?.name ?? input.destinationCountry] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== input.destinationCountry);
         // Questions et réponses lisibles (formulaire dynamique puis questions complémentaires de l'IA), toutes conservées.
         const declared = collectDeclaredResponses({ ...(publicDetails ?? {}), dynamicResponses: input.dynamicResponses }, { country: input.destinationCountry, projectType: input.projectType, overrides: formOverrides });
         const dynamicDetails: Record<string, string> = {
@@ -440,6 +444,10 @@ export const evaluationRouter = router({
         throw new Error("Base de données non disponible");
       }
 
+      // Même règle que la soumission multi-projets : zone et code de visa déduits du pays canonique, pas saisis librement.
+      const legacyDestination = normalizeDestination({ destinationCountry: input.destinationCountry, destinationCategory: input.destinationCategory, visaType: input.visaType, projectType: input.projectType });
+      if (legacyDestination.corrections.length > 0) logger.info("evaluation.destination_normalized", { corrections: legacyDestination.corrections });
+
       // Règle des 2 évaluations gratuites maximum, par adresse email.
       const previousCount = await db.select().from(evaluations).where(eq(evaluations.email, input.email)).limit(3);
       if (previousCount.length >= 2) {
@@ -510,9 +518,9 @@ export const evaluationRouter = router({
         frenchLevel: input.frenchLevel,
         englishLevel: input.englishLevel,
         languageTestsTaken: input.languageTestsTaken,
-        destinationCategory: input.destinationCategory,
-        destinationCountry: input.destinationCountry,
-        visaType: input.visaType,
+        destinationCategory: legacyDestination.destinationCategory,
+        destinationCountry: legacyDestination.destinationCountry || input.destinationCountry,
+        visaType: legacyDestination.visaType,
         travelReason: input.travelReason,
         availableBudget: input.availableBudget,
         projectType: input.projectType,
@@ -546,7 +554,7 @@ export const evaluationRouter = router({
       if (evaluationId && input.geminiAnalysisConsent && input.projectType && ["travail", "etudes", "tourisme"].includes(input.projectType)) {
         const projectType = input.projectType as "travail" | "etudes" | "tourisme";
         const destinationCountry = input.destinationCountry || input.destinationCategory;
-        const alternatives = (orientationAlternativeCandidates[destinationCountry ?? ""] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== destinationCountry);
+        const alternatives = (orientationAlternativeCandidates[canonicalCountry(destinationCountry)?.name ?? destinationCountry ?? ""] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== destinationCountry);
         // Le modèle reçoit les questions et réponses lisibles (pas des codes), le visa et le domaine choisis, et des consignes propres au dossier.
         const declared = collectDeclaredResponses(cleanDetails, { country: destinationCountry, projectType, overrides: formOverrides });
         const geminiCountryDetails: Record<string, string> = {
