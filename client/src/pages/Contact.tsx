@@ -204,6 +204,9 @@ export default function Contact() {
         queueAction(CONTACT_QUEUE_STORAGE_KEY, formData);
         setOfflineQueued(true);
         setError('Connexion indisponible : votre message est conservé et sera envoyé automatiquement dès la reconnexion.');
+      } else if (/erreur interne|internal|r[ée]essayer/i.test(errorMessage)) {
+        // Échec côté serveur (e-mail indisponible…) : on propose tout de suite le canal qui fonctionne.
+        setError(`${errorMessage} Vous pouvez aussi nous écrire sur WhatsApp au ${cameroon.whatsappDisplay}.`);
       } else {
         setError(errorMessage);
       }

@@ -372,7 +372,7 @@ export default function Login() {
 
           {/* Se souvenir de moi + Mot de passe oublié + Renvoyer email */}
           <div className="mt-4 mb-2 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap">
               <input
                 type="checkbox"
                 checked={rememberMe}
@@ -381,7 +381,7 @@ export default function Login() {
               />
               <span className="text-sm text-gray-600">{t("Se souvenir de moi", "Remember me")}</span>
             </label>
-            <div className="flex flex-wrap gap-x-3 gap-y-2 text-sm">
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm sm:justify-end">
               <button
                 type="button"
                 onClick={() => setShowResendModal(true)}
@@ -389,7 +389,6 @@ export default function Login() {
               >
                 {t("Renvoyer l’e-mail", "Resend email")}
               </button>
-              <span className="text-gray-300">•</span>
               <button
                 type="button"
                 onClick={() => setShowForgotPasswordModal(true)}
@@ -397,7 +396,6 @@ export default function Login() {
               >
                 {t("Mot de passe oublié ?", "Forgot password?")}
               </button>
-              <span className="text-gray-300">•</span>
               <button
                 type="button"
                 onClick={() => navigate("/assistance-acces")}
