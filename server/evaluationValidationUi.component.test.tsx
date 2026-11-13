@@ -65,6 +65,7 @@ vi.mock("@/lib/trpc", () => ({
       // frise de suivi du bilan automatisé : inactive dans ces scénarios (aucun traitement)
       myBilanProgress: { useQuery: () => ({ data: { progress: null } }) },
       grantCvAnalysisConsent: mutation("grantCvAnalysisConsent"),
+      myDocumentChecklist: { useQuery: () => ({ data: { items: [] } }) },
     },
   },
 }));
@@ -302,6 +303,17 @@ describe("espace candidat : CV, élément clé de la finalisation", () => {
     await user.click(screen.getByRole("button", { name: "Envoyer mon CV" }));
     await waitFor(() => expect(state.calls.attachCv).toHaveLength(2));
     expect(lastCall("attachCv").cvAnalysisConsent).toBe(true);
+  });
+
+  it("prévient tout de suite le candidat quand le CV est enregistré mais peu lisible", async () => {
+    state.next.attachCv = (handlers) => handlers.onSuccess?.({ intake: { status: "texte_absent", message: "Document reçu, mais ce PDF est une image (scan ou photo) et ne peut pas être lu automatiquement." } });
+    const user = userEvent.setup();
+    render(<CandidateEvaluationStatus evaluationId={7} view={pendingWithoutCv()} />);
+    choose(pdf());
+    await user.click(screen.getByRole("button", { name: "Envoyer mon CV" }));
+    const notice = await screen.findByTestId("cv-intake-notice");
+    expect(notice.textContent).toMatch(/ce PDF est une image/);
+    expect(state.toastSuccess).not.toHaveBeenCalled();
   });
 
   it("affiche le motif de refus du serveur et laisse réessayer", async () => {

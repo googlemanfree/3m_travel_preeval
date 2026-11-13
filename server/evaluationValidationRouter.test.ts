@@ -44,10 +44,11 @@ const modelOutput = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-function setup(options: { missingTables?: boolean; row?: Partial<EvaluationRowForDraft>; withoutCv?: boolean } = {}) {
+function setup(options: { missingTables?: boolean; row?: Partial<EvaluationRowForDraft>; withoutCv?: boolean; intake?: { status: string; message: string; duplicate: boolean; readableForAutomation: boolean } } = {}) {
   const store = new InMemoryValidationStore([options.withoutCv ? { ...CANDIDATE_CONTEXT, cvOnFile: false, cvFileName: null, cvFileUrl: null } : CANDIDATE_CONTEXT], () => NOW);
   const stored: Array<{ evaluationId: number; fileName: string; mimeType: string; size: number }> = [];
   const consents: number[] = [];
+  const intakes: Array<{ evaluationId: number; fileKey: string; size: number }> = [];
   const mailer = new FakeMailer(store.timeline);
   const deps: ValidationDeps = { store, mailer, now: () => NOW, portalUrl: "https://www.3mtravelagency.com/evaluation" };
   const invoke = vi.fn(async () => ({ choices: [{ message: { content: JSON.stringify(modelOutput()) } }] }) as never);
@@ -75,11 +76,12 @@ function setup(options: { missingTables?: boolean; row?: Partial<EvaluationRowFo
       return `https://files.example.com/cv-uploads/${file.evaluationId}_${file.fileName}`;
     },
     async recordCvConsent(id) { consents.push(id); },
+    ...(options.intake ? { async recordCvIntake(file: { evaluationId: number; fileKey: string; bytes: Uint8Array }) { intakes.push({ evaluationId: file.evaluationId, fileKey: file.fileKey, size: file.bytes.length }); return options.intake!; } } : {}),
     aiRun: { loadRow: async () => evaluationRow(options.row), generator: { invoke } },
   };
   const candidateAs = (identity: { id: number; email: string }) => publicProcedure.use(({ next }) => next({ ctx: { candidate: identity } as never })) as never;
   const build = (identity = { id: 7, email: "aicha@example.com" }) => createEvaluationValidationRouter(ports, candidateAs(identity)).createCaller({} as never);
-  return { store, mailer, deps, invoke, resolveDeps, ports, stored, consents, caller: build(), build };
+  return { store, mailer, deps, invoke, resolveDeps, ports, stored, consents, intakes, caller: build(), build };
 }
 type Setup = ReturnType<typeof setup>;
 
@@ -466,5 +468,26 @@ describe("consentement à la lecture du CV depuis l'espace candidat", () => {
     await expect(s.build({ id: 9, email: "autre@example.com" }).grantCvAnalysisConsent({ evaluationId: 1, accepted: true })).rejects.toMatchObject({ code: "NOT_FOUND" });
     await expect(s.caller.grantCvAnalysisConsent({ evaluationId: 1, accepted: false as never })).rejects.toBeTruthy();
     expect(s.consents).toEqual([]);
+  });
+});
+
+describe("contrôle à la réception du CV déposé", () => {
+  it("renvoie au candidat le message de lisibilité, avec le fichier réellement enregistré", async () => {
+    const s = setup({ withoutCv: true, intake: { status: "texte_absent", message: "Document reçu, mais ce PDF est une image.", duplicate: false, readableForAutomation: false } });
+    const result = await s.caller.attachCv({ evaluationId: 1, fileName: "cv.pdf", base64: PDF_BASE64 });
+    expect(result.cv.onFile).toBe(true);
+    expect((result as { intake?: { status: string; message: string } }).intake).toMatchObject({ status: "texte_absent", message: expect.stringMatching(/image/) });
+    expect(s.intakes).toHaveLength(1);
+    expect(s.intakes[0].fileKey).toMatch(/cv-uploads|files\.example\.com/);
+  });
+  it("un CV refusé n'est ni enregistré ni contrôlé", async () => {
+    const s = setup({ withoutCv: true, intake: { status: "lisible", message: "ok", duplicate: false, readableForAutomation: true } });
+    await expect(s.caller.attachCv({ evaluationId: 1, fileName: "cv.pdf", base64: "!!! pas du base64 !!!" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(s.intakes).toHaveLength(0);
+  });
+  it("sans contrôle disponible, le dépôt réussit comme avant (aucune clé « intake »)", async () => {
+    const s = setup({ withoutCv: true });
+    const result = await s.caller.attachCv({ evaluationId: 1, fileName: "cv.pdf", base64: PDF_BASE64 });
+    expect(Object.keys(result)).toEqual(["cv"]);
   });
 });

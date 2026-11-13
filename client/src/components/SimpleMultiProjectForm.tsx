@@ -346,10 +346,13 @@ function AuthenticatedSimpleMultiProjectForm() {
       });
       let uploaded = 0;
       const failedDocuments: string[] = [];
+      const unreadableDocuments: string[] = [];
       for (const item of selectedDocuments) {
         setUploadProgress({ done: uploaded + failedDocuments.length, total: selectedDocuments.length });
         try {
-        await uploadSupportingDocument.mutateAsync({ evaluationId: created.evaluationId, email: formData.email, uploadToken: created.documentUploadToken, documentType: item.documentType, fileName: item.file.name, mimeType: item.file.type as "application/pdf" | "image/jpeg" | "image/png", sizeBytes: item.file.size, fileBase64: await readFileAsDataUrl(item.file) });
+        const sent = await uploadSupportingDocument.mutateAsync({ evaluationId: created.evaluationId, email: formData.email, uploadToken: created.documentUploadToken, documentType: item.documentType, fileName: item.file.name, mimeType: item.file.type as "application/pdf" | "image/jpeg" | "image/png", sizeBytes: item.file.size, fileBase64: await readFileAsDataUrl(item.file) });
+        // Contrôle à la réception : un document peu lisible est enregistré, mais le candidat est prévenu tout de suite.
+        if (sent && typeof sent === "object" && "intake" in sent && sent.intake && (sent.intake as { status?: string }).status !== "lisible") unreadableDocuments.push(`${item.file.name} — ${(sent.intake as { message?: string }).message ?? "à redéposer"}`);
         uploaded += 1;
         } catch (uploadError) {
           // L'évaluation est déjà enregistrée : un document refusé ne doit ni la bloquer ni passer inaperçu.
@@ -358,6 +361,7 @@ function AuthenticatedSimpleMultiProjectForm() {
         }
       }
       setUploadProgress(null);
+      for (const note of unreadableDocuments) toast.warning("Document à redéposer", { description: note, duration: 12000 });
       if (failedDocuments.length > 0) toast.info("Votre évaluation est bien enregistrée. Vous pourrez ajouter les documents manquants depuis votre espace ou en répondant à notre e-mail.");
       setUploadedDocumentCount(uploaded);
       setSubmittedDossierCode(typeof created.dossierCode === "string" && created.dossierCode.trim() ? created.dossierCode.trim() : null);

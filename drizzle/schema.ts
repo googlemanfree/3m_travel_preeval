@@ -22,6 +22,7 @@ export * from "./stayProgramsSchema";
 export * from "./remoteSupportSchema";
 export * from "./bilanAutoSchema";
 export * from "./dataCoherenceSchema";
+export * from "./documentIntakeSchema";
 
 /**
  * Core user table backing auth flow.

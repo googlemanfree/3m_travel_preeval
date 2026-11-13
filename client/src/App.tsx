@@ -37,6 +37,7 @@ const SuperAdminDashboard = lazyWithTimeout(() => import("./pages/SuperAdminDash
 const CandidatesManager = lazyWithTimeout(() => import("./pages/CandidatesManager"));
 const AdminBilansAutomatises = lazyWithTimeout(() => import("./pages/AdminBilansAutomatises"));
 const AdminDataCoherence = lazyWithTimeout(() => import("./pages/AdminDataCoherence"));
+const AdminDocuments = lazyWithTimeout(() => import("./pages/AdminDocuments"));
 const AdminAccompagnement = lazyWithTimeout(() => import("./pages/AdminAccompagnement"));
 const AdminAgencyDossiers = lazyWithTimeout(() => import("./pages/AdminAgencyDossiers"));
 const AdminDossierVerification = lazyWithTimeout(() => import("./pages/AdminDossierVerification"));
@@ -520,6 +521,11 @@ function Router() {
       <Route path={"/admin/evaluations"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminEvaluations />
+        </AdminGuard>
+      </Route>
+      <Route path={"/admin/documents"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminDocuments />
         </AdminGuard>
       </Route>
       <Route path={"/admin/coherence"}>

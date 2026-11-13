@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import EvaluationReportView from "@/components/EvaluationReportView";
 import BilanAutoProgress from "@/components/BilanAutoProgress";
+import DocumentChecklistCard from "@/components/DocumentChecklistCard";
 import { CV_ACCEPT_ATTRIBUTE, CV_REQUIRED_MESSAGE, cvProblemForFile } from "@shared/evaluationCv";
 import type { ClientReport } from "@shared/evaluationValidation";
 
@@ -54,6 +55,7 @@ export default function CandidateEvaluationStatus({ evaluationId, view, onChange
         </Card>
       )}
       {view.stage !== "published" && view.stage !== "not_started" && <BilanAutoProgress evaluationId={evaluationId} />}
+      {view.stage !== "not_started" && <DocumentChecklistCard evaluationId={evaluationId} />}
       {view.report && <EvaluationReportView report={view.report} evaluationId={evaluationId} />}
     </div>
   );
@@ -122,11 +124,15 @@ function readAsDataUrl(file: File): Promise<string> {
 function CvUploadCard({ evaluationId, onChanged, replacing = false }: { evaluationId: number; onChanged?: () => void; replacing?: boolean }) {
   const [file, setFile] = useState<File | null>(null);
   const [consent, setConsent] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const utils = trpc.useUtils();
   const [problem, setProblem] = useState<string | null>(null);
   const attach = trpc.evaluationValidation.attachCv.useMutation({
-    onSuccess: () => {
-      toast.success("Merci, votre CV a bien été ajouté à votre dossier.");
+    onSuccess: (data: { intake?: { status: string; message: string } }) => {
+      if (data?.intake && data.intake.status !== "lisible") {
+        setNotice(data.intake.message);
+        toast.warning("CV enregistré, mais peu lisible", { description: data.intake.message, duration: 12000 });
+      } else toast.success(data?.intake?.message ?? "Merci, votre CV a bien été ajouté à votre dossier.");
       setFile(null);
       void utils.evaluationValidation.myBilanProgress.invalidate();
       onChanged?.();
@@ -178,6 +184,7 @@ function CvUploadCard({ evaluationId, onChanged, replacing = false }: { evaluati
               {attach.isPending ? "Envoi…" : "Envoyer mon CV"}
             </Button>
           </div>
+          {notice && <p role="status" className="mt-3 rounded-md border border-amber-400 bg-white p-3 text-sm text-amber-950" data-testid="cv-intake-notice">{notice}</p>}
           {problem && (
             <p role="alert" className="mt-3 text-sm font-medium text-red-700">
               {problem}
