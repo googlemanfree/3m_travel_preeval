@@ -19,7 +19,7 @@ const SERVICE_OPTIONS = [
   {
     name: "Évaluation gratuite",
     detail: "Première orientation sur votre projet par un conseiller 3M, à partir d’un formulaire rapide.",
-    points: ["Sans engagement de procédure", "Sans compte pour démarrer et envoyer", "Réponse indicative sous 24 h ouvrées"],
+    points: ["Sans engagement de procédure", "Compte candidat gratuit requis pour envoyer", "Réponse indicative sous 24 h ouvrées"],
     accent: "border-blue-200 bg-blue-50",
   },
   {

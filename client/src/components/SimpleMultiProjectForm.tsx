@@ -385,7 +385,7 @@ function AuthenticatedSimpleMultiProjectForm() {
     <motion.div className="w-full max-w-2xl mx-auto" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28 }}>
       <Card className="premium-form-surface border border-slate-100 bg-white p-5 shadow-xl sm:p-8">
         <div className="mb-7">
-          <div className="flex items-end justify-between gap-3"><div><h2 className="premium-section-title text-2xl">Évaluation guidée</h2><p className="premium-copy mt-1 text-sm">Sans compte pour démarrer — projet, destination, nationalité et contact. Le compte sert ensuite au suivi et aux documents confidentiels.</p></div><span className="text-sm font-bold text-blue-800">{progress}%</span></div>
+          <div className="flex items-end justify-between gap-3"><div><h2 className="premium-section-title text-2xl">Évaluation guidée</h2><p className="premium-copy mt-1 text-sm">Projet, destination, nationalité et contact. Votre espace candidat sert ensuite au suivi et aux documents confidentiels.</p></div><span className="text-sm font-bold text-blue-800">{progress}%</span></div>
           <p
             className="mt-3 rounded-xl border border-blue-100 bg-blue-50/80 px-3 py-2 text-xs leading-5 text-blue-950"
             data-testid="evaluation-indicative-sla"
@@ -397,7 +397,7 @@ function AuthenticatedSimpleMultiProjectForm() {
           </p>
           {!isAuthenticated && (
             <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-950" role="status" data-testid="evaluation-guest-start">
-              <strong>Accessible sans compte.</strong> Remplissez ce premier formulaire court. Créez un compte seulement si vous souhaitez enregistrer le dossier, suivre le statut ou déposer des pièces sensibles.
+              <strong>Compte candidat requis.</strong> La création du compte est gratuite : elle protège vos réponses et vos pièces confidentielles, et permet de suivre le statut de votre dossier.
             </div>
           )}
           {isPostRegistrationOnboarding && <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-950" role="status"><strong>Votre compte est activé.</strong> Complétez maintenant cette évaluation préparatoire ; elle organise les informations utiles, mais ne remplace pas un formulaire consulaire officiel ni une décision.</div>}

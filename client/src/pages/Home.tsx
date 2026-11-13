@@ -373,7 +373,7 @@ export default function Home() {
       <section id="evaluation-multi" className="section-pad scroll-mt-24 bg-gradient-to-b from-white to-blue-50">
         <div className="max-w-4xl mx-auto px-4">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="section-head">
-            <p className="section-eyebrow mb-2">Gratuit · sans compte pour démarrer · réponse sous 24 h ouvrées</p>
+            <p className="section-eyebrow mb-2">Gratuit · compte candidat requis pour envoyer · réponse sous 24 h ouvrées</p>
             <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Évaluez votre projet avant d’avancer</h2>
             <p className="text-gray-600 max-w-2xl mx-auto" data-testid="evaluation-response-sla">
               Indiquez votre objectif (travail, études ou tourisme) : un conseiller 3M oriente la procédure et les pièces utiles.

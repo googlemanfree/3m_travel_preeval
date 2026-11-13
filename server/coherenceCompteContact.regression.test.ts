@@ -16,15 +16,16 @@ describe("cohérence compte / contact / confidentialité / annulation", () => {
     const tarifs = read("client/src/pages/Tarifs.tsx");
     const account = PUBLIC_FAQ_ITEMS.find((item) => item.question === "Faut-il créer un compte avant de commencer ?");
 
-    expect(account?.answer).toMatch(/Non pour démarrer/i);
-    expect(account?.answer).toContain("sans compte");
-    expect(footer).toContain("sans compte pour démarrer et soumettre");
+    expect(account?.answer).toMatch(/^Oui\./);
+    expect(account?.answer).toContain("espace candidat");
+    expect(account?.answer).toContain("WhatsApp");
+    expect(footer).toContain("créez un compte candidat gratuit pour l’envoyer");
     expect(footer).not.toContain("déposer un CV avant la soumission");
-    expect(cta).toContain("Sans compte pour démarrer et envoyer");
+    expect(cta).toContain("Compte candidat gratuit requis pour envoyer");
     expect(cta).not.toContain("déposez mon CV");
-    expect(brand).toContain("Sans compte pour démarrer");
-    expect(tarifs).toContain("Sans compte pour démarrer et envoyer");
-    expect(composePublicPrerender(shell, "/procedures").html).toContain("sans compte");
+    expect(brand).toContain("Compte gratuit requis pour envoyer");
+    expect(tarifs).toContain("Compte candidat gratuit requis pour envoyer");
+    expect(composePublicPrerender(shell, "/procedures").html).toContain("compte candidat gratuit");
     expect(composePublicPrerender(shell, "/procedures").html).not.toContain("Oui. Créez d’abord votre compte");
   });
 

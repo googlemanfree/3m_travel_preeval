@@ -20,11 +20,11 @@ describe("signaux publics de marque et d’évaluation", () => {
     expect(html).not.toContain("3M Travel &amp; Services | Voyages, Visas, Études &amp; Mobilité Internationale");
   });
 
-  it("aligne la FAQ compte sur le démarrage sans compte puis suivi avec compte", () => {
+  it("aligne la FAQ compte sur le compte candidat gratuit, avec une alternative WhatsApp", () => {
     const accountQuestion = PUBLIC_FAQ_ITEMS.find((item) => item.question === "Faut-il créer un compte avant de commencer ?");
-    expect(accountQuestion?.answer).toMatch(/Non pour démarrer/i);
-    expect(accountQuestion?.answer).toContain("sans compte");
-    expect(accountQuestion?.answer).toContain("Créez un compte ensuite");
+    expect(accountQuestion?.answer).toMatch(/^Oui\./);
+    expect(accountQuestion?.answer).toContain("espace candidat");
+    expect(accountQuestion?.answer).toContain("WhatsApp");
     expect(accountQuestion?.answer).not.toContain("Créez d’abord votre compte");
   });
 

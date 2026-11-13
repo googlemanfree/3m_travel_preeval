@@ -8,8 +8,8 @@ export function buildFreeEvaluationHref(project: EvaluationProject = "travail") 
 
 /** Texte d’accompagnement attendu près des CTA d’évaluation (évite la surprise compte / CV). */
 export const EVALUATION_CTA_HINT = {
-  fr: "Sans compte pour démarrer et envoyer l’évaluation — compte ensuite pour le suivi et le dépôt de CV.",
-  en: "No account needed to start and submit the assessment — account afterwards for follow-up and CV upload.",
+  fr: "Compte candidat gratuit requis pour envoyer l’évaluation — il sert aussi au suivi et au dépôt de CV.",
+  en: "A free candidate account is required to submit the assessment — it also covers follow-up and CV upload.",
 } as const;
 
 export function PublicEvaluationCTA({

@@ -46,7 +46,7 @@ describe("accès public au formulaire d’évaluation gratuite", () => {
 
   it("permet le démarrage sans compte puis propose le suivi via compte après envoi", () => {
     expect(form).toContain('data-testid="evaluation-guest-start"');
-    expect(form).toContain("Accessible sans compte.");
+    expect(form).toContain("Compte candidat requis.");
     expect(form).not.toContain("evaluation-account-gate");
     expect(form).toContain("Suivre ma demande dans Mon espace");
     expect(form).toContain('setLocation("/mon-espace?section=overview")');

@@ -29,7 +29,7 @@ export const luxembourgGuide: CandidateGuide = {
       number: "02",
       title: "Évaluation en ligne et espace candidat",
       blocks: [
-        { type: "text", text: "Commencer sur www.3mtravelagency.com. La page publique présente une évaluation gratuite pouvant commencer sans compte. Indiquez votre métier, votre projet et le Luxembourg comme destination. Déposez votre CV à jour et utilisez une adresse email personnelle et un numéro joignable. [S1]" },
+        { type: "text", text: "Commencer sur www.3mtravelagency.com. La page publique présente une évaluation gratuite, accessible depuis un compte candidat gratuit. Indiquez votre métier, votre projet et le Luxembourg comme destination. Déposez votre CV à jour et utilisez une adresse email personnelle et un numéro joignable. [S1]" },
         {
           type: "cards",
           items: [

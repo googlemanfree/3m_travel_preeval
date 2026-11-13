@@ -17,7 +17,7 @@ export const FAQ_GENERAL_GROUPS: FaqGroup[] = [
     items: [
       {
         question: "Faut-il créer un compte pour commencer ?",
-        answer: "Non. L’évaluation gratuite démarre sans compte : vous indiquez votre projet, votre destination, votre nationalité et vos coordonnées. Le compte est demandé ensuite, pour enregistrer votre dossier, déposer des pièces confidentielles et suivre son statut dans votre espace.",
+        answer: "Oui. L’évaluation gratuite s’envoie depuis un compte candidat, dont la création est gratuite : vous y indiquez votre projet, votre destination, votre nationalité et vos coordonnées, puis vous déposez vos pièces confidentielles et suivez le statut de votre dossier. Pour une première question sans compte, écrivez-nous sur WhatsApp.",
       },
       {
         question: "L’évaluation est-elle vraiment gratuite ?",
