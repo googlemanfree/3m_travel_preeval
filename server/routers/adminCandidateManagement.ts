@@ -1,6 +1,7 @@
 ﻿import { publicProcedure, router } from "../_core/trpc";
 import { DEFAULT_OPENING_FEE_XAF, proposedOpeningFee } from "../../shared/openingFee";
 import { PRE_DOSSIER_STATUSES, isActivatedStatus } from "../../shared/candidateStatus";
+import { DOSSIER_STAGE_IDS, dossierStageOf, dossierStatusLabel, isDossierStage, type DossierStage } from "../../shared/dossierStages";
 import { TRPCError } from "@trpc/server";
 import crypto from "node:crypto";
 import { z } from "zod";
@@ -91,10 +92,14 @@ type AdminCandidate = {
   scoringTotal: number;
   scoringBadge: "excellent" | "bon" | "moyen" | "faible";
   status: string;
+  /** Étape lisible regroupant les trois vocabulaires de statut (dossier en ligne, agence, compte). */
+  stage: DossierStage;
+  statusLabel: string;
   paymentStatus: "paye" | "en_attente" | "non_paye";
   createdAt: Date;
   documentsCount: number;
-  source: "web" | "agence";
+  /** « compte » : candidat inscrit sans dossier ; seules les actions de lecture lui sont proposées. */
+  source: "web" | "agence" | "compte";
   avatarUrl?: string | null;
   avatarVerificationStatus: "missing" | "pending" | "verified" | "rejected";
   avatarVerificationReason?: string | null;
@@ -286,7 +291,7 @@ export async function requireAdminTreatmentSession(cookieHeader: string | undefi
   }
 }
 
-async function loadCandidates(filter: CandidateFilter, sourceLimit = 5000) {
+async function loadCandidateRecords(sourceLimit = 5000): Promise<AdminCandidate[]> {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
@@ -314,6 +319,8 @@ async function loadCandidates(filter: CandidateFilter, sourceLimit = 5000) {
       scoringTotal: application.scoringTotal ?? application.evaluationScore ?? 0,
       scoringBadge: toUiScoreBand(application.scoringBadge),
       status: application.dossierStatus,
+      stage: dossierStageOf(application.dossierStatus),
+      statusLabel: dossierStatusLabel(application.dossierStatus),
       paymentStatus: application.paymentStatus === "SUCCESS" ? "paye" : application.paymentStatus === "PENDING" ? "en_attente" : "non_paye",
       createdAt: application.createdAt,
       documentsCount: documentCounts.get(application.email.toLowerCase()) ?? 0,
@@ -334,6 +341,8 @@ async function loadCandidates(filter: CandidateFilter, sourceLimit = 5000) {
       scoringTotal: 0,
       scoringBadge: "faible" as const,
       status: dossier.status,
+      stage: dossierStageOf(dossier.status),
+      statusLabel: dossierStatusLabel(dossier.status),
       paymentStatus: "non_paye" as const,
       createdAt: dossier.createdAt,
       documentsCount: documentCounts.get(dossier.email.toLowerCase()) ?? 0,
@@ -343,11 +352,45 @@ async function loadCandidates(filter: CandidateFilter, sourceLimit = 5000) {
       avatarVerificationReason: candidateByEmail.get(dossier.email.toLowerCase())?.avatarVerificationReason ?? null,
       avatarFaceCount: candidateByEmail.get(dossier.email.toLowerCase())?.avatarFaceCount ?? 0,
     }) as AdminCandidate);
-  let candidateRecords: AdminCandidate[] = onlineCandidates.concat(agencyCandidates);
+  // Candidats inscrits mais sans dossier (ni en ligne, ni agence) : ils étaient invisibles de cette liste.
+  const emailsWithDossier = new Set<string>([...online.map(item => item.email), ...agency.map(item => item.email)].map(email => email.toLowerCase()));
+  const accountOnlyCandidates: AdminCandidate[] = (candidateRows as Array<typeof candidates.$inferSelect>)
+    .filter(candidate => !candidate.deletedAt && !emailsWithDossier.has(candidate.email.toLowerCase()))
+    .map(candidate => ({
+      id: `account_${candidate.id}`,
+      applicationNumber: `COMPTE-${String(candidate.id).padStart(5, "0")}`,
+      fullName: candidate.fullName,
+      email: candidate.email,
+      phone: candidate.phone ?? "",
+      destination: candidate.destination || "Non spécifiée",
+      visaType: candidate.visaType || "Non spécifié",
+      scoringTotal: 0,
+      scoringBadge: "faible" as const,
+      status: candidate.dossierStatus,
+      stage: dossierStageOf(candidate.dossierStatus),
+      statusLabel: dossierStatusLabel(candidate.dossierStatus),
+      paymentStatus: "non_paye" as const,
+      createdAt: candidate.createdAt,
+      documentsCount: documentCounts.get(candidate.email.toLowerCase()) ?? 0,
+      source: "compte" as const,
+      avatarUrl: candidate.avatarUrl ?? null,
+      avatarVerificationStatus: candidate.avatarVerificationStatus ?? "missing",
+      avatarVerificationReason: candidate.avatarVerificationReason ?? null,
+      avatarFaceCount: candidate.avatarFaceCount ?? 0,
+    }) as AdminCandidate);
+  return onlineCandidates.concat(agencyCandidates, accountOnlyCandidates);
+}
+
+/** Filtres et tri en mémoire. `skipStatus` sert aux compteurs par étape, qui ignorent le filtre d'étape. */
+export function filterCandidateRecords(records: AdminCandidate[], filter: CandidateFilter, options: { skipStatus?: boolean } = {}): AdminCandidate[] {
+  let candidateRecords: AdminCandidate[] = records;
 
   const query = filter.search.toLowerCase();
   if (query) candidateRecords = candidateRecords.filter(candidate => [candidate.fullName, candidate.email, candidate.applicationNumber, candidate.destination, candidate.visaType].some(value => value.toLowerCase().includes(query)));
-  if (filter.status !== "all") candidateRecords = candidateRecords.filter(candidate => candidate.status === filter.status);
+  // Le filtre accepte une étape (« paiement », « approuve »…) ou, par compatibilité, un statut brut.
+  if (!options.skipStatus && filter.status !== "all") {
+    candidateRecords = candidateRecords.filter(candidate => isDossierStage(filter.status) ? candidate.stage === filter.status : candidate.status === filter.status);
+  }
   if (filter.paymentStatus !== "all") candidateRecords = candidateRecords.filter(candidate => candidate.paymentStatus === filter.paymentStatus);
   if (filter.scoreBand !== "all") candidateRecords = candidateRecords.filter(candidate => candidate.scoringBadge === filter.scoreBand);
   if (filter.destination !== "all") candidateRecords = candidateRecords.filter(candidate => candidate.destination.toLowerCase() === filter.destination.toLowerCase());
@@ -361,6 +404,10 @@ async function loadCandidates(filter: CandidateFilter, sourceLimit = 5000) {
   });
 
   return candidateRecords;
+}
+
+async function loadCandidates(filter: CandidateFilter, sourceLimit = 5000) {
+  return filterCandidateRecords(await loadCandidateRecords(sourceLimit), filter);
 }
 
 export const adminCandidateManagementRouter = router({
@@ -1911,10 +1958,16 @@ export const adminCandidateManagementRouter = router({
 
   list: publicProcedure.input(candidateFilterSchema).query(async ({ input, ctx }) => {
     await requireAdminSessionFromCookie(ctx.req.headers.cookie);
-    const candidates = await loadCandidates(input);
+    const allRecords = await loadCandidateRecords();
+    // Compteurs : calculés sur tout le périmètre filtré (hors étape), pas seulement sur la page affichée.
+    const scope = filterCandidateRecords(allRecords, input, { skipStatus: true });
+    const stageCounts = Object.fromEntries(DOSSIER_STAGE_IDS.map(stage => [stage, 0])) as Record<DossierStage, number>;
+    for (const record of scope) stageCounts[record.stage] += 1;
+    const candidates = filterCandidateRecords(allRecords, input);
     const pagination = paginateCandidates(candidates, input.page, input.pageSize);
     return {
       candidates: pagination.records,
+      stats: { scopeTotal: scope.length, stageCounts, paidCount: scope.filter(record => record.paymentStatus === "paye").length, withoutDossierCount: scope.filter(record => record.source === "compte").length },
       total: pagination.total,
       page: pagination.page,
       pageSize: pagination.pageSize,
@@ -1925,10 +1978,10 @@ export const adminCandidateManagementRouter = router({
   exportCsv: publicProcedure.input(candidateFilterSchema).mutation(async ({ input, ctx }) => {
     await requireAdminSessionFromCookie(ctx.req.headers.cookie);
     const candidates = await loadCandidates(input, 10000);
-    const headers = ["Référence", "Nom", "E-mail", "Téléphone", "Destination", "Visa", "Score", "Statut", "Paiement", "Documents", "Source", "Créé le"];
+    const headers = ["Référence", "Nom", "E-mail", "Téléphone", "Destination", "Visa", "Score", "Étape", "Statut", "Paiement", "Documents", "Source", "Créé le"];
     const rows = candidates.map(candidate => [
       candidate.applicationNumber, candidate.fullName, candidate.email, candidate.phone,
-      candidate.destination, candidate.visaType, candidate.scoringTotal, candidate.status,
+      candidate.destination, candidate.visaType, candidate.scoringTotal, dossierStageOf(candidate.status), candidate.statusLabel,
       candidate.paymentStatus, candidate.documentsCount, candidate.source,
       new Date(candidate.createdAt).toLocaleString("fr-FR"),
     ].map(escapeCsvCell).join(","));

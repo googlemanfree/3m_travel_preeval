@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, Clock3, ImageOff, Loader2, ShieldCheck, UserRound, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronDown, Clock3, ImageOff, Loader2, ShieldCheck, UserRound, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -43,10 +43,18 @@ export default function AdminPortraitReviewPanel({ candidates }: Props) {
     onError: (error) => toast.error(error.message || "Impossible de mettre à jour le portrait."),
   });
 
-  const reviewQueue = useMemo(
-    () => candidates.filter((candidate) => candidate.avatarVerificationStatus !== "verified"),
-    [candidates],
-  );
+  // À revoir d'abord (portrait déposé à vérifier ou rejeté), puis les comptes sans portrait.
+  const reviewQueue = useMemo(() => {
+    const rank: Record<PortraitCandidate["avatarVerificationStatus"], number> = { pending: 0, rejected: 1, missing: 2, verified: 3 };
+    return candidates
+      .filter((candidate) => candidate.avatarVerificationStatus !== "verified")
+      .sort((left, right) => rank[left.avatarVerificationStatus] - rank[right.avatarVerificationStatus]);
+  }, [candidates]);
+  const toReviewCount = reviewQueue.filter((candidate) => candidate.avatarVerificationStatus !== "missing").length;
+  const withoutPortraitCount = reviewQueue.length - toReviewCount;
+  // Replié par défaut s'il n'y a que des comptes sans portrait : la liste des candidats reste en tête de page.
+  const [expanded, setExpanded] = useState(toReviewCount > 0);
+  const [visibleCount, setVisibleCount] = useState(6);
 
   const updateReason = (candidateId: string | number, value: string) => {
     setReasons((current) => ({ ...current, [String(candidateId)]: value.slice(0, 500) }));
@@ -70,18 +78,39 @@ export default function AdminPortraitReviewPanel({ candidates }: Props) {
             <p className="mt-1 text-sm text-slate-600">Vérifiez les portraits signalés ou demandez une nouvelle prise avant d’autoriser l’accès complet.</p>
           </div>
         </div>
-        <span className="inline-flex w-fit items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
-          <Clock3 className="h-3.5 w-3.5" /> {reviewQueue.length} à revoir
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex w-fit items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-semibold text-amber-800 ring-1 ring-amber-200" data-testid="portrait-to-review-count">
+            <Clock3 className="h-3.5 w-3.5" /> {toReviewCount} à revoir
+          </span>
+          {withoutPortraitCount > 0 && (
+            <span className="inline-flex w-fit items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200" data-testid="portrait-missing-count">
+              <ImageOff className="h-3.5 w-3.5" /> {withoutPortraitCount} sans portrait
+            </span>
+          )}
+          {reviewQueue.length > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              aria-expanded={expanded}
+              aria-controls="admin-portrait-review-list"
+              onClick={() => setExpanded((open) => !open)}
+              data-testid="portrait-review-toggle"
+            >
+              {expanded ? "Masquer la revue" : "Afficher la revue"}
+              <ChevronDown className={`ml-1.5 h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`} aria-hidden="true" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {reviewQueue.length === 0 ? (
         <div className="mt-5 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
           <CheckCircle2 className="h-4 w-4" /> Aucun portrait en attente sur cette page.
         </div>
-      ) : (
-        <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          {reviewQueue.map((candidate) => {
+      ) : !expanded ? null : (
+        <div id="admin-portrait-review-list" className="mt-5 grid gap-4 lg:grid-cols-2">
+          {reviewQueue.slice(0, visibleCount).map((candidate) => {
             const status = statusCopy[candidate.avatarVerificationStatus];
             const reason = reasons[String(candidate.id)] || "";
             const passportAwaiting = isPassportPhotoRequestReason(candidate.avatarVerificationReason)
@@ -153,6 +182,13 @@ export default function AdminPortraitReviewPanel({ candidates }: Props) {
               </article>
             );
           })}
+          {reviewQueue.length > visibleCount && (
+            <div className="lg:col-span-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setVisibleCount((count) => count + 6)} data-testid="portrait-show-more">
+                Afficher les {Math.min(6, reviewQueue.length - visibleCount)} suivants ({reviewQueue.length - visibleCount} restants)
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </Card>

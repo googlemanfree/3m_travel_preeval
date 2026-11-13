@@ -1690,3 +1690,13 @@ html.motion-disabled .premium-surface:active,
 html.motion-disabled .glass-card:active {
   transform: none !important;
 }
+
+
+/* En-tête réduit dans l'administration : le menu public, la recherche de destinations et les boutons visiteur
+   (Se connecter / Inscription) n'ont pas de sens pour un administrateur connecté et mangeaient ~65 px de hauteur. */
+.premium-header[data-admin-area="true"] nav.order-4,
+.premium-header[data-admin-area="true"] form.order-2,
+.premium-header[data-admin-area="true"] a[href="/register"],
+.premium-header[data-admin-area="true"] a[href="/login"] {
+  display: none !important;
+}
