@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { AlertCircle, Lock } from "lucide-react";
@@ -152,11 +153,19 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
     );
   }
 
+  const showFloatingBell = location.split("?")[0].replace(/\/$/, "") !== "/admin";
+
   return (
     <>
-      <div className="fixed top-3 right-4 z-[60] bg-white rounded-full shadow-md border border-gray-100">
-        <AdminNotificationBell />
-      </div>
+      {/* Rendue dans <body> : le conteneur de page crée son propre empilement (isolation: isolate), donc une cloche
+          « fixe » y restait sous l'en-tête fixe du site et n'était pas cliquable. Placée sous l'en-tête, et omise sur
+          le tableau de bord, qui a sa propre cloche dans son bandeau. */}
+      {showFloatingBell && typeof document !== "undefined" && createPortal(
+        <div className="fixed right-4 top-[8.75rem] z-[60] rounded-full border border-gray-100 bg-white shadow-md" data-testid="admin-floating-bell">
+          <AdminNotificationBell />
+        </div>,
+        document.body,
+      )}
       <AdminTwoFactorNotice sessionToken={sessionToken} />
       {children}
     </>

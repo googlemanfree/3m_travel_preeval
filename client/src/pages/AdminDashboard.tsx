@@ -2586,8 +2586,8 @@ export default function AdminDashboard() {
               Saisir dossier agence
             </Button>
             
-            {/* Notifications */}
-            <AdminNotificationBell />
+            {/* Notifications (fond sombre : icône claire) */}
+            <AdminNotificationBell tone="dark" />
             
             {/* Profil Admin */}
             <div className="flex items-center gap-2 pl-3 border-l border-white/20" data-testid="admin-role-badge">
