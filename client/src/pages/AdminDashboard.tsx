@@ -410,6 +410,7 @@ const ADMIN_GLOBAL_SEARCH_ITEMS = [
   { label: "Planificateur", hint: "Tester les relances et consulter l’historique", tab: "scheduler" },
   { label: "Liens et routes", hint: "Contrôler les liens publics", tab: "route-health" },
   { label: "Visuels destinations", hint: "Gérer les médias des destinations", path: "/admin/destination-media" },
+  { label: "Cohérence des données", hint: "Pays, zone, type de visa, âge, expérience : anomalies et corrections", path: "/admin/coherence" },
   { label: "Bilans automatisés", hint: "Valider les bilans prêts, suivre les incidents, gérer les sources", path: "/admin/bilans" },
 ] as const;
 

@@ -69,6 +69,8 @@ export type EvaluationInputs = {
   submitted: boolean;
   /** Périmètre de la première version : projet TRAVAIL uniquement. */
   projectIsWork: boolean;
+  /** Projet et type de visa du dossier se contredisent : à clarifier avant toute analyse (page « Cohérence des données »). */
+  projectConflict?: boolean;
   cvConsent: boolean;
   form: FormAnswers;
   cv: { key: string | null; fileName: string | null; sha256: string | null; stored: boolean; attachedToAccount: boolean; text: string | null; file: ExtractionFile | null };
@@ -182,6 +184,7 @@ export async function submitForAnalysis(deps: PipelineDeps, evaluationId: number
   const inputs = await deps.loadInputs(evaluationId, { content: false });
   if (!inputs) return { status: "not_ready", reason: "Évaluation introuvable." };
   if (config.allowlistEmails && !config.allowlistEmails.includes(inputs.email.trim().toLowerCase())) return { status: "not_allowed", reason: "Dossier hors de la liste de test." };
+  if (inputs.projectConflict) return { status: "not_allowed", reason: "Projet et type de visa contradictoires : à clarifier (page Cohérence des données)." };
   if (!inputs.projectIsWork) return { status: "not_allowed", reason: "Projet hors périmètre (travail uniquement) : parcours inchangé." };
   if (!inputs.submitted) return { status: "not_ready", reason: "Le formulaire n'est pas finalisé." };
   if (!inputs.cv.stored) return { status: "not_ready", reason: "Le CV n'est pas encore stocké." };

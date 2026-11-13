@@ -65,6 +65,7 @@ import { visaStatusTrackerRouter } from "./routers/visaStatusTracker";
 import { flightPlannerAIRouter } from "./routers/flightPlannerAI";
 import { adminCandidateManagementRouter } from "./routers/adminCandidateManagement";
 import { adminBilanAutoRouter } from "./routers/adminBilanAuto";
+import { adminDataCoherenceRouter } from "./routers/adminDataCoherence";
 import { adminSavedViewsRouter } from "./routers/adminSavedViews";
 import { insuranceRequestsRouter } from "./routers/insuranceRequests";
 import { caseTrackingRouter } from "./routers/caseTracking";
@@ -194,6 +195,7 @@ export const appRouter = router({
   adminDocumentInsights: adminDocumentInsightsRouter,
   adminCandidateManagement: adminCandidateManagementRouter,
   adminBilanAuto: adminBilanAutoRouter,
+  adminDataCoherence: adminDataCoherenceRouter,
   adminSavedViews: adminSavedViewsRouter,
   insuranceRequests: insuranceRequestsRouter,
   caseTracking: caseTrackingRouter,

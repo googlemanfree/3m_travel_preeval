@@ -21,6 +21,7 @@ export * from "./jobOffersSchema";
 export * from "./stayProgramsSchema";
 export * from "./remoteSupportSchema";
 export * from "./bilanAutoSchema";
+export * from "./dataCoherenceSchema";
 
 /**
  * Core user table backing auth flow.

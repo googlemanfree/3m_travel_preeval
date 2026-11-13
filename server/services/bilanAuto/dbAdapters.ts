@@ -15,6 +15,7 @@ import { configFromEnv, type EvaluationInputs, type Mailer, type PipelineDeps, t
 import { DrizzleBilanAutoStore } from "./drizzleStore";
 import { parseModelJson, type ExtractionRunner } from "./extraction";
 import { renderPdf } from "./reportPdf";
+import { checkRecordCoherence, projectKindOf } from "../../../shared/dataCoherence";
 import { DrizzleSourcesStore, makeReferentialSearch } from "./sources";
 import type { BilanReport, RunRecord } from "./types";
 
@@ -96,7 +97,8 @@ export function makeLoadInputs(db: Db, io: { fetchBuffer: (url: string) => Promi
     return {
       evaluationId, candidateId: ev.candidateId ?? null, email: ev.email, fullName: ev.fullName, dossierRef: ev.referenceCode ?? null,
       priorityCountry: ev.destinationCountry ?? null, submitted: true,
-      projectIsWork: ev.projectType === "travail" || WORK_VISA.has(ev.visaType),
+      projectIsWork: projectKindOf(ev.projectType, ev.visaType) === "travail" || WORK_VISA.has(ev.visaType),
+      projectConflict: checkRecordCoherence({ destinationCountry: ev.destinationCountry, visaType: ev.visaType, projectType: ev.projectType }).some((issue) => issue.code === "VISA_PROJET_INCOHERENT"),
       cvConsent: cvAnalysisConsented(ev), form, cv, documents,
     };
   };
