@@ -23,6 +23,6 @@ describe("récupération des routes protégées après déploiement", () => {
   it("ne prétend pas nettoyer le cache quand l’erreur de rendu n’est pas une erreur de module", () => {
     expect(errorBoundary).toContain("isChunkLoadError(this.state.error)");
     expect(errorBoundary).toContain("Un élément de cette page a rencontré un problème temporaire");
-    expect(errorBoundary).toContain("this.setState({ hasError: false, error: null })");
+    expect(errorBoundary).toContain("this.setState({ hasError: false, error: null, report: null, copied: false })");
   });
 });

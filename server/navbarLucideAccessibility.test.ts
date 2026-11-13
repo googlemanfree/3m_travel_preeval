@@ -78,7 +78,7 @@ describe("Navbar avec icônes Lucide", () => {
     expect(source).toContain("3m-recent-destination-searches");
     expect(source).toContain("localStorage.setItem");
     expect(source).toContain("recentSearches");
-    expect(source).toContain("rememberTypedSearch");
+    expect(source).toContain("rememberSearch");
   });
 
   it("affiche une inscription directement dans la barre mobile", () => {

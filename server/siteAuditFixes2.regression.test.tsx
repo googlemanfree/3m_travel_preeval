@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { applySecurityHeaders, isPrivatePath, PERMISSIONS_POLICY } from "./_core/securityHeaders";
 import { composePublicPrerender, getIndexablePublicPaths } from "./publicPrerender";
+import { AnimationPreferencesProvider } from "../client/src/contexts/AnimationPreferencesContext";
 
 // Fiches.tsx s'appuie sur le runtime JSX automatique de Vite : sous vitest, React doit être global avant son import.
 (globalThis as { React?: typeof React }).React = React;
@@ -110,7 +111,7 @@ describe("/fiches : affichage progressif", () => {
 
   it("affiche 18 fiches d'abord, puis 18 de plus à chaque clic, le bouton disparaît quand tout est affiché", async () => {
     const Fiches = await loadFiches();
-    render(<Fiches />);
+    render(<AnimationPreferencesProvider><Fiches /></AnimationPreferencesProvider>);
     expect(cards()).toHaveLength(18);
     const more = screen.getByTestId("fiches-show-more");
     expect(more.textContent).toMatch(/restantes/);
@@ -123,7 +124,7 @@ describe("/fiches : affichage progressif", () => {
 
   it("une recherche revient à la première page et trouve aussi les fiches non encore affichées", async () => {
     const Fiches = await loadFiches();
-    render(<Fiches />);
+    render(<AnimationPreferencesProvider><Fiches /></AnimationPreferencesProvider>);
     fireEvent.click(screen.getByTestId("fiches-show-more"));
     expect(cards()).toHaveLength(36);
     fireEvent.change(screen.getByLabelText("Rechercher une fiche pays"), { target: { value: "Canada" } });

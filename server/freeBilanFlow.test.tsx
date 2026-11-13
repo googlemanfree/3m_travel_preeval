@@ -92,12 +92,13 @@ const VALIDATE = "unifiedRequests.validateEvaluationDraft";
 const SEND = "unifiedRequests.sendEvaluationNow";
 
 describe("saisie, validation et envoi du bilan côté administration", () => {
-  it("l'écran se limite à un champ de saisie, un aperçu et trois boutons ; rien d'autre", () => {
+  it("l'écran se limite à un champ de saisie, un aperçu, deux aides de saisie et quatre boutons d'action", () => {
     open();
     expect(screen.getByTestId("bilan-input")).toBeTruthy();
     expect(screen.getByTestId("bilan-live-preview-empty")).toBeTruthy();
     const buttons = screen.getAllByRole("button").map((button) => button.getAttribute("data-testid"));
-    expect(buttons.filter(Boolean)).toEqual(["bilan-save-draft", "bilan-validate", "bilan-test-email", "bilan-validate-send"]);
+    // Deux aides de saisie (coller, trame de départ) puis les quatre actions ; rien d'autre.
+    expect(buttons.filter(Boolean)).toEqual(["bilan-paste-clipboard", "bilan-use-skeleton", "bilan-save-draft", "bilan-validate", "bilan-test-email", "bilan-validate-send"]);
     expect(screen.getByTestId("bilan-blockers").textContent).toMatch(/Saisissez le bilan/);
     expect((screen.getByTestId("bilan-validate") as HTMLButtonElement).disabled).toBe(true);
     expect((screen.getByTestId("bilan-validate-send") as HTMLButtonElement).disabled).toBe(true);
