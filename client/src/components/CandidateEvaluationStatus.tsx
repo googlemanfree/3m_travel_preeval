@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import EvaluationReportView from "@/components/EvaluationReportView";
 import BilanAutoProgress from "@/components/BilanAutoProgress";
+import DocumentChecklistCard from "@/components/DocumentChecklistCard";
 import { CV_ACCEPT_ATTRIBUTE, CV_REQUIRED_MESSAGE, cvProblemForFile } from "@shared/evaluationCv";
 import type { ClientReport } from "@shared/evaluationValidation";
 
@@ -28,10 +29,13 @@ export type CandidateEvaluationViewData = {
  */
 export default function CandidateEvaluationStatus({ evaluationId, view, onChanged }: { evaluationId: number; view: CandidateEvaluationViewData; onChanged?: () => void }) {
   const cvMissing = !view.cv?.onFile;
+  // Le bilan automatisé peut demander une version lisible du CV (PDF avec texte) même si un fichier est déjà au dossier.
+  const progressQuery = trpc.evaluationValidation.myBilanProgress.useQuery({ evaluationId }, { retry: false, refetchInterval: 60_000 });
+  const needsReadableCv = progressQuery.data?.progress?.needs === "cv_lisible";
   if (view.stage === "not_started" && !cvMissing) return null;
   return (
     <div className="space-y-4" data-testid="candidate-evaluation-status">
-      {cvMissing && view.stage !== "published" && <CvUploadCard evaluationId={evaluationId} onChanged={onChanged} />}
+      {(cvMissing || needsReadableCv) && view.stage !== "published" && <CvUploadCard evaluationId={evaluationId} onChanged={onChanged} replacing={!cvMissing} />}
       {view.infoRequest && <InfoRequestForm evaluationId={evaluationId} request={view.infoRequest} onChanged={onChanged} />}
       {view.stage === "pending" && view.pendingNotice && (
         <Card className="border-2 border-blue-200 bg-blue-50/60 p-6" role="status" aria-labelledby="evaluation-pending-title">
@@ -51,6 +55,7 @@ export default function CandidateEvaluationStatus({ evaluationId, view, onChange
         </Card>
       )}
       {view.stage !== "published" && view.stage !== "not_started" && <BilanAutoProgress evaluationId={evaluationId} />}
+      {view.stage !== "not_started" && <DocumentChecklistCard evaluationId={evaluationId} />}
       {view.report && <EvaluationReportView report={view.report} evaluationId={evaluationId} />}
     </div>
   );
@@ -116,13 +121,20 @@ function readAsDataUrl(file: File): Promise<string> {
 }
 
 /** Dépôt du CV depuis l'espace candidat : contrôlé ici (type, taille), puis re-contrôlé par le serveur sur le contenu du fichier. */
-function CvUploadCard({ evaluationId, onChanged }: { evaluationId: number; onChanged?: () => void }) {
+function CvUploadCard({ evaluationId, onChanged, replacing = false }: { evaluationId: number; onChanged?: () => void; replacing?: boolean }) {
   const [file, setFile] = useState<File | null>(null);
+  const [consent, setConsent] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const utils = trpc.useUtils();
   const [problem, setProblem] = useState<string | null>(null);
   const attach = trpc.evaluationValidation.attachCv.useMutation({
-    onSuccess: () => {
-      toast.success("Merci, votre CV a bien été ajouté à votre dossier.");
+    onSuccess: (data: { intake?: { status: string; message: string } }) => {
+      if (data?.intake && data.intake.status !== "lisible") {
+        setNotice(data.intake.message);
+        toast.warning("CV enregistré, mais peu lisible", { description: data.intake.message, duration: 12000 });
+      } else toast.success(data?.intake?.message ?? "Merci, votre CV a bien été ajouté à votre dossier.");
       setFile(null);
+      void utils.evaluationValidation.myBilanProgress.invalidate();
       onChanged?.();
     },
     onError: (error: { message?: string }) => setProblem(error.message || "Envoi du CV impossible pour le moment."),
@@ -144,7 +156,7 @@ function CvUploadCard({ evaluationId, onChanged }: { evaluationId: number; onCha
     if (!file || attach.isPending) return;
     setProblem(null);
     try {
-      attach.mutate({ evaluationId, fileName: file.name, base64: await readAsDataUrl(file) });
+      attach.mutate({ evaluationId, fileName: file.name, base64: await readAsDataUrl(file), cvAnalysisConsent: consent });
     } catch {
       setProblem("Lecture du fichier impossible. Choisissez-le de nouveau.");
     }
@@ -159,9 +171,9 @@ function CvUploadCard({ evaluationId, onChanged }: { evaluationId: number; onCha
         <div className="min-w-0 flex-1">
           <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-800">Action requise</p>
           <h2 id="evaluation-cv-title" className="mt-1 text-xl font-black text-slate-950">
-            Ajoutez votre CV pour finaliser votre évaluation
+            {replacing ? "Déposez une version lisible de votre CV" : "Ajoutez votre CV pour finaliser votre évaluation"}
           </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-800">{CV_REQUIRED_MESSAGE} PDF, JPG ou PNG, 5 Mo maximum.</p>
+          <p className="mt-2 text-sm leading-6 text-slate-800">{replacing ? "Votre CV actuel ne peut pas être lu automatiquement. Déposez-le au format PDF avec un texte sélectionnable (et non une photo ou un scan). 5 Mo maximum." : `${CV_REQUIRED_MESSAGE} PDF, JPG ou PNG, 5 Mo maximum.`}</p>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <label className="inline-flex cursor-pointer items-center rounded-md border border-amber-400 bg-white px-3 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100">
               {file ? "Choisir un autre fichier" : "Choisir mon CV"}
@@ -172,12 +184,16 @@ function CvUploadCard({ evaluationId, onChanged }: { evaluationId: number; onCha
               {attach.isPending ? "Envoi…" : "Envoyer mon CV"}
             </Button>
           </div>
+          {notice && <p role="status" className="mt-3 rounded-md border border-amber-400 bg-white p-3 text-sm text-amber-950" data-testid="cv-intake-notice">{notice}</p>}
           {problem && (
             <p role="alert" className="mt-3 text-sm font-medium text-red-700">
               {problem}
             </p>
           )}
-          <p className="mt-3 text-xs text-amber-900">Votre CV n’est lu que par notre équipe pour préparer votre évaluation.</p>
+          <label className="mt-4 flex items-start gap-2 text-sm leading-6 text-slate-900">
+            <input type="checkbox" className="mt-1" checked={consent} onChange={(event) => setConsent(event.target.checked)} data-testid="cv-consent-checkbox" />
+            <span>J’accepte que mon CV et les informations de mon dossier soient lus par un traitement automatisé pour préparer mon bilan. Le total de la note est calculé par des règles connues de l’agence, et je peux demander la correction ou la suppression de mes données à tout moment. Sans cet accord, mon CV est enregistré mais n’est pas lu automatiquement.</span>
+          </label>
         </div>
       </div>
     </Card>

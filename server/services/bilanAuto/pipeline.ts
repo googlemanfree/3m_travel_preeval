@@ -23,6 +23,7 @@ export type PipelineConfig = {
   dailyBudgetEur: number;
   costPerRunEstimateEur: number;
   notificationsEnabled: boolean;
+  visionEnabled: boolean;
   grid: GridDef;
 };
 
@@ -37,6 +38,7 @@ export const DEFAULT_CONFIG: PipelineConfig = {
   dailyBudgetEur: 20,
   costPerRunEstimateEur: 0.05,
   notificationsEnabled: true,
+  visionEnabled: false,
   grid: GRID_V1,
 };
 
@@ -55,6 +57,7 @@ export function configFromEnv(env: Record<string, string | undefined> = process.
     dailyBudgetEur: num(env.BILAN_AUTO_DAILY_BUDGET_EUR, DEFAULT_CONFIG.dailyBudgetEur),
     costPerRunEstimateEur: num(env.BILAN_AUTO_COST_PER_RUN_EUR, DEFAULT_CONFIG.costPerRunEstimateEur),
     notificationsEnabled: env.BILAN_AUTO_NOTIFICATIONS_ENABLED !== "false",
+    visionEnabled: env.BILAN_AUTO_VISION_ENABLED === "true",
   };
 }
 
@@ -275,6 +278,18 @@ export async function processRun(deps: PipelineDeps, claimed: RunRecord): Promis
       return run;
     }
 
+    // Consentement : sans l'accord distinct du candidat à la lecture de son CV, AUCUN contenu n'est envoyé au modèle ; on demande l'accord.
+    if (!inputs.cvConsent) {
+      const decision = decideOutcome({ preconditions: { evaluationSubmitted: inputs.submitted, cvStored: inputs.cv.stored, cvAttachedToAccount: inputs.cv.attachedToAccount, cvConsent: false, cvReadable: false, technicalError: null, gridApproved: isGridApproved(config.grid) || run.mode === "simulation", visionEnabled: config.visionEnabled }, score: null });
+      run = await setState(deps, run, "needs_information", { outcome: "B", complement: decision.complementItems, inputSnapshot: snapshot, lastError: null, lockedBy: null, lockedAt: null });
+      await store.addEvent({ runId: run.id, evaluationId: run.evaluationId, actor: "systeme", action: "complement_requested", detail: "consentement_cv (aucune lecture du CV)", at: now });
+      if (run.mode !== "simulation") {
+        await deps.publisher.requestComplement(run, decision.complementItems);
+        await queueNotification(deps, run, inputs.email, "complement_demande");
+      }
+      return run;
+    }
+
     // 1. Extraction (les empreintes de fichiers, connues maintenant, complètent l'instantané sans changer la version)
     run = await setState(deps, run, "extracting", { inputSnapshot: snapshot });
     const extraction = await extractFacts(
@@ -312,6 +327,7 @@ export async function processRun(deps: PipelineDeps, claimed: RunRecord): Promis
       cvReadable: extraction.cvReadable,
       technicalError: null,
       gridApproved,
+      visionEnabled: config.visionEnabled,
     };
     let decision = decideOutcome({ preconditions, score });
     const flags = [...score.rubrics.flatMap((rubric) => rubric.subCriteria.flatMap((sub) => sub.flags)), ...(injectionSuspected ? ["Consigne détectée dans un contenu du dossier : ignorée"] : []), ...notes, ...orientations.searchErrors];

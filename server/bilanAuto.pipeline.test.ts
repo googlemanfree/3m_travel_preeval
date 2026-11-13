@@ -225,6 +225,36 @@ describe("cas B — complément nécessaire", () => {
     const run = await processNext(h.deps);
     expect(run?.state).toBe("needs_information");
     expect(run?.complement?.[0].id).toBe("cv_consent");
+    // aucun contenu n'a été envoyé au modèle sans l'accord du candidat
+    expect(h.extraction).not.toHaveBeenCalled();
+    expect(run?.facts).toBeNull();
+    expect(run?.score).toBeNull();
+  });
+
+  it("l'accord donné ensuite crée une nouvelle version et le dossier est alors traité", async () => {
+    const h = harness();
+    h.state.inputs = inputs({ cvConsent: false });
+    await submitForAnalysis(h.deps, 1);
+    expect((await processNext(h.deps))?.state).toBe("needs_information");
+    h.state.inputs = inputs({ cvConsent: true });
+    expect((await submitForAnalysis(h.deps, 1)).status).toBe("queued");
+    const run = await processNext(h.deps);
+    expect(run?.state).toBe("ready_for_review");
+    expect(h.extraction).toHaveBeenCalledTimes(1);
+    const runs = await h.store.listRuns({});
+    expect(runs.find((entry) => entry.state === "superseded")).toBeTruthy();
+  });
+
+  it("CV illisible : la consigne dit « PDF avec texte » quand la lecture des scans est désactivée", async () => {
+    const h = harness({ extraction: async () => cvJson({ readable: false }) });
+    h.state.inputs = inputs({ cv: { ...inputs().cv, text: null, file: null } });
+    await submitForAnalysis(h.deps, 1);
+    const run = await processNext(h.deps);
+    expect(run?.complement?.[0].label).toMatch(/PDF dont le texte est sélectionnable/);
+    const vision = harness({ config: { visionEnabled: true }, extraction: async () => cvJson({ readable: false }) });
+    vision.state.inputs = inputs({ cv: { ...inputs().cv, text: null, file: null } });
+    await submitForAnalysis(vision.deps, 1);
+    expect((await processNext(vision.deps))?.complement?.[0].label).toMatch(/PDF ou image nette/);
   });
 
   it("CV scanné illisible : demande d'une version lisible, jamais un refus", async () => {

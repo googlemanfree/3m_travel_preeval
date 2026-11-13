@@ -66,7 +66,9 @@ export function makeLoadInputs(db: Db, io: { fetchBuffer: (url: string) => Promi
     const docRows = await db.select().from(clientDocuments).where(and(eq(clientDocuments.evaluationId, evaluationId), ne(clientDocuments.documentType, "cv")));
     const documents: EvaluationInputs["documents"] = docRows.map((row) => ({ id: String(row.id), kind: DOC_KIND[row.documentType] ?? "autre", key: storageKeyFromStoredUrl(row.documentUrl) ?? row.documentUrl ?? null, sha256: null, text: null, file: null }));
 
-    if (options.content && cvUrl) {
+    // Sans l'accord du candidat à la lecture de son CV, aucun fichier n'est téléchargé ni lu.
+    const consented = cvAnalysisConsented(ev);
+    if (options.content && consented && cvUrl) {
       const buffer = await io.fetchBuffer(cvUrl);
       if (buffer) {
         cv.sha256 = createHash("sha256").update(buffer).digest("hex");
@@ -78,7 +80,7 @@ export function makeLoadInputs(db: Db, io: { fetchBuffer: (url: string) => Promi
         }
       }
     }
-    if (options.content) {
+    if (options.content && consented) {
       for (let index = 0; index < docRows.length; index += 1) {
         const row = docRows[index];
         if (!row.documentUrl) continue;
@@ -99,7 +101,7 @@ export function makeLoadInputs(db: Db, io: { fetchBuffer: (url: string) => Promi
       priorityCountry: ev.destinationCountry ?? null, submitted: true,
       projectIsWork: projectKindOf(ev.projectType, ev.visaType) === "travail" || WORK_VISA.has(ev.visaType),
       projectConflict: checkRecordCoherence({ destinationCountry: ev.destinationCountry, visaType: ev.visaType, projectType: ev.projectType }).some((issue) => issue.code === "VISA_PROJET_INCOHERENT"),
-      cvConsent: cvAnalysisConsented(ev), form, cv, documents,
+      cvConsent: consented, form, cv, documents,
     };
   };
 }

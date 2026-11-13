@@ -1,4 +1,5 @@
 ﻿import { z } from "zod";
+import { inspectAndRecord } from "../services/documentIntakeStore";
 import { canonicalCountry, normalizeDestination } from "../../shared/dataCoherence";
 import { triggerBilanAuto } from "../services/bilanAuto/runtime";
 import { TRPCError } from "@trpc/server";
@@ -431,8 +432,10 @@ export const evaluationRouter = router({
     const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-150) || "document";
     const stored = await storagePut(`evaluation-documents/${input.evaluationId}/${Date.now()}-${safeName}`, buffer, input.mimeType);
     const result = await db.insert(clientDocuments).values({ evaluationId: input.evaluationId, candidateEmail: input.email.toLowerCase(), documentType: input.documentType, documentName: safeName, documentUrl: stored.url, fileSize: buffer.length, source: "online", receivedByAdmin: false }).$returningId();
+    // Contrôle à la réception : le candidat sait tout de suite si le document est lisible (jamais un refus pour cette raison).
+    const intake = result[0]?.id ? await inspectAndRecord({ source: "client_document", refId: result[0].id, evaluationId: input.evaluationId, documentType: input.documentType, fileName: safeName, fileKey: stored.url, bytes: buffer }) : null;
     triggerBilanAuto(input.evaluationId);
-    return { success: true, documentId: result[0]?.id, documentName: safeName };
+    return { success: true, documentId: result[0]?.id, documentName: safeName, ...(intake ? { intake } : {}) };
   }),
 
   submit: publicProcedure

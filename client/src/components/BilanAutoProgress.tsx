@@ -1,6 +1,8 @@
 import { CheckCircle2, Circle, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 /**
  * Frise de suivi du bilan automatisé côté candidat : dossier reçu → analyse → relecture par l'agence → bilan disponible.
@@ -8,6 +10,11 @@ import { trpc } from "@/lib/trpc";
  */
 export default function BilanAutoProgress({ evaluationId }: { evaluationId: number }) {
   const query = trpc.evaluationValidation.myBilanProgress.useQuery({ evaluationId }, { retry: false, refetchInterval: 60_000 });
+  const utils = trpc.useUtils();
+  const grant = trpc.evaluationValidation.grantCvAnalysisConsent.useMutation({
+    onSuccess: () => { toast.success("Merci : votre accord est enregistré, l'analyse de votre dossier reprend."); void utils.evaluationValidation.myBilanProgress.invalidate(); },
+    onError: (error: { message?: string }) => toast.error(error.message || "Enregistrement impossible pour le moment."),
+  });
   const progress = query.data?.progress;
   if (!progress) return null;
   return (
@@ -22,6 +29,12 @@ export default function BilanAutoProgress({ evaluationId }: { evaluationId: numb
           </li>
         ))}
       </ol>
+      {progress.needs === "consentement_cv" && (
+        <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 p-3" data-testid="cv-consent-request">
+          <p className="text-sm leading-6 text-slate-900">Pour préparer votre bilan, nous avons besoin de votre accord : votre CV et les informations de votre dossier seront lus par un traitement automatisé. Le total de la note est calculé par des règles connues de l’agence. Vous pouvez demander la correction ou la suppression de vos données à tout moment.</p>
+          <Button className="mt-3" onClick={() => grant.mutate({ evaluationId, accepted: true })} disabled={grant.isPending} data-testid="cv-consent-accept">J’accepte l’analyse de mon dossier et la lecture de mon CV</Button>
+        </div>
+      )}
       {progress.note && <p className="mt-3 rounded-md bg-slate-50 p-3 text-sm leading-6 text-slate-700" role="status">{progress.note}</p>}
     </Card>
   );
