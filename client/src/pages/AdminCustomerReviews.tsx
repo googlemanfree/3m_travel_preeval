@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { getAdminSessionToken } from "@/lib/adminSession";
 import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,9 +25,9 @@ const STATUS_COLORS: Record<string, string> = {
 export default function AdminCustomerReviews() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateSort, setDateSort] = useState<"newest" | "oldest">("newest");
-  const sessionToken = typeof window !== "undefined"
-    ? sessionStorage.getItem("admin_session_token") || localStorage.getItem("admin_session_token") || ""
-    : "";
+  // Même clé que la connexion (adminSessionToken) : avec l'ancienne clé « admin_session_token », la modération
+  // affichait toujours « Veuillez vous connecter » même pour un administrateur connecté.
+  const sessionToken = getAdminSessionToken();
   const { data: adminReviews, isLoading, refetch } = trpc.customerReview.listForAdmin.useQuery(
     { sessionToken },
     { refetchInterval: 30000, enabled: !!sessionToken }
@@ -65,7 +66,7 @@ export default function AdminCustomerReviews() {
         {sessionToken && <TestimonialComposer sessionToken={sessionToken} onSaved={() => void refetch()} />}
 
         {!sessionToken ? (
-          <p className="text-center text-amber-600 py-16">Veuillez vous connecter en tant qu'administrateur pour accéder à la modération.</p>
+          <p className="py-16 text-center text-amber-800">Veuillez vous connecter en tant qu'administrateur pour accéder à la modération.</p>
         ) : isLoading ? (
           <div className="flex justify-center py-16">
             <Loader className="w-6 h-6 animate-spin text-blue-600" />

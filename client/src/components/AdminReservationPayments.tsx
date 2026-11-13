@@ -9,11 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { MANUAL_METHOD_CODES, paymentMethodLabel } from "@shared/paymentMethods";
 import AdminPaymentProofBadge from "@/components/AdminPaymentProofBadge";
+import { getAdminSessionToken } from "@/lib/adminSession";
 
 export function AdminReservationPayments() {
-  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("admin_session_token") || "active_session" : "active_session";
+  // Même clé que la connexion (adminSessionToken) : l'ancienne clé « admin_session_token » n'existait nulle part.
+  const sessionToken = getAdminSessionToken();
   const utils = trpc.useUtils();
-  const { data: payments, isLoading } = trpc.flightBooking.listReservationPayments.useQuery({ sessionToken });
+  const { data: payments, isLoading } = trpc.flightBooking.listReservationPayments.useQuery({ sessionToken }, { enabled: !!sessionToken });
   const [search, setSearch] = useState("");
   const [methodFilter, setMethodFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");

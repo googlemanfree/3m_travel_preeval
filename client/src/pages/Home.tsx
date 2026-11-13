@@ -443,7 +443,7 @@ export default function Home() {
               , fondateur et PDG de {GROUP_LEGAL_NAME}. {INTERNATIONAL_BRAND.promiseLine.fr} Nous préparons et suivons votre dossier — la décision finale reste celle des autorités compétentes.
             </p>
           </div>
-          <aside
+          <div role="group"
             className="mx-auto mb-10 max-w-3xl rounded-2xl border border-slate-200 bg-slate-50/90 p-5 text-left sm:p-6"
             data-testid="home-legal-registration-proof"
             aria-labelledby="home-legal-registration-title"
@@ -494,7 +494,7 @@ export default function Home() {
                 Page À propos
               </a>
             </div>
-          </aside>
+          </div>
           <ul className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Piliers internationaux">
             {INTERNATIONAL_BRAND.trustPillars.map((pillar) => (
               <li key={pillar.title.fr} className="premium-surface rounded-2xl p-5 text-left">

@@ -495,6 +495,8 @@ export default function ProceduresAdvanced() {
                   <TabsTrigger value="etudes" className="min-h-10 text-xs sm:text-sm">Études ({VISA_COUNTS.etudes ?? 0})</TabsTrigger>
                   <TabsTrigger value="visiteur" className="min-h-10 text-xs sm:text-sm">Visiteur ({VISA_COUNTS.visiteur ?? 0})</TabsTrigger>
                 </TabsList>
+                {/* Les onglets servent de filtre : on rend des panneaux vides pour que aria-controls pointe vers un élément existant. */}
+                {["tous", "travail", "etudes", "visiteur"].map((value) => <TabsContent key={value} value={value} forceMount className="hidden" />)}
               </Tabs>
               <a href="/procedures/comparaison" className="w-full sm:w-auto shrink-0" data-testid="procedures-corridor-comparer-cta">
                 <Button className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 text-white font-bold px-5 py-2.5 rounded-xl shadow flex items-center justify-center gap-2">

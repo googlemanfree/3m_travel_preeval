@@ -467,8 +467,9 @@ export default function AdminAgencyDossiers() {
               variant="ghost"
               onClick={() => navigate("/admin")}
               className="text-white hover:bg-white/10 p-2"
+              aria-label="Retour au tableau de bord"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5" aria-hidden="true" />
             </Button>
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -541,7 +542,7 @@ export default function AdminAgencyDossiers() {
                 />
               </div>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full md:w-48 bg-slate-700 border-slate-600 text-white">
+                <SelectTrigger className="w-full md:w-48 bg-slate-700 border-slate-600 text-white" aria-label="Filtrer par statut">
                   <Filter className="w-4 h-4 mr-2 text-slate-400" />
                   <SelectValue placeholder="Tous les statuts" />
                 </SelectTrigger>
@@ -553,7 +554,7 @@ export default function AdminAgencyDossiers() {
                 </SelectContent>
               </Select>
               <Select value={filterDestination} onValueChange={setFilterDestination}>
-                <SelectTrigger className="w-full md:w-48 bg-slate-700 border-slate-600 text-white">
+                <SelectTrigger className="w-full md:w-48 bg-slate-700 border-slate-600 text-white" aria-label="Filtrer par destination">
                   <MapPin className="w-4 h-4 mr-2 text-slate-400" />
                   <SelectValue placeholder="Toutes destinations" />
                 </SelectTrigger>

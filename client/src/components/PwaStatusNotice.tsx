@@ -136,7 +136,7 @@ export default function PwaStatusNotice() {
           </button>
         </div>
       )}
-      {online && !updateRegistration && <span className="sr-only"><Wifi /> Connexion active</span>}
+      {online && !updateRegistration && <span role="status" className="sr-only"><Wifi /> Connexion active</span>}
     </>
   );
 }

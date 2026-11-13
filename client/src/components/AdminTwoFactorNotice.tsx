@@ -23,7 +23,7 @@ export default function AdminTwoFactorNotice({ sessionToken }: { sessionToken: s
   if (!status.data || status.data.enabled !== false) return null;
 
   return (
-    <aside
+    <div
       role="status"
       aria-live="polite"
       data-testid="admin-2fa-notice"
@@ -45,6 +45,6 @@ export default function AdminTwoFactorNotice({ sessionToken }: { sessionToken: s
           <X className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
-    </aside>
+    </div>
   );
 }

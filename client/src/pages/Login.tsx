@@ -407,7 +407,7 @@ export default function Login() {
           </div>
 
           {/* Sécurité */}
-          <div className="mt-4 flex items-center gap-2 text-xs text-gray-400 justify-center">
+          <div className="mt-4 flex items-center gap-2 text-xs text-gray-600 justify-center">
             <Shield className="w-3.5 h-3.5" />
             <span>{t("Connexion sécurisée — vos données sont chiffrées", "Secure sign-in — your data is encrypted")}</span>
           </div>
@@ -415,7 +415,7 @@ export default function Login() {
           {/* Séparateur */}
           <div className="flex items-center gap-3 my-6">
             <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs text-gray-400 font-medium">{t("OU", "OR")}</span>
+            <span className="text-xs text-gray-600 font-medium">{t("OU", "OR")}</span>
             <div className="flex-1 h-px bg-gray-200" />
           </div>
 

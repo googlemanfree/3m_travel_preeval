@@ -453,7 +453,7 @@ export default function Navbar() {
               }
               placeholder={copy(NAV_COPY.searchPlaceholder)}
               aria-keyshortcuts="/"
-              aria-controls="desktop-nav-suggestions"
+              aria-controls={isDesktopSearchFocused ? "desktop-nav-suggestions" : undefined}
               aria-activedescendant={
                 activeSuggestionIndex >= 0
                   ? `desktop-nav-suggestion-${activeSuggestionIndex}`
@@ -912,7 +912,7 @@ export default function Navbar() {
                     }
                     placeholder={copy(NAV_COPY.searchPlaceholder)}
                     aria-keyshortcuts="/"
-                    aria-controls="mobile-nav-suggestions"
+                    aria-controls={isMobileSearchFocused || normalizedSearch ? "mobile-nav-suggestions" : undefined}
                     aria-activedescendant={
                       activeSuggestionIndex >= 0
                         ? `mobile-nav-suggestion-${activeSuggestionIndex}`

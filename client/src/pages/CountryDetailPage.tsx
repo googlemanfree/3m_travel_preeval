@@ -472,9 +472,9 @@ export default function CountryDetailPage() {
               </h2>
               <p className="text-slate-700 leading-relaxed text-base">{country.description}</p>
               <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-6 text-slate-700 leading-relaxed text-sm">
-                <h4 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
+                <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
                   <Award className="w-4 h-4 text-amber-600" /> {L.whyChoose} {country.name}?
-                </h4>
+                </h3>
                 <p>{country.detailedDescription}</p>
               </div>
 

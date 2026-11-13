@@ -745,7 +745,7 @@ export default function CandidatesManager() {
             </div>
 
             <Select value={statusFilter} onValueChange={(value) => { setStatusFilter(value); resetToFirstPage(); }}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Filtrer par statut">
                 <SelectValue placeholder="Statut" />
               </SelectTrigger>
               <SelectContent>
@@ -760,7 +760,7 @@ export default function CandidatesManager() {
             </Select>
 
             <Select value={paymentFilter} onValueChange={(value) => { setPaymentFilter(value); resetToFirstPage(); }}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Filtrer par paiement">
                 <SelectValue placeholder="Paiement" />
               </SelectTrigger>
               <SelectContent>
@@ -772,7 +772,7 @@ export default function CandidatesManager() {
             </Select>
 
             <Select value={scoreFilter} onValueChange={(value) => { setScoreFilter(value); resetToFirstPage(); }}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Filtrer par score">
                 <SelectValue placeholder="Score" />
               </SelectTrigger>
               <SelectContent>
@@ -785,7 +785,7 @@ export default function CandidatesManager() {
             </Select>
 
             <Select value={destinationFilter} onValueChange={(value) => { setDestinationFilter(value); resetToFirstPage(); }}>
-              <SelectTrigger><SelectValue placeholder="Destination" /></SelectTrigger>
+              <SelectTrigger aria-label="Filtrer par destination"><SelectValue placeholder="Destination" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="tous">Toutes destinations</SelectItem>
                 {destinationFilter !== "tous" && !destinations.includes(destinationFilter) && <SelectItem value={destinationFilter}>{destinationFilter}</SelectItem>}
@@ -794,7 +794,7 @@ export default function CandidatesManager() {
             </Select>
 
             <Select value={sortBy} onValueChange={(value) => { setSortBy(value as "createdAt" | "fullName" | "score"); resetToFirstPage(); }}>
-              <SelectTrigger><SelectValue placeholder="Trier" /></SelectTrigger>
+              <SelectTrigger aria-label="Trier les candidats"><SelectValue placeholder="Trier" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="createdAt">Plus récents</SelectItem>
                 <SelectItem value="fullName">Nom du candidat</SelectItem>
@@ -808,7 +808,7 @@ export default function CandidatesManager() {
             </p>
             <div className="flex flex-wrap items-center justify-end gap-2">
               <Select value={activeSavedViewId ? String(activeSavedViewId) : "none"} onValueChange={applySavedView}>
-                <SelectTrigger className="h-8 w-[160px]"><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Vues favorites" className="h-8 w-[160px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Vues favorites</SelectItem>
                   {(savedViewsQuery.data ?? []).map(view => <SelectItem key={view.id} value={String(view.id)}>{view.name}</SelectItem>)}
@@ -834,7 +834,7 @@ export default function CandidatesManager() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-lg shadow-md overflow-hidden"
         >
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" role="region" aria-label="Liste des candidats (défilement horizontal)" tabIndex={0}>
             <table className="w-full">
               <thead className="bg-gray-50 border-b">
                 <tr>

@@ -96,11 +96,11 @@ export function ServicePageShell({
                 )}
               </div>
             </div>
-            <aside className="rounded-2xl border border-white/25 bg-slate-950/45 p-6 shadow-2xl backdrop-blur-sm sm:p-7">
+            <div className="rounded-2xl border border-white/25 bg-slate-950/45 p-6 shadow-2xl backdrop-blur-sm sm:p-7">
               <ShieldCheck className="h-8 w-8 text-amber-200" aria-hidden="true" />
               <h2 className="mt-4 text-lg font-black !text-white">{shellCopy.asideTitle}</h2>
               <p className="premium-copy-on-dark mt-2 rounded-xl bg-[#020C3B]/30 px-3 py-2 !text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)] text-base">{shellCopy.asideText}</p>
-            </aside>
+            </div>
           </div>
         </section>
         {notice && (

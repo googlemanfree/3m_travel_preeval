@@ -27,7 +27,7 @@ export function FloatingActionMenu() {
   }, [location]);
 
   return (
-    <div className="safe-bottom-floating safe-bottom-floating-whatsapp fixed right-4 z-40 md:right-6">
+    <aside aria-label="Contact rapide" className="safe-bottom-floating safe-bottom-floating-whatsapp fixed right-4 z-40 md:right-6">
       <motion.a
         href={whatsappUrl}
         onClick={(event) => {
@@ -63,6 +63,6 @@ export function FloatingActionMenu() {
           WhatsApp — une question ?
         </span>
       </motion.a>
-    </div>
+    </aside>
   );
 }

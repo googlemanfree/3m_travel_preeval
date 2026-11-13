@@ -14,7 +14,7 @@ export default function NextStepCard({ step, onAct }: { step: NextStep; onAct: (
   const tone = TONES[step.tone];
   const isWhatsApp = step.action.kind === "link" && /wa\.me\//i.test(step.action.href);
   return (
-    <section className={`rounded-2xl border-2 p-5 shadow-sm ${tone.card}`} aria-labelledby="next-step-title" data-testid="next-step-card" data-step={step.id}>
+    <section className={`rounded-2xl border-2 p-5 shadow-sm ${tone.card}`} aria-label={`Prochaine étape : ${step.title}`} data-testid="next-step-card" data-step={step.id}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-4">
           <span className={`rounded-2xl bg-white p-3 shadow-sm ${tone.badge}`}>{tone.icon}</span>
