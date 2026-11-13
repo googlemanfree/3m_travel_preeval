@@ -49,7 +49,7 @@ export default function CandidateEvaluationStatus({ evaluationId, view, onChange
           <PendingProgress cvOnFile={!cvMissing} />
         </Card>
       )}
-      {view.report && <EvaluationReportView report={view.report} />}
+      {view.report && <EvaluationReportView report={view.report} evaluationId={evaluationId} />}
     </div>
   );
 }

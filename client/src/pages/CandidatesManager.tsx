@@ -479,6 +479,8 @@ export default function CandidatesManager() {
   }, [searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy, page, pageSize]);
   const { data, isLoading, error } = trpc.adminCandidateManagement.list.useQuery(filterInput);
   const savedViewsQuery = trpc.adminSavedViews.list.useQuery();
+  const bilanReadyQuery = trpc.adminBilanAuto.list.useQuery({ sessionToken: getAdminSessionToken(), filter: "pret" }, { retry: false, staleTime: 60_000 });
+  const bilansReadyCount = bilanReadyQuery.data && bilanReadyQuery.data.enabled ? bilanReadyQuery.data.rows.length : 0;
   const utils = trpc.useUtils();
   const resendConfirmationMutation = trpc.adminCandidateManagement.resendConfirmation.useMutation({
     onSuccess: ({ recipientEmail }) => toast.success(`E-mail de confirmation renvoyé à ${recipientEmail}.`),
@@ -737,6 +739,15 @@ export default function CandidatesManager() {
                 className="pl-10"
               />
             </div>
+
+            {bilanReadyQuery.data?.enabled && (
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Bilans</p>
+                <a href="/admin/bilans" className="inline-flex h-9 items-center rounded-md border border-emerald-300 bg-emerald-50 px-3 text-sm font-semibold text-emerald-900 hover:bg-emerald-100" data-testid="bilans-prets-link">
+                  Bilan prêt à valider ({bilansReadyCount})
+                </a>
+              </div>
+            )}
 
             <div>
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Étape</p>
