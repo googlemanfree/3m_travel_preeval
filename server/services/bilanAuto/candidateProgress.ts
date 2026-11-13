@@ -18,10 +18,12 @@ export type CandidateProgress = {
   /** Message complémentaire (complément à fournir, délai plus long). */
   note: string | null;
   action: "completer" | null;
+  /** Ce que le candidat peut faire lui-même : accepter la lecture du CV, ou déposer une version dont le texte est lisible. */
+  needs: "consentement_cv" | "cv_lisible" | null;
   updatedAt: string;
 };
 
-export function progressForCandidate(run: Pick<RunRecord, "state" | "mode" | "updatedAt">): CandidateProgress | null {
+export function progressForCandidate(run: Pick<RunRecord, "state" | "mode" | "updatedAt"> & { complement?: Array<{ id: string }> | null }): CandidateProgress | null {
   if (run.state === "superseded") return null;
   let current: ProgressStepId;
   let note: string | null = null;
@@ -43,6 +45,7 @@ export function progressForCandidate(run: Pick<RunRecord, "state" | "mode" | "up
     steps: PROGRESS_STEPS.map((step, index) => ({ id: step.id, label: step.label, status: current === "publie" || index < currentIndex ? "fait" : index === currentIndex ? "en_cours" : "a_venir" })),
     note,
     action,
+    needs: run.state === "needs_information" ? (run.complement?.some((item) => item.id === "cv_consent") ? "consentement_cv" : run.complement?.some((item) => item.id === "cv_lisible" || item.id === "cv") ? "cv_lisible" : null) : null,
     updatedAt: run.updatedAt.toISOString(),
   };
 }

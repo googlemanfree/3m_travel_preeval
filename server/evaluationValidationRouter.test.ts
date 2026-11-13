@@ -47,6 +47,7 @@ const modelOutput = (overrides: Record<string, unknown> = {}) => ({
 function setup(options: { missingTables?: boolean; row?: Partial<EvaluationRowForDraft>; withoutCv?: boolean } = {}) {
   const store = new InMemoryValidationStore([options.withoutCv ? { ...CANDIDATE_CONTEXT, cvOnFile: false, cvFileName: null, cvFileUrl: null } : CANDIDATE_CONTEXT], () => NOW);
   const stored: Array<{ evaluationId: number; fileName: string; mimeType: string; size: number }> = [];
+  const consents: number[] = [];
   const mailer = new FakeMailer(store.timeline);
   const deps: ValidationDeps = { store, mailer, now: () => NOW, portalUrl: "https://www.3mtravelagency.com/evaluation" };
   const invoke = vi.fn(async () => ({ choices: [{ message: { content: JSON.stringify(modelOutput()) } }] }) as never);
@@ -73,11 +74,12 @@ function setup(options: { missingTables?: boolean; row?: Partial<EvaluationRowFo
       stored.push({ evaluationId: file.evaluationId, fileName: file.fileName, mimeType: file.mimeType, size: file.bytes.length });
       return `https://files.example.com/cv-uploads/${file.evaluationId}_${file.fileName}`;
     },
+    async recordCvConsent(id) { consents.push(id); },
     aiRun: { loadRow: async () => evaluationRow(options.row), generator: { invoke } },
   };
   const candidateAs = (identity: { id: number; email: string }) => publicProcedure.use(({ next }) => next({ ctx: { candidate: identity } as never })) as never;
   const build = (identity = { id: 7, email: "aicha@example.com" }) => createEvaluationValidationRouter(ports, candidateAs(identity)).createCaller({} as never);
-  return { store, mailer, deps, invoke, resolveDeps, ports, stored, caller: build(), build };
+  return { store, mailer, deps, invoke, resolveDeps, ports, stored, consents, caller: build(), build };
 }
 type Setup = ReturnType<typeof setup>;
 
@@ -429,5 +431,40 @@ describe("traduction des erreurs", () => {
     const existing = new TRPCError({ code: "UNAUTHORIZED", message: "x" });
     expect(toTrpcError(existing)).toBe(existing);
     expect(toTrpcError(new Error("panne réseau"))).toBeNull();
+  });
+});
+
+describe("consentement à la lecture du CV depuis l'espace candidat", () => {
+  it("enregistre l'accord seulement si la case est cochée au dépôt du CV", async () => {
+    const without = setup({ withoutCv: true });
+    await without.caller.attachCv({ evaluationId: 1, fileName: "cv.pdf", base64: PDF_BASE64 });
+    expect(without.consents).toEqual([]);
+    const withConsent = setup({ withoutCv: true });
+    await withConsent.caller.attachCv({ evaluationId: 1, fileName: "cv.pdf", base64: PDF_BASE64, cvAnalysisConsent: true });
+    expect(withConsent.consents).toEqual([1]);
+    const refused = setup({ withoutCv: true });
+    await refused.caller.attachCv({ evaluationId: 1, fileName: "cv.pdf", base64: PDF_BASE64, cvAnalysisConsent: false });
+    expect(refused.consents).toEqual([]);
+  });
+
+  it("un CV refusé (format invalide) n'enregistre aucun accord", async () => {
+    const s = setup({ withoutCv: true });
+    await expect(s.caller.attachCv({ evaluationId: 1, fileName: "cv.pdf", base64: "!!! pas du base64 !!!", cvAnalysisConsent: true })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(s.consents).toEqual([]);
+  });
+
+  it("le bouton « J'accepte » enregistre l'accord pour le propriétaire dont le CV est au dossier", async () => {
+    const s = setup();
+    expect(await s.caller.grantCvAnalysisConsent({ evaluationId: 1, accepted: true })).toEqual({ ok: true });
+    expect(s.consents).toEqual([1]);
+  });
+
+  it("refuse l'accord sans CV au dossier, pour une évaluation d'autrui, ou sans acceptation explicite", async () => {
+    const noCv = setup({ withoutCv: true });
+    await expect(noCv.caller.grantCvAnalysisConsent({ evaluationId: 1, accepted: true })).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+    const s = setup();
+    await expect(s.build({ id: 9, email: "autre@example.com" }).grantCvAnalysisConsent({ evaluationId: 1, accepted: true })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(s.caller.grantCvAnalysisConsent({ evaluationId: 1, accepted: false as never })).rejects.toBeTruthy();
+    expect(s.consents).toEqual([]);
   });
 });

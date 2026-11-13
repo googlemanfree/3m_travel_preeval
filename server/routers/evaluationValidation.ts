@@ -24,6 +24,7 @@ import {
   type ValidationFlowErrorCode,
 } from "../services/evaluationValidationCore";
 import { isMissingTableError } from "../services/evaluationValidationStore";
+import { withCvAnalysisConsent } from "../services/cvTextLoader";
 import { getCandidateBilanProgress, getPublishedBilanPdfUrl, triggerBilanAuto } from "../services/bilanAuto/runtime";
 import { buildDefaultDeps, runAiDraft, type AiDraftRunOptions } from "../services/structuredEvaluationPipeline";
 import { requireValidAdminSession } from "./adminAuth";
@@ -78,6 +79,8 @@ export type ValidationRouterPorts = {
   ownsEvaluation: (candidate: CandidateIdentity, evaluationId: number) => Promise<boolean>;
   /** Enregistre le fichier du CV dans le stockage et renvoie son lien. */
   storeCv: (file: { evaluationId: number; fileName: string; mimeType: string; bytes: Uint8Array }) => Promise<string>;
+  /** Enregistre le consentement du candidat à l'analyse automatisée et à la lecture de son CV (espace candidat). */
+  recordCvConsent?: (evaluationId: number) => Promise<void>;
   aiRun?: AiDraftRunOptions;
 };
 
@@ -106,6 +109,13 @@ export const productionPorts: ValidationRouterPorts = {
   async storeCv(file) {
     const { url } = await storagePut(`cv-uploads/${file.evaluationId}_${Date.now()}_${safeCvFileName(file.fileName)}`, Buffer.from(file.bytes), file.mimeType);
     return url;
+  },
+  async recordCvConsent(evaluationId) {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const [row] = await db.select({ projectDetailsJson: evaluations.projectDetailsJson }).from(evaluations).where(eq(evaluations.id, evaluationId)).limit(1);
+    if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
+    await db.update(evaluations).set({ projectDetailsJson: withCvAnalysisConsent(row.projectDetailsJson, new Date()) }).where(eq(evaluations.id, evaluationId));
   },
   async ownsEvaluation(candidate, evaluationId) {
     const db = await getDb();
@@ -237,7 +247,7 @@ export function createEvaluationValidationRouter(ports: ValidationRouterPorts, c
 
     /** Dépôt (ou remplacement) du CV : PDF, JPG ou PNG de 5 Mo maximum, type vérifié sur le contenu du fichier. */
     attachCv: candidateProc
-      .input(z.object({ evaluationId, fileName: z.string().min(1).max(255), base64: z.string().min(4).max(CV_MAX_BASE64_LENGTH) }))
+      .input(z.object({ evaluationId, fileName: z.string().min(1).max(255), base64: z.string().min(4).max(CV_MAX_BASE64_LENGTH), cvAnalysisConsent: z.boolean().optional() }))
       .mutation(({ ctx, input }) =>
         guard(async () => {
           const candidate = { id: ctx.candidate.id, email: ctx.candidate.email };
@@ -250,8 +260,25 @@ export function createEvaluationValidationRouter(ports: ValidationRouterPorts, c
             fileName,
             upload: () => ports.storeCv({ evaluationId: input.evaluationId, fileName, mimeType: checked.mime, bytes: checked.bytes }),
           });
+          // Case cochée par le candidat au dépôt : sans elle, le CV est enregistré mais jamais lu automatiquement.
+          if (input.cvAnalysisConsent === true) await ports.recordCvConsent?.(input.evaluationId);
           triggerBilanAuto(input.evaluationId);
           return { cv };
+        }),
+      ),
+
+    /** Consentement à l'analyse automatisée et à la lecture du CV déjà déposé (bouton « J'accepte ») ; relance le traitement. */
+    grantCvAnalysisConsent: candidateProc
+      .input(z.object({ evaluationId, accepted: z.literal(true) }))
+      .mutation(({ ctx, input }) =>
+        guard(async () => {
+          const candidate = { id: ctx.candidate.id, email: ctx.candidate.email };
+          if (!(await ports.ownsEvaluation(candidate, input.evaluationId))) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
+          const own = await ports.findOwnEvaluation(candidate);
+          if (!own || own.id !== input.evaluationId || !own.cv.onFile) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Déposez d'abord votre CV." });
+          await ports.recordCvConsent?.(input.evaluationId);
+          triggerBilanAuto(input.evaluationId);
+          return { ok: true };
         }),
       ),
 

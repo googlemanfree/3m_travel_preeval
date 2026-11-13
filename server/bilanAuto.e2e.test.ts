@@ -122,4 +122,28 @@ describe.skipIf(!URL)("parcours complet sur base réelle", () => {
     expect(run.previous?.updateNature).toMatch(/même CV/);
     expect(run.report!.sections[0].paragraphs.join(" ")).toMatch(/Évaluation du/);
   });
+
+  it("CV déposé depuis l'espace candidat sans accord : rien n'est lu ; une fois l'accord donné, le dossier est traité", async () => {
+    const pipeline = await import("./services/bilanAuto/pipeline");
+    const { productionPorts } = await import("./routers/evaluationValidation");
+    const before = extractCalls.length;
+    const [ev] = await ctx.db.insert(ctx.schema.evaluations).values({
+      candidateId: ctx.candidateId, fullName: "Awa Ndiaye", email: ctx.email, phone: "+237600000000", dateOfBirth: "1995-04-02", educationLevel: "Licence", yearsOfExperience: "5-10 ans", frenchLevel: "B2",
+      destinationCategory: "schengen", destinationCountry: "Luxembourg", visaType: "schengen_travail", projectType: "travail", cvFileUrl: "https://files.test/cv-awa-2.pdf", cvFileName: "cv-awa-2.pdf", referenceCode: `E2E-CONSENT-${Date.now()}`,
+    } as never).$returningId();
+    await pipeline.submitForAnalysis(ctx.deps, ev.id);
+    const waiting = (await pipeline.processNext(ctx.deps))!;
+    expect(waiting.state).toBe("needs_information");
+    expect(waiting.complement?.[0].id).toBe("cv_consent");
+    expect(extractCalls.length).toBe(before); // aucun contenu envoyé au modèle
+
+    await productionPorts.recordCvConsent!(ev.id);
+    expect((await pipeline.submitForAnalysis(ctx.deps, ev.id)).status).toBe("queued");
+    const done = (await pipeline.processNext(ctx.deps))!;
+    expect(done.state).toBe("ready_for_review");
+    expect(extractCalls.length).toBe(before + 1);
+    expect(extractCalls.at(-1)).toMatch(/Technicienne electricienne/);
+    const [row] = await ctx.db.select().from(ctx.schema.evaluations).where(eq(ctx.schema.evaluations.id, ev.id));
+    expect(JSON.parse(row.projectDetailsJson!)).toMatchObject({ preparatoryCvAnalysisConsent: true, preparatoryCvAnalysisConsentSource: "espace_candidat" });
+  });
 });

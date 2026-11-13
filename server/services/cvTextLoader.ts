@@ -24,6 +24,24 @@ export function cvAnalysisConsented(row: { projectDetailsJson?: string | null })
   }
 }
 
+/**
+ * Enregistre le consentement donné DEPUIS L'ESPACE CANDIDAT (case cochée au dépôt du CV, ou bouton « J'accepte »). Il couvre l'analyse
+ * automatisée du dossier et la lecture du CV, avec la date et l'origine ; il ne remplace aucune autre information du projet.
+ */
+export function withCvAnalysisConsent(projectDetailsJson: string | null | undefined, now: Date): string {
+  let details: Record<string, unknown> = {};
+  try { details = projectDetailsJson ? (JSON.parse(projectDetailsJson) as Record<string, unknown>) : {}; } catch { details = {}; }
+  const stamp = now.toISOString();
+  return JSON.stringify({
+    ...details,
+    preparatoryAnalysisConsent: true,
+    preparatoryAnalysisConsentRecordedAt: (details.preparatoryAnalysisConsentRecordedAt as string | null | undefined) ?? stamp,
+    preparatoryCvAnalysisConsent: true,
+    preparatoryCvAnalysisConsentRecordedAt: stamp,
+    preparatoryCvAnalysisConsentSource: "espace_candidat",
+  });
+}
+
 export type CvTextDeps = {
   /** Transforme l'adresse enregistrée (« /manus-storage/… ») en lien https signé ; une adresse déjà absolue reste telle quelle. */
   resolveStoredUrl?: (url: string) => Promise<string | null>;

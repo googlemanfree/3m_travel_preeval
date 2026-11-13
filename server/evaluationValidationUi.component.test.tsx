@@ -50,7 +50,7 @@ const { state, mutation } = vi.hoisted(() => {
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
-    useUtils: () => ({ evaluationValidation: { listStatuses: { invalidate: state.invalidate } } }),
+    useUtils: () => ({ evaluationValidation: { listStatuses: { invalidate: state.invalidate }, myBilanProgress: { invalidate: state.invalidate } } }),
     evaluationValidation: {
       getCase: { useQuery: () => ({ data: { view: state.view }, isLoading: state.isLoading, error: state.error, refetch: state.refetch }) },
       openCase: mutation("openCase"),
@@ -64,6 +64,7 @@ vi.mock("@/lib/trpc", () => ({
       attachCv: mutation("attachCv"),
       // frise de suivi du bilan automatisé : inactive dans ces scénarios (aucun traitement)
       myBilanProgress: { useQuery: () => ({ data: { progress: null } }) },
+      grantCvAnalysisConsent: mutation("grantCvAnalysisConsent"),
     },
   },
 }));
@@ -280,6 +281,27 @@ describe("espace candidat : CV, élément clé de la finalisation", () => {
     expect(sent.base64.startsWith("data:application/pdf;base64,")).toBe(true);
     expect(onChanged).toHaveBeenCalledTimes(1);
     expect(state.toastSuccess).toHaveBeenCalled();
+  });
+
+  it("l'accord à la lecture automatisée du CV n'est jamais coché d'office : il part seulement si le candidat le coche", async () => {
+    state.next.attachCv = (handlers) => handlers.onSuccess?.({});
+    const user = userEvent.setup();
+    const { unmount } = render(<CandidateEvaluationStatus evaluationId={7} view={pendingWithoutCv()} />);
+    const checkbox = screen.getByTestId("cv-consent-checkbox") as HTMLInputElement;
+    expect(checkbox.checked).toBe(false);
+    expect(document.body.textContent).toMatch(/traitement automatisé/);
+    expect(document.body.textContent).not.toMatch(/n’est lu que par notre équipe/);
+    choose(pdf());
+    await user.click(screen.getByRole("button", { name: "Envoyer mon CV" }));
+    await waitFor(() => expect(state.calls.attachCv).toHaveLength(1));
+    expect(lastCall("attachCv").cvAnalysisConsent).toBe(false);
+    unmount();
+    render(<CandidateEvaluationStatus evaluationId={7} view={pendingWithoutCv()} />);
+    await user.click(screen.getByTestId("cv-consent-checkbox"));
+    choose(pdf());
+    await user.click(screen.getByRole("button", { name: "Envoyer mon CV" }));
+    await waitFor(() => expect(state.calls.attachCv).toHaveLength(2));
+    expect(lastCall("attachCv").cvAnalysisConsent).toBe(true);
   });
 
   it("affiche le motif de refus du serveur et laisse réessayer", async () => {

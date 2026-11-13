@@ -24,6 +24,8 @@ export type Preconditions = {
   technicalError: string | null;
   /** Grille approuvée par le propriétaire. */
   gridApproved: boolean;
+  /** Lecture visuelle des scans autorisée : adapte la consigne donnée au candidat. */
+  visionEnabled?: boolean;
 };
 
 export type ComplementItem = { id: string; label: string };
@@ -81,7 +83,7 @@ export function decideOutcome(input: { preconditions: Preconditions; score: Scor
   const complementItems: ComplementItem[] = [];
   if (!preconditions.cvStored || !preconditions.cvAttachedToAccount) complementItems.push({ id: "cv", label: "Déposer votre CV dans votre espace client." });
   else if (!preconditions.cvConsent) complementItems.push({ id: "cv_consent", label: "Confirmer votre accord pour la lecture de votre CV." });
-  else if (!preconditions.cvReadable) complementItems.push({ id: "cv_lisible", label: "Déposer une version lisible de votre CV (PDF ou image nette)." });
+  else if (!preconditions.cvReadable) complementItems.push({ id: "cv_lisible", label: preconditions.visionEnabled ? "Déposer une version lisible de votre CV (PDF ou image nette)." : "Déposer votre CV au format PDF dont le texte est sélectionnable (un CV photographié ou numérisé n'est pas lisible automatiquement)." });
   for (const item of score?.missing ?? []) complementItems.push({ id: `${item.rubric}.${item.subCriterion}`, label: `Précisez : ${item.label.charAt(0).toLowerCase()}${item.label.slice(1)}.` });
   if (complementItems.length > 0) {
     return { code: "B", reasons: ["Informations essentielles manquantes"], complementItems, adminAlert: null };
