@@ -18,6 +18,7 @@ import { registerCinetPayWebhook } from "../routers/cinetpayWebhook";
 import { handleEvaluationJob } from "../scheduled/evaluationJob";
 import { handleEvaluationBilanJob } from "../scheduled/evaluationBilanJob";
 import { startBilanAutoWorker } from "../services/bilanAuto/runtime";
+import { handleBilanEmailWebhook } from "../services/bilanAuto/emailWebhook";
 import { handleComplianceMonthlyReportJob } from "../scheduled/complianceMonthlyReportJob";
 import { handlePassportPendingWeeklyAlertJob } from "../scheduled/passportPendingWeeklyAlertJob";
 import { handleExternalLinkCheckJob } from "../scheduled/externalLinkCheckJob";
@@ -76,6 +77,8 @@ async function startServer() {
     return next();
   });
   // Configure body parser with larger size limit for file uploads
+  // Webhook signé du fournisseur d'e-mail : corps brut requis pour vérifier la signature (déclaré avant express.json).
+  app.post("/api/webhooks/bilan-email", express.raw({ type: "*/*", limit: "256kb" }), handleBilanEmailWebhook);
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);

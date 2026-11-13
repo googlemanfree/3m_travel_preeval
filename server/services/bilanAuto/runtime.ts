@@ -1,6 +1,8 @@
 import { configFromEnv, pdfKeyForCandidate, processNext, processOutbox, submitForAnalysis, type PipelineDeps } from "./pipeline";
 import { createProductionDeps } from "./dbAdapters";
 import { ensureBilanAutoTables } from "./schemaGuard";
+import { sendAdminDigest } from "./adminDigest";
+import { progressForCandidate, type CandidateProgress } from "./candidateProgress";
 
 /**
  * Point d'entrée d'exploitation. Tout est inerte tant que BILAN_AUTO_ENABLED n'est pas « true » : aucune table créée, aucun appel IA,
@@ -44,6 +46,11 @@ export async function bilanAutoTick(): Promise<{ processed: number }> {
     processed += 1;
   }
   await processOutbox(ready);
+  if (process.env.BILAN_AUTO_ADMIN_ALERTS_ENABLED !== "false") {
+    const origin = (() => { try { return new URL(ready.portalUrl).origin; } catch { return "https://www.3mtravelagency.com"; } })();
+    const digest = await sendAdminDigest({ store: ready.store, mailer: ready.mailer, now: ready.now, adminEmail: (process.env.ADMIN_EMAIL || "admin@3mtravelagency.com").trim(), adminUrl: `${origin}/admin/bilans` }).catch(() => null);
+    if (digest?.error) console.warn("[bilanAuto] alerte administrateur non envoyée :", digest.error);
+  }
   return { processed };
 }
 
@@ -75,4 +82,13 @@ export async function getPublishedBilanPdfUrl(evaluationId: number, candidateId:
   if (!key) return null;
   const { storageGetSignedUrl } = await import("../../storage");
   return storageGetSignedUrl(key);
+}
+
+/** Étape de suivi montrée au candidat (jamais d'erreur, de note ni de détail interne) ; null si le bilan automatisé est inactif ou sans traitement. */
+export async function getCandidateBilanProgress(evaluationId: number, candidateId: number): Promise<CandidateProgress | null> {
+  const ready = await deps();
+  if (!ready) return null;
+  const run = await ready.store.latestRunForEvaluation(evaluationId);
+  if (!run || run.candidateId !== candidateId || run.mode === "simulation") return null;
+  return progressForCandidate(run);
 }

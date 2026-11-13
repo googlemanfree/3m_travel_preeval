@@ -7,6 +7,7 @@ import { GRID_V1 } from "../shared/bilanAuto/grid";
  * Parcours complet sur une base MySQL réelle (schéma complet du site) avec un faux modèle d'IA et un faux serveur d'e-mail :
  * soumission → file → extraction → notation → bilan prêt → validation administrateur → publication dans le parcours existant →
  * vue candidat → e-mail unique. Exécuté seulement si BILAN_AUTO_TEST_DATABASE_URL pointe vers une base JETABLE.
+ * Partage la base avec bilanAuto.drizzleStore.test.ts : lancer avec --no-file-parallelism.
  */
 const URL = process.env.BILAN_AUTO_TEST_DATABASE_URL;
 

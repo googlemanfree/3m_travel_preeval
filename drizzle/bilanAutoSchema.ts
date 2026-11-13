@@ -86,3 +86,26 @@ export const bilanAutoOutbox = mysqlTable("bilan_auto_outbox", {
   uniqueIndex("uq_bilan_auto_outbox_dedup").on(table.dedupKey),
   index("idx_bilan_auto_outbox_state").on(table.state, table.id),
 ]);
+
+/** Référentiel des sources (offres et repères salariaux) saisi par l'agence : seul ce qui est daté, sourcé et récent est publié dans un bilan. */
+export const bilanAutoSources = mysqlTable("bilan_auto_sources", {
+  id: int("id").autoincrement().primaryKey(),
+  country: varchar("country", { length: 80 }).notNull(),
+  kind: varchar("kind", { length: 12 }).notNull(),
+  occupation: varchar("occupation", { length: 160 }).notNull(),
+  employer: varchar("employer", { length: 160 }),
+  city: varchar("city", { length: 120 }),
+  amountMin: int("amountMin"),
+  amountMax: int("amountMax"),
+  currency: varchar("currency", { length: 8 }),
+  period: varchar("period", { length: 24 }),
+  grossOrNet: varchar("grossOrNet", { length: 8 }),
+  geography: varchar("geography", { length: 120 }),
+  url: varchar("url", { length: 700 }).notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  observedAt: varchar("observedAt", { length: 10 }).notNull(),
+  remoteRecruiting: varchar("remoteRecruiting", { length: 16 }).default("non_confirmee").notNull(),
+  active: boolean("active").default(true).notNull(),
+  createdBy: varchar("createdBy", { length: 320 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [index("idx_bilan_auto_sources_country").on(table.country, table.kind, table.active)]);

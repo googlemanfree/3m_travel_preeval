@@ -534,6 +534,8 @@ export async function applyDeliveryEvent(deps: Pick<PipelineDeps, "store" | "now
   for (const run of runs) {
     for (const entry of await deps.store.listOutbox(run.id)) {
       if (entry.providerMessageId === event.providerMessageId) {
+        // idempotent : même état, ou rebond déjà enregistré (un rebond n'est jamais effacé par un événement ultérieur)
+        if (entry.state === event.type || entry.state === "bounced") return false;
         await deps.store.updateOutbox(entry.id, { state: event.type });
         await deps.store.updateRun(run.id, { notificationState: event.type });
         await deps.store.addEvent({ runId: run.id, evaluationId: run.evaluationId, actor: "fournisseur-email", action: `notification_${event.type}`, detail: event.eventId, at: deps.now() });

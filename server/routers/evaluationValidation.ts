@@ -24,7 +24,7 @@ import {
   type ValidationFlowErrorCode,
 } from "../services/evaluationValidationCore";
 import { isMissingTableError } from "../services/evaluationValidationStore";
-import { getPublishedBilanPdfUrl, triggerBilanAuto } from "../services/bilanAuto/runtime";
+import { getCandidateBilanProgress, getPublishedBilanPdfUrl, triggerBilanAuto } from "../services/bilanAuto/runtime";
 import { buildDefaultDeps, runAiDraft, type AiDraftRunOptions } from "../services/structuredEvaluationPipeline";
 import { requireValidAdminSession } from "./adminAuth";
 import type { candidateProcedure as CandidateProcedure } from "./candidate";
@@ -252,6 +252,17 @@ export function createEvaluationValidationRouter(ports: ValidationRouterPorts, c
           });
           triggerBilanAuto(input.evaluationId);
           return { cv };
+        }),
+      ),
+
+    /** Étape de suivi du bilan automatisé (jamais d'erreur ni de note) ; null si aucun traitement. Réservé au propriétaire de l'évaluation. */
+    myBilanProgress: candidateProc
+      .input(z.object({ evaluationId }))
+      .query(({ ctx, input }) =>
+        guard(async () => {
+          const candidate = { id: ctx.candidate.id, email: ctx.candidate.email };
+          if (!(await ports.ownsEvaluation(candidate, input.evaluationId))) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
+          return { progress: await getCandidateBilanProgress(input.evaluationId, ctx.candidate.id) };
         }),
       ),
 

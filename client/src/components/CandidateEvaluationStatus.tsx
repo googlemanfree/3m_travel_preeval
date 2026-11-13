@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import EvaluationReportView from "@/components/EvaluationReportView";
+import BilanAutoProgress from "@/components/BilanAutoProgress";
 import { CV_ACCEPT_ATTRIBUTE, CV_REQUIRED_MESSAGE, cvProblemForFile } from "@shared/evaluationCv";
 import type { ClientReport } from "@shared/evaluationValidation";
 
@@ -49,6 +50,7 @@ export default function CandidateEvaluationStatus({ evaluationId, view, onChange
           <PendingProgress cvOnFile={!cvMissing} />
         </Card>
       )}
+      {view.stage !== "published" && view.stage !== "not_started" && <BilanAutoProgress evaluationId={evaluationId} />}
       {view.report && <EvaluationReportView report={view.report} evaluationId={evaluationId} />}
     </div>
   );

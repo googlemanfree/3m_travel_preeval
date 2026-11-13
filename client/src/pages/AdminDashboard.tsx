@@ -2,6 +2,7 @@
  * Dashboard Administrateur — 3M TRAVEL AGENCY
  * Gestion unifiée des candidats (dossiers en ligne + dossiers agence)
  */
+import AdminBilansBanner from "@/components/AdminBilansBanner";
 import { scrollBehavior } from "@/lib/motion";
 import { isPreDossierStatus } from "@shared/candidateStatus";
 import React, { lazy, Suspense, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
@@ -409,6 +410,7 @@ const ADMIN_GLOBAL_SEARCH_ITEMS = [
   { label: "Planificateur", hint: "Tester les relances et consulter l’historique", tab: "scheduler" },
   { label: "Liens et routes", hint: "Contrôler les liens publics", tab: "route-health" },
   { label: "Visuels destinations", hint: "Gérer les médias des destinations", path: "/admin/destination-media" },
+  { label: "Bilans automatisés", hint: "Valider les bilans prêts, suivre les incidents, gérer les sources", path: "/admin/bilans" },
 ] as const;
 
 type ManualPriorityDeadline = {
@@ -2824,6 +2826,8 @@ export default function AdminDashboard() {
                 </div>
               )}
             </section>
+
+            <AdminBilansBanner />
 
             <div className="mb-4 flex flex-col justify-between gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 sm:flex-row sm:items-center">
               <div><p className="font-black text-blue-950">Pôle 3M Solutions</p><p className="text-sm text-blue-800">Consultez et traitez les demandes de plateformes, marketing, support IT et formation.</p></div>

@@ -5,7 +5,7 @@ import { getDb } from "../../db";
  * Crée les tables du bilan automatisé si elles manquent (CREATE TABLE IF NOT EXISTS) : les migrations Drizzle ne sont pas rejouées
  * sur l'hébergement actuel. Additif uniquement : aucune table existante n'est modifiée. Appelé une fois par processus, et
  * seulement quand BILAN_AUTO_ENABLED=true — activé ou non, le reste du site ne dépend jamais de ces tables.
- * Retour arrière : DROP TABLE bilan_auto_outbox, bilan_auto_events, bilan_auto_runs (aucune autre table ne les référence).
+ * Retour arrière : DROP TABLE bilan_auto_sources, bilan_auto_outbox, bilan_auto_events, bilan_auto_runs (aucune autre table ne les référence).
  */
 const DDL = [
   `CREATE TABLE IF NOT EXISTS bilan_auto_runs (
@@ -31,6 +31,13 @@ const DDL = [
     kind VARCHAR(32) NOT NULL, state VARCHAR(24) NOT NULL DEFAULT 'pending', attempts INT NOT NULL DEFAULT 0, providerMessageId VARCHAR(191) NULL, lastError TEXT NULL,
     createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uq_bilan_auto_outbox_dedup (dedupKey), KEY idx_bilan_auto_outbox_state (state, id)
+  )`,
+  `CREATE TABLE IF NOT EXISTS bilan_auto_sources (
+    id INT AUTO_INCREMENT PRIMARY KEY, country VARCHAR(80) NOT NULL, kind VARCHAR(12) NOT NULL, occupation VARCHAR(160) NOT NULL, employer VARCHAR(160) NULL, city VARCHAR(120) NULL,
+    amountMin INT NULL, amountMax INT NULL, currency VARCHAR(8) NULL, period VARCHAR(24) NULL, grossOrNet VARCHAR(8) NULL, geography VARCHAR(120) NULL,
+    url VARCHAR(700) NOT NULL, title VARCHAR(200) NOT NULL, observedAt VARCHAR(10) NOT NULL, remoteRecruiting VARCHAR(16) NOT NULL DEFAULT 'non_confirmee',
+    active TINYINT(1) NOT NULL DEFAULT 1, createdBy VARCHAR(320) NOT NULL, createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_bilan_auto_sources_country (country, kind, active)
   )`,
 ];
 

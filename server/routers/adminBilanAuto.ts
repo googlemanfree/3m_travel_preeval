@@ -10,6 +10,8 @@ import { renderHtml, renderText } from "../services/bilanAuto/report";
 import { RUN_STATE_LABELS, type RunRecord, type RunState } from "../services/bilanAuto/types";
 import { bilanAutoTick, getProductionDeps } from "../services/bilanAuto/runtime";
 import { requireValidAdminSession } from "./adminAuth";
+import { DrizzleSourcesStore, SourceInputSchema } from "../services/bilanAuto/sources";
+import { ensureBilanAutoTables } from "../services/bilanAuto/schemaGuard";
 
 /**
  * Supervision du bilan automatisé (administrateur). Le bilan « prêt » est validé ici avant publication (mode par défaut) ;
@@ -49,7 +51,37 @@ export function summarize(run: RunRecord, person: { fullName: string; email: str
   };
 }
 
+async function sourcesStore() {
+  if (!configFromEnv().enabled) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le bilan automatisé n'est pas activé." });
+  const db = await getDb();
+  if (!db || !(await ensureBilanAutoTables())) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+  return new DrizzleSourcesStore(db);
+}
+
 export const adminBilanAutoRouter = router({
+  /** Référentiel des sources (offres, repères salariaux) saisies par l'agence. */
+  listSources: publicProcedure.input(token).query(async ({ input }) => {
+    await requireValidAdminSession(input.sessionToken);
+    const entries = await (await sourcesStore()).list();
+    return entries.map((entry) => ({ ...entry, createdAt: entry.createdAt.toISOString() }));
+  }),
+  createSource: publicProcedure.input(token.extend({ source: SourceInputSchema })).mutation(async ({ input }) => {
+    const admin = await requireValidAdminSession(input.sessionToken);
+    const src = input.source;
+    const created = await (await sourcesStore()).create({ ...src, employer: src.employer ?? null, city: src.city ?? null, amountMin: src.amountMin ?? null, amountMax: src.amountMax ?? null, currency: src.currency ?? null, period: src.period ?? null, grossOrNet: src.grossOrNet ?? null, geography: src.geography ?? null, createdBy: admin.email });
+    return { id: created.id };
+  }),
+  setSourceActive: publicProcedure.input(token.extend({ id: z.number().int().positive(), active: z.boolean() })).mutation(async ({ input }) => {
+    await requireValidAdminSession(input.sessionToken);
+    await (await sourcesStore()).setActive(input.id, input.active);
+    return { ok: true };
+  }),
+  deleteSource: publicProcedure.input(token.extend({ id: z.number().int().positive() })).mutation(async ({ input }) => {
+    await requireValidAdminSession(input.sessionToken);
+    await (await sourcesStore()).remove(input.id);
+    return { ok: true };
+  }),
+
   /** État d'exploitation, sans aucun secret. */
   status: publicProcedure.input(token).query(async ({ input }) => {
     await requireValidAdminSession(input.sessionToken);

@@ -37,7 +37,7 @@ function section(id: string, title: string, paragraphs: string[] = [], bullets: 
 }
 
 function itemLine(item: DestinationProposal["items"][number]): string {
-  if (item.kind === "offre_reperee") return `OFFRE REPÉRÉE — ${item.title}, ${item.employer}${item.city ? ` (${item.city})` : ""} · source : ${item.source.title}, consultée le ${formatDate(item.source.consultedAt)}`;
+  if (item.kind === "offre_reperee") return `OFFRE REPÉRÉE — ${item.title}, ${item.employer}${item.city ? ` (${item.city})` : ""} · recrutement depuis l'étranger : ${item.remote === "confirmee" ? "mentionné par l'annonce" : "non confirmé"} · source : ${item.source.title}, consultée le ${formatDate(item.source.consultedAt)}`;
   if (item.kind === "repere_salarial") return `REPÈRE SALARIAL — ${item.label} : ${item.amount} (${item.period}) · source : ${item.source.title}, consultée le ${formatDate(item.source.consultedAt)}`;
   return `POSTE À CIBLER — ${item.title}${item.missions.length ? ` · missions : ${item.missions.join(", ")}` : ""}`;
 }

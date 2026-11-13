@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import AdminBilanSources from "@/components/AdminBilanSources";
 
 const FILTERS = [
   { id: "pret", label: "Bilan prêt à valider" },
@@ -80,6 +81,8 @@ export default function AdminBilansAutomatises() {
           {!status.data.visionEnabled && <Badge variant="outline">Lecture des scans : désactivée</Badge>}
         </Card>
       )}
+
+      <AdminBilanSources />
 
       <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Filtrer les dossiers">
         {FILTERS.map((entry) => (
