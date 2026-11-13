@@ -12,6 +12,6 @@ describe("lecture publique des avis approuvés", () => {
     expect(routerSource).toContain("listApproved: publicProcedure.query");
     expect(routerSource).toContain('eq(customerReviews.status, "approved")');
     expect(routerSource).toContain("eq(customerReviews.consentToPublish, true)");
-    expect(routerSource).toContain(".limit(30)");
+    expect(routerSource).toContain(".limit(40)");
   });
 });
