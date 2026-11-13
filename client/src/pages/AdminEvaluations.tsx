@@ -63,6 +63,13 @@ export default function AdminEvaluations() {
     }
   };
 
+  // Tous les hooks doivent être appelés avant les retours anticipés ci-dessous : déclaré après, ce hook faisait
+  // planter la page (« Rendered more hooks than during the previous render ») dès la fin du chargement.
+  const reminderMutation = trpc.unifiedRequests.sendEvaluationReminder.useMutation({
+    onSuccess: async (result) => { toast.success(result.message); await bilanViewStatusesQuery.refetch(); },
+    onError: (error) => toast.error(error.message),
+  });
+
   if (isLoading) {
     return (
       <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
@@ -83,10 +90,6 @@ export default function AdminEvaluations() {
   const viewedBilanCount = bilanViewStatuses.filter((item: any) => Boolean(item.viewedAt)).length;
   const unviewedBilanCount = bilanViewStatuses.length - viewedBilanCount;
   const recentlyViewedBilanCount = bilanViewStatuses.filter((item: any) => item.viewedAt && Date.now() - new Date(item.viewedAt).getTime() <= 7 * 24 * 60 * 60 * 1000).length;
-  const reminderMutation = trpc.unifiedRequests.sendEvaluationReminder.useMutation({
-    onSuccess: async (result) => { toast.success(result.message); await bilanViewStatusesQuery.refetch(); },
-    onError: (error) => toast.error(error.message),
-  });
   const visibleBilanViewStatuses = bilanViewStatuses.filter((item: any) => viewFilter === "all" || (viewFilter === "unviewed" ? !item.viewedAt : Boolean(item.viewedAt)));
 
   const exportBilanStatusesCsv = () => {

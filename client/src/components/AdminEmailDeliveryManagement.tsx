@@ -261,7 +261,7 @@ export default function AdminEmailDeliveryManagement() {
                 <span className="sr-only" aria-live="polite">{search ? `Recherche active : ${search}` : "Tous les journaux e-mail sont affichés"}</span>
               </div>
               <Select value={status} onValueChange={(value) => setStatus(value as typeof status)}>
-                <SelectTrigger className="w-full md:w-48"><SelectValue placeholder="Tous les statuts" /></SelectTrigger>
+                <SelectTrigger className="w-full md:w-48" aria-label="Filtrer par statut d’envoi"><SelectValue placeholder="Tous les statuts" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les statuts</SelectItem>
                   <SelectItem value="sent">Envoyés</SelectItem>
@@ -270,7 +270,7 @@ export default function AdminEmailDeliveryManagement() {
                 </SelectContent>
               </Select>
               <Select value={errorType} onValueChange={(value) => setErrorType(value as typeof errorType)}>
-                <SelectTrigger className="w-full md:w-56"><SelectValue placeholder="Tous les types d’erreur" /></SelectTrigger>
+                <SelectTrigger className="w-full md:w-56" aria-label="Filtrer par type d’erreur"><SelectValue placeholder="Tous les types d’erreur" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les types d’erreur</SelectItem>
                   <SelectItem value="invalid_recipient">Adresse invalide</SelectItem>

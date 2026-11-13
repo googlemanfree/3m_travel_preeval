@@ -100,7 +100,7 @@ export default function Schengen() {
         lockFilter
         collapsedCount={3}
         hideWhenEmpty
-        className="bg-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
+        className="section-pad bg-white px-4 sm:px-6 lg:px-8"
         titleFr="Preuves de visas obtenus"
         titleEn="Proofs of visas obtained"
         leadFr="Extraits anonymisés de visas Schengen et autres autorisations obtenus par des candidats accompagnés depuis Yaoundé."

@@ -372,7 +372,7 @@ export default function Login() {
 
           {/* Se souvenir de moi + Mot de passe oublié + Renvoyer email */}
           <div className="mt-4 mb-2 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap">
               <input
                 type="checkbox"
                 checked={rememberMe}
@@ -381,7 +381,7 @@ export default function Login() {
               />
               <span className="text-sm text-gray-600">{t("Se souvenir de moi", "Remember me")}</span>
             </label>
-            <div className="flex flex-wrap gap-x-3 gap-y-2 text-sm">
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm sm:justify-end">
               <button
                 type="button"
                 onClick={() => setShowResendModal(true)}
@@ -389,7 +389,6 @@ export default function Login() {
               >
                 {t("Renvoyer l’e-mail", "Resend email")}
               </button>
-              <span className="text-gray-300">•</span>
               <button
                 type="button"
                 onClick={() => setShowForgotPasswordModal(true)}
@@ -397,7 +396,6 @@ export default function Login() {
               >
                 {t("Mot de passe oublié ?", "Forgot password?")}
               </button>
-              <span className="text-gray-300">•</span>
               <button
                 type="button"
                 onClick={() => navigate("/assistance-acces")}
@@ -409,7 +407,7 @@ export default function Login() {
           </div>
 
           {/* Sécurité */}
-          <div className="mt-4 flex items-center gap-2 text-xs text-gray-400 justify-center">
+          <div className="mt-4 flex items-center gap-2 text-xs text-gray-600 justify-center">
             <Shield className="w-3.5 h-3.5" />
             <span>{t("Connexion sécurisée — vos données sont chiffrées", "Secure sign-in — your data is encrypted")}</span>
           </div>
@@ -417,7 +415,7 @@ export default function Login() {
           {/* Séparateur */}
           <div className="flex items-center gap-3 my-6">
             <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs text-gray-400 font-medium">{t("OU", "OR")}</span>
+            <span className="text-xs text-gray-600 font-medium">{t("OU", "OR")}</span>
             <div className="flex-1 h-px bg-gray-200" />
           </div>
 

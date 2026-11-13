@@ -5,7 +5,7 @@ export const PUBLIC_FAQ_ITEMS = [
   },
   {
     question: "Faut-il créer un compte avant de commencer ?",
-    answer: "Non pour démarrer. Vous pouvez remplir le formulaire d’évaluation gratuit sans compte. Créez un compte ensuite si vous souhaitez enregistrer le dossier, déposer un CV ou des pièces, et suivre le statut dans votre espace.",
+    answer: "Oui. Le formulaire d’évaluation gratuit s’envoie depuis votre espace candidat : la création du compte est gratuite et donne aussi accès au suivi du dossier, au dépôt de CV et de pièces. Pour une première question sans compte, écrivez-nous sur WhatsApp ou via la page Contact.",
   },
   {
     question: "Quels documents dois-je préparer ?",

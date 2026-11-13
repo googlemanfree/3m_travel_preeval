@@ -17,10 +17,10 @@ describe("parcours évaluation + suivi commercial", () => {
     expect(form.indexOf("Suivre ma demande dans Mon espace")).toBeLessThan(form.indexOf("Envoyer une autre évaluation"));
   });
 
-  it("le démarrage sans compte explique gratuité puis suivi via compte après envoi", () => {
-    expect(form).toContain("Accessible sans compte.");
+  it("le compte candidat gratuit est annoncé clairement, puis le suivi après envoi", () => {
+    expect(form).toContain("Compte candidat requis.");
     expect(form).toContain("Créer un compte pour suivre mon dossier");
-    expect(home).toContain("Gratuit · sans compte pour démarrer · réponse sous 24 h ouvrées");
+    expect(home).toContain("Gratuit · compte candidat requis pour envoyer · réponse sous 24 h ouvrées");
   });
 
   it("l’espace client expose la référence et l’eyebrow de suivi réel", () => {

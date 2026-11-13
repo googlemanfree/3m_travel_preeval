@@ -294,7 +294,7 @@ export default function ApprovedReviewsSection() {
 
   if (showLoadingSkeleton) {
     return (
-      <div className="py-16 px-4 bg-gradient-to-b from-white to-slate-50" aria-busy="true" aria-label={labels.loading} data-testid="approved-reviews-loading">
+      <div id="approved-reviews-title" className="scroll-mt-24 py-16 px-4 bg-gradient-to-b from-white to-slate-50" aria-busy="true" aria-label={labels.loading} data-testid="approved-reviews-loading">
         <div className="max-w-6xl mx-auto">
           <div className="mx-auto mb-10 max-w-2xl text-center">
             <Skeleton className="mx-auto h-8 w-64" />
@@ -327,7 +327,8 @@ export default function ApprovedReviewsSection() {
   if (approvedReviews.length === 0) {
     return (
       <section
-        className="py-16 px-4 bg-gradient-to-b from-white to-slate-50"
+        id="approved-reviews-title"
+        className="scroll-mt-24 py-16 px-4 bg-gradient-to-b from-white to-slate-50"
         aria-labelledby="no-reviews-yet-title"
         data-testid="approved-reviews-empty"
         data-reviews-resolved="true"

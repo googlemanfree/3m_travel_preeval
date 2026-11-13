@@ -98,6 +98,11 @@ export function CountryPhotoGallery({ photos, country }: Props) {
   }, [photos, placeFilter, sortMode]);
 
   const places = useMemo(() => Array.from(new Set(photos.slice(1).map((photo) => photo.place))).sort((a, b) => a.localeCompare(b, "fr")), [photos]);
+  // Avec une seule photo de galerie, elle est déjà affichée en grand : ni filtres ni vignette en doublon.
+  // Les filtres ne servent qu'à partir de trois photos.
+  const candidateCount = photos.slice(1).length;
+  const showThumbnails = candidateCount >= 2;
+  const showControls = candidateCount >= 3;
   const selectedPhoto = lightboxIndex === null ? null : galleryPhotos[lightboxIndex] ?? null;
 
   useEffect(() => {
@@ -155,7 +160,7 @@ export function CountryPhotoGallery({ photos, country }: Props) {
           </div>
         </div>
 
-        {galleryPhotos.length > 0 && (
+        {showControls && (
           <div className="border-t border-white/10 bg-slate-950 px-4 py-4 sm:px-5" data-testid="country-photo-controls">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2 text-xs font-semibold text-white">
@@ -188,6 +193,7 @@ export function CountryPhotoGallery({ photos, country }: Props) {
           </div>
         )}
 
+        {showThumbnails && (
         <div className="grid grid-cols-1 gap-2 bg-slate-950 p-2 sm:grid-cols-2" data-testid="country-photo-thumbnails">
           {galleryPhotos.length > 0 ? galleryPhotos.map((photo, index) => (
             <button
@@ -205,6 +211,7 @@ export function CountryPhotoGallery({ photos, country }: Props) {
             <p className="col-span-full px-3 py-6 text-center text-sm text-slate-300">Aucune photo ne correspond à ce filtre.</p>
           )}
         </div>
+        )}
         <PhotoCredits photos={photos} country={country} />
       </figure>
 

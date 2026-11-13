@@ -10,6 +10,7 @@ import { randomInt } from 'node:crypto';
 import mysql from 'mysql2/promise';
 import { storagePut } from '../storage';
 import { sendEmail } from '../_core/email';
+import { ensureEvisaIssuedPdfColumn } from '../services/evisaSchemaGuard';
 
 // Générer un numéro de dossier unique
 function generateDossierNumber(): string {
@@ -465,6 +466,9 @@ export const evisaAdminRouter = router({
         }
 
         const req = rows[0];
+
+        // La colonne du PDF final doit exister avant d'écrire le fichier.
+        await ensureEvisaIssuedPdfColumn(connection);
 
         const buffer = Buffer.from(input.fileBase64, 'base64');
         const storageKey = `evisa-docs/${input.requestId}-${Date.now()}-${input.fileName}`;

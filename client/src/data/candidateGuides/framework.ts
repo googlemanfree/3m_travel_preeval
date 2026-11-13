@@ -30,7 +30,7 @@ export function buildFrameworkGuide(destination: Destination20, officialSources:
       number: "01",
       title: "Évaluation en ligne et espace candidat",
       blocks: [
-        { type: "text", text: `Commencer sur www.3mtravelagency.com. L’évaluation gratuite peut commencer sans compte : indiquez votre métier, votre projet et ${name} comme destination, déposez votre CV à jour et utilisez une adresse email personnelle et un numéro joignable. [S1]` },
+        { type: "text", text: `Commencer sur www.3mtravelagency.com. L’évaluation gratuite s’envoie depuis un compte candidat gratuit : indiquez votre métier, votre projet et ${name} comme destination, déposez votre CV à jour et utilisez une adresse email personnelle et un numéro joignable. [S1]` },
         {
           type: "cards",
           items: [

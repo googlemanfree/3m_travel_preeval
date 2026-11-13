@@ -55,6 +55,14 @@ const fadeUp = {
   }),
 };
 
+// Apparition commune des blocs de la page d'accueil (une seule durée, une seule courbe).
+const sectionReveal = {
+  initial: { opacity: 0, y: 18 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, amount: 0.12 },
+  transition: { duration: 0.48, ease: "easeOut" as const },
+};
+
 // ─── Composant principal ──────────────────────────────────────────────────────
 export default function Home() {
   const { t, language } = useLanguage();
@@ -158,7 +166,7 @@ export default function Home() {
       </nav>
 
       {/* Trois parcours prioritaires — orientation rapide avant le reste. */}
-      <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
+      <motion.div {...sectionReveal} className="mobile-section-transition">
         <HomePrimaryPathsSection />
       </motion.div>
 
@@ -166,18 +174,18 @@ export default function Home() {
       <HomeLiveStrips />
 
       {/* Preuves + avis tôt : confiance avant le détail B2B. */}
-      <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
+      <motion.div {...sectionReveal} className="mobile-section-transition">
         <ProofGallerySection />
       </motion.div>
 
-      <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
+      <motion.div {...sectionReveal} className="mobile-section-transition">
         <ReviewsErrorBoundary>
           <ApprovedReviewsSection />
         </ReviewsErrorBoundary>
       </motion.div>
 
       {/* Autres services (dossier, vols, assurance…) — après la triade et les preuves. */}
-      <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.48 }} className="mobile-section-transition">
+      <motion.div {...sectionReveal} className="mobile-section-transition">
         <QuickActionsSection />
       </motion.div>
 
@@ -185,7 +193,7 @@ export default function Home() {
       <section
         id="home-talent-corridor"
         aria-labelledby="home-b2b-title"
-        className="border-y border-indigo-100 bg-gradient-to-br from-[#071b3d] via-[#0b2f6f] to-[#1463ff] py-10 md:py-12"
+        className="section-pad-tight border-y border-indigo-100 bg-gradient-to-br from-[#071b3d] via-[#0b2f6f] to-[#1463ff]"
         data-testid="home-talent-corridor"
       >
         <div className="mx-auto max-w-6xl px-4">
@@ -206,17 +214,17 @@ export default function Home() {
             </a>
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <a href={CORRIDOR_ROUTES.partnersHub} className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
+            <a href={CORRIDOR_ROUTES.partnersHub} className="group card-lift rounded-2xl border border-white/20 bg-white/95 p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
               <p className="text-base font-black text-slate-950">{t("Entreprises & partenaires", "Companies & partners")}</p>
               <p className="mt-1 text-sm text-slate-600">{t("Candidat, admin 3M, agences et employeurs — un corridor traçable.", "Candidate, 3M admin, agencies and employers — one traceable corridor.")}</p>
               <span className="mt-3 inline-flex items-center text-sm font-bold text-indigo-700">{t("Voir le corridor →", "View the corridor →")}</span>
             </a>
-            <a href={CORRIDOR_ROUTES.agencies} className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
+            <a href={CORRIDOR_ROUTES.agencies} className="group card-lift rounded-2xl border border-white/20 bg-white/95 p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
               <p className="text-base font-black text-slate-950">{t("Agences de placement", "Placement agencies")}</p>
               <p className="mt-1 text-sm text-slate-600">{t("Canal documenté : recevoir des profils consentants après contrôle 3M.", "Documented channel: receive consenting profiles after a 3M check.")}</p>
               <span className="mt-3 inline-flex items-center text-sm font-bold text-indigo-700">{t("Portail agence →", "Agency portal →")}</span>
             </a>
-            <a href={CORRIDOR_ROUTES.employers} className="group rounded-2xl border border-white/20 bg-white/95 p-5 transition hover:-translate-y-1 hover:shadow-lg">
+            <a href={CORRIDOR_ROUTES.employers} className="group card-lift rounded-2xl border border-white/20 bg-white/95 p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
               <p className="text-base font-black text-slate-950">{t("Employeurs internationaux", "International employers")}</p>
               <p className="mt-1 text-sm text-slate-600">{t("Sélectionner, décider, renvoyer le retour dans le bon dossier 3M.", "Select, decide, return feedback into the correct 3M file.")}</p>
               <span className="mt-3 inline-flex items-center text-sm font-bold text-amber-700">{t("Portail employeur →", "Employer portal →")}</span>
@@ -233,7 +241,7 @@ export default function Home() {
       {/* B2B détaillé — après réassurance, sans saturer le premier écran. */}
       <section
         id="home-employer-b2b"
-        className="border-y border-amber-100 bg-gradient-to-b from-slate-50 to-white py-12 md:py-14"
+        className="section-pad-tight border-y border-amber-100 bg-gradient-to-b from-slate-50 to-white"
         data-testid="home-employer-b2b"
         aria-labelledby="home-employer-deliverables-title"
       >
@@ -330,7 +338,7 @@ export default function Home() {
       <ServicesOverviewSection />
 
       {/* ─── PROCÉDURES LES PLUS DEMANDÉES : liens directs vers les pages de service dédiées ── */}
-      <section aria-label="Procédures les plus demandées" className="py-10 bg-white">
+      <section aria-label="Procédures les plus demandées" className="section-pad-tight bg-white">
         <div className="max-w-5xl mx-auto px-4">
           <h2 className="text-xl md:text-2xl font-black text-slate-950 text-center mb-2">Depuis l’Afrique vers le monde — parcours les plus demandés</h2>
           <p className="premium-section-lead mx-auto mb-6 text-center">Candidats de tous les pays africains : commencez par la destination qui correspond à votre projet. Chaque fiche détaille les étapes et les documents à préparer.</p>
@@ -345,7 +353,7 @@ export default function Home() {
               <a
                 key={item.href}
                 href={item.href}
-                className="flex flex-col items-center gap-1.5 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-4 text-center transition-colors hover:border-blue-300 hover:bg-blue-50"
+                className="card-lift flex flex-col items-center gap-1.5 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-4 text-center hover:border-blue-300 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
               >
                 <span className="text-2xl" aria-hidden="true">{item.flag}</span>
                 <span className="text-xs font-bold text-slate-800">{item.label}</span>
@@ -362,10 +370,10 @@ export default function Home() {
       <DestinationsShowcaseSection />
 
       {/* ─── ÉVALUATION MULTI-PROJETS : ACTION PRINCIPALE ──────────────────── */}
-      <section id="evaluation-multi" className="scroll-mt-24 bg-gradient-to-b from-white to-blue-50 py-14 md:py-20">
+      <section id="evaluation-multi" className="section-pad scroll-mt-24 bg-gradient-to-b from-white to-blue-50">
         <div className="max-w-4xl mx-auto px-4">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-10">
-            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Gratuit · sans compte pour démarrer · réponse sous 24 h ouvrées</p>
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="section-head">
+            <p className="section-eyebrow mb-2">Gratuit · compte candidat requis pour envoyer · réponse sous 24 h ouvrées</p>
             <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Évaluez votre projet avant d’avancer</h2>
             <p className="text-gray-600 max-w-2xl mx-auto" data-testid="evaluation-response-sla">
               Indiquez votre objectif (travail, études ou tourisme) : un conseiller 3M oriente la procédure et les pièces utiles.
@@ -382,7 +390,7 @@ export default function Home() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.2 }}
         transition={{ duration: 0.55, ease: "easeOut" }}
-        className="border-y border-slate-200 bg-slate-50 py-10 md:py-12"
+        className="section-pad-tight border-y border-slate-200 bg-slate-50"
         aria-labelledby="home-quick-access-title"
       >
         <div className="mx-auto max-w-6xl px-4">
@@ -396,22 +404,22 @@ export default function Home() {
             </a>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <a href="/canada#simulateur-crs-canada" className="group rounded-xl border border-blue-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-100 focus-within:-translate-y-1 focus-within:border-blue-500 focus-within:shadow-lg">
+            <a href="/canada#simulateur-crs-canada" className="group card-lift rounded-xl border border-blue-200 bg-white p-4 hover:border-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
               <p className="text-sm font-black text-slate-950">Canada · Simulateur CRS</p>
               <p className="premium-copy mt-1.5 text-sm">Score indicatif et estimation rapide — sans remplacer l’évaluation guidée.</p>
               <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Ouvrir le simulateur CRS Canada <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
             </a>
-            <a href="/procedures" className="group rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg hover:shadow-slate-200 focus-within:-translate-y-1 focus-within:border-blue-400 focus-within:shadow-lg">
+            <a href="/procedures" className="group card-lift rounded-xl border border-slate-200 bg-white p-4 hover:border-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
               <p className="text-sm font-black text-slate-950">Procédures par destination</p>
               <p className="premium-copy mt-1.5 text-sm">Comparer les pays, visas et sources officielles.</p>
               <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Explorer les destinations <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
             </a>
-            <a href="/guide-procedures" className="group rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg hover:shadow-slate-200 focus-within:-translate-y-1 focus-within:border-blue-400 focus-within:shadow-lg" data-testid="home-guide-procedures">
+            <a href="/guide-procedures" className="group card-lift rounded-xl border border-slate-200 bg-white p-4 hover:border-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600" data-testid="home-guide-procedures">
               <p className="text-sm font-black text-slate-950">Guide PDF des procédures</p>
               <p className="premium-copy mt-1.5 text-sm">Bibliothèque travail / études / visiteur — même source que le traitement admin.</p>
               <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Ouvrir le guide des procédures <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
             </a>
-            <a href="/contact" className="group rounded-xl border border-slate-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg hover:shadow-slate-200 focus-within:-translate-y-1 focus-within:border-blue-400 focus-within:shadow-lg">
+            <a href="/contact" className="group card-lift rounded-xl border border-slate-200 bg-white p-4 hover:border-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
               <p className="text-sm font-black text-slate-950">Services et accompagnement</p>
               <p className="premium-copy mt-1.5 text-sm">Parler à l’agence pour un besoin précis.</p>
               <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-blue-700">Nous contacter <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
@@ -421,7 +429,7 @@ export default function Home() {
       </motion.section>
 
       {/* ─── POURQUOI 3M : preuves concrètes, pas de slogans vides ─────────── */}
-      <section aria-labelledby="why-3m-title" className="bg-white py-16" data-testid="why-3m-section">
+      <section aria-labelledby="why-3m-title" className="section-pad bg-white" data-testid="why-3m-section">
         <div className="mx-auto max-w-6xl px-4">
           <div className="mb-10 text-center md:mb-12">
             <p className="mb-2 text-sm font-bold uppercase tracking-widest text-[#2563eb]">Pourquoi 3M TRAVEL AGENCY</p>
@@ -435,7 +443,7 @@ export default function Home() {
               , fondateur et PDG de {GROUP_LEGAL_NAME}. {INTERNATIONAL_BRAND.promiseLine.fr} Nous préparons et suivons votre dossier — la décision finale reste celle des autorités compétentes.
             </p>
           </div>
-          <aside
+          <div role="group"
             className="mx-auto mb-10 max-w-3xl rounded-2xl border border-slate-200 bg-slate-50/90 p-5 text-left sm:p-6"
             data-testid="home-legal-registration-proof"
             aria-labelledby="home-legal-registration-title"
@@ -486,7 +494,7 @@ export default function Home() {
                 Page À propos
               </a>
             </div>
-          </aside>
+          </div>
           <ul className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Piliers internationaux">
             {INTERNATIONAL_BRAND.trustPillars.map((pillar) => (
               <li key={pillar.title.fr} className="premium-surface rounded-2xl p-5 text-left">
@@ -572,7 +580,7 @@ export default function Home() {
 
       <FlightBookingFAQ />
 
-      <section className="relative overflow-hidden py-16" style={{ background: "linear-gradient(135deg, #061a36 0%, #0a3264 48%, #165dff 100%)" }} data-testid="home-final-cta" aria-labelledby="home-final-cta-title">
+      <section className="section-pad relative overflow-hidden" style={{ background: "linear-gradient(135deg, #061a36 0%, #0a3264 48%, #165dff 100%)" }} data-testid="home-final-cta" aria-labelledby="home-final-cta-title">
         <div className="fx-aurora" aria-hidden="true" />
         <div className="relative z-10 mx-auto max-w-4xl px-4 text-center">
           <p className="font-[Georgia,Cambria,'Times_New_Roman',serif] text-2xl font-normal tracking-tight text-amber-200 sm:text-3xl">
@@ -725,15 +733,15 @@ function PricingSection() {
   const phoneNumber = "237698104832";
 
   return (
-    <section id="tarifs" className="py-12 md:py-20 bg-gradient-to-b from-white to-[#f0f6ff]">
+    <section id="tarifs" className="section-pad bg-gradient-to-b from-white to-[#f0f6ff]">
       <div className="max-w-7xl mx-auto px-4">
         {/* En-tête */}
-        <div className="text-center mb-14">
+        <div className="section-head">
           <motion.p
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2"
+            className="section-eyebrow mb-2"
           >
             Nos formules
           </motion.p>
@@ -766,7 +774,7 @@ function PricingSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.12, duration: 0.5 }}
-              className={`relative rounded-3xl border-2 ${plan.borderColor} flex flex-col overflow-hidden shadow-lg ${plan.highlight ? "scale-[1.03] shadow-2xl ring-2 ring-[#2563eb]/40" : ""}`}
+              className={`relative rounded-3xl border-2 ${plan.borderColor} flex flex-col overflow-hidden shadow-lg ${plan.highlight ? "shadow-2xl ring-2 ring-[#2563eb]/40 md:scale-[1.03]" : ""}`}
             >
               {/* Badge */}
               {plan.badge && (
@@ -824,9 +832,9 @@ function PricingSection() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.4 }}
-          className="text-center text-xs text-gray-400 mt-8 max-w-2xl mx-auto"
+          className="mx-auto mt-8 max-w-2xl text-center text-xs leading-5 text-slate-600"
         >
-          <Info className="w-3.5 h-3.5 inline mr-1 text-gray-400" />
+          <Info className="mr-1 inline h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
           Honoraires 3M = accompagnement et suivi. Frais tiers = autorités / prestataires externes. Montants, échéances, éligibilité, remboursement et arrêt de dossier : conditions écrites avant paiement (voir aussi{" "}
           <a href="/conditions-utilisation" className="font-semibold text-blue-700 underline-offset-2 hover:underline">CGU</a>
           ). La décision de visa n’appartient qu’aux autorités.{" "}

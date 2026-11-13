@@ -165,6 +165,15 @@ const mobileAuthButtonClass =
 export default function Navbar() {
   const { candidate, logout } = useCandidateAuth();
   const { language, setLanguage } = useLanguage();
+  // Sous 480 px, le sélecteur de langue n’affiche que « FR » / « EN » : sinon le bouton du menu sort de l’écran.
+  const [compactLanguage, setCompactLanguage] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 479px)");
+    const sync = () => setCompactLanguage(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
   const copy = (value: NavCopy) => value[language];
   const { totalItems } = useMultiServiceCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -444,7 +453,7 @@ export default function Navbar() {
               }
               placeholder={copy(NAV_COPY.searchPlaceholder)}
               aria-keyshortcuts="/"
-              aria-controls="desktop-nav-suggestions"
+              aria-controls={isDesktopSearchFocused ? "desktop-nav-suggestions" : undefined}
               aria-activedescendant={
                 activeSuggestionIndex >= 0
                   ? `desktop-nav-suggestion-${activeSuggestionIndex}`
@@ -721,8 +730,8 @@ export default function Navbar() {
                 aria-label={copy(NAV_COPY.languageGroup)}
                 className="min-h-10 max-w-[8.5rem] cursor-pointer appearance-none bg-transparent pr-1 outline-none"
               >
-                <option value="fr">FR · Français</option>
-                <option value="en">EN · English</option>
+                <option value="fr">{compactLanguage ? "FR" : "FR · Français"}</option>
+                <option value="en">{compactLanguage ? "EN" : "EN · English"}</option>
               </select>
             </label>
             <ThemeToggle compact />
@@ -736,7 +745,7 @@ export default function Navbar() {
                 className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1 rounded-xl bg-blue-600 px-2.5 text-[11px] font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 active:scale-95 sm:px-3 sm:text-xs"
               >
                 <PenLine className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <span>{copy(NAV_COPY.register)}</span>
+                <span className="max-[359px]:sr-only">{copy(NAV_COPY.register)}</span>
               </a>
             )}
             <motion.button
@@ -903,7 +912,7 @@ export default function Navbar() {
                     }
                     placeholder={copy(NAV_COPY.searchPlaceholder)}
                     aria-keyshortcuts="/"
-                    aria-controls="mobile-nav-suggestions"
+                    aria-controls={isMobileSearchFocused || normalizedSearch ? "mobile-nav-suggestions" : undefined}
                     aria-activedescendant={
                       activeSuggestionIndex >= 0
                         ? `mobile-nav-suggestion-${activeSuggestionIndex}`

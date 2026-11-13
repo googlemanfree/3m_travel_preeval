@@ -12,7 +12,7 @@ export const EN_FAQ_GROUPS: FaqGroup[] = [
     title: "Getting started",
     intro: "What to know before you submit your first request.",
     items: [
-      { question: "Do I need an account to get started?", answer: "No. The free assessment starts without an account: you tell us about your project, destination, nationality and contact details. An account is requested afterwards, to save your file, upload confidential documents and follow its status in your space." },
+      { question: "Do I need an account to get started?", answer: "Yes. The free assessment is submitted from a candidate account, which is free to create: you give your project, destination, nationality and contact details, then upload confidential documents and follow your file's status. For a first question without an account, message us on WhatsApp." },
       { question: "Is the assessment really free?", answer: "Yes. It is an orientation assessment: it helps you place your project and know which documents and steps to plan for. It does not commit you to opening a file and never replaces the decision of an authority, school or employer." },
       { question: "What happens after the assessment?", answer: "An adviser reviews your assessment, then you receive a summary with your strengths, the points to clarify and the documents to gather. If you decide to continue, a file is opened and a written quote is given to you before any payment." },
       { question: "Which countries can you support me with?", answer: "The directory of procedures and destinations lists the documented countries by type of project (work, study, visitor, training, e-Visa). The list evolves: check it before deciding, and ask us if your destination is not there yet." },

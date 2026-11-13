@@ -412,7 +412,7 @@ export default function VisaTravail() {
         lockFilter
         collapsedCount={3}
         hideWhenEmpty
-        className="bg-slate-50/70 px-4 py-16 sm:px-6"
+        className="section-pad bg-slate-50/70 px-4 sm:px-6"
         titleFr="Preuves de dossiers de mobilité"
         titleEn="Mobility file proofs"
         leadFr="Autorisations et visas obtenus par des candidats accompagnés — pour illustrer le suivi, sans garantir un emploi ou un visa."

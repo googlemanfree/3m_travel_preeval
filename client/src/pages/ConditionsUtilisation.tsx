@@ -77,10 +77,10 @@ export default function ConditionsUtilisation() {
           <div>
             <h2 className="mb-4 text-2xl font-bold text-gray-900">3. Compte candidat et évaluation</h2>
             <p className="leading-relaxed text-gray-700">
-              Un formulaire d’évaluation rapide peut être commencé sans compte. Pour enregistrer un dossier, suivre son statut et
-              déposer des pièces sensibles (notamment un CV pour un projet travail), la création d’un compte gratuit avec activation
-              par e-mail est requise. Vous êtes responsable de la confidentialité de vos identifiants et de l’exactitude des
-              informations transmises.
+              Pour envoyer un formulaire d’évaluation, enregistrer un dossier, suivre son statut et déposer des pièces sensibles
+              (notamment un CV pour un projet travail), la création d’un compte candidat gratuit avec activation par e-mail est
+              requise. Pour une première question sans compte, vous pouvez contacter l’agence par WhatsApp ou via la page Contact.
+              Vous êtes responsable de la confidentialité de vos identifiants et de l’exactitude des informations transmises.
             </p>
           </div>
 

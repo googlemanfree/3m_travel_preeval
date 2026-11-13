@@ -15,6 +15,7 @@ import { storagePut } from '../storage';
 import { sendEmail } from '../_core/email';
 import { buildPassportCorrectionAudit } from '../services/passportCorrectionHistory';
 import { requireValidAdminSession } from './adminAuth';
+import { ensureEvisaIssuedPdfColumn } from '../services/evisaSchemaGuard';
 
 function esc(v: string | number | undefined | null): string {
   return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -548,6 +549,7 @@ export const evisaRouter = router({
       try {
         const dbUrl = process.env.DATABASE_URL || '';
         const connection = await mysql.createConnection(dbUrl);
+        await ensureEvisaIssuedPdfColumn(connection);
         const [requests] = await connection.execute(`
           SELECT id, countryCode, countryName, evisaType, totalCost, currency, status, issuedPdfUrl, createdAt, updatedAt
           FROM evisa_requests
@@ -610,6 +612,9 @@ export const evisaRouter = router({
         }
 
         const req = rows[0];
+
+        // La colonne du PDF final doit exister avant d'écrire le fichier : sinon le fichier serait stocké sans suite.
+        await ensureEvisaIssuedPdfColumn(connection);
 
         // Stocker le fichier PDF via storagePut
         const storageKey = `evisa-docs/${input.requestId}-${Date.now()}-${safeName}`;

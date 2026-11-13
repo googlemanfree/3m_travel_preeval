@@ -87,14 +87,15 @@ describe("QA contrôle — procédures, évaluation, vols, marque", () => {
     expect(institutional).toContain("type de séjour, de la nationalité et de la situation du demandeur");
   });
 
-  it("évaluation gratuite : formulaire court sans compte préalable", () => {
+  it("évaluation gratuite : formulaire court, compte candidat gratuit annoncé", () => {
     expect(form).toContain('data-testid="evaluation-guest-start"');
-    expect(form).toContain("Accessible sans compte.");
+    expect(form).toContain("Compte candidat requis.");
     expect(form).not.toContain("evaluation-account-gate");
     expect(form).not.toContain("Créez un compte ou connectez-vous avant de soumettre");
     expect(form).toContain('data-testid="evaluation-create-account-after-submit"');
-    expect(home).toContain("sans compte pour démarrer");
-    expect(aureol).toContain("formulaire court gratuit sans compte");
+    expect(home).toContain("compte candidat requis pour envoyer");
+    expect(aureol).toContain("formulaire court gratuit");
+    expect(aureol).toContain("compte candidat gratuit");
   });
 
   it("formules tarifaires : conditions écrites (éligibilité, remboursement, arrêt, exclusivité visa)", () => {

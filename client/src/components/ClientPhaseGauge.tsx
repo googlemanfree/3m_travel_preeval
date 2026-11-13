@@ -52,7 +52,7 @@ export default function ClientPhaseGauge({
         </div>
         <p className="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-800">{progress.percent}%</p>
       </div>
-      <Progress className="mt-4 h-2.5" value={progress.percent} />
+      <Progress className="mt-4 h-2.5" value={progress.percent} aria-label="Avancement de votre dossier" />
       {!progress.refused && progress.stepLabel ? (
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           <div className="rounded-xl bg-slate-50 p-3">

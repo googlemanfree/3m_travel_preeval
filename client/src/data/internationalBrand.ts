@@ -36,8 +36,8 @@ export const INTERNATIONAL_BRAND = {
   },
   /** Ligne de confiance sous les CTA. */
   heroTrust: {
-    fr: "Sans compte pour démarrer et envoyer l’évaluation — compte ensuite pour le suivi et le dépôt de CV • Informations vérifiables",
-    en: "No account to start and submit the assessment — account afterwards for follow-up and CV upload • Verifiable information",
+    fr: "Informations vérifiables · Bureaux à Yaoundé et Ottawa · Décisions finales : autorités, établissements et employeurs",
+    en: "Verifiable information · Offices in Yaoundé and Ottawa · Final decisions: authorities, schools and employers",
   },
   /** Alias utilisés par d’autres pages (promesse courte). */
   promiseLine: {
@@ -89,8 +89,8 @@ export const INTERNATIONAL_BRAND = {
   cta: {
     evaluate: { fr: "Évaluer mon projet — gratuit", en: "Evaluate my project — free" },
     evaluateHint: {
-      fr: "Sans compte pour démarrer — compte ensuite pour le suivi",
-      en: "No account to start — account later for follow-up",
+      fr: "Compte gratuit requis pour envoyer — il sert ensuite au suivi",
+      en: "Free account required to submit — used afterwards for follow-up",
     },
     advisor: { fr: "Parler à un conseiller", en: "Talk to an advisor" },
     procedures: { fr: "Explorer les procédures", en: "Explore procedures" },

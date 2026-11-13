@@ -24,7 +24,7 @@ function timeAgo(date: string | Date): string {
   return `il y a ${days} j`;
 }
 
-export default function AdminNotificationBell() {
+export default function AdminNotificationBell({ tone = "light" }: { tone?: "light" | "dark" }) {
   const [open, setOpen] = useState(false);
   const sessionToken = getAdminSessionToken();
 
@@ -51,9 +51,9 @@ export default function AdminNotificationBell() {
         <button
           type="button"
           aria-label={unreadCount > 0 ? `${unreadCount} notification(s) non lue(s)` : "Notifications"}
-          className="relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+          className={`relative w-10 h-10 flex items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${tone === "dark" ? "hover:bg-white/10" : "hover:bg-gray-100"}`}
         >
-          <Bell className="w-5 h-5 text-gray-600" />
+          <Bell className={`w-5 h-5 ${tone === "dark" ? "text-white" : "text-gray-600"}`} aria-hidden="true" />
           {unreadCount > 0 && (
             <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full">
               {unreadCount > 9 ? "9+" : unreadCount}

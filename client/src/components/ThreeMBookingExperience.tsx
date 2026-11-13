@@ -118,7 +118,7 @@ export function ThreeMBookingExperience() {
   function submitRequest() {
     if (!isAuthenticated || !candidate) {
       toast({ title: "Compte requis", description: "Créez votre compte 3M TRAVEL AGENCY pour transmettre une demande 3M Booking." });
-      setLocation("/register?returnTo=%2Fflights%3Fmode%3Dbooking");
+      setLocation(`/register?from=${encodeURIComponent("/flights#3m-booking")}`);
       return;
     }
     if (!phone.trim()) {
@@ -152,7 +152,7 @@ export function ThreeMBookingExperience() {
   const selectedJinkoId = selectedPlace?.jinko?.providerHotelId;
 
   return (
-    <section id="3m-booking" className="bg-slate-50 px-4 py-12 md:px-6">
+    <section id="3m-booking-experience" className="bg-slate-50 px-4 py-12 md:px-6">
       <div className="mx-auto max-w-6xl">
         <div className="overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-950 via-blue-950 to-blue-800 p-6 text-white shadow-2xl md:p-10">
           <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">

@@ -16,7 +16,8 @@ vi.mock("framer-motion", () => {
 });
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), message: vi.fn(), warning: vi.fn() } }));
 vi.mock("wouter", () => ({ useLocation: () => ["/", vi.fn()] }));
-vi.mock("@/hooks/useCandidateAuth", () => ({ useCandidateAuth: () => ({ isAuthenticated: false, candidate: null }) }));
+// Le formulaire d'évaluation n'est exposé qu'à un candidat connecté (écran evaluation-registration-gate sinon).
+vi.mock("@/hooks/useCandidateAuth", () => ({ useCandidateAuth: () => ({ isAuthenticated: true, candidate: { id: 1, fullName: "Test Candidat", email: "test@example.test", phone: "+237670000000", nationality: "Camerounaise", preferredLanguage: "fr" } }) }));
 vi.mock("@/components/CountryPicker", () => ({
   CountrySelect: ({ value, onChange }: { value: string; onChange: (country: string) => void }) => (
     <div><span data-testid="country-value">{value}</span>{["Allemagne", "Canada", "France"].map((country) => <button key={country} type="button" onClick={() => onChange(country)}>Pays : {country}</button>)}</div>

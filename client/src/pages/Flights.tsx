@@ -1257,6 +1257,8 @@ export default function Flights() {
               </div>
             </div>
             <button
+              type="button"
+              aria-label="Fermer"
               onClick={() => {
                 const modal = document.getElementById("ai-planner-modal");
                 if (modal) modal.style.display = "none";

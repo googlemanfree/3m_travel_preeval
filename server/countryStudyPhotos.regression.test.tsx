@@ -62,7 +62,10 @@ describe("guides d'études : photos, crédits et repères pour chaque pays", () 
     const photos = getCountryPhotos("france");
     const html = renderToStaticMarkup(<CountryPhotoGallery photos={photos} country="France" />);
     expect(html).toContain(photos[1].src);
-    expect(html).toContain('loading="lazy"');
+    // Une seule photo de galerie : affichée une fois (pas de vignette en doublon, pas de filtres inutiles).
+    expect(html.split(`src="${photos[1].src}"`).length - 1).toBe(1);
+    expect(html).not.toContain("country-photo-thumbnails");
+    expect(html).not.toContain("country-photo-controls");
     for (const photo of photos) {
       expect(html).toContain(photo.author);
       expect(html).toContain(photo.license);

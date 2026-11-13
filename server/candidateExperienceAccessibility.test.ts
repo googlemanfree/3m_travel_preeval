@@ -36,9 +36,9 @@ describe("expérience candidat et navigation admin", () => {
     expect(hero).toContain("h-[6.5rem] w-[6.5rem] overflow-hidden rounded-full");
     expect(hero).toContain("sm:h-[7.5rem] sm:w-[7.5rem] md:h-[8.5rem] md:w-[8.5rem] lg:h-[9.5rem] lg:w-[9.5rem]");
     expect(hero).toContain("text-5xl font-extrabold uppercase tracking-tight");
-    expect(hero).toContain("sm:text-6xl md:text-7xl lg:text-8xl xl:text-[6.25rem]");
+    expect(hero).toContain("sm:text-6xl md:text-7xl xl:text-8xl");
     expect(hero).toContain("text-3xl font-black tracking-tight");
-    expect(hero).toContain("sm:text-4xl md:text-5xl lg:text-6xl");
+    expect(hero).toContain("sm:text-4xl md:text-5xl");
     expect(hero).toContain("INTERNATIONAL_BRAND.publicName");
     expect(hero).toContain("INTERNATIONAL_BRAND.slogan");
     expect(brand).toContain("L’Afrique vers le monde.");

@@ -170,7 +170,7 @@ export default function CniPasseport() {
       <ChecklistSection title="Les pièges à éviter" items={CNI_COMMON_ERRORS} tone="blue" testId="cni-errors" />
       <FaqSection introduction="Les points que l’on nous demande le plus souvent avant un dépôt de CNI ou de passeport." items={CNI_FAQ} testId="cni-faq" />
 
-      <section id="demande" className="scroll-mt-24 bg-white px-4 py-14 sm:px-6 lg:px-8" aria-labelledby="cni-request-title">
+      <section id="demande" className="section-pad-tight scroll-mt-24 bg-white px-4 sm:px-6 lg:px-8" aria-labelledby="cni-request-title">
         <div className="mx-auto max-w-4xl">
           <h2 id="cni-request-title" className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">Faire ma demande</h2>
           <p className="mt-2 mb-6 max-w-2xl text-sm leading-6 text-slate-600">Décrivez votre situation : un conseiller vous recontacte pour confirmer les pièces à fournir.</p>

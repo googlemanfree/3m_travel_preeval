@@ -27,7 +27,8 @@ describe("page communautaire 3M", () => {
     expect(app).toContain('path={"/3m-solutions"} component={Community}');
     expect(app).toContain('Redirect to="/3m-solutions"');
     expect(app).toContain('path={"/admin/digital-services"}');
-    expect(navbar).toContain('{ href: "/3m-solutions", label: { fr: "3M Solutions", en: "3M Solutions" }');
+    expect(navbar).toContain('href: "/3m-solutions"');
+    expect(navbar).toContain('label: { fr: "3M Solutions", en: "3M Solutions" }');
     expect(footer).toContain("Service 3M Solutions");
   });
 });

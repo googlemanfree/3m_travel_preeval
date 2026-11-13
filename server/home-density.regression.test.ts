@@ -12,9 +12,9 @@ describe("accueil allégé et accès CRS", () => {
     expect(home).toContain('href="/canada#simulateur-crs-canada"');
     expect(home).toContain('aria-label="Retour en haut de la page"');
     expect(home).toContain("window.scrollTo({ top: 0, behavior: scrollBehavior() })");
-    expect(home).toContain('hover:-translate-y-1 hover:border-blue-500');
-    expect(home).toContain('initial={{ opacity: 0, y: 18 }}');
-    expect(home).toContain('whileInView={{ opacity: 1, y: 0 }}');
+    expect(home).toContain("card-lift");
+    expect(home).toContain("initial: { opacity: 0, y: 18 }");
+    expect(home).toContain("whileInView: { opacity: 1, y: 0 }");
     expect(home).toContain('id="evaluation-multi"');
     expect(home).toContain("Choisissez votre prochaine étape");
     expect(home).toContain('href="/procedures"');

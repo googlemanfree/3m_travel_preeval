@@ -1,3 +1,6 @@
+// Secret de signature des jetons candidat pour les tests : n'écrase jamais une valeur réelle de l'environnement.
+process.env.JWT_SECRET ??= "vitest-only-secret-not-used-outside-tests-0123456789";
+
 class NoopIntersectionObserver {
   observe() {}
   unobserve() {}

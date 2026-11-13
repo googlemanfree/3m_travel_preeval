@@ -21,9 +21,9 @@ describe("CTA public et accès direct au dossier connecté", () => {
   it("renforce la taille du titre et du texte d’introduction du hero", () => {
     expect(heroSource).toContain('data-testid="hero-logo"');
     expect(heroSource).toContain("text-5xl font-extrabold uppercase tracking-tight");
-    expect(heroSource).toContain("sm:text-6xl md:text-7xl lg:text-8xl xl:text-[6.25rem]");
+    expect(heroSource).toContain("sm:text-6xl md:text-7xl xl:text-8xl");
     expect(heroSource).toContain("text-3xl font-black tracking-tight");
-    expect(heroSource).toContain("sm:text-4xl md:text-5xl lg:text-6xl");
+    expect(heroSource).toContain("sm:text-4xl md:text-5xl");
     expect(heroSource).toContain("INTERNATIONAL_BRAND.publicName");
     expect(heroSource).toContain("INTERNATIONAL_BRAND.slogan");
   });

@@ -72,7 +72,7 @@ const USEFUL_LINKS: FooterLink[] = [
 ];
 
 const MINI_SITE_MAP: FooterLink[] = [
-  { key: "mini_assessment", label: { fr: "Évaluation gratuite", en: "Free assessment" }, href: "/?project=travail#evaluation-multi", description: { fr: "Formulaire d’évaluation gratuit sans compte pour démarrer et soumettre ; créez un compte ensuite pour le suivi et le dépôt de CV.", en: "Free assessment form without an account to start and submit; create an account afterwards for follow-up and CV upload." } },
+  { key: "mini_assessment", label: { fr: "Évaluation gratuite", en: "Free assessment" }, href: "/?project=travail#evaluation-multi", description: { fr: "Formulaire d’évaluation gratuit : créez un compte candidat gratuit pour l’envoyer, suivre le statut et déposer votre CV.", en: "Free assessment form: create a free candidate account to submit it, follow its status and upload your CV." } },
   { key: "mini_booking", label: { fr: "3M Booking", en: "3M Booking" }, href: "/flights", description: { fr: "Rechercher des options de voyage et de réservation.", en: "Search travel and booking options." } },
   { key: "mini_procedures", label: { fr: "Procédures", en: "Procedures" }, href: "/procedures", description: { fr: "Comparer les démarches et destinations proposées.", en: "Compare available procedures and destinations." } },
   { key: "mini_country_guides", label: { fr: "Guides par pays", en: "Country guides" }, href: "/pays", description: { fr: "Étapes et liens officiels, publiés après relecture des sources.", en: "Steps and official links, published once sources are reviewed." } },

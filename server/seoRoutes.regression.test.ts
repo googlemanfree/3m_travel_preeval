@@ -64,8 +64,8 @@ describe("SEO dynamique", () => {
     expect(html).toContain('"@type":"Question"');
     expect(html).toContain("L’évaluation gratuite engage-t-elle une procédure ?");
     expect(html).toContain("Questions fréquentes");
-    expect(html).toContain("Non pour démarrer");
-    expect(html).toContain("sans compte");
+    expect(html).toContain("s’envoie depuis votre espace candidat");
+    expect(html).toContain("WhatsApp");
     expect(html).not.toContain("Oui. Créez d’abord votre compte");
   });
 

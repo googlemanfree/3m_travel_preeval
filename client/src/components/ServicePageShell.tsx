@@ -49,7 +49,7 @@ export function ServicePageShell({
   return (
     <PremiumAtmosphere washVisual={heroVisual ?? null} washOpacity={12}>
       <main className="min-h-screen text-slate-900">
-        <section className="relative overflow-hidden border-b border-blue-900/30 px-4 pb-16 pt-20 text-white sm:px-6 sm:pb-20 lg:px-8">
+        <section className="relative overflow-hidden page-hero-pad border-b border-blue-900/30 px-4 text-white sm:px-6 lg:px-8">
           {heroVisual ? (
             <>
               <PremiumCoverImage
@@ -96,11 +96,11 @@ export function ServicePageShell({
                 )}
               </div>
             </div>
-            <aside className="rounded-2xl border border-white/25 bg-slate-950/45 p-6 shadow-2xl backdrop-blur-sm sm:p-7">
+            <div className="rounded-2xl border border-white/25 bg-slate-950/45 p-6 shadow-2xl backdrop-blur-sm sm:p-7">
               <ShieldCheck className="h-8 w-8 text-amber-200" aria-hidden="true" />
               <h2 className="mt-4 text-lg font-black !text-white">{shellCopy.asideTitle}</h2>
               <p className="premium-copy-on-dark mt-2 rounded-xl bg-[#020C3B]/30 px-3 py-2 !text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)] text-base">{shellCopy.asideText}</p>
-            </aside>
+            </div>
           </div>
         </section>
         {notice && (
@@ -129,7 +129,7 @@ export function ServiceSection({ title, introduction, children, tone = "white" }
     blue: "bg-blue-50/75 backdrop-blur-[1px]",
   };
   return (
-    <section className={`${tones[tone]} px-4 py-16 sm:px-6 sm:py-20 lg:px-8`}>
+    <section className={`${tones[tone]} section-pad px-4 sm:px-6 lg:px-8`}>
       <div className="mx-auto max-w-7xl">
         <PremiumReveal>
           <div className="max-w-3xl">

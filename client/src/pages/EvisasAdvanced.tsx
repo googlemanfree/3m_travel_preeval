@@ -73,6 +73,8 @@ export default function EvisasAdvanced() {
               {regions.map(region => (
                 <button
                   key={region}
+                  type="button"
+                  aria-pressed={selectedRegion === region}
                   onClick={() => setSelectedRegion(region)}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                     selectedRegion === region
@@ -92,6 +94,8 @@ export default function EvisasAdvanced() {
               {delays.map(delay => (
                 <button
                   key={delay}
+                  type="button"
+                  aria-pressed={selectedDelay === delay}
                   onClick={() => setSelectedDelay(delay)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                     selectedDelay === delay

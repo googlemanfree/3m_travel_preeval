@@ -272,7 +272,7 @@ export default function ProceduresAdvanced() {
   return (
     <PremiumAtmosphere washVisual={heroVisual} washOpacity={14}>
     <main className="min-h-screen text-slate-900" data-testid="procedures-premium-hub">
-      <section className="relative overflow-hidden px-4 pb-14 pt-16 text-white sm:px-6 lg:px-8">
+      <section className="page-hero-pad relative overflow-hidden px-4 text-white sm:px-6 lg:px-8">
         <PremiumCoverImage
           visual={heroVisual}
           priority
@@ -322,6 +322,7 @@ export default function ProceduresAdvanced() {
         title="Corridors en images"
         lead="Visuels premium du catalogue 3M — pour situer l’ambiance avant de filtrer l’annuaire."
         className="border-b border-slate-200/60 bg-white/45"
+        widthClassName="max-w-7xl"
       />
 
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -434,9 +435,9 @@ export default function ProceduresAdvanced() {
                 </tr>
                 <tr>
                   <th scope="row" className="bg-slate-50 px-4 py-4 font-bold text-slate-700">Parcours 3M</th>
-                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Évaluation gratuite sans compte → choix du pays → compte pour le suivi → pièces et paiement selon le dossier → orientation vers les étapes admissibles.</td>
-                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Évaluation gratuite sans compte → destination → compte pour le suivi → recherche de programme → admission et préparation du dossier.</td>
-                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Évaluation gratuite sans compte → motif et destination → checklist → compte pour le suivi → demande selon le consulat compétent.</td>
+                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Compte gratuit → évaluation gratuite → choix du pays → compte pour le suivi → pièces et paiement selon le dossier → orientation vers les étapes admissibles.</td>
+                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Compte gratuit → évaluation gratuite → destination → compte pour le suivi → recherche de programme → admission et préparation du dossier.</td>
+                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Compte gratuit → évaluation gratuite → motif et destination → checklist → compte pour le suivi → demande selon le consulat compétent.</td>
                 </tr>
                 <tr>
                   <th scope="row" className="bg-slate-50 px-4 py-4 font-bold text-slate-700">Repère important</th>
@@ -488,12 +489,14 @@ export default function ProceduresAdvanced() {
             {/* Type de Visa Tabs & Comparateur */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <Tabs value={visaType} onValueChange={(v) => setVisaType(v as any)} className="w-full sm:w-auto flex-1">
-                <TabsList className="grid w-full grid-cols-2 gap-1 bg-slate-100 sm:grid-cols-4">
+                <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-slate-100 sm:grid-cols-4">
                   <TabsTrigger value="tous" className="min-h-10 text-xs sm:text-sm">Tous ({PUBLIC_PROCEDURES.length})</TabsTrigger>
                   <TabsTrigger value="travail" className="min-h-10 text-xs sm:text-sm">Travail ({VISA_COUNTS.travail ?? 0})</TabsTrigger>
                   <TabsTrigger value="etudes" className="min-h-10 text-xs sm:text-sm">Études ({VISA_COUNTS.etudes ?? 0})</TabsTrigger>
                   <TabsTrigger value="visiteur" className="min-h-10 text-xs sm:text-sm">Visiteur ({VISA_COUNTS.visiteur ?? 0})</TabsTrigger>
                 </TabsList>
+                {/* Les onglets servent de filtre : on rend des panneaux vides pour que aria-controls pointe vers un élément existant. */}
+                {["tous", "travail", "etudes", "visiteur"].map((value) => <TabsContent key={value} value={value} forceMount className="hidden" />)}
               </Tabs>
               <a href="/procedures/comparaison" className="w-full sm:w-auto shrink-0" data-testid="procedures-corridor-comparer-cta">
                 <Button className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 text-white font-bold px-5 py-2.5 rounded-xl shadow flex items-center justify-center gap-2">

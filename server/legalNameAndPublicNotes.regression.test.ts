@@ -28,13 +28,15 @@ describe("raison sociale officielle", () => {
 });
 
 describe("/evaluation sans compte", () => {
-  it("l'écran de blocage propose l'évaluation gratuite publique au lieu d'une impasse", () => {
+  it("l'écran de blocage explique qu'un compte gratuit est requis, sans contournement public", () => {
     const guard = read("client/src/components/AuthGuard.tsx");
     const app = read("client/src/App.tsx").replace(/\r\n/g, "\n");
+    // Le composant sait afficher une alternative publique, mais /evaluation ne la propose pas (compte obligatoire).
     expect(guard).toContain("publicAlternative");
     expect(guard).toContain('data-testid="auth-guard-public-alternative"');
     const route = app.slice(app.indexOf('<Route path={"/evaluation"}>'), app.indexOf('<Route path={"/mon-espace"}>'));
     expect(route).toContain("AuthGuard");
-    expect(route).toContain("/?project=travail#evaluation-multi");
+    expect(route).toContain("Vous devez créer un compte pour faire votre évaluation.");
+    expect(route).not.toContain("publicAlternative");
   });
 });

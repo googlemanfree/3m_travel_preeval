@@ -11,19 +11,19 @@ const shell = "<!doctype html><html><head><title>Base</title></head><body><!--pr
 describe("SEO procédures, avis résolus et alignement sans compte", () => {
   it("indexe /procedures avec démarrage sans compte (FAQ + corps + meta)", () => {
     const html = composePublicPrerender(shell, "/procedures").html;
-    expect(html).toContain("Non pour démarrer");
-    expect(html).toContain("sans compte");
-    expect(html).toContain("Évaluation gratuite (sans compte pour démarrer)");
+    expect(html).toContain("s’envoie depuis votre espace candidat");
+    expect(html).toContain("compte candidat gratuit");
+    expect(html).toContain("Évaluation gratuite (compte candidat gratuit)");
     expect(html).not.toContain("Oui. Créez d’abord votre compte");
-    expect(html).toMatch(/description[^>]*sans compte/i);
+    expect(html).toMatch(/description[^>]*compte candidat gratuit/i);
 
     const account = PUBLIC_FAQ_ITEMS.find((item) => item.question === "Faut-il créer un compte avant de commencer ?");
-    expect(account?.answer).toMatch(/^Non pour démarrer/);
+    expect(account?.answer).toMatch(/^Oui\./);
   });
 
   it("aligne le tableau interactif Procédures sur le même parcours", () => {
     const page = read("client/src/pages/ProceduresAdvanced.tsx");
-    expect(page).toContain("Évaluation gratuite sans compte");
+    expect(page).toContain("Compte gratuit → évaluation gratuite");
     expect(page).not.toContain("Compte → sélection du pays → évaluation");
     expect(page).not.toContain("Compte → choix de destination → évaluation");
     expect(page).not.toContain("Compte → motif et destination → checklist");

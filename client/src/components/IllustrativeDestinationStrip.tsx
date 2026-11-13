@@ -25,6 +25,8 @@ type Props = {
   lead?: string;
   destinations?: StripDestination[];
   className?: string;
+  /** Largeur du contenu : à aligner sur le reste de la page (6xl par défaut, 7xl sur /procedures). */
+  widthClassName?: string;
 };
 
 /** Bande illustrée de destinations premium — images réelles du catalogue. */
@@ -33,14 +35,15 @@ export function IllustrativeDestinationStrip({
   lead = "Visuels premium issus du catalogue 3M — pour situer l’ambiance de chaque corridor.",
   destinations = DEFAULT_STRIP,
   className = "",
+  widthClassName = "max-w-6xl",
 }: Props) {
   return (
     <section
-      className={`px-4 py-12 sm:px-6 lg:px-8 ${className}`}
+      className={`section-pad-tight px-4 sm:px-6 lg:px-8 ${className}`}
       aria-labelledby="illustrative-strip-title"
       data-testid="illustrative-destination-strip"
     >
-      <div className="mx-auto max-w-6xl">
+      <div className={`mx-auto ${widthClassName}`}>
         <div className="max-w-2xl">
           <h2 id="illustrative-strip-title" className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
             {title}
@@ -60,7 +63,7 @@ export function IllustrativeDestinationStrip({
               >
                 <Link
                   href={item.href}
-                  className="group relative flex min-h-[160px] flex-col justify-end overflow-hidden text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                  className="group card-lift relative flex min-h-[160px] flex-col justify-end overflow-hidden rounded-2xl text-white shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2"
                   data-testid={`illustrative-strip-${item.slug}`}
                 >
                   <PremiumCoverImage

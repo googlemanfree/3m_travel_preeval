@@ -95,7 +95,7 @@ export default function HeroSectionVIP({
     <section
       key={language}
       ref={heroRef}
-      className="relative flex min-h-[72vh] items-center justify-center overflow-hidden px-4 py-14 text-center sm:min-h-[78vh] sm:px-6 sm:py-16 md:min-h-[86vh] md:py-20"
+      className="relative flex min-h-[min(86svh,50rem)] items-center justify-center overflow-hidden px-4 py-8 text-center sm:px-6 sm:py-10 md:py-12"
       style={{
         background: "radial-gradient(circle at center, #1e3a8a 0%, #07162c 70%)",
       }}
@@ -133,13 +133,13 @@ export default function HeroSectionVIP({
         <div className="fx-aurora" aria-hidden="true" data-testid="hero-aurora" />
       </div>
 
-      <div className="group relative z-10 mx-auto w-full max-w-5xl px-5 py-10 text-white sm:px-10 sm:py-14 md:px-14">
+      <div className="group relative z-10 mx-auto w-full max-w-5xl px-4 pb-14 pt-4 text-white sm:px-10 sm:pb-16 sm:pt-6 md:px-14">
         <motion.div
           initial="hidden"
           animate="visible"
           variants={fadeIn}
           custom={0}
-          className="mb-5 flex justify-center sm:mb-6"
+          className="mb-4 flex justify-center sm:mb-5"
         >
           <div className="fx-float h-[6.5rem] w-[6.5rem] overflow-hidden rounded-full border-[3px] border-amber-200/80 bg-white shadow-[0_16px_48px_rgba(0,0,0,0.5)] ring-2 ring-white/40 transition-transform duration-200 ease-out group-hover:scale-[1.04] group-hover:rotate-1 motion-reduce:transition-none sm:h-[7.5rem] sm:w-[7.5rem] md:h-[8.5rem] md:w-[8.5rem] lg:h-[9.5rem] lg:w-[9.5rem]">
             <img
@@ -162,7 +162,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={0.5}
-          className="text-5xl font-extrabold uppercase tracking-tight text-white drop-shadow-[0_3px_16px_rgba(0,0,0,0.55)] transition-[transform,text-shadow] duration-200 ease-out group-hover:-translate-y-0.5 group-hover:drop-shadow-[0_5px_20px_rgba(0,0,0,0.7)] motion-reduce:transition-none sm:text-6xl md:text-7xl lg:text-8xl xl:text-[6.25rem]"
+          className="text-5xl font-extrabold uppercase tracking-tight text-white drop-shadow-[0_3px_16px_rgba(0,0,0,0.55)] [text-wrap:balance] sm:text-6xl md:text-7xl xl:text-8xl"
           data-testid="hero-title"
         >
           {INTERNATIONAL_BRAND.publicName}
@@ -173,7 +173,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={1}
-          className="mt-5 text-3xl font-black tracking-tight text-amber-200 drop-shadow-[0_3px_12px_rgba(0,0,0,0.5)] sm:text-4xl md:text-5xl lg:text-6xl"
+          className="mt-3 text-3xl font-black tracking-tight text-amber-200 drop-shadow-[0_3px_12px_rgba(0,0,0,0.5)] sm:text-4xl md:text-5xl"
           data-testid="hero-tagline"
         >
           {t(INTERNATIONAL_BRAND.slogan.fr, INTERNATIONAL_BRAND.slogan.en)}
@@ -184,7 +184,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={1.5}
-          className="mt-4 text-xl font-bold tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)] sm:text-2xl md:text-3xl"
+          className="mt-2 text-xl font-bold tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)] sm:text-2xl md:text-3xl"
           data-testid="hero-support"
         >
           {t(INTERNATIONAL_BRAND.headline.fr, INTERNATIONAL_BRAND.headline.en)}
@@ -195,21 +195,10 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={2}
-          className="mt-7 text-xs font-bold uppercase tracking-[0.14em] text-white/95 drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] sm:text-sm md:text-base"
+          className="mt-5 text-xs font-bold uppercase tracking-[0.14em] text-white/95 drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] sm:text-sm md:text-base"
           data-testid="hero-corridor"
         >
           {t(INTERNATIONAL_BRAND.categories.fr, INTERNATIONAL_BRAND.categories.en)}
-        </motion.p>
-
-        <motion.p
-          initial="hidden"
-          animate="visible"
-          variants={fadeIn}
-          custom={2.5}
-          className="mx-auto mt-7 max-w-3xl text-base leading-8 text-white/95 drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] sm:text-lg sm:leading-9"
-          data-testid="hero-body"
-        >
-          {t(INTERNATIONAL_BRAND.heroBody.fr, INTERNATIONAL_BRAND.heroBody.en)}
         </motion.p>
 
         <motion.div
@@ -217,7 +206,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={3}
-          className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4"
+          className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row sm:items-start sm:gap-4"
           data-testid="hero-cta-group"
         >
           <div className="flex w-full max-w-xl flex-col items-center gap-1.5">
@@ -260,7 +249,18 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeIn}
           custom={3.5}
-          className="mx-auto mt-7 max-w-xl text-xs leading-5 text-white/90 drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] sm:text-sm"
+          className="mx-auto mt-6 max-w-3xl text-base leading-7 text-white/95 drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] sm:text-lg sm:leading-8"
+          data-testid="hero-body"
+        >
+          {t(INTERNATIONAL_BRAND.heroBody.fr, INTERNATIONAL_BRAND.heroBody.en)}
+        </motion.p>
+
+        <motion.p
+          initial="hidden"
+          animate="visible"
+          variants={fadeIn}
+          custom={4}
+          className="mx-auto mt-4 max-w-xl text-xs leading-5 text-white/90 drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] sm:text-sm"
           data-testid="hero-trust"
         >
           {t(INTERNATIONAL_BRAND.heroTrust.fr, INTERNATIONAL_BRAND.heroTrust.en)}

@@ -131,7 +131,7 @@ export default function VisaEtudes() {
         </div>
       </section>
 
-      <section className="border-b border-slate-200/70 bg-white/70 px-4 py-10 sm:px-6 lg:px-8" aria-label="Illustration parcours études">
+      <section className="section-pad-tight border-b border-slate-200/70 bg-white/70 px-4 sm:px-6 lg:px-8" aria-label="Illustration parcours études">
         <div className="mx-auto max-w-xl">
           <StudyAbroadIllustration className="h-auto w-full" />
         </div>
@@ -152,7 +152,7 @@ export default function VisaEtudes() {
       />
 
       {/* Destinations */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white/80">
+      <section className="section-pad px-4 sm:px-6 lg:px-8 bg-white/80">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-gray-900 mb-4 text-center">Destinations d'études les plus demandées</h2>
           <p className="text-center text-gray-500 mb-12 max-w-2xl mx-auto">
@@ -189,7 +189,7 @@ export default function VisaEtudes() {
       </section>
 
       {/* Process */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
+      <section className="section-pad px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">Comment ça marche</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -212,7 +212,7 @@ export default function VisaEtudes() {
       </section>
 
       {/* Évaluation intégrée */}
-      <section id="evaluation" className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-blue-50 to-white">
+      <section id="evaluation" className="section-pad px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-blue-50 to-white">
         <div className="max-w-3xl mx-auto text-center mb-10">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Quelles sont vos chances aujourd'hui ?</h2>
           <p className="text-gray-600">Répondez à ces quelques questions pour obtenir une estimation immédiate, gratuite et sans engagement.</p>
@@ -236,7 +236,7 @@ export default function VisaEtudes() {
       </section>
 
       {/* Requirements */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-blue-50">
+      <section className="section-pad px-4 sm:px-6 lg:px-8 bg-blue-50">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold text-gray-900 mb-4 text-center">Documents généralement demandés</h2>
           <p className="text-center text-gray-600 mb-10">La liste exacte varie selon la destination et l'établissement — elle vous est confirmée précisément lors de votre évaluation.</p>
@@ -252,7 +252,7 @@ export default function VisaEtudes() {
       </section>
 
       {/* Benefits */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
+      <section className="section-pad px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">Pourquoi passer par 3M TRAVEL AGENCY</h2>
           <div className="grid sm:grid-cols-2 gap-8">
@@ -265,7 +265,7 @@ export default function VisaEtudes() {
       </section>
 
       {/* FAQ */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section className="section-pad px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">Questions fréquentes</h2>
           <Accordion type="single" collapsible className="space-y-3">
@@ -280,7 +280,7 @@ export default function VisaEtudes() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-blue-50">
+      <section className="section-pad px-4 sm:px-6 lg:px-8 bg-blue-50">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-6">Prêt à démarrer votre projet d'études ?</h2>
           <p className="text-lg text-gray-600 mb-2">Une évaluation gratuite et sans engagement pour savoir où vous en êtes.</p>

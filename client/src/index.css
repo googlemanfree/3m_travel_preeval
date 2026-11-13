@@ -132,7 +132,7 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
-    scroll-padding-top: 6rem;
+    scroll-padding-top: 9rem; /* > hauteur de l’en-tête fixe (≈ 131 px) : un contrôle atteint au clavier ou par ancre ne reste pas masqué */
     text-rendering: optimizeLegibility;
   }
   * {
@@ -1155,6 +1155,56 @@ html.text-size-xlarge {
 
 /* ─── Finition premium des pages secondaires ─────────────────────────────── */
 @layer components {
+  /* Rythme vertical commun des sections publiques : une seule échelle, fluide du mobile au grand écran. */
+  .section-pad {
+    padding-block: clamp(2.75rem, 2rem + 3.5vw, 5rem);
+  }
+
+  .section-pad-tight {
+    padding-block: clamp(2rem, 1.5rem + 2.2vw, 3.25rem);
+  }
+
+  /* En-tête de page secondaire : même respiration au-dessus et en dessous du titre sur toutes les pages. */
+  .page-hero-pad {
+    padding-top: clamp(3.5rem, 2.5rem + 3vw, 5rem);
+    padding-bottom: clamp(2.75rem, 2rem + 3vw, 4.5rem);
+  }
+
+  .section-head {
+    margin-inline: auto;
+    margin-bottom: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+    max-width: 46rem;
+    text-align: center;
+  }
+
+  .section-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #1d4ed8;
+  }
+
+  /* Carte cliquable : même élévation et même durée partout (survol et focus clavier). */
+  .card-lift {
+    transition: transform 220ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 220ms cubic-bezier(0.23, 1, 0.32, 1), border-color 220ms ease;
+  }
+
+  .card-lift:hover,
+  .card-lift:focus-visible {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 38px -24px rgba(15, 31, 54, 0.45);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card-lift,
+    .card-lift:hover,
+    .card-lift:focus-visible {
+      transition: none;
+      transform: none;
+    }
+  }
+
   .premium-page-shell {
     letter-spacing: -0.005em;
   }
