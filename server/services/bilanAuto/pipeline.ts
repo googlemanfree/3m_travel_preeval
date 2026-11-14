@@ -7,6 +7,7 @@ import { buildOrientations, type SourceSearch } from "./orientations";
 import { buildReport, checkStrictReportCharter, explainScoreChange, foreignPersonalData, renderHtml, renderText, reportHash, verdictFor } from "./report";
 import { checkPdfIntegrity } from "./reportPdf";
 import { recomputeScore, scoreFacts } from "./scoring";
+import { ensureBaseVersion, hasAdminEdits, syncVersionAfterPublish } from "./versions";
 import type { BilanAutoStore, BilanReport, InputSnapshot, NewRun, PreviousEvaluationRef, RunMode, RunRecord } from "./types";
 
 export const PROMPT_VERSION = "extraction-v1";
@@ -228,6 +229,8 @@ export async function submitForAnalysis(deps: PipelineDeps, evaluationId: number
   const supersededIds: number[] = [];
   for (const old of await store.listRuns({ evaluationId, limit: 50 })) {
     if (old.id === created.id || old.state === "published" || old.state === "superseded") continue;
+    // Une version corrigée par l'administrateur n'est JAMAIS remplacée en silence : la nouvelle proposition reste distincte (voir processRun).
+    if (await hasAdminEdits(store, old.id)) continue;
     await store.updateRun(old.id, { state: "superseded", supersededById: created.id, lockedBy: null, lockedAt: null });
     supersededIds.push(old.id);
   }
@@ -359,10 +362,17 @@ export async function processRun(deps: PipelineDeps, claimed: RunRecord): Promis
     if (run.mode !== "simulation" && problems.pdf) {
       pdfKey = (await deps.storePdf(`bilan-auto/${run.evaluationId}/bilan-run-${run.id}-${hash.slice(0, 12)}.pdf`, problems.pdf)).key;
     }
-    run = await setState(deps, run, "ready_for_review", { ...common, outcome: "A", report, reportHash: hash, pdfKey, reviewStatus: run.mode === "simulation" ? "none" : "pending", complement: null, lastError: null, lockedBy: null, lockedAt: null });
+    // Corrections manuelles existantes pour cette évaluation : cette proposition reste distincte, signalée, et n'est jamais publiée automatiquement.
+    const editedRuns: number[] = [];
+    for (const other of await store.listRuns({ evaluationId: run.evaluationId, limit: 20 })) {
+      if (other.id !== run.id && other.state !== "superseded" && (await hasAdminEdits(store, other.id))) editedRuns.push(other.id);
+    }
+    const conflictFlags = editedRuns.map((id) => `Une version corrigée manuellement existe (traitement n° ${id}) : comparez avant de publier cette nouvelle proposition.`);
+    run = await setState(deps, run, "ready_for_review", { ...common, flags: [...common.flags, ...conflictFlags], outcome: "A", report, reportHash: hash, pdfKey, reviewStatus: run.mode === "simulation" ? "none" : "pending", complement: null, lastError: null, lockedBy: null, lockedAt: null });
+    if (run.mode !== "simulation") await ensureBaseVersion(deps, run);
     await store.addEvent({ runId: run.id, evaluationId: run.evaluationId, actor: "systeme", action: "ready_for_review", detail: `score ${score.total}/${score.max}, empreinte ${hash.slice(0, 12)}`, at: now });
 
-    if (run.mode === "automatique") return (await publishRun(deps, run.id, "systeme")).run;
+    if (run.mode === "automatique" && editedRuns.length === 0) return (await publishRun(deps, run.id, "systeme")).run;
     return run;
   } catch (error) {
     if ((error as Error).message === "VERROU_PERDU") return (await store.getRun(run.id)) ?? run;
@@ -453,6 +463,7 @@ export async function publishRun(deps: PipelineDeps, runId: number, actor: strin
   try {
     const pdf = run.pdfKey ? { key: run.pdfKey, url: "" } : null;
     await deps.publisher.publish(claimed, claimed.report!, pdf);
+    await syncVersionAfterPublish(deps, claimed, actor);
   } catch (error) {
     await store.updateRun(run.id, { state: "ready_for_review", publishedAt: null });
     return { ok: false, error: `Publication impossible : ${error instanceof Error ? error.message : "erreur"}`, run };
@@ -496,12 +507,13 @@ export async function correctRun(deps: PipelineDeps, runId: number, admin: strin
 
 const OUTBOX_SUBJECT: Record<string, string> = {
   bilan_publie: "Votre bilan d'évaluation est disponible — 3M TRAVEL AGENCY",
+  bilan_mis_a_jour: "Votre bilan d'évaluation a été mis à jour — 3M TRAVEL AGENCY",
   complement_demande: "Un complément est nécessaire pour votre évaluation — 3M TRAVEL AGENCY",
   incident_candidat: "Votre évaluation est en cours de traitement — 3M TRAVEL AGENCY",
 };
 
-async function queueNotification(deps: PipelineDeps, run: RunRecord, recipient: string, kind: "bilan_publie" | "complement_demande" | "incident_candidat"): Promise<void> {
-  const dedupKey = kind === "bilan_publie" ? `${run.id}:${run.reportHash ?? "-"}:${recipient.toLowerCase()}:email` : `${run.id}:${kind}:${recipient.toLowerCase()}:email`;
+export async function queueNotification(deps: PipelineDeps, run: RunRecord, recipient: string, kind: "bilan_publie" | "bilan_mis_a_jour" | "complement_demande" | "incident_candidat", versionTag = ""): Promise<void> {
+  const dedupKey = kind === "bilan_publie" || kind === "bilan_mis_a_jour" ? `${run.id}:${versionTag}:${run.reportHash ?? "-"}:${recipient.toLowerCase()}:email` : `${run.id}:${kind}:${recipient.toLowerCase()}:email`;
   const entry = await deps.store.enqueueOutbox({ runId: run.id, dedupKey, channel: "email", recipient, kind });
   if (entry) await deps.store.updateRun(run.id, { notificationState: "pending" });
 }
@@ -509,6 +521,7 @@ async function queueNotification(deps: PipelineDeps, run: RunRecord, recipient: 
 function emailBody(kind: string, name: string, portalUrl: string): { text: string; html: string } {
   const lines: Record<string, string[]> = {
     bilan_publie: [`Bonjour ${name},`, "", "Votre bilan d'évaluation préliminaire est disponible dans votre espace client sécurisé. Vous pouvez le consulter et télécharger le PDF.", "", `Accéder à mon espace : ${portalUrl}`, "", "Ce message ne contient pas le détail de votre bilan."],
+    bilan_mis_a_jour: [`Bonjour ${name},`, "", "Votre bilan d'évaluation a été mis à jour. La version à jour est disponible dans votre espace client sécurisé, avec son PDF.", "", `Accéder à mon espace : ${portalUrl}`, "", "Ce message ne contient pas le détail de votre bilan."],
     complement_demande: [`Bonjour ${name},`, "", "Pour poursuivre votre évaluation, nous avons besoin de quelques informations complémentaires. Le détail est indiqué dans votre espace client.", "", `Accéder à mon espace : ${portalUrl}`],
     incident_candidat: [`Bonjour ${name},`, "", "Votre évaluation est bien enregistrée. Son traitement prend plus de temps que prévu ; nous revenons vers vous dès qu'il est terminé. Aucune action n'est nécessaire pour le moment.", "", `Suivre mon dossier : ${portalUrl}`],
   };
@@ -532,7 +545,7 @@ export async function processOutbox(deps: PipelineDeps, limit = 20): Promise<{ s
       await deps.store.updateOutbox(entry.id, { state: "accepted_by_provider", providerMessageId: result.messageId ?? null, lastError: null });
       await deps.store.updateRun(run.id, { notificationState: "accepted_by_provider" });
       await deps.store.addEvent({ runId: run.id, evaluationId: run.evaluationId, actor: "systeme", action: "notification_accepted", detail: entry.kind, at: deps.now() });
-      if (entry.kind === "bilan_publie") await deps.onPublicationEmailAccepted?.(run).catch(() => undefined);
+      if (entry.kind === "bilan_publie" || entry.kind === "bilan_mis_a_jour") await deps.onPublicationEmailAccepted?.(run).catch(() => undefined);
       sent += 1;
     } catch (error) {
       const message = (error instanceof Error ? error.message : String(error)).slice(0, 300);

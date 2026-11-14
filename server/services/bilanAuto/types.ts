@@ -45,7 +45,11 @@ export type NotificationState = "none" | "pending" | "accepted_by_provider" | "d
 export const RUN_MODES = ["simulation", "validation_admin", "automatique"] as const;
 export type RunMode = (typeof RUN_MODES)[number];
 
-export type ReportSection = { id: string; title: string; paragraphs: string[]; bullets: string[]; table?: Array<[string, string]> };
+export type ReportSection = {
+  id: string; title: string; paragraphs: string[]; bullets: string[]; table?: Array<[string, string]>;
+  /** Section calculée (verdict, note, rubriques) : jamais éditable en texte libre, régénérée depuis la notation. */
+  locked?: boolean;
+};
 export type BilanReport = {
   candidateName: string;
   dossierRef: string | null;
@@ -135,7 +139,7 @@ export type OutboxEntry = {
   dedupKey: string;
   channel: "email" | "whatsapp";
   recipient: string;
-  kind: "bilan_publie" | "complement_demande" | "incident_candidat";
+  kind: "bilan_publie" | "bilan_mis_a_jour" | "complement_demande" | "incident_candidat";
   state: NotificationState;
   attempts: number;
   providerMessageId: string | null;
@@ -143,6 +147,19 @@ export type OutboxEntry = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+export type VersionStatus = "brouillon" | "publiee" | "remplacee";
+export type VersionRecord = {
+  id: number; runId: number; evaluationId: number; versionNumber: number;
+  authorKind: "systeme" | "admin"; author: string; reason: string | null; status: VersionStatus; baseVersion: number | null;
+  report: BilanReport; scoreResult: ScoreResult | null;
+  /** Sources (offres, repères salariaux) citées par cette version : une ligne éditée ne garde jamais une source qui ne la soutient plus. */
+  sources: Array<{ url: string; title: string; consultedAt: string }>;
+  reportHash: string; pdfKey: string | null;
+  publishedAt: Date | null; publishedBy: string | null; notifiedAt: Date | null; createdAt: Date; updatedAt: Date;
+};
+export type NewVersion = Omit<VersionRecord, "id" | "createdAt" | "updatedAt">;
+export type VersionPatch = Partial<Omit<VersionRecord, "id" | "runId" | "evaluationId" | "versionNumber" | "createdAt" | "updatedAt">>;
 
 export type RunFilter = { states?: RunState[]; reviewStatus?: RunRecord["reviewStatus"]; evaluationId?: number; candidateId?: number; limit?: number };
 
@@ -167,5 +184,9 @@ export interface BilanAutoStore {
   updateOutbox(id: number, patch: Partial<Pick<OutboxEntry, "state" | "attempts" | "providerMessageId" | "lastError">>): Promise<void>;
   listOutbox(runId: number): Promise<OutboxEntry[]>;
   /** Suppression des données de bilan d'un candidat (traitements, journal, outbox). Renvoie les fichiers PDF à effacer du stockage. */
+  /** Versions rédactionnelles du bilan (système puis administrateur). */
+  addVersion(version: NewVersion): Promise<VersionRecord | null>;
+  listVersions(runId: number): Promise<VersionRecord[]>;
+  updateVersion(id: number, patch: VersionPatch, guard?: { expectedStatus?: VersionStatus }): Promise<VersionRecord | null>;
   eraseCandidate(candidateId: number): Promise<{ runs: number; pdfKeys: string[] }>;
 }

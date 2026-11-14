@@ -10,6 +10,10 @@ import { renderHtml, renderText } from "../services/bilanAuto/report";
 import { RUN_STATE_LABELS, type RunRecord, type RunState } from "../services/bilanAuto/types";
 import { bilanAutoTick, getProductionDeps } from "../services/bilanAuto/runtime";
 import { requireValidAdminSession } from "./adminAuth";
+import { EditorialError, changeScore, compareReports, ensureBaseVersion, notifyPublished, publishVersion, saveDraft } from "../services/bilanAuto/versions";
+import { parseEditableText, sectionsToEditableText } from "../../shared/bilanAuto/editableText";
+import { renderPdf } from "../services/bilanAuto/reportPdf";
+import { toClientReport } from "../services/bilanAuto/dbAdapters";
 import { DrizzleSourcesStore, SourceInputSchema } from "../services/bilanAuto/sources";
 import { ensureBilanAutoTables } from "../services/bilanAuto/schemaGuard";
 
@@ -34,6 +38,19 @@ export function matchesFilter(run: Pick<RunRecord, "state" | "mode">, filter: Bi
   if (filter === "pret") return run.state === "ready_for_review" && run.mode !== "simulation";
   return FILTER_STATES[filter].includes(run.state);
 }
+
+const editorial = async <T,>(action: () => Promise<T>): Promise<T> => {
+  try { return await action(); } catch (error) {
+    if (error instanceof EditorialError) throw new TRPCError({ code: "BAD_REQUEST", message: error.problems.length ? `${error.message} ${error.problems.join(" · ")}` : error.message });
+    throw error;
+  }
+};
+const sectionInput = z.object({ id: z.string().max(40), title: z.string().max(200), paragraphs: z.array(z.string().max(4000)).max(60), bullets: z.array(z.string().max(2000)).max(60) });
+
+const versionMeta = (version: { versionNumber: number; authorKind: string; author: string; reason: string | null; status: string; baseVersion: number | null; reportHash: string; pdfKey: string | null; publishedAt: Date | null; publishedBy: string | null; notifiedAt: Date | null; createdAt: Date; updatedAt: Date }) => ({
+  versionNumber: version.versionNumber, authorKind: version.authorKind, author: version.author, reason: version.reason, status: version.status, baseVersion: version.baseVersion, reportHash: version.reportHash.slice(0, 12),
+  hasPdf: Boolean(version.pdfKey), publishedAt: version.publishedAt?.toISOString() ?? null, publishedBy: version.publishedBy, notified: Boolean(version.notifiedAt), createdAt: version.createdAt.toISOString(), updatedAt: version.updatedAt.toISOString(),
+});
 
 async function requireDeps() {
   const deps = await getProductionDeps();
@@ -176,5 +193,132 @@ export const adminBilanAutoRouter = router({
     const deps = await requireDeps();
     const result = await eraseBilanData(deps, input.candidateId, admin.email);
     return { ...result, note: "Les fichiers PDF listés doivent aussi être retirés du stockage (le service de stockage actuel n'expose pas de suppression)." };
+  }),
+
+  // ── Éditeur du bilan : brouillons, notes contrôlées, aperçu, publication, historique ───────────────────────────────
+
+  /** État de l'éditeur : version de travail (dernière non remplacée), historique, textes à copier, autres traitements corrigés du même dossier. */
+  editor: publicProcedure.input(token.extend({ runId: z.number().int().positive() })).query(async ({ input }) => {
+    await requireValidAdminSession(input.sessionToken);
+    const deps = await requireDeps();
+    return editorial(async () => {
+      const run = await deps.store.getRun(input.runId);
+      if (!run || !run.report) throw new EditorialError("Ce traitement n'a pas encore de bilan rédigé.");
+      const base = run.mode === "simulation" ? null : await ensureBaseVersion(deps, run);
+      const versions = await deps.store.listVersions(run.id);
+      const current = [...versions].reverse().find((entry) => entry.status !== "remplacee") ?? base;
+      const report = current?.report ?? run.report;
+      const others = (await deps.store.listRuns({ evaluationId: run.evaluationId, limit: 20 })).filter((other) => other.id !== run.id && other.state !== "superseded");
+      return {
+        run: summarize(run, undefined),
+        editable: run.mode !== "simulation" && ["ready_for_review", "published"].includes(run.state),
+        currentVersion: current ? versionMeta(current) : null,
+        versions: versions.map(versionMeta),
+        sections: report.sections,
+        score: current?.scoreResult ?? run.scoreResult,
+        plainText: renderText(report),
+        html: renderHtml(report),
+        editableText: sectionsToEditableText(report.sections),
+        otherRuns: others.map((other) => ({ id: other.id, state: other.state, stateLabel: RUN_STATE_LABELS[other.state], createdAt: other.createdAt.toISOString() })),
+      };
+    });
+  }),
+
+  saveDraft: publicProcedure.input(token.extend({ runId: z.number().int().positive(), sections: z.array(sectionInput).max(40), reason: z.string().trim().max(300).optional() })).mutation(async ({ input }) => {
+    const admin = await requireValidAdminSession(input.sessionToken);
+    const deps = await requireDeps();
+    return editorial(async () => versionMeta(await saveDraft(deps, input.runId, admin.email, { sections: input.sections, reason: input.reason })));
+  }),
+
+  /** Mode « texte simple » : le texte est relu section par section puis enregistré comme un brouillon. */
+  saveDraftText: publicProcedure.input(token.extend({ runId: z.number().int().positive(), text: z.string().max(120_000), reason: z.string().trim().max(300).optional() })).mutation(async ({ input }) => {
+    const admin = await requireValidAdminSession(input.sessionToken);
+    const deps = await requireDeps();
+    return editorial(async () => {
+      const run = await deps.store.getRun(input.runId);
+      if (!run) throw new EditorialError("Traitement introuvable.");
+      const base = await ensureBaseVersion(deps, run);
+      const versions = await deps.store.listVersions(run.id);
+      const current = [...versions].reverse().find((entry) => entry.status !== "remplacee") ?? base;
+      const unlocked = current.report.sections.filter((section) => !section.locked);
+      const parsed = parseEditableText(input.text, unlocked.length);
+      if (parsed.ok === false) throw new EditorialError(parsed.error);
+      return versionMeta(await saveDraft(deps, input.runId, admin.email, { sections: parsed.sections.map((section, index) => ({ id: unlocked[index].id, ...section })), reason: input.reason }));
+    });
+  }),
+
+  changeScore: publicProcedure.input(token.extend({ runId: z.number().int().positive(), rubric: z.string().max(40), subCriterion: z.string().max(40), points: z.number().int().min(0).max(20), justification: z.string().trim().min(10).max(600) })).mutation(async ({ input }) => {
+    const admin = await requireValidAdminSession(input.sessionToken);
+    const deps = await requireDeps();
+    return editorial(async () => {
+      const version = await changeScore(deps, input.runId, admin.email, { rubric: input.rubric, subCriterion: input.subCriterion, points: input.points, justification: input.justification });
+      return { ...versionMeta(version), score: version.report.score, verdict: version.report.verdictLabel };
+    });
+  }),
+
+  /** Aperçu tel que le candidat le verra (sans le publier). */
+  preview: publicProcedure.input(token.extend({ runId: z.number().int().positive(), versionNumber: z.number().int().positive().optional() })).query(async ({ input }) => {
+    await requireValidAdminSession(input.sessionToken);
+    const deps = await requireDeps();
+    return editorial(async () => {
+      const run = await deps.store.getRun(input.runId);
+      if (!run) throw new EditorialError("Traitement introuvable.");
+      const versions = await deps.store.listVersions(run.id);
+      const version = input.versionNumber ? versions.find((entry) => entry.versionNumber === input.versionNumber) : [...versions].reverse().find((entry) => entry.status !== "remplacee");
+      if (!version) throw new EditorialError("Version introuvable.");
+      return { report: toClientReport(version.report, { id: run.id, scoreResult: version.scoreResult, orientations: run.orientations, validatedBy: version.authorKind === "admin" ? version.author : run.validatedBy }, true, deps.now().toISOString().slice(0, 10)), status: version.status };
+    });
+  }),
+
+  /** Publication d'une version : « sans notification » ou « et notifier » (jamais d'e-mail à l'enregistrement). */
+  publishVersion: publicProcedure.input(token.extend({ runId: z.number().int().positive(), versionNumber: z.number().int().positive(), notify: z.boolean() })).mutation(async ({ input }) => {
+    const admin = await requireValidAdminSession(input.sessionToken);
+    const deps = await requireDeps();
+    const result = await editorial(() => publishVersion(deps, input.runId, input.versionNumber, admin.email, { notify: input.notify }));
+    if (input.notify) await processOutbox(deps).catch(() => undefined);
+    return { versionNumber: result.version.versionNumber, notified: result.notified, alreadyPublished: result.alreadyPublished };
+  }),
+
+  notifyCandidate: publicProcedure.input(token.extend({ runId: z.number().int().positive() })).mutation(async ({ input }) => {
+    const admin = await requireValidAdminSession(input.sessionToken);
+    const deps = await requireDeps();
+    const result = await editorial(() => notifyPublished(deps, input.runId, admin.email));
+    await processOutbox(deps).catch(() => undefined);
+    return result;
+  }),
+
+  /** Comparaison de deux versions du même traitement, ou d'une version avec la proposition d'un autre traitement du dossier. */
+  compare: publicProcedure.input(token.extend({ runId: z.number().int().positive(), fromVersion: z.number().int().positive(), toVersion: z.number().int().positive().optional(), otherRunId: z.number().int().positive().optional() })).query(async ({ input }) => {
+    await requireValidAdminSession(input.sessionToken);
+    const deps = await requireDeps();
+    return editorial(async () => {
+      const versions = await deps.store.listVersions(input.runId);
+      const from = versions.find((entry) => entry.versionNumber === input.fromVersion);
+      if (!from) throw new EditorialError("Version introuvable.");
+      let to = input.toVersion ? versions.find((entry) => entry.versionNumber === input.toVersion) : undefined;
+      if (input.otherRunId) {
+        const other = await deps.store.getRun(input.otherRunId);
+        if (!other || other.evaluationId !== from.evaluationId) throw new EditorialError("Ce traitement n'appartient pas au même dossier.");
+        const otherVersions = await deps.store.listVersions(other.id);
+        to = otherVersions[otherVersions.length - 1] ?? (other.report ? ({ report: other.report } as never) : undefined);
+      }
+      if (!to) throw new EditorialError("Version à comparer introuvable.");
+      return { diff: compareReports(from.report, to.report) };
+    });
+  }),
+
+  /** Télécharge le PDF d'une version : celui qui a été publié, ou un aperçu marqué « brouillon » pour une version non publiée. */
+  downloadPdf: publicProcedure.input(token.extend({ runId: z.number().int().positive(), versionNumber: z.number().int().positive().optional() })).query(async ({ input }) => {
+    await requireValidAdminSession(input.sessionToken);
+    const deps = await requireDeps();
+    return editorial(async () => {
+      const run = await deps.store.getRun(input.runId);
+      if (!run) throw new EditorialError("Traitement introuvable.");
+      const versions = await deps.store.listVersions(run.id);
+      const version = input.versionNumber ? versions.find((entry) => entry.versionNumber === input.versionNumber) : [...versions].reverse().find((entry) => entry.status !== "remplacee");
+      if (!version) throw new EditorialError("Version introuvable.");
+      const bytes = await renderPdf(version.report, { draft: version.status === "brouillon" });
+      return { fileName: `bilan-${run.dossierRef ?? run.evaluationId}-v${version.versionNumber}${version.status === "brouillon" ? "-brouillon" : ""}.pdf`, base64: bytes.toString("base64"), draft: version.status === "brouillon" };
+    });
   }),
 });

@@ -8,12 +8,12 @@ const read = (path: string) => readFileSync(resolve(import.meta.dirname, "..", p
 
 const base = {
   search: "", status: "all", paymentStatus: "all" as const, scoreBand: "all" as const, destination: "all",
-  portraitStatus: "all" as const, sortBy: "createdAt" as const, sortDirection: "desc" as const, page: 1, pageSize: 25,
+  portraitStatus: "all" as const, cvStatus: "all" as const, sortBy: "createdAt" as const, sortDirection: "desc" as const, page: 1, pageSize: 25,
 };
 const record = (id: string, status: string, source: "web" | "agence" | "compte" = "web", paymentStatus: "paye" | "en_attente" | "non_paye" = "non_paye") => ({
   id, applicationNumber: id.toUpperCase(), fullName: `Candidat ${id}`, email: `${id}@example.test`, phone: "", destination: "canada", visaType: "x",
   scoringTotal: 0, scoringBadge: "faible" as const, status, stage: dossierStageOf(status), statusLabel: dossierStatusLabel(status),
-  paymentStatus, createdAt: new Date("2026-11-01"), documentsCount: 0, source, avatarVerificationStatus: "missing" as const, avatarFaceCount: 0,
+  paymentStatus, createdAt: new Date("2026-11-01"), documentsCount: 0, source, avatarVerificationStatus: "missing" as const, avatarFaceCount: 0, cvReceived: false, bilanSent: false,
 });
 
 describe("liste des candidats : étapes et statuts", () => {
@@ -84,5 +84,30 @@ describe("administration candidats et dossiers : garde-fous de l'interface", () 
   it("le tableau Dossiers masque Source, Score, Date et Destination sous 1536 px", () => {
     const dashboard = read("client/src/pages/AdminDashboard.tsx");
     expect((dashboard.match(/hidden 2xl:table-cell/g) ?? []).length).toBeGreaterThanOrEqual(8);
+  });
+});
+
+describe("liste des candidats : file « CV reçu à traiter »", () => {
+  const withCv = (id: string, cvReceived: boolean, bilanSent: boolean) => ({ ...record(id, "en_evaluation"), cvReceived, bilanSent });
+  const records = [withCv("online_1", true, false), withCv("online_2", true, true), withCv("online_3", false, false), withCv("online_4", true, false)];
+  it("« à traiter » = CV reçu ET bilan pas encore envoyé", () => {
+    expect(filterCandidateRecords(records, { ...base, cvStatus: "a_traiter" }).map((r) => r.id).sort()).toEqual(["online_1", "online_4"]);
+  });
+  it("« reçu » garde aussi ceux dont le bilan est envoyé ; « sans » = aucun CV ; « tous » = tout", () => {
+    expect(filterCandidateRecords(records, { ...base, cvStatus: "recu" })).toHaveLength(3);
+    expect(filterCandidateRecords(records, { ...base, cvStatus: "sans" }).map((r) => r.id)).toEqual(["online_3"]);
+    expect(filterCandidateRecords(records, base)).toHaveLength(4);
+  });
+  it("se combine avec la recherche et l'étape", () => {
+    expect(filterCandidateRecords(records, { ...base, cvStatus: "a_traiter", search: "online_4" }).map((r) => r.id)).toEqual(["online_4"]);
+  });
+  it("l'écran propose le filtre et le badge, et le serveur calcule les compteurs sur tout le périmètre", () => {
+    const client = read("client/src/pages/CandidatesManager.tsx");
+    expect(client).toContain('data-testid="cv-filter"');
+    expect(client).toContain("CV reçu à traiter");
+    expect(client).toContain('data-testid="cv-badge"');
+    const server = read("server/routers/adminCandidateManagement.ts");
+    expect(server).toContain("cvToProcessCount");
+    expect(server).toContain("cvReceivedCount");
   });
 });

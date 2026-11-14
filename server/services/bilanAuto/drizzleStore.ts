@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, gte, inArray, isNull, lt, ne, or, sql } from "drizzle-orm";
-import { bilanAutoEvents, bilanAutoOutbox, bilanAutoRuns, type BilanAutoRunRow } from "../../../drizzle/bilanAutoSchema";
+import { bilanAutoEvents, bilanAutoOutbox, bilanAutoRuns, bilanAutoVersions, type BilanAutoRunRow } from "../../../drizzle/bilanAutoSchema";
 import { getDb } from "../../db";
-import type { AuditEvent, BilanAutoStore, NewRun, OutboxEntry, RunFilter, RunPatch, RunRecord, RunState } from "./types";
+import type { AuditEvent, BilanAutoStore, NewRun, NewVersion, OutboxEntry, RunFilter, RunPatch, RunRecord, RunState, VersionPatch, VersionRecord, VersionStatus } from "./types";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
 
@@ -49,6 +49,23 @@ const affected = (result: unknown): number => {
   const header = Array.isArray(result) ? result[0] : result;
   return Number((header as { affectedRows?: number })?.affectedRows ?? 0);
 };
+
+function rowToVersion(row: typeof bilanAutoVersions.$inferSelect): VersionRecord {
+  return {
+    id: row.id, runId: row.runId, evaluationId: row.evaluationId, versionNumber: row.versionNumber, authorKind: row.authorKind as VersionRecord["authorKind"], author: row.author, reason: row.reason,
+    status: row.status as VersionStatus, baseVersion: row.baseVersion, report: parse(row.reportJson, {} as VersionRecord["report"]), scoreResult: parse(row.scoreJson, null), sources: parse(row.sourcesJson, []),
+    reportHash: row.reportHash, pdfKey: row.pdfKey, publishedAt: row.publishedAt, publishedBy: row.publishedBy, notifiedAt: row.notifiedAt, createdAt: row.createdAt, updatedAt: row.updatedAt,
+  };
+}
+
+function versionPatchToValues(patch: VersionPatch): Partial<typeof bilanAutoVersions.$inferInsert> {
+  const values: Record<string, unknown> = {};
+  for (const key of ["authorKind", "author", "reason", "status", "baseVersion", "reportHash", "pdfKey", "publishedAt", "publishedBy", "notifiedAt"] as const) if (key in patch) values[key] = (patch as Record<string, unknown>)[key];
+  if ("report" in patch) values.reportJson = JSON.stringify(patch.report);
+  if ("scoreResult" in patch) values.scoreJson = json(patch.scoreResult);
+  if ("sources" in patch) values.sourcesJson = JSON.stringify(patch.sources ?? []);
+  return values as Partial<typeof bilanAutoVersions.$inferInsert>;
+}
 
 export const isDuplicateKey = (error: unknown) => {
   const e = error as { errno?: number; code?: string; cause?: { errno?: number; code?: string } };
@@ -185,11 +202,38 @@ export class DrizzleBilanAutoStore implements BilanAutoStore {
     return rows.map((row) => this.toOutbox(row));
   }
 
+  async addVersion(version: NewVersion) {
+    try {
+      const inserted = await this.db.insert(bilanAutoVersions).values({ ...(versionPatchToValues(version) as typeof bilanAutoVersions.$inferInsert), runId: version.runId, evaluationId: version.evaluationId, versionNumber: version.versionNumber, reportJson: JSON.stringify(version.report), reportHash: version.reportHash, authorKind: version.authorKind, author: version.author, status: version.status }).$returningId();
+      const [row] = await this.db.select().from(bilanAutoVersions).where(eq(bilanAutoVersions.id, inserted[0].id)).limit(1);
+      return row ? rowToVersion(row) : null;
+    } catch (error) {
+      if (isDuplicateKey(error)) return null;
+      throw error;
+    }
+  }
+
+  async listVersions(runId: number) {
+    const rows = await this.db.select().from(bilanAutoVersions).where(eq(bilanAutoVersions.runId, runId)).orderBy(asc(bilanAutoVersions.versionNumber));
+    return rows.map(rowToVersion);
+  }
+
+  async updateVersion(id: number, patch: VersionPatch, guard?: { expectedStatus?: VersionStatus }) {
+    const values = versionPatchToValues(patch);
+    if (Object.keys(values).length === 0) return null;
+    const conditions = [eq(bilanAutoVersions.id, id), guard?.expectedStatus !== undefined ? eq(bilanAutoVersions.status, guard.expectedStatus) : undefined].filter((c): c is NonNullable<typeof c> => Boolean(c));
+    const result = await this.db.update(bilanAutoVersions).set(values).where(and(...conditions));
+    if (affected(result) === 0) return null;
+    const [row] = await this.db.select().from(bilanAutoVersions).where(eq(bilanAutoVersions.id, id)).limit(1);
+    return row ? rowToVersion(row) : null;
+  }
+
   async eraseCandidate(candidateId: number) {
     const rows = await this.db.select({ id: bilanAutoRuns.id, pdfKey: bilanAutoRuns.pdfKey }).from(bilanAutoRuns).where(eq(bilanAutoRuns.candidateId, candidateId));
     const ids = rows.map((row) => row.id);
     if (ids.length === 0) return { runs: 0, pdfKeys: [] };
     await this.db.delete(bilanAutoOutbox).where(inArray(bilanAutoOutbox.runId, ids));
+    await this.db.delete(bilanAutoVersions).where(inArray(bilanAutoVersions.runId, ids));
     await this.db.delete(bilanAutoEvents).where(inArray(bilanAutoEvents.runId, ids));
     await this.db.delete(bilanAutoRuns).where(inArray(bilanAutoRuns.id, ids));
     return { runs: ids.length, pdfKeys: rows.map((row) => row.pdfKey).filter((key): key is string => Boolean(key)) };

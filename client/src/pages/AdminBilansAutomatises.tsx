@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import AdminBilanSources from "@/components/AdminBilanSources";
+import BilanEditorPanel from "@/components/BilanEditorPanel";
 
 const FILTERS = [
   { id: "pret", label: "Bilan prêt à valider" },
@@ -35,8 +36,8 @@ function stateTone(state: string) {
 export default function AdminBilansAutomatises() {
   const sessionToken = getAdminSessionToken();
   const [, setLocation] = useLocation();
-  const [filter, setFilter] = useState<FilterId>("pret");
-  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<FilterId>(() => (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("q") ? "tous" : "pret"));
+  const [search, setSearch] = useState(() => (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("q") ?? "" : ""));
   const [openId, setOpenId] = useState<number | null>(null);
   const utils = trpc.useUtils();
   const enabled = Boolean(sessionToken);
@@ -135,11 +136,6 @@ export default function AdminBilansAutomatises() {
                   <Badge className={stateTone(run.state)}>{run.stateLabel}</Badge>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {run.state === "ready_for_review" && run.mode !== "simulation" && (
-                    <Button onClick={() => { if (window.confirm("Publier ce bilan dans l'espace client et notifier le candidat par e-mail ?")) validate.mutate({ sessionToken, runId: run.id }); }} disabled={validate.isPending}>
-                      <CheckCircle2 className="mr-2 h-4 w-4" />Valider et publier
-                    </Button>
-                  )}
                   {run.state !== "published" && <Button variant="outline" onClick={() => relaunch.mutate({ sessionToken, evaluationId: run.evaluationId })} disabled={relaunch.isPending}>Relancer le traitement</Button>}
                 </div>
                 <p className="text-xs text-slate-600">Notification : {NOTIFICATION[run.notificationState] ?? run.notificationState}{run.attempts > 0 ? ` · ${run.attempts}/${run.maxAttempts} tentative(s)` : ""}</p>
@@ -157,6 +153,8 @@ export default function AdminBilansAutomatises() {
                 )}
                 {run.previous && <p className="rounded-md bg-blue-50 p-3 text-xs text-blue-900">Évaluation antérieure du {new Date(run.previous.date).toLocaleDateString("fr-FR")} : {run.previous.score ?? "—"}/100 — {run.previous.verdict} ({run.previous.updateNature}).</p>}
               </Card>
+
+              {run.report && run.mode !== "simulation" && ["ready_for_review", "published"].includes(run.state) && <BilanEditorPanel sessionToken={sessionToken} runId={run.id} onChanged={refresh} />}
 
               {run.scoreResult && (
                 <Card className="space-y-3 p-4">

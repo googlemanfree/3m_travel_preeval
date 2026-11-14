@@ -109,3 +109,33 @@ export const bilanAutoSources = mysqlTable("bilan_auto_sources", {
   createdBy: varchar("createdBy", { length: 320 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [index("idx_bilan_auto_sources_country").on(table.country, table.kind, table.active)]);
+
+/**
+ * Versions rédactionnelles d'un bilan : une proposition du système (v1), puis les corrections de l'administrateur. Le contenu éditable
+ * (sections de texte) est conservé À PART du résultat de notation et des faits ; le PDF de chaque version publiée est rattaché à cette version.
+ * Un brouillon n'est jamais visible du candidat : seule la publication écrit dans le parcours d'évaluation.
+ */
+export const bilanAutoVersions = mysqlTable("bilan_auto_versions", {
+  id: int("id").autoincrement().primaryKey(),
+  runId: int("runId").notNull(),
+  evaluationId: int("evaluationId").notNull(),
+  versionNumber: int("versionNumber").notNull(),
+  authorKind: varchar("authorKind", { length: 10 }).notNull(),
+  author: varchar("author", { length: 320 }).notNull(),
+  reason: text("reason"),
+  status: varchar("status", { length: 12 }).notNull(),
+  baseVersion: int("baseVersion"),
+  reportJson: mediumtext("reportJson").notNull(),
+  scoreJson: mediumtext("scoreJson"),
+  sourcesJson: text("sourcesJson"),
+  reportHash: varchar("reportHash", { length: 64 }).notNull(),
+  pdfKey: varchar("pdfKey", { length: 512 }),
+  publishedAt: timestamp("publishedAt"),
+  publishedBy: varchar("publishedBy", { length: 320 }),
+  notifiedAt: timestamp("notifiedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [
+  uniqueIndex("uq_bilan_auto_versions_run_number").on(table.runId, table.versionNumber),
+  index("idx_bilan_auto_versions_evaluation").on(table.evaluationId, table.id),
+]);

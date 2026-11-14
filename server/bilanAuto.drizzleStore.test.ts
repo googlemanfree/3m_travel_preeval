@@ -27,14 +27,14 @@ describe.skipIf(!URL)("store MySQL du bilan automatisé", () => {
     const dbModule = await import("./db");
     db = (await dbModule.getDb())!;
     const guard = await import("./services/bilanAuto/schemaGuard");
-    for (const table of ["bilan_auto_sources", "bilan_auto_outbox", "bilan_auto_events", "bilan_auto_runs"]) await db.execute(sql.raw(`DROP TABLE IF EXISTS ${table}`));
+    for (const table of ["bilan_auto_versions", "bilan_auto_sources", "bilan_auto_outbox", "bilan_auto_events", "bilan_auto_runs"]) await db.execute(sql.raw(`DROP TABLE IF EXISTS ${table}`));
     guard.resetBilanAutoSchemaGuardForTests();
     expect(await guard.ensureBilanAutoTables()).toBe(true);
     expect(await guard.ensureBilanAutoTables()).toBe(true); // idempotent
     const { DrizzleBilanAutoStore } = await import("./services/bilanAuto/drizzleStore");
     store = new DrizzleBilanAutoStore(db);
   });
-  afterAll(async () => { for (const table of ["bilan_auto_sources", "bilan_auto_outbox", "bilan_auto_events", "bilan_auto_runs"]) await db.execute(sql.raw(`DROP TABLE IF EXISTS ${table}`)); });
+  afterAll(async () => { for (const table of ["bilan_auto_versions", "bilan_auto_sources", "bilan_auto_outbox", "bilan_auto_events", "bilan_auto_runs"]) await db.execute(sql.raw(`DROP TABLE IF EXISTS ${table}`)); });
 
   it("insère, relit avec les JSON, et refuse une seconde insertion de la même clé d'idempotence", async () => {
     const first = await store.insertRun({ ...base("k-1"), facts: { ok: true } as never, flags: ["a"] });
@@ -105,5 +105,21 @@ describe.skipIf(!URL)("store MySQL du bilan automatisé", () => {
     expect((await makeReferentialSearch(sources)({ country: "Luxembourg", jobTitle: "Technicienne de maintenance" })).salaries).toHaveLength(0);
     await sources.remove(created.id);
     expect(await sources.list()).toHaveLength(0);
+  });
+
+  it("versions du bilan : numéros uniques par traitement, ordre, mise à jour gardée par statut, suppression avec le candidat", async () => {
+    const run = (await store.insertRun({ ...base("k-versions", 8, 55) }))!;
+    const report = { candidateName: "A", dossierRef: null, referenceDate: NOW.toISOString(), gridVersion: 1, score: 70, scoreMax: 100, threshold: 65, thresholdReached: true, verdictLabel: "v", sections: [{ id: "profil", title: "3", paragraphs: ["p"], bullets: [] }], disclaimer: "d" };
+    const input = { runId: run.id, evaluationId: 8, versionNumber: 1, authorKind: "systeme" as const, author: "systeme", reason: "Proposition", status: "brouillon" as const, baseVersion: null, report, scoreResult: null, sources: [{ url: "https://example.org", title: "t", consultedAt: "2026-11-13" }], reportHash: "h1", pdfKey: null, publishedAt: null, publishedBy: null, notifiedAt: null };
+    const v1 = await store.addVersion(input);
+    expect(v1?.versionNumber).toBe(1);
+    expect(await store.addVersion(input)).toBeNull(); // numéro déjà pris
+    const v2 = await store.addVersion({ ...input, versionNumber: 2, authorKind: "admin", author: "admin@3m.test", baseVersion: 1, reportHash: "h2" });
+    expect((await store.listVersions(run.id)).map((v) => v.versionNumber)).toEqual([1, 2]);
+    expect((await store.listVersions(run.id))[0].sources[0].url).toBe("https://example.org");
+    expect((await store.updateVersion(v2!.id, { status: "publiee", pdfKey: "k/pdf", publishedAt: new Date(), publishedBy: "admin@3m.test" }, { expectedStatus: "brouillon" }))?.status).toBe("publiee");
+    expect(await store.updateVersion(v2!.id, { status: "publiee" }, { expectedStatus: "brouillon" })).toBeNull(); // déjà publiée : un second clic n'écrase rien
+    expect((await store.eraseCandidate(55)).runs).toBe(1);
+    expect(await store.listVersions(run.id)).toHaveLength(0);
   });
 });

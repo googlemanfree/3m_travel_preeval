@@ -1,4 +1,4 @@
-import type { AuditEvent, BilanAutoStore, NewRun, OutboxEntry, RunFilter, RunPatch, RunRecord, RunState } from "./types";
+import type { AuditEvent, BilanAutoStore, NewRun, NewVersion, OutboxEntry, RunFilter, RunPatch, RunRecord, RunState, VersionPatch, VersionRecord, VersionStatus } from "./types";
 
 /** Implémentation en mémoire : tests et mode simulation. Mêmes garanties d'atomicité que la version MySQL (verrou, clé unique, déduplication). */
 export class MemoryBilanAutoStore implements BilanAutoStore {
@@ -6,6 +6,8 @@ export class MemoryBilanAutoStore implements BilanAutoStore {
   private events: AuditEvent[] = [];
   private outbox: OutboxEntry[] = [];
   private seq = 0;
+  private versions: VersionRecord[] = [];
+  private versionSeq = 0;
   private outboxSeq = 0;
   constructor(private readonly clock: () => Date = () => new Date()) {}
 
@@ -91,6 +93,22 @@ export class MemoryBilanAutoStore implements BilanAutoStore {
 
   async listOutbox(runId: number) { return this.outbox.filter((entry) => entry.runId === runId).map((entry) => this.clone(entry)); }
 
+  async addVersion(version: NewVersion) {
+    if (this.versions.some((entry) => entry.runId === version.runId && entry.versionNumber === version.versionNumber)) return null;
+    const now = this.clock();
+    const record: VersionRecord = { ...this.clone(version), id: ++this.versionSeq, createdAt: now, updatedAt: now };
+    this.versions.push(record);
+    return this.clone(record);
+  }
+  async listVersions(runId: number) { return this.versions.filter((entry) => entry.runId === runId).sort((a, b) => a.versionNumber - b.versionNumber).map((entry) => this.clone(entry)); }
+  async updateVersion(id: number, patch: VersionPatch, guard?: { expectedStatus?: VersionStatus }) {
+    const version = this.versions.find((entry) => entry.id === id);
+    if (!version) return null;
+    if (guard?.expectedStatus !== undefined && version.status !== guard.expectedStatus) return null;
+    Object.assign(version, this.clone(patch), { updatedAt: this.clock() });
+    return this.clone(version);
+  }
+
   async eraseCandidate(candidateId: number) {
     const mine = this.runs.filter((run) => run.candidateId === candidateId);
     const ids = new Set(mine.map((run) => run.id));
@@ -98,6 +116,7 @@ export class MemoryBilanAutoStore implements BilanAutoStore {
     this.runs = this.runs.filter((run) => !ids.has(run.id));
     this.events = this.events.filter((event) => event.runId === null || !ids.has(event.runId));
     this.outbox = this.outbox.filter((entry) => !ids.has(entry.runId));
+    this.versions = this.versions.filter((entry) => !ids.has(entry.runId));
     return { runs: ids.size, pdfKeys };
   }
 }

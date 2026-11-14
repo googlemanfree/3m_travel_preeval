@@ -27,7 +27,7 @@ function writeJustified(doc: jsPDF, text: string, x: number, y: number, width: n
   return y;
 }
 
-export async function renderPdf(report: BilanReport): Promise<Buffer> {
+export async function renderPdf(report: BilanReport, options: { draft?: boolean } = {}): Promise<Buffer> {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const logo = await loadBrandLogo();
   const letterhead: LetterheadOptions = {
@@ -36,7 +36,7 @@ export async function renderPdf(report: BilanReport): Promise<Buffer> {
     documentKind: "Bilan d'évaluation préliminaire — projet de travail",
     reference: safe(report.dossierRef ?? ""),
     recipient: safe(report.candidateName),
-    subject: "Bilan d'évaluation préliminaire",
+    subject: options.draft ? "Brouillon — non publié, invisible du candidat" : "Bilan d'évaluation préliminaire",
     serviceFocus: "Mobilité internationale — travail",
   };
   const layout = letterheadLayout(letterhead);
