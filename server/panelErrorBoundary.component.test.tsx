@@ -69,6 +69,7 @@ describe("garde-fou d'un panneau d'administration", () => {
   it("la fiche candidat de l'administration est enveloppée par ce garde-fou", () => {
     const dashboard = read("client/src/pages/AdminDashboard.tsx").replace(/\s+/g, " ");
     expect(dashboard).toContain('<PanelErrorBoundary label="fiche candidat"');
-    expect(dashboard).toMatch(/<\/Candidate360Workspace>|onTabChange=\{setCandidate360Tab\} \/> <\/PanelErrorBoundary>/);
+    // la fiche est chargée à la demande : le garde-fou enveloppe l'attente (Suspense) puis la fiche
+    expect(dashboard).toMatch(/<\/Candidate360Workspace>|onTabChange=\{setCandidate360Tab\} \/> (<\/Suspense> )?<\/PanelErrorBoundary>/);
   });
 });

@@ -4504,10 +4504,14 @@ export const adminRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
       const reference = parseAdminCandidateReference(input.candidateId);
       if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
-      const operationalCase = await ensureOperationalCase(db, reference);
-      const sourceRecord = reference.source === "online"
-        ? (await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1))[0]
-        : (await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
+      // Le dossier opérationnel et la fiche source sont indépendants : lus en même temps (un aller-retour de moins).
+      const [operationalCase, sourceRows] = await Promise.all([
+        ensureOperationalCase(db, reference),
+        reference.source === "online"
+          ? db.select().from(applications).where(eq(applications.id, reference.id)).limit(1)
+          : db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1),
+      ]);
+      const sourceRecord = sourceRows[0] as typeof applications.$inferSelect | typeof agencyDossiers.$inferSelect | undefined;
       if (!sourceRecord) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable." });
       const email = sourceRecord.email;
       const candidateRecord = (await db.select(candidateDetailsSelect).from(candidates).where(eq(candidates.email, email)).limit(1))[0];
@@ -4526,6 +4530,135 @@ export const adminRouter = router({
           return fallback;
         }
       };
+      // (La comparaison d'e-mails reste insensible à la casse et aux espaces sans dépendre de la collation de la base : elle est conservée telle quelle.)
+      // Requêtes indépendantes lancées EN MÊME TEMPS que le lot principal (avant : enchaînées l'une après l'autre, d'où autant d'allers-retours
+      // vers la base). Chacune est protégée : une table ou une colonne absente n'empêche plus d'ouvrir le dossier.
+      const progressCandidateIdEarly = reference.source === "online" ? (sourceRecord as typeof applications.$inferSelect).candidateId : agencyCandidateId;
+      const checklistKeysEarly = checklistProgressKeysForDossier({
+        caseNumber: operationalCase.caseNumber,
+        source: reference.source,
+        sourceId: reference.id,
+        onlineDossierNumber: reference.source === "online" ? (sourceRecord as typeof applications.$inferSelect).dossierNumber : null,
+      });
+      const employerSettingPromise = safeCollection(
+        db.select({ settingValue: agencySettings.settingValue }).from(agencySettings).where(eq(agencySettings.settingKey, employerSelectionSettingKey(reference.source, reference.id))).limit(1),
+        [] as Array<{ settingValue: string | null }>,
+        "employerSelection",
+      );
+      const siblingRowsPromise = safeCollection(
+        Promise.all([
+          db.select({
+            id: applications.id,
+            dossierNumber: applications.dossierNumber,
+            destination: applications.destination,
+            visaType: applications.visaType,
+            dossierStatus: applications.dossierStatus,
+            paymentStatus: applications.paymentStatus,
+            agreementSigned: applications.agreementSigned,
+          }).from(applications).where(and(sql`LOWER(TRIM(${applications.email})) = LOWER(TRIM(${email}))`, isNull(applications.deletedAt))).limit(10),
+          db.select({
+            id: agencyDossiers.id,
+            destination: agencyDossiers.destination,
+            visaType: agencyDossiers.visaType,
+            status: agencyDossiers.status,
+            initialPaymentStatus: agencyDossiers.initialPaymentStatus,
+          }).from(agencyDossiers).where(and(sql`LOWER(TRIM(${agencyDossiers.email})) = LOWER(TRIM(${email}))`, isNull(agencyDossiers.deletedAt))).limit(10),
+        ]).then(([onlineRows, agencyRows]) => {
+          const online = onlineRows.map((row) => ({
+            id: `online_${row.id}`,
+            folderCode: row.dossierNumber,
+            projectType: row.visaType,
+            destinationCountry: row.destination,
+            status: row.dossierStatus,
+            paymentStatus: row.paymentStatus,
+            agreementSigned: row.agreementSigned,
+            source: "online" as const,
+            procedureLabel: procedureLabelForDossier({
+              visaType: row.visaType,
+              destination: row.destination,
+              dossierNumber: row.dossierNumber,
+            }),
+          }));
+          const agency = agencyRows.map((row) => {
+            const folderCode = `3M-AGN-${String(row.id).padStart(4, "0")}`;
+            return {
+              id: `agency_${row.id}`,
+              folderCode,
+              projectType: row.visaType,
+              destinationCountry: row.destination,
+              status: row.status,
+              paymentStatus: row.initialPaymentStatus === "paid" ? "SUCCESS" : "NOT_PAID",
+              agreementSigned: null,
+              source: "agency" as const,
+              procedureLabel: procedureLabelForDossier({
+                visaType: row.visaType,
+                destination: row.destination,
+                dossierNumber: folderCode,
+              }),
+            };
+          });
+          // Un seul dossier actif : masquer les miroirs EVAL-AG dès qu’un 3M-AGN existe.
+          return collapseEvalAgencyShellRows(
+            [...online, ...agency].filter((row) => row.id !== input.candidateId),
+          );
+        }),
+        [],
+        "siblingProcedures",
+      );
+      const placementSummaryPromise = candidateRecord ? safeCollection((async () => {
+          const profile = (await db.select({
+            id: placementCandidateProfiles.id,
+            profileCode: placementCandidateProfiles.profileCode,
+            targetDestination: placementCandidateProfiles.targetDestination,
+            targetProcedure: placementCandidateProfiles.targetProcedure,
+          }).from(placementCandidateProfiles)
+            .where(and(eq(placementCandidateProfiles.candidateId, candidateRecord.id), isNull(placementCandidateProfiles.archivedAt)))
+            .orderBy(desc(placementCandidateProfiles.updatedAt))
+            .limit(1))[0];
+          if (!profile) return null;
+          const submission = (await db.select({
+            id: placementProfileSubmissions.id,
+            status: placementProfileSubmissions.status,
+            adminPipelineStage: placementProfileSubmissions.adminPipelineStage,
+            organizationId: placementProfileSubmissions.organizationId,
+            lastResponseAt: placementProfileSubmissions.lastResponseAt,
+          }).from(placementProfileSubmissions)
+            .where(eq(placementProfileSubmissions.profileId, profile.id))
+            .orderBy(desc(placementProfileSubmissions.lastResponseAt), desc(placementProfileSubmissions.id))
+            .limit(1))[0];
+          const organization = submission
+            ? (await db.select({ legalName: placementOrganizations.legalName, organizationType: placementOrganizations.organizationType }).from(placementOrganizations).where(eq(placementOrganizations.id, submission.organizationId)).limit(1))[0]
+            : null;
+          const consent = (await db.select({ status: candidatePlacementConsents.status }).from(candidatePlacementConsents).where(eq(candidatePlacementConsents.candidateId, candidateRecord.id)).limit(1))[0];
+          return {
+            consentStatus: consent?.status ?? "withdrawn",
+            profileCode: profile.profileCode,
+            targetDestination: profile.targetDestination,
+            targetProcedure: profile.targetProcedure,
+            submissionStatus: submission?.status ?? null,
+            postSelectionStage: submission
+              ? (submission.adminPipelineStage ?? (submission.status === "selected" || submission.status === "procedure_ready" ? submission.status : null))
+              : null,
+            organizationName: organization?.legalName ?? null,
+            organizationType: organization?.organizationType ?? null,
+            updatedAt: submission?.lastResponseAt ?? null,
+          };
+      })(), null, "placementSummary") : Promise.resolve(null);
+      const agencyDocumentsPromise = reference.source === "agency"
+        ? safeCollection(db.select().from(agencyDossierDocuments).where(eq(agencyDossierDocuments.dossierId, reference.id)).orderBy(desc(agencyDossierDocuments.createdAt)).limit(100), [], "agencyDossierDocuments")
+        : Promise.resolve([] as Array<typeof agencyDossierDocuments.$inferSelect>);
+      const checklistRowsPromise = progressCandidateIdEarly && checklistKeysEarly.length
+        ? safeCollection(db.select().from(procedureChecklistProgress).where(and(inArray(procedureChecklistProgress.dossierKey, checklistKeysEarly), eq(procedureChecklistProgress.candidateId, progressCandidateIdEarly))).limit(10), [], "procedureChecklistProgress")
+        : Promise.resolve([] as Array<typeof procedureChecklistProgress.$inferSelect>);
+      const agencyPaymentAuditPromise = reference.source === "agency"
+        ? safeCollection(db.select().from(paymentAuditLogs).where(and(eq(paymentAuditLogs.paymentId, reference.id), eq(paymentAuditLogs.candidateEmail, email))).orderBy(desc(paymentAuditLogs.createdAt)).limit(1), [], "agencyPaymentAudit")
+        : Promise.resolve([] as Array<typeof paymentAuditLogs.$inferSelect>);
+      const receiptApprovalPromise = safeCollection(db.select().from(paymentReceiptApprovals).where(and(eq(paymentReceiptApprovals.source, reference.source), eq(paymentReceiptApprovals.paymentId, reference.id), eq(paymentReceiptApprovals.candidateEmail, email))).orderBy(desc(paymentReceiptApprovals.approvedAt)).limit(1), [], "paymentReceiptApproval");
+      // L'écran n'utilise que le numéro, l'état et la date des versions : on ne transporte plus le contenu complet (jusqu'à 50 × plusieurs centaines de Ko).
+      const evaluationVersionsPromise = reference.source === "online"
+        ? safeCollection(db.select({ id: evaluationBilanVersions.id, applicationId: evaluationBilanVersions.applicationId, versionNumber: evaluationBilanVersions.versionNumber, approvalStatus: evaluationBilanVersions.approvalStatus, requiresSecondApproval: evaluationBilanVersions.requiresSecondApproval, pdfUrl: evaluationBilanVersions.pdfUrl, sentAt: evaluationBilanVersions.sentAt, createdAt: evaluationBilanVersions.createdAt }).from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, reference.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(50), [] as Array<Pick<typeof evaluationBilanVersions.$inferSelect, "id" | "applicationId" | "versionNumber" | "approvalStatus" | "requiresSecondApproval" | "pdfUrl" | "sentAt" | "createdAt">>, "evaluationBilanVersions")
+        : Promise.resolve([] as Array<Pick<typeof evaluationBilanVersions.$inferSelect, "id" | "applicationId" | "versionNumber" | "approvalStatus" | "requiresSecondApproval" | "pdfUrl" | "sentAt" | "createdAt">>);
+
       const [requirements, operationalDocuments, legacyDocuments, tasks, notes, statusHistory, activityLogs, notifications, messages, documentClarifications, documentClarificationEventHistory, advisors, requestHistory, latestEvaluations] = await Promise.all([
         safeCollection(db.select().from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(asc(documentRequirements.requestedAt)).limit(100), [], "requirements"),
         safeCollection(db.select().from(caseDocuments).where(eq(caseDocuments.caseId, operationalCase.id)).orderBy(desc(caseDocuments.uploadedAt)).limit(100), [], "caseDocuments"),
@@ -4544,33 +4677,10 @@ export const adminRouter = router({
         safeCollection(db.select().from(unifiedClientRequestHistory).where(eq(unifiedClientRequestHistory.requestId, operationalCase.id)).orderBy(desc(unifiedClientRequestHistory.createdAt)).limit(30), [], "requestHistory"),
         safeCollection(db.select().from(evaluations).where(eq(evaluations.email, email)).orderBy(desc(evaluations.createdAt)).limit(1), [], "evaluations"),
       ]);
-      const agencyDocuments = reference.source === "agency"
-        ? await safeCollection(
-            db.select().from(agencyDossierDocuments)
-              .where(eq(agencyDossierDocuments.dossierId, reference.id))
-              .orderBy(desc(agencyDossierDocuments.createdAt))
-              .limit(100),
-            [],
-            "agencyDossierDocuments",
-          )
-        : [];
-      const progressCandidateId = reference.source === "online" ? (sourceRecord as typeof applications.$inferSelect).candidateId : agencyCandidateId;
-      const checklistKeys = checklistProgressKeysForDossier({
-        caseNumber: operationalCase.caseNumber,
-        source: reference.source,
-        sourceId: reference.id,
-        onlineDossierNumber: reference.source === "online" ? (sourceRecord as typeof applications.$inferSelect).dossierNumber : null,
-      });
-      const checklistProgressRows = progressCandidateId && checklistKeys.length
-        ? await safeCollection(
-            db.select().from(procedureChecklistProgress).where(and(
-              inArray(procedureChecklistProgress.dossierKey, checklistKeys),
-              eq(procedureChecklistProgress.candidateId, progressCandidateId),
-            )).limit(10),
-            [],
-            "procedureChecklistProgress",
-          )
-        : [];
+      const agencyDocuments = await agencyDocumentsPromise;
+      const progressCandidateId = progressCandidateIdEarly;
+      const checklistKeys = checklistKeysEarly;
+      const checklistProgressRows = await checklistRowsPromise;
       const persistedJourneyStepIds = new Set<string>();
       for (const row of checklistProgressRows) {
         for (const stepId of parseAdminChecklistStepIds(row.completedStepIds)) persistedJourneyStepIds.add(stepId);
@@ -4580,22 +4690,8 @@ export const adminRouter = router({
       const agencyCvDocument = agencyDocuments.find((document) => normalizeAdminDocumentType(document.documentType, document.documentName) === "cv") ?? null;
       const pendingDocuments = requirements.filter((requirement) => ["pending", "rejected"].includes(requirement.status)).length;
       const openTasks = tasks.filter((task) => ["open", "in_progress"].includes(task.taskStatus)).length;
-      const latestAgencyPaymentAudit = reference.source === "agency"
-        ? (await safeCollection(
-            db.select().from(paymentAuditLogs)
-              .where(and(eq(paymentAuditLogs.paymentId, reference.id), eq(paymentAuditLogs.candidateEmail, email)))
-              .orderBy(desc(paymentAuditLogs.createdAt)).limit(1),
-            [],
-            "agencyPaymentAudit",
-          ))[0] ?? null
-        : null;
-      const latestReceiptApproval = await safeCollection(
-        db.select().from(paymentReceiptApprovals)
-          .where(and(eq(paymentReceiptApprovals.source, reference.source), eq(paymentReceiptApprovals.paymentId, reference.id), eq(paymentReceiptApprovals.candidateEmail, email)))
-          .orderBy(desc(paymentReceiptApprovals.approvedAt)).limit(1),
-        [],
-        "paymentReceiptApproval",
-      );
+      const latestAgencyPaymentAudit = (await agencyPaymentAuditPromise)[0] ?? null;
+      const latestReceiptApproval = await receiptApprovalPromise;
       const receiptApproval = latestReceiptApproval[0] ?? null;
       const paymentSnapshot = reference.source === "online" ? {
         status: (sourceRecord as typeof applications.$inferSelect).paymentStatus,
@@ -4614,9 +4710,7 @@ export const adminRouter = router({
         paidAt: latestAgencyPaymentAudit?.createdAt ?? null,
         receiptApproval: receiptApproval ? { id: receiptApproval.id, approvedByName: receiptApproval.approvedByName, approvedByEmail: receiptApproval.approvedByEmail, approvedAt: receiptApproval.approvedAt, signatureLabel: receiptApproval.signatureLabel, signatureHash: receiptApproval.signatureHash } : null,
       };
-      const evaluationVersions = reference.source === "online"
-        ? await db.select().from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, reference.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(50)
-        : [];
+      const evaluationVersions = await evaluationVersionsPromise;
       const latestEvaluation = latestEvaluations[0];
       const projectDetails = parseEvaluationProjectDetails(latestEvaluation?.projectDetailsJson);
       const procedureLabel = [projectDetails.procedureName, projectDetails.procedureLabel, projectDetails.selectedProcedureLabel, projectDetails.procedure]
@@ -4688,7 +4782,7 @@ export const adminRouter = router({
       const onlineApp = reference.source === "online" ? (sourceRecord as typeof applications.$inferSelect) : null;
       const { loadAgencyAgreementSignature } = await import("../services/agencyAgreementSignature");
       const agencyAgreementSignature = reference.source === "agency"
-        ? await loadAgencyAgreementSignature(db, reference.id)
+        ? await safeCollection(loadAgencyAgreementSignature(db, reference.id), null, "agencyAgreementSignature")
         : null;
       const protocolOneSigned = Boolean(onlineApp?.agreementSigned) || Boolean(agencyAgreementSignature);
       const secondProtocol = describeSecondProtocolState({
@@ -4703,11 +4797,7 @@ export const adminRouter = router({
       });
       // Sélection employeur additive (agency_settings) — lecture seule des dossiers actifs.
       const employerSettingKey = employerSelectionSettingKey(reference.source, reference.id);
-      const [employerSettingRow] = await db
-        .select({ settingValue: agencySettings.settingValue })
-        .from(agencySettings)
-        .where(eq(agencySettings.settingKey, employerSettingKey))
-        .limit(1);
+      const [employerSettingRow] = await employerSettingPromise;
       const storedEmployerSelection = parseEmployerSelectionSetting(employerSettingRow?.settingValue) as EmployerSelectionRecord | null;
       const employerSelectedFlag = isEmployerSelected({
         stored: storedEmployerSelection,
@@ -4715,66 +4805,7 @@ export const adminRouter = router({
         secondAgreementEmployer: onlineApp?.secondAgreementEmployer,
         recruitmentPartnerName: onlineApp?.recruitmentPartnerName,
       });
-      const siblingRows = await safeCollection(
-        Promise.all([
-          db.select({
-            id: applications.id,
-            dossierNumber: applications.dossierNumber,
-            destination: applications.destination,
-            visaType: applications.visaType,
-            dossierStatus: applications.dossierStatus,
-            paymentStatus: applications.paymentStatus,
-            agreementSigned: applications.agreementSigned,
-          }).from(applications).where(and(sql`LOWER(TRIM(${applications.email})) = LOWER(TRIM(${email}))`, isNull(applications.deletedAt))).limit(10),
-          db.select({
-            id: agencyDossiers.id,
-            destination: agencyDossiers.destination,
-            visaType: agencyDossiers.visaType,
-            status: agencyDossiers.status,
-            initialPaymentStatus: agencyDossiers.initialPaymentStatus,
-          }).from(agencyDossiers).where(and(sql`LOWER(TRIM(${agencyDossiers.email})) = LOWER(TRIM(${email}))`, isNull(agencyDossiers.deletedAt))).limit(10),
-        ]).then(([onlineRows, agencyRows]) => {
-          const online = onlineRows.map((row) => ({
-            id: `online_${row.id}`,
-            folderCode: row.dossierNumber,
-            projectType: row.visaType,
-            destinationCountry: row.destination,
-            status: row.dossierStatus,
-            paymentStatus: row.paymentStatus,
-            agreementSigned: row.agreementSigned,
-            source: "online" as const,
-            procedureLabel: procedureLabelForDossier({
-              visaType: row.visaType,
-              destination: row.destination,
-              dossierNumber: row.dossierNumber,
-            }),
-          }));
-          const agency = agencyRows.map((row) => {
-            const folderCode = `3M-AGN-${String(row.id).padStart(4, "0")}`;
-            return {
-              id: `agency_${row.id}`,
-              folderCode,
-              projectType: row.visaType,
-              destinationCountry: row.destination,
-              status: row.status,
-              paymentStatus: row.initialPaymentStatus === "paid" ? "SUCCESS" : "NOT_PAID",
-              agreementSigned: null,
-              source: "agency" as const,
-              procedureLabel: procedureLabelForDossier({
-                visaType: row.visaType,
-                destination: row.destination,
-                dossierNumber: folderCode,
-              }),
-            };
-          });
-          // Un seul dossier actif : masquer les miroirs EVAL-AG dès qu’un 3M-AGN existe.
-          return collapseEvalAgencyShellRows(
-            [...online, ...agency].filter((row) => row.id !== input.candidateId),
-          );
-        }),
-        [],
-        "siblingProcedures",
-      );
+      const siblingRows = await siblingRowsPromise;
       const dualOpportunityHandoff = dualOpportunityHandoffMessage({
         currentProcedure: procedureLabel ?? visaTypeForJourney,
         siblingProcedures: siblingRows,
@@ -4788,11 +4819,11 @@ export const adminRouter = router({
       let redirectToCanonicalAgencyId: string | null = null;
       const evalShellPurged = false;
       if (evalShellId != null) {
-        const [linkedAgency] = await db
-          .select({ id: agencyDossiers.id })
-          .from(agencyDossiers)
-          .where(and(eq(agencyDossiers.id, evalShellId), isNull(agencyDossiers.deletedAt)))
-          .limit(1);
+        const [linkedAgency] = await safeCollection(
+          db.select({ id: agencyDossiers.id }).from(agencyDossiers).where(and(eq(agencyDossiers.id, evalShellId), isNull(agencyDossiers.deletedAt))).limit(1),
+          [] as Array<{ id: number }>,
+          "linkedAgency",
+        );
         if (linkedAgency) {
           redirectToCanonicalAgencyId = canonicalAgencyCandidateId(linkedAgency.id);
         }
@@ -5033,45 +5064,7 @@ export const adminRouter = router({
         canonicalFolderCode: reference.source === "agency"
           ? agencyDisplayReference(sourceRecord as typeof agencyDossiers.$inferSelect, candidateRecord?.id)
           : (evalShellId != null ? canonicalAgencyFolderCode(evalShellId) : null),
-        placementSummary: candidateRecord ? await safeCollection((async () => {
-          const profile = (await db.select({
-            id: placementCandidateProfiles.id,
-            profileCode: placementCandidateProfiles.profileCode,
-            targetDestination: placementCandidateProfiles.targetDestination,
-            targetProcedure: placementCandidateProfiles.targetProcedure,
-          }).from(placementCandidateProfiles)
-            .where(and(eq(placementCandidateProfiles.candidateId, candidateRecord.id), isNull(placementCandidateProfiles.archivedAt)))
-            .orderBy(desc(placementCandidateProfiles.updatedAt))
-            .limit(1))[0];
-          if (!profile) return null;
-          const submission = (await db.select({
-            id: placementProfileSubmissions.id,
-            status: placementProfileSubmissions.status,
-            adminPipelineStage: placementProfileSubmissions.adminPipelineStage,
-            organizationId: placementProfileSubmissions.organizationId,
-            lastResponseAt: placementProfileSubmissions.lastResponseAt,
-          }).from(placementProfileSubmissions)
-            .where(eq(placementProfileSubmissions.profileId, profile.id))
-            .orderBy(desc(placementProfileSubmissions.lastResponseAt), desc(placementProfileSubmissions.id))
-            .limit(1))[0];
-          const organization = submission
-            ? (await db.select({ legalName: placementOrganizations.legalName, organizationType: placementOrganizations.organizationType }).from(placementOrganizations).where(eq(placementOrganizations.id, submission.organizationId)).limit(1))[0]
-            : null;
-          const consent = (await db.select({ status: candidatePlacementConsents.status }).from(candidatePlacementConsents).where(eq(candidatePlacementConsents.candidateId, candidateRecord.id)).limit(1))[0];
-          return {
-            consentStatus: consent?.status ?? "withdrawn",
-            profileCode: profile.profileCode,
-            targetDestination: profile.targetDestination,
-            targetProcedure: profile.targetProcedure,
-            submissionStatus: submission?.status ?? null,
-            postSelectionStage: submission
-              ? (submission.adminPipelineStage ?? (submission.status === "selected" || submission.status === "procedure_ready" ? submission.status : null))
-              : null,
-            organizationName: organization?.legalName ?? null,
-            organizationType: organization?.organizationType ?? null,
-            updatedAt: submission?.lastResponseAt ?? null,
-          };
-        })(), null, "placementSummary") : null,
+        placementSummary: await placementSummaryPromise,
         /** Identifiant `candidates.id` pour la fiche synthèse / placement — distinct de internalId (application ou dossier agence). */
         candidateAccountId: candidateRecord?.id ?? null,
         advisors,
