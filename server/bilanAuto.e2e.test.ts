@@ -146,4 +146,39 @@ describe.skipIf(!URL)("parcours complet sur base réelle", () => {
     const [row] = await ctx.db.select().from(ctx.schema.evaluations).where(eq(ctx.schema.evaluations.id, ev.id));
     expect(JSON.parse(row.projectDetailsJson!)).toMatchObject({ preparatoryCvAnalysisConsent: true, preparatoryCvAnalysisConsentSource: "espace_candidat" });
   });
+
+  it("correction : le brouillon reste invisible du candidat, la publication met à jour son bilan, l'ancienne version reste en historique", async () => {
+    const pipeline = await import("./services/bilanAuto/pipeline");
+    const versions = await import("./services/bilanAuto/versions");
+    const { buildCandidateView } = await import("./services/evaluationValidationCore");
+    const [ev] = await ctx.db.insert(ctx.schema.evaluations).values({
+      candidateId: ctx.candidateId, fullName: "Awa Ndiaye", email: ctx.email, phone: "+237600000000", dateOfBirth: "1995-04-02", educationLevel: "Licence", yearsOfExperience: "5-10 ans", frenchLevel: "B2",
+      destinationCategory: "schengen", destinationCountry: "Luxembourg", visaType: "schengen_travail", projectType: "travail", cvFileUrl: "https://files.test/cv-awa-3.pdf", cvFileName: "cv-awa-3.pdf",
+      projectDetailsJson: JSON.stringify({ preparatoryCvAnalysisConsent: true }), referenceCode: `E2E-EDIT-${Date.now()}`,
+    } as never).$returningId();
+    await pipeline.submitForAnalysis(ctx.deps, ev.id);
+    const run = (await pipeline.processNext(ctx.deps))!;
+    expect(run.state).toBe("ready_for_review");
+    const viewOf = async () => buildCandidateView({ latest: await ctx.validation.store.getLatestCase(ev.id), latestPublished: await ctx.validation.store.getLatestPublishedCase(ev.id), cv: { onFile: true, fileName: "cv.pdf" } });
+
+    // publication de la proposition, puis brouillon de correction : le candidat voit encore la proposition
+    const first = await versions.publishVersion(ctx.deps, run.id, 1, "admin@3m.test", { notify: false });
+    expect(first.version.status).toBe("publiee");
+    const profileSection = run.report!.sections.find((s: any) => s.id === "profil")!;
+    const draft = await versions.saveDraft(ctx.deps, run.id, "admin@3m.test", { sections: run.report!.sections.filter((s: any) => !s.locked).map((s: any) => (s.id === "profil" ? { ...s, paragraphs: ["Texte corrigé MARQUEUR-E2E."] } : s)), reason: "Correction du profil" });
+    expect(draft.versionNumber).toBe(2);
+    let view = await viewOf();
+    expect(JSON.stringify(view)).not.toContain("MARQUEUR-E2E");
+    expect(JSON.stringify(view.report?.automated?.sections)).toContain(profileSection.paragraphs[0].slice(0, 30));
+
+    await versions.publishVersion(ctx.deps, run.id, 2, "admin@3m.test", { notify: false });
+    view = await viewOf();
+    expect(view.stage).toBe("published");
+    expect(JSON.stringify(view.report?.automated?.sections)).toContain("MARQUEUR-E2E");
+    expect(view.report?.automated?.reviewedByAgency).toBe(true);
+    const history = await ctx.deps.store.listVersions(run.id);
+    expect(history.map((v: any) => [v.versionNumber, v.status])).toEqual([[1, "remplacee"], [2, "publiee"]]);
+    expect(history.every((v: any) => v.pdfKey)).toBe(true);
+    expect(JSON.stringify(history[0].report)).not.toContain("MARQUEUR-E2E");
+  });
 });

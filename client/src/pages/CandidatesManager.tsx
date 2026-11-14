@@ -92,6 +92,8 @@ interface Candidate {
   avatarVerificationStatus: "missing" | "pending" | "verified" | "rejected";
   avatarVerificationReason?: string | null;
   avatarFaceCount: number;
+  cvReceived?: boolean;
+  bilanSent?: boolean;
 }
 
 // ─── MOCK DATA ───────────────────────────────────────────────────────────────
@@ -447,6 +449,8 @@ export default function CandidatesManager() {
   );
   const [searchQuery, setSearchQuery] = useState(initialUrlState.searchQuery);
   const [statusFilter, setStatusFilter] = useState(initialUrlState.statusFilter);
+  // File de traitement rapide : candidats dont le CV est reçu et dont le bilan n'est pas encore envoyé.
+  const [cvFilter, setCvFilter] = useState<"all" | "a_traiter" | "recu" | "sans">("all");
   const [paymentFilter, setPaymentFilter] = useState(initialUrlState.paymentFilter);
   const [scoreFilter, setScoreFilter] = useState(initialUrlState.scoreFilter);
   const [destinationFilter, setDestinationFilter] = useState(initialUrlState.destinationFilter);
@@ -471,12 +475,13 @@ export default function CandidatesManager() {
       scoreBand,
       destination: destinationFilter === "tous" ? "all" : destinationFilter,
       portraitStatus: "all" as const,
+      cvStatus: cvFilter,
       sortBy: sortBy as "createdAt" | "fullName" | "score",
       sortDirection: "desc" as const,
       page,
       pageSize,
     };
-  }, [searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy, page, pageSize]);
+  }, [searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, cvFilter, sortBy, page, pageSize]);
   const { data, isLoading, error } = trpc.adminCandidateManagement.list.useQuery(filterInput);
   const savedViewsQuery = trpc.adminSavedViews.list.useQuery();
   const bilanReadyQuery = trpc.adminBilanAuto.list.useQuery({ sessionToken: getAdminSessionToken(), filter: "pret" }, { retry: false, staleTime: 60_000 });
@@ -740,6 +745,20 @@ export default function CandidatesManager() {
               />
             </div>
 
+            <div data-testid="cv-filter">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">CV</p>
+              <div className="flex flex-wrap gap-1" role="group" aria-label="Filtrer selon le CV">
+                {([
+                  ["a_traiter", `CV reçu à traiter${data?.stats ? ` (${data.stats.cvToProcessCount})` : ""}`],
+                  ["recu", `CV reçu${data?.stats ? ` (${data.stats.cvReceivedCount})` : ""}`],
+                  ["sans", "Sans CV"],
+                  ["all", "Tous"],
+                ] as const).map(([value, label]) => (
+                  <button key={value} type="button" aria-pressed={cvFilter === value} onClick={() => { setCvFilter(value); resetToFirstPage(); }} className={`h-9 rounded-md border px-3 text-sm font-semibold ${cvFilter === value ? "border-[#0B2A52] bg-[#0B2A52] text-white" : "border-slate-300 bg-white text-slate-800 hover:bg-slate-50"}`}>{label}</button>
+                ))}
+              </div>
+            </div>
+
             {bilanReadyQuery.data?.enabled && (
               <div>
                 <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Bilans</p>
@@ -894,6 +913,11 @@ export default function CandidatesManager() {
                         <p className="text-xs text-gray-500">
                           {candidate.applicationNumber}
                         </p>
+                        {candidate.cvReceived && (
+                          <a href={`/admin/bilans?q=${encodeURIComponent(candidate.email)}`} className={`mr-1 mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${candidate.bilanSent ? "bg-slate-100 text-slate-700" : "bg-emerald-100 text-emerald-900"}`} data-testid="cv-badge" title={candidate.bilanSent ? "CV reçu, bilan déjà envoyé — ouvrir le bilan" : "CV reçu : bilan à traiter — ouvrir le bilan"}>
+                            {candidate.bilanSent ? "CV reçu · bilan envoyé" : "CV reçu · à traiter"}
+                          </a>
+                        )}
                         {candidate.source === "compte" && (
                           <span className="mt-1 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700" title="Compte inscrit qui n’a pas encore de dossier ouvert">
                             Compte sans dossier

@@ -9,7 +9,7 @@ import { invokeLLM } from "../../_core/llm";
 import { storageGetSignedUrl, storagePut } from "../../storage";
 import { cvAnalysisConsented, loadCvExcerpt, loadStoredCvBuffer } from "../cvTextLoader";
 import { getValidationStore } from "../evaluationValidationStore";
-import { ensureCase, requestInformation, startReevaluation, type ValidationDeps } from "../evaluationValidationCore";
+import { ensureCase, requestInformation, type ValidationDeps } from "../evaluationValidationCore";
 import { clientReportToPlainText } from "../../../shared/evaluationValidation";
 import { configFromEnv, type EvaluationInputs, type Mailer, type PipelineDeps, type Publisher } from "./pipeline";
 import { DrizzleBilanAutoStore } from "./drizzleStore";
@@ -164,7 +164,14 @@ export function makePublisher(validation: ValidationDeps, now: () => Date): Publ
     async publish(run, report, pdf) {
       let current = await ensureCase(validation, run.evaluationId);
       if (current.workflowStatus === "validee_publiee" || current.workflowStatus === "validee_publiee_notifiee") {
-        current = await startReevaluation(validation, ACTOR, run.evaluationId, { reason: "Nouveau bilan automatisé" });
+        // Nouvelle version du parcours. `startReevaluation` exige une version rédigée dans l'éditeur classique, absente d'une publication
+        // automatisée : on ouvre directement une nouvelle ligne, le bilan déjà publié restant visible du candidat jusqu'à la publication suivante.
+        const created = await validation.store.insertCase(
+          { evaluationId: run.evaluationId, versionNumber: current.versionNumber + 1, workflowStatus: "en_revue_admin", aiDraft: current.aiDraft, aiDraftGeneratedAt: current.aiDraftGeneratedAt, aiDraftModel: current.aiDraftModel, aiDraftWarnings: current.aiDraftWarnings },
+          { audit: { adminEmail: ACTOR.email, action: "bilan_auto_new_version", note: "Nouvelle version du bilan automatisé" } },
+        );
+        if (!created) throw new Error("Le parcours d'évaluation a changé : réessayez.");
+        current = created;
       }
       const publishedAt = now();
       const clientReport = toClientReport(report, run, Boolean(pdf), publishedAt.toISOString().slice(0, 10));

@@ -8,7 +8,7 @@ import { z } from "zod";
 import { and, desc, eq, inArray, isNull, isNotNull, like, or, sql } from "drizzle-orm";
 import { checkNoProofReason, checkPaymentReference, referenceKey } from "../../shared/openingPaymentReference";
 import { declaredProjectWarnings } from "../../shared/declaredConsistency";
-import { applications, agencyDossiers, agencyDossierDocuments, agencyDossierHistory, agencySettings, clientDocuments, candidateFiles, candidateMessages, candidates, evaluations, paymentAuditLogs, paymentReceiptApprovals } from "../../drizzle/schema";
+import { applications, agencyDossiers, agencyDossierDocuments, agencyDossierHistory, agencySettings, clientDocuments, candidateFiles, candidateMessages, candidates, evaluationValidationCases, evaluations, paymentAuditLogs, paymentReceiptApprovals } from "../../drizzle/schema";
 import { caseActivityLogs, caseStatusHistory, cases, clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
 import { requireAdminSessionFromCookie, requireSuperAdminSession, requireValidAdminSession } from "./adminAuth";
@@ -73,6 +73,8 @@ const candidateFilterSchema = z.object({
   scoreBand: z.enum(["all", "excellent", "bon", "moyen", "faible"]).default("all"),
   destination: z.string().trim().max(100).optional().default("all"),
   portraitStatus: z.enum(["all", "missing", "pending", "verified", "rejected"]).default("all"),
+  /** CV : « a_traiter » = CV reçu et bilan pas encore envoyé (file de traitement rapide). */
+  cvStatus: z.enum(["all", "a_traiter", "recu", "sans"]).default("all"),
   sortBy: z.enum(["createdAt", "fullName", "score"]).default("createdAt"),
   sortDirection: z.enum(["asc", "desc"]).default("desc"),
   page: z.number().int().min(1).default(1),
@@ -104,6 +106,10 @@ type AdminCandidate = {
   avatarVerificationStatus: "missing" | "pending" | "verified" | "rejected";
   avatarVerificationReason?: string | null;
   avatarFaceCount: number;
+  /** Un CV est au dossier (évaluation, dossier en ligne ou agence, fichiers du compte). */
+  cvReceived: boolean;
+  /** Un bilan a déjà été envoyé ou publié pour ce candidat. */
+  bilanSent: boolean;
 };
 
 function escapeAgreementHtml(value: string): string {
@@ -295,12 +301,20 @@ async function loadCandidateRecords(sourceLimit = 5000): Promise<AdminCandidate[
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
-  const [online, agency, documents, candidateRows] = await Promise.all([
+  const [online, agency, documents, candidateRows, cvEvaluationRows, cvFileRows, publishedRows] = await Promise.all([
     db.select().from(applications).orderBy(desc(applications.createdAt)).limit(sourceLimit),
     db.select().from(agencyDossiers).orderBy(desc(agencyDossiers.createdAt)).limit(sourceLimit),
     db.select().from(clientDocuments).limit(Math.min(sourceLimit * 2, 10000)),
     db.select().from(candidates).limit(sourceLimit),
+    db.select({ email: evaluations.email }).from(evaluations).where(sql`${evaluations.cvFileUrl} IS NOT NULL AND ${evaluations.cvFileUrl} <> ''`).limit(10000),
+    db.select({ candidateId: candidateFiles.candidateId }).from(candidateFiles).where(eq(candidateFiles.fileType, "cv")).limit(10000),
+    // la table du parcours de validation peut manquer sur une base non migrée : le filtre « CV » continue de fonctionner
+    db.select({ email: evaluations.email }).from(evaluationValidationCases).innerJoin(evaluations, eq(evaluations.id, evaluationValidationCases.evaluationId)).where(isNotNull(evaluationValidationCases.publishedAt)).limit(10000).catch(() => [] as Array<{ email: string }>),
   ]);
+  const cvEmails = new Set(cvEvaluationRows.map(row => row.email.toLowerCase()));
+  const cvCandidateIds = new Set(cvFileRows.map(row => row.candidateId));
+  const publishedEmails = new Set(publishedRows.map(row => row.email.toLowerCase()));
+  const hasCv = (email: string, ownCv?: string | null) => Boolean(ownCv?.trim()) || cvEmails.has(email.toLowerCase()) || (candidateByEmail.get(email.toLowerCase()) !== undefined && cvCandidateIds.has(candidateByEmail.get(email.toLowerCase())!.id));
   const candidateByEmail = new Map<string, typeof candidates.$inferSelect>();
   for (const candidate of candidateRows as Array<typeof candidates.$inferSelect>) {
     candidateByEmail.set(candidate.email.toLowerCase(), candidate);
@@ -329,6 +343,8 @@ async function loadCandidateRecords(sourceLimit = 5000): Promise<AdminCandidate[
       avatarVerificationStatus: candidateByEmail.get(application.email.toLowerCase())?.avatarVerificationStatus ?? "missing",
       avatarVerificationReason: candidateByEmail.get(application.email.toLowerCase())?.avatarVerificationReason ?? null,
       avatarFaceCount: candidateByEmail.get(application.email.toLowerCase())?.avatarFaceCount ?? 0,
+      cvReceived: hasCv(application.email, application.cvUrl),
+      bilanSent: application.evaluationDeliveryStatus === "sent" || publishedEmails.has(application.email.toLowerCase()),
     }) as AdminCandidate);
   const agencyCandidates: AdminCandidate[] = agency.map(dossier => ({
       id: `agency_${dossier.id}`,
@@ -351,6 +367,8 @@ async function loadCandidateRecords(sourceLimit = 5000): Promise<AdminCandidate[
       avatarVerificationStatus: candidateByEmail.get(dossier.email.toLowerCase())?.avatarVerificationStatus ?? "missing",
       avatarVerificationReason: candidateByEmail.get(dossier.email.toLowerCase())?.avatarVerificationReason ?? null,
       avatarFaceCount: candidateByEmail.get(dossier.email.toLowerCase())?.avatarFaceCount ?? 0,
+      cvReceived: hasCv(dossier.email),
+      bilanSent: publishedEmails.has(dossier.email.toLowerCase()),
     }) as AdminCandidate);
   // Candidats inscrits mais sans dossier (ni en ligne, ni agence) : ils étaient invisibles de cette liste.
   const emailsWithDossier = new Set<string>([...online.map(item => item.email), ...agency.map(item => item.email)].map(email => email.toLowerCase()));
@@ -377,6 +395,8 @@ async function loadCandidateRecords(sourceLimit = 5000): Promise<AdminCandidate[
       avatarVerificationStatus: candidate.avatarVerificationStatus ?? "missing",
       avatarVerificationReason: candidate.avatarVerificationReason ?? null,
       avatarFaceCount: candidate.avatarFaceCount ?? 0,
+      cvReceived: hasCv(candidate.email),
+      bilanSent: publishedEmails.has(candidate.email.toLowerCase()),
     }) as AdminCandidate);
   return onlineCandidates.concat(agencyCandidates, accountOnlyCandidates);
 }
@@ -395,6 +415,9 @@ export function filterCandidateRecords(records: AdminCandidate[], filter: Candid
   if (filter.scoreBand !== "all") candidateRecords = candidateRecords.filter(candidate => candidate.scoringBadge === filter.scoreBand);
   if (filter.destination !== "all") candidateRecords = candidateRecords.filter(candidate => candidate.destination.toLowerCase() === filter.destination.toLowerCase());
   if (filter.portraitStatus !== "all") candidateRecords = candidateRecords.filter(candidate => candidate.avatarVerificationStatus === filter.portraitStatus);
+  if (filter.cvStatus === "a_traiter") candidateRecords = candidateRecords.filter(candidate => candidate.cvReceived && !candidate.bilanSent);
+  else if (filter.cvStatus === "recu") candidateRecords = candidateRecords.filter(candidate => candidate.cvReceived);
+  else if (filter.cvStatus === "sans") candidateRecords = candidateRecords.filter(candidate => !candidate.cvReceived);
 
   candidateRecords.sort((left, right) => {
     const direction = filter.sortDirection === "asc" ? 1 : -1;
@@ -1967,7 +1990,7 @@ export const adminCandidateManagementRouter = router({
     const pagination = paginateCandidates(candidates, input.page, input.pageSize);
     return {
       candidates: pagination.records,
-      stats: { scopeTotal: scope.length, stageCounts, paidCount: scope.filter(record => record.paymentStatus === "paye").length, withoutDossierCount: scope.filter(record => record.source === "compte").length },
+      stats: { scopeTotal: scope.length, stageCounts, paidCount: scope.filter(record => record.paymentStatus === "paye").length, withoutDossierCount: scope.filter(record => record.source === "compte").length, cvToProcessCount: scope.filter(record => record.cvReceived && !record.bilanSent).length, cvReceivedCount: scope.filter(record => record.cvReceived).length },
       total: pagination.total,
       page: pagination.page,
       pageSize: pagination.pageSize,

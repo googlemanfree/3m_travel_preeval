@@ -67,12 +67,47 @@ export type ReportInput = {
   injectionSuspected: boolean;
 };
 
+export function verdictLabelOf(score: ScoreResult): string {
+  return score.thresholdReached ? `Seuil interne atteint (${score.total}/${score.max}, seuil ${score.threshold})` : `Seuil interne non atteint à ce stade (${score.total}/${score.max}, seuil ${score.threshold})`;
+}
+
+/** Section « Verdict interne et note expliquée » : entièrement dérivée de la notation, jamais saisie à la main. */
+export function buildVerdictSection(score: ScoreResult): ReportSection {
+  const entry = section(
+    "verdict",
+    "2. Verdict interne et note expliquée",
+    [
+      `${verdictLabelOf(score)}. Ce score mesure la préparation du dossier et l'adéquation du profil au projet de travail ; il n'est pas une décision officielle d'immigration.`,
+      "Le total est calculé par le système à partir de règles publiées, rubrique par rubrique.",
+    ],
+    [],
+    score.rubrics.map((rubric): [string, string] => [rubric.label, `${rubric.points ?? "non calculable"}/${rubric.max}`]),
+  );
+  for (const rubric of score.rubrics) {
+    entry.bullets.push(...rubric.subCriteria.map((sub) => `${rubric.label} · ${sub.label} : ${sub.points ?? "non évaluable"}/${sub.max} — ${sub.explanation} (${PROVENANCE_LABEL[sub.provenance]})`));
+  }
+  return { ...entry, locked: true };
+}
+
+/**
+ * Applique une notation (corrigée par l'administrateur) à un bilan déjà rédigé : le verdict, la note et le détail des rubriques sont
+ * régénérés ; les autres sections, y compris les textes modifiés à la main, restent intacts.
+ */
+export function applyScoreToReport(report: BilanReport, score: ScoreResult): BilanReport {
+  return {
+    ...report,
+    score: score.calculable ? score.total : null,
+    thresholdReached: score.calculable ? score.thresholdReached : null,
+    verdictLabel: verdictLabelOf(score),
+    gridVersion: score.gridVersion,
+    sections: report.sections.map((entry) => (entry.id === "verdict" ? buildVerdictSection(score) : entry)),
+  };
+}
+
 export function buildReport(input: ReportInput): BilanReport {
   const { facts, score, orientations, previous } = input;
   const flags = score.rubrics.flatMap((rubric) => rubric.subCriteria.flatMap((sub) => sub.flags));
-  const verdict = score.thresholdReached
-    ? `Seuil interne atteint (${score.total}/${score.max}, seuil ${score.threshold})`
-    : `Seuil interne non atteint à ce stade (${score.total}/${score.max}, seuil ${score.threshold})`;
+  const verdict = verdictLabelOf(score);
   const sections: ReportSection[] = [];
 
   // 1. Rappel d'une évaluation antérieure
@@ -82,22 +117,8 @@ export function buildReport(input: ReportInput): BilanReport {
       : section("rappel", "1. Rappel d'une évaluation antérieure", ["Aucune évaluation antérieure n'a été trouvée pour ce compte."]),
   );
 
-  // 2. Verdict interne et note expliquée
-  sections.push(
-    section(
-      "verdict",
-      "2. Verdict interne et note expliquée",
-      [
-        `${verdict}. Ce score mesure la préparation du dossier et l'adéquation du profil au projet de travail ; il n'est pas une décision officielle d'immigration.`,
-        "Le total est calculé par le système à partir de règles publiées, rubrique par rubrique.",
-      ],
-      [],
-      score.rubrics.map((rubric): [string, string] => [rubric.label, `${rubric.points ?? "non calculable"}/${rubric.max}`]),
-    ),
-  );
-  for (const rubric of score.rubrics) {
-    sections[sections.length - 1].bullets.push(...rubric.subCriteria.map((sub) => `${rubric.label} · ${sub.label} : ${sub.points ?? "non évaluable"}/${sub.max} — ${sub.explanation} (${PROVENANCE_LABEL[sub.provenance]})`));
-  }
+  // 2. Verdict interne et note expliquée (section calculée : verrouillée)
+  sections.push(buildVerdictSection(score));
 
   // 3. Profil et points forts
   const strengths = score.rubrics
