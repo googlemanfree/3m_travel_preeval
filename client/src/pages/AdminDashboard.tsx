@@ -230,7 +230,8 @@ import AdminTodayDashboard, { type TodayCandidate } from "@/components/AdminToda
 import { AdminCandidateKanban, getNextKanbanStatus, type KanbanCandidate } from "@/components/AdminCandidateKanban";
 import { AdminCalendarView } from "@/components/AdminCalendarView";
 import { UnifiedRequestInbox } from "@/components/UnifiedRequestInbox";
-import { Candidate360Workspace } from "@/components/Candidate360Workspace";
+// Chargée à l'ouverture d'une fiche seulement : ce composant d'environ 2 500 lignes alourdissait chaque ouverture du tableau de bord.
+const Candidate360Workspace = lazy(() => import("@/components/Candidate360Workspace").then(({ Candidate360Workspace: Workspace }) => ({ default: Workspace })));
 import { adminLoginUrl, clearAdminSession, isAdminSessionError } from "@/lib/adminSession";
 import FlightAgentDashboard from "@/pages/FlightAgentDashboard";
 import { AdvisorEvaluationReviewQueue } from "@/components/AdvisorEvaluationReviewQueue";
@@ -1308,6 +1309,7 @@ export function CandidateDetailModal({
               </>
             ) : (
               <PanelErrorBoundary label="fiche candidat" resetKey={(candidate as any)?.id}>
+              <Suspense fallback={<div role="status" aria-live="polite" className="space-y-3 p-4" data-testid="fiche-360-chargement"><div className="h-20 animate-pulse rounded-xl bg-slate-100 motion-reduce:animate-none" /><div className="h-40 animate-pulse rounded-xl bg-slate-100 motion-reduce:animate-none" /><span className="sr-only">Chargement de la fiche…</span></div>}>
               <Candidate360Workspace
                 sessionToken={sessionToken}
                 candidate={candidate as any}
@@ -1330,6 +1332,7 @@ export function CandidateDetailModal({
                 initialTab={candidate360Tab}
                 onTabChange={setCandidate360Tab}
               />
+              </Suspense>
               </PanelErrorBoundary>
             )}
 

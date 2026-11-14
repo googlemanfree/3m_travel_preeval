@@ -39,6 +39,9 @@ import { buildEvisaMessageSnapshot, buildEvisaMessageTemplate, type EvisaMessage
 import { mergeEvisaCatalogue } from "@/lib/evisaCatalogueMerge";
 import { buildAgreementProtocolText, buildSecondAgreementProtocolText, AGREEMENT_PROTOCOL_VERSION } from "@shared/agreementProtocolContent";
 import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from "@shared/adminSync";
+import PanelErrorBoundary from "@/components/PanelErrorBoundary";
+
+const DOSSIER_360_POLL_MS = ADMIN_DOSSIER_POLL_MS * 2;
 import { ADMIN_MESSAGE_TEMPLATES, fillAdminTemplate, formatActivationTransition, templateForStage } from "@shared/adminOpsToolkit";
 import { resolveEvaluationProjectKind } from "@shared/evaluationVisaCv";
 import { whatsappLink } from "@shared/remoteSupport";
@@ -241,7 +244,8 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
       enabled: Boolean(sessionToken && candidate.id),
       placeholderData: (previous) => previous,
       retry: 2,
-      ...adminDossierPolling(ADMIN_DOSSIER_POLL_MS),
+      // Fiche lourde : rafraîchie une fois par minute (la liste reste à 30 s) ; les actions de l'administrateur la rafraîchissent aussitôt.
+      ...adminDossierPolling(DOSSIER_360_POLL_MS),
     },
   );
   const canonicalizeDossierMutation = trpc.admin.canonicalizeActiveDossier.useMutation({
@@ -1381,6 +1385,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4 pt-4">
+          <PanelErrorBoundary label="onglet overview" resetKey={`${candidate.id}:overview`}>
           <div id="candidate360-overview-summary" data-testid="candidate360-overview-summary" className="scroll-mt-24">
             <AdminCandidateSummaryCard
               sessionToken={sessionToken}
@@ -1813,9 +1818,11 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
               </aside>
             </div>
           </section>
+          </PanelErrorBoundary>
         </TabsContent>
 
         <TabsContent value="evaluation" className="space-y-3 pt-4">
+          <PanelErrorBoundary label="onglet evaluation" resetKey={`${candidate.id}:evaluation`}>
           <div id="candidate360-evaluation-panel" className="scroll-mt-24 rounded-xl border border-blue-100 bg-blue-50/50 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h4 className="font-semibold text-slate-900">Bilan d’évaluation</h4><p className="mt-1 text-sm text-slate-600">Score IFP 3M : <strong>{candidate.scoringTotal ?? "À calculer"}{candidate.scoringTotal !== null ? "/100" : ""}</strong>. Les versions et approbations restent traçables.</p></div><div className="flex flex-wrap gap-2">{canPrepareEvaluation && <Button className="bg-blue-700 hover:bg-blue-800" onClick={() => setEvaluationOpen(true)}><FileText className="mr-2 h-4 w-4" />{data.evaluationVersions.length ? "Ouvrir le bilan" : "Préparer la première évaluation"}</Button>}<Button variant="outline" className="border-emerald-300 text-emerald-800 hover:bg-emerald-50" disabled={evaluationAlreadyValidated || offlineEvaluationMutation.isPending || actionLocks.offlineEvaluation} onClick={() => setOfflineEvaluationOpen(true)}><UserCheck className="mr-2 h-4 w-4" />{evaluationAlreadyValidated ? "Évaluation déjà validée" : "Valider l’évaluation hors ligne"}</Button></div></div></div>
           <div id="candidate360-protocol-panel" className="scroll-mt-24 rounded-xl border border-amber-200 bg-amber-50/50 p-4" data-testid="candidate360-protocol-panel"><div className="flex flex-wrap items-center justify-between gap-3"><div><h4 className="font-semibold text-slate-950">Protocole d’accord</h4><p className="mt-1 text-sm text-slate-700">Relancez la signature client, renvoyez l’accès, ou préparez un envoi manuel. Le serveur exige un paiement confirmé — aucun rewrite de statut dossier.</p></div><Badge variant="outline" className="border-amber-300 text-amber-800">{protocolSigned ? "Signé" : paymentConfirmed ? "À signer" : "Après paiement"}</Badge></div>{paymentConfirmed && !protocolSigned && /^(online|agency)_\d+$/.test(candidate.id) ? (<div id="candidate360-protocol-relance" className="mt-3 scroll-mt-24 flex flex-wrap items-center gap-2 rounded-lg border border-indigo-200 bg-white/80 p-3" data-testid="candidate360-protocol-relance"><p className="mr-auto text-sm text-slate-700"><strong className="text-indigo-900">Action prioritaire :</strong> relancer la signature ou renvoyer le lien d’accès.</p><Button type="button" size="sm" variant="outline" className="gap-1.5 border-indigo-200 text-indigo-900 hover:bg-indigo-50" disabled={!sessionToken || protocolRemindMutation.isPending || actionLocks.protocolRemind} onClick={() => { lockAction("protocolRemind"); protocolRemindMutation.mutate({ sessionToken, candidateId: candidate.id }); }} data-testid="candidate360-protocol-remind">{protocolRemindMutation.isPending || actionLocks.protocolRemind ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />}Relancer signature</Button><Button type="button" size="sm" variant="outline" className="gap-1.5 border-slate-300 text-slate-800" disabled={!sessionToken || resendAccessMutation.isPending || actionLocks.resendAccess} onClick={() => { lockAction("resendAccess"); resendAccessMutation.mutate({ sessionToken, candidateId: candidate.id }); }} data-testid="candidate360-protocol-access">{resendAccessMutation.isPending || actionLocks.resendAccess ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}Accès</Button></div>) : <div id="candidate360-protocol-relance" className="sr-only" aria-hidden="true" data-testid="candidate360-protocol-relance" />}<div className="mt-3 grid gap-3"><div><Label htmlFor="agreement-subject">Objet de l’e-mail</Label><Input id="agreement-subject" value={agreementSubject} onChange={(event) => setAgreementSubject(event.target.value)} placeholder={`Protocole d’accord — ${candidate.folderCode}`} maxLength={255} /></div><div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3"><p className="text-xs leading-5 text-blue-900">Après confirmation et sélection d’une procédure, utilisez le modèle distinct du second protocole, puis complétez-le et faites-le relire avant diffusion.</p><Button type="button" variant="outline" className="border-blue-300 text-blue-800 hover:bg-blue-100" onClick={() => { setAgreementSubject(`Second protocole — ${candidate.destinationCountry} — ${candidate.projectType}`); setAgreementContent(buildSecondAgreementProtocolText(candidate.destinationCountry, candidate.projectType, candidate.projectType)); }}>Charger le modèle du second protocole</Button></div><div><Label htmlFor="agreement-content">Texte du protocole</Label><Textarea id="agreement-content" value={agreementContent} onChange={(event) => setAgreementContent(event.target.value)} rows={10} maxLength={12000} /></div><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-slate-500">{agreementContent.length}/12000 caractères · Signature client verrouillée avant paiement.</p><div className="flex flex-wrap gap-2"><Button type="button" variant="outline" className="gap-1.5 border-indigo-300 text-indigo-800 hover:bg-indigo-50" onClick={() => setAgreementPreviewOpen(true)} data-testid="candidate360-preview-agreement"><Eye className="h-4 w-4" />Aperçu dynamique</Button><Button type="button" className="bg-amber-700 text-white hover:bg-amber-800" disabled={agreementContent.trim().length < 50 || agreementProtocolMutation.isPending || actionLocks.agreementProtocol} onClick={() => { lockAction("agreementProtocol"); agreementProtocolMutation.mutate({ sessionToken, candidateId: candidate.id, subject: agreementSubject.trim() || undefined, content: agreementContent.trim() }); }}>{agreementProtocolMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Envoi…</> : <><Send className="mr-2 h-4 w-4" />Envoyer par e-mail et déposer</>}</Button></div></div></div></div>
           {(data as any)?.placementSummary && (
@@ -1895,9 +1902,11 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             </div>
           )}
           {data.evaluationVersions.length ? <div className="space-y-2">{data.evaluationVersions.map((version: any) => <div key={version.id} className="flex items-center justify-between rounded-lg border p-3"><div><p className="text-sm font-medium">Version {version.versionNumber}</p><p className="text-xs text-slate-500">Créée le {formatDate(version.createdAt)}</p></div><StateBadge status={version.approvalStatus} /></div>)}</div> : <p className="rounded-lg border border-dashed p-4 text-sm text-slate-500">Aucun bilan versionné. Préparez l’évaluation lorsque les informations sont complètes.</p>}
+          </PanelErrorBoundary>
         </TabsContent>
 
         <TabsContent value="documents" className="space-y-3 pt-4">
+          <PanelErrorBoundary label="onglet documents" resetKey={`${candidate.id}:documents`}>
           <section id="candidate360-documents-panel" className="scroll-mt-24 rounded-xl border border-violet-200 bg-violet-50/60 p-4" data-testid="candidate360-documents-hub">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
@@ -2021,6 +2030,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
           }) : <p className="text-sm text-slate-500">Aucun document opérationnel n’est encore centralisé dans ce dossier.</p>}</div></div>
             </div>
           </details>
+          </PanelErrorBoundary>
         </TabsContent>
 
         <Dialog open={agreementPreviewOpen} onOpenChange={setAgreementPreviewOpen}>
@@ -2205,6 +2215,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
           </DialogContent>
         </Dialog>
         <TabsContent value="payments" className="space-y-3 pt-4">
+          <PanelErrorBoundary label="onglet payments" resetKey={`${candidate.id}:payments`}>
           <div id="candidate360-payments-panel" className="scroll-mt-24 space-y-3">
           {paymentConfirmed ? (
             <div
@@ -2292,9 +2303,11 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
           </section>
           {data.payments.length ? data.payments.map((payment: any, index: number) => { const normalizedStatus = String(payment.status ?? "").trim().toUpperCase(); const normalizedMethod = String(payment.method ?? "").trim().toUpperCase(); const paymentConfirmed = ["SUCCESS", "PAID", "CONFIRMED", "CONFIRMÉ", "CONFIRMED_BY_ADVISER"].includes(normalizedStatus) || (normalizedMethod === "AGENCE" && Boolean(payment.paidAt)); return <div key={index} className="rounded-xl border p-4"><div className="flex items-center justify-between"><div className="flex items-center gap-2"><CreditCard className="h-5 w-5 text-blue-700" /><div><p className="font-semibold text-slate-900">Frais de dossier</p><p className="text-sm text-slate-500">{payment.amount?.toLocaleString("fr-FR")} {payment.currency} · {payment.method || "Méthode à préciser"}</p></div></div><StateBadge status={String(payment.status).toLowerCase()} /></div><p className="mt-3 text-sm text-slate-600">Référence : {payment.reference || "Non renseignée"} · Date : {formatDate(payment.paidAt)}</p>{paymentConfirmed && <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-blue-100 bg-blue-50/60 p-3"><div><p className="text-xs text-blue-950">Le reçu doit être validé et signé électroniquement par l’agence avant l’envoi.</p>{payment.receiptApproval ? <p className="mt-1 text-xs font-medium text-emerald-700">Validé par {payment.receiptApproval.approvedByEmail} le {formatDate(payment.receiptApproval.approvedAt)}</p> : <p className="mt-1 text-xs text-amber-700">Validation admin requise · frais non remboursables après début du traitement.</p>}</div><div className="flex flex-wrap gap-2">{!payment.receiptApproval && <Button type="button" size="sm" variant="outline" className="gap-2 border-blue-300 text-blue-800" disabled={approvePaymentReceiptMutation.isPending || actionLocks.approveReceipt} onClick={() => { lockAction("approveReceipt"); approvePaymentReceiptMutation.mutate({ sessionToken, candidateId: candidate.id }); }}>{approvePaymentReceiptMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" />Validation…</> : <><CheckCircle2 className="h-4 w-4" />Valider et signer</>}</Button>}{payment.receiptApproval && <Button type="button" size="sm" className="gap-2 bg-blue-700 text-white hover:bg-blue-800" disabled={paymentReceiptMutation.isPending || actionLocks.paymentReceipt} onClick={() => { lockAction("paymentReceipt"); paymentReceiptMutation.mutate({ sessionToken, candidateId: candidate.id, deliveryMode: "resend" }); }}>{paymentReceiptMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" />Envoi…</> : <><Mail className="h-4 w-4" />Envoyer le reçu PDF</>}</Button>}{paymentConfirmed && <Button type="button" size="sm" variant="outline" className="gap-2 border-rose-300 text-rose-800 hover:bg-rose-50" disabled={cancelValidatedPaymentMutation.isPending} onClick={() => setCancelPaymentDialogOpen(true)}><X className="h-4 w-4" />Annuler le paiement effectué</Button>}</div></div>}</div>; }) : <p className="rounded-lg border border-dashed p-4 text-sm text-slate-500">Aucun paiement relié à ce dossier agence.</p>}
           </div>
+          </PanelErrorBoundary>
         </TabsContent>
 
         <TabsContent value="messages" className="grid gap-3 pt-4 sm:grid-cols-2">
+          <PanelErrorBoundary label="onglet messages" resetKey={`${candidate.id}:messages`}>
           {unifiedTimeline.filter((entry) => ["message", "notification", "clarification", "email", "whatsapp"].includes(entry.channel)).length > 0 ? (
             <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 sm:col-span-2" data-testid="candidate360-messages-unified-preview">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -2388,9 +2401,11 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
           </div>
           <div className="rounded-xl border p-4"><h4 className="flex items-center gap-2 font-semibold"><Bell className="h-4 w-4 text-blue-700" />Notifications client</h4><div className="mt-3 space-y-2">{data.communications.notifications.length ? data.communications.notifications.map((notification: any) => <div key={notification.id} className="rounded-lg bg-slate-50 p-3"><p className="text-sm font-medium">{notification.title}</p><p className="mt-1 text-xs text-slate-600">{notification.body}</p><p className="mt-1 text-xs text-slate-400">{formatDate(notification.createdAt)}</p></div>) : <p className="text-sm text-slate-500">Aucune notification enregistrée.</p>}</div></div>
           <div className="rounded-xl border p-4"><div className="flex flex-wrap items-center justify-between gap-2"><h4 className="flex items-center gap-2 font-semibold"><MessageSquare className="h-4 w-4 text-blue-700" />Échanges</h4><CommunicationHistoryPdfButton sessionToken={sessionToken} candidateId={candidate.id} candidateName={candidate.fullName} folderCode={candidate.folderCode} messages={data.communications.messages} notifications={data.communications.notifications} /></div><div className="mt-3 space-y-2">{data.communications.messages.length ? data.communications.messages.map((message: any) => { const snapshot = message.evisaSnapshotJson ? (() => { try { return JSON.parse(message.evisaSnapshotJson); } catch { return null; } })() : null; return <div key={message.id} className="rounded-lg bg-slate-50 p-3"><p className="text-sm font-medium">{message.senderRole === "candidate" ? "Candidat" : "Administration"}</p><p className="mt-1 text-xs text-slate-600 line-clamp-3">{message.content}</p>{snapshot?.items?.length ? <div className="mt-2 rounded border border-cyan-200 bg-cyan-50 p-2 text-xs text-cyan-950"><p className="font-semibold">Instantané e‑Visa partagé</p>{snapshot.items.map((item: any) => <p key={item.destinationId}>{item.country} · vérifié le {item.officialVerifiedAt} · <a className="underline" href={item.officialPortalUrl} target="_blank" rel="noreferrer">portail officiel</a></p>)}</div> : null}<p className="mt-1 text-xs text-slate-400">{formatDate(message.createdAt)}</p></div>; }) : <p className="text-sm text-slate-500">Aucun message dans ce fil.</p>}</div></div>
+          </PanelErrorBoundary>
         </TabsContent>
 
         <TabsContent value="history" className="space-y-4 pt-4">
+          <PanelErrorBoundary label="onglet history" resetKey={`${candidate.id}:history`}>
           <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4 shadow-sm" data-testid="candidate360-unified-timeline">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
@@ -2445,6 +2460,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             <div className="rounded-xl border p-4"><h4 className="flex items-center gap-2 font-semibold"><FileText className="h-4 w-4 text-blue-700" />Décisions et notes internes</h4><div className="mt-3 space-y-2">{data.notes.length ? data.notes.slice(0, 12).map((note: any) => <div key={note.id} className="rounded-lg bg-slate-50 p-3"><p className="text-sm text-slate-700">{note.note}</p><p className="mt-1 text-xs text-slate-400">{formatDate(note.createdAt)}</p></div>) : <p className="text-sm text-slate-500">Aucune note interne. Ajoutez une décision dans Vue d’ensemble.</p>}</div></div>
             <div className="rounded-xl border p-4"><h4 className="flex items-center gap-2 font-semibold"><FolderKanban className="h-4 w-4 text-blue-700" />Détails statut serveur</h4><p className="mt-2 text-sm text-slate-600">{data.statusHistory.length} changement(s) de statut conservé(s), relu(s) depuis le dossier opérationnel.</p><p className="mt-1 text-xs text-slate-500">Les transitions restent séparées des notes privées et des tâches.</p></div>
           </div>
+          </PanelErrorBoundary>
         </TabsContent>
       </Tabs>
 

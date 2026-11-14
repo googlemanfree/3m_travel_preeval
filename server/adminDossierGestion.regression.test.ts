@@ -19,7 +19,9 @@ describe("gestion des dossiers côté admin (sans mutation des données client)"
 
   it("poll la fiche 360° et affiche la sync de référence", () => {
     const workspace = read("client/src/components/Candidate360Workspace.tsx");
-    expect(workspace).toContain("adminDossierPolling(ADMIN_DOSSIER_POLL_MS)");
+    // la fiche lourde est rafraîchie au rythme du registre multiplié par deux (une minute) : elle poll toujours, moins souvent
+    expect(workspace).toContain("DOSSIER_360_POLL_MS = ADMIN_DOSSIER_POLL_MS * 2");
+    expect(workspace).toContain("adminDossierPolling(DOSSIER_360_POLL_MS)");
     expect(workspace).toContain('data-testid="candidate360-sync"');
     expect(workspace).toContain("candidate.folderCode");
   });

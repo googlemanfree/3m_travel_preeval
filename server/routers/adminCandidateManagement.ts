@@ -297,15 +297,37 @@ export async function requireAdminTreatmentSession(cookieHeader: string | undefi
   }
 }
 
+/**
+ * Colonnes réellement utilisées par la liste : avant, `select()` rapatriait TOUTES les colonnes (70 et plus pour les dossiers, dont de gros
+ * textes JSON) de TOUTES les lignes à chaque affichage ou rafraîchissement, puis filtrait en mémoire.
+ */
+const onlineListColumns = { id: applications.id, dossierNumber: applications.dossierNumber, fullName: applications.fullName, email: applications.email, whatsappNumber: applications.whatsappNumber, destination: applications.destination, visaType: applications.visaType, scoringTotal: applications.scoringTotal, evaluationScore: applications.evaluationScore, scoringBadge: applications.scoringBadge, dossierStatus: applications.dossierStatus, paymentStatus: applications.paymentStatus, createdAt: applications.createdAt, evaluationDeliveryStatus: applications.evaluationDeliveryStatus, cvUrl: applications.cvUrl };
+const agencyListColumns = { id: agencyDossiers.id, fullName: agencyDossiers.fullName, email: agencyDossiers.email, phone: agencyDossiers.phone, destination: agencyDossiers.destination, visaType: agencyDossiers.visaType, status: agencyDossiers.status, createdAt: agencyDossiers.createdAt };
+const candidateListColumns = { id: candidates.id, email: candidates.email, fullName: candidates.fullName, phone: candidates.phone, destination: candidates.destination, visaType: candidates.visaType, dossierStatus: candidates.dossierStatus, createdAt: candidates.createdAt, deletedAt: candidates.deletedAt, avatarUrl: candidates.avatarUrl, avatarVerificationStatus: candidates.avatarVerificationStatus, avatarVerificationReason: candidates.avatarVerificationReason, avatarFaceCount: candidates.avatarFaceCount };
+
+// Un même chargement sert les appels simultanés (tableau de bord, liste, compteurs) : une seule lecture de la base au lieu d'une par appel.
+let recordsInFlight: { limit: number; at: number; promise: Promise<AdminCandidate[]> } | null = null;
+const RECORDS_SHARE_MS = 1500;
 async function loadCandidateRecords(sourceLimit = 5000): Promise<AdminCandidate[]> {
+  const now = Date.now();
+  if (recordsInFlight && recordsInFlight.limit === sourceLimit && now - recordsInFlight.at < RECORDS_SHARE_MS) return [...(await recordsInFlight.promise)];
+  const promise = loadCandidateRecordsFromDb(sourceLimit);
+  recordsInFlight = { limit: sourceLimit, at: now, promise };
+  promise.catch(() => { if (recordsInFlight?.promise === promise) recordsInFlight = null; });
+  return [...(await promise)];
+}
+export function resetCandidateRecordsShareForTests() { recordsInFlight = null; }
+
+async function loadCandidateRecordsFromDb(sourceLimit = 5000): Promise<AdminCandidate[]> {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
-  const [online, agency, documents, candidateRows, cvEvaluationRows, cvFileRows, publishedRows] = await Promise.all([
-    db.select().from(applications).orderBy(desc(applications.createdAt)).limit(sourceLimit),
-    db.select().from(agencyDossiers).orderBy(desc(agencyDossiers.createdAt)).limit(sourceLimit),
-    db.select().from(clientDocuments).limit(Math.min(sourceLimit * 2, 10000)),
-    db.select().from(candidates).limit(sourceLimit),
+  const [online, agency, documentCountRows, candidateRows, cvEvaluationRows, cvFileRows, publishedRows] = await Promise.all([
+    db.select(onlineListColumns).from(applications).orderBy(desc(applications.createdAt)).limit(sourceLimit),
+    db.select(agencyListColumns).from(agencyDossiers).orderBy(desc(agencyDossiers.createdAt)).limit(sourceLimit),
+    // le nombre de documents par adresse se compte dans la base : avant, jusqu'à 10 000 lignes de documents étaient transférées pour être comptées ici
+    db.select({ email: clientDocuments.candidateEmail, n: sql<number>`count(*)` }).from(clientDocuments).groupBy(clientDocuments.candidateEmail),
+    db.select(candidateListColumns).from(candidates).limit(sourceLimit),
     db.select({ email: evaluations.email }).from(evaluations).where(sql`${evaluations.cvFileUrl} IS NOT NULL AND ${evaluations.cvFileUrl} <> ''`).limit(10000),
     db.select({ candidateId: candidateFiles.candidateId }).from(candidateFiles).where(eq(candidateFiles.fileType, "cv")).limit(10000),
     // la table du parcours de validation peut manquer sur une base non migrée : le filtre « CV » continue de fonctionner
@@ -320,7 +342,7 @@ async function loadCandidateRecords(sourceLimit = 5000): Promise<AdminCandidate[
     candidateByEmail.set(candidate.email.toLowerCase(), candidate);
   }
   const documentCounts = new Map<string, number>();
-  documents.forEach(document => documentCounts.set(document.candidateEmail.toLowerCase(), (documentCounts.get(document.candidateEmail.toLowerCase()) ?? 0) + 1));
+  for (const row of documentCountRows) documentCounts.set(row.email.toLowerCase(), (documentCounts.get(row.email.toLowerCase()) ?? 0) + Number(row.n));
 
   const onlineCandidates: AdminCandidate[] = online.map(application => ({
       id: `online_${application.id}`,
