@@ -21,7 +21,7 @@ export const DOSSIER_STAGES: ReadonlyArray<{ id: DossierStage; label: string; to
   { id: "refuse", label: "Refusé", tone: "bg-red-100 text-red-800" },
 ];
 
-const STAGE_BY_STATUS: Record<string, DossierStage> = {
+export const DOSSIER_STATUS_STAGE: Record<string, DossierStage> = {
   // Dossiers en ligne (applications.dossierStatus)
   nouveau: "nouveau",
   en_evaluation: "evaluation",
@@ -81,7 +81,7 @@ export function isDossierStage(value: string): value is DossierStage {
 
 /** Étape d'un statut brut ; un statut inconnu reste « nouveau » plutôt que de disparaître des compteurs. */
 export function dossierStageOf(status: string | null | undefined): DossierStage {
-  return STAGE_BY_STATUS[String(status ?? "").trim()] ?? "nouveau";
+  return DOSSIER_STATUS_STAGE[String(status ?? "").trim()] ?? "nouveau";
 }
 
 export function dossierStageMeta(stage: DossierStage) {

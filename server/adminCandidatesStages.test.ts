@@ -55,7 +55,7 @@ describe("administration candidats et dossiers : garde-fous de l'interface", () 
   });
 
   it("le changement de taille de page relance la requête (pageSize dans les dépendances)", () => {
-    expect(manager).toContain("sortBy, page, pageSize]);\n  const { data, isLoading, error } = trpc.adminCandidateManagement.list.useQuery(filterInput);");
+    expect(manager).toContain("sortBy, page, pageSize]);\n  // La liste précédente reste affichée pendant le chargement de la suivante (pas de page blanche à chaque filtre ou changement de page).\n  const { data, isLoading, error } = trpc.adminCandidateManagement.list.useQuery(filterInput, { placeholderData: (previous) => previous });");
   });
 
   it("filtres avec libellés visibles et statuts lisibles (jamais de snake_case)", () => {
@@ -106,7 +106,8 @@ describe("liste des candidats : file « CV reçu à traiter »", () => {
     expect(client).toContain('data-testid="cv-filter"');
     expect(client).toContain("CV reçu à traiter");
     expect(client).toContain('data-testid="cv-badge"');
-    const server = read("server/routers/adminCandidateManagement.ts");
+    // les compteurs sont calculés par la base (services/candidateListQuery.ts), plus en mémoire dans le routeur
+    const server = read("server/services/candidateListQuery.ts");
     expect(server).toContain("cvToProcessCount");
     expect(server).toContain("cvReceivedCount");
   });
