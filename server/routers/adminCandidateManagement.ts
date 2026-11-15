@@ -76,6 +76,8 @@ const candidateFilterSchema = z.object({
   portraitStatus: z.enum(["all", "missing", "pending", "verified", "rejected"]).default("all"),
   /** CV : « a_traiter » = CV reçu et bilan pas encore envoyé (file de traitement rapide). */
   cvStatus: z.enum(["all", "a_traiter", "recu", "sans"]).default("all"),
+  /** Évaluation : « evalue » = bilan envoyé ou évaluation validée par un conseiller ; « non_evalue » = ni l'un ni l'autre. */
+  evaluationStatus: z.enum(["all", "evalue", "non_evalue"]).default("all"),
   sortBy: z.enum(["createdAt", "fullName", "score"]).default("createdAt"),
   sortDirection: z.enum(["asc", "desc"]).default("desc"),
   page: z.number().int().min(1).default(1),
@@ -111,6 +113,8 @@ type AdminCandidate = {
   cvReceived: boolean;
   /** Un bilan a déjà été envoyé ou publié pour ce candidat. */
   bilanSent: boolean;
+  /** Bilan envoyé ou évaluation validée par un conseiller (appel, agence, e-mail). */
+  evaluated: boolean;
 };
 
 function escapeAgreementHtml(value: string): string {
@@ -318,7 +322,7 @@ export async function requireAdminTreatmentSession(cookieHeader: string | undefi
  */
 const onlineListColumns = { id: applications.id, dossierNumber: applications.dossierNumber, fullName: applications.fullName, email: applications.email, whatsappNumber: applications.whatsappNumber, destination: applications.destination, visaType: applications.visaType, scoringTotal: applications.scoringTotal, evaluationScore: applications.evaluationScore, scoringBadge: applications.scoringBadge, dossierStatus: applications.dossierStatus, paymentStatus: applications.paymentStatus, createdAt: applications.createdAt, evaluationDeliveryStatus: applications.evaluationDeliveryStatus, cvUrl: applications.cvUrl };
 const agencyListColumns = { id: agencyDossiers.id, fullName: agencyDossiers.fullName, email: agencyDossiers.email, phone: agencyDossiers.phone, destination: agencyDossiers.destination, visaType: agencyDossiers.visaType, status: agencyDossiers.status, createdAt: agencyDossiers.createdAt };
-const candidateListColumns = { id: candidates.id, email: candidates.email, fullName: candidates.fullName, phone: candidates.phone, destination: candidates.destination, visaType: candidates.visaType, dossierStatus: candidates.dossierStatus, createdAt: candidates.createdAt, deletedAt: candidates.deletedAt, avatarUrl: candidates.avatarUrl, avatarVerificationStatus: candidates.avatarVerificationStatus, avatarVerificationReason: candidates.avatarVerificationReason, avatarFaceCount: candidates.avatarFaceCount };
+const candidateListColumns = { id: candidates.id, evaluationDeclarationStatus: candidates.evaluationDeclarationStatus, email: candidates.email, fullName: candidates.fullName, phone: candidates.phone, destination: candidates.destination, visaType: candidates.visaType, dossierStatus: candidates.dossierStatus, createdAt: candidates.createdAt, deletedAt: candidates.deletedAt, avatarUrl: candidates.avatarUrl, avatarVerificationStatus: candidates.avatarVerificationStatus, avatarVerificationReason: candidates.avatarVerificationReason, avatarFaceCount: candidates.avatarFaceCount };
 
 // Un même chargement sert les appels simultanés (tableau de bord, liste, compteurs) : une seule lecture de la base au lieu d'une par appel.
 let recordsInFlight: { limit: number; at: number; promise: Promise<AdminCandidate[]> } | null = null;
@@ -351,6 +355,7 @@ async function loadCandidateRecordsFromDb(sourceLimit = 5000): Promise<AdminCand
   const cvEmails = new Set(cvEvaluationRows.map(row => row.email.toLowerCase()));
   const cvCandidateIds = new Set(cvFileRows.map(row => row.candidateId));
   const publishedEmails = new Set(publishedRows.map(row => row.email.toLowerCase()));
+  const validatedEmails = new Set((candidateRows as Array<{ email: string; evaluationDeclarationStatus?: string | null }>).filter(row => row.evaluationDeclarationStatus === "validated").map(row => row.email.toLowerCase()));
   const hasCv = (email: string, ownCv?: string | null) => Boolean(ownCv?.trim()) || cvEmails.has(email.toLowerCase()) || (candidateByEmail.get(email.toLowerCase()) !== undefined && cvCandidateIds.has(candidateByEmail.get(email.toLowerCase())!.id));
   const candidateByEmail = new Map<string, typeof candidates.$inferSelect>();
   for (const candidate of candidateRows as Array<typeof candidates.$inferSelect>) {
@@ -382,6 +387,7 @@ async function loadCandidateRecordsFromDb(sourceLimit = 5000): Promise<AdminCand
       avatarFaceCount: candidateByEmail.get(application.email.toLowerCase())?.avatarFaceCount ?? 0,
       cvReceived: hasCv(application.email, application.cvUrl),
       bilanSent: application.evaluationDeliveryStatus === "sent" || publishedEmails.has(application.email.toLowerCase()),
+      evaluated: application.evaluationDeliveryStatus === "sent" || publishedEmails.has(application.email.toLowerCase()) || validatedEmails.has(application.email.toLowerCase()),
     }) as AdminCandidate);
   const agencyCandidates: AdminCandidate[] = agency.map(dossier => ({
       id: `agency_${dossier.id}`,
@@ -406,6 +412,7 @@ async function loadCandidateRecordsFromDb(sourceLimit = 5000): Promise<AdminCand
       avatarFaceCount: candidateByEmail.get(dossier.email.toLowerCase())?.avatarFaceCount ?? 0,
       cvReceived: hasCv(dossier.email),
       bilanSent: publishedEmails.has(dossier.email.toLowerCase()),
+      evaluated: publishedEmails.has(dossier.email.toLowerCase()) || validatedEmails.has(dossier.email.toLowerCase()),
     }) as AdminCandidate);
   // Candidats inscrits mais sans dossier (ni en ligne, ni agence) : ils étaient invisibles de cette liste.
   const emailsWithDossier = new Set<string>([...online.map(item => item.email), ...agency.map(item => item.email)].map(email => email.toLowerCase()));
@@ -434,6 +441,7 @@ async function loadCandidateRecordsFromDb(sourceLimit = 5000): Promise<AdminCand
       avatarFaceCount: candidate.avatarFaceCount ?? 0,
       cvReceived: hasCv(candidate.email),
       bilanSent: publishedEmails.has(candidate.email.toLowerCase()),
+      evaluated: publishedEmails.has(candidate.email.toLowerCase()) || validatedEmails.has(candidate.email.toLowerCase()),
     }) as AdminCandidate);
   return onlineCandidates.concat(agencyCandidates, accountOnlyCandidates);
 }
@@ -452,9 +460,11 @@ export function filterCandidateRecords(records: AdminCandidate[], filter: Candid
   if (filter.scoreBand !== "all") candidateRecords = candidateRecords.filter(candidate => candidate.scoringBadge === filter.scoreBand);
   if (filter.destination !== "all") candidateRecords = candidateRecords.filter(candidate => candidate.destination.toLowerCase() === filter.destination.toLowerCase());
   if (filter.portraitStatus !== "all") candidateRecords = candidateRecords.filter(candidate => candidate.avatarVerificationStatus === filter.portraitStatus);
-  if (filter.cvStatus === "a_traiter") candidateRecords = candidateRecords.filter(candidate => candidate.cvReceived && !candidate.bilanSent);
+  if (filter.cvStatus === "a_traiter") candidateRecords = candidateRecords.filter(candidate => candidate.cvReceived && !candidate.evaluated);
   else if (filter.cvStatus === "recu") candidateRecords = candidateRecords.filter(candidate => candidate.cvReceived);
   else if (filter.cvStatus === "sans") candidateRecords = candidateRecords.filter(candidate => !candidate.cvReceived);
+  if (filter.evaluationStatus === "evalue") candidateRecords = candidateRecords.filter(candidate => candidate.evaluated);
+  else if (filter.evaluationStatus === "non_evalue") candidateRecords = candidateRecords.filter(candidate => !candidate.evaluated);
 
   candidateRecords.sort((left, right) => {
     const direction = filter.sortDirection === "asc" ? 1 : -1;

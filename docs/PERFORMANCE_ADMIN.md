@@ -70,3 +70,16 @@ BILAN_AUTO_TEST_DATABASE_URL=mysql://bt:bt@localhost:3306/bilan_test npx tsx scr
 - `adminDashboardStats.*` (4 requêtes) interroge des colonnes qui n'existent pas dans la table `applications` (`status`, `destinationCountry`) et échoue toujours. Aucune page ne l'appelle aujourd'hui (le composant `AdminDashboardAdvanced` n'est importé nulle part) : à supprimer ou à réécrire si cet écran doit revenir.
 - `admin.listCandidates` renvoie encore toute la liste (6,4 Mo pour 3 010 lignes, avant compression) : le tableau de bord calcule ses compteurs et son tableau de suivi sur cette liste entière. Le rendre paginé suppose de déplacer ces compteurs côté serveur, comme pour la liste des candidats ; non fait ici.
 - Les lectures qui ramènent 120 à 280 Ko de la base pour produire quelques lignes (`adminDataCoherence.report`, `adminInsights.adminDataQuality`, `listRedundantPreAccounts`, `listCockpitControlBoard`) restent sous 50 ms ici ; à surveiller si les tables grossissent.
+
+## Classement rapide de la liste des candidats
+
+Quatre onglets au-dessus des filtres, chacun avec son effectif (calculé avec la recherche et les filtres actifs, mais sans le classement lui-même : les chiffres ne bougent pas quand on change d'onglet) :
+
+| Onglet | Règle |
+|---|---|
+| Tous | aucun classement |
+| CV reçu à traiter | CV reçu (envoyé à l'évaluation, déposé dans l'espace client ou sur le compte) et pas encore évalué |
+| Non évalués | ni bilan envoyé, ni évaluation validée par un conseiller |
+| Déjà évalués | bilan envoyé ou publié au candidat, OU évaluation validée par un conseiller hors ligne (appel, agence, e-mail) |
+
+Chaque ligne porte aussi un repère « Évalué » / « Non évalué ». Le classement se combine avec la recherche, l'étape, le paiement, la destination et les boutons CV. Un candidat dont l'évaluation a été validée hors ligne n'apparaît plus dans « CV reçu à traiter ».

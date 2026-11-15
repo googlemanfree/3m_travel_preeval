@@ -7,13 +7,14 @@ import { dossierStageOf, dossierStatusLabel } from "@shared/dossierStages";
 const read = (path: string) => readFileSync(resolve(import.meta.dirname, "..", path), "utf8");
 
 const base = {
+  evaluationStatus: "all" as const,
   search: "", status: "all", paymentStatus: "all" as const, scoreBand: "all" as const, destination: "all",
   portraitStatus: "all" as const, cvStatus: "all" as const, sortBy: "createdAt" as const, sortDirection: "desc" as const, page: 1, pageSize: 25,
 };
 const record = (id: string, status: string, source: "web" | "agence" | "compte" = "web", paymentStatus: "paye" | "en_attente" | "non_paye" = "non_paye") => ({
   id, applicationNumber: id.toUpperCase(), fullName: `Candidat ${id}`, email: `${id}@example.test`, phone: "", destination: "canada", visaType: "x",
   scoringTotal: 0, scoringBadge: "faible" as const, status, stage: dossierStageOf(status), statusLabel: dossierStatusLabel(status),
-  paymentStatus, createdAt: new Date("2026-11-01"), documentsCount: 0, source, avatarVerificationStatus: "missing" as const, avatarFaceCount: 0, cvReceived: false, bilanSent: false,
+  paymentStatus, createdAt: new Date("2026-11-01"), documentsCount: 0, source, avatarVerificationStatus: "missing" as const, avatarFaceCount: 0, cvReceived: false, bilanSent: false, evaluated: false,
 });
 
 describe("liste des candidats : étapes et statuts", () => {
@@ -88,7 +89,7 @@ describe("administration candidats et dossiers : garde-fous de l'interface", () 
 });
 
 describe("liste des candidats : file « CV reçu à traiter »", () => {
-  const withCv = (id: string, cvReceived: boolean, bilanSent: boolean) => ({ ...record(id, "en_evaluation"), cvReceived, bilanSent });
+  const withCv = (id: string, cvReceived: boolean, bilanSent: boolean) => ({ ...record(id, "en_evaluation"), cvReceived, bilanSent, evaluated: bilanSent });
   const records = [withCv("online_1", true, false), withCv("online_2", true, true), withCv("online_3", false, false), withCv("online_4", true, false)];
   it("« à traiter » = CV reçu ET bilan pas encore envoyé", () => {
     expect(filterCandidateRecords(records, { ...base, cvStatus: "a_traiter" }).map((r) => r.id).sort()).toEqual(["online_1", "online_4"]);
@@ -97,6 +98,17 @@ describe("liste des candidats : file « CV reçu à traiter »", () => {
     expect(filterCandidateRecords(records, { ...base, cvStatus: "recu" })).toHaveLength(3);
     expect(filterCandidateRecords(records, { ...base, cvStatus: "sans" }).map((r) => r.id)).toEqual(["online_3"]);
     expect(filterCandidateRecords(records, base)).toHaveLength(4);
+  });
+  it("« à traiter » exclut aussi les évaluations validées hors ligne (évalué sans bilan envoyé)", () => {
+    const offline = { ...withCv("online_9", true, false), evaluated: true };
+    expect(filterCandidateRecords([withCv("online_8", true, false), offline], { ...base, cvStatus: "a_traiter" }).map((r) => r.id)).toEqual(["online_8"]);
+  });
+  it("classement par évaluation : évalués d'un côté, non évalués de l'autre, et ils se combinent avec le CV", () => {
+    const rows = [withCv("online_1", true, true), withCv("online_2", true, false), withCv("online_3", false, false), { ...withCv("online_4", false, false), evaluated: true }];
+    expect(filterCandidateRecords(rows, { ...base, evaluationStatus: "evalue" }).map((r) => r.id).sort()).toEqual(["online_1", "online_4"]);
+    expect(filterCandidateRecords(rows, { ...base, evaluationStatus: "non_evalue" }).map((r) => r.id).sort()).toEqual(["online_2", "online_3"]);
+    expect(filterCandidateRecords(rows, { ...base, evaluationStatus: "non_evalue", cvStatus: "recu" }).map((r) => r.id)).toEqual(["online_2"]);
+    expect(filterCandidateRecords(rows, { ...base, evaluationStatus: "all" })).toHaveLength(4);
   });
   it("se combine avec la recherche et l'étape", () => {
     expect(filterCandidateRecords(records, { ...base, cvStatus: "a_traiter", search: "online_4" }).map((r) => r.id)).toEqual(["online_4"]);

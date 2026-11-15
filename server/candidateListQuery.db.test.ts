@@ -37,11 +37,11 @@ describe.skipIf(!URL)("liste des candidats : SQL = ancien calcul en mémoire", (
     for (let n = 0; n < 15; n += 1) {
       await db.insert(s.candidates).values({
         fullName: `Zl Compte ${n}`, email: mail(`co${n}`), passwordHash: "x", phone: n % 2 ? "+3361" : null, destination: n % 3 === 0 ? null : "canada", visaType: n % 4 === 0 ? null : "etude",
-        dossierStatus: (["nouveau", "evaluation", "documents", "traitement"] as const)[n % 4], avatarVerificationStatus: (["missing", "pending", "verified", "rejected"] as const)[n % 4], avatarUrl: n % 4 === 2 ? "https://f.test/a.jpg" : null, createdAt: at(70 + n),
+        dossierStatus: (["nouveau", "evaluation", "documents", "traitement"] as const)[n % 4], evaluationDeclarationStatus: n % 5 === 0 ? "validated" : "not_declared", avatarVerificationStatus: (["missing", "pending", "verified", "rejected"] as const)[n % 4], avatarUrl: n % 4 === 2 ? "https://f.test/a.jpg" : null, createdAt: at(70 + n),
       } as never);
     }
     // un compte qui a aussi un dossier en ligne (ne doit PAS apparaître comme « compte sans dossier ») et un compte supprimé
-    await db.insert(s.candidates).values({ fullName: "Zl Compte Lié", email: mail("on1"), passwordHash: "x", createdAt: at(99), avatarVerificationStatus: "verified", avatarUrl: "https://f.test/lie.jpg" } as never);
+    await db.insert(s.candidates).values({ fullName: "Zl Compte Lié", email: mail("on1"), passwordHash: "x", evaluationDeclarationStatus: "validated", createdAt: at(99), avatarVerificationStatus: "verified", avatarUrl: "https://f.test/lie.jpg" } as never);
     await db.insert(s.candidates).values({ fullName: "Zl Compte Supprimé", email: mail("del"), passwordHash: "x", createdAt: at(98), deletedAt: at(100) } as never);
     const [liee] = await db.select({ id: s.candidates.id }).from(s.candidates).where(like(s.candidates.email, mail("co2")));
     await db.insert(s.candidateFiles).values({ candidateId: liee.id, fileType: "cv", fileName: "cv.pdf", fileUrl: "https://f.test/cv.pdf", fileKey: `k${stamp}` } as never);
@@ -68,7 +68,7 @@ describe.skipIf(!URL)("liste des candidats : SQL = ancien calcul en mémoire", (
     await db.delete(s.applications).where(or(like(s.applications.email, `zl${stamp}.%`)));
   });
 
-  const base = { search: "", status: "all", paymentStatus: "all", scoreBand: "all", destination: "all", portraitStatus: "all", cvStatus: "all", sortBy: "createdAt", sortDirection: "desc", page: 1, pageSize: 100 } as const;
+  const base = { search: "", status: "all", paymentStatus: "all", scoreBand: "all", destination: "all", portraitStatus: "all", cvStatus: "all", evaluationStatus: "all", sortBy: "createdAt", sortDirection: "desc", page: 1, pageSize: 100 } as const;
 
   async function both(overrides: Record<string, unknown>) {
     const { loadCandidateRecords, filterCandidateRecords, resetCandidateRecordsShareForTests } = await import("./routers/adminCandidateManagement");
@@ -99,6 +99,7 @@ describe.skipIf(!URL)("liste des candidats : SQL = ancien calcul en mémoire", (
     ["portrait vérifié", { portraitStatus: "verified" }], ["portrait manquant", { portraitStatus: "missing" }],
     ["CV à traiter", { cvStatus: "a_traiter" }], ["CV reçu", { cvStatus: "recu" }], ["sans CV", { cvStatus: "sans" }],
     ["recherche par nom accentué", { search: "éloïse" }], ["recherche par référence agence", { search: "3M-AGN-" }], ["recherche par référence compte", { search: "COMPTE-" }], ["recherche avec caractères spéciaux", { search: "100%_x" }],
+    ["déjà évalués", { evaluationStatus: "evalue" }], ["non évalués", { evaluationStatus: "non_evalue" }], ["non évalués avec CV reçu", { evaluationStatus: "non_evalue", cvStatus: "recu" }], ["évalués et paiement", { evaluationStatus: "evalue", paymentStatus: "paye" }], ["non évalués par étape", { evaluationStatus: "non_evalue", status: "paiement" }],
     ["tri par score croissant", { sortBy: "score", sortDirection: "asc" }], ["tri par nom", { sortBy: "fullName", sortDirection: "asc" }], ["tri par date croissante", { sortDirection: "asc" }],
     ["combinaison", { status: "documents", paymentStatus: "non_paye", cvStatus: "recu", sortBy: "score" }],
   ];
@@ -112,6 +113,8 @@ describe.skipIf(!URL)("liste des candidats : SQL = ancien calcul en mémoire", (
       expect(first.stats.withoutDossierCount).toBe(scope.filter((r: any) => r.source === "compte").length);
       expect(first.stats.cvToProcessCount).toBe(scope.filter((r: any) => r.cvReceived && !r.bilanSent).length);
       expect(first.stats.cvReceivedCount).toBe(scope.filter((r: any) => r.cvReceived).length);
+      expect(first.stats.evaluatedCount).toBe(scope.filter((r: any) => r.evaluated).length);
+      expect(first.stats.notEvaluatedCount).toBe(scope.filter((r: any) => !r.evaluated).length);
       const stageCounts: Record<string, number> = {};
       for (const r of scope) stageCounts[r.stage] = (stageCounts[r.stage] ?? 0) + 1;
       for (const [stage, n] of Object.entries(first.stats.stageCounts)) expect(n).toBe(stageCounts[stage] ?? 0);
@@ -127,6 +130,29 @@ describe.skipIf(!URL)("liste des candidats : SQL = ancien calcul en mémoire", (
       }
     });
   }
+
+  it("les effectifs des onglets ne changent pas quand on change de classement, et suivent la recherche", async () => {
+    const { loadCandidateRecords, filterCandidateRecords, resetCandidateRecordsShareForTests } = await import("./routers/adminCandidateManagement");
+    const { queryCandidateList } = await import("./services/candidateListQuery");
+    resetCandidateRecordsShareForTests();
+    const all = await loadCandidateRecords();
+    const reference = filterCandidateRecords(all, { ...base, search: `zl${stamp}` } as any);
+    const expected = { all: reference.length, cvToProcess: reference.filter((r: any) => r.cvReceived && !r.evaluated).length, cvReceived: reference.filter((r: any) => r.cvReceived).length, evaluated: reference.filter((r: any) => r.evaluated).length, notEvaluated: reference.filter((r: any) => !r.evaluated).length };
+    expect(expected.evaluated).toBeGreaterThan(0);
+    expect(expected.notEvaluated).toBeGreaterThan(0);
+    for (const overrides of [{}, { evaluationStatus: "evalue" }, { evaluationStatus: "non_evalue" }, { cvStatus: "a_traiter" }, { cvStatus: "sans", evaluationStatus: "evalue" }]) {
+      const result = await queryCandidateList(ctx.db, { ...base, search: `zl${stamp}`, ...overrides } as any);
+      expect(result.tabCounts).toEqual(expected);
+    }
+  });
+
+  it("un compte évalué hors ligne (validé par un conseiller) est « évalué » même sans bilan envoyé", async () => {
+    const { queryCandidateList } = await import("./services/candidateListQuery");
+    const result = await queryCandidateList(ctx.db, { ...base, search: mail("co0"), evaluationStatus: "evalue" } as any);
+    expect(result.candidates.map((r) => r.email.toLowerCase())).toEqual([mail("co0").toLowerCase()]);
+    expect(result.candidates[0].evaluated).toBe(true);
+    expect(result.candidates[0].bilanSent).toBe(false);
+  });
 
   it("page demandée au-delà de la dernière : ramenée à la dernière page, avec le bon nombre de lignes", async () => {
     const { queryCandidateList } = await import("./services/candidateListQuery");
