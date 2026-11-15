@@ -25,7 +25,7 @@ export function BilanAiAssistant({ sessionToken, text, fullName, disabled = fals
   }
   const tooShort = text.trim().length < 30;
   return (
-    <div className="mt-2 space-y-2 rounded-md border border-violet-200 bg-violet-50/60 p-2" data-testid="bilan-ai">
+    <div className="space-y-3 rounded-xl border border-violet-200 bg-violet-50/60 p-3 sm:p-4" data-testid="bilan-ai">
       <div className="flex flex-wrap items-center gap-2">
         <Sparkles className="h-4 w-4 text-violet-700" aria-hidden="true" />
         <select className="h-9 rounded-md border border-slate-300 bg-white px-2 text-xs" value={mode} onChange={(event) => setMode(event.target.value)} aria-label="Type de relecture" data-testid="bilan-ai-mode" disabled={disabled}>
