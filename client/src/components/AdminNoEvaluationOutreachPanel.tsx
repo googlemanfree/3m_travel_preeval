@@ -22,12 +22,13 @@ export default function AdminNoEvaluationOutreachPanel({ sessionToken }: { sessi
   const [search, setSearch] = useState("");
   const [onlyUnverifiedEmail, setOnlyUnverifiedEmail] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [limit, setLimit] = useState(50);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
 
   const query = trpc.adminCandidateManagement.listCandidatesWithoutEvaluation.useQuery(
-    { sessionToken, search: search.trim(), onlyUnverifiedEmail },
-    { enabled: Boolean(sessionToken), refetchInterval: 60_000 },
+    { sessionToken, search: search.trim(), onlyUnverifiedEmail, limit },
+    { enabled: Boolean(sessionToken), refetchInterval: 60_000, placeholderData: (previous) => previous },
   );
 
   const sendMutation = trpc.adminCandidateManagement.sendNoEvaluationOutreach.useMutation({
@@ -147,6 +148,12 @@ export default function AdminNoEvaluationOutreachPanel({ sessionToken }: { sessi
                 ))}
               </tbody>
             </table>
+            {query.data.hasMore && (
+              <div className="border-t bg-slate-50 px-4 py-3 text-center">
+                <p className="text-xs text-slate-500">{query.data.candidates.length} comptes affichés sur {query.data.total}</p>
+                <Button size="sm" variant="outline" className="mt-2" data-testid="outreach-show-more" onClick={() => setLimit((current) => Math.min(500, current + 50))}>Afficher 50 de plus</Button>
+              </div>
+            )}
           </div>
         )}
 

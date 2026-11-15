@@ -210,6 +210,20 @@ async function getOpeningPaymentRecord(db: NonNullable<Awaited<ReturnType<typeof
   }
 }
 
+/** Même lecture que `getOpeningPaymentRecord`, pour plusieurs comptes à la fois. Un enregistrement illisible vaut « aucun ». */
+export async function getOpeningPaymentRecords(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, candidateIds: number[]): Promise<Map<number, OpeningPaymentRecord | null>> {
+  const result = new Map<number, OpeningPaymentRecord | null>(candidateIds.map((id) => [id, null]));
+  if (candidateIds.length === 0) return result;
+  const rows = await db.select({ settingKey: agencySettings.settingKey, settingValue: agencySettings.settingValue }).from(agencySettings)
+    .where(inArray(agencySettings.settingKey, candidateIds.map((id) => `${OPENING_PAYMENT_KEY_PREFIX}${id}`)))
+    .limit(candidateIds.length);
+  for (const row of rows) {
+    const id = Number(row.settingKey.slice(OPENING_PAYMENT_KEY_PREFIX.length));
+    try { result.set(id, JSON.parse(row.settingValue) as OpeningPaymentRecord); } catch { /* illisible : ignoré */ }
+  }
+  return result;
+}
+
 async function setOpeningPaymentRecord(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, record: OpeningPaymentRecord): Promise<void> {
   const key = `${OPENING_PAYMENT_KEY_PREFIX}${record.candidateId}`;
   const settingValue = JSON.stringify(record);
@@ -728,10 +742,8 @@ export const adminCandidateManagementRouter = router({
       }
       const query = input.search.toLowerCase();
       const filtered = accounts.filter((account) => !query || [account.fullName, account.email, account.phone ?? "", account.destination ?? ""].some((value) => value.toLowerCase().includes(query)));
-      const openingPaymentByCandidate = new Map<number, OpeningPaymentRecord | null>();
-      await Promise.all(filtered.map(async (account) => {
-        openingPaymentByCandidate.set(account.id, await getOpeningPaymentRecord(db, account.id));
-      }));
+      // Un seul aller-retour pour tous les comptes (avant : une requête par compte, 500 pour une liste pleine).
+      const openingPaymentByCandidate = await getOpeningPaymentRecords(db, filtered.map((account) => account.id));
       // Suivi du bilan : dernier dossier d'évaluation de chaque compte (par compte, à défaut par e-mail) et réponse du candidat.
       const filteredIds = filtered.map((account) => account.id);
       const filteredEmails = filtered.map((account) => account.email.trim().toLowerCase());
@@ -835,6 +847,8 @@ export const adminCandidateManagementRouter = router({
       sessionToken: z.string().min(1),
       search: z.string().trim().max(120).optional().default(""),
       onlyUnverifiedEmail: z.boolean().optional().default(false),
+      /** Par pages : chaque ligne porte son brouillon d'e-mail, la liste complète (jusqu'à 2 000 comptes) pesait plusieurs Mo à chaque rafraîchissement. */
+      limit: z.number().int().min(1).max(500).optional().default(50),
     }))
     .query(async ({ input, ctx }) => {
       await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
@@ -864,10 +878,13 @@ export const adminCandidateManagementRouter = router({
 
       const evaluatedEmails = new Set(evaluationRows.map((row) => row.email.trim().toLowerCase()));
       const query = input.search.toLowerCase();
-      const rows = accountRows
+      const matching = accountRows
         .filter((account) => !evaluatedEmails.has(account.email.trim().toLowerCase()))
         .filter((account) => !input.onlyUnverifiedEmail || !account.emailVerified)
-        .filter((account) => !query || [account.fullName, account.email, account.phone ?? "", account.destination ?? "", account.visaType ?? ""].some((value) => value.toLowerCase().includes(query)))
+        .filter((account) => !query || [account.fullName, account.email, account.phone ?? "", account.destination ?? "", account.visaType ?? ""].some((value) => value.toLowerCase().includes(query)));
+      // Les brouillons ne sont construits que pour la page renvoyée.
+      const rows = matching
+        .slice(0, input.limit)
         .map((account) => {
           let preferredDestinations: string[] = [];
           try {
@@ -902,7 +919,7 @@ export const adminCandidateManagementRouter = router({
           };
         });
 
-      return { total: rows.length, candidates: rows };
+      return { total: matching.length, candidates: rows, limit: input.limit, hasMore: matching.length > rows.length };
     }),
 
   sendNoEvaluationOutreach: publicProcedure

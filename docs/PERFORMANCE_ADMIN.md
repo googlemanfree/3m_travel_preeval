@@ -45,3 +45,28 @@ Alertes du dossier calculées (CV illisible, pièce à mettre à jour, paiement 
 - Si la table du parcours de validation n'existe pas (base non migrée), la liste fonctionne sans la mention « bilan publié », comme avant.
 
 **Pistes non faites (à décider).** Index sur `applications.email`, `evaluations.email`, `client_documents.candidateEmail` : les rapprochements se font aujourd'hui sans index (sous-requêtes matérialisées par la base, rapides jusqu'à plusieurs dizaines de milliers de lignes). Les ajouter demande de toucher à la base de Manus : à valider avec vous avant.
+
+## Audit des écrans d'administration (novembre 2026)
+
+**Méthode.** `scripts/perf-admin-audit.mts` appelle chaque requête des écrans d'administration sur une base JETABLE (3 001 dossiers en ligne, 3 009 comptes, 5 945 documents) et relève, pour chacune, la durée médiane, le volume envoyé par la base, le nombre d'instructions SQL et la taille de la réponse :
+
+```bash
+BILAN_AUTO_TEST_DATABASE_URL=mysql://bt:bt@localhost:3306/bilan_test npx tsx scripts/perf-admin-audit.mts
+```
+
+**Résultats (base locale : sans latence réseau ; chaque instruction SQL de plus coûte en réalité un aller-retour vers la base de Manus).**
+
+| Requête | Avant | Après | Cause |
+|---|---|---|---|
+| `admin.listCandidates` (liste principale du tableau de bord) | 3 815 ms | ~200 ms | le parcours de chaque dossier était recalculé 3 fois par dossier (plus de 9 000 calculs) ; il est maintenant gardé par combinaison pays/visa/programme |
+| `adminCandidateManagement.listPreDossierAccounts` | 507 instructions | 8 | une lecture du paiement d'ouverture par compte (500 comptes) → une seule lecture pour tous |
+| `adminCandidateManagement.listCandidatesWithoutEvaluation` | 7 Mo, 2 000 comptes | 175 Ko, 50 comptes | liste complète avec un brouillon d'e-mail par ligne ; maintenant par pages de 50, bouton « Afficher 50 de plus » |
+| `adminDocuments.overview` | 101 instructions (jusqu'à ~1 500 pour 300 évaluations) | 3 | cinq lectures par évaluation → trois lectures pour toute la liste |
+| `adminInsights.adminProofQueue` | une vérification à la fois, jusqu'à 400 candidats | par groupes de 10 | lectures en parallèle, ordre conservé |
+| `adminOps.adminSystemHealth` | 26 contrôles de tables à la suite | 6 à la fois | idem |
+| toute lecture admin | +1 aller-retour avant chaque requête | supprimé | le journal d'audit ne concerne que les modifications ; une lecture n'a pas besoin de retrouver le compte avant de commencer |
+
+**Constats sans correction.**
+- `adminDashboardStats.*` (4 requêtes) interroge des colonnes qui n'existent pas dans la table `applications` (`status`, `destinationCountry`) et échoue toujours. Aucune page ne l'appelle aujourd'hui (le composant `AdminDashboardAdvanced` n'est importé nulle part) : à supprimer ou à réécrire si cet écran doit revenir.
+- `admin.listCandidates` renvoie encore toute la liste (6,4 Mo pour 3 010 lignes, avant compression) : le tableau de bord calcule ses compteurs et son tableau de suivi sur cette liste entière. Le rendre paginé suppose de déplacer ces compteurs côté serveur, comme pour la liste des candidats ; non fait ici.
+- Les lectures qui ramènent 120 à 280 Ko de la base pour produire quelques lignes (`adminDataCoherence.report`, `adminInsights.adminDataQuality`, `listRedundantPreAccounts`, `listCockpitControlBoard`) restent sous 50 ms ici ; à surveiller si les tables grossissent.
