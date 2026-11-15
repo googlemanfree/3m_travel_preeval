@@ -94,6 +94,7 @@ interface Candidate {
   avatarFaceCount: number;
   cvReceived?: boolean;
   bilanSent?: boolean;
+  evaluated?: boolean;
 }
 
 // ─── MOCK DATA ───────────────────────────────────────────────────────────────
@@ -457,6 +458,8 @@ export default function CandidatesManager() {
   const [statusFilter, setStatusFilter] = useState(initialUrlState.statusFilter);
   // File de traitement rapide : candidats dont le CV est reçu et dont le bilan n'est pas encore envoyé.
   const [cvFilter, setCvFilter] = useState<"all" | "a_traiter" | "recu" | "sans">("all");
+  // Classement par évaluation : évalués (bilan envoyé ou validation conseiller) / non évalués.
+  const [evaluationFilter, setEvaluationFilter] = useState<"all" | "evalue" | "non_evalue">("all");
   const [paymentFilter, setPaymentFilter] = useState(initialUrlState.paymentFilter);
   const [scoreFilter, setScoreFilter] = useState(initialUrlState.scoreFilter);
   const [destinationFilter, setDestinationFilter] = useState(initialUrlState.destinationFilter);
@@ -482,12 +485,13 @@ export default function CandidatesManager() {
       destination: destinationFilter === "tous" ? "all" : destinationFilter,
       portraitStatus: "all" as const,
       cvStatus: cvFilter,
+      evaluationStatus: evaluationFilter,
       sortBy: sortBy as "createdAt" | "fullName" | "score",
       sortDirection: "desc" as const,
       page,
       pageSize,
     };
-  }, [debouncedSearch, statusFilter, paymentFilter, scoreFilter, destinationFilter, cvFilter, sortBy, page, pageSize]);
+  }, [debouncedSearch, statusFilter, paymentFilter, scoreFilter, destinationFilter, cvFilter, evaluationFilter, sortBy, page, pageSize]);
   // La liste précédente reste affichée pendant le chargement de la suivante (pas de page blanche à chaque filtre ou changement de page).
   const { data, isLoading, error } = trpc.adminCandidateManagement.list.useQuery(filterInput, { placeholderData: (previous) => previous });
   const savedViewsQuery = trpc.adminSavedViews.list.useQuery();
@@ -740,6 +744,26 @@ export default function CandidatesManager() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-lg shadow-md p-6 mb-8"
         >
+          <div className="mb-5" data-testid="classement-rapide" role="tablist" aria-label="Classement rapide des candidats">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Classement rapide</p>
+            <div className="flex flex-wrap gap-2">
+              {([
+                { id: "tous", label: "Tous", count: data?.tabCounts?.all, cv: "all", evaluation: "all", tone: "slate" },
+                { id: "cv-a-traiter", label: "CV reçu à traiter", count: data?.tabCounts?.cvToProcess, cv: "a_traiter", evaluation: "all", tone: "emerald" },
+                { id: "non-evalues", label: "Non évalués", count: data?.tabCounts?.notEvaluated, cv: "all", evaluation: "non_evalue", tone: "amber" },
+                { id: "evalues", label: "Déjà évalués", count: data?.tabCounts?.evaluated, cv: "all", evaluation: "evalue", tone: "slate" },
+              ] as const).map((tab) => {
+                const active = cvFilter === tab.cv && evaluationFilter === tab.evaluation;
+                const activeClass = tab.tone === "emerald" ? "border-emerald-700 bg-emerald-700 text-white" : tab.tone === "amber" ? "border-amber-600 bg-amber-600 text-white" : "border-[#0B2A52] bg-[#0B2A52] text-white";
+                return (
+                  <button key={tab.id} type="button" role="tab" aria-selected={active} data-testid={`classement-${tab.id}`} onClick={() => { setCvFilter(tab.cv); setEvaluationFilter(tab.evaluation); resetToFirstPage(); }} className={`inline-flex h-10 items-center gap-2 rounded-lg border px-4 text-sm font-semibold ${active ? activeClass : "border-slate-300 bg-white text-slate-800 hover:bg-slate-50"}`}>
+                    {tab.label}
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${active ? "bg-white/25 text-white" : "bg-slate-100 text-slate-700"}`}>{tab.count ?? "…"}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="relative lg:col-span-2">
               <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
@@ -921,10 +945,13 @@ export default function CandidatesManager() {
                           {candidate.applicationNumber}
                         </p>
                         {candidate.cvReceived && (
-                          <a href={`/admin/bilans?q=${encodeURIComponent(candidate.email)}`} className={`mr-1 mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${candidate.bilanSent ? "bg-slate-100 text-slate-700" : "bg-emerald-100 text-emerald-900"}`} data-testid="cv-badge" title={candidate.bilanSent ? "CV reçu, bilan déjà envoyé — ouvrir le bilan" : "CV reçu : bilan à traiter — ouvrir le bilan"}>
-                            {candidate.bilanSent ? "CV reçu · bilan envoyé" : "CV reçu · à traiter"}
+                          <a href={`/admin/bilans?q=${encodeURIComponent(candidate.email)}`} className={`mr-1 mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${candidate.evaluated ?? candidate.bilanSent ? "bg-slate-100 text-slate-700" : "bg-emerald-100 text-emerald-900"}`} data-testid="cv-badge" title={candidate.evaluated ?? candidate.bilanSent ? "CV reçu, déjà évalué — ouvrir le bilan" : "CV reçu : bilan à traiter — ouvrir le bilan"}>
+                            {candidate.bilanSent ? "CV reçu · bilan envoyé" : (candidate.evaluated ?? false) ? "CV reçu · évalué" : "CV reçu · à traiter"}
                           </a>
                         )}
+                        <span className={`mr-1 mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${candidate.evaluated ? "bg-sky-100 text-sky-900" : "bg-amber-100 text-amber-900"}`} data-testid="evaluation-badge" title={candidate.evaluated ? "Évaluation faite (bilan envoyé ou validation conseiller)" : "Pas encore évalué"}>
+                          {candidate.evaluated ? "Évalué" : "Non évalué"}
+                        </span>
                         {candidate.source === "compte" && (
                           <span className="mt-1 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700" title="Compte inscrit qui n’a pas encore de dossier ouvert">
                             Compte sans dossier

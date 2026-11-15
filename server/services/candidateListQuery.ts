@@ -17,6 +17,8 @@ import { DOSSIER_STAGE_IDS, DOSSIER_STATUS_STAGE, dossierStageOf, dossierStatusL
 export type ListFilter = {
   search: string; status: string; paymentStatus: "all" | "paye" | "en_attente" | "non_paye"; scoreBand: "all" | "excellent" | "bon" | "moyen" | "faible";
   destination: string; portraitStatus: "all" | "missing" | "pending" | "verified" | "rejected"; cvStatus: "all" | "a_traiter" | "recu" | "sans";
+  /** « evalue » : bilan envoyé ou évaluation validée par un conseiller ; « non_evalue » : ni l'un ni l'autre. */
+  evaluationStatus: "all" | "evalue" | "non_evalue";
   sortBy: "createdAt" | "fullName" | "score"; sortDirection: "asc" | "desc"; page: number; pageSize: number;
 };
 
@@ -24,12 +26,14 @@ export type ListedCandidate = {
   id: string; applicationNumber: string; fullName: string; email: string; phone: string; destination: string; visaType: string; scoringTotal: number;
   scoringBadge: "excellent" | "bon" | "moyen" | "faible"; status: string; stage: DossierStage; statusLabel: string; paymentStatus: "paye" | "en_attente" | "non_paye";
   createdAt: Date; documentsCount: number; source: "web" | "agence" | "compte"; avatarUrl: string | null; avatarVerificationStatus: string;
-  avatarVerificationReason: string | null; avatarFaceCount: number; cvReceived: boolean; bilanSent: boolean;
+  avatarVerificationReason: string | null; avatarFaceCount: number; cvReceived: boolean; bilanSent: boolean; evaluated: boolean;
 };
 
 export type ListResult = {
   candidates: ListedCandidate[];
-  stats: { scopeTotal: number; stageCounts: Record<DossierStage, number>; paidCount: number; withoutDossierCount: number; cvToProcessCount: number; cvReceivedCount: number };
+  stats: { scopeTotal: number; stageCounts: Record<DossierStage, number>; paidCount: number; withoutDossierCount: number; cvToProcessCount: number; cvReceivedCount: number; evaluatedCount: number; notEvaluatedCount: number };
+  /** Effectifs des classements rapides : calculés avec la recherche et les filtres actifs, mais SANS le choix de classement lui-même (ils ne bougent pas quand on change d'onglet). */
+  tabCounts: { all: number; cvToProcess: number; cvReceived: number; evaluated: number; notEvaluated: number };
   total: number; page: number; pageSize: number; totalPages: number;
 };
 
@@ -89,8 +93,15 @@ function joins(options: Options, needPortrait: boolean): SQL {
   parts.push(options.withPublished
     ? sql` LEFT JOIN (SELECT DISTINCT LOWER(e.email) AS em FROM evaluation_validation_cases v INNER JOIN evaluations e ON e.id = v.evaluationId WHERE v.publishedAt IS NOT NULL) pubx ON pubx.em = LOWER(s.email)`
     : sql` LEFT JOIN (SELECT NULL AS em) pubx ON 1 = 0`);
+  // évaluation validée par un conseiller (hors ligne : appel, agence, e-mail) sur le compte portant cette adresse
+  parts.push(sql` LEFT JOIN (SELECT DISTINCT LOWER(c.email) AS em FROM candidates c WHERE c.evaluationDeclarationStatus = 'validated') valx ON valx.em = LOWER(s.email)`);
   if (needPortrait) parts.push(sql` LEFT JOIN (SELECT LOWER(c.email) AS em, MAX(c.avatarVerificationStatus) AS st FROM candidates c GROUP BY LOWER(c.email)) avx ON avx.em = LOWER(s.email)`);
   return sql.join(parts, sql``);
+}
+
+/** Déjà évalué : bilan envoyé (ou publié) au candidat, ou évaluation validée par un conseiller hors ligne. */
+function evaluatedExpression(def: ReturnType<typeof definition>): SQL {
+  return sql`(${def.ownBilan} OR pubx.em IS NOT NULL OR valx.em IS NOT NULL)`;
 }
 
 /** Conditions communes à tous les compteurs (le filtre d'étape en est exclu : les compteurs par étape l'ignorent). */
@@ -107,10 +118,12 @@ function scopeConditions(source: Source, filter: ListFilter): SQL[] {
   if (filter.destination !== "all") conditions.push(sql`LOWER(${def.destination}) = ${filter.destination.toLowerCase()}`);
   if (filter.portraitStatus !== "all") conditions.push(sql`COALESCE(avx.st, 'missing') = ${filter.portraitStatus}`);
   const hasCv = sql`(${def.ownCv} OR cvx.em IS NOT NULL)`;
-  const bilanSent = sql`(${def.ownBilan} OR pubx.em IS NOT NULL)`;
-  if (filter.cvStatus === "a_traiter") conditions.push(sql`(${hasCv} AND NOT ${bilanSent})`);
+  const evaluated = evaluatedExpression(def);
+  if (filter.cvStatus === "a_traiter") conditions.push(sql`(${hasCv} AND NOT ${evaluated})`);
   else if (filter.cvStatus === "recu") conditions.push(hasCv);
   else if (filter.cvStatus === "sans") conditions.push(sql`NOT ${hasCv}`);
+  if (filter.evaluationStatus === "evalue") conditions.push(evaluated);
+  else if (filter.evaluationStatus === "non_evalue") conditions.push(sql`NOT ${evaluated}`);
   return conditions;
 }
 
@@ -142,9 +155,21 @@ async function counts(db: Db, source: Source, filter: ListFilter, options: Optio
   const needPortrait = filter.portraitStatus !== "all";
   const where = sql.join(scopeConditions(source, filter), sql` AND `);
   const hasCv = sql`(${def.ownCv} OR cvx.em IS NOT NULL)`;
-  const bilanSent = sql`(${def.ownBilan} OR pubx.em IS NOT NULL)`;
-  const query = sql`SELECT ${def.status} AS st, ${def.payment} AS pay, COUNT(*) AS n, SUM(CASE WHEN ${hasCv} THEN 1 ELSE 0 END) AS cv, SUM(CASE WHEN ${hasCv} AND NOT ${bilanSent} THEN 1 ELSE 0 END) AS todo FROM ${def.table} s${joins(options, needPortrait)} WHERE ${where} GROUP BY ${def.status}, ${def.payment}`;
-  return rowsOf(await db.execute(query)).map((row) => ({ status: (row.st as string | null) ?? null, payment: String(row.pay), n: Number(row.n), cv: Number(row.cv), todo: Number(row.todo) }));
+  const evaluated = evaluatedExpression(def);
+  const query = sql`SELECT ${def.status} AS st, ${def.payment} AS pay, COUNT(*) AS n, SUM(CASE WHEN ${hasCv} THEN 1 ELSE 0 END) AS cv, SUM(CASE WHEN ${hasCv} AND NOT ${evaluated} THEN 1 ELSE 0 END) AS todo, SUM(CASE WHEN ${evaluated} THEN 1 ELSE 0 END) AS ev FROM ${def.table} s${joins(options, needPortrait)} WHERE ${where} GROUP BY ${def.status}, ${def.payment}`;
+  return rowsOf(await db.execute(query)).map((row) => ({ status: (row.st as string | null) ?? null, payment: String(row.pay), n: Number(row.n), cv: Number(row.cv), todo: Number(row.todo), ev: Number(row.ev) }));
+}
+
+/** Effectifs des onglets de classement rapide (sans le choix de classement ni l'étape). */
+async function tabCountsFor(db: Db, source: Source, filter: ListFilter, options: Options) {
+  const def = definition(source);
+  const neutral: ListFilter = { ...filter, cvStatus: "all", evaluationStatus: "all" };
+  const where = sql.join(scopeConditions(source, neutral), sql` AND `);
+  const hasCv = sql`(${def.ownCv} OR cvx.em IS NOT NULL)`;
+  const evaluated = evaluatedExpression(def);
+  const query = sql`SELECT COUNT(*) AS n, SUM(CASE WHEN ${hasCv} AND NOT ${evaluated} THEN 1 ELSE 0 END) AS todo, SUM(CASE WHEN ${hasCv} THEN 1 ELSE 0 END) AS cv, SUM(CASE WHEN ${evaluated} THEN 1 ELSE 0 END) AS ev FROM ${def.table} s${joins(options, neutral.portraitStatus !== "all")} WHERE ${where}`;
+  const [row] = rowsOf(await db.execute(query));
+  return { n: Number(row?.n ?? 0), todo: Number(row?.todo ?? 0), cv: Number(row?.cv ?? 0), ev: Number(row?.ev ?? 0) };
 }
 
 async function pageRows(db: Db, source: Source, filter: ListFilter, options: Options, limit: number) {
@@ -154,7 +179,7 @@ async function pageRows(db: Db, source: Source, filter: ListFilter, options: Opt
   const stage = stageCondition(source, filter.status);
   if (stage) conditions.push(stage);
   const where = sql.join(conditions, sql` AND `);
-  const query = sql`SELECT ${def.id} AS id, ${def.number} AS number, ${def.name} AS name, ${def.email} AS email, ${def.phone} AS phone, ${def.destination} AS destination, ${def.visa} AS visa, ${def.score} AS score, ${def.band} AS band, ${def.status} AS st, ${def.payment} AS pay, ${def.createdAt} AS createdAt, (${def.ownCv} OR cvx.em IS NOT NULL) AS cv, (${def.ownBilan} OR pubx.em IS NOT NULL) AS bilan FROM ${def.table} s${joins(options, needPortrait)} WHERE ${where}${orderBy(source, filter)} LIMIT ${limit}`;
+  const query = sql`SELECT ${def.id} AS id, ${def.number} AS number, ${def.name} AS name, ${def.email} AS email, ${def.phone} AS phone, ${def.destination} AS destination, ${def.visa} AS visa, ${def.score} AS score, ${def.band} AS band, ${def.status} AS st, ${def.payment} AS pay, ${def.createdAt} AS createdAt, (${def.ownCv} OR cvx.em IS NOT NULL) AS cv, (${def.ownBilan} OR pubx.em IS NOT NULL) AS bilan, ${evaluatedExpression(def)} AS evaluated FROM ${def.table} s${joins(options, needPortrait)} WHERE ${where}${orderBy(source, filter)} LIMIT ${limit}`;
   return rowsOf(await db.execute(query));
 }
 
@@ -166,13 +191,13 @@ export async function queryCandidateList(db: Db, filter: ListFilter): Promise<Li
     // Compteurs et lignes de la page demandée partent ensemble (un seul aller-retour) ; si la page demandée dépasse la dernière, on relit la bonne.
     const fetchWindow = (page: number) => Promise.all(sources.map(async (source) => (await pageRows(db, source, filter, options, page * filter.pageSize)).map((row) => ({ source, row }))));
     const speculative = filter.page <= 20; // une page très lointaine n'est pas lue avant de savoir qu'elle existe
-    const [groups, firstTry] = await Promise.all([Promise.all(sources.map((source) => counts(db, source, filter, options))), speculative ? fetchWindow(filter.page) : Promise.resolve(null)]);
+    const [groups, firstTry, tabs] = await Promise.all([Promise.all(sources.map((source) => counts(db, source, filter, options))), speculative ? fetchWindow(filter.page) : Promise.resolve(null), Promise.all(sources.map((source) => tabCountsFor(db, source, filter, options)))]);
     const stageCounts = Object.fromEntries(DOSSIER_STAGE_IDS.map((stage) => [stage, 0])) as Record<DossierStage, number>;
-    let scopeTotal = 0, paid = 0, cvReceived = 0, cvToProcess = 0, total = 0;
+    let scopeTotal = 0, paid = 0, cvReceived = 0, cvToProcess = 0, evaluatedTotal = 0, total = 0;
     const matches = (status: string | null) => filter.status === "all" || (isDossierStage(filter.status) ? dossierStageOf(status) === filter.status : (status ?? "") === filter.status);
     for (const rows of groups) {
       for (const row of rows) {
-        scopeTotal += row.n; stageCounts[dossierStageOf(row.status)] += row.n; cvReceived += row.cv; cvToProcess += row.todo;
+        scopeTotal += row.n; stageCounts[dossierStageOf(row.status)] += row.n; cvReceived += row.cv; cvToProcess += row.todo; evaluatedTotal += row.ev;
         if (row.payment === "paye") paid += row.n;
         if (matches(row.status)) total += row.n;
       }
@@ -212,10 +237,10 @@ export async function queryCandidateList(db: Db, filter: ListFilter): Promise<Li
         paymentStatus: row.pay as ListedCandidate["paymentStatus"], createdAt: new Date(row.createdAt as string), documentsCount: documentCounts.get(email.toLowerCase()) ?? 0, source,
         avatarUrl: (avatar?.avatarUrl as string | null | undefined) ?? null, avatarVerificationStatus: (avatar?.st as string | null | undefined) ?? "missing",
         avatarVerificationReason: (avatar?.reason as string | null | undefined) ?? null, avatarFaceCount: Number(avatar?.faces ?? 0),
-        cvReceived: Number(row.cv) > 0, bilanSent: Number(row.bilan) > 0,
+        cvReceived: Number(row.cv) > 0, bilanSent: Number(row.bilan) > 0, evaluated: Number(row.evaluated) > 0,
       };
     });
-    return { candidates, stats: { scopeTotal, stageCounts, paidCount: paid, withoutDossierCount, cvToProcessCount: cvToProcess, cvReceivedCount: cvReceived }, total, page, pageSize: filter.pageSize, totalPages };
+    return { candidates, stats: { scopeTotal, stageCounts, paidCount: paid, withoutDossierCount, cvToProcessCount: cvToProcess, cvReceivedCount: cvReceived, evaluatedCount: evaluatedTotal, notEvaluatedCount: scopeTotal - evaluatedTotal }, tabCounts: { all: tabs.reduce((sum, t) => sum + t.n, 0), cvToProcess: tabs.reduce((sum, t) => sum + t.todo, 0), cvReceived: tabs.reduce((sum, t) => sum + t.cv, 0), evaluated: tabs.reduce((sum, t) => sum + t.ev, 0), notEvaluated: tabs.reduce((sum, t) => sum + t.n - t.ev, 0) }, total, page, pageSize: filter.pageSize, totalPages };
   };
 
   // La table du parcours de validation peut manquer sur une base non migrée : la liste continue de fonctionner sans « bilan publié ».
