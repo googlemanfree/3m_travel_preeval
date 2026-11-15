@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { inArray } from "drizzle-orm";
+import { desc, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { evaluations } from "../../drizzle/schema";
 import { isGridApproved } from "../../shared/bilanAuto/grid";
@@ -7,7 +7,7 @@ import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { configFromEnv, correctRun, eraseBilanData, processOutbox, publishRun, submitForAnalysis } from "../services/bilanAuto/pipeline";
 import { renderHtml, renderText } from "../services/bilanAuto/report";
-import { RUN_STATE_LABELS, type RunRecord, type RunState } from "../services/bilanAuto/types";
+import { RUN_STATE_LABELS, type BilanAutoStore, type RunRecord, type RunState } from "../services/bilanAuto/types";
 import { bilanAutoTick, getProductionDeps } from "../services/bilanAuto/runtime";
 import { requireValidAdminSession } from "./adminAuth";
 import { EditorialError, changeScore, compareReports, ensureBaseVersion, notifyPublished, publishVersion, saveDraft } from "../services/bilanAuto/versions";
@@ -68,6 +68,15 @@ export function summarize(run: RunRecord, person: { fullName: string; email: str
   };
 }
 
+/** Dernier traitement (hors remplacés) de chacune des évaluations d'un candidat, le plus récent d'abord. */
+export async function latestRunsForEvaluations(store: Pick<BilanAutoStore, "listRuns">, evaluationIds: number[]): Promise<RunRecord[]> {
+  const lists = await Promise.all(evaluationIds.slice(0, 5).map((evaluationId) => store.listRuns({ evaluationId, limit: 5 })));
+  return lists
+    .map((runs) => runs.find((run) => run.state !== "superseded") ?? null)
+    .filter((run): run is RunRecord => run !== null)
+    .sort((a, b) => b.id - a.id);
+}
+
 async function sourcesStore() {
   if (!configFromEnv().enabled) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le bilan automatisé n'est pas activé." });
   const db = await getDb();
@@ -108,6 +117,20 @@ export const adminBilanAutoRouter = router({
       gridApproved: isGridApproved(config.grid), threshold: config.grid.threshold, allowlistActive: Boolean(config.allowlistEmails),
       visionEnabled: process.env.BILAN_AUTO_VISION_ENABLED === "true",
     };
+  }),
+
+  /** Bilan automatisé d'un candidat (fiche 360, onglet Évaluation) : chargé à la demande, jamais dans la fiche elle-même. */
+  forCandidate: publicProcedure.input(token.extend({ email: z.string().trim().toLowerCase().email().max(254) })).query(async ({ input }) => {
+    await requireValidAdminSession(input.sessionToken);
+    const config = configFromEnv();
+    if (!config.enabled) return { enabled: false as const, rows: [] };
+    const deps = await requireDeps();
+    const db = await getDb();
+    if (!db) return { enabled: true as const, rows: [] };
+    const found = await db.select({ id: evaluations.id, fullName: evaluations.fullName, email: evaluations.email }).from(evaluations).where(sql`LOWER(TRIM(${evaluations.email})) = ${input.email}`).orderBy(desc(evaluations.id)).limit(5);
+    const runs = await latestRunsForEvaluations(deps.store, found.map((row) => row.id));
+    const people = new Map(found.map((row) => [row.id, { fullName: row.fullName, email: row.email }] as const));
+    return { enabled: true as const, rows: runs.map((run) => summarize(run, people.get(run.evaluationId))) };
   }),
 
   /** Dossiers par statut (filtre « bilan prêt » compris) avec les compteurs de chaque filtre. */
