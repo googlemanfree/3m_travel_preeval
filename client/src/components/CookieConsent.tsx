@@ -35,10 +35,10 @@ export default function CookieConsent() {
       aria-labelledby="cookie-consent-title"
       aria-describedby="cookie-consent-text"
       data-testid="cookie-consent"
-      className="fixed inset-x-0 bottom-0 z-[70] border-t border-slate-300 bg-white px-4 py-4 shadow-[0_-8px_30px_rgba(7,27,61,0.18)] sm:px-6"
+      className="fixed inset-x-0 bottom-0 z-[70] border-t border-slate-300 bg-white px-4 py-3 shadow-[0_-8px_30px_rgba(7,27,61,0.18)] sm:px-6 sm:py-4"
     >
       <div className="mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm leading-6 text-slate-800">
+        <div className="text-xs leading-5 text-slate-800 sm:text-sm sm:leading-6">
           <p id="cookie-consent-title" className="font-bold text-slate-950">{t("Votre choix sur les cookies de mesure d’audience", "Your choice on audience-measurement cookies")}</p>
           <p id="cookie-consent-text">
             {t(

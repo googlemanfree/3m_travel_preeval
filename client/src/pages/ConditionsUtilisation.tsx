@@ -34,11 +34,11 @@ export default function ConditionsUtilisation() {
             </p>
             <p className="mt-3 leading-relaxed text-gray-700">
               Fondateur et PDG :{" "}
-              <a href="/about#aureol-donfack" className="font-semibold text-blue-700 underline-offset-2 hover:underline">
+              <a href="/about#aureol-donfack" className="font-semibold text-blue-700 underline underline-offset-2 hover:no-underline">
                 {COMPANY_FOUNDER.name}
               </a>
               . Siège : {yaounde.addressLines.join(", ")}. Contact :{" "}
-              <a href={`mailto:${COMPANY_PROFILE.publicEmail}`} className="text-blue-700 hover:underline">
+              <a href={`mailto:${COMPANY_PROFILE.publicEmail}`} className="text-blue-700 underline underline-offset-2 hover:no-underline">
                 {COMPANY_PROFILE.publicEmail}
               </a>
               .
@@ -48,7 +48,7 @@ export default function ConditionsUtilisation() {
             </p>
             <p className="mt-3 text-sm text-gray-600">
               Mentions légales complètes :{" "}
-              <a href="/mentions-legales" className="font-semibold text-blue-700 hover:underline">
+              <a href="/mentions-legales" className="font-semibold text-blue-700 underline underline-offset-2 hover:no-underline">
                 /mentions-legales
               </a>
               .
@@ -98,7 +98,7 @@ export default function ConditionsUtilisation() {
             </ul>
             <p className="mt-3 text-sm text-gray-600">
               Voir aussi la page{" "}
-              <a href="/tarifs" className="font-semibold text-blue-700 hover:underline">
+              <a href="/tarifs" className="font-semibold text-blue-700 underline underline-offset-2 hover:no-underline">
                 Tarifs
               </a>
               .
@@ -130,11 +130,11 @@ export default function ConditionsUtilisation() {
             <h2 className="mb-4 text-2xl font-bold text-gray-900">7. Réclamations</h2>
             <p className="leading-relaxed text-gray-700">
               Toute réclamation relative à un service peut être adressée à{" "}
-              <a href={`mailto:${COMPANY_PROFILE.publicEmail}`} className="text-blue-700 hover:underline">
+              <a href={`mailto:${COMPANY_PROFILE.publicEmail}`} className="text-blue-700 underline underline-offset-2 hover:no-underline">
                 {COMPANY_PROFILE.publicEmail}
               </a>{" "}
               ou via la page{" "}
-              <a href="/contact" className="font-semibold text-blue-700 hover:underline">
+              <a href="/contact" className="font-semibold text-blue-700 underline underline-offset-2 hover:no-underline">
                 Contact
               </a>
               , en précisant la référence de dossier le cas échéant. L’agence accuse réception et répond dans un délai raisonnable
@@ -146,7 +146,7 @@ export default function ConditionsUtilisation() {
             <h2 className="mb-4 text-2xl font-bold text-gray-900">8. Confidentialité et données personnelles</h2>
             <p className="leading-relaxed text-gray-700">
               Le traitement des données personnelles (évaluation, compte, pièces, suivi) est décrit dans la{" "}
-              <a href="/politique-confidentialite" className="font-semibold text-blue-700 hover:underline">
+              <a href="/politique-confidentialite" className="font-semibold text-blue-700 underline underline-offset-2 hover:no-underline">
                 Politique de confidentialité
               </a>
               . Les documents sensibles sont destinés au suivi du dossier et ne sont pas revendus. Le partage anonymisé avec des
@@ -190,33 +190,33 @@ export default function ConditionsUtilisation() {
                 {yaounde.addressLines[1] ? ` — ${yaounde.addressLines[1]}` : ""}
               </p>
               <p>
-                <a href={`mailto:${COMPANY_PROFILE.publicEmail}`} className="text-blue-600 hover:underline">
+                <a href={`mailto:${COMPANY_PROFILE.publicEmail}`} className="text-blue-600 underline underline-offset-2 hover:no-underline">
                   {COMPANY_PROFILE.publicEmail}
                 </a>
               </p>
               <p>
-                <a href={`tel:+${yaounde.whatsappNumber}`} className="text-blue-600 hover:underline">
+                <a href={`tel:+${yaounde.whatsappNumber}`} className="text-blue-600 underline underline-offset-2 hover:no-underline">
                   {yaounde.whatsappDisplay}
                 </a>
                 {yaounde.phoneDisplay ? (
                   <>
                     {" / "}
-                    <a href={`tel:${yaounde.phoneDisplay.replace(/\s/g, "")}`} className="text-blue-600 hover:underline">
+                    <a href={`tel:${yaounde.phoneDisplay.replace(/\s/g, "")}`} className="text-blue-600 underline underline-offset-2 hover:no-underline">
                       {yaounde.phoneDisplay}
                     </a>
                   </>
                 ) : null}
               </p>
               <p className="pt-2 text-sm">
-                <a href="/sources-officielles" className="font-semibold text-blue-700 hover:underline">
+                <a href="/sources-officielles" className="font-semibold text-blue-700 underline underline-offset-2 hover:no-underline">
                   Sources officielles
                 </a>
                 {" · "}
-                <a href="/politique-confidentialite" className="font-semibold text-blue-700 hover:underline">
+                <a href="/politique-confidentialite" className="font-semibold text-blue-700 underline underline-offset-2 hover:no-underline">
                   Confidentialité
                 </a>
                 {" · "}
-                <a href="/tarifs" className="font-semibold text-blue-700 hover:underline">
+                <a href="/tarifs" className="font-semibold text-blue-700 underline underline-offset-2 hover:no-underline">
                   Tarifs
                 </a>
               </p>

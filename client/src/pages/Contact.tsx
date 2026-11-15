@@ -39,6 +39,8 @@ export default function Contact() {
       imageAlt: heroVisual.alt,
     });
   }, [heroVisual.desktop, heroVisual.alt]);
+  // Piège à robots (jamais enregistré dans le brouillon) : un visiteur ne voit ni ne remplit ce champ.
+  const [honeypot, setHoneypot] = useState('');
   const [formData, setFormData] = useState<ContactFormDraft>({
     name: '',
     email: '',
@@ -189,7 +191,7 @@ export default function Contact() {
     setIsLoading(true);
 
     try {
-      await sendContactEmailMutation.mutateAsync(formData);
+      await sendContactEmailMutation.mutateAsync({ ...formData, website: honeypot });
       setSubmitted(true);
       removeLocalDraft(CONTACT_DRAFT_STORAGE_KEY);
       removeQueuedAction(CONTACT_QUEUE_STORAGE_KEY);
@@ -506,6 +508,11 @@ export default function Contact() {
               )}
 
               <form onSubmit={handleSubmit} className="space-y-6">
+                <div aria-hidden="true" style={{ position: 'absolute', left: '-10000px', width: 1, height: 1, overflow: 'hidden' }} data-testid="contact-honeypot">
+                  <label>Ne pas remplir ce champ
+                    <input type="text" name="website" aria-label="Ne pas remplir ce champ" tabIndex={-1} autoComplete="off" value={honeypot} onChange={(event) => setHoneypot(event.target.value)} />
+                  </label>
+                </div>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
