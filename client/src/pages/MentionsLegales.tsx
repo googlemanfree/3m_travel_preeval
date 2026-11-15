@@ -47,7 +47,7 @@ export default function MentionsLegales() {
               <li>Siège : {yaounde.addressLines.join(", ")}</li>
               <li>
                 E-mail :{" "}
-                <a href={`mailto:${COMPANY_PROFILE.publicEmail}`} className="font-semibold text-blue-700 hover:underline">
+                <a href={`mailto:${COMPANY_PROFILE.publicEmail}`} className="font-semibold text-blue-700 underline underline-offset-2 hover:no-underline">
                   {COMPANY_PROFILE.publicEmail}
                 </a>
               </li>
@@ -59,7 +59,7 @@ export default function MentionsLegales() {
             <p className="mt-4 text-sm text-slate-600">{COMPANY_PROFILE.groupRole}</p>
             <p className="mt-3 text-sm">
               Vérification au registre :{" "}
-              <a href={identity.registrySearchUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-700 hover:underline">
+              <a href={identity.registrySearchUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-700 underline underline-offset-2 hover:no-underline">
                 portail RCCM OHADA
               </a>
               .
@@ -70,7 +70,7 @@ export default function MentionsLegales() {
             <h2 className="mb-4 text-2xl font-bold text-gray-900">2. Directeur de la publication</h2>
             <p>
               Directeur de la publication :{" "}
-              <a href="/about#aureol-donfack" className="font-semibold text-blue-700 hover:underline">
+              <a href="/about#aureol-donfack" className="font-semibold text-blue-700 underline underline-offset-2 hover:no-underline">
                 {COMPANY_FOUNDER.name}
               </a>
               , {COMPANY_FOUNDER.jobTitle} de {GROUP_LEGAL_NAME}.
@@ -85,7 +85,7 @@ export default function MentionsLegales() {
             <p className="mt-2 text-sm text-slate-600">{COMPANY_PROFILE.hosting.providerNote}</p>
             <p className="mt-2 text-sm">
               Contact éditeur pour l’hébergement :{" "}
-              <a href={`mailto:${COMPANY_PROFILE.publicEmail}`} className="text-blue-700 hover:underline">
+              <a href={`mailto:${COMPANY_PROFILE.publicEmail}`} className="text-blue-700 underline underline-offset-2 hover:no-underline">
                 {COMPANY_PROFILE.publicEmail}
               </a>
             </p>
@@ -104,11 +104,11 @@ export default function MentionsLegales() {
             <h2 className="mb-4 text-2xl font-bold text-gray-900">5. Données personnelles et conditions</h2>
             <p>
               Le traitement des données est décrit dans la{" "}
-              <a href="/politique-confidentialite" className="font-semibold text-blue-700 hover:underline">
+              <a href="/politique-confidentialite" className="font-semibold text-blue-700 underline underline-offset-2 hover:no-underline">
                 politique de confidentialité
               </a>
               . Les conditions de service figurent dans les{" "}
-              <a href="/conditions-utilisation" className="font-semibold text-blue-700 hover:underline">
+              <a href="/conditions-utilisation" className="font-semibold text-blue-700 underline underline-offset-2 hover:no-underline">
                 conditions d’utilisation
               </a>
               .

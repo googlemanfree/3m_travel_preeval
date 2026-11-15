@@ -139,7 +139,7 @@ export default function PolitiqueConfidentialite() {
               <li className="flex items-start gap-3">
                 <span className="text-blue-600 font-bold">•</span>
                 <span><strong>Suppression anticipée :</strong> vous pouvez demander l’effacement à{" "}
-                  <a href="mailto:hello@3mtravelagency.com" className="text-blue-600 hover:underline">hello@3mtravelagency.com</a>
+                  <a href="mailto:hello@3mtravelagency.com" className="text-blue-600 underline underline-offset-2 hover:no-underline">hello@3mtravelagency.com</a>
                   {" "}— traité sous réserve des pièces que la loi nous impose de conserver.</span>
               </li>
             </ul>
@@ -158,10 +158,10 @@ export default function PolitiqueConfidentialite() {
             <h2 className="text-2xl font-bold text-gray-900 mb-4">7. Vos droits</h2>
             <p className="text-gray-700 leading-relaxed">
               Vous disposez d'un droit d'accès, de rectification et de suppression de vos données personnelles. Pour exercer ces droits, contactez-nous à{" "}
-              <a href="mailto:hello@3mtravelagency.com" className="text-blue-600 hover:underline">
+              <a href="mailto:hello@3mtravelagency.com" className="text-blue-600 underline underline-offset-2 hover:no-underline">
                 hello@3mtravelagency.com
               </a>{" "}
-              ou au <a href="tel:+237698104832" className="text-blue-600 hover:underline">+237 698 104 832</a>.
+              ou au <a href="tel:+237698104832" className="text-blue-600 underline underline-offset-2 hover:no-underline">+237 698 104 832</a>.
             </p>
           </div>
 
@@ -186,16 +186,16 @@ export default function PolitiqueConfidentialite() {
               <p><strong>3M Group SARL</strong></p>
               <p>Yaoundé, Biyem-Assi, Montée Chapelle Obili</p>
               <p>
-                <a href="mailto:hello@3mtravelagency.com" className="text-blue-600 hover:underline">
+                <a href="mailto:hello@3mtravelagency.com" className="text-blue-600 underline underline-offset-2 hover:no-underline">
                   hello@3mtravelagency.com
                 </a>
               </p>
               <p>
                 WhatsApp (canal principal) :{" "}
-                <a href="tel:+237698104832" className="text-blue-600 hover:underline">+237 698 104 832</a>
+                <a href="tel:+237698104832" className="text-blue-600 underline underline-offset-2 hover:no-underline">+237 698 104 832</a>
                 {" · "}
                 Fixe (appels) :{" "}
-                <a href="tel:+237620996045" className="text-blue-600 hover:underline">+237 620 996 045</a>
+                <a href="tel:+237620996045" className="text-blue-600 underline underline-offset-2 hover:no-underline">+237 620 996 045</a>
               </p>
             </div>
           </div>

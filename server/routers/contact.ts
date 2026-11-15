@@ -19,7 +19,12 @@ const sendContactEmailInput = z.object({
   phone: z.string().max(30).optional(),
   subject: z.string().min(3, "Le sujet est requis").max(300).trim(),
   message: z.string().min(10, "Le message doit contenir au moins 10 caractères").max(5000),
+  /** Piège à robots : champ caché que seuls les programmes automatiques remplissent. Un visiteur ne le voit pas. */
+  website: z.string().max(500).optional(),
 });
+
+/** Réponse renvoyée aux robots : identique à un succès, pour ne leur laisser aucun signal. */
+export const CONTACT_SUCCESS_MESSAGE = "Votre demande a ete envoyee avec succes. Vous recevrez une reponse dans les 24 heures.";
 
 const sendMessageInput = z.object({
   visitorName: z.string().min(2, "Le nom est requis").max(200).trim(),
@@ -122,6 +127,8 @@ export const contactRouter = router({
   sendContactEmail: publicProcedure
     .input(sendContactEmailInput)
     .mutation(async ({ input, ctx }) => {
+      // Champ piège rempli : c'est un robot. Rien n'est enregistré ni envoyé, et le robot reçoit la réponse d'un succès.
+      if (input.website?.trim()) return { success: true, message: CONTACT_SUCCESS_MESSAGE };
       contactSubmissionGuard.assertAllowed(ctx?.req, input.email);
       const db = await getDb();
 
@@ -160,10 +167,7 @@ export const contactRouter = router({
           html: `<h2>Merci pour votre demande</h2><p>Bonjour ${esc(input.name)},</p><p>Nous avons bien recu votre demande. Notre equipe vous repondra dans les 24 heures ouvrables.</p><p>Cordialement,<br />L'equipe 3M TRAVEL AGENCY</p>`,
         });
 
-        return {
-          success: true,
-          message: "Votre demande a ete envoyee avec succes. Vous recevrez une reponse dans les 24 heures.",
-        };
+        return { success: true, message: CONTACT_SUCCESS_MESSAGE };
       } catch (error) {
         console.error("[Contact] Send email error:", error);
         throw new Error("Erreur lors de l'envoi de votre demande. Veuillez reessayer.");
