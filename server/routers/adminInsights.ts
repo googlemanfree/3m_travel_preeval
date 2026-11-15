@@ -1,3 +1,4 @@
+import { mapWithLimit } from "../utils/mapWithLimit";
 import { isActivatedStatus } from "../../shared/candidateStatus";
 import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, like, lte, sql } from "drizzle-orm";
@@ -71,18 +72,16 @@ async function loadProofQueue(db: Db): Promise<ProofRow[]> {
   const bySignature = new Map<string, number[]>();
   for (const row of rows) bySignature.set(`${row.fileName}|${row.size}`, [...(bySignature.get(`${row.fileName}|${row.size}`) ?? []), row.candidateId]);
   const seen = new Set<number>();
-  const queue: ProofRow[] = [];
-  for (const row of rows) {
-    if (seen.has(row.candidateId)) continue;
-    seen.add(row.candidateId);
-    const evidence = await getOpeningPaymentEvidence(db, { id: row.candidateId, email: row.email });
-    if (evidence.ok) continue;
-    queue.push({
-      fileId: row.id, candidateId: row.candidateId, fullName: row.fullName, email: row.email, dossierStatus: row.dossierStatus, fileName: row.fileName, mimeType: row.mimeType,
-      uploadedAt: iso(row.uploadedAt)!, ageDays: Math.floor((Date.now() - new Date(row.uploadedAt).getTime()) / DAY), expectedAmount: await expectedFeeFor(db, row),
-      alreadyActive: isActivatedStatus(row.dossierStatus), duplicateOf: Array.from(new Set((bySignature.get(`${row.fileName}|${row.size}`) ?? []).filter((id) => id !== row.candidateId))), fileKey: row.fileKey,
-    });
-  }
+  const unique = rows.filter((row) => (seen.has(row.candidateId) ? false : (seen.add(row.candidateId), true)));
+  // Les vérifications (plusieurs lectures par candidat) partent par groupes de 10 en parallèle : avant, une par une, jusqu'à 400 candidats à la suite.
+  const evidence = await mapWithLimit(unique, 10, (row) => getOpeningPaymentEvidence(db, { id: row.candidateId, email: row.email }));
+  const pending = unique.filter((_, index) => !evidence[index].ok);
+  const fees = await mapWithLimit(pending, 10, (row) => expectedFeeFor(db, row));
+  const queue: ProofRow[] = pending.map((row, index) => ({
+    fileId: row.id, candidateId: row.candidateId, fullName: row.fullName, email: row.email, dossierStatus: row.dossierStatus, fileName: row.fileName, mimeType: row.mimeType,
+    uploadedAt: iso(row.uploadedAt)!, ageDays: Math.floor((Date.now() - new Date(row.uploadedAt).getTime()) / DAY), expectedAmount: fees[index],
+    alreadyActive: isActivatedStatus(row.dossierStatus), duplicateOf: Array.from(new Set((bySignature.get(`${row.fileName}|${row.size}`) ?? []).filter((id) => id !== row.candidateId))), fileKey: row.fileKey,
+  }));
   return queue;
 }
 

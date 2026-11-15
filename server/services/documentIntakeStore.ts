@@ -60,13 +60,13 @@ const toSummary = (row: IntakeRow | undefined): IntakeSummary => (row ? { status
 
 export type DocumentView = ChecklistDocument & { source: "evaluation_cv" | "client_document"; intakeId: number | null; kind: string | null; pages: number | null; sizeBytes: number | null; sha256: string | null; issues: string[] };
 
-/** Pièces d'une évaluation (CV de l'évaluation + documents déposés) avec leur contrôle le plus récent. */
-export async function loadDocuments(db: Db, evaluationId: number): Promise<DocumentView[]> {
-  await ensureDocumentIntakeTable(db);
-  const intakes = await db.select().from(documentIntake).where(eq(documentIntake.evaluationId, evaluationId)).orderBy(desc(documentIntake.id));
+type IntakeRowT = typeof documentIntake.$inferSelect;
+type DocRowT = typeof clientDocuments.$inferSelect;
+type EvidenceRow = { cvFileUrl: string | null; cvFileName: string | null; createdAt: Date };
+
+/** Vue des pièces d'une évaluation à partir de lignes déjà lues (même construction pour une évaluation ou pour toute une liste). */
+function buildDocumentViews(evaluationId: number, intakes: IntakeRowT[], docs: DocRowT[], ev: EvidenceRow | undefined): DocumentView[] {
   const latestFor = (source: string, refId: number) => intakes.find((row) => row.source === source && row.refId === refId);
-  const docs = await db.select().from(clientDocuments).where(eq(clientDocuments.evaluationId, evaluationId));
-  const [ev] = await db.select({ cvFileUrl: evaluations.cvFileUrl, cvFileName: evaluations.cvFileName, createdAt: evaluations.createdAt }).from(evaluations).where(eq(evaluations.id, evaluationId)).limit(1);
   const views: DocumentView[] = docs.filter((row) => row.documentType !== "cv").map((row) => {
     const intake = latestFor("client_document", row.id);
     return { id: row.id, documentType: row.documentType, name: row.documentName, uploadedAt: row.uploadedAt, intake: toSummary(intake), source: "client_document", intakeId: intake?.id ?? null, kind: intake?.kind ?? null, pages: intake?.pages ?? null, sizeBytes: intake?.sizeBytes ?? row.fileSize ?? null, sha256: intake?.sha256 ?? null, issues: intake?.issuesJson ? JSON.parse(intake.issuesJson) : [] };
@@ -76,6 +76,17 @@ export async function loadDocuments(db: Db, evaluationId: number): Promise<Docum
     views.push({ id: -evaluationId, documentType: "cv", name: ev.cvFileName ?? "CV", uploadedAt: intake?.createdAt ?? ev.createdAt, intake: toSummary(intake), source: "evaluation_cv", intakeId: intake?.id ?? null, kind: intake?.kind ?? null, pages: intake?.pages ?? null, sizeBytes: intake?.sizeBytes ?? null, sha256: intake?.sha256 ?? null, issues: intake?.issuesJson ? JSON.parse(intake.issuesJson) : [] });
   }
   return views;
+}
+
+/** Pièces d'une évaluation (CV de l'évaluation + documents déposés) avec leur contrôle le plus récent. */
+export async function loadDocuments(db: Db, evaluationId: number): Promise<DocumentView[]> {
+  await ensureDocumentIntakeTable(db);
+  const [intakes, docs, [ev]] = await Promise.all([
+    db.select().from(documentIntake).where(eq(documentIntake.evaluationId, evaluationId)).orderBy(desc(documentIntake.id)),
+    db.select().from(clientDocuments).where(eq(clientDocuments.evaluationId, evaluationId)),
+    db.select({ cvFileUrl: evaluations.cvFileUrl, cvFileName: evaluations.cvFileName, createdAt: evaluations.createdAt }).from(evaluations).where(eq(evaluations.id, evaluationId)).limit(1),
+  ]);
+  return buildDocumentViews(evaluationId, intakes, docs, ev);
 }
 
 export async function checklistFor_(db: Db, evaluationId: number, now: Date = new Date()): Promise<{ items: ChecklistItem[]; projectKind: string; documents: DocumentView[] } | null> {
@@ -89,12 +100,24 @@ export async function checklistFor_(db: Db, evaluationId: number, now: Date = ne
 export type OverviewFilter = "a_mettre_a_jour" | "manquant" | "doublon" | "non_controle" | "tous";
 
 export async function overview(db: Db, filter: OverviewFilter, search: string | undefined, now: Date = new Date()) {
-  const evals = await db.select({ id: evaluations.id, referenceCode: evaluations.referenceCode, fullName: evaluations.fullName, email: evaluations.email }).from(evaluations).orderBy(desc(evaluations.id)).limit(300);
+  await ensureDocumentIntakeTable(db);
+  const evals = await db.select({ id: evaluations.id, referenceCode: evaluations.referenceCode, fullName: evaluations.fullName, email: evaluations.email, projectType: evaluations.projectType, visaType: evaluations.visaType, cvFileUrl: evaluations.cvFileUrl, cvFileName: evaluations.cvFileName, createdAt: evaluations.createdAt }).from(evaluations).orderBy(desc(evaluations.id)).limit(300);
+  const ids = evals.map((ev) => ev.id);
+  // Trois lectures pour toute la liste (avant : cinq par évaluation, soit jusqu'à 1 500 allers-retours pour 300 évaluations).
+  const [allIntakes, allDocs] = ids.length === 0 ? [[], []] : await Promise.all([
+    db.select().from(documentIntake).where(inArray(documentIntake.evaluationId, ids)).orderBy(desc(documentIntake.id)),
+    db.select().from(clientDocuments).where(inArray(clientDocuments.evaluationId, ids)),
+  ]);
+  const intakesByEvaluation = new Map<number, IntakeRowT[]>();
+  for (const row of allIntakes) intakesByEvaluation.set(row.evaluationId, [...(intakesByEvaluation.get(row.evaluationId) ?? []), row]);
+  const docsByEvaluation = new Map<number, DocRowT[]>();
+  for (const row of allDocs) if (row.evaluationId !== null) docsByEvaluation.set(row.evaluationId, [...(docsByEvaluation.get(row.evaluationId) ?? []), row]);
   const rows = [];
   const counts = { a_mettre_a_jour: 0, manquant: 0, doublon: 0, non_controle: 0, tous: 0 };
   for (const ev of evals) {
-    const checklist = await checklistFor_(db, ev.id, now);
-    if (!checklist) continue;
+    const documents = buildDocumentViews(ev.id, intakesByEvaluation.get(ev.id) ?? [], docsByEvaluation.get(ev.id) ?? [], ev);
+    const projectKind = checklistFor(ev.projectType, ev.visaType);
+    const checklist = { items: computeChecklist(projectKind, documents, now), projectKind, documents };
     const summary = checklistSummary(checklist.items);
     const uncontrolled = checklist.documents.filter((doc) => !doc.intake).length;
     const flags = { a_mettre_a_jour: summary.toUpdate > 0, manquant: summary.missing > 0, doublon: summary.duplicates > 0, non_controle: uncontrolled > 0 };

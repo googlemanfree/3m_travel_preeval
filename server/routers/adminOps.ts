@@ -1,3 +1,4 @@
+import { mapWithLimit } from "../utils/mapWithLimit";
 import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq, gte, inArray, isNull, lte, max, notInArray, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -270,11 +271,13 @@ export const adminOpsRouter = router({
     await requireValidAdminSession(input.sessionToken);
     const db = await requireDb();
     const missing: Array<{ migration: string; tables: string[] }> = [];
+    // Une vérification par table, six à la fois (avant : une par une, plus de vingt allers-retours à la suite).
+    const present = new Map<string, boolean>();
+    await mapWithLimit(Array.from(new Set(EXPECTED_TABLES.flatMap((entry) => entry.tables))), 6, async (table) => {
+      try { await db.execute(sql.raw(`SELECT 1 FROM \`${table}\` LIMIT 1`)); present.set(table, true); } catch { present.set(table, false); }
+    });
     for (const entry of EXPECTED_TABLES) {
-      const absent: string[] = [];
-      for (const table of entry.tables) {
-        try { await db.execute(sql.raw(`SELECT 1 FROM \`${table}\` LIMIT 1`)); } catch { absent.push(table); }
-      }
+      const absent = entry.tables.filter((table) => !present.get(table));
       if (absent.length) missing.push({ migration: entry.migration, tables: absent });
     }
     const [incidents] = await db.select({ total: sql<number>`count(*)` }).from(emailDeliveryIncidents).where(eq(emailDeliveryIncidents.status, "open")).catch(() => [{ total: 0 }]);

@@ -1258,7 +1258,32 @@ function countryStepsFromTreatment(treatment: PublishedProcedureTreatment): Jour
  * du guide PDF publié pour le pays / type de visa (Canada détaillé en premier ;
  * autres destinations via le catalogue 107 + URL PDF du site).
  */
+/**
+ * Le parcours ne dépend que de ces cinq textes et de catalogues fixes : le recalculer pour chaque dossier d'une liste (3 appels par dossier,
+ * jusqu'à plusieurs milliers de dossiers) coûtait des secondes. Les résultats sont donc gardés par combinaison (au plus quelques centaines).
+ * Les objets renvoyés sont partagés : les appelants les lisent sans jamais les modifier (en test, ils sont figés pour que toute modification échoue).
+ */
+const journeyCache = new Map<string, CandidateJourney>();
+const JOURNEY_CACHE_MAX = 600;
+function deepFreeze<T>(value: T): T {
+  if (value && typeof value === "object" && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const child of Object.values(value as object)) deepFreeze(child);
+  }
+  return value;
+}
+export function resetEnrichedJourneyCacheForTests() { journeyCache.clear(); }
 export function getEnrichedCandidateJourney(destination?: string | null, visaType?: string | null, procedureLabel?: string | null, programId?: string | null, domainId?: string | null): CandidateJourney {
+  const key = JSON.stringify([destination ?? null, visaType ?? null, procedureLabel ?? null, programId ?? null, domainId ?? null]);
+  const cached = journeyCache.get(key);
+  if (cached) return cached;
+  const built = computeEnrichedCandidateJourney(destination, visaType, procedureLabel, programId, domainId);
+  if (journeyCache.size >= JOURNEY_CACHE_MAX) journeyCache.clear();
+  journeyCache.set(key, typeof process !== "undefined" && process.env?.VITEST ? deepFreeze(built) : built);
+  return built;
+}
+
+function computeEnrichedCandidateJourney(destination?: string | null, visaType?: string | null, procedureLabel?: string | null, programId?: string | null, domainId?: string | null): CandidateJourney {
   const journey = buildEnrichedCandidateJourney(destination, visaType, procedureLabel);
   // Visa ou programme explicitement connu, sinon retrouvé par son libellé exact : les étapes s'adaptent partout de la même façon.
   const resolvedProgramId = programId || findProgramByLabel(procedureLabel, visaType)?.id || null;

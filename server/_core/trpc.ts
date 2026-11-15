@@ -46,14 +46,17 @@ const adminAuditMiddleware = t.middleware(async opts => {
   const { path, type, input, ctx, next } = opts;
   if (!ADMIN_ROUTE_RE.test(path)) return next();
 
+  const isAuthPath = path.startsWith("adminAuth.login") || path.startsWith("adminAuth.logout") || path.startsWith("adminAuth.changePassword");
+  // Seules les modifications et l'authentification sont journalisées : une simple lecture n'a pas besoin de retrouver le compte ici
+  // (chaque procédure valide déjà sa session). Avant, chaque lecture payait un aller-retour inutile vers la base avant de commencer.
+  if (!isAuthPath && type !== "mutation") return next();
+
   const payload = (input && typeof input === "object") ? input as Record<string, unknown> : {};
   const sessionToken = typeof payload.sessionToken === "string" ? payload.sessionToken : null;
   const email = typeof payload.email === "string" ? payload.email : null;
   const admin = sessionToken ? await findAdminBySessionToken(sessionToken) : (email ? await findAdminByEmail(email) : null);
-  const isAuthPath = path.startsWith("adminAuth.login") || path.startsWith("adminAuth.logout") || path.startsWith("adminAuth.changePassword");
 
   const result = await next();
-  if (!isAuthPath && type !== "mutation") return result;
 
   const ok = result.ok;
   await recordAdminAuditFromContext(ctx, {
