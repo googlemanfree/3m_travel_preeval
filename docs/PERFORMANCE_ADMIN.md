@@ -25,3 +25,23 @@ Base MariaDB locale avec 3 001 dossiers en ligne, 3 001 comptes, 6 100 documents
 
 ## Proposition pour la suite (fiche 360)
 Alertes du dossier calculées (CV illisible, pièce à mettre à jour, paiement en attente, incohérence pays/visa, bilan prêt) en tête de fiche ; mémorisation de l'onglet et des sections repliées par administrateur ; actions rapides au clavier ; chargement des onglets lourds (documents, échanges, historique) uniquement à l'ouverture, avec données chargées à la demande.
+
+## Liste des candidats : pagination et filtres par la base
+
+**Avant.** À chaque affichage ou rafraîchissement, la liste rapatriait les 5 000 derniers dossiers en ligne, les 5 000 derniers dossiers agence et 5 000 comptes, puis filtrait, triait et découpait en mémoire. Conséquences mesurées sur une base de 11 389 dossiers : la liste n'en voyait que 5 009, et la recherche d'un dossier au-delà de la 5 000e ligne ne trouvait rien (0 résultat au lieu de 2 796).
+
+**Maintenant** (`server/services/candidateListQuery.ts`) :
+- chaque source (dossiers en ligne, dossiers agence, comptes sans dossier) est filtrée et comptée en SQL ; les compteurs par étape, « payés », « sans dossier », « CV à traiter » et « CV reçus » sortent d'une seule requête groupée par source ;
+- seules les lignes de la page demandée sont lues (par source, les `page × taille` premières, fusionnées puis découpées) ; documents et portraits ne sont cherchés que pour ces lignes ;
+- compteurs et page partent dans le même aller-retour vers la base ;
+- l'export CSV utilise la même requête (une page de 10 000 lignes) et n'est plus limité aux 5 000 derniers dossiers par source ;
+- côté écran : la recherche attend 300 ms de pause de frappe, et la liste précédente reste affichée pendant le chargement de la suivante.
+
+**Exactitude.** `server/candidateListQuery.db.test.ts` compare, sur une base réelle et des données variées (statuts, paiements, bandes de score, CV, bilans publiés, portraits, comptes liés ou supprimés, référence agence et compte), le résultat SQL à l'ancien calcul en mémoire : mêmes lignes, mêmes valeurs, mêmes compteurs, 26 combinaisons de filtres et de tris.
+
+**Différences connues, volontaires.**
+- Tri par nom : la base trie avec son interclassement, le serveur re-trie la page fusionnée en français ; deux noms ne différant que par un accent peuvent se départager autrement qu'avant.
+- Tri par score : les dossiers agence et les comptes (score 0) se départagent par date.
+- Si la table du parcours de validation n'existe pas (base non migrée), la liste fonctionne sans la mention « bilan publié », comme avant.
+
+**Pistes non faites (à décider).** Index sur `applications.email`, `evaluations.email`, `client_documents.candidateEmail` : les rapprochements se font aujourd'hui sans index (sous-requêtes matérialisées par la base, rapides jusqu'à plusieurs dizaines de milliers de lignes). Les ajouter demande de toucher à la base de Manus : à valider avec vous avant.

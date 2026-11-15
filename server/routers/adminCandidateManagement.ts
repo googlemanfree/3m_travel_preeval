@@ -1,6 +1,7 @@
 ﻿import { publicProcedure, router } from "../_core/trpc";
 import { DEFAULT_OPENING_FEE_XAF, proposedOpeningFee } from "../../shared/openingFee";
 import { PRE_DOSSIER_STATUSES, isActivatedStatus } from "../../shared/candidateStatus";
+import { queryCandidateList } from "../services/candidateListQuery";
 import { DOSSIER_STAGE_IDS, dossierStageOf, dossierStatusLabel, isDossierStage, type DossierStage } from "../../shared/dossierStages";
 import { TRPCError } from "@trpc/server";
 import crypto from "node:crypto";
@@ -308,7 +309,7 @@ const candidateListColumns = { id: candidates.id, email: candidates.email, fullN
 // Un même chargement sert les appels simultanés (tableau de bord, liste, compteurs) : une seule lecture de la base au lieu d'une par appel.
 let recordsInFlight: { limit: number; at: number; promise: Promise<AdminCandidate[]> } | null = null;
 const RECORDS_SHARE_MS = 1500;
-async function loadCandidateRecords(sourceLimit = 5000): Promise<AdminCandidate[]> {
+export async function loadCandidateRecords(sourceLimit = 5000): Promise<AdminCandidate[]> {
   const now = Date.now();
   if (recordsInFlight && recordsInFlight.limit === sourceLimit && now - recordsInFlight.at < RECORDS_SHARE_MS) return [...(await recordsInFlight.promise)];
   const promise = loadCandidateRecordsFromDb(sourceLimit);
@@ -449,10 +450,6 @@ export function filterCandidateRecords(records: AdminCandidate[], filter: Candid
   });
 
   return candidateRecords;
-}
-
-async function loadCandidates(filter: CandidateFilter, sourceLimit = 5000) {
-  return filterCandidateRecords(await loadCandidateRecords(sourceLimit), filter);
 }
 
 export const adminCandidateManagementRouter = router({
@@ -2001,28 +1998,20 @@ export const adminCandidateManagementRouter = router({
       };
     }),
 
+  /** Liste paginée par la base : filtres, compteurs et page sont calculés en SQL (voir services/candidateListQuery.ts). */
   list: publicProcedure.input(candidateFilterSchema).query(async ({ input, ctx }) => {
     await requireAdminSessionFromCookie(ctx.req.headers.cookie);
-    const allRecords = await loadCandidateRecords();
-    // Compteurs : calculés sur tout le périmètre filtré (hors étape), pas seulement sur la page affichée.
-    const scope = filterCandidateRecords(allRecords, input, { skipStatus: true });
-    const stageCounts = Object.fromEntries(DOSSIER_STAGE_IDS.map(stage => [stage, 0])) as Record<DossierStage, number>;
-    for (const record of scope) stageCounts[record.stage] += 1;
-    const candidates = filterCandidateRecords(allRecords, input);
-    const pagination = paginateCandidates(candidates, input.page, input.pageSize);
-    return {
-      candidates: pagination.records,
-      stats: { scopeTotal: scope.length, stageCounts, paidCount: scope.filter(record => record.paymentStatus === "paye").length, withoutDossierCount: scope.filter(record => record.source === "compte").length, cvToProcessCount: scope.filter(record => record.cvReceived && !record.bilanSent).length, cvReceivedCount: scope.filter(record => record.cvReceived).length },
-      total: pagination.total,
-      page: pagination.page,
-      pageSize: pagination.pageSize,
-      totalPages: pagination.totalPages,
-    };
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    return queryCandidateList(db as never, input);
   }),
 
   exportCsv: publicProcedure.input(candidateFilterSchema).mutation(async ({ input, ctx }) => {
     await requireAdminSessionFromCookie(ctx.req.headers.cookie);
-    const candidates = await loadCandidates(input, 10000);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    // Même requête que la liste, en une seule grande page (10 000 lignes au plus) : l'export n'est plus limité aux 5 000 derniers dossiers de chaque source.
+    const candidates = (await queryCandidateList(db as never, { ...input, page: 1, pageSize: 10000 })).candidates;
     const headers = ["Référence", "Nom", "E-mail", "Téléphone", "Destination", "Visa", "Score", "Étape", "Statut", "Paiement", "Documents", "Source", "Créé le"];
     const rows = candidates.map(candidate => [
       candidate.applicationNumber, candidate.fullName, candidate.email, candidate.phone,

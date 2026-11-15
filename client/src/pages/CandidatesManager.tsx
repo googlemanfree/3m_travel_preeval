@@ -448,6 +448,12 @@ export default function CandidatesManager() {
     []
   );
   const [searchQuery, setSearchQuery] = useState(initialUrlState.searchQuery);
+  // La base filtre à chaque requête : on attend une courte pause de frappe plutôt que d'interroger à chaque lettre.
+  const [debouncedSearch, setDebouncedSearch] = useState(initialUrlState.searchQuery);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearch(searchQuery), searchQuery === "" ? 0 : 300);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
   const [statusFilter, setStatusFilter] = useState(initialUrlState.statusFilter);
   // File de traitement rapide : candidats dont le CV est reçu et dont le bilan n'est pas encore envoyé.
   const [cvFilter, setCvFilter] = useState<"all" | "a_traiter" | "recu" | "sans">("all");
@@ -469,7 +475,7 @@ export default function CandidatesManager() {
     const paymentStatus: "all" | "paye" | "en_attente" | "non_paye" = paymentFilter === "tous" ? "all" : paymentFilter === "paye" || paymentFilter === "en_attente" ? paymentFilter : "non_paye";
     const scoreBand: "all" | "excellent" | "bon" | "moyen" | "faible" = scoreFilter === "tous" ? "all" : scoreFilter === "excellent" || scoreFilter === "bon" || scoreFilter === "moyen" ? scoreFilter : "faible";
     return {
-      search: searchQuery,
+      search: debouncedSearch,
       status: statusFilter === "tous" ? "all" : statusFilter,
       paymentStatus,
       scoreBand,
@@ -481,8 +487,9 @@ export default function CandidatesManager() {
       page,
       pageSize,
     };
-  }, [searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, cvFilter, sortBy, page, pageSize]);
-  const { data, isLoading, error } = trpc.adminCandidateManagement.list.useQuery(filterInput);
+  }, [debouncedSearch, statusFilter, paymentFilter, scoreFilter, destinationFilter, cvFilter, sortBy, page, pageSize]);
+  // La liste précédente reste affichée pendant le chargement de la suivante (pas de page blanche à chaque filtre ou changement de page).
+  const { data, isLoading, error } = trpc.adminCandidateManagement.list.useQuery(filterInput, { placeholderData: (previous) => previous });
   const savedViewsQuery = trpc.adminSavedViews.list.useQuery();
   const bilanReadyQuery = trpc.adminBilanAuto.list.useQuery({ sessionToken: getAdminSessionToken(), filter: "pret" }, { retry: false, staleTime: 60_000 });
   const bilansReadyCount = bilanReadyQuery.data && bilanReadyQuery.data.enabled ? bilanReadyQuery.data.rows.length : 0;
