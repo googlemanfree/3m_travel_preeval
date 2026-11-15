@@ -370,41 +370,41 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
                 <Button type="button" size="sm" role="tab" aria-selected={tab === "preview"} variant={tab === "preview" ? "default" : "outline"} onClick={() => setTab("preview")} data-testid="bilan-tab-preview">Aperçu</Button>
               </div>
               <div className="grid min-h-0 flex-1 gap-3 overflow-y-auto lg:grid-cols-2 lg:overflow-hidden">
-                <div className={`${tab === "preview" ? "hidden lg:flex" : "flex"} min-h-[320px] flex-col overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 lg:min-h-0`}>
+                <div className={`${tab === "preview" ? "hidden lg:flex" : "flex"} min-h-[320px] flex-col overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 sm:p-5 lg:min-h-0`}>
                   {restored && <p className="mb-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-950" role="status" data-testid="bilan-restored">Votre dernière saisie non enregistrée a été restaurée depuis cet appareil.</p>}
-                  <details open className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-2" data-testid="bilan-meta">
-                    <summary className="cursor-pointer text-sm font-semibold text-slate-900">Informations du dossier (à choisir par vous)</summary>
-                    <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                  <details className="group mb-5 shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:p-4" data-testid="bilan-meta">
+                    <summary className="cursor-pointer text-sm font-semibold text-slate-900">Informations du dossier (à choisir par vous)<span className="ml-2 text-xs font-normal text-slate-500" data-testid="bilan-meta-recap">{[fee.trim() ? `${Number(fee).toLocaleString("fr-FR")} XAF` : null, deadline ? `avant le ${new Date(`${deadline}T00:00:00`).toLocaleDateString("fr-FR")}` : null, advisor.trim() || null].filter(Boolean).join(" · ") || "frais, date limite et conseiller à préciser"}</span><span className="ml-2 text-xs font-normal text-blue-700 underline group-open:hidden">Modifier</span></summary>
+                    <div className="mt-4 grid gap-4 sm:grid-cols-3">
                       <label className="text-xs font-semibold text-slate-700">Frais d'ouverture (XAF)
-                        <Input type="number" inputMode="numeric" min={1000} step={500} value={fee} disabled={locked} placeholder={String(proposedOpeningFee(application.visaType ?? projectLabel))} onChange={(event) => setFee(event.target.value)} data-testid="bilan-fee" className="mt-1 bg-white" />
+                        <Input type="number" inputMode="numeric" min={1000} step={500} value={fee} disabled={locked} placeholder={String(proposedOpeningFee(application.visaType ?? projectLabel))} onChange={(event) => setFee(event.target.value)} data-testid="bilan-fee" className="mt-1.5 h-10 bg-white" />
                       </label>
                       <label className="text-xs font-semibold text-slate-700">Ouvrir le dossier avant le
-                        <Input type="date" value={deadline} disabled={locked} onChange={(event) => setDeadline(event.target.value)} data-testid="bilan-deadline" className="mt-1 bg-white" />
+                        <Input type="date" value={deadline} disabled={locked} onChange={(event) => setDeadline(event.target.value)} data-testid="bilan-deadline" className="mt-1.5 h-10 bg-white" />
                       </label>
                       <label className="text-xs font-semibold text-slate-700">Conseiller référent
-                        <Input type="text" maxLength={120} value={advisor} disabled={locked} onChange={(event) => setAdvisor(event.target.value)} data-testid="bilan-advisor" className="mt-1 bg-white" />
+                        <Input type="text" maxLength={120} value={advisor} disabled={locked} onChange={(event) => setAdvisor(event.target.value)} data-testid="bilan-advisor" className="mt-1.5 h-10 bg-white" />
                       </label>
                     </div>
-                    <p className="mt-1 text-[11px] text-slate-500">Dans le texte : {"{{montant}}"}, {"{{date_limite}}"}, {"{{conseiller}}"}. Le montant devient le montant attendu au paiement d'ouverture (jamais modifié une fois le paiement confirmé).</p>
-                    <label className="mt-2 block text-xs font-semibold text-slate-700">Mot d'accompagnement en tête de l'e-mail (facultatif)
-                      <Textarea value={note} disabled={locked} onChange={(event) => setNote(event.target.value)} rows={2} maxLength={1500} data-testid="bilan-note" className="mt-1 bg-white text-sm" />
+                    <p className="mt-3 text-xs leading-5 text-slate-500">Dans le texte : {"{{montant}}"}, {"{{date_limite}}"}, {"{{conseiller}}"}. Le montant devient le montant attendu au paiement d'ouverture (jamais modifié une fois le paiement confirmé).</p>
+                    <label className="mt-4 block text-xs font-semibold text-slate-700">Mot d'accompagnement en tête de l'e-mail (facultatif)
+                      <Textarea value={note} disabled={locked} onChange={(event) => setNote(event.target.value)} rows={3} maxLength={1500} data-testid="bilan-note" className="mt-1.5 bg-white text-sm leading-6" />
                     </label>
                   </details>
                   {!text.trim() && !locked && (
-                    <label className="mb-2 block text-xs font-semibold text-slate-700">Partir d'un modèle
-                      <select className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-2 text-sm" value="" onChange={(event) => event.target.value && pickSkeleton(event.target.value as SkeletonKind)} data-testid="bilan-skeleton">
+                    <label className="mb-4 block shrink-0 text-xs font-semibold text-slate-700">Partir d'un modèle
+                      <select className="mt-1.5 h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm" value="" onChange={(event) => event.target.value && pickSkeleton(event.target.value as SkeletonKind)} data-testid="bilan-skeleton">
                         <option value="">Choisir un canevas (structure sans contenu inventé)…</option>
                         <option value="travail">Visa travail</option><option value="etudes">Visa études</option><option value="tourisme">Tourisme / visite</option><option value="autre">Autre projet</option>
                       </select>
                     </label>
                   )}
-                  <Label htmlFor="bilan-input" className="mb-1 text-sm font-semibold text-slate-900">Bilan</Label>
-                  <Textarea id="bilan-input" data-testid="bilan-input" value={text} onChange={(event) => setText(event.target.value)} placeholder={PLACEHOLDER} disabled={locked} spellCheck onPaste={onPasteBilan} className="min-h-0 flex-1 resize-none font-sans text-sm leading-6" />
-                  <p className="mt-1 text-xs text-slate-500" data-testid="bilan-status" role="status" aria-live="polite">{status} · {inspection.words} mot{inspection.words > 1 ? "s" : ""}</p>
-                  <BilanAiAssistant sessionToken={sessionToken} text={text} fullName={application.fullName} disabled={locked} onApply={setText} />
+                  <Label htmlFor="bilan-input" className="mb-2 shrink-0 text-sm font-semibold text-slate-900">Bilan</Label>
+                  <Textarea id="bilan-input" data-testid="bilan-input" value={text} onChange={(event) => setText(event.target.value)} placeholder={PLACEHOLDER} disabled={locked} spellCheck onPaste={onPasteBilan} className="min-h-[320px] flex-1 resize-y p-3 font-sans text-sm leading-6" />
+                  <p className="mt-2 shrink-0 text-xs text-slate-500" data-testid="bilan-status" role="status" aria-live="polite">{status} · {inspection.words} mot{inspection.words > 1 ? "s" : ""}</p>
+                  <div className="mt-4 shrink-0"><BilanAiAssistant sessionToken={sessionToken} text={text} fullName={application.fullName} disabled={locked} onApply={setText} /></div>
                 </div>
-                <div className={`${tab === "input" ? "hidden lg:flex" : "flex"} min-h-[420px] flex-col rounded-xl border border-slate-200 bg-white p-3 lg:min-h-0`}>
-                  <p className="mb-1 text-sm font-semibold text-slate-900">Aperçu en direct — ce que le candidat recevra</p>
+                <div className={`${tab === "input" ? "hidden lg:flex" : "flex"} min-h-[420px] flex-col rounded-xl border border-slate-200 bg-white p-4 sm:p-5 lg:min-h-0`}>
+                  <p className="mb-3 text-sm font-semibold text-slate-900">Aperçu en direct — ce que le candidat recevra</p>
                   {previewDocument
                     ? <iframe title="Aperçu du bilan" data-testid="bilan-live-preview" sandbox="" srcDoc={previewDocument} className="min-h-0 w-full flex-1 rounded border bg-white" />
                     : <div className="flex flex-1 items-center justify-center rounded border border-dashed p-6 text-center text-sm text-slate-500" data-testid="bilan-live-preview-empty">L'aperçu apparaît ici dès les premiers mots saisis.</div>}
