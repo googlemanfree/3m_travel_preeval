@@ -66,6 +66,7 @@ type PreDossierAccount = {
   hasCv?: boolean;
   cvFileUrl?: string | null;
   cvFileName?: string | null;
+  evaluationDocuments?: Array<{ id: number; name: string; type: string; url: string | null; uploadedAt: string | Date | null }>;
   evaluationWithoutCv?: boolean;
   pendingEvaluationReference?: string | null;
   evaluationValidated?: boolean;
@@ -1356,6 +1357,23 @@ export default function AdminPreDossierAccountsPanel({
                     <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                     Ouvrir le CV
                   </a>
+                </div>
+              ) : null}
+              {selected?.evaluationDocuments?.length ? (
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-3" data-testid="predossier-evaluation-documents">
+                  <p className="text-xs font-semibold text-blue-950">Documents déposés à l’évaluation ({selected.evaluationDocuments.length})</p>
+                  <ul className="mt-2 space-y-1">
+                    {selected.evaluationDocuments.map((document) => (
+                      <li key={document.id} className="flex items-center justify-between gap-2 text-xs text-blue-900">
+                        <span className="min-w-0 truncate" title={document.name}>{document.name} <span className="text-blue-700">· {document.type}</span></span>
+                        {isOpenableStoredUrl(document.url) ? (
+                          <a href={document.url!} target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center gap-1 font-bold underline underline-offset-2" data-testid={`predossier-evaluation-document-${document.id}`}>
+                            <ExternalLink className="h-3 w-3" aria-hidden="true" />Ouvrir
+                          </a>
+                        ) : <span className="shrink-0 text-blue-700">Fichier indisponible</span>}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               ) : null}
               <div>

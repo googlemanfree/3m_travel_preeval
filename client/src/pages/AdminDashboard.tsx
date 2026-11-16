@@ -1916,6 +1916,14 @@ export default function AdminDashboard() {
   const [destinationFilter, setDestinationFilter] = useState("ALL");
   const [assignedToMeFilter, setAssignedToMeFilter] = useState(false);
   const [sortBy, setSortBy] = useState<"priority" | "recent" | "oldest" | "name" | "score_desc">("priority");
+  // Liste paginée par le serveur ; la recherche attend une courte pause de frappe (chaque requête relit la base).
+  const [candidatePage, setCandidatePage] = useState(1);
+  const [candidatePageSize, setCandidatePageSize] = useState(50);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearch(search), search === "" ? 0 : 300);
+    return () => window.clearTimeout(timer);
+  }, [search]);
   const [nextActionFilter, setNextActionFilter] = useState<"ALL" | "high" | "medium" | "low">("ALL");
   const [nextActionSort, setNextActionSort] = useState<"default" | "urgency_desc" | "label">("default");
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
@@ -2124,7 +2132,7 @@ export default function AdminDashboard() {
 
   const candidateListInput = useMemo(() => ({
     sessionToken,
-    search: search || undefined,
+    search: debouncedSearch || undefined,
     status: statusFilter !== "ALL" ? statusFilter : undefined,
     activationStatus: activationFilter !== "ALL" ? activationFilter : undefined,
     source: sourceFilter !== "ALL" ? sourceFilter : undefined,
@@ -2132,7 +2140,13 @@ export default function AdminDashboard() {
     visaKind: visaKindFilter !== "ALL" ? (visaKindFilter as "evisa" | "work" | "study" | "visitor" | "family" | "residence" | "other") : undefined,
     assignedToMe: assignedToMeFilter || undefined,
     sortBy,
-  }), [sessionToken, search, statusFilter, activationFilter, sourceFilter, destinationFilter, visaKindFilter, assignedToMeFilter, sortBy]);
+    page: candidatePage,
+    pageSize: candidatePageSize,
+  }), [sessionToken, debouncedSearch, statusFilter, activationFilter, sourceFilter, destinationFilter, visaKindFilter, assignedToMeFilter, sortBy, candidatePage, candidatePageSize]);
+  // Un nouveau filtre, tri ou taille de page ramène à la première page.
+  useEffect(() => {
+    setCandidatePage(1);
+  }, [debouncedSearch, statusFilter, activationFilter, sourceFilter, destinationFilter, visaKindFilter, assignedToMeFilter, sortBy, candidatePageSize]);
   const { data, isLoading, error: candidateListError, refetch, dataUpdatedAt, isFetching: isFetchingCandidates } = trpc.admin.listCandidates.useQuery(
     candidateListInput,
     {
@@ -2365,19 +2379,23 @@ export default function AdminDashboard() {
     setNextActionSort("default");
   };
 
-  // Statistiques rapides
+  // Statistiques rapides : calculées par le serveur sur toute la liste filtrée (et non sur la seule page affichée).
+  const listSummary = data?.summary;
   const stats = {
     total,
-    pending: candidates.filter((c) => c.status === "PENDING_48H").length,
-    published: candidates.filter((c) => c.status === "PUBLISHED").length,
-    documents: candidates.filter((c) => c.status === "DOCUMENTS_CHECK").length,
-    submitted: candidates.filter((c) => c.status === "SUBMITTED").length,
-    approved: candidates.filter((c) => c.status === "APPROVED").length,
-    web: candidates.filter((c) => c.source === "WEB").length,
-    agency: candidates.filter((c) => c.source === "AGENCY_PHYSICAL").length,
+    pending: listSummary?.stats.pending ?? 0,
+    published: listSummary?.stats.published ?? 0,
+    documents: listSummary?.stats.documents ?? 0,
+    submitted: listSummary?.stats.submitted ?? 0,
+    approved: listSummary?.stats.approved ?? 0,
+    web: listSummary?.stats.web ?? 0,
+    agency: listSummary?.stats.agency ?? 0,
   };
-  const externalEvaluationCandidates = candidates.filter((candidate) => candidate.source === "ACCOUNT_ONLY" && candidate.evaluationDeclarationStatus === "pending_validation");
-  const pendingEvaluationCandidates = candidates.filter((candidate) => candidate.status === "PENDING_48H");
+  const externalEvaluationCount = listSummary?.externalEvaluation.count ?? 0;
+  const pendingEvaluationCount = listSummary?.pendingEvaluation.count ?? 0;
+  const attentionRows = listSummary?.attentionRows ?? [];
+  const attentionCount = externalEvaluationCount + (listSummary?.agencyPhysicalCount ?? 0);
+  const oldestAsItems = (value: Date | string | null | undefined) => (value ? [{ createdAt: value }] : []);
   const visibleAdvisorDeadlineGroups = advisorDeadlineGroups
     .filter((group) => !assignedToMeFilter || !currentAdminEmail || group.advisorEmail?.toLowerCase() === currentAdminEmail.toLowerCase())
     .map((group) => ({
@@ -2424,19 +2442,19 @@ export default function AdminDashboard() {
       id: "external-evaluations",
       label: "Évaluations externes à confirmer",
       detail: "Aucune activation de dossier avant décision humaine.",
-      count: externalEvaluationCandidates.length,
+      count: externalEvaluationCount,
       tab: "pre-dossiers",
       tone: "amber",
-      deadline: getManualPriorityDeadline(externalEvaluationCandidates, 24),
+      deadline: getManualPriorityDeadline(oldestAsItems(listSummary?.externalEvaluation.oldestCreatedAt), 24),
     },
     {
       id: "evaluation-48h",
       label: "Bilans à relire",
       detail: "Vérifier le bilan avant sa décision de procédure.",
-      count: pendingEvaluationCandidates.length,
+      count: pendingEvaluationCount,
       tab: "evaluation-review",
       tone: "blue",
-      deadline: getManualPriorityDeadline(pendingEvaluationCandidates, 48),
+      deadline: getManualPriorityDeadline(oldestAsItems(listSummary?.pendingEvaluation.oldestCreatedAt), 48),
     },
     {
       id: "payments",
@@ -2744,7 +2762,7 @@ export default function AdminDashboard() {
               />
             ) : null}
             <AdminTodayDashboard candidates={candidates as TodayCandidate[]} isRefreshing={isFetchingCandidates} lastUpdatedAt={dataUpdatedAt ? new Date(dataUpdatedAt) : null} onRefresh={() => void handleRefresh()} onOpen={(candidateId) => setSelectedCandidateId(candidateId)} />
-            <AdminOperationsControlCenter sessionToken={sessionToken} totalCandidates={total} pendingEvaluations={pendingEvaluationCandidates.length} pendingPayments={pendingPaymentApplications.length} pendingFlights={flightQueueSummary?.pending_review ?? 0} openDeadlines={advisorDeadlineGroups.reduce((count, group) => count + group.items.length, 0)} smtpFailures={smtpSummary.failed} lastSyncedAt={lastSyncedAt} isRefreshing={isRefreshing} onRefresh={handleRefresh} onNavigate={setActiveAdminTab} />
+            <AdminOperationsControlCenter sessionToken={sessionToken} totalCandidates={total} pendingEvaluations={pendingEvaluationCount} pendingPayments={pendingPaymentApplications.length} pendingFlights={flightQueueSummary?.pending_review ?? 0} openDeadlines={advisorDeadlineGroups.reduce((count, group) => count + group.items.length, 0)} smtpFailures={smtpSummary.failed} lastSyncedAt={lastSyncedAt} isRefreshing={isRefreshing} onRefresh={handleRefresh} onNavigate={setActiveAdminTab} />
             <AdminCockpitControlBoard sessionToken={sessionToken} onOpen={(openId) => setSelectedCandidateId(openId)} />
             <AdminPilotageQueue sessionToken={sessionToken} onOpen={(openId) => setSelectedCandidateId(openId)} />
             <AdminDelayStats sessionToken={sessionToken} />
@@ -2752,17 +2770,17 @@ export default function AdminDashboard() {
               <CardContent className="p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div><h2 className="text-base font-black text-slate-950">Déclarations préalables à contrôler</h2><p className="text-sm text-slate-600">Candidats ayant déclaré une évaluation déjà réalisée ou un paiement effectué en agence.</p></div>
-                  <Badge className="w-fit bg-amber-700 text-white">{externalEvaluationCandidates.length + candidates.filter((candidate) => candidate.source === "AGENCY_PHYSICAL").length} à contrôler</Badge>
+                  <Badge className="w-fit bg-amber-700 text-white">{attentionCount} à contrôler</Badge>
                 </div>
                 <div className="mt-4 grid gap-3 lg:grid-cols-2">
-                  {[...externalEvaluationCandidates, ...candidates.filter((candidate) => candidate.source === "AGENCY_PHYSICAL")].slice(0, 8).map((candidate) => (
+                  {attentionRows.map((candidate) => (
                     <div key={`declaration-${candidate.id}`} className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-white p-3">
                       <div className="min-w-0"><p className="truncate font-semibold text-slate-900">{candidate.fullName}</p><p className="truncate text-xs text-slate-500">{candidate.folderCode} · {candidate.destinationCountry}</p><div className="mt-1 flex flex-wrap gap-1"><EvaluationDeclarationBadge status={candidate.evaluationDeclarationStatus as EvaluationDeclarationStatus | undefined} /><Badge variant="outline" className="text-[10px]">{candidate.source === "AGENCY_PHYSICAL" ? "Paiement/dépôt agence" : "Évaluation déclarée"}</Badge></div></div>
                       <Button type="button" size="sm" variant="outline" onClick={() => setSelectedCandidateId(candidate.id)} aria-label={`Ouvrir le dossier de ${candidate.fullName}`}>Ouvrir</Button>
                     </div>
                   ))}
                 </div>
-                {(externalEvaluationCandidates.length + candidates.filter((candidate) => candidate.source === "AGENCY_PHYSICAL").length) === 0 && <p className="mt-4 rounded-lg bg-white/80 p-4 text-sm text-slate-600">Aucune déclaration préalable en attente de contrôle.</p>}
+                {attentionCount === 0 && <p className="mt-4 rounded-lg bg-white/80 p-4 text-sm text-slate-600">Aucune déclaration préalable en attente de contrôle.</p>}
               </CardContent>
             </Card>
             <AdminCandidateKanban candidates={kanbanCandidates} onMove={handleKanbanMove} onAdvance={handleKanbanAdvance} onOpen={(candidate) => setSelectedCandidateId(candidate.id)} />
@@ -3920,10 +3938,22 @@ export default function AdminDashboard() {
             </table>
           </div>
 
-          {candidates.length > 0 && (
-            <div className="px-4 py-3 border-t border-gray-200/70 bg-white/30 text-xs text-gray-500 dark:bg-slate-900/20">
-              {candidates.length} candidat{candidates.length > 1 ? "s" : ""} affiché{candidates.length > 1 ? "s" : ""}
-              {total !== candidates.length && ` sur ${total} au total`}
+          {total > 0 && (
+            <div className="flex flex-col gap-2 border-t border-gray-200/70 bg-white/30 px-4 py-3 text-xs text-gray-600 sm:flex-row sm:items-center sm:justify-between dark:bg-slate-900/20" data-testid="candidate-pagination">
+              <span>
+                {(((data?.page ?? 1) - 1) * (data?.pageSize ?? candidatePageSize)) + 1}–{Math.min((data?.page ?? 1) * (data?.pageSize ?? candidatePageSize), total)} sur {total} candidat{total > 1 ? "s" : ""}
+                {isFetchingCandidates ? " · actualisation…" : ""}
+              </span>
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-1">Par page
+                  <select value={candidatePageSize} onChange={(event) => setCandidatePageSize(Number(event.target.value))} className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs" data-testid="candidate-page-size" aria-label="Nombre de candidats par page">
+                    {[25, 50, 100, 200].map((size) => <option key={size} value={size}>{size}</option>)}
+                  </select>
+                </label>
+                <Button type="button" size="sm" variant="outline" disabled={(data?.page ?? 1) <= 1} onClick={() => setCandidatePage((current) => Math.max(1, current - 1))} data-testid="candidate-page-prev">Précédent</Button>
+                <span className="tabular-nums" data-testid="candidate-page-indicator">Page {data?.page ?? 1} / {data?.totalPages ?? 1}</span>
+                <Button type="button" size="sm" variant="outline" disabled={(data?.page ?? 1) >= (data?.totalPages ?? 1)} onClick={() => setCandidatePage((current) => current + 1)} data-testid="candidate-page-next">Suivant</Button>
+              </div>
             </div>
           )}
         </Card>

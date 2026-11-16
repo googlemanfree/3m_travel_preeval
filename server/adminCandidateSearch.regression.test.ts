@@ -7,9 +7,10 @@ const routerSource = readFileSync(resolve(projectRoot, "server/routers/admin.ts"
 const dashboardSource = readFileSync(resolve(projectRoot, "client/src/pages/AdminDashboard.tsx"), "utf8");
 
 describe("Recherche Dossiers admin", () => {
-  it("charge plus que la page courante lorsque la recherche est active", () => {
-    expect(routerSource).toContain("const sourceLimit = input.search?.trim() ? 5000 : input.limit;");
+  it("lit tous les dossiers (jusqu'à 5 000 par source), avec ou sans recherche, avant de les découper en pages", () => {
+    expect(routerSource).toContain("const sourceLimit = 5000;");
     expect(routerSource).toContain(".limit(sourceLimit)");
+    expect(routerSource).not.toContain("input.search?.trim() ? 5000 : input.limit");
   });
 
   it("cherche dans la référence, l’identité, le contact, la destination et la procédure", () => {
@@ -22,6 +23,7 @@ describe("Recherche Dossiers admin", () => {
   it("relie bien le champ visible au state de recherche transmis à la requête", () => {
     expect(dashboardSource).toContain("value={search}");
     expect(dashboardSource).toContain("onChange={(e) => setSearch(e.target.value)}");
-    expect(dashboardSource).toContain("search: search || undefined");
+    expect(dashboardSource).toContain("search: debouncedSearch || undefined");
+    expect(dashboardSource).toContain("setDebouncedSearch(search)");
   });
 });

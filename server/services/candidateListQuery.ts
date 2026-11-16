@@ -88,7 +88,7 @@ type Options = { withPublished: boolean };
 
 function joins(options: Options, needPortrait: boolean): SQL {
   const parts: SQL[] = [
-    sql` LEFT JOIN (SELECT LOWER(e.email) AS em FROM evaluations e WHERE e.cvFileUrl IS NOT NULL AND e.cvFileUrl <> '' UNION SELECT LOWER(c.email) FROM candidates c INNER JOIN candidate_files f ON f.candidateId = c.id WHERE f.fileType = 'cv') cvx ON cvx.em = LOWER(s.email)`,
+    sql` LEFT JOIN (SELECT LOWER(e.email) AS em FROM evaluations e WHERE e.cvFileUrl IS NOT NULL AND e.cvFileUrl <> '' UNION SELECT LOWER(c.email) FROM candidates c INNER JOIN candidate_files f ON f.candidateId = c.id WHERE f.fileType = 'cv' UNION SELECT LOWER(d.candidateEmail) FROM client_documents d WHERE d.documentType = 'cv') cvx ON cvx.em = LOWER(s.email)`,
   ];
   parts.push(options.withPublished
     ? sql` LEFT JOIN (SELECT DISTINCT LOWER(e.email) AS em FROM evaluation_validation_cases v INNER JOIN evaluations e ON e.id = v.evaluationId WHERE v.publishedAt IS NOT NULL) pubx ON pubx.em = LOWER(s.email)`

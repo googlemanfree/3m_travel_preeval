@@ -83,3 +83,19 @@ Quatre onglets au-dessus des filtres, chacun avec son effectif (calculé avec la
 | Déjà évalués | bilan envoyé ou publié au candidat, OU évaluation validée par un conseiller hors ligne (appel, agence, e-mail) |
 
 Chaque ligne porte aussi un repère « Évalué » / « Non évalué ». Le classement se combine avec la recherche, l'étape, le paiement, la destination et les boutons CV. Un candidat dont l'évaluation a été validée hors ligne n'apparaît plus dans « CV reçu à traiter ».
+
+## Liste principale du tableau de bord : pagination côté serveur
+
+`admin.listCandidates` renvoyait toute la liste (6,4 Mo pour 3 010 lignes) et ne lisait que les 100 dossiers les plus récents de chaque source tant qu'on ne tapait pas une recherche : un dossier plus ancien restait invisible.
+
+- Tous les dossiers sont lus (jusqu'à 5 000 par source, sur les seules colonnes utilisées) puis découpés en pages côté serveur : réponse de 6 477 Ko à 309 Ko pour une page de 100 lignes (mesure locale).
+- Nouveaux paramètres `page` et `pageSize` (25, 50, 100 ou 200 à l'écran, 50 par défaut). Sans `pageSize`, `limit` donne la taille de la page : l'annuaire de l'onglet Documents, qui demande 200 lignes, n'est pas touché.
+- Les compteurs du haut de page (éval. 48 h, bilan dispo, documents, soumis, décision favorable, en ligne, agence), l'encart « Déclarations préalables à contrôler » et les échéances de la file de priorités sont calculés par le serveur sur toute la liste filtrée (`summary`), plus déduits des lignes reçues.
+- La recherche attend 300 ms de pause de frappe.
+- À savoir : le tableau Kanban, la file « Aujourd'hui » et le tri par action suivante travaillent sur la page affichée ; avec le tri par défaut (priorité), la première page porte les dossiers les plus urgents.
+
+## Comptes à ouvrir : CV et documents de l'évaluation visibles
+
+- Les pièces, CV et documents n'étaient lus que par trois requêtes globales plafonnées (5 000 fichiers, 10 000 évaluations, sans ordre) : au-delà, des CV et des pièces devenaient invisibles. Elles sont maintenant limitées aux comptes affichés.
+- Les documents déposés à l'évaluation (table `client_documents`) n'étaient jamais comptés ni listés : ils sont comptés dans « pièces » et listés, avec un lien, dans la fiche du pré-dossier. Un CV déposé ainsi compte comme CV reçu (aussi dans le classement de la liste des candidats).
+- La recherche est faite par la base avant la limite de 500 comptes.

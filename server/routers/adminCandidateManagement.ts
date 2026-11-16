@@ -341,7 +341,7 @@ async function loadCandidateRecordsFromDb(sourceLimit = 5000): Promise<AdminCand
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
-  const [online, agency, documentCountRows, candidateRows, cvEvaluationRows, cvFileRows, publishedRows] = await Promise.all([
+  const [online, agency, documentCountRows, candidateRows, cvEvaluationRows, cvFileRows, publishedRows, cvDocumentRows] = await Promise.all([
     db.select(onlineListColumns).from(applications).orderBy(desc(applications.createdAt)).limit(sourceLimit),
     db.select(agencyListColumns).from(agencyDossiers).orderBy(desc(agencyDossiers.createdAt)).limit(sourceLimit),
     // le nombre de documents par adresse se compte dans la base : avant, jusqu'à 10 000 lignes de documents étaient transférées pour être comptées ici
@@ -351,8 +351,10 @@ async function loadCandidateRecordsFromDb(sourceLimit = 5000): Promise<AdminCand
     db.select({ candidateId: candidateFiles.candidateId }).from(candidateFiles).where(eq(candidateFiles.fileType, "cv")).limit(10000),
     // la table du parcours de validation peut manquer sur une base non migrée : le filtre « CV » continue de fonctionner
     db.select({ email: evaluations.email }).from(evaluationValidationCases).innerJoin(evaluations, eq(evaluations.id, evaluationValidationCases.evaluationId)).where(isNotNull(evaluationValidationCases.publishedAt)).limit(10000).catch(() => [] as Array<{ email: string }>),
+    // CV déposé à l'évaluation (table des documents) : compte aussi comme « CV reçu »
+    db.select({ email: clientDocuments.candidateEmail }).from(clientDocuments).where(eq(clientDocuments.documentType, "cv")).limit(10000),
   ]);
-  const cvEmails = new Set(cvEvaluationRows.map(row => row.email.toLowerCase()));
+  const cvEmails = new Set([...cvEvaluationRows, ...cvDocumentRows].map(row => row.email.toLowerCase()));
   const cvCandidateIds = new Set(cvFileRows.map(row => row.candidateId));
   const publishedEmails = new Set(publishedRows.map(row => row.email.toLowerCase()));
   const validatedEmails = new Set((candidateRows as Array<{ email: string; evaluationDeclarationStatus?: string | null }>).filter(row => row.evaluationDeclarationStatus === "validated").map(row => row.email.toLowerCase()));
@@ -706,24 +708,44 @@ export const adminCandidateManagementRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       // Un pré-compte déjà mis en corbeille n'est plus à ouvrir, et celui dont la personne a déjà un dossier actif non plus :
       // il n'est ni supprimé ni modifié, seulement retiré de cette liste (le nombre masqué est annoncé à l'administrateur).
-      const [allAccounts, files, evaluationRows, activeEmails] = await Promise.all([
-        db.select().from(candidates).where(and(inArray(candidates.dossierStatus, [...PRE_DOSSIER_STATUSES]), isNull(candidates.deletedAt))).orderBy(desc(candidates.createdAt)).limit(500),
+      const [allAccounts, activeEmails] = await Promise.all([
+        // La recherche est appliquée par la base AVANT la limite de 500 : avant, un compte plus ancien que les 500 plus récents restait introuvable.
+        db.select().from(candidates).where(and(
+          inArray(candidates.dossierStatus, [...PRE_DOSSIER_STATUSES]),
+          isNull(candidates.deletedAt),
+          input.search ? or(...[candidates.fullName, candidates.email, candidates.phone, candidates.destination].map((column) => sql`LOWER(${column}) LIKE ${`%${input.search.toLowerCase().replace(/[\\%_]/g, (match) => `\\${match}`)}%`}`)) : undefined,
+        )).orderBy(desc(candidates.createdAt)).limit(500),
+        loadEmailsWithActiveDossier(db),
+      ]);
+      const accounts = allAccounts.filter((account) => !activeEmails.has(account.email.trim().toLowerCase()));
+      const coveredByActiveDossier = allAccounts.length - accounts.length;
+      // Pièces, CV et documents de l'évaluation : lus POUR CES COMPTES SEULEMENT. Avant, trois lectures globales plafonnées (5 000 fichiers,
+      // 10 000 évaluations, sans ordre) laissaient des CV et des pièces invisibles dès que la base grossissait, et les documents déposés
+      // à l'évaluation (table client_documents) n'étaient jamais comptés.
+      const accountIds = accounts.map((account) => account.id);
+      const accountEmails = Array.from(new Set(accounts.map((account) => account.email.trim().toLowerCase())));
+      const [files, evaluationRows, evaluationDocumentRows] = accounts.length === 0 ? [[], [], []] : await Promise.all([
         db.select({
           candidateId: candidateFiles.candidateId,
           fileType: candidateFiles.fileType,
           fileUrl: candidateFiles.fileUrl,
           fileName: candidateFiles.fileName,
-        }).from(candidateFiles).limit(5000),
+        }).from(candidateFiles).where(inArray(candidateFiles.candidateId, accountIds)).limit(20000),
         db.select({
           email: evaluations.email,
           cvFileUrl: evaluations.cvFileUrl,
           cvFileName: evaluations.cvFileName,
           createdAt: evaluations.createdAt,
-        }).from(evaluations).limit(10000),
-        loadEmailsWithActiveDossier(db),
+        }).from(evaluations).where(inArray(sql<string>`LOWER(TRIM(${evaluations.email}))`, accountEmails)).limit(20000),
+        db.select({
+          id: clientDocuments.id,
+          email: clientDocuments.candidateEmail,
+          documentType: clientDocuments.documentType,
+          documentName: clientDocuments.documentName,
+          documentUrl: clientDocuments.documentUrl,
+          uploadedAt: clientDocuments.uploadedAt,
+        }).from(clientDocuments).where(inArray(sql<string>`LOWER(TRIM(${clientDocuments.candidateEmail}))`, accountEmails)).orderBy(desc(clientDocuments.uploadedAt)).limit(20000),
       ]);
-      const accounts = allAccounts.filter((account) => !activeEmails.has(account.email.trim().toLowerCase()));
-      const coveredByActiveDossier = allAccounts.length - accounts.length;
       const documentsByCandidate = new Map<number, number>();
       const cvByCandidate = new Set<number>();
       const cvFileByCandidate = new Map<number, { url: string; fileName: string }>();
@@ -749,6 +771,14 @@ export const adminCandidateManagementRouter = router({
             createdAtMs,
           });
         }
+      }
+      // Documents déposés à l'évaluation (passeport, diplômes, CV…), du plus récent au plus ancien.
+      const evaluationDocumentsByEmail = new Map<string, Array<{ id: number; name: string; type: string; url: string | null; uploadedAt: Date | null }>>();
+      for (const row of evaluationDocumentRows) {
+        const key = row.email.trim().toLowerCase();
+        const list = evaluationDocumentsByEmail.get(key) ?? [];
+        list.push({ id: row.id, name: row.documentName, type: row.documentType, url: row.documentUrl ?? null, uploadedAt: row.uploadedAt ?? null });
+        evaluationDocumentsByEmail.set(key, list);
       }
       const query = input.search.toLowerCase();
       const filtered = accounts.filter((account) => !query || [account.fullName, account.email, account.phone ?? "", account.destination ?? ""].some((value) => value.toLowerCase().includes(query)));
@@ -787,7 +817,9 @@ export const adminCandidateManagementRouter = router({
           const emailKey = account.email.trim().toLowerCase();
           const evalCv = cvByEmail.get(emailKey);
           const fileCv = cvFileByCandidate.get(account.id);
-          const hasCv = Boolean(fileCv || evalCv);
+          const evaluationDocuments = evaluationDocumentsByEmail.get(emailKey) ?? [];
+          const documentCv = evaluationDocuments.find((document) => document.type === "cv" && document.url?.trim());
+          const hasCv = Boolean(fileCv || evalCv || documentCv);
           const evaluationValidated = account.evaluationDeclarationStatus === "validated";
           const evaluationPending = account.evaluationDeclarationStatus === "pending_validation";
           return {
@@ -800,10 +832,12 @@ export const adminCandidateManagementRouter = router({
             emailVerified: account.emailVerified,
             createdAt: account.createdAt,
             lastLoginAt: account.lastLoginAt,
-            documentsCount: documentsByCandidate.get(account.id) ?? 0,
+            documentsCount: (documentsByCandidate.get(account.id) ?? 0) + evaluationDocuments.length,
             hasCv,
-            cvFileUrl: fileCv?.url ?? evalCv?.url ?? null,
-            cvFileName: fileCv?.fileName ?? evalCv?.fileName ?? null,
+            cvFileUrl: fileCv?.url ?? evalCv?.url ?? documentCv?.url ?? null,
+            cvFileName: fileCv?.fileName ?? evalCv?.fileName ?? documentCv?.name ?? null,
+            /** Documents déposés à l'évaluation (les 12 plus récents) : visibles et ouvrables depuis la fiche du pré-dossier. */
+            evaluationDocuments: evaluationDocuments.slice(0, 12).map((document) => ({ id: document.id, name: document.name, type: document.type, url: document.url, uploadedAt: document.uploadedAt })),
             /** Déclaration / validation hors ligne sans CV en fichier — dossier à ouvrir ensuite selon pays + visa. */
             evaluationWithoutCv: (evaluationValidated || evaluationPending) && !hasCv,
             pendingEvaluationReference: evaluationPending ? (hasCv ? "Évaluation externe à valider" : "Évaluation sans CV à valider") : null,

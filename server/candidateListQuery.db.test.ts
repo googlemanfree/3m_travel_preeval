@@ -52,6 +52,8 @@ describe.skipIf(!URL)("liste des candidats : SQL = ancien calcul en mémoire", (
     }
     await db.insert(s.evaluationValidationCases).values({ evaluationId: evaluationIds[0], publishedAt: at(1) } as never);
     await db.insert(s.evaluationValidationCases).values({ evaluationId: evaluationIds[1], publishedAt: at(1) } as never);
+    // CV déposé à l'évaluation (table des documents) : doit compter comme « CV reçu »
+    await db.insert(s.clientDocuments).values({ evaluationId: evaluationIds[2], candidateEmail: mail("on6"), documentType: "cv", documentName: "cv-eval.pdf", documentUrl: "https://f.test/cv-eval.pdf" } as never);
     for (let n = 0; n < 3; n += 1) await db.insert(s.clientDocuments).values({ evaluationId: evaluationIds[0], candidateEmail: n === 0 ? mail("on2").toLowerCase() : mail("on2"), documentType: "cv", documentName: `d${n}.pdf`, documentUrl: "https://f.test/x.pdf" } as never);
     ctx = { db, s, evaluationIds };
   });
