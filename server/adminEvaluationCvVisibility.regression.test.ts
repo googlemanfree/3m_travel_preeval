@@ -39,8 +39,8 @@ describe("admin — CV d’évaluation visible sans creuser la validation", () =
     expect(workspace).toContain("Soumis à l’évaluation");
 
     const predossierRouter = read("server/routers/adminCandidateManagement.ts");
-    expect(predossierRouter).toContain("cvFileUrl: fileCv?.url ?? evalCv?.url ?? null");
-    expect(predossierRouter).toContain("cvFileName: fileCv?.fileName ?? evalCv?.fileName ?? null");
+    expect(predossierRouter).toContain("cvFileUrl: fileCv?.url ?? evalCv?.url ?? documentCv?.url ?? null");
+    expect(predossierRouter).toContain("cvFileName: fileCv?.fileName ?? evalCv?.fileName ?? documentCv?.name ?? null");
 
     const predossierUi = read("client/src/components/AdminPreDossierAccountsPanel.tsx");
     expect(predossierUi).toContain("predossier-cv-open-");

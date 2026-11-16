@@ -60,6 +60,6 @@ describe.skipIf(!URL)("pilotage 360 sur base réelle", () => {
     const caller = appRouter.createCaller({ req: { headers: { cookie: `admin_session=${ctx.token}` } }, res: {} } as never);
     const list: any = await caller.adminCandidateManagement.list({ search: `3M-P-${stamp}`, status: "all", paymentStatus: "all", scoreBand: "all", destination: "all", portraitStatus: "all", cvStatus: "all", sortBy: "createdAt", sortDirection: "desc", page: 1, pageSize: 25 });
     const row = list.candidates.find((candidate: any) => candidate.applicationNumber === `3M-P-${stamp}`);
-    expect(row).toMatchObject({ fullName: "Perf Test", documentsCount: 3, destination: "luxembourg", cvReceived: false });
+    expect(row).toMatchObject({ fullName: "Perf Test", documentsCount: 3, destination: "luxembourg", cvReceived: true }); // les trois documents déposés sont des CV (table client_documents) : ils comptent comme « CV reçu »
   });
 });

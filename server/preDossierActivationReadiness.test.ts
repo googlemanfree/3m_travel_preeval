@@ -327,13 +327,15 @@ describe("liste « Comptes à ouvrir » : ni corbeille, ni personne qui a déjà
   const account = (id: number, email: string) => candidate({ id, email, fullName: `Compte ${id}`, createdAt: new Date("2026-09-20"), lastLoginAt: null, emailVerified: true, destination: "luxembourg" });
 
   it("masque le compte dont l'e-mail a un dossier agence ouvert ou un dossier en ligne payé, sans rien modifier, et l'annonce", async () => {
-    // lectures : comptes « nouveau » non supprimés, pièces, dossiers agence actifs, dossiers en ligne actifs
+    // lectures : comptes « nouveau » non supprimés, dossiers agence actifs, dossiers en ligne actifs ; puis, pour les comptes restants seulement :
+    // pièces, évaluations, documents déposés à l'évaluation
     state.reads = [
       [account(1, "a@example.com"), account(2, "B@Example.com"), account(3, "c@example.com"), account(4, "d@example.com")],
-      [{ candidateId: 4 }, { candidateId: 4 }],
-      [],
       [{ email: "A@example.com" }],
       [{ email: "b@example.com" }],
+      [{ candidateId: 4 }, { candidateId: 4 }],
+      [],
+      [],
     ];
     const result = await caller().listPreDossierAccounts({ ...base });
     expect(result.accounts.map((item) => item.id)).toEqual([3, 4]);
@@ -345,7 +347,7 @@ describe("liste « Comptes à ouvrir » : ni corbeille, ni personne qui a déjà
   });
 
   it("aucune personne couverte : rien n'est masqué", async () => {
-    state.reads = [[account(1, "a@example.com")], [], [], [], []];
+    state.reads = [[account(1, "a@example.com")], [], [], [], [], []];
     const result = await caller().listPreDossierAccounts({ ...base });
     expect(result).toMatchObject({ total: 1, coveredByActiveDossier: 0 });
   });

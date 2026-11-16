@@ -84,6 +84,24 @@ import { randomBytes } from "node:crypto";
 import { proposedOpeningFee } from "../../shared/openingFee";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 
+/**
+ * Colonnes réellement utilisées par la liste principale du tableau de bord. Avant, `select()` rapatriait les 70 colonnes et plus de chaque dossier
+ * (gros textes JSON compris) alors que la liste n'en lit qu'une vingtaine.
+ */
+const adminListOnlineColumns = {
+  id: applications.id, dossierNumber: applications.dossierNumber, fullName: applications.fullName, email: applications.email, whatsappNumber: applications.whatsappNumber,
+  currentCity: applications.currentCity, destination: applications.destination, visaType: applications.visaType, dossierStatus: applications.dossierStatus,
+  scoringTotal: applications.scoringTotal, scoringBadge: applications.scoringBadge, createdAt: applications.createdAt, updatedAt: applications.updatedAt,
+  adminAssignedTo: applications.adminAssignedTo, lastStatusUpdateAt: applications.lastStatusUpdateAt, evaluationScheduledAt: applications.evaluationScheduledAt,
+  paymentStatus: applications.paymentStatus, agreementSigned: applications.agreementSigned, secondAgreementReadyAt: applications.secondAgreementReadyAt, secondAgreementSigned: applications.secondAgreementSigned,
+};
+const adminListAgencyColumns = {
+  id: agencyDossiers.id, fullName: agencyDossiers.fullName, email: agencyDossiers.email, phone: agencyDossiers.phone, destination: agencyDossiers.destination,
+  visaType: agencyDossiers.visaType, status: agencyDossiers.status, createdAt: agencyDossiers.createdAt, updatedAt: agencyDossiers.updatedAt,
+  assignedToAdmin: agencyDossiers.assignedToAdmin, initialPaymentStatus: agencyDossiers.initialPaymentStatus,
+};
+
+
 function esc(v: string): string { return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 
 export function normalizeAdminDocumentType(value: unknown, fileName?: unknown): (typeof ADMIN_DOCUMENT_TYPES)[number] {
@@ -1676,6 +1694,9 @@ export const adminRouter = router({
        sortBy: z.enum(["priority", "recent", "oldest", "name", "score_desc"]).default("priority"),
               limit: z.number().int().min(1).max(200).default(100),
       offset: z.number().int().min(0).default(0),
+      /** Pagination : la liste est découpée côté serveur (avant : tout était renvoyé, 6 Mo pour 3 000 dossiers). Sans `pageSize`, `limit` donne la taille de la page. */
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(10).max(200).optional(),
     }))
     .query(async ({ input, ctx }) => {
       let admin;
@@ -1690,11 +1711,13 @@ export const adminRouter = router({
       try {
         // Une recherche doit porter sur tout le lot disponible, pas seulement sur les N dossiers récents.
         // Sinon un dossier de test plus ancien peut rester invisible même si son nom/référence correspond.
-        const sourceLimit = input.search?.trim() ? 5000 : input.limit;
+        // Tous les dossiers sont lus (jusqu'à 5 000 par source) puis découpés en pages : avant, seuls les `limit` plus récents l'étaient,
+        // et un dossier plus ancien restait invisible tant qu'on ne tapait pas une recherche.
+        const sourceLimit = 5000;
 
         // Récupérer les dossiers en ligne (table applications), hors corbeille
         const onlineApps = await db
-          .select()
+          .select(adminListOnlineColumns)
           .from(applications)
           .where(isNull(applications.deletedAt))
           .orderBy(desc(applications.createdAt))
@@ -1702,7 +1725,7 @@ export const adminRouter = router({
 
         // Récupérer les dossiers agence (table agencyDossiers), hors corbeille
         const agencyApps = await db
-          .select()
+          .select(adminListAgencyColumns)
           .from(agencyDossiers)
           .where(isNull(agencyDossiers.deletedAt))
           .orderBy(desc(agencyDossiers.createdAt))
@@ -1710,7 +1733,7 @@ export const adminRouter = router({
         const caseRows = await db
           .select({ id: cases.id, legacyApplicationId: cases.legacyApplicationId, legacyAgencyDossierId: cases.legacyAgencyDossierId, dueAt: cases.dueAt })
           .from(cases)
-          .limit(input.limit * 2);
+          .limit(20000);
         const dueAtByLegacyReference = new Map<string, Date | null>();
         const caseIdByLegacyReference = new Map<string, number>();
         for (const item of caseRows) {
@@ -2193,10 +2216,48 @@ export const adminRouter = router({
           return priorityRank(a) - priorityRank(b) || -createdAtDiff;
         });
 
+        // Pagination : le tableau ne reçoit que la page demandée ; les compteurs et les files d'attention du tableau de bord
+        // sont calculés ici sur TOUTE la liste filtrée (le navigateur ne les déduit plus des lignes reçues).
+        const pageSize = input.pageSize ?? input.limit;
+        const total = allCandidates.length;
+        const totalPages = Math.max(1, Math.ceil(total / pageSize));
+        const page = Math.min(input.page, totalPages);
+        const oldestCreatedAt = (rows: Array<{ createdAt: Date | string | null }>) => {
+          let oldest: number | null = null;
+          for (const row of rows) {
+            const time = row.createdAt ? new Date(row.createdAt).getTime() : Number.NaN;
+            if (Number.isFinite(time) && (oldest === null || time < oldest)) oldest = time;
+          }
+          return oldest === null ? null : new Date(oldest);
+        };
+        const externalEvaluation = allCandidates.filter((candidate) => candidate.source === "ACCOUNT_ONLY" && candidate.evaluationDeclarationStatus === "pending_validation");
+        const agencyPhysical = allCandidates.filter((candidate) => candidate.source === "AGENCY_PHYSICAL");
+        const pendingEvaluation = allCandidates.filter((candidate) => candidate.status === "PENDING_48H");
+        const summary = {
+          stats: {
+            pending: pendingEvaluation.length,
+            published: allCandidates.filter((candidate) => candidate.status === "PUBLISHED").length,
+            documents: allCandidates.filter((candidate) => candidate.status === "DOCUMENTS_CHECK").length,
+            submitted: allCandidates.filter((candidate) => candidate.status === "SUBMITTED").length,
+            approved: allCandidates.filter((candidate) => candidate.status === "APPROVED").length,
+            web: allCandidates.filter((candidate) => candidate.source === "WEB").length,
+            agency: agencyPhysical.length,
+          },
+          externalEvaluation: { count: externalEvaluation.length, oldestCreatedAt: oldestCreatedAt(externalEvaluation) },
+          pendingEvaluation: { count: pendingEvaluation.length, oldestCreatedAt: oldestCreatedAt(pendingEvaluation) },
+          agencyPhysicalCount: agencyPhysical.length,
+          /** Les 8 premiers dossiers à contrôler (évaluations externes puis dossiers agence), pour l'encart « à contrôler ». */
+          attentionRows: [...externalEvaluation, ...agencyPhysical].slice(0, 8),
+        };
+
         return {
           success: true,
-          candidates: allCandidates,
-          total: allCandidates.length,
+          candidates: allCandidates.slice((page - 1) * pageSize, page * pageSize),
+          total,
+          page,
+          pageSize,
+          totalPages,
+          summary,
           availableDestinations,
           availableVisaKinds,
           currentAdminEmail: admin.email ?? null,

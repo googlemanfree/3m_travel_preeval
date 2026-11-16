@@ -23,7 +23,7 @@ describe("tableau de bord administrateur : filtres rapides par type de visa", ()
     expect(page).toContain('aria-label="Filtrer par type de visa"');
     expect(page).toContain("aria-pressed={active}");
     expect(page).toContain("visaKind: visaKindFilter !== \"ALL\"");
-    expect(page).toContain("visaKindFilter, assignedToMeFilter, sortBy]);");
+    expect(page).toContain("visaKindFilter, assignedToMeFilter, sortBy, candidatePage, candidatePageSize]);");
     expect(page).toContain('visaKindFilter !== "ALL" || assignedToMeFilter');
     expect(page).toContain('setVisaKindFilter("ALL");');
   });
