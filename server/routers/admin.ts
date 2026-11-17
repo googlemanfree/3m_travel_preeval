@@ -1689,7 +1689,7 @@ export const adminRouter = router({
       search: z.string().max(200).optional(),
        status: z.string().max(50).optional(),
        activationStatus: z.enum(["ALL", "active", "pending", "expired", "failed", "not_registered"]).optional(),
-       source: z.enum(["WEB", "AGENCY_PHYSICAL", "ACCOUNT_ONLY"]).optional(),
+       source: z.enum(["WEB", "AGENCY_PHYSICAL", "ACCOUNT_ONLY", "EVALUATION_ONLY"]).optional(),
        destination: z.string().trim().min(1).max(100).optional(),
        visaKind: z.enum(["evisa", "work", "study", "visitor", "family", "residence", "other"]).optional(),
        assignedToMe: z.boolean().optional(),
@@ -2095,6 +2095,61 @@ export const adminRouter = router({
             ...clarificationFieldsForEmail(candidate.email),
           }));
 
+        // Évaluations de personnes sans compte, sans dossier en ligne et sans dossier agence : sans cette source, leur CV et leurs documents
+        // n'apparaissaient dans aucune liste de candidats. On retient la plus récente de chaque adresse ; les comptes supprimés comptent comme des comptes ;
+        // les évaluations « clôturées » ne figurent pas dans ce tableau de suivi (elles restent dans la liste des candidats).
+        const [guestEvaluationRows, deletedAccountRows] = await Promise.all([
+          db.select({ id: evaluations.id, email: evaluations.email, fullName: evaluations.fullName, phone: evaluations.phone, referenceCode: evaluations.referenceCode, destinationCountry: evaluations.destinationCountry, projectType: evaluations.projectType, visaType: evaluations.visaType, status: evaluations.status, createdAt: evaluations.createdAt, updatedAt: evaluations.updatedAt })
+            .from(evaluations).orderBy(desc(evaluations.id)).limit(5000),
+          db.select({ email: candidates.email }).from(candidates).where(isNotNull(candidates.deletedAt)).limit(10000).catch(() => [] as Array<{ email: string }>),
+        ]);
+        const emailsWithRecord = new Set<string>([...onlineApps, ...agencyApps, ...candidateRows, ...deletedAccountRows].map((record) => record.email.toLowerCase()));
+        const latestGuestByEmail = new Map<string, (typeof guestEvaluationRows)[number]>();
+        for (const row of guestEvaluationRows) if (!latestGuestByEmail.has(row.email.toLowerCase())) latestGuestByEmail.set(row.email.toLowerCase(), row);
+        const normalizedGuestEvaluations = Array.from(latestGuestByEmail.values())
+          .filter((row) => !emailsWithRecord.has(row.email.toLowerCase()) && row.status !== "closed")
+          .map((row) => ({
+            id: `evaluation_${row.id}`,
+            internalId: row.id,
+            folderCode: row.referenceCode?.trim() ? row.referenceCode : `Évaluation n° ${row.id}`,
+            formerAccountReference: null as string | null,
+            fullName: row.fullName,
+            email: row.email,
+            whatsapp: row.phone || "",
+            city: "Évaluation en ligne",
+            destinationCountry: row.destinationCountry?.trim() || "Non spécifiée",
+            preferredDestinations: [] as string[],
+            projectType: row.projectType?.trim() || row.visaType || "À qualifier",
+            isActiveDossier: false,
+            status: "PENDING_48H",
+            internalStatus: row.status,
+            source: "EVALUATION_ONLY" as const,
+            scoringTotal: null,
+            scoringBadge: null,
+            createdAt: row.createdAt,
+            updatedAt: row.updatedAt,
+            activationStatus: "not_registered" as CandidateActivationStatus,
+            evaluationDeclarationStatus: "not_declared",
+            evaluationDeclaredAt: null,
+            evaluationReviewedAt: null,
+            evaluationReviewedBy: null,
+            evaluationReviewNote: null,
+            evaluationValidatedAt: null,
+            evaluationValidatedBy: null,
+            adminAssignedTo: null,
+            lastStatusUpdateAt: row.updatedAt,
+            evaluationScheduledAt: null,
+            dueAt: null,
+            paymentStatus: "NOT_PAID" as const,
+            agreementSigned: null,
+            receiptApproved: false,
+            secondProtocolReady: false,
+            secondProtocolSigned: false,
+            checklistPercent: null,
+            procedureStep: "PENDING_48H",
+            ...clarificationFieldsForEmail(row.email),
+          }));
+
         // EVAL-AG-{id} est un miroir de préparation du dossier agence 3M-AGN-{id} :
         // un seul dossier actif (3M). On retire le miroir de la liste principale
         // mais on conserve EVAL-AG dans les codes recherchables du dossier 3M.
@@ -2117,7 +2172,7 @@ export const adminRouter = router({
         // Combiner les sources avant les filtres et le tri explicitement choisis par l’administrateur.
         // siblingProcedures : même e-mail → plusieurs procédures (ex. travail + études) visibles côté admin.
         // procedureJourney : étape réelle du parcours pays/procédure (plus de libellé générique unique).
-        const combinedRows = attachSiblingProcedures([...onlineWithoutEvalShells, ...agencyWithEvalSearch, ...normalizedAccounts]);
+        const combinedRows = attachSiblingProcedures([...onlineWithoutEvalShells, ...agencyWithEvalSearch, ...normalizedAccounts, ...normalizedGuestEvaluations]);
         // Visa ou programme choisi dans l'évaluation de chaque candidat : mêmes étapes que dans son espace client.
         const programContextByEmail = await programContextsByEmail(db, combinedRows.map((row) => (row as { email?: string | null }).email));
         // Dossiers dont le CV est reçu et le bilan pas encore fait : en tête de la liste « priorité », les plus anciens d'abord.
@@ -2252,6 +2307,7 @@ export const adminRouter = router({
           externalEvaluation: { count: externalEvaluation.length, oldestCreatedAt: oldestCreatedAt(externalEvaluation) },
           pendingEvaluation: { count: pendingEvaluation.length, oldestCreatedAt: oldestCreatedAt(pendingEvaluation) },
           agencyPhysicalCount: agencyPhysical.length,
+          evaluationOnlyCount: allCandidates.filter((candidate) => candidate.source === "EVALUATION_ONLY").length,
           cvToProcessCount: allCandidates.filter((candidate) => candidate.cvToProcess).length,
           /** Les 8 premiers dossiers à contrôler (évaluations externes puis dossiers agence), pour l'encart « à contrôler ». */
           attentionRows: [...externalEvaluation, ...agencyPhysical].slice(0, 8),

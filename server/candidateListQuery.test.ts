@@ -57,7 +57,7 @@ describe("liste des candidats : requêtes envoyées à la base", () => {
     const db = fakeDb((text) => (text.includes("COUNT(*)") ? [{ st: "nouveau", pay: "non_paye", n: 30, cv: 0, todo: 0 }] : []));
     const result = await queryCandidateList(db, { ...base, page: 99, pageSize: 25 } as never);
     expect(result.page).toBe(result.totalPages);
-    expect(result.totalPages).toBe(Math.ceil(90 / 25)); // 30 par source
+    expect(result.totalPages).toBe(Math.ceil(120 / 25)); // 30 par source, quatre sources
   });
 
   it("compte par étape à partir des statuts bruts, les statuts vides ou inconnus allant dans « nouveau »", async () => {

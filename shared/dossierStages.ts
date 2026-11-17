@@ -48,6 +48,11 @@ export const DOSSIER_STATUS_STAGE: Record<string, DossierStage> = {
   traitement: "traitement",
   // Alias historiques de l'interface
   en_attente: "paiement",
+  // Évaluations (table evaluations) de personnes sans compte ni dossier
+  pending: "nouveau",
+  reviewed: "evaluation",
+  contacted: "evaluation",
+  closed: "traitement",
 };
 
 const LABEL_BY_STATUS: Record<string, string> = {
@@ -73,6 +78,10 @@ const LABEL_BY_STATUS: Record<string, string> = {
   documents: "Documents",
   traitement: "En traitement",
   en_attente: "En attente",
+  pending: "Évaluation reçue",
+  reviewed: "Évaluation relue",
+  contacted: "Candidat contacté",
+  closed: "Évaluation clôturée",
 };
 
 export function isDossierStage(value: string): value is DossierStage {

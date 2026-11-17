@@ -33,6 +33,11 @@ const FILTER_STATES: Record<Exclude<BilanFilter, "tous" | "pret">, RunState[]> =
   publie: ["published"],
 };
 
+/** Bilans prêts à valider : le plus ancien d'abord (il attend depuis le plus longtemps). Les autres filtres ne sont pas réordonnés. */
+export function orderForReview<T extends { id: number }>(runs: T[], filter: BilanFilter): T[] {
+  return filter === "pret" ? [...runs].sort((a, b) => a.id - b.id) : runs;
+}
+
 export function matchesFilter(run: Pick<RunRecord, "state" | "mode">, filter: BilanFilter): boolean {
   if (filter === "tous") return run.state !== "superseded";
   if (filter === "pret") return run.state === "ready_for_review" && run.mode !== "simulation";
@@ -144,7 +149,8 @@ export const adminBilanAutoRouter = router({
     for (const run of all) if (!latestByEvaluation.has(run.evaluationId)) latestByEvaluation.set(run.evaluationId, run);
     const latest = Array.from(latestByEvaluation.values());
     const counts = Object.fromEntries(BILAN_FILTERS.map((filter) => [filter, latest.filter((run) => matchesFilter(run, filter)).length])) as Record<BilanFilter, number>;
-    const selected = latest.filter((run) => matchesFilter(run, input.filter));
+    // « Prêt à valider » : celui qui attend depuis le plus longtemps en tête ; les autres filtres gardent le plus récent d'abord.
+    const selected = orderForReview(latest.filter((run) => matchesFilter(run, input.filter)), input.filter);
     const db = await getDb();
     const people = new Map<number, { fullName: string; email: string }>();
     if (db && selected.length > 0) {

@@ -8,7 +8,7 @@ const adminRouter = fs.readFileSync(path.join(root, "server/routers/admin.ts"), 
 
 describe("filtres et tri du registre administrateur", () => {
   it("valide les critères côté serveur avant de retourner les dossiers", () => {
-    expect(adminRouter).toContain('source: z.enum(["WEB", "AGENCY_PHYSICAL", "ACCOUNT_ONLY"]).optional()');
+    expect(adminRouter).toContain('source: z.enum(["WEB", "AGENCY_PHYSICAL", "ACCOUNT_ONLY", "EVALUATION_ONLY"]).optional()');
     expect(adminRouter).toContain('sortBy: z.enum(["priority", "recent", "oldest", "name", "score_desc"]).default("priority")');
     expect(adminRouter).toContain("availableDestinations");
     expect(adminRouter).toContain("priorityRank");

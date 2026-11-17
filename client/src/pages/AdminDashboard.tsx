@@ -259,7 +259,7 @@ const EvaluationDeliveryEditor = lazy(() => import("@/components/EvaluationDeliv
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type AdminStatus = "PENDING_48H" | "PUBLISHED" | "DOCUMENTS_CHECK" | "SUBMITTED" | "APPROVED";
-type CandidateSource = "WEB" | "AGENCY_PHYSICAL" | "ACCOUNT_ONLY";
+type CandidateSource = "WEB" | "AGENCY_PHYSICAL" | "ACCOUNT_ONLY" | "EVALUATION_ONLY";
 type CandidateActivationStatus = "active" | "pending" | "expired" | "failed" | "not_registered";
 
 interface Candidate {
@@ -384,6 +384,11 @@ const SOURCE_CONFIG: Record<CandidateSource, { label: string; color: string; ico
     label: "Compte créé",
     color: "text-violet-700 bg-violet-50 border-violet-200",
     icon: <UserPlus className="w-3 h-3" />,
+  },
+  EVALUATION_ONLY: {
+    label: "Évaluation seule",
+    color: "text-sky-800 bg-sky-50 border-sky-200",
+    icon: <FileText className="w-3 h-3" />,
   },
 };
 
@@ -1927,6 +1932,10 @@ export default function AdminDashboard() {
   const [nextActionFilter, setNextActionFilter] = useState<"ALL" | "high" | "medium" | "low">("ALL");
   const [nextActionSort, setNextActionSort] = useState<"default" | "urgency_desc" | "label">("default");
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
+  // Évaluation faite sans compte ni dossier : pas de fiche 360° ; elle s'ouvre dans le tableau des évaluations.
+  useEffect(() => {
+    if (selectedCandidateId?.startsWith("evaluation_")) window.location.assign(`/admin/ai-evaluations?q=${encodeURIComponent(selectedCandidateId)}`);
+  }, [selectedCandidateId]);
   const [openEvaluationEditor, setOpenEvaluationEditor] = useState(false);
   const [preDossierActivateAccountId, setPreDossierActivateAccountId] = useState<number | null>(null);
   const [activeAdminTab, setActiveAdminTabState] = useState<string>(readInitialAdminTab);
