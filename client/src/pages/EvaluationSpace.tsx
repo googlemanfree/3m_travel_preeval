@@ -78,6 +78,7 @@ import { CandidateOpportunitiesCard } from "@/components/CandidateOpportunitiesC
 import { SelectableProfileCard } from "@/components/SelectableProfileCard";
 import SubmitReview from "@/pages/SubmitReview";
 import CaseDocumentsPanel, { agencyDepositedDocuments, allCaseDocuments } from "@/components/CaseDocumentsPanel";
+import { downloadHrefFor } from "@shared/storedFileUrl";
 import ClientNotificationsInbox from "@/components/ClientNotificationsInbox";
 import { checklistLines, pickActiveCaseRequirements } from "@/lib/documentChecklist";
 import { EVALUATION_ANCHOR_ID, computeNextStep, type NextStep } from "@/lib/nextStep";
@@ -1692,7 +1693,7 @@ export default function EvaluationSpace() {
                     <div className="mt-4 flex flex-wrap gap-2">
                       {first.documentUrl ? (
                         <Button asChild type="button" className="bg-teal-700 text-white hover:bg-teal-800">
-                          <a href={first.documentUrl} target="_blank" rel="noreferrer" download>
+                          <a href={downloadHrefFor(first.documentUrl, first.fileName)} target="_blank" rel="noreferrer" download>
                             <Download className="mr-2 h-4 w-4" />Télécharger le formulaire
                           </a>
                         </Button>

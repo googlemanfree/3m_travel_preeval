@@ -2,6 +2,7 @@ import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, ExternalLink, X } from "lucide-react";
+import { downloadHrefFor } from "@shared/storedFileUrl";
 
 interface DocumentPreviewModalProps {
   isOpen: boolean;
@@ -39,7 +40,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
               <ExternalLink className="w-4 h-4" /> Ouvrir
             </a>
             <a
-              href={documentUrl}
+              href={downloadHrefFor(documentUrl, documentTitle)}
               download
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white hover:bg-gray-800 rounded-md text-sm font-medium transition"
             >

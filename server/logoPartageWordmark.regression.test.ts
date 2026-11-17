@@ -23,7 +23,7 @@ describe("logo partage + wordmark", () => {
     const nav = read("client/src/components/Navbar.tsx");
     expect(nav).toContain("navbar-brand-wordmark");
     expect(nav).toContain("3M TRAVEL");
-    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v60-logo-partage-wordmark");
+    expect(read("client/public/sw.js")).toContain("3m-travel-pwa-v61-fichiers-hors-cache");
     expect(read("client/index.html")).toContain("2026-10-15-logo-partage-wordmark-v60");
   });
 });

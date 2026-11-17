@@ -1,4 +1,4 @@
-const CACHE_NAME = '3m-travel-pwa-v60-logo-partage-wordmark';
+const CACHE_NAME = '3m-travel-pwa-v61-fichiers-hors-cache';
 const IS_PREVIEW_HOST = /\.manus\.computer$|\.manuspre\.computer$|\.manuscomputer\.ai$/i.test(self.location.hostname);
 const ASSETS_TO_CACHE = [
   '/manifest.json',
@@ -86,6 +86,12 @@ self.addEventListener('fetch', (event) => {
   // (et faisait croire à un déploiement raté) jusqu'à la prochaine montée de version du cache.
   if (url.pathname === '/build-commit.json') {
     event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Fichiers déposés (CV, pièces) : jamais interceptés ni mis en cache. Leur adresse redirige vers un lien signé qui expire : une copie gardée
+  // ici rendait le fichier introuvable à la réouverture, et laissait des documents de candidats dans le cache du navigateur.
+  if (url.pathname.startsWith('/manus-storage/')) {
     return;
   }
 

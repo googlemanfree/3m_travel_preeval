@@ -2,6 +2,7 @@
 import { DEFAULT_OPENING_FEE_XAF, proposedOpeningFee } from "../../shared/openingFee";
 import { PRE_DOSSIER_STATUSES, isActivatedStatus } from "../../shared/candidateStatus";
 import { queryCandidateList } from "../services/candidateListQuery";
+import { listArchivedEvaluationIds } from "../services/evaluationArchive";
 import { DOSSIER_STAGE_IDS, dossierStageOf, dossierStatusLabel, isDossierStage, type DossierStage } from "../../shared/dossierStages";
 import { TRPCError } from "@trpc/server";
 import crypto from "node:crypto";
@@ -455,8 +456,9 @@ async function loadCandidateRecordsFromDb(sourceLimit = 5000): Promise<AdminCand
     const existing = latestEvaluationByEmail.get(key);
     if (!existing || row.id > existing.id) latestEvaluationByEmail.set(key, row);
   }
+  const archivedEvaluationIds = new Set(await listArchivedEvaluationIds(db).catch(() => [] as number[]));
   const evaluationOnlyCandidates: AdminCandidate[] = Array.from(latestEvaluationByEmail.values())
-    .filter(row => !knownEmails.has(row.email.toLowerCase()))
+    .filter(row => !knownEmails.has(row.email.toLowerCase()) && !archivedEvaluationIds.has(row.id))
     .map(row => ({
       id: `evaluation_${row.id}`,
       applicationNumber: row.referenceCode?.trim() ? row.referenceCode : `Évaluation n° ${row.id}`,

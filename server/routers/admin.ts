@@ -18,6 +18,7 @@ import { createEvisaCommunicationSnapshot } from "../services/evisaCommunication
 import { listDestinationDocuments, addDestinationDocument, deleteDestinationDocument } from "../destinationDocumentService";
 import { storagePut } from "../storage";
 import { ADMIN_DOCUMENT_TYPES, suggestAdminDocumentMetadata } from "../services/adminDocumentRecognitionAssistant";
+import { setEvaluationArchived, clearEvaluationArchived, listArchivedEvaluationIds } from "../services/evaluationArchive";
 import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray, gte, sql, count } from "drizzle-orm";
 import { buildDocumentClarificationAnsweredNotification, buildDocumentClarificationHistory, classifyDocumentClarificationDeadline } from "../../shared/documentClarification";
 import { passportPhotoAdminStatus } from "../../shared/passportPhotoRequirement";
@@ -2103,11 +2104,12 @@ export const adminRouter = router({
             .from(evaluations).orderBy(desc(evaluations.id)).limit(5000),
           db.select({ email: candidates.email }).from(candidates).where(isNotNull(candidates.deletedAt)).limit(10000).catch(() => [] as Array<{ email: string }>),
         ]);
+        const archivedGuestIds = new Set(await listArchivedEvaluationIds(db).catch(() => [] as number[]));
         const emailsWithRecord = new Set<string>([...onlineApps, ...agencyApps, ...candidateRows, ...deletedAccountRows].map((record) => record.email.toLowerCase()));
         const latestGuestByEmail = new Map<string, (typeof guestEvaluationRows)[number]>();
         for (const row of guestEvaluationRows) if (!latestGuestByEmail.has(row.email.toLowerCase())) latestGuestByEmail.set(row.email.toLowerCase(), row);
         const normalizedGuestEvaluations = Array.from(latestGuestByEmail.values())
-          .filter((row) => !emailsWithRecord.has(row.email.toLowerCase()) && row.status !== "closed")
+          .filter((row) => !emailsWithRecord.has(row.email.toLowerCase()) && row.status !== "closed" && !archivedGuestIds.has(row.id))
           .map((row) => ({
             id: `evaluation_${row.id}`,
             internalId: row.id,
@@ -4646,11 +4648,16 @@ export const adminRouter = router({
           ? (await db.select().from(applications).where(eq(applications.candidateId, agencyCandidateId)).orderBy(desc(applications.createdAt)).limit(1))[0]
             ?? (await db.select().from(applications).where(and(eq(applications.email, email), eq(applications.fullName, sourceRecord.fullName))).orderBy(desc(applications.createdAt)).limit(1))[0]
           : (await db.select().from(applications).where(and(eq(applications.email, email), eq(applications.fullName, sourceRecord.fullName))).orderBy(desc(applications.createdAt)).limit(1))[0]) ?? null;
-      const safeCollection = async <T>(query: PromiseLike<T>, fallback: T, label: string): Promise<T> => {
+      // Table ou colonne absente (base non migrée) : on continue avec une valeur par défaut. Toute AUTRE erreur (délai dépassé, connexion perdue)
+      // est relancée pour les sources de documents (`critical`) : avant, elle renvoyait une liste vide, la fiche s'affichait sans CV ni pièces
+      // jusqu'au rafraîchissement suivant, alors que l'écran sait garder les dernières données reçues quand une requête échoue.
+      const isMissingSchemaError = (error: unknown) => /doesn't exist|no such table|unknown column|ER_NO_SUCH_TABLE|ER_BAD_FIELD_ERROR/i.test(String((error as { cause?: { message?: string }; message?: string })?.cause?.message ?? (error as Error)?.message ?? ""));
+      const safeCollection = async <T>(query: PromiseLike<T>, fallback: T, label: string, options: { critical?: boolean } = {}): Promise<T> => {
         try {
           return await query;
         } catch (error) {
           console.error(`[getCandidate360:${label}] optional query failed`, error instanceof Error ? error.message : "unknown error");
+          if (options.critical && !isMissingSchemaError(error)) throw error;
           return fallback;
         }
       };
@@ -4769,7 +4776,7 @@ export const adminRouter = router({
           };
       })(), null, "placementSummary") : Promise.resolve(null);
       const agencyDocumentsPromise = reference.source === "agency"
-        ? safeCollection(db.select().from(agencyDossierDocuments).where(eq(agencyDossierDocuments.dossierId, reference.id)).orderBy(desc(agencyDossierDocuments.createdAt)).limit(100), [], "agencyDossierDocuments")
+        ? safeCollection(db.select().from(agencyDossierDocuments).where(eq(agencyDossierDocuments.dossierId, reference.id)).orderBy(desc(agencyDossierDocuments.createdAt)).limit(100), [], "agencyDossierDocuments", { critical: true })
         : Promise.resolve([] as Array<typeof agencyDossierDocuments.$inferSelect>);
       const checklistRowsPromise = progressCandidateIdEarly && checklistKeysEarly.length
         ? safeCollection(db.select().from(procedureChecklistProgress).where(and(inArray(procedureChecklistProgress.dossierKey, checklistKeysEarly), eq(procedureChecklistProgress.candidateId, progressCandidateIdEarly))).limit(10), [], "procedureChecklistProgress")
@@ -4784,10 +4791,10 @@ export const adminRouter = router({
         : Promise.resolve([] as Array<Pick<typeof evaluationBilanVersions.$inferSelect, "id" | "applicationId" | "versionNumber" | "approvalStatus" | "requiresSecondApproval" | "pdfUrl" | "sentAt" | "createdAt">>);
 
       const [requirements, operationalDocuments, legacyDocuments, tasks, notes, statusHistory, activityLogs, notifications, messages, documentClarifications, documentClarificationEventHistory, advisors, requestHistory, latestEvaluations] = await Promise.all([
-        safeCollection(db.select().from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(asc(documentRequirements.requestedAt)).limit(100), [], "requirements"),
-        safeCollection(db.select().from(caseDocuments).where(eq(caseDocuments.caseId, operationalCase.id)).orderBy(desc(caseDocuments.uploadedAt)).limit(100), [], "caseDocuments"),
+        safeCollection(db.select().from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(asc(documentRequirements.requestedAt)).limit(100), [], "requirements", { critical: true }),
+        safeCollection(db.select().from(caseDocuments).where(eq(caseDocuments.caseId, operationalCase.id)).orderBy(desc(caseDocuments.uploadedAt)).limit(100), [], "caseDocuments", { critical: true }),
         linkedApplication
-          ? safeCollection(db.select().from(clientDocuments).where(eq(clientDocuments.evaluationId, linkedApplication.id)).orderBy(desc(clientDocuments.uploadedAt)).limit(100), [], "clientDocuments")
+          ? safeCollection(db.select().from(clientDocuments).where(eq(clientDocuments.evaluationId, linkedApplication.id)).orderBy(desc(clientDocuments.uploadedAt)).limit(100), [], "clientDocuments", { critical: true })
           : Promise.resolve([]),
         safeCollection(db.select().from(caseTasks).where(eq(caseTasks.caseId, operationalCase.id)).orderBy(asc(caseTasks.dueAt)).limit(100), [], "tasks"),
         safeCollection(db.select().from(caseAdminNotes).where(eq(caseAdminNotes.caseId, operationalCase.id)).orderBy(desc(caseAdminNotes.createdAt)).limit(100), [], "notes"),
@@ -5383,16 +5390,28 @@ export const adminRouter = router({
       const admin = await requireSuperAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      const parsed = /^(account|online|agency)_(\d+)$/.exec(input.candidateId.trim());
-      if (!parsed) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence de dossier non prise en charge." });
+      const parsed = /^(account|online|agency|evaluation)_(\d+)$/.exec(input.candidateId.trim());
+      if (!parsed) throw new TRPCError({ code: "BAD_REQUEST", message: `Référence de dossier non prise en charge : « ${input.candidateId.trim().slice(0, 40)} ».` });
       const source = parsed[1];
       const id = Number(parsed[2]);
+      // Évaluation faite sans compte ni dossier : la table des évaluations n'a pas de colonne « corbeille » ; l'archivage est un repère
+      // réversible dans les réglages de l'agence (aucune donnée n'est supprimée, l'évaluation reste visible dans le tableau des évaluations).
+      if (source === "evaluation") {
+        const [record] = await db.select({ id: evaluations.id, referenceCode: evaluations.referenceCode }).from(evaluations).where(eq(evaluations.id, id)).limit(1);
+        if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable (déjà supprimée ?)." });
+        await setEvaluationArchived(db, id, { by: admin.email ?? "admin", reason: input.reason });
+        return { success: true, source, id, reference: record.referenceCode ?? `Évaluation n° ${id}`, message: "Évaluation retirée des listes de dossiers (corbeille réversible). Elle reste consultable dans le tableau des évaluations." };
+      }
       if (source === "account") {
         const [record] = await db.select({ id: candidates.id, fullName: candidates.fullName, email: candidates.email, dossierStatus: candidates.dossierStatus }).from(candidates).where(and(eq(candidates.id, id), isNull(candidates.deletedAt))).limit(1);
-        if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat actif introuvable." });
+        if (!record) {
+          const [already] = await db.select({ id: candidates.id }).from(candidates).where(and(eq(candidates.id, id), isNotNull(candidates.deletedAt))).limit(1);
+          if (already) return { success: true, source, id, reference: `COMPTE-${String(id).padStart(5, "0")}`, message: "Ce compte est déjà dans la corbeille." };
+          throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
+        }
         // Supprimer un compte activé le fait d'abord basculer en pré-compte : rien n'est perdu, et une seconde suppression l'envoie à la corbeille.
         if (isActivatedStatus(record.dossierStatus)) {
-          const reverted = await deactivateCandidateDossier(db, { candidateId: id, actorEmail: admin.email ?? "admin", reason: input.reason });
+          const reverted = await deactivateCandidateDossier(db, { candidateId: id, actorEmail: admin.email ?? "admin", reason: input.reason }).catch((error) => { console.error("[archiveDuplicateRecord] retour en pré-compte impossible :", error instanceof Error ? error.message : error); return { ok: false as const }; });
           if (reverted.ok) return { success: true, source, id, reference: reverted.reference, message: "Compte activé : il est repassé en pré-compte, rien n'est supprimé. Supprimez-le de nouveau pour le placer dans la corbeille." };
         }
         await db.update(candidates).set({ deletedAt: new Date(), deletedBy: admin.email, deletionReason: input.reason }).where(eq(candidates.id, id));
@@ -5400,15 +5419,24 @@ export const adminRouter = router({
       }
       if (source === "online") {
         const [record] = await db.select({ id: applications.id, dossierNumber: applications.dossierNumber, email: applications.email }).from(applications).where(and(eq(applications.id, id), isNull(applications.deletedAt))).limit(1);
-        if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne actif introuvable." });
+        if (!record) {
+          const [already] = await db.select({ id: applications.id, dossierNumber: applications.dossierNumber }).from(applications).where(and(eq(applications.id, id), isNotNull(applications.deletedAt))).limit(1);
+          if (already) return { success: true, source, id, reference: already.dossierNumber, message: "Ce dossier est déjà dans la corbeille." };
+          throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        }
         await db.update(applications).set({ deletedAt: new Date(), deletedBy: admin.email, deletionReason: input.reason }).where(eq(applications.id, id));
-        const revertedOnline = await revertToPreAccountAfterDossierRemoval(db, { email: record.email, actorEmail: admin.email ?? "admin", reason: input.reason });
+        // Le dossier est déjà dans la corbeille : un échec du retour du compte en pré-compte ne doit pas faire croire que la suppression a échoué.
+        const revertedOnline = await revertToPreAccountAfterDossierRemoval(db, { email: record.email, actorEmail: admin.email ?? "admin", reason: input.reason }).catch((error) => { console.error("[archiveDuplicateRecord] retour en pré-compte impossible :", error instanceof Error ? error.message : error); return false; });
         return { success: true, source, id, reference: record.dossierNumber, message: revertedOnline ? "Dossier placé dans la corbeille réversible ; le compte est repassé en pré-compte." : "Dossier placé dans la corbeille réversible." };
       }
       const [record] = await db.select({ id: agencyDossiers.id, email: agencyDossiers.email }).from(agencyDossiers).where(and(eq(agencyDossiers.id, id), isNull(agencyDossiers.deletedAt))).limit(1);
-      if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence actif introuvable." });
+      if (!record) {
+        const [already] = await db.select({ id: agencyDossiers.id }).from(agencyDossiers).where(and(eq(agencyDossiers.id, id), isNotNull(agencyDossiers.deletedAt))).limit(1);
+        if (already) return { success: true, source, id, reference: `3M-AGN-${String(id).padStart(4, "0")}`, message: "Ce dossier est déjà dans la corbeille." };
+        throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+      }
       await db.update(agencyDossiers).set({ deletedAt: new Date(), deletedBy: admin.email, deletionReason: input.reason }).where(eq(agencyDossiers.id, id));
-      const revertedAgency = await revertToPreAccountAfterDossierRemoval(db, { email: record.email, actorEmail: admin.email ?? "admin", reason: input.reason });
+      const revertedAgency = await revertToPreAccountAfterDossierRemoval(db, { email: record.email, actorEmail: admin.email ?? "admin", reason: input.reason }).catch((error) => { console.error("[archiveDuplicateRecord] retour en pré-compte impossible :", error instanceof Error ? error.message : error); return false; });
       return { success: true, source, id, reference: `3M-AGN-${String(id).padStart(4, "0")}`, message: revertedAgency ? "Dossier placé dans la corbeille réversible ; le compte est repassé en pré-compte." : "Dossier placé dans la corbeille réversible." };
     }),
 
@@ -5418,11 +5446,12 @@ export const adminRouter = router({
       await requireSuperAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      const parsed = /^(account|online|agency)_(\d+)$/.exec(input.candidateId.trim());
+      const parsed = /^(account|online|agency|evaluation)_(\d+)$/.exec(input.candidateId.trim());
       if (!parsed) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence archivée non prise en charge." });
       const source = parsed[1];
       const id = Number(parsed[2]);
-      if (source === "account") await db.update(candidates).set({ deletedAt: null, deletedBy: null, deletionReason: null }).where(eq(candidates.id, id));
+      if (source === "evaluation") await clearEvaluationArchived(db, id);
+      else if (source === "account") await db.update(candidates).set({ deletedAt: null, deletedBy: null, deletionReason: null }).where(eq(candidates.id, id));
       else if (source === "online") await db.update(applications).set({ deletedAt: null, deletedBy: null, deletionReason: null }).where(eq(applications.id, id));
       else await db.update(agencyDossiers).set({ deletedAt: null, deletedBy: null, deletionReason: null }).where(eq(agencyDossiers.id, id));
       return { success: true, source, id, message: "Enregistrement restauré dans la liste active." };
@@ -5466,6 +5495,10 @@ export const adminRouter = router({
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const archivedEvaluationIds = await listArchivedEvaluationIds(db);
+      const archivedEvaluationRows = archivedEvaluationIds.length
+        ? await db.select({ id: evaluations.id, fullName: evaluations.fullName, email: evaluations.email, referenceCode: evaluations.referenceCode }).from(evaluations).where(inArray(evaluations.id, archivedEvaluationIds)).limit(500)
+        : [];
       const [accountRows, onlineRows, agencyRows] = await Promise.all([
         db.select({ id: candidates.id, fullName: candidates.fullName, email: candidates.email, deletedAt: candidates.deletedAt, deletedBy: candidates.deletedBy, deletionReason: candidates.deletionReason }).from(candidates).where(isNotNull(candidates.deletedAt)).limit(500),
         db.select({ id: applications.id, dossierNumber: applications.dossierNumber, fullName: applications.fullName, email: applications.email, deletedAt: applications.deletedAt, deletedBy: applications.deletedBy, deletionReason: applications.deletionReason }).from(applications).where(isNotNull(applications.deletedAt)).limit(500),
@@ -5476,6 +5509,7 @@ export const adminRouter = router({
         ...accountRows.map((row) => ({ candidateId: `account_${row.id}`, reference: `COMPTE-${String(row.id).padStart(5, "0")}`, source: "account", fullName: row.fullName, email: row.email, deletedAt: row.deletedAt, deletedBy: row.deletedBy, reason: row.deletionReason })),
         ...onlineRows.map((row) => ({ candidateId: `online_${row.id}`, reference: row.dossierNumber, source: "online", fullName: row.fullName, email: row.email, deletedAt: row.deletedAt, deletedBy: row.deletedBy, reason: row.deletionReason })),
         ...agencyRows.map((row) => ({ candidateId: `agency_${row.id}`, reference: `3M-AGN-${String(row.id).padStart(4, "0")}`, source: "agency", fullName: row.fullName, email: row.email, deletedAt: row.deletedAt, deletedBy: row.deletedBy, reason: row.deletionReason })),
+        ...archivedEvaluationRows.map((row) => ({ candidateId: `evaluation_${row.id}`, reference: row.referenceCode ?? `Évaluation n° ${row.id}`, source: "evaluation", fullName: row.fullName, email: row.email, deletedAt: null as Date | null, deletedBy: null as string | null, reason: "Évaluation sans compte retirée des listes" as string | null })),
       ].filter((row) => !query || `${row.reference} ${row.fullName} ${row.email}`.toLowerCase().includes(query));
     }),
 
