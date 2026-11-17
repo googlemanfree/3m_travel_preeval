@@ -7,7 +7,7 @@ export type CandidateListUrlState = {
   paymentFilter: string;
   scoreFilter: string;
   destinationFilter: string;
-  sortBy: "createdAt" | "fullName" | "score";
+  sortBy: "createdAt" | "fullName" | "score" | "priorite";
   page: number;
   pageSize: CandidatePageSize;
 };
@@ -22,14 +22,14 @@ export function parseCandidateListUrl(search: string): CandidateListUrlState {
   const params = new URLSearchParams(search);
   const rawPageSize = readPositiveInt(params.get("pageSize"), 25);
   const pageSize = CANDIDATE_PAGE_SIZES.includes(rawPageSize as CandidatePageSize) ? rawPageSize as CandidatePageSize : 25;
-  const rawSort = readText(params, "sort", "createdAt");
+  const rawSort = readText(params, "sort", "priorite");
   return {
     searchQuery: readText(params, "q", ""),
     statusFilter: readText(params, "status", "tous"),
     paymentFilter: readText(params, "payment", "tous"),
     scoreFilter: readText(params, "score", "tous"),
     destinationFilter: readText(params, "destination", "tous"),
-    sortBy: rawSort === "fullName" || rawSort === "score" ? rawSort : "createdAt",
+    sortBy: rawSort === "fullName" || rawSort === "score" || rawSort === "createdAt" || rawSort === "priorite" ? rawSort : "priorite",
     page: readPositiveInt(params.get("page"), 1),
     pageSize,
   };
@@ -42,7 +42,7 @@ export function serializeCandidateListUrl(state: CandidateListUrlState): string 
   if (state.paymentFilter !== "tous") params.set("payment", state.paymentFilter);
   if (state.scoreFilter !== "tous") params.set("score", state.scoreFilter);
   if (state.destinationFilter !== "tous") params.set("destination", state.destinationFilter);
-  if (state.sortBy !== "createdAt") params.set("sort", state.sortBy);
+  if (state.sortBy !== "priorite") params.set("sort", state.sortBy);
   if (state.page !== 1) params.set("page", String(state.page));
   if (state.pageSize !== 25) params.set("pageSize", String(state.pageSize));
   const query = params.toString();

@@ -486,7 +486,7 @@ export default function CandidatesManager() {
       portraitStatus: "all" as const,
       cvStatus: cvFilter,
       evaluationStatus: evaluationFilter,
-      sortBy: sortBy as "createdAt" | "fullName" | "score",
+      sortBy: sortBy as "createdAt" | "fullName" | "score" | "priorite",
       sortDirection: "desc" as const,
       page,
       pageSize,
@@ -542,7 +542,7 @@ export default function CandidatesManager() {
   const totalCandidates = data?.total ?? 0;
   const currentViewState = React.useMemo(() => ({
     searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter,
-    sortBy: sortBy as "createdAt" | "fullName" | "score", page, pageSize,
+    sortBy: sortBy as "createdAt" | "fullName" | "score" | "priorite", page, pageSize,
   }), [searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy, page, pageSize]);
   const saveViewMutation = trpc.adminSavedViews.save.useMutation({
     onSuccess: () => {
@@ -572,7 +572,7 @@ export default function CandidatesManager() {
   }, []);
 
   React.useEffect(() => {
-    const urlState = { searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy: sortBy as "createdAt" | "fullName" | "score", page, pageSize };
+    const urlState = { searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy: sortBy as "createdAt" | "fullName" | "score" | "priorite", page, pageSize };
     const nextUrl = `${window.location.pathname}${serializeCandidateListUrl(urlState)}${window.location.hash}`;
     if (`${window.location.pathname}${window.location.search}${window.location.hash}` !== nextUrl) {
       window.history.replaceState(null, "", nextUrl);
@@ -861,9 +861,10 @@ export default function CandidatesManager() {
 
             <div>
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Tri</p>
-            <Select value={sortBy} onValueChange={(value) => { setSortBy(value as "createdAt" | "fullName" | "score"); resetToFirstPage(); }}>
+            <Select value={sortBy} onValueChange={(value) => { setSortBy(value as "createdAt" | "fullName" | "score" | "priorite"); resetToFirstPage(); }}>
               <SelectTrigger aria-label="Trier les candidats"><SelectValue placeholder="Trier" /></SelectTrigger>
               <SelectContent>
+                <SelectItem value="priorite">Priorité : CV à traiter d’abord</SelectItem>
                 <SelectItem value="createdAt">Plus récents</SelectItem>
                 <SelectItem value="fullName">Nom du candidat</SelectItem>
                 <SelectItem value="score">Score décroissant</SelectItem>

@@ -25,6 +25,9 @@ describe.skipIf(!URL)("liste principale paginée et comptes à ouvrir", () => {
       await db.insert(s.applications).values({ dossierNumber: `ZQ${stamp}-${n}`, fullName: `Zq Candidat ${n}`, email: mail(`on${n}`), whatsappNumber: "+237600", destination: "canada", visaType: "travail", dossierStatus: statuses[n % 5], createdAt: new Date(Date.UTC(2020, 0, 1 + n)) } as never);
     }
     for (let n = 0; n < 6; n += 1) await db.insert(s.agencyDossiers).values({ fullName: `Zq Agence ${n}`, email: mail(`ag${n}`), phone: "+33", destination: "Canada", visaType: "etude", createdByAdmin: "t@t.test", createdAt: new Date(Date.UTC(2020, 1, 1 + n)) } as never);
+    // CV reçu et bilan à faire (n=3, plus ancien), CV reçu mais évaluation validée par un conseiller (n=4 : déjà évalué)
+    await db.update(s.applications).set({ cvUrl: "/manus-storage/cv-3.pdf" } as never).where(sql`${s.applications.dossierNumber} IN (${`ZQ${stamp}-3`}, ${`ZQ${stamp}-4`})`);
+    await db.insert(s.candidates).values({ fullName: "Zq Validé", email: mail("on4"), passwordHash: "x", dossierStatus: "nouveau", evaluationDeclarationStatus: "validated" } as never);
     const accountIds: number[] = [];
     for (let n = 0; n < 4; n += 1) {
       const [row] = await db.insert(s.candidates).values({ fullName: `Zq Compte ${n}`, email: mail(`co${n}`), passwordHash: "x", dossierStatus: "nouveau", evaluationDeclarationStatus: n % 2 ? "pending_validation" : "not_declared" } as never).$returningId();
@@ -66,6 +69,20 @@ describe.skipIf(!URL)("liste principale paginée et comptes à ouvrir", () => {
     }
     expect(new Set(seen).size).toBe(seen.length);
     expect(seen.sort()).toEqual(full.candidates.map((candidate: any) => candidate.id).sort());
+  });
+
+  it("les dossiers avec CV et bilan à faire passent en tête de la liste « priorité », avec leur repère et leur effectif", async () => {
+    const result = await list({ pageSize: 200, sortBy: "priority" });
+    const first = result.candidates[0];
+    expect(first.cvToProcess).toBe(true);
+    expect(first.email).toBe(mail("on3"));
+    // le compte co0 a déposé un CV à l'évaluation (document) et n'est pas évalué : à traiter aussi, derrière le dossier plus ancien
+    expect(result.candidates.filter((candidate: any) => candidate.cvToProcess).map((candidate: any) => candidate.email)).toEqual([mail("on3"), mail("co0")]);
+    // CV reçu mais évaluation déjà validée par un conseiller : plus à traiter
+    expect(result.candidates.find((candidate: any) => candidate.email === mail("on4")).cvToProcess).toBe(false);
+    expect(result.summary.cvToProcessCount).toBe(2);
+    // les autres files gardent leur ordre de priorité derrière lui
+    expect(result.candidates.slice(2).some((candidate: any) => candidate.cvToProcess)).toBe(false);
   });
 
   it("garde le même ordre d'une page à l'autre (tri demandé appliqué à toute la liste, pas à la page)", async () => {

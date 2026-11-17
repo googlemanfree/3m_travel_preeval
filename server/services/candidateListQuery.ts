@@ -19,7 +19,7 @@ export type ListFilter = {
   destination: string; portraitStatus: "all" | "missing" | "pending" | "verified" | "rejected"; cvStatus: "all" | "a_traiter" | "recu" | "sans";
   /** « evalue » : bilan envoyé ou évaluation validée par un conseiller ; « non_evalue » : ni l'un ni l'autre. */
   evaluationStatus: "all" | "evalue" | "non_evalue";
-  sortBy: "createdAt" | "fullName" | "score"; sortDirection: "asc" | "desc"; page: number; pageSize: number;
+  sortBy: "createdAt" | "fullName" | "score" | "priorite"; sortDirection: "asc" | "desc"; page: number; pageSize: number;
 };
 
 export type ListedCandidate = {
@@ -143,6 +143,11 @@ const rowsOf = (result: unknown): Array<Record<string, unknown>> => {
 
 function orderBy(source: Source, filter: ListFilter): SQL {
   const def = definition(source);
+  // Priorité : CV reçu et bilan à faire d'abord (le plus ancien en tête), puis tous les autres du plus récent au plus ancien.
+  if (filter.sortBy === "priorite") {
+    const todo = sql`(${def.ownCv} OR cvx.em IS NOT NULL) AND NOT ${evaluatedExpression(def)}`;
+    return sql` ORDER BY CASE WHEN ${todo} THEN 0 ELSE 1 END ASC, CASE WHEN ${todo} THEN ${def.createdAt} END ASC, ${def.createdAt} DESC, ${def.id} DESC`;
+  }
   const direction = sql.raw(filter.sortDirection === "asc" ? "ASC" : "DESC");
   // un score constant (dossiers agence, comptes) ne se trie pas : « ORDER BY 0 » serait lu comme un numéro de colonne
   if (filter.sortBy === "score" && source !== "web") return sql` ORDER BY ${def.createdAt} DESC, ${def.id} DESC`;
@@ -179,7 +184,7 @@ async function pageRows(db: Db, source: Source, filter: ListFilter, options: Opt
   const stage = stageCondition(source, filter.status);
   if (stage) conditions.push(stage);
   const where = sql.join(conditions, sql` AND `);
-  const query = sql`SELECT ${def.id} AS id, ${def.number} AS number, ${def.name} AS name, ${def.email} AS email, ${def.phone} AS phone, ${def.destination} AS destination, ${def.visa} AS visa, ${def.score} AS score, ${def.band} AS band, ${def.status} AS st, ${def.payment} AS pay, ${def.createdAt} AS createdAt, (${def.ownCv} OR cvx.em IS NOT NULL) AS cv, (${def.ownBilan} OR pubx.em IS NOT NULL) AS bilan, ${evaluatedExpression(def)} AS evaluated FROM ${def.table} s${joins(options, needPortrait)} WHERE ${where}${orderBy(source, filter)} LIMIT ${limit}`;
+  const query = sql`SELECT ${def.id} AS id, ${def.number} AS number, ${def.name} AS name, ${def.email} AS email, ${def.phone} AS phone, ${def.destination} AS destination, ${def.visa} AS visa, ${def.score} AS score, ${def.band} AS band, ${def.status} AS st, ${def.payment} AS pay, ${def.createdAt} AS createdAt, (${def.ownCv} OR cvx.em IS NOT NULL) AS cv, (${def.ownBilan} OR pubx.em IS NOT NULL) AS bilan, ${evaluatedExpression(def)} AS evaluated, (((${def.ownCv}) OR cvx.em IS NOT NULL) AND NOT ${evaluatedExpression(def)}) AS todo FROM ${def.table} s${joins(options, needPortrait)} WHERE ${where}${orderBy(source, filter)} LIMIT ${limit}`;
   return rowsOf(await db.execute(query));
 }
 
@@ -210,6 +215,12 @@ export async function queryCandidateList(db: Db, filter: ListFilter): Promise<Li
     const perSource = firstTry && page === filter.page ? firstTry : await fetchWindow(page);
     const direction = filter.sortDirection === "asc" ? 1 : -1;
     const merged = perSource.flat().sort((a, b) => {
+      if (filter.sortBy === "priorite") {
+        const todoA = Number(a.row.todo) > 0, todoB = Number(b.row.todo) > 0;
+        const timeDiff = new Date(a.row.createdAt as string).getTime() - new Date(b.row.createdAt as string).getTime();
+        if (todoA !== todoB) return todoA ? -1 : 1;
+        return todoA ? timeDiff : -timeDiff;
+      }
       let diff = 0;
       if (filter.sortBy === "score") diff = Number(a.row.score) - Number(b.row.score);
       else if (filter.sortBy === "fullName") diff = String(a.row.name).localeCompare(String(b.row.name), "fr");
@@ -256,3 +267,31 @@ export async function queryCandidateList(db: Db, filter: ListFilter): Promise<Li
 }
 
 export function resetCandidateListQueryForTests() { publishedTableMissingUntil = 0; }
+
+/**
+ * Adresses (en minuscules) des personnes dont le CV est reçu et le bilan pas encore fait : même règle que le classement « CV reçu à traiter ».
+ * CV reçu = CV de l'évaluation, CV du compte, CV déposé à l'évaluation (documents) ou CV du dossier en ligne.
+ * Déjà évalué = bilan publié, bilan envoyé, ou évaluation validée par un conseiller.
+ */
+export async function loadCvToProcessEmails(db: Db): Promise<Set<string>> {
+  const build = (withPublished: boolean) => sql`
+    SELECT DISTINCT cvx.em AS em FROM (
+      SELECT LOWER(e.email) AS em FROM evaluations e WHERE e.cvFileUrl IS NOT NULL AND e.cvFileUrl <> ''
+      UNION SELECT LOWER(c.email) FROM candidates c INNER JOIN candidate_files f ON f.candidateId = c.id WHERE f.fileType = 'cv'
+      UNION SELECT LOWER(d.candidateEmail) FROM client_documents d WHERE d.documentType = 'cv'
+      UNION SELECT LOWER(a.email) FROM applications a WHERE a.deletedAt IS NULL AND a.cvUrl IS NOT NULL AND TRIM(a.cvUrl) <> ''
+    ) cvx
+    WHERE cvx.em NOT IN (SELECT LOWER(c.email) FROM candidates c WHERE c.evaluationDeclarationStatus = 'validated')
+      AND cvx.em NOT IN (SELECT LOWER(a.email) FROM applications a WHERE a.evaluationDeliveryStatus = 'sent')
+      ${withPublished ? sql`AND cvx.em NOT IN (SELECT LOWER(e.email) FROM evaluation_validation_cases v INNER JOIN evaluations e ON e.id = v.evaluationId WHERE v.publishedAt IS NOT NULL)` : sql``}`;
+  let rows: Array<Record<string, unknown>>;
+  try {
+    rows = rowsOf(await db.execute(build(Date.now() >= publishedTableMissingUntil)));
+  } catch (error) {
+    const text = String((error as { cause?: { message?: string }; message?: string })?.cause?.message ?? (error as Error)?.message ?? "");
+    if (!/evaluation_validation_cases|doesn't exist|no such table/i.test(text)) throw error;
+    publishedTableMissingUntil = Date.now() + 60_000;
+    rows = rowsOf(await db.execute(build(false)));
+  }
+  return new Set(rows.map((row) => String(row.em)));
+}

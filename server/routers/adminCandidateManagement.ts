@@ -78,7 +78,7 @@ const candidateFilterSchema = z.object({
   cvStatus: z.enum(["all", "a_traiter", "recu", "sans"]).default("all"),
   /** Évaluation : « evalue » = bilan envoyé ou évaluation validée par un conseiller ; « non_evalue » = ni l'un ni l'autre. */
   evaluationStatus: z.enum(["all", "evalue", "non_evalue"]).default("all"),
-  sortBy: z.enum(["createdAt", "fullName", "score"]).default("createdAt"),
+  sortBy: z.enum(["createdAt", "fullName", "score", "priorite"]).default("createdAt"),
   sortDirection: z.enum(["asc", "desc"]).default("desc"),
   page: z.number().int().min(1).default(1),
   pageSize: z.number().int().min(10).max(100).default(25),
@@ -469,6 +469,13 @@ export function filterCandidateRecords(records: AdminCandidate[], filter: Candid
   else if (filter.evaluationStatus === "non_evalue") candidateRecords = candidateRecords.filter(candidate => !candidate.evaluated);
 
   candidateRecords.sort((left, right) => {
+    if (filter.sortBy === "priorite") {
+      // CV reçu et bilan à faire d'abord (le plus ancien en tête), puis les autres du plus récent au plus ancien
+      const leftTodo = left.cvReceived && !left.evaluated, rightTodo = right.cvReceived && !right.evaluated;
+      const time = new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+      if (leftTodo !== rightTodo) return leftTodo ? -1 : 1;
+      return leftTodo ? time : -time;
+    }
     const direction = filter.sortDirection === "asc" ? 1 : -1;
     if (filter.sortBy === "score") return direction * (left.scoringTotal - right.scoringTotal);
     if (filter.sortBy === "fullName") return direction * left.fullName.localeCompare(right.fullName, "fr");

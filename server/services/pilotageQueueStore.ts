@@ -3,7 +3,8 @@ import { PRE_DOSSIER_STATUSES } from "../../shared/candidateStatus";
 import { agencyDossierDocuments, agencyDossiers, applications, candidateFiles, candidates, paymentAuditLogs } from "../../drizzle/schema";
 import { accountReference, agencyDossierReference } from "../../shared/caseReference";
 import { clientStatusLabel } from "../../shared/dossierProgress";
-import { DAY_MS, STALLED_AFTER_DAYS, documentsToReviewItem, rankPilotageItems, readyToActivateItem, stalledItem, summarizePilotage, type PilotageItem } from "./pilotageQueue";
+import { queryCandidateList } from "./candidateListQuery";
+import { DAY_MS, STALLED_AFTER_DAYS, cvToProcessItem, documentsToReviewItem, rankPilotageItems, readyToActivateItem, stalledItem, summarizePilotage, type PilotageItem } from "./pilotageQueue";
 
 type Db = NonNullable<Awaited<ReturnType<typeof import("../db").getDb>>>;
 
@@ -74,8 +75,17 @@ async function loadStalled(db: Db, now: Date): Promise<PilotageItem[]> {
   ];
 }
 
+/** Dossiers dont le CV est reçu et le bilan pas encore fait : même règle que le classement « CV reçu à traiter » de la liste des candidats, les plus anciens d'abord. */
+async function loadCvToProcess(db: Db, now: Date): Promise<PilotageItem[]> {
+  const result = await queryCandidateList(db, {
+    search: "", status: "all", paymentStatus: "all", scoreBand: "all", destination: "all", portraitStatus: "all", cvStatus: "a_traiter", evaluationStatus: "all",
+    sortBy: "createdAt", sortDirection: "asc", page: 1, pageSize: LIMIT,
+  });
+  return result.candidates.map((row) => cvToProcessItem({ openId: row.id, reference: row.applicationNumber, fullName: row.fullName, destination: row.destination, visaType: row.visaType, statusLabel: row.statusLabel, since: row.createdAt, now }));
+}
+
 export async function loadPilotageQueue(db: Db, now = new Date()) {
-  const [ready, documents, stalled] = await Promise.all([loadReadyToActivate(db, now), loadDocumentsToReview(db, now), loadStalled(db, now)]);
-  const items = rankPilotageItems([...ready, ...documents, ...stalled]);
+  const [cvToProcess, ready, documents, stalled] = await Promise.all([loadCvToProcess(db, now), loadReadyToActivate(db, now), loadDocumentsToReview(db, now), loadStalled(db, now)]);
+  const items = rankPilotageItems([...cvToProcess, ...ready, ...documents, ...stalled]);
   return { items, summary: summarizePilotage(items), generatedAt: now.toISOString() };
 }

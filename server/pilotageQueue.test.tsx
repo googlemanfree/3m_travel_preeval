@@ -8,7 +8,9 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 (globalThis as any).React = React;
 
-const state = vi.hoisted(() => ({ data: undefined as any, error: null as any, loading: false }));
+const state = vi.hoisted(() => ({ data: undefined as any, error: null as any, loading: false, cvRows: [] as any[] }));
+// Les dossiers « CV reçu, bilan à traiter » viennent de la requête de la liste des candidats (testée à part sur une base réelle).
+vi.mock("./services/candidateListQuery", () => ({ queryCandidateList: async () => ({ candidates: state.cvRows }) }));
 vi.mock("@/lib/trpc", () => ({
   trpc: { adminCandidateManagement: { getPilotageQueue: { useQuery: () => ({ data: state.data, error: state.error, isLoading: state.loading, isFetching: false, refetch: vi.fn() }) } } },
 }));
@@ -55,7 +57,7 @@ describe("classement de la file de pilotage", () => {
     ];
     const ranked = rankPilotageItems(items);
     expect(ranked.map((item) => item.fullName)).toEqual(["Aïcha", "Paul", "Marc", "Zoé"]);
-    expect(summarizePilotage(items)).toEqual({ readyToActivate: 1, documentsToReview: 2, stalled: 1, high: 3, total: 4 });
+    expect(summarizePilotage(items)).toEqual({ cvToProcess: 0, readyToActivate: 1, documentsToReview: 2, stalled: 1, high: 3, total: 4 });
   });
 
   it("l'urgence prime sur l'ancienneté : un dossier « à traiter » très ancien passe après un « urgent » plus récent", () => {
@@ -97,6 +99,23 @@ describe("chargement de la file (base simulée)", () => {
   const chain = (result: unknown[]): any => new Proxy({}, { get: (_target, property) => (property === "then" ? (resolve: (value: unknown[]) => void) => resolve(result) : () => chain(result)) });
   const fakeDb: any = { select: (fields: Record<string, unknown>) => ({ from: (table: any) => chain(rows[`${getTableName(table)}:${Object.keys(fields).join(",")}`] ?? []) }) };
 
+  it("les dossiers avec CV à traiter passent en tête de file, du plus ancien au plus récent, avant les urgences des autres files", async () => {
+    state.cvRows = [
+      { id: "online_5", applicationNumber: "3M-2026-0005", fullName: "Récent Cv", destination: "canada", visaType: "travail", statusLabel: "Nouveau", createdAt: daysAgo(1) },
+      { id: "account_9", applicationNumber: "COMPTE-00009", fullName: "Ancien Cv", destination: "luxembourg", visaType: "travail", statusLabel: "Nouveau", createdAt: daysAgo(8) },
+    ];
+    try {
+      const { items, summary } = await loadPilotageQueue(fakeDb, now);
+      expect(items.slice(0, 2).map((item) => item.fullName)).toEqual(["Ancien Cv", "Récent Cv"]);
+      expect(items.slice(0, 2).every((item) => item.category === "cv_to_process")).toBe(true);
+      expect(items[0]).toMatchObject({ openId: "account_9", title: "CV reçu — bilan à traiter", severity: "high" });
+      expect(items[1].severity).toBe("medium");
+      expect(summary.cvToProcess).toBe(2);
+      // une urgence « high » d'une autre file ne passe jamais devant un dossier avec CV
+      expect(items.slice(2).some((item) => item.category === "cv_to_process")).toBe(false);
+    } finally { state.cvRows = []; }
+  });
+
   it("regroupe les trois files, applique la règle d'activation et classe par urgence", async () => {
     const { items, summary } = await loadPilotageQueue(fakeDb, now);
     const byCategory = (category: string) => items.filter((item) => item.category === category).map((item) => item.fullName).sort();
@@ -126,7 +145,7 @@ describe("procédure et panneau", () => {
   it("affiche les priorités classées, filtre par file et ouvre le dossier cliqué", () => {
     const onOpen = vi.fn();
     state.data = {
-      summary: { readyToActivate: 1, documentsToReview: 1, stalled: 0, high: 1, total: 2 },
+      summary: { cvToProcess: 0, readyToActivate: 1, documentsToReview: 1, stalled: 0, high: 1, total: 2 },
       items: [
         { id: "ready:12", category: "ready_to_activate", openId: "account_12", reference: "COMPTE-00012", fullName: "Aïcha Nkolo", title: "Prêt à activer", detail: "Évaluation validée", ageDays: 3, severity: "high", count: 1 },
         { id: "docs:c12", category: "documents_to_review", openId: "account_12", reference: "COMPTE-00012", fullName: "Aïcha Nkolo", title: "3 pièces à contrôler", detail: "x", ageDays: 0, severity: "low", count: 3 },
@@ -142,7 +161,7 @@ describe("procédure et panneau", () => {
   });
 
   it("file vide : message rassurant ; erreur : affichée", () => {
-    state.data = { summary: { readyToActivate: 0, documentsToReview: 0, stalled: 0, high: 0, total: 0 }, items: [] };
+    state.data = { summary: { cvToProcess: 0, readyToActivate: 0, documentsToReview: 0, stalled: 0, high: 0, total: 0 }, items: [] };
     render(<AdminPilotageQueue sessionToken="t" onOpen={vi.fn()} />);
     expect(screen.getByText(/Aucune action en attente/)).toBeTruthy();
     cleanup();

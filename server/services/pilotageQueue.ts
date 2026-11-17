@@ -2,13 +2,14 @@
  * File de pilotage prioritaire de l'administration : ce qui attend une action, classé par urgence.
  * Fonctions pures (aucun accès base) : le chargement est fait par pilotageQueueStore.ts.
  *
- * Trois files, complémentaires des compteurs déjà présents (bilans à valider, paiements, vols) :
+ * Quatre files, complémentaires des compteurs déjà présents (bilans à valider, paiements, vols) :
+ *  - « CV reçu, bilan à traiter » : le candidat a envoyé son CV et n'est pas encore évalué ; toujours en tête de file (du plus ancien au plus récent) ;
  *  - « prêts à activer » : évaluation validée + paiement des frais validé, dossier pas encore activé ;
  *  - « pièces à contrôler » : documents reçus en attente de vérification, par candidat ;
  *  - « dossiers sans mouvement » : dossier actif dont le statut n'a pas bougé depuis plusieurs jours.
  */
 
-export type PilotageCategory = "ready_to_activate" | "documents_to_review" | "stalled";
+export type PilotageCategory = "cv_to_process" | "ready_to_activate" | "documents_to_review" | "stalled";
 export type PilotageSeverity = "high" | "medium" | "low";
 
 export type PilotageItem = {
@@ -37,6 +38,7 @@ export const ageInDays = (from: Date | string | null | undefined, now: Date): nu
 
 /** Urgence selon la file et l'ancienneté : plus c'est vieux, plus c'est prioritaire. */
 export function severityFor(category: PilotageCategory, ageDays: number): PilotageSeverity {
+  if (category === "cv_to_process") return ageDays >= 2 ? "high" : "medium";
   if (category === "ready_to_activate") return ageDays >= 2 ? "high" : "medium";
   if (category === "documents_to_review") return ageDays >= 3 ? "high" : ageDays >= 1 ? "medium" : "low";
   return ageDays >= 14 ? "high" : "medium";
@@ -44,11 +46,15 @@ export function severityFor(category: PilotageCategory, ageDays: number): Pilota
 
 const SEVERITY_RANK: Record<PilotageSeverity, number> = { high: 0, medium: 1, low: 2 };
 
+/** Les dossiers avec CV à traiter passent avant tout le reste, quelle que soit l'urgence des autres files ; entre eux, le plus ancien d'abord. */
+const isCvFirst = (item: PilotageItem) => (item.category === "cv_to_process" ? 0 : 1);
+
 export function rankPilotageItems(items: PilotageItem[]): PilotageItem[] {
-  return [...items].sort((left, right) => SEVERITY_RANK[left.severity] - SEVERITY_RANK[right.severity] || right.ageDays - left.ageDays || left.fullName.localeCompare(right.fullName, "fr"));
+  return [...items].sort((left, right) => isCvFirst(left) - isCvFirst(right) || (isCvFirst(left) === 0 ? 0 : SEVERITY_RANK[left.severity] - SEVERITY_RANK[right.severity]) || right.ageDays - left.ageDays || left.fullName.localeCompare(right.fullName, "fr"));
 }
 
 export type PilotageSummary = {
+  cvToProcess: number;
   readyToActivate: number;
   documentsToReview: number;
   stalled: number;
@@ -58,6 +64,7 @@ export type PilotageSummary = {
 
 export function summarizePilotage(items: PilotageItem[]): PilotageSummary {
   return {
+    cvToProcess: items.filter((item) => item.category === "cv_to_process").length,
     readyToActivate: items.filter((item) => item.category === "ready_to_activate").length,
     documentsToReview: items.filter((item) => item.category === "documents_to_review").length,
     stalled: items.filter((item) => item.category === "stalled").length,
@@ -67,6 +74,23 @@ export function summarizePilotage(items: PilotageItem[]): PilotageSummary {
 }
 
 const plural = (count: number, one: string, many: string) => (count > 1 ? many : one);
+
+export function cvToProcessItem(input: { openId: string; reference: string; fullName: string; destination?: string | null; visaType?: string | null; statusLabel?: string | null; since: Date | string | null; now: Date }): PilotageItem {
+  const ageDays = ageInDays(input.since, input.now);
+  const context = [input.destination, input.visaType, input.statusLabel].filter(Boolean).join(" · ");
+  return {
+    id: `cv:${input.openId}`,
+    category: "cv_to_process",
+    openId: input.openId,
+    reference: input.reference,
+    fullName: input.fullName,
+    title: "CV reçu — bilan à traiter",
+    detail: `${context ? `${context}. ` : ""}${ageDays > 0 ? `Dossier ouvert depuis ${ageDays} jour${ageDays > 1 ? "s" : ""}, bilan pas encore envoyé.` : "Dossier ouvert aujourd’hui."}`,
+    ageDays,
+    severity: severityFor("cv_to_process", ageDays),
+    count: 1,
+  };
+}
 
 export function readyToActivateItem(input: { candidateId: number; reference: string; fullName: string; destination?: string | null; since: Date | string | null; now: Date }): PilotageItem {
   const ageDays = ageInDays(input.since, input.now);

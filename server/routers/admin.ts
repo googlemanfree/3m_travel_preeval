@@ -84,6 +84,8 @@ import { randomBytes } from "node:crypto";
 import { proposedOpeningFee } from "../../shared/openingFee";
 import { procedureChecklistProgress } from "../../drizzle/caseTrackingSchema";
 
+import { loadCvToProcessEmails } from "../services/candidateListQuery";
+
 /**
  * Colonnes réellement utilisées par la liste principale du tableau de bord. Avant, `select()` rapatriait les 70 colonnes et plus de chaque dossier
  * (gros textes JSON compris) alors que la liste n'en lit qu'une vingtaine.
@@ -2118,6 +2120,8 @@ export const adminRouter = router({
         const combinedRows = attachSiblingProcedures([...onlineWithoutEvalShells, ...agencyWithEvalSearch, ...normalizedAccounts]);
         // Visa ou programme choisi dans l'évaluation de chaque candidat : mêmes étapes que dans son espace client.
         const programContextByEmail = await programContextsByEmail(db, combinedRows.map((row) => (row as { email?: string | null }).email));
+        // Dossiers dont le CV est reçu et le bilan pas encore fait : en tête de la liste « priorité », les plus anciens d'abord.
+        const cvToProcessEmails = await loadCvToProcessEmails(db).catch((error) => { console.warn("[listCandidates] CV à traiter indisponible :", error instanceof Error ? error.message : error); return new Set<string>(); });
         let allCandidates = combinedRows.map((row) => {
           const programContext = pickProgramContext(programContextByEmail.get(String((row as { email?: string | null }).email ?? "").trim().toLowerCase()), row.projectType);
           const procedureJourney = buildAdminProcedureSnapshot({
@@ -2142,6 +2146,7 @@ export const adminRouter = router({
           });
           return {
             ...row,
+            cvToProcess: cvToProcessEmails.has(String((row as { email?: string | null }).email ?? "").trim().toLowerCase()),
             procedureJourney,
             journeySla: {
               label: journeySla.label,
@@ -2202,10 +2207,11 @@ export const adminRouter = router({
         }
 
         const priorityRank = (candidate: (typeof allCandidates)[number]) => {
-          if (candidate.source === "ACCOUNT_ONLY" && candidate.evaluationDeclarationStatus === "pending_validation") return 0;
-          if (candidate.status === "PENDING_48H") return 1;
-          if (candidate.status === "DOCUMENTS_CHECK") return 2;
-          return 3;
+          if (candidate.cvToProcess) return 0; // CV reçu, bilan à traiter : toujours en premier
+          if (candidate.source === "ACCOUNT_ONLY" && candidate.evaluationDeclarationStatus === "pending_validation") return 1;
+          if (candidate.status === "PENDING_48H") return 2;
+          if (candidate.status === "DOCUMENTS_CHECK") return 3;
+          return 4;
         };
         allCandidates.sort((a, b) => {
           const createdAtDiff = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -2246,6 +2252,7 @@ export const adminRouter = router({
           externalEvaluation: { count: externalEvaluation.length, oldestCreatedAt: oldestCreatedAt(externalEvaluation) },
           pendingEvaluation: { count: pendingEvaluation.length, oldestCreatedAt: oldestCreatedAt(pendingEvaluation) },
           agencyPhysicalCount: agencyPhysical.length,
+          cvToProcessCount: allCandidates.filter((candidate) => candidate.cvToProcess).length,
           /** Les 8 premiers dossiers à contrôler (évaluations externes puis dossiers agence), pour l'encart « à contrôler ». */
           attentionRows: [...externalEvaluation, ...agencyPhysical].slice(0, 8),
         };

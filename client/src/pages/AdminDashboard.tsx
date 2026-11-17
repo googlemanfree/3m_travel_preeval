@@ -2656,6 +2656,15 @@ export default function AdminDashboard() {
       </Dialog>
 
       <div className="mx-auto w-full max-w-[1920px] px-4 py-6 space-y-6 sm:px-6 xl:px-8 2xl:px-10">
+        {(listSummary?.cvToProcessCount ?? 0) > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3" data-testid="cv-to-process-banner">
+            <div>
+              <p className="font-black text-violet-950">{listSummary!.cvToProcessCount} dossier{listSummary!.cvToProcessCount > 1 ? "s" : ""} avec CV : bilan à traiter en priorité</p>
+              <p className="text-sm text-violet-800">Ils passent en tête de la liste (tri « priorité »), du plus ancien au plus récent.</p>
+            </div>
+            <a href="/admin/candidates" className="inline-flex h-9 items-center rounded-lg border border-violet-300 bg-white px-3 text-sm font-semibold text-violet-900 hover:bg-violet-100">Voir la file « CV reçu à traiter »</a>
+          </div>
+        )}
         {/* Statistiques */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {[
@@ -3663,6 +3672,11 @@ export default function AdminDashboard() {
                           <span className="font-mono text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded w-fit" title={`Référence dossier ${candidate.folderCode}`}>
                             {candidate.folderCode}
                           </span>
+                          {(candidate as { cvToProcess?: boolean }).cvToProcess && (
+                            <span data-testid="cv-to-process-badge" className="inline-flex w-fit items-center rounded-full border border-violet-300 bg-violet-50 px-2 py-0.5 text-[10px] font-bold text-violet-900" title="CV reçu : bilan à traiter en priorité">
+                              CV reçu · bilan à traiter
+                            </span>
+                          )}
                           {candidate.isActiveDossier && (
                             <span data-testid="admin-active-treatment-badge" data-active-dossier-badge="admin-active-dossier-badge" className="inline-flex w-fit items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
                               Dossier actif

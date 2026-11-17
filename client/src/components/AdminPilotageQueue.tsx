@@ -1,15 +1,16 @@
 import { useState } from "react";
-import { AlertTriangle, CheckCircle2, FileCheck2, Hourglass, RefreshCw, Rocket } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FileCheck2, FileText, Hourglass, RefreshCw, Rocket } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatAdminSyncTime } from "@shared/adminSync";
 
-type Category = "ready_to_activate" | "documents_to_review" | "stalled";
+type Category = "cv_to_process" | "ready_to_activate" | "documents_to_review" | "stalled";
 type Item = { id: string; category: Category; openId: string; reference: string; fullName: string; title: string; detail: string; ageDays: number; severity: "high" | "medium" | "low"; count: number };
 
 const CATEGORY_META: Record<Category, { label: string; icon: typeof Rocket; tone: string }> = {
+  cv_to_process: { label: "CV reçu — bilan à traiter", icon: FileText, tone: "border-violet-200 bg-violet-50 text-violet-900" },
   ready_to_activate: { label: "Prêts à activer", icon: Rocket, tone: "border-emerald-200 bg-emerald-50 text-emerald-900" },
   documents_to_review: { label: "Pièces à contrôler", icon: FileCheck2, tone: "border-blue-200 bg-blue-50 text-blue-900" },
   stalled: { label: "Sans mouvement", icon: Hourglass, tone: "border-amber-200 bg-amber-50 text-amber-900" },
@@ -54,7 +55,7 @@ export default function AdminPilotageQueue({ sessionToken, onOpen }: { sessionTo
               {(Object.keys(CATEGORY_META) as Category[]).map((category) => {
                 const meta = CATEGORY_META[category];
                 const Icon = meta.icon;
-                const count = category === "ready_to_activate" ? summary?.readyToActivate : category === "documents_to_review" ? summary?.documentsToReview : summary?.stalled;
+                const count = category === "cv_to_process" ? summary?.cvToProcess : category === "ready_to_activate" ? summary?.readyToActivate : category === "documents_to_review" ? summary?.documentsToReview : summary?.stalled;
                 return (
                   <button key={category} type="button" onClick={() => { setFilter(category); setVisible(PAGE); }} aria-pressed={filter === category} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold ${filter === category ? "ring-2 ring-slate-900" : ""} ${meta.tone}`}>
                     <Icon className="h-3.5 w-3.5" aria-hidden="true" />{meta.label} ({count ?? 0})
