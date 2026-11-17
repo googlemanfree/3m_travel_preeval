@@ -50,6 +50,19 @@ describe.skipIf(!URL)("liste des candidats : SQL = ancien calcul en mémoire", (
       const [row] = await db.insert(s.evaluations).values({ fullName: "Zl E", email: mail(name), phone: "+1", destinationCategory: "canada", visaType: "canada_travail", cvFileUrl: cv || null } as never).$returningId();
       evaluationIds.push(row.id);
     }
+    // évaluations de personnes SANS compte ni dossier : doivent apparaître (une seule ligne par adresse, la plus récente)
+    for (let n = 0; n < 5; n += 1) {
+      const [row] = await db.insert(s.evaluations).values({ fullName: `Zl Invité ${n}`, email: mail(`gu${n}`), phone: "+2", destinationCategory: "canada", destinationCountry: n % 2 ? "Canada" : null, visaType: "canada_travail", projectType: n % 3 === 0 ? "travail" : null, status: (["pending", "reviewed", "contacted", "closed", "pending"] as const)[n], cvFileUrl: n % 2 === 0 ? "https://f.test/inv.pdf" : null, finalResponseSentAt: n === 1 ? new Date() : null, createdAt: new Date(base + n * 3_600_000) } as never).$returningId();
+      evaluationIds.push(row.id);
+    }
+    // même adresse évaluée deux fois : seule la plus récente compte
+    for (let n = 0; n < 2; n += 1) {
+      const [row] = await db.insert(s.evaluations).values({ fullName: `Zl Invité Double ${n}`, email: mail("gudouble"), phone: "+2", destinationCategory: "autre", visaType: "autre", cvFileUrl: n === 1 ? "https://f.test/d.pdf" : null } as never).$returningId();
+      evaluationIds.push(row.id);
+    }
+    // personne dont le compte a été supprimé : l'évaluation ne ressuscite pas la personne dans les listes
+    const [gone] = await db.insert(s.evaluations).values({ fullName: "Zl Invité Supprimé", email: mail("del"), phone: "+2", destinationCategory: "autre", visaType: "autre" } as never).$returningId();
+    evaluationIds.push(gone.id);
     await db.insert(s.evaluationValidationCases).values({ evaluationId: evaluationIds[0], publishedAt: at(1) } as never);
     await db.insert(s.evaluationValidationCases).values({ evaluationId: evaluationIds[1], publishedAt: at(1) } as never);
     // CV déposé à l'évaluation (table des documents) : doit compter comme « CV reçu »
@@ -168,6 +181,22 @@ describe.skipIf(!URL)("liste des candidats : SQL = ancien calcul en mémoire", (
     expect(result.candidates.map((r) => r.email.toLowerCase())).toEqual([mail("co0").toLowerCase()]);
     expect(result.candidates[0].evaluated).toBe(true);
     expect(result.candidates[0].bilanSent).toBe(false);
+  });
+
+  it("les évaluations de personnes sans compte ni dossier apparaissent, une ligne par adresse, sans ressusciter un compte supprimé", async () => {
+    const { queryCandidateList } = await import("./services/candidateListQuery");
+    const result = await queryCandidateList(ctx.db, { ...base, search: `zl${stamp}.gu` } as any);
+    const guests = result.candidates.filter((r) => r.source === "evaluation");
+    expect(guests).toHaveLength(6); // gu0..gu4 + gudouble
+    expect(guests.every((r) => r.id.startsWith("evaluation_"))).toBe(true);
+    expect(result.stats.evaluationOnlyCount).toBe(6);
+    expect(guests.filter((r) => r.email.includes("gudouble"))).toHaveLength(1);
+    expect(guests.find((r) => r.email.includes("gudouble"))!.cvReceived).toBe(true); // la plus récente porte le CV
+    const gone = await queryCandidateList(ctx.db, { ...base, search: mail("del") } as any);
+    expect(gone.candidates.filter((r) => r.source === "evaluation")).toHaveLength(0);
+    // CV reçu et non évalué : à traiter ; réponse finale envoyée : évalué
+    expect(guests.find((r) => r.email.includes(".gu0@"))).toMatchObject({ cvReceived: true, evaluated: false });
+    expect(guests.find((r) => r.email.includes(".gu1@"))).toMatchObject({ evaluated: true });
   });
 
   it("page demandée au-delà de la dernière : ramenée à la dernière page, avec le bon nombre de lignes", async () => {

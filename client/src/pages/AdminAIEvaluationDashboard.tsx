@@ -409,7 +409,8 @@ export default function AdminAIEvaluationDashboard() {
   const reviewSlaMaximum = Math.max(1, ...(reviewSla?.days.flatMap((day) => [day.received, day.reviewed]) ?? [1]));
   const history = (historyQuery.data ?? []) as ActivityLog[];
   const managedTemplates = (managedTemplatesQuery.data ?? []) as ManagedResponseTemplate[];
-  const [search, setSearch] = useState("");
+  // `?q=` pré-remplit la recherche : « evaluation_12 » ouvre l'évaluation n° 12 (lien depuis les listes de candidats), sinon nom, e-mail…
+  const [search, setSearch] = useState(() => (typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("q") ?? ""));
   const [scoreSort, setScoreSort] = useState<"default" | "desc" | "asc">("default");
   const [scoreFilter, setScoreFilter] = useState<"all" | "scored" | "pending">("all");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -483,8 +484,11 @@ export default function AdminAIEvaluationDashboard() {
   const visibleItems = useMemo(() => {
     const query = search.trim().toLowerCase();
     const filtered = items.filter((item) => {
-      const matchesQuery = !query || [item.fullName, item.email, item.destinationCountry, item.nationality, item.educationLevel, item.employmentStatus, item.typeLabel, item.suggestedAction]
-        .filter(Boolean).join(" ").toLowerCase().includes(query);
+      const evaluationIdQuery = /^evaluation_(\d+)$/.exec(query);
+      const matchesQuery = !query || (evaluationIdQuery
+        ? item.type === "evaluation" && evaluationIdOf(item) === Number(evaluationIdQuery[1])
+        : [item.fullName, item.email, item.destinationCountry, item.nationality, item.educationLevel, item.employmentStatus, item.typeLabel, item.suggestedAction]
+          .filter(Boolean).join(" ").toLowerCase().includes(query));
       const matchesScore = scoreFilter === "all" || (scoreFilter === "scored" ? typeof item.score === "number" : typeof item.score !== "number");
       const matchesPendingQueue = !pendingQueueOnly || (item.type === "evaluation" || item.type === "consultation") && !item.reviewedAt && item.status !== "validated_sent";
       const matchesSecondReview = !secondReviewOnly || (item.type === "evaluation" && Boolean(item.secondReviewRequired) && !item.secondReviewedAt);

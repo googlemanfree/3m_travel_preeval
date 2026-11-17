@@ -70,6 +70,9 @@ export type SiblingProcedureSummary = {
 };
 
 /** Regroupe les dossiers d’un même e-mail (hors comptes seuls non encore ouverts). */
+/** Compte seul ou évaluation seule : pas de dossier, donc pas de procédures sœurs. */
+const isStandaloneSource = (source: string) => source === "ACCOUNT_ONLY" || source === "EVALUATION_ONLY";
+
 export function attachSiblingProcedures<T extends {
   id: string;
   email: string;
@@ -82,7 +85,7 @@ export function attachSiblingProcedures<T extends {
 }>(rows: T[]): Array<T & { siblingCount: number; siblingProcedures: SiblingProcedureSummary[] }> {
   const byEmail = new Map<string, T[]>();
   for (const row of rows) {
-    if (row.source === "ACCOUNT_ONLY") continue;
+    if (isStandaloneSource(row.source)) continue;
     const email = row.email.trim().toLowerCase();
     if (!email) continue;
     const list = byEmail.get(email) ?? [];
@@ -91,7 +94,7 @@ export function attachSiblingProcedures<T extends {
   }
 
   return rows.map((row) => {
-    if (row.source === "ACCOUNT_ONLY") {
+    if (isStandaloneSource(row.source)) {
       return { ...row, siblingCount: 0, siblingProcedures: [] as SiblingProcedureSummary[] };
     }
     const email = row.email.trim().toLowerCase();
@@ -129,14 +132,14 @@ export function retainSiblingGroupsInFilteredList<T extends {
   if (filtered.length === 0 || filtered.length === universe.length) return filtered;
   const emails = new Set(
     filtered
-      .filter((row) => row.source !== "ACCOUNT_ONLY")
+      .filter((row) => !isStandaloneSource(row.source))
       .map((row) => row.email.trim().toLowerCase())
       .filter(Boolean),
   );
   if (emails.size === 0) return filtered;
   const keepIds = new Set(filtered.map((row) => row.id));
   for (const row of universe) {
-    if (row.source === "ACCOUNT_ONLY") continue;
+    if (isStandaloneSource(row.source)) continue;
     if (emails.has(row.email.trim().toLowerCase())) keepIds.add(row.id);
   }
   const byId = new Map(universe.map((row) => [row.id, row]));
@@ -148,7 +151,7 @@ export function retainSiblingGroupsInFilteredList<T extends {
     seen.add(row.id);
     for (const sibling of universe) {
       if (seen.has(sibling.id) || !keepIds.has(sibling.id)) continue;
-      if (sibling.source === "ACCOUNT_ONLY") continue;
+      if (isStandaloneSource(sibling.source)) continue;
       if (sibling.email.trim().toLowerCase() !== row.email.trim().toLowerCase()) continue;
       ordered.push(sibling);
       seen.add(sibling.id);

@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, gte, inArray, isNull, lt, ne, or, sql } from "drizzle-orm";
 import { bilanAutoEvents, bilanAutoOutbox, bilanAutoRuns, bilanAutoVersions, type BilanAutoRunRow } from "../../../drizzle/bilanAutoSchema";
 import { getDb } from "../../db";
+import { pickNextRun } from "./types";
 import type { AuditEvent, BilanAutoStore, NewRun, NewVersion, OutboxEntry, RunFilter, RunPatch, RunRecord, RunState, VersionPatch, VersionRecord, VersionStatus } from "./types";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
@@ -72,6 +73,19 @@ export const isDuplicateKey = (error: unknown) => {
   return e?.errno === 1062 || e?.code === "ER_DUP_ENTRY" || e?.cause?.errno === 1062 || e?.cause?.code === "ER_DUP_ENTRY";
 };
 
+/** Nombre de traitements échus examinés pour choisir le suivant (les plus anciens). */
+const CLAIM_WINDOW = 50;
+
+/** Le traitement porte-t-il un CV ? (clé de fichier dans l'instantané des données soumises) */
+export function snapshotHasCv(snapshotJson: string | null | undefined): boolean {
+  try {
+    const snapshot = JSON.parse(snapshotJson ?? "{}") as { cv?: { key?: string | null } };
+    return Boolean(snapshot.cv?.key);
+  } catch {
+    return false;
+  }
+}
+
 export class DrizzleBilanAutoStore implements BilanAutoStore {
   constructor(private readonly db: Db) {}
 
@@ -127,9 +141,11 @@ export class DrizzleBilanAutoStore implements BilanAutoStore {
   async claimNext(workerId: string, now: Date, lockTtlMs: number) {
     const expired = new Date(now.getTime() - lockTtlMs);
     for (let attempt = 0; attempt < 5; attempt += 1) {
-      const [candidate] = await this.db.select({ id: bilanAutoRuns.id }).from(bilanAutoRuns)
+      const eligible = await this.db.select({ id: bilanAutoRuns.id, snapshot: bilanAutoRuns.inputSnapshotJson }).from(bilanAutoRuns)
         .where(and(inArray(bilanAutoRuns.state, ["queued", "retry_pending"]), or(isNull(bilanAutoRuns.nextAttemptAt), sql`${bilanAutoRuns.nextAttemptAt} <= ${now}`), or(isNull(bilanAutoRuns.lockedBy), lt(bilanAutoRuns.lockedAt, expired))))
-        .orderBy(asc(bilanAutoRuns.id)).limit(1);
+        .orderBy(asc(bilanAutoRuns.id)).limit(CLAIM_WINDOW);
+      // Les dossiers avec CV passent avant les autres (le plus ancien d'abord dans chaque groupe) : voir `runPriority`.
+      const candidate = pickNextRun(eligible.map((row) => ({ id: row.id, hasCv: snapshotHasCv(row.snapshot) })));
       if (!candidate) return null;
       // Réservation atomique : une seule instance gagne la condition « encore libre ou verrou expiré ».
       const result = await this.db.update(bilanAutoRuns).set({ lockedBy: workerId, lockedAt: now })

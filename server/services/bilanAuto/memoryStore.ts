@@ -1,3 +1,4 @@
+import { pickNextRun } from "./types";
 import type { AuditEvent, BilanAutoStore, NewRun, NewVersion, OutboxEntry, RunFilter, RunPatch, RunRecord, RunState, VersionPatch, VersionRecord, VersionStatus } from "./types";
 
 /** Implémentation en mémoire : tests et mode simulation. Mêmes garanties d'atomicité que la version MySQL (verrou, clé unique, déduplication). */
@@ -47,9 +48,11 @@ export class MemoryBilanAutoStore implements BilanAutoStore {
   }
 
   async claimNext(workerId: string, now: Date, lockTtlMs: number) {
-    const due = this.runs
-      .filter((run) => (run.state === "queued" || run.state === "retry_pending") && (!run.nextAttemptAt || run.nextAttemptAt <= now) && (!run.lockedBy || (run.lockedAt && now.getTime() - run.lockedAt.getTime() > lockTtlMs)))
-      .sort((a, b) => a.id - b.id)[0];
+    const eligible = this.runs
+      .filter((run) => (run.state === "queued" || run.state === "retry_pending") && (!run.nextAttemptAt || run.nextAttemptAt <= now) && (!run.lockedBy || (run.lockedAt && now.getTime() - run.lockedAt.getTime() > lockTtlMs)));
+    // dossiers avec CV d'abord, le plus ancien en tête dans chaque groupe
+    const next = pickNextRun(eligible.map((run) => ({ id: run.id, hasCv: Boolean(run.inputSnapshot.cv?.key) })));
+    const due = next ? eligible.find((run) => run.id === next.id) : undefined;
     if (!due) return null;
     due.lockedBy = workerId;
     due.lockedAt = now;

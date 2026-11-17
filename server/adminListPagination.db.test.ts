@@ -37,15 +37,22 @@ describe.skipIf(!URL)("liste principale paginée et comptes à ouvrir", () => {
     const [evaluation] = await db.insert(s.evaluations).values({ fullName: "Zq Eval", email: mail("co0"), phone: "+1", destinationCategory: "canada", visaType: "canada_travail" } as never).$returningId();
     await db.insert(s.clientDocuments).values({ evaluationId: evaluation.id, candidateEmail: mail("co0").toUpperCase(), documentType: "passport", documentName: "passeport.pdf", documentUrl: "/manus-storage/passeport.pdf" } as never);
     await db.insert(s.clientDocuments).values({ evaluationId: evaluation.id, candidateEmail: mail("co0"), documentType: "cv", documentName: "mon-cv.pdf", documentUrl: "/manus-storage/mon-cv.pdf" } as never);
+    // évaluations de personnes sans compte : gu0 (ouverte, avec CV) visible ; gu1 (clôturée) et gu2 (compte supprimé) absentes
+    const guestIds: number[] = [];
+    for (const [name, status, cv] of [["gu0", "pending", "https://f.test/gu0.pdf"], ["gu1", "closed", null], ["gu2", "pending", null]] as const) {
+      const [row] = await db.insert(s.evaluations).values({ fullName: `Zq Invité ${name}`, email: mail(name), phone: "+2", destinationCategory: "canada", visaType: "canada_travail", status, cvFileUrl: cv } as never).$returningId();
+      guestIds.push(row.id);
+    }
+    await db.insert(s.candidates).values({ fullName: "Zq Supprimé", email: mail("gu2"), passwordHash: "x", dossierStatus: "nouveau", deletedAt: new Date() } as never);
     const { appRouter } = await import("./routers");
-    ctx = { db, s, token, accountIds, evaluationId: evaluation.id, caller: appRouter.createCaller({ req: { headers: { cookie: `admin_session=${token}` } }, res: {} } as never) };
+    ctx = { guestIds, db, s, token, accountIds, evaluationId: evaluation.id, caller: appRouter.createCaller({ req: { headers: { cookie: `admin_session=${token}` } }, res: {} } as never) };
   });
 
   afterAll(async () => {
     if (!ctx) return;
     const { db, s, token, evaluationId } = ctx;
     await db.delete(s.clientDocuments).where(inArray(s.clientDocuments.evaluationId, [evaluationId]));
-    await db.delete(s.evaluations).where(inArray(s.evaluations.id, [evaluationId]));
+    await db.delete(s.evaluations).where(inArray(s.evaluations.id, [evaluationId, ...ctx.guestIds]));
     await db.delete(s.candidates).where(like(s.candidates.email, `zq${stamp}.%`));
     await db.delete(s.agencyDossiers).where(like(s.agencyDossiers.email, `zq${stamp}.%`));
     await db.delete(s.applications).where(like(s.applications.email, `zq${stamp}.%`));
@@ -56,8 +63,8 @@ describe.skipIf(!URL)("liste principale paginée et comptes à ouvrir", () => {
 
   it("découpe en pages sans perdre ni répéter une ligne, et annonce le total", async () => {
     const full = await list({ pageSize: 200 });
-    expect(full.total).toBe(27 + 6 + 4);
-    expect(full.candidates).toHaveLength(37);
+    expect(full.total).toBe(27 + 6 + 4 + 1);
+    expect(full.candidates).toHaveLength(38);
     const seen: string[] = [];
     const first = await list({ page: 1, pageSize: 10 });
     expect(first.totalPages).toBe(4);
@@ -77,12 +84,12 @@ describe.skipIf(!URL)("liste principale paginée et comptes à ouvrir", () => {
     expect(first.cvToProcess).toBe(true);
     expect(first.email).toBe(mail("on3"));
     // le compte co0 a déposé un CV à l'évaluation (document) et n'est pas évalué : à traiter aussi, derrière le dossier plus ancien
-    expect(result.candidates.filter((candidate: any) => candidate.cvToProcess).map((candidate: any) => candidate.email)).toEqual([mail("on3"), mail("co0")]);
+    expect(result.candidates.filter((candidate: any) => candidate.cvToProcess).map((candidate: any) => candidate.email).sort()).toEqual([mail("co0"), mail("gu0"), mail("on3")].sort());
     // CV reçu mais évaluation déjà validée par un conseiller : plus à traiter
     expect(result.candidates.find((candidate: any) => candidate.email === mail("on4")).cvToProcess).toBe(false);
-    expect(result.summary.cvToProcessCount).toBe(2);
+    expect(result.summary.cvToProcessCount).toBe(3);
     // les autres files gardent leur ordre de priorité derrière lui
-    expect(result.candidates.slice(2).some((candidate: any) => candidate.cvToProcess)).toBe(false);
+    expect(result.candidates.slice(3).some((candidate: any) => candidate.cvToProcess)).toBe(false);
   });
 
   it("garde le même ordre d'une page à l'autre (tri demandé appliqué à toute la liste, pas à la page)", async () => {
@@ -108,10 +115,21 @@ describe.skipIf(!URL)("liste principale paginée et comptes à ouvrir", () => {
     expect(full.summary.agencyPhysicalCount).toBe(6);
   });
 
+  it("une évaluation faite sans compte ni dossier apparaît (ouverte, avec son CV), pas la clôturée ni celle d'un compte supprimé", async () => {
+    const result = await list({ pageSize: 200 });
+    const guests = result.candidates.filter((candidate: any) => candidate.source === "EVALUATION_ONLY");
+    expect(guests.map((candidate: any) => candidate.email)).toEqual([mail("gu0")]);
+    expect(guests[0]).toMatchObject({ status: "PENDING_48H", cvToProcess: true });
+    expect(guests[0].id).toMatch(/^evaluation_\d+$/);
+    expect(result.summary.evaluationOnlyCount).toBe(1);
+    const onlyGuests = await list({ pageSize: 200, source: "EVALUATION_ONLY" });
+    expect(onlyGuests.total).toBe(1);
+  });
+
   it("une page trop lointaine est ramenée à la dernière ; sans pageSize, `limit` donne la taille de page", async () => {
     const far = await list({ page: 99, pageSize: 10 });
     expect(far.page).toBe(far.totalPages);
-    expect(far.candidates.length).toBe(37 - 30);
+    expect(far.candidates.length).toBe(38 - 30);
     const legacy = await list({ limit: 25 });
     expect(legacy.pageSize).toBe(25);
     expect(legacy.candidates).toHaveLength(25);

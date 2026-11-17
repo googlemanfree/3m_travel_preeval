@@ -109,3 +109,15 @@ Un dossier dont le CV est reçu et qui n'est pas encore évalué (ni bilan envoy
 - **Liste des candidats** : nouveau tri « Priorité : CV à traiter d'abord », choisi par défaut (le tri « Plus récents » reste disponible).
 
 CV reçu = CV de l'évaluation, CV du compte, CV déposé à l'évaluation (documents) ou CV du dossier en ligne. Les bilans automatisés (`/admin/bilans`) traitent leur file dans l'ordre d'arrivée ; ils ne sont pas réordonnés.
+
+## Évaluations sans compte, ordre des bilans automatisés, index
+
+**Évaluations faites sans compte ni dossier.** Une personne qui remplit l'évaluation sans créer de compte n'apparaissait dans aucune liste de candidats (ni son CV, ni ses documents) : seul le tableau des évaluations la montrait. Elle est maintenant listée, une ligne par adresse (la plus récente) :
+- dans la **liste des candidats** (source « Évaluation sans compte », avec CV reçu, évalué ou non, classements rapides et tri « priorité » compris) ;
+- dans la **liste principale du tableau de bord** (source « Évaluation seule », statut « Évaluation 48 h » ; les évaluations clôturées n'y figurent pas, elles restent dans la liste des candidats) ;
+- dans la file « CV reçu — bilan à traiter » quand elles ont un CV.
+Une personne qui a un compte (même supprimé), un dossier en ligne ou un dossier agence n'est jamais comptée deux fois. Pas de fiche 360° pour ces lignes : un clic ouvre le tableau des évaluations (`/admin/ai-evaluations?q=evaluation_<n>`), qui retrouve l'évaluation par son numéro.
+
+**Bilans automatisés.** Les traitements en attente sont réservés dans cet ordre : dossiers avec CV d'abord, puis les autres, le plus ancien en tête dans chaque groupe (les 50 plus anciens traitements échus sont examinés à chaque réservation). La liste « Prêt à valider » de `/admin/bilans` montre le bilan qui attend depuis le plus longtemps en premier ; les autres filtres ne changent pas.
+
+**Index.** Voir `docs/INDEX_BASE_DE_DONNEES.md` et `scripts/sql/indexes-recommandes.sql` : onze index sur des tables aujourd'hui sans index (documents, fichiers, dossiers, évaluations, comptes), à appliquer par l'hébergeur. Non appliqués par le code.

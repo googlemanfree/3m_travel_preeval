@@ -104,7 +104,7 @@ type AdminCandidate = {
   createdAt: Date;
   documentsCount: number;
   /** « compte » : candidat inscrit sans dossier ; seules les actions de lecture lui sont proposées. */
-  source: "web" | "agence" | "compte";
+  source: "web" | "agence" | "compte" | "evaluation";
   avatarUrl?: string | null;
   avatarVerificationStatus: "missing" | "pending" | "verified" | "rejected";
   avatarVerificationReason?: string | null;
@@ -341,7 +341,7 @@ async function loadCandidateRecordsFromDb(sourceLimit = 5000): Promise<AdminCand
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
-  const [online, agency, documentCountRows, candidateRows, cvEvaluationRows, cvFileRows, publishedRows, cvDocumentRows] = await Promise.all([
+  const [online, agency, documentCountRows, candidateRows, cvEvaluationRows, cvFileRows, publishedRows, cvDocumentRows, evaluationRowsAll] = await Promise.all([
     db.select(onlineListColumns).from(applications).orderBy(desc(applications.createdAt)).limit(sourceLimit),
     db.select(agencyListColumns).from(agencyDossiers).orderBy(desc(agencyDossiers.createdAt)).limit(sourceLimit),
     // le nombre de documents par adresse se compte dans la base : avant, jusqu'à 10 000 lignes de documents étaient transférées pour être comptées ici
@@ -353,6 +353,8 @@ async function loadCandidateRecordsFromDb(sourceLimit = 5000): Promise<AdminCand
     db.select({ email: evaluations.email }).from(evaluationValidationCases).innerJoin(evaluations, eq(evaluations.id, evaluationValidationCases.evaluationId)).where(isNotNull(evaluationValidationCases.publishedAt)).limit(10000).catch(() => [] as Array<{ email: string }>),
     // CV déposé à l'évaluation (table des documents) : compte aussi comme « CV reçu »
     db.select({ email: clientDocuments.candidateEmail }).from(clientDocuments).where(eq(clientDocuments.documentType, "cv")).limit(10000),
+    // évaluations (la dernière de chaque adresse est retenue plus bas) : celles de personnes sans compte ni dossier
+    db.select({ id: evaluations.id, email: evaluations.email, fullName: evaluations.fullName, phone: evaluations.phone, referenceCode: evaluations.referenceCode, destinationCountry: evaluations.destinationCountry, projectType: evaluations.projectType, visaType: evaluations.visaType, status: evaluations.status, cvFileUrl: evaluations.cvFileUrl, finalResponseSentAt: evaluations.finalResponseSentAt, createdAt: evaluations.createdAt }).from(evaluations).orderBy(desc(evaluations.id)).limit(10000),
   ]);
   const cvEmails = new Set([...cvEvaluationRows, ...cvDocumentRows].map(row => row.email.toLowerCase()));
   const cvCandidateIds = new Set(cvFileRows.map(row => row.candidateId));
@@ -445,7 +447,42 @@ async function loadCandidateRecordsFromDb(sourceLimit = 5000): Promise<AdminCand
       bilanSent: publishedEmails.has(candidate.email.toLowerCase()),
       evaluated: publishedEmails.has(candidate.email.toLowerCase()) || validatedEmails.has(candidate.email.toLowerCase()),
     }) as AdminCandidate);
-  return onlineCandidates.concat(agencyCandidates, accountOnlyCandidates);
+  // Évaluations de personnes sans compte, sans dossier en ligne et sans dossier agence : la plus récente de chaque adresse.
+  const knownEmails = new Set<string>(Array.from(emailsWithDossier).concat((candidateRows as Array<{ email: string }>).map(row => row.email.toLowerCase())));
+  const latestEvaluationByEmail = new Map<string, (typeof evaluationRowsAll)[number]>();
+  for (const row of evaluationRowsAll) {
+    const key = row.email.toLowerCase();
+    const existing = latestEvaluationByEmail.get(key);
+    if (!existing || row.id > existing.id) latestEvaluationByEmail.set(key, row);
+  }
+  const evaluationOnlyCandidates: AdminCandidate[] = Array.from(latestEvaluationByEmail.values())
+    .filter(row => !knownEmails.has(row.email.toLowerCase()))
+    .map(row => ({
+      id: `evaluation_${row.id}`,
+      applicationNumber: row.referenceCode?.trim() ? row.referenceCode : `Évaluation n° ${row.id}`,
+      fullName: row.fullName,
+      email: row.email,
+      phone: row.phone,
+      destination: row.destinationCountry?.trim() ? row.destinationCountry : "Non spécifiée",
+      visaType: row.projectType?.trim() ? row.projectType : (row.visaType?.trim() ? row.visaType : "Non spécifié"),
+      scoringTotal: 0,
+      scoringBadge: "faible" as const,
+      status: row.status,
+      stage: dossierStageOf(row.status),
+      statusLabel: dossierStatusLabel(row.status),
+      paymentStatus: "non_paye" as const,
+      createdAt: row.createdAt,
+      documentsCount: documentCounts.get(row.email.toLowerCase()) ?? 0,
+      source: "evaluation" as const,
+      avatarUrl: null,
+      avatarVerificationStatus: "missing",
+      avatarVerificationReason: null,
+      avatarFaceCount: 0,
+      cvReceived: hasCv(row.email, row.cvFileUrl),
+      bilanSent: Boolean(row.finalResponseSentAt) || publishedEmails.has(row.email.toLowerCase()),
+      evaluated: Boolean(row.finalResponseSentAt) || publishedEmails.has(row.email.toLowerCase()) || validatedEmails.has(row.email.toLowerCase()),
+    }) as AdminCandidate);
+  return onlineCandidates.concat(agencyCandidates, accountOnlyCandidates, evaluationOnlyCandidates);
 }
 
 /** Filtres et tri en mémoire. `skipStatus` sert aux compteurs par étape, qui ignorent le filtre d'étape. */

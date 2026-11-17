@@ -190,3 +190,15 @@ export interface BilanAutoStore {
   updateVersion(id: number, patch: VersionPatch, guard?: { expectedStatus?: VersionStatus }): Promise<VersionRecord | null>;
   eraseCandidate(candidateId: number): Promise<{ runs: number; pdfKeys: string[] }>;
 }
+
+/**
+ * Ordre de traitement : les dossiers avec CV d'abord (ce sont eux dont le bilan se fait), puis les autres ; dans chaque groupe, le plus ancien en tête.
+ * Renvoie l'identifiant du traitement à réserver, ou `undefined` s'il n'y en a aucun.
+ */
+export function pickNextRun(runs: Array<{ id: number; hasCv: boolean }>): { id: number } | undefined {
+  let best: { id: number; hasCv: boolean } | undefined;
+  for (const run of runs) {
+    if (!best || (run.hasCv && !best.hasCv) || (run.hasCv === best.hasCv && run.id < best.id)) best = run;
+  }
+  return best ? { id: best.id } : undefined;
+}

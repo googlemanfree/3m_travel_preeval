@@ -87,7 +87,7 @@ interface Candidate {
   createdAt: string;
   adminNotes?: string;
   documentsCount?: number;
-  source?: "web" | "agence" | "compte";
+  source?: "web" | "agence" | "compte" | "evaluation";
   avatarUrl?: string | null;
   avatarVerificationStatus: "missing" | "pending" | "verified" | "rejected";
   avatarVerificationReason?: string | null;
@@ -631,6 +631,11 @@ export default function CandidatesManager() {
   };
 
   const handleViewDetails = (candidate: Candidate, tab: "info" | "messages" | "ai-summary" | "interview" = "info") => {
+    // Évaluation faite sans compte ni dossier : elle se traite dans le tableau des évaluations (pas de fiche 360° à ouvrir)
+    if (candidate.source === "evaluation" || String(candidate.id).startsWith("evaluation_")) {
+      window.location.assign(`/admin/ai-evaluations?q=${encodeURIComponent(String(candidate.id))}`);
+      return;
+    }
     setDetailInitialTab(tab);
     setSelectedCandidate(candidate);
     setIsDetailOpen(true);
@@ -953,6 +958,11 @@ export default function CandidatesManager() {
                         <span className={`mr-1 mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${candidate.evaluated ? "bg-sky-100 text-sky-900" : "bg-amber-100 text-amber-900"}`} data-testid="evaluation-badge" title={candidate.evaluated ? "Évaluation faite (bilan envoyé ou validation conseiller)" : "Pas encore évalué"}>
                           {candidate.evaluated ? "Évalué" : "Non évalué"}
                         </span>
+                        {candidate.source === "evaluation" && (
+                          <span className="mt-1 inline-block rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold text-sky-900" data-testid="evaluation-only-badge" title="Évaluation envoyée sans créer de compte : à traiter dans le tableau des évaluations">
+                            Évaluation sans compte
+                          </span>
+                        )}
                         {candidate.source === "compte" && (
                           <span className="mt-1 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700" title="Compte inscrit qui n’a pas encore de dossier ouvert">
                             Compte sans dossier

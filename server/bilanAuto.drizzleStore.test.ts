@@ -52,6 +52,24 @@ describe.skipIf(!URL)("store MySQL du bilan automatisé", () => {
     expect(claimed).toHaveLength(1);
   });
 
+  it("la file réserve d'abord les dossiers avec CV (même plus récents), puis les autres, le plus ancien d'abord", async () => {
+    // on vide la file des tests précédents pour ne garder que ces quatre traitements
+    await db.execute(sql.raw("UPDATE bilan_auto_runs SET state = 'published' WHERE state IN ('queued', 'retry_pending')"));
+    const withoutCv = (key: string, evaluationId: number): NewRun => ({ ...base(key, evaluationId), inputSnapshot: { ...base(key).inputSnapshot, cv: { key: null, fileName: null, sha256: null } } });
+    const a = (await store.insertRun(withoutCv("k-prio-a", 71)))!;
+    const b = (await store.insertRun(base("k-prio-b", 72)))!;
+    const c = (await store.insertRun(withoutCv("k-prio-c", 73)))!;
+    const d = (await store.insertRun(base("k-prio-d", 74)))!;
+    const order: number[] = [];
+    for (let i = 0; i < 4; i += 1) {
+      const next = await store.claimNext("w-prio", new Date(), 600_000);
+      if (!next) break;
+      order.push(next.id);
+      await store.updateRun(next.id, { state: "published" });
+    }
+    expect(order).toEqual([b.id, d.id, a.id, c.id]);
+  });
+
   it("le verrou expiré peut être repris, un verrou valide non", async () => {
     const run = (await store.insertRun(base("k-lock", 3)))!;
     await db.execute(sql.raw(`UPDATE bilan_auto_runs SET state='failed' WHERE id <> ${run.id}`)); // isole ce traitement
