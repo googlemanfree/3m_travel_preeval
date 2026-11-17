@@ -102,6 +102,7 @@ describe.skipIf(!URL)("liste des candidats : SQL = ancien calcul en mémoire", (
     ["CV à traiter", { cvStatus: "a_traiter" }], ["CV reçu", { cvStatus: "recu" }], ["sans CV", { cvStatus: "sans" }],
     ["recherche par nom accentué", { search: "éloïse" }], ["recherche par référence agence", { search: "3M-AGN-" }], ["recherche par référence compte", { search: "COMPTE-" }], ["recherche avec caractères spéciaux", { search: "100%_x" }],
     ["déjà évalués", { evaluationStatus: "evalue" }], ["non évalués", { evaluationStatus: "non_evalue" }], ["non évalués avec CV reçu", { evaluationStatus: "non_evalue", cvStatus: "recu" }], ["évalués et paiement", { evaluationStatus: "evalue", paymentStatus: "paye" }], ["non évalués par étape", { evaluationStatus: "non_evalue", status: "paiement" }],
+    ["tri priorité (CV à traiter d'abord)", { sortBy: "priorite" }], ["priorité + non évalués", { sortBy: "priorite", evaluationStatus: "non_evalue" }],
     ["tri par score croissant", { sortBy: "score", sortDirection: "asc" }], ["tri par nom", { sortBy: "fullName", sortDirection: "asc" }], ["tri par date croissante", { sortDirection: "asc" }],
     ["combinaison", { status: "documents", paymentStatus: "non_paye", cvStatus: "recu", sortBy: "score" }],
   ];
@@ -124,6 +125,19 @@ describe.skipIf(!URL)("liste des candidats : SQL = ancien calcul en mémoire", (
       expect(actual.map(key).sort()).toEqual(expected.map(key).sort());
       const byId = new Map(expected.map((r: any) => [r.id, r]));
       for (const row of actual) expect(plain(row)).toEqual(plain(byId.get(row.id)));
+      if (filter.sortBy === "priorite") {
+        // d'abord tous les dossiers « CV reçu, bilan à faire » (du plus ancien au plus récent), puis les autres (du plus récent au plus ancien)
+        const todo = (r: any) => r.cvReceived && !r.evaluated;
+        const firstOther = actual.findIndex((r: any) => !todo(r));
+        const todoRows = firstOther === -1 ? actual : actual.slice(0, firstOther);
+        const others = firstOther === -1 ? [] : actual.slice(firstOther);
+        expect(todoRows.every(todo)).toBe(true);
+        expect(others.some(todo)).toBe(false);
+        const times = (rows: any[]) => rows.map((r) => new Date(r.createdAt).getTime());
+        expect(times(todoRows)).toEqual([...times(todoRows)].sort((a, b) => a - b));
+        expect(times(others)).toEqual([...times(others)].sort((a, b) => b - a));
+        return;
+      }
       const sortKey = (r: any) => (filter.sortBy === "score" ? r.scoringTotal : filter.sortBy === "fullName" ? r.fullName : new Date(r.createdAt).getTime());
       for (let i = 1; i < actual.length; i += 1) {
         const a = sortKey(actual[i - 1]), b = sortKey(actual[i]);

@@ -9,7 +9,7 @@ describe("pagination candidats persistante", () => {
   it("valide les paramètres URL et conserve les filtres explicites", () => {
     const state = parseCandidateListUrl("?q=Aureol&page=3&pageSize=50&sort=score&status=nouveau");
     expect(state).toMatchObject({ searchQuery: "Aureol", page: 3, pageSize: 50, sortBy: "score", statusFilter: "nouveau" });
-    expect(parseCandidateListUrl("?page=0&pageSize=999&sort=unknown")).toMatchObject({ page: 1, pageSize: 25, sortBy: "createdAt" });
+    expect(parseCandidateListUrl("?page=0&pageSize=999&sort=unknown")).toMatchObject({ page: 1, pageSize: 25, sortBy: "priorite" }); // priorité (CV à traiter d’abord) par défaut
     expect(serializeCandidateListUrl(state)).toContain("pageSize=50");
   });
 

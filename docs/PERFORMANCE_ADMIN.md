@@ -99,3 +99,13 @@ Chaque ligne porte aussi un repère « Évalué » / « Non évalué ». Le clas
 - Les pièces, CV et documents n'étaient lus que par trois requêtes globales plafonnées (5 000 fichiers, 10 000 évaluations, sans ordre) : au-delà, des CV et des pièces devenaient invisibles. Elles sont maintenant limitées aux comptes affichés.
 - Les documents déposés à l'évaluation (table `client_documents`) n'étaient jamais comptés ni listés : ils sont comptés dans « pièces » et listés, avec un lien, dans la fiche du pré-dossier. Un CV déposé ainsi compte comme CV reçu (aussi dans le classement de la liste des candidats).
 - La recherche est faite par la base avant la limite de 500 comptes.
+
+## Dossiers avec CV : prioritaires pour le traitement du bilan
+
+Un dossier dont le CV est reçu et qui n'est pas encore évalué (ni bilan envoyé ou publié, ni évaluation validée par un conseiller) passe avant tout le reste, du plus ancien au plus récent :
+
+- **Liste principale du tableau de bord** (tri « priorité ») : en tête, avec le repère « CV reçu · bilan à traiter » et un bandeau qui annonce leur nombre, avec un lien vers la liste des candidats.
+- **Priorités de l'équipe** : nouvelle file « CV reçu — bilan à traiter », toujours au-dessus des autres files, quelle que soit leur urgence. Elle n'a aucun effet sur l'activation automatique (limitée à la file « prêts à activer »).
+- **Liste des candidats** : nouveau tri « Priorité : CV à traiter d'abord », choisi par défaut (le tri « Plus récents » reste disponible).
+
+CV reçu = CV de l'évaluation, CV du compte, CV déposé à l'évaluation (documents) ou CV du dossier en ligne. Les bilans automatisés (`/admin/bilans`) traitent leur file dans l'ordre d'arrivée ; ils ne sont pas réordonnés.

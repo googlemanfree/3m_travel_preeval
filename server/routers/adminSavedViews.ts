@@ -12,7 +12,7 @@ const savedViewStateSchema = z.object({
   paymentFilter: z.string().max(50).default("tous"),
   scoreFilter: z.string().max(50).default("tous"),
   destinationFilter: z.string().max(100).default("tous"),
-  sortBy: z.enum(["createdAt", "fullName", "score"]).default("createdAt"),
+  sortBy: z.enum(["createdAt", "fullName", "score", "priorite"]).default("priorite"),
   page: z.number().int().min(1).default(1),
   pageSize: z.union([z.literal(10), z.literal(25), z.literal(50), z.literal(100)]).default(25),
 });
