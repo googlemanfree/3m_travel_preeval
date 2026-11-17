@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { getCandidateToken } from "@/hooks/useCandidateAuth";
 import { getRejectedDocumentCount } from "@shared/documentStatus";
+import { downloadHrefFor } from "@shared/storedFileUrl";
 
 interface DocumentsStatusProps {
   dossierNumber: string;
@@ -151,7 +152,7 @@ export function DocumentsStatus({ dossierNumber }: DocumentsStatusProps) {
                       </Button>
                     )}
                     {doc.status === "rejected" && doc.url && (
-                      <a href={doc.url} download={doc.name} target="_blank" rel="noreferrer">
+                      <a href={downloadHrefFor(doc.url, doc.name)} download={doc.name} target="_blank" rel="noreferrer">
                         <Button size="sm" variant="outline" className="border-red-200 text-red-700 hover:bg-red-100">
                           <Download className="w-4 h-4 mr-1" />
                           Télécharger
@@ -198,7 +199,7 @@ export function DocumentsStatus({ dossierNumber }: DocumentsStatusProps) {
                 </div>
               )}
               <div className="flex gap-2">
-                <a href={selectedDoc.url} download className="flex-1">
+                <a href={downloadHrefFor(selectedDoc.url, selectedDoc.name)} download className="flex-1">
                   <Button className="w-full" variant="outline">
                     <Download className="w-4 h-4 mr-2" />
                     Télécharger

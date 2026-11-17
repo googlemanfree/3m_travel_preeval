@@ -1,4 +1,5 @@
 import { sql, type SQL } from "drizzle-orm";
+import { NOT_ARCHIVED_EVALUATION_SQL } from "./evaluationArchive";
 import { DOSSIER_STAGE_IDS, DOSSIER_STATUS_STAGE, dossierStageOf, dossierStatusLabel, isDossierStage, type DossierStage } from "../../shared/dossierStages";
 
 /**
@@ -85,7 +86,7 @@ function definition(source: Source) {
       ownCv: sql.raw("(s.cvFileUrl IS NOT NULL AND TRIM(s.cvFileUrl) <> '')"), ownBilan: sql.raw("(s.finalResponseSentAt IS NOT NULL)"),
       // évaluation faite par une personne qui n'a NI compte, NI dossier en ligne, NI dossier agence (la dernière de chaque adresse) :
       // sans cette source, son CV et ses documents n'apparaissaient dans aucune liste de candidats. Les comptes supprimés comptent comme des comptes.
-      base: sql.raw("s.id IN (SELECT MAX(xe.id) FROM evaluations xe GROUP BY LOWER(xe.email)) AND LOWER(s.email) NOT IN (SELECT LOWER(xa.email) FROM applications xa) AND LOWER(s.email) NOT IN (SELECT LOWER(xg.email) FROM agency_dossiers xg) AND LOWER(s.email) NOT IN (SELECT LOWER(xc.email) FROM candidates xc)"),
+      base: sql.raw(NOT_ARCHIVED_EVALUATION_SQL + " AND s.id IN (SELECT MAX(xe.id) FROM evaluations xe GROUP BY LOWER(xe.email)) AND LOWER(s.email) NOT IN (SELECT LOWER(xa.email) FROM applications xa) AND LOWER(s.email) NOT IN (SELECT LOWER(xg.email) FROM agency_dossiers xg) AND LOWER(s.email) NOT IN (SELECT LOWER(xc.email) FROM candidates xc)"),
     };
   }
   return {

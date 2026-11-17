@@ -22,6 +22,17 @@ export function isOpenableStoredUrl(url: string | null | undefined): boolean {
   return /^https?:\/\//i.test(url) || storageKeyFromStoredUrl(url) !== null;
 }
 
+/**
+ * Adresse à donner à un bouton « Télécharger » : pour un fichier de notre stockage, le serveur relaie le fichier avec son nom
+ * (l'attribut `download` d'un lien est ignoré dès que l'adresse redirige vers un autre site) ; toute autre adresse reste inchangée.
+ */
+export function downloadHrefFor(url: string | null | undefined, fileName?: string | null): string {
+  if (typeof url !== "string") return "";
+  if (storageKeyFromStoredUrl(url) === null) return url;
+  const name = fileName?.trim() ? `&name=${encodeURIComponent(fileName.trim())}` : "";
+  return `${url}?download=1${name}`;
+}
+
 /** Reconstruit l’URL proxy à partir d’une clé de stockage déjà validée. */
 export function storedUrlFromKey(key: string): string {
   return `${STORAGE_PROXY_PREFIX}${key.replace(/^\/+/, "")}`;

@@ -17,6 +17,7 @@ import { trpc } from "@/lib/trpc";
 import { DOCUMENT_REJECTION_REASONS, composeRejectionComment, type DocumentRejectionCode } from "@shared/documentRejectionReasons";
 import { summarizeWaiting, waitingInfo } from "@shared/documentWaiting";
 import { AdminDocumentInsightsCard } from "@/components/AdminDocumentInsights";
+import { downloadHrefFor } from "@shared/storedFileUrl";
 
 interface Document {
   id: number;
@@ -622,7 +623,7 @@ export function AdminDocumentsManagement() {
   const handleDownloadDocument = (url: string, docName: string) => {
     try {
       const link = document.createElement("a");
-      link.href = url;
+      link.href = downloadHrefFor(url, docName);
       link.download = docName;
       link.click();
       toast.success("✓ Téléchargement en cours", {

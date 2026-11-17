@@ -2040,22 +2040,30 @@ export default function AdminDashboard() {
     if (reason.length < 8) { toast({ title: "Motif obligatoire", description: "Saisissez au moins 8 caractères pour continuer.", variant: "destructive" }); return; }
     let succeeded = 0;
     let failed = 0;
+    // Le message du serveur dit POURQUOI un dossier n'a pas pu être archivé (droits, dossier introuvable…) : il était avalé, d'où « 1 échec » sans explication.
+    const failureReasons = new Map<string, number>();
+    const serverMessages = new Set<string>();
     for (const item of archiveDialogItems) {
       try {
-        await archiveDuplicateMutation.mutateAsync({ sessionToken, candidateId: item.id, reason, confirmation: "CORBEILLE" });
+        const result = await archiveDuplicateMutation.mutateAsync({ sessionToken, candidateId: item.id, reason, confirmation: "CORBEILLE" });
         succeeded += 1;
-      } catch {
+        if (result && typeof (result as { message?: unknown }).message === "string") serverMessages.add((result as { message: string }).message);
+      } catch (error) {
         failed += 1;
+        const message = error instanceof Error && error.message ? error.message : "Erreur inconnue.";
+        failureReasons.set(message, (failureReasons.get(message) ?? 0) + 1);
       }
     }
     const isBulk = archiveDialogItems.length > 1;
     setSelectedCandidateIds(new Set());
     setArchiveDialogItems(null);
+    const reasons = Array.from(failureReasons.entries()).slice(0, 3).map(([message, count]) => (count > 1 ? `${message} (×${count})` : message)).join(" · ");
     toast({
-      title: isBulk ? "Mise en corbeille groupée terminée" : "Dossier placé dans la corbeille",
-      description: `${succeeded} dossier(s) archivé(s)${failed ? `, ${failed} échec(s)` : ""}.`,
+      title: failed && !succeeded ? "Mise en corbeille impossible" : isBulk ? "Mise en corbeille groupée terminée" : "Dossier placé dans la corbeille",
+      description: `${succeeded} dossier(s) archivé(s)${failed ? `, ${failed} échec(s)` : ""}.${reasons ? ` Raison : ${reasons}` : !isBulk && serverMessages.size ? ` ${Array.from(serverMessages)[0]}` : ""}`,
       variant: failed ? "destructive" : undefined,
     });
+    if (succeeded) void refetch();
   }, [archiveDialogItems, archiveReasonInput, archiveDuplicateMutation, sessionToken, toast]);
 
   const queueInlineChange = useCallback((candidateId: string, field: "paymentStatus" | "procedureStep", value: string) => {
