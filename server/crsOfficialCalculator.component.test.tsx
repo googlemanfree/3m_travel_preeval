@@ -20,8 +20,8 @@ function fillReferenceProfile() {
   choose("crs-q5i", "yes");
   choose("crs-first-test", "ielts");
   for (const ability of ["speaking", "listening", "reading", "writing"]) choose(`crs-first-${ability}`, "1");
+  choose("crs-second-test", "none");
   choose("crs-q6i", "0");
-  choose("crs-q6ii", "no");
   choose("crs-q6v", "3");
   choose("crs-q7", "no");
   choose("crs-q8", "no");
@@ -66,6 +66,8 @@ describe("calculatrice CRS « comme canada.ca »", () => {
 
   it("les questions de salaire élevé et d'offre d'emploi se déplient comme sur l'outil officiel", () => {
     render(<CrsOfficialCalculator />);
+    expect(document.getElementById("crs-q6ii")).toBeNull(); // posée seulement avec au moins un an d’expérience canadienne, comme sur canada.ca
+    choose("crs-q6i", "3");
     expect(document.getElementById("crs-q6iii")).toBeNull();
     choose("crs-q6ii", "yes");
     expect(document.getElementById("crs-q6iii")).not.toBeNull();
@@ -162,6 +164,7 @@ describe("calculatrice CRS « comme canada.ca »", () => {
     choose("crs-q1", "married");
     choose("crs-q2i", "no");
     choose("crs-q2ii", "yes");
+    choose("crs-q6i", "2");
     choose("crs-q6ii", "yes");
     choose("crs-q8", "yes");
     for (const id of ["crs-q2i", "crs-q2ii", "crs-q11", "crs-q12", "crs-q13", "crs-q6iii", "crs-q8a"]) {
@@ -190,5 +193,75 @@ describe("calculatrice CRS « comme canada.ca »", () => {
     unmount();
     render(<CrsOfficialCalculator />);
     expect((document.getElementById("crs-q3") as HTMLSelectElement).value).toBe("33");
+  });
+  it("ne compte jamais une question laissée vide comme « sans objet » : la seconde langue doit être renseignée", () => {
+    render(<CrsOfficialCalculator />);
+    fillReferenceProfile();
+    choose("crs-second-test", "");
+    calculate();
+    expect(screen.queryByTestId("crs-results")).toBeNull();
+    expect(screen.getByTestId("crs-missing").textContent).toContain("5 iii)");
+    expect(screen.getByTestId("crs-remaining").textContent).toMatch(/Il reste 1 question/);
+    choose("crs-second-test", "none");
+    expect(screen.getByTestId("crs-remaining").textContent).toMatch(/Toutes les questions/);
+  });
+
+  it("répartit la note (profil principal, conjoint, transfert, points supplémentaires) et rappelle qu'elle ne confirme rien", () => {
+    render(<CrsOfficialCalculator />);
+    fillReferenceProfile();
+    calculate();
+    const tiles = within(screen.getByTestId("crs-summary-tiles"));
+    expect(tiles.getByText("Profil principal")).toBeTruthy();
+    expect(tiles.getByText("Conjoint (non compté)")).toBeTruthy();
+    expect(tiles.getByText("Transfert des compétences")).toBeTruthy();
+    expect(tiles.getByText("Points supplémentaires")).toBeTruthy();
+    expect(screen.getByTestId("crs-estimate-disclaimer").textContent).toMatch(/ne confirme ni votre admissibilité à Entrée express, ni une invitation/);
+    expect(screen.getByTestId("crs-evaluation-cta").textContent).toBe("Demander une évaluation de mon profil");
+    expect(screen.getByTestId("crs-evaluation-cta").getAttribute("href")).toBe("/evaluation?destination=canada");
+    expect(document.querySelector('a[href*="canada.ca"]')).not.toBeNull(); // lien vers l'outil officiel conservé
+  });
+
+  it("explique les mots techniques en français simple", () => {
+    render(<CrsOfficialCalculator />);
+    const glossary = within(screen.getByTestId("crs-glossary"));
+    for (const term of ["CLB / NCLC", "CNP et TEER", "Profession à salaire élevé", "EIMT", "Transférabilité des compétences", "Facteur d’intégration sur le marché du travail"]) expect(glossary.getByText(term)).toBeTruthy();
+  });
+
+  it("Comparer deux scénarios : change seulement l'expression orale du TCF Canada et montre le nouveau total, l'écart et les rubriques modifiées", () => {
+    render(<CrsOfficialCalculator />);
+    fillReferenceProfile();
+    calculate();
+    expect(screen.queryByTestId("crs-compare")).toBeNull();
+    fireEvent.click(screen.getByTestId("crs-compare-open"));
+    // le scénario B démarre identique au profil A
+    expect(screen.getByTestId("crs-compare-identical")).toBeTruthy();
+    expect(screen.getByTestId("crs-compare-delta").textContent).toBe("0");
+    choose("crs-b-first-test", "tcf_canada");
+    for (const ability of ["speaking", "listening", "reading", "writing"]) choose(`crs-b-first-${ability}`, "1");
+    const totalAfterTest = Number(screen.getByTestId("crs-compare-b").textContent);
+    choose("crs-b-first-speaking", "0");
+    const a = Number(screen.getByTestId("crs-compare-a").textContent);
+    const b = Number(screen.getByTestId("crs-compare-b").textContent);
+    expect(a).toBe(469);
+    expect(b).toBeGreaterThan(totalAfterTest);
+    expect(screen.getByTestId("crs-compare-delta").textContent).toBe(`+${b - a}`);
+    expect(screen.getByTestId("crs-b-first-test-changed")).toBeTruthy();
+    expect(within(screen.getByTestId("crs-compare-answers")).getByText(/Expression orale \(première langue\)/)).toBeTruthy();
+    expect(within(screen.getByTestId("crs-compare-lines")).getByText("Première langue officielle")).toBeTruthy();
+    expect(screen.getByTestId("crs-compare-disclaimer").textContent).toMatch(/ne prédit aucune note de ronde/);
+    // le profil A n'a pas bougé
+    expect(screen.getByTestId("crs-total").textContent?.replace(/\s/g, "")).toBe("469/1270");
+    fireEvent.click(screen.getByTestId("crs-compare-close"));
+    expect(screen.queryByTestId("crs-compare")).toBeNull();
+  });
+
+  it("Comparer deux scénarios : un scénario B incomplet liste les réponses manquantes au lieu de compter des zéros", () => {
+    render(<CrsOfficialCalculator />);
+    fillReferenceProfile();
+    calculate();
+    fireEvent.click(screen.getByTestId("crs-compare-open"));
+    choose("crs-b-q4", "");
+    expect(screen.getByTestId("crs-compare-missing").textContent).toContain("4) Niveau d’études");
+    expect(screen.queryByTestId("crs-compare-result")).toBeNull();
   });
 });

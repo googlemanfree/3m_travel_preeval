@@ -19,6 +19,7 @@ const referenceAnswers: CrsOfficialAnswers = {
   firstBands: { speaking: "1", listening: "1", reading: "1", writing: "1" },
   canadianWorkYears: "0",
   highWageExperience: "no",
+  secondTest: "none",
   foreignWorkYears: "3",
   certificate: "no",
   jobOffer: "no",
@@ -51,8 +52,9 @@ describe("export PDF de la calculatrice CRS", () => {
 });
 
 describe("infobulles de la calculatrice CRS", () => {
-  const source = readFileSync(resolve(import.meta.dirname, "../client/src/components/CrsOfficialCalculator.tsx"), "utf8");
-  const questionIds = Array.from(source.matchAll(/<Question id="([^"]+)"/g), (match) => match[1]);
+  const source = readFileSync(resolve(import.meta.dirname, "../client/src/components/CrsQuestions.tsx"), "utf8");
+  // les questions portent un identifiant à préfixe (« crs » pour le profil, « crs-b » pour le scénario B) : les aides sont rangées sous « crs-… »
+  const questionIds = Array.from(source.matchAll(/<Question id=\{`\$\{prefix\}-([^`]+)`\}/g), (match) => `crs-${match[1]}`);
 
   it("toute question de la calculatrice a son explication, et toute explication a sa question", () => {
     expect(questionIds.length).toBeGreaterThanOrEqual(23);

@@ -1,6 +1,6 @@
 /**
  * Calcul du score CRS (Comprehensive Ranking System) d'Entrée express, fidèle à la grille officielle d'IRCC EN VIGUEUR
- * DEPUIS LE 3 NOVEMBRE 2026, relue sur canada.ca le 2026-11-04 et recoupée avec l'outil officiel « Vérifiez votre note »
+ * DEPUIS LE 3 NOVEMBRE 2026, relue sur canada.ca le 2026-11-18 et recoupée avec l'outil officiel « Vérifiez votre note »
  * (les résultats de l'outil servent de cas de référence dans les tests) :
  *  - https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/check-score/crs-criteria.html
  *  - https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/changes.html
@@ -409,6 +409,6 @@ export const CRS_TOTAL_MAX = 1270;
 export const CRS_SOURCE = {
   organization: "Immigration, Réfugiés et Citoyenneté Canada (IRCC)",
   url: "https://www.canada.ca/fr/immigration-refugies-citoyennete/services/immigrer-canada/entree-express/verifier-note/criteries-scg.html",
-  verifiedAt: "2026-11-04",
+  verifiedAt: "2026-11-18",
   note: "Grille en vigueur depuis le 3 novembre 2026 : note sur 1 270, facteur d'intégration au marché du travail (expérience canadienne ou offre d'emploi à salaire élevé, jamais les deux), aucune EIMT exigée pour l'offre d'emploi.",
 } as const;

@@ -1,6 +1,6 @@
 /**
  * Tests de langue acceptés par Entrée express et leur conversion en niveaux CLB / NCLC, compétence par compétence.
- * Les tranches de notes sont reprises une à une de l'outil officiel d'IRCC « Vérifiez votre note » (relu le 2026-11-04) :
+ * Les tranches de notes sont reprises une à une de l'outil officiel d'IRCC « Vérifiez votre note » (relu le 2026-11-18) :
  * https://www.canada.ca/fr/immigration-refugies-citoyennete/services/immigrer-canada/entree-express/verifier-note.html
  * Un niveau 0 signifie « inférieur au CLB 4 » (aucun point). Aucune tranche n'est estimée : seules celles de l'outil existent ici.
  */

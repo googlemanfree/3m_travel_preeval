@@ -109,6 +109,8 @@ export function buildCrsProfileFromOfficialAnswers(a: CrsOfficialAnswers): CrsOf
     need(isTest(a.firstTest), "5 ii) Test de langue de la première langue officielle");
     first = abilitiesFromBands(a.firstTest, a.firstBands);
     if (isTest(a.firstTest) && !first) need(false, "5 ii) Notes des quatre compétences (première langue)");
+    // Comme l'outil officiel (« not applicable »), « aucun autre résultat » est une réponse à donner : une question laissée vide n'est jamais comptée comme « sans objet ».
+    need(a.secondTest !== "", "5 iii) Autres résultats linguistiques (seconde langue officielle) : choisissez un test ou « Sans objet »");
     if (isTest(a.secondTest)) {
       second = abilitiesFromBands(a.secondTest, a.secondBands);
       if (!second) need(false, "5 iii) Notes des quatre compétences (seconde langue)");
@@ -120,8 +122,10 @@ export function buildCrsProfileFromOfficialAnswers(a: CrsOfficialAnswers): CrsOf
   }
 
   need(/^[0-5]$/.test(a.canadianWorkYears), "6 i) Expérience de travail qualifié au Canada");
-  need(a.highWageExperience !== "", "6 ii) Expérience au Canada dans une profession à salaire élevé");
-  if (a.highWageExperience === "yes") {
+  // Comme l'outil officiel, la question 6 ii n'est posée qu'avec au moins un an d'expérience canadienne : sans cela, une réponse précédente est ignorée.
+  const askHighWage = Number(a.canadianWorkYears) >= 1;
+  if (askHighWage) need(a.highWageExperience !== "", "6 ii) Expérience au Canada dans une profession à salaire élevé");
+  if (askHighWage && a.highWageExperience === "yes") {
     need(a.highWage2x !== "", "6 iii) Salaire au moins 2 fois supérieur au salaire médian");
     if (a.highWage2x === "no") need(a.highWage15x !== "", "6 iv) Salaire au moins 1,5 fois supérieur au salaire médian");
   }
@@ -152,7 +156,7 @@ export function buildCrsProfileFromOfficialAnswers(a: CrsOfficialAnswers): CrsOf
   const french = firstIsFrench ? firstAbilities : second && isTest(a.secondTest) && CRS_TEST_LANGUAGE[a.secondTest] === "french" ? secondAbilities : ZERO_ABILITIES;
   const english = !firstIsFrench ? firstAbilities : second ? secondAbilities : ZERO_ABILITIES;
   const level = (value: string): HighWageLevel => (value === "2" || value === "1.5" || value === "1.3" ? value : "none");
-  const highWageExperience: HighWageLevel = a.highWageExperience === "yes" ? (a.highWage2x === "yes" ? "2" : a.highWage15x === "yes" ? "1.5" : "1.3") : "none";
+  const highWageExperience: HighWageLevel = askHighWage && a.highWageExperience === "yes" ? (a.highWage2x === "yes" ? "2" : a.highWage15x === "yes" ? "1.5" : "1.3") : "none";
   const canadianEducation: CanadianEducationLevel = a.canadianCredential === "yes" ? (a.canadianCredentialLevel === "three_year_or_more" ? "three_years_or_more" : a.canadianCredentialLevel === "one_two_year" ? "one_or_two_years" : "none") : "none";
 
   const profile: CrsProfile = {

@@ -1,10 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { AlertCircle, CheckCircle2, Copy, Download, ExternalLink, Info, MessageCircle, Printer, RotateCcw, Sparkles } from "lucide-react";
-import { ALL_CRS_TESTS, CRS_ABILITIES, CRS_TEST_BANDS, CRS_TEST_LABELS, secondLanguageTests, type CrsAbility, type CrsLanguageTest } from "@shared/crsLanguageTests";
-import { EMPTY_CRS_ANSWERS, MARITAL_OPTIONS, buildCrsProfileFromOfficialAnswers, countsAsWithSpouse, isMarried, type CrsOfficialAnswers } from "@shared/crsOfficialAnswers";
+import { AlertCircle, ArrowRight, BookOpen, CheckCircle2, Copy, Download, ExternalLink, GitCompareArrows, Info, MessageCircle, Printer, RotateCcw, Sparkles } from "lucide-react";
+import { CRS_ABILITIES, CRS_TEST_BANDS, CRS_TEST_LABELS, type CrsAbility, type CrsLanguageTest } from "@shared/crsLanguageTests";
+import { EMPTY_CRS_ANSWERS, MARITAL_OPTIONS, buildCrsProfileFromOfficialAnswers, countsAsWithSpouse, type CrsOfficialAnswers } from "@shared/crsOfficialAnswers";
 import { CRS_SOURCE, CRS_TOTAL_MAX, computeCrsScore } from "@shared/crsScore";
 import { improvementLevers, resultSections } from "@/lib/crsResultModel";
+import { AGE_CHOICES, CANADIAN_CREDENTIAL_LEVELS, CrsQuestions, EDUCATION_CHOICES, FOREIGN_YEARS_CHOICES, JOB_OFFER_LEVELS, YEARS_CHOICES, YES_NO } from "@/components/CrsQuestions";
 import { CRS_TIPS, tipSummary } from "@/lib/crsTips";
+import { CRS_GLOSSARY } from "@/lib/crsGlossary";
+import { changedAnswerFields, compareScenarios } from "@/lib/crsScenario";
 
 /**
  * Calculatrice CRS « comme canada.ca » : les mêmes questions, dans le même ordre, avec les mêmes conditions que l'outil officiel d'IRCC
@@ -14,94 +17,65 @@ import { CRS_TIPS, tipSummary } from "@/lib/crsTips";
 const IRCC_TOOL_URL = "https://www.canada.ca/fr/immigration-refugies-citoyennete/services/immigrer-canada/entree-express/verifier-note.html";
 const STORAGE_KEY = "3m-crs-official-answers-v1";
 
-const EDUCATION_CHOICES = [
-  { value: "less_than_secondary", label: "Aucun, études secondaires non complétées (école secondaire)" },
-  { value: "secondary", label: "Diplôme d’études secondaires" },
-  { value: "one_year_postsecondary", label: "Programme d’un an d’une université, d’un collège, d’une école technique ou d’une école de métier, ou d’un autre établissement" },
-  { value: "two_year_postsecondary", label: "Programme de deux ans d’une université, d’un collège, d’une école technique ou d’une école de métier, ou d’un autre établissement" },
-  { value: "bachelor_or_three_year", label: "Baccalauréat (programme de trois ans ou plus d’une université, d’un collège, d’une école technique ou d’une école de métier, ou d’un autre établissement)" },
-  { value: "two_or_more_credentials", label: "Au moins deux certificats, grades ou diplômes. Au moins l’un de ces diplômes a été obtenu à la suite de la réussite d’un programme d’études postsecondaires d’au moins trois ans" },
-  { value: "master_or_professional", label: "Maîtrise ou diplôme professionnel nécessaire pour pratiquer une profession réglementée" },
-  { value: "doctoral", label: "Diplôme universitaire au niveau du doctorat (Ph. D.)" },
-];
-const AGE_CHOICES = Array.from({ length: 29 }, (_, index) => 17 + index).map((age) => ({ value: String(age), label: age === 17 ? "17 ans ou moins" : age === 45 ? "45 ans ou plus" : `${age} ans` }));
-const YEARS_CHOICES = [
-  { value: "0", label: "Aucune ou moins d’un an" }, { value: "1", label: "1 an" }, { value: "2", label: "2 ans" },
-  { value: "3", label: "3 ans" }, { value: "4", label: "4 ans" }, { value: "5", label: "5 ans ou plus" },
-];
-const FOREIGN_YEARS_CHOICES = [{ value: "0", label: "Aucune ou moins d’un an" }, { value: "1", label: "1 an" }, { value: "2", label: "2 ans" }, { value: "3", label: "3 ans ou plus" }];
-const YES_NO = [{ value: "no", label: "Non" }, { value: "yes", label: "Oui" }];
-const NO_YES_FR = YES_NO;
-const CANADIAN_CREDENTIAL_LEVELS = [
-  { value: "secondary_or_less", label: "École secondaire ou moins" },
-  { value: "one_two_year", label: "Diplôme ou certificat d’un ou de deux ans" },
-  { value: "three_year_or_more", label: "Degré, diplôme ou certificat de trois ans ou plus OU une maîtrise, un doctorat ou un diplôme professionnel avec au moins une année de scolarité" },
-];
-const JOB_OFFER_LEVELS = [
-  { value: "2", label: "Une offre d’emploi dans une profession à salaire élevé offrant un salaire au moins 2 fois supérieur au salaire médian" },
-  { value: "1.5", label: "Une offre d’emploi dans une profession à salaire élevé offrant un salaire au moins 1,5 fois supérieur, mais inférieur à 2 fois, au salaire médian" },
-  { value: "1.3", label: "Une offre d’emploi dans une profession à salaire élevé offrant un salaire au moins 1,3 fois supérieur, mais inférieur à 1,5 fois, au salaire médian" },
-];
+/** Libellé lisible d'une réponse (pour la liste « Réponses modifiées » du mode comparaison). */
+const SIMPLE_FIELDS: Record<string, { label: string; options: ReadonlyArray<{ value: string; label: string }> }> = {
+  maritalStatus: { label: "État matrimonial", options: MARITAL_OPTIONS },
+  spouseCitizenOrPr: { label: "Conjoint citoyen ou résident permanent", options: YES_NO },
+  spouseAccompanies: { label: "Conjoint qui vous accompagne", options: YES_NO },
+  age: { label: "Âge", options: AGE_CHOICES },
+  education: { label: "Niveau d’études", options: EDUCATION_CHOICES },
+  canadianCredential: { label: "Diplôme canadien", options: YES_NO },
+  canadianCredentialLevel: { label: "Niveau du diplôme canadien", options: CANADIAN_CREDENTIAL_LEVELS },
+  languageTestRecent: { label: "Test de langue de moins de deux ans", options: YES_NO },
+  canadianWorkYears: { label: "Expérience de travail qualifié au Canada", options: YEARS_CHOICES },
+  highWageExperience: { label: "Expérience au Canada dans une profession à salaire élevé", options: YES_NO },
+  highWage2x: { label: "Salaire au moins 2 fois le salaire médian", options: YES_NO },
+  highWage15x: { label: "Salaire au moins 1,5 fois le salaire médian", options: YES_NO },
+  foreignWorkYears: { label: "Expérience de travail qualifié à l’étranger", options: FOREIGN_YEARS_CHOICES },
+  certificate: { label: "Certificat de compétence", options: YES_NO },
+  jobOffer: { label: "Offre d’emploi valide à salaire élevé", options: YES_NO },
+  jobOfferLevel: { label: "Niveau de l’offre d’emploi", options: JOB_OFFER_LEVELS },
+  nomination: { label: "Désignation provinciale", options: YES_NO },
+  sibling: { label: "Frère ou sœur au Canada", options: YES_NO },
+  spouseEducation: { label: "Niveau d’études du conjoint", options: EDUCATION_CHOICES },
+  spouseCanadianWorkYears: { label: "Expérience canadienne du conjoint", options: YEARS_CHOICES },
+};
+const TEST_FIELDS: Record<string, { label: string; allowNone: boolean }> = {
+  firstTest: { label: "Test de langue (première langue)", allowNone: false },
+  secondTest: { label: "Test de langue (seconde langue)", allowNone: true },
+  spouseTest: { label: "Test de langue du conjoint", allowNone: true },
+};
+const BAND_FIELDS: Record<string, { label: string; test: "firstTest" | "secondTest" | "spouseTest" }> = {
+  firstBands: { label: "première langue", test: "firstTest" },
+  secondBands: { label: "seconde langue", test: "secondTest" },
+  spouseBands: { label: "conjoint", test: "spouseTest" },
+};
 
-const selectClass = "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200";
-
-/** Une question et son infobulle : survol (texte court) ou clic / clavier (explication complète), y compris sur téléphone. */
-function Question({ id, label, children }: { id: string; label: string; children: React.ReactNode }) {
-  const tip = CRS_TIPS[id];
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
-      <div className="flex items-start justify-between gap-3">
-        <label htmlFor={id} className="block text-sm font-bold leading-6 text-slate-900">{label}</label>
-        {tip ? (
-          <button
-            type="button"
-            onClick={() => setOpen((value) => !value)}
-            aria-expanded={open}
-            aria-controls={`${id}-tip`}
-            aria-label={open ? "Masquer l’aide de cette question" : "Afficher l’aide de cette question"}
-            title={tipSummary(tip)}
-            className="crs-no-print mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-blue-800 transition hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
-            data-testid={`${id}-tip-button`}
-          >
-            <Info className="h-4 w-4" aria-hidden="true" />
-          </button>
-        ) : null}
-      </div>
-      {tip && open ? <p id={`${id}-tip`} role="note" className="mt-2 rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs leading-5 text-slate-700" data-testid={`${id}-tip`}>{tip}</p> : null}
-      {children}
-    </div>
-  );
+export function describeAnswerChange(field: string, a: CrsOfficialAnswers, b: CrsOfficialAnswers): { label: string; from: string; to: string } {
+  const unanswered = "non renseigné";
+  const simple = SIMPLE_FIELDS[field];
+  if (simple) {
+    const read = (answers: CrsOfficialAnswers) => { const value = String(answers[field as keyof CrsOfficialAnswers] ?? ""); return simple.options.find((option) => option.value === value)?.label ?? (value === "" ? unanswered : value); };
+    return { label: simple.label, from: read(a), to: read(b) };
+  }
+  const testField = TEST_FIELDS[field];
+  if (testField) {
+    const read = (answers: CrsOfficialAnswers) => { const value = String(answers[field as keyof CrsOfficialAnswers] ?? ""); return value === "" ? unanswered : value === "none" ? "Sans objet" : CRS_TEST_LABELS[value as CrsLanguageTest] ?? value; };
+    return { label: testField.label, from: read(a), to: read(b) };
+  }
+  const [group, ability] = field.split(".") as [keyof typeof BAND_FIELDS, CrsAbility];
+  const meta = BAND_FIELDS[group];
+  const abilityLabel = CRS_ABILITIES.find((entry) => entry.key === ability)?.label ?? ability;
+  const read = (answers: CrsOfficialAnswers) => {
+    const test = answers[meta.test] as string;
+    const index = (answers[group] as Record<CrsAbility, string>)[ability];
+    return test in CRS_TEST_BANDS && index !== "" ? `${CRS_TEST_LABELS[test as CrsLanguageTest]} : ${CRS_TEST_BANDS[test as CrsLanguageTest][ability][Number(index)]?.label ?? index}` : unanswered;
+  };
+  return { label: `${abilityLabel} (${meta.label})`, from: read(a), to: read(b) };
 }
 
-function Choice({ id, value, onChange, options, placeholder = "Sélectionner…" }: { id: string; value: string; onChange: (value: string) => void; options: Array<{ value: string; label: string }>; placeholder?: string }) {
-  return (
-    <select id={id} value={value} onChange={(event) => onChange(event.target.value)} className={selectClass}>
-      <option value="">{placeholder}</option>
-      {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-    </select>
-  );
-}
-
-/** Test de langue (cinq tests officiels) puis une note par compétence, comme l'outil d'IRCC. */
-function LanguageBlock({ idPrefix, test, bands, tests, onTest, onBand }: { idPrefix: string; test: string; bands: Record<CrsAbility, string>; tests: CrsLanguageTest[]; onTest: (value: string) => void; onBand: (ability: CrsAbility, value: string) => void }) {
-  const chosen = tests.includes(test as CrsLanguageTest) ? (test as CrsLanguageTest) : null;
-  return (
-    <div className="mt-2 space-y-3">
-      <Choice id={`${idPrefix}-test`} value={test} onChange={onTest} options={[...tests.map((entry) => ({ value: entry, label: CRS_TEST_LABELS[entry] })), ...(idPrefix === "crs-first" ? [] : [{ value: "none", label: "Sans objet" }])]} />
-      {chosen ? (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {CRS_ABILITIES.map(({ key, label }) => (
-            <div key={key}>
-              <label htmlFor={`${idPrefix}-${key}`} className="block text-xs font-semibold text-slate-700">{label} :</label>
-              <Choice id={`${idPrefix}-${key}`} value={bands[key]} onChange={(value) => onBand(key, value)} options={CRS_TEST_BANDS[chosen][key].map((entry, index) => ({ value: String(index), label: entry.label }))} />
-            </div>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
+const signed = (value: number) => (value > 0 ? `+${value}` : value < 0 ? `−${Math.abs(value)}` : "0");
+const deltaTone = (value: number) => (value > 0 ? "text-emerald-800" : value < 0 ? "text-red-800" : "text-slate-600");
 
 const fmt = (value: number) => value.toLocaleString("fr-FR");
 
@@ -121,13 +95,13 @@ export default function CrsOfficialCalculator() {
     try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(answers)); } catch { /* ignoré */ }
   }, [answers]);
 
-  const set = <K extends keyof CrsOfficialAnswers>(key: K, value: CrsOfficialAnswers[K]) => { setSubmitted(false); setAnswers((previous) => ({ ...previous, [key]: value })); };
-  const setBand = (group: "firstBands" | "secondBands" | "spouseBands", ability: CrsAbility, value: string) => set(group, { ...answers[group], [ability]: value });
+  const [scenario, setScenario] = useState<CrsOfficialAnswers | null>(null);
   const withSpouse = countsAsWithSpouse(answers);
   const result = useMemo(() => buildCrsProfileFromOfficialAnswers(answers), [answers]);
   const breakdown = result.complete ? computeCrsScore(result.profile) : null;
   const levers = result.complete && breakdown ? improvementLevers(result.profile, breakdown) : [];
-  const firstTest = ALL_CRS_TESTS.includes(answers.firstTest as CrsLanguageTest) ? (answers.firstTest as CrsLanguageTest) : null;
+  const comparison = useMemo(() => (scenario ? compareScenarios(answers, scenario) : null), [answers, scenario]);
+  const scenarioChanged = useMemo(() => (scenario ? changedAnswerFields(answers, scenario) : []), [answers, scenario]);
 
   const summaryText = breakdown
     ? `Mon score CRS estimé (grille IRCC du 3 novembre 2026) : ${breakdown.total} / ${CRS_TOTAL_MAX}. Facteurs de base ${breakdown.coreHumanCapital}, conjoint ${breakdown.spouseFactors}, transfert des compétences ${breakdown.skillTransferability}, points supplémentaires ${breakdown.additionalPoints}.`
@@ -135,7 +109,7 @@ export default function CrsOfficialCalculator() {
   const copyResult = async () => {
     try { await navigator.clipboard.writeText(summaryText); setCopied(true); window.setTimeout(() => setCopied(false), 2500); } catch { setCopied(false); }
   };
-  const reset = () => { setAnswers(EMPTY_CRS_ANSWERS); setSubmitted(false); };
+  const reset = () => { setAnswers(EMPTY_CRS_ANSWERS); setSubmitted(false); setScenario(null); };
   const downloadPdf = async () => {
     if (!breakdown) return;
     setPdfState("working");
@@ -157,121 +131,27 @@ export default function CrsOfficialCalculator() {
           <strong>Nouveau depuis le 3 novembre 2026 :</strong> l’expérience de travail canadienne devient le « facteur d’intégration sur le marché du travail » (durée + points pour une profession à salaire élevé), ou, à la place, une offre d’emploi valide dans une profession à salaire élevé — jamais les deux : IRCC retient le plus avantageux. Plus aucune EIMT n’est exigée pour l’offre d’emploi.
         </p>
         <p className="mt-2 text-xs leading-5 text-slate-600">Cet outil sert uniquement de repère. En cas de divergence avec le résultat du système électronique Entrée express, c’est ce dernier qui prévaut. <a className="font-semibold text-blue-800 underline" href={IRCC_TOOL_URL} target="_blank" rel="noreferrer noopener">Ouvrir l’outil officiel d’IRCC</a></p>
+        <details className="mt-3 rounded-lg border border-blue-200 bg-white" data-testid="crs-glossary">
+          <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-3 py-2 text-sm font-bold text-blue-900"><BookOpen className="h-4 w-4" aria-hidden="true" />Mots techniques expliqués simplement (CLB, TEER, EIMT, salaire élevé…)</summary>
+          <dl className="space-y-3 border-t border-blue-100 px-3 py-3 text-sm">
+            {CRS_GLOSSARY.map((entry) => (
+              <div key={entry.term}><dt className="font-black text-slate-900">{entry.term}</dt><dd className="mt-0.5 leading-6 text-slate-700">{entry.meaning}</dd></div>
+            ))}
+          </dl>
+        </details>
       </div>
 
       <form className="space-y-3" onSubmit={(event) => { event.preventDefault(); setSubmitted(true); }} noValidate>
-        <Question id="crs-q1" label="1) Quel est votre état matrimonial ?">
-          <Choice id="crs-q1" value={answers.maritalStatus} onChange={(value) => set("maritalStatus", value)} options={[...MARITAL_OPTIONS]} />
-        </Question>
-        {isMarried(answers.maritalStatus) && (
-          <>
-            <Question id="crs-q2i" label="2) i. Votre époux ou conjoint de fait est-il citoyen ou résident permanent du Canada ?">
-              <Choice id="crs-q2i" value={answers.spouseCitizenOrPr} onChange={(value) => set("spouseCitizenOrPr", value)} options={NO_YES_FR} />
-            </Question>
-            {answers.spouseCitizenOrPr === "no" && (
-              <Question id="crs-q2ii" label="2) ii. Votre époux ou conjoint de fait vous accompagnera-t-il au Canada ?">
-                <Choice id="crs-q2ii" value={answers.spouseAccompanies} onChange={(value) => set("spouseAccompanies", value)} options={NO_YES_FR} />
-              </Question>
-            )}
-          </>
-        )}
-        <Question id="crs-q3" label="3) Quel âge avez-vous ?">
-          <Choice id="crs-q3" value={answers.age} onChange={(value) => set("age", value)} options={AGE_CHOICES} />
-        </Question>
-        <Question id="crs-q4" label="4) Quel niveau d’études avez-vous atteint ?">
-          <Choice id="crs-q4" value={answers.education} onChange={(value) => set("education", value)} options={EDUCATION_CHOICES} />
-        </Question>
-        <Question id="crs-q4b" label="4b) Avez-vous obtenu un certificat, grade ou diplôme canadien ?">
-          <Choice id="crs-q4b" value={answers.canadianCredential} onChange={(value) => set("canadianCredential", value)} options={YES_NO} />
-        </Question>
-        {answers.canadianCredential === "yes" && (
-          <Question id="crs-q4c" label="4c) Choisissez la meilleure réponse pour décrire ce niveau d’éducation.">
-            <Choice id="crs-q4c" value={answers.canadianCredentialLevel} onChange={(value) => set("canadianCredentialLevel", value)} options={CANADIAN_CREDENTIAL_LEVELS} />
-          </Question>
-        )}
+        <CrsQuestions answers={answers} setAnswers={setAnswers} onEdit={() => setSubmitted(false)} />
 
-        <Question id="crs-q5i" label="5) Langues officielles : i. Vos résultats de test linguistique ont-ils moins de deux ans ?">
-          <Choice id="crs-q5i" value={answers.languageTestRecent} onChange={(value) => set("languageTestRecent", value)} options={YES_NO} />
-        </Question>
-        {answers.languageTestRecent === "no" && (
-          <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-950" data-testid="crs-language-note">
-            <AlertCircle className="mr-1 inline h-4 w-4" aria-hidden="true" />{result.languageNote}
-          </p>
-        )}
-        {answers.languageTestRecent === "yes" && (
-          <>
-            <Question id="crs-first-test" label="5) ii. Quel test linguistique avez-vous passé pour votre première langue officielle ?">
-              <LanguageBlock idPrefix="crs-first" test={answers.firstTest} bands={answers.firstBands} tests={ALL_CRS_TESTS} onTest={(value) => setAnswers((previous) => ({ ...previous, firstTest: value, firstBands: EMPTY_CRS_ANSWERS.firstBands, secondTest: "", secondBands: EMPTY_CRS_ANSWERS.secondBands }))} onBand={(ability, value) => setBand("firstBands", ability, value)} />
-            </Question>
-            {firstTest && (
-              <Question id="crs-second-test" label="5) iii. Avez-vous d’autres résultats linguistiques ? Si oui, quel test avez-vous passé pour votre seconde langue officielle ?">
-                <LanguageBlock idPrefix="crs-second" test={answers.secondTest} bands={answers.secondBands} tests={secondLanguageTests(firstTest)} onTest={(value) => setAnswers((previous) => ({ ...previous, secondTest: value, secondBands: EMPTY_CRS_ANSWERS.secondBands }))} onBand={(ability, value) => setBand("secondBands", ability, value)} />
-              </Question>
-            )}
-          </>
-        )}
-
-        <Question id="crs-q6i" label="6) Expérience de travail : i. Au cours des 10 dernières années, combien d’années d’expérience de travail qualifié au Canada avez-vous accumulées ?">
-          <Choice id="crs-q6i" value={answers.canadianWorkYears} onChange={(value) => set("canadianWorkYears", value)} options={YEARS_CHOICES} />
-        </Question>
-        <Question id="crs-q6ii" label="6) ii. Au cours des 10 dernières années, avez-vous au moins 1 an (ou 1 560 heures) d’expérience de travail qualifié au Canada dans un ou plusieurs emplois de la CNP figurant sur la liste des professions à salaire élevé ?">
-          <Choice id="crs-q6ii" value={answers.highWageExperience} onChange={(value) => set("highWageExperience", value)} options={[{ value: "yes", label: "Oui" }, { value: "no", label: "Non" }]} />
-        </Question>
-        {answers.highWageExperience === "yes" && (
-          <>
-            <Question id="crs-q6iii" label="6) iii. Cette expérience de travail a-t-elle duré au moins 1 an (ou 1 560 heures) dans un ou plusieurs emplois à salaire élevé dont le salaire était au moins 2 fois supérieur au salaire médian ?">
-              <Choice id="crs-q6iii" value={answers.highWage2x} onChange={(value) => set("highWage2x", value)} options={[{ value: "yes", label: "Oui" }, { value: "no", label: "Non" }]} />
-            </Question>
-            {answers.highWage2x === "no" && (
-              <Question id="crs-q6iv" label="6) iv. Cette expérience de travail a-t-elle duré au moins 1 an (ou 1 560 heures) dans un ou plusieurs emplois à salaire élevé dont le salaire était au moins 1,5 fois supérieur au salaire médian moyen ?">
-                <Choice id="crs-q6iv" value={answers.highWage15x} onChange={(value) => set("highWage15x", value)} options={[{ value: "yes", label: "Oui" }, { value: "no", label: "Non" }]} />
-              </Question>
-            )}
-          </>
-        )}
-        <Question id="crs-q6v" label="6) v. Au cours des 10 dernières années, combien d’années d’expérience de travail qualifié à l’étranger avez-vous accumulées au total ?">
-          <Choice id="crs-q6v" value={answers.foreignWorkYears} onChange={(value) => set("foreignWorkYears", value)} options={FOREIGN_YEARS_CHOICES} />
-        </Question>
-        <Question id="crs-q7" label="7) Possédez-vous un certificat de compétence d’une province, d’un territoire ou d’un organisme fédéral canadien ?">
-          <Choice id="crs-q7" value={answers.certificate} onChange={(value) => set("certificate", value)} options={YES_NO} />
-        </Question>
-        <Question id="crs-q8" label="8) Avez-vous une offre d’emploi valide pour un emploi dans une catégorie de la CNP figurant dans la liste des professions à salaire élevé ?">
-          <Choice id="crs-q8" value={answers.jobOffer} onChange={(value) => set("jobOffer", value)} options={[{ value: "yes", label: "Oui" }, { value: "no", label: "Non" }]} />
-        </Question>
-        {answers.jobOffer === "yes" && (
-          <Question id="crs-q8a" label="8a) À quel niveau de profession à salaire élevé l’offre d’emploi correspond-elle ?">
-            <Choice id="crs-q8a" value={answers.jobOfferLevel} onChange={(value) => set("jobOfferLevel", value)} options={JOB_OFFER_LEVELS} />
-          </Question>
-        )}
-
-        <h4 className="pt-2 text-sm font-black uppercase tracking-wide text-blue-800">Points supplémentaires</h4>
-        <Question id="crs-q9" label="9) Avez-vous un certificat de désignation d’une province ou d’un territoire ?">
-          <Choice id="crs-q9" value={answers.nomination} onChange={(value) => set("nomination", value)} options={YES_NO} />
-        </Question>
-        <Question id="crs-q10i" label="10) Est-ce que vous ou votre époux/conjoint de fait (si celui-ci vous accompagne au Canada) avez au moins un frère ou une sœur habitant au Canada qui est un citoyen ou un résident permanent ?">
-          <Choice id="crs-q10i" value={answers.sibling} onChange={(value) => set("sibling", value)} options={YES_NO} />
-        </Question>
-
-        {withSpouse && (
-          <>
-            <h4 className="pt-2 text-sm font-black uppercase tracking-wide text-blue-800">Votre époux ou conjoint de fait</h4>
-            <Question id="crs-q11" label="11) Quel est le niveau de scolarité le plus élevé de votre époux ou conjoint de fait (diplôme canadien ou évaluation des diplômes d’études) ?">
-              <Choice id="crs-q11" value={answers.spouseEducation} onChange={(value) => set("spouseEducation", value)} options={EDUCATION_CHOICES} />
-            </Question>
-            <Question id="crs-q12" label="12) Au cours des dix dernières années, combien d’années d’expérience de travail qualifié au Canada votre époux ou conjoint de fait possède-t-il ?">
-              <Choice id="crs-q12" value={answers.spouseCanadianWorkYears} onChange={(value) => set("spouseCanadianWorkYears", value)} options={YEARS_CHOICES} />
-            </Question>
-            <Question id="crs-q13" label="13) i) Votre époux ou conjoint de fait a-t-il passé un test linguistique ? Si oui, lequel ?">
-              <LanguageBlock idPrefix="crs-spouse" test={answers.spouseTest} bands={answers.spouseBands} tests={ALL_CRS_TESTS} onTest={(value) => setAnswers((previous) => ({ ...previous, spouseTest: value, spouseBands: EMPTY_CRS_ANSWERS.spouseBands }))} onBand={(ability, value) => setBand("spouseBands", ability, value)} />
-            </Question>
-          </>
-        )}
-
+        <p className="pt-1 text-xs text-slate-600" data-testid="crs-remaining" aria-live="polite">
+          {result.complete ? "Toutes les questions nécessaires ont une réponse : vous pouvez calculer votre note." : `Il reste ${result.missing.length} question${result.missing.length > 1 ? "s" : ""} à répondre pour obtenir votre note. Aucune réponse manquante n’est comptée comme zéro.`}
+        </p>
         <div className="flex flex-wrap items-center gap-3 pt-2">
-          <button type="submit" className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-blue-700 px-6 py-3 text-sm font-black text-white shadow transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400" data-testid="crs-calculate">
+          <button type="submit" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-6 py-3 text-sm font-black text-white shadow transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400" data-testid="crs-calculate">
             <Sparkles className="h-4 w-4" aria-hidden="true" />Calculer vos résultats
           </button>
-          <button type="button" onClick={reset} className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-800 hover:bg-slate-50">
+          <button type="button" onClick={reset} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 sm:w-auto text-sm font-bold text-slate-800 hover:bg-slate-50">
             <RotateCcw className="h-4 w-4" aria-hidden="true" />Recommencer
           </button>
         </div>
@@ -299,6 +179,23 @@ export default function CrsOfficialCalculator() {
             </div>
             <p className="text-right" data-testid="crs-total"><span className="text-5xl font-black text-blue-900">{breakdown.total}</span><span className="ml-1 text-lg font-semibold text-slate-600">/ {fmt(CRS_TOTAL_MAX)}</span></p>
           </div>
+
+          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="crs-summary-tiles" aria-label="Répartition de la note estimée">
+            {[
+              { label: "Profil principal", points: breakdown.coreHumanCapital, max: breakdown.coreHumanCapitalMax },
+              { label: result.withSpouse ? "Conjoint" : "Conjoint (non compté)", points: breakdown.spouseFactors, max: result.withSpouse ? 40 : 0 },
+              { label: "Transfert des compétences", points: breakdown.skillTransferability, max: 100 },
+              { label: "Points supplémentaires", points: breakdown.additionalPoints, max: 600 },
+            ].map((tile) => (
+              <li key={tile.label} className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-center">
+                <p className="text-[11px] font-bold leading-4 text-slate-700">{tile.label}</p>
+                <p className="mt-1 text-xl font-black text-blue-900">{tile.points}{tile.max > 0 ? <span className="text-xs font-semibold text-slate-600"> / {tile.max}</span> : null}</p>
+              </li>
+            ))}
+          </ul>
+          <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs leading-5 text-amber-950" data-testid="crs-estimate-disclaimer">
+            <strong>Note estimée, à titre indicatif.</strong> Elle ne confirme ni votre admissibilité à Entrée express, ni une invitation à présenter une demande de résidence permanente : seul IRCC décide, sur la base de vos documents, et le résultat du système Entrée express prévaut.
+          </p>
 
           {resultSections(breakdown, result.withSpouse).map((section) => (
             <div key={section.title} className="rounded-xl border border-slate-200 p-4">
@@ -332,9 +229,79 @@ export default function CrsOfficialCalculator() {
             <button type="button" onClick={() => window.print()} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-800 hover:bg-slate-50" data-testid="crs-print"><Printer className="h-4 w-4" aria-hidden="true" />Imprimer</button>
             <a href={`https://wa.me/237698104832?text=${encodeURIComponent(`${summaryText} Je souhaite l’avis d’un conseiller 3M TRAVEL AGENCY.`)}`} target="_blank" rel="noreferrer noopener" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-black text-white hover:bg-emerald-800" data-testid="crs-share-whatsapp"><MessageCircle className="h-4 w-4" aria-hidden="true" />Demander l’avis d’un conseiller (WhatsApp)</a>
             <button type="button" onClick={copyResult} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-800 hover:bg-slate-50" data-testid="crs-copy"><Copy className="h-4 w-4" aria-hidden="true" />{copied ? "Résultat copié" : "Copier le résultat"}</button>
-            <a href="/evaluation?destination=canada" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-black text-white hover:bg-blue-800">Faire évaluer mon profil Canada</a>
+            <a href="/evaluation?destination=canada" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-black text-white hover:bg-blue-800" data-testid="crs-evaluation-cta">Demander une évaluation de mon profil</a>
+            <button type="button" onClick={() => setScenario((current) => current ?? { ...answers, firstBands: { ...answers.firstBands }, secondBands: { ...answers.secondBands }, spouseBands: { ...answers.spouseBands } })} aria-expanded={scenario !== null} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-400 bg-amber-50 px-5 py-2.5 text-sm font-black text-amber-950 hover:bg-amber-100" data-testid="crs-compare-open"><GitCompareArrows className="h-4 w-4" aria-hidden="true" />Comparer deux scénarios</button>
             <a href={IRCC_TOOL_URL} target="_blank" rel="noreferrer noopener" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-blue-300 bg-white px-5 py-2.5 text-sm font-bold text-blue-900 hover:bg-blue-50"><ExternalLink className="h-4 w-4" aria-hidden="true" />Comparer avec l’outil officiel</a>
           </div>
+        </section>
+      )}
+      {scenario && (
+        <section aria-labelledby="crs-compare-title" className="space-y-4 rounded-2xl border-2 border-amber-300 bg-white p-4 shadow-md sm:p-5" data-testid="crs-compare">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 id="crs-compare-title" className="text-xl font-black text-slate-950">Comparer deux scénarios</h3>
+              <p className="mt-1 text-sm leading-6 text-slate-700">Le <strong>scénario A</strong> est votre profil ci-dessus. Le <strong>scénario B</strong> en est une copie : changez seulement ce que vous voulez tester (par exemple la note d’expression orale de votre TCF Canada) et lisez la différence. C’est une simulation : ni une prévision, ni une garantie, ni un engagement d’IRCC.</p>
+            </div>
+            <button type="button" onClick={() => setScenario(null)} className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-800 hover:bg-slate-50" data-testid="crs-compare-close">Fermer la comparaison</button>
+          </div>
+
+          {comparison && comparison.ok === false && (
+            <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950" data-testid="crs-compare-missing">
+              <p className="font-black"><AlertCircle className="mr-1 inline h-4 w-4" aria-hidden="true" />{comparison.reason === "a_incomplete" ? "Complétez d’abord votre profil (scénario A) :" : "Complétez le scénario B pour voir la différence :"}</p>
+              <ul className="mt-2 list-disc space-y-1 pl-5">{comparison.missing.map((entry) => <li key={entry}>{entry}</li>)}</ul>
+            </div>
+          )}
+
+          {comparison && comparison.ok === true && (
+            <div className="space-y-4" data-testid="crs-compare-result" aria-live="polite">
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-[11px] font-bold text-slate-600">Scénario A</p><p className="text-2xl font-black text-slate-900" data-testid="crs-compare-a">{comparison.totalA}</p></div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-[11px] font-bold text-slate-600">Scénario B</p><p className="text-2xl font-black text-slate-900" data-testid="crs-compare-b">{comparison.totalB}</p></div>
+                <div className="rounded-xl border-2 border-amber-300 bg-amber-50 p-3"><p className="text-[11px] font-bold text-slate-700">Différence</p><p className={`text-2xl font-black ${deltaTone(comparison.delta)}`} data-testid="crs-compare-delta">{signed(comparison.delta)}</p></div>
+              </div>
+
+              {comparison.identical ? (
+                <p className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-950" data-testid="crs-compare-identical">Les deux scénarios sont identiques. Modifiez une réponse du scénario B pour voir l’effet sur la note.</p>
+              ) : (
+                <>
+                  <div>
+                    <h4 className="text-sm font-black text-slate-950">Réponses modifiées</h4>
+                    <ul className="mt-2 space-y-1.5 text-sm text-slate-800" data-testid="crs-compare-answers">
+                      {comparison.changedFields.map((field) => {
+                        const change = describeAnswerChange(field, answers, scenario);
+                        return <li key={field} className="flex flex-wrap items-center gap-x-2 rounded-lg bg-slate-50 px-3 py-2"><strong>{change.label} :</strong><span>{change.from}</span><ArrowRight className="h-4 w-4 text-slate-500" aria-hidden="true" /><span className="font-bold">{change.to}</span></li>;
+                      })}
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-slate-950">Rubriques de la note qui changent</h4>
+                    {comparison.changedLines.length === 0 ? (
+                      <p className="mt-2 text-sm text-slate-700" data-testid="crs-compare-no-line">Aucune rubrique ne change : la réponse modifiée ne change pas les points (par exemple parce que la tranche de notes reste la même ou qu’un plafond est déjà atteint).</p>
+                    ) : (
+                      <div className="mt-2 overflow-x-auto">
+                        <table className="w-full text-left text-sm" data-testid="crs-compare-lines">
+                          <thead><tr className="border-b border-slate-200 text-xs text-slate-600"><th className="py-1.5 pr-3 font-bold">Rubrique</th><th className="px-2 py-1.5 text-right font-bold">A</th><th className="px-2 py-1.5 text-right font-bold">B</th><th className="py-1.5 pl-2 text-right font-bold">Écart</th></tr></thead>
+                          <tbody>
+                            {comparison.changedLines.map((line) => (
+                              <tr key={`${line.section}|${line.label}`} className="border-b border-slate-100"><td className="py-1.5 pr-3 text-slate-800">{line.label}</td><td className="px-2 py-1.5 text-right">{line.a}</td><td className="px-2 py-1.5 text-right">{line.b}</td><td className={`py-1.5 pl-2 text-right font-black ${deltaTone(line.delta)}`}>{signed(line.delta)}</td></tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+              <p className="text-xs leading-5 text-slate-600" data-testid="crs-compare-disclaimer">Cette comparaison utilise la même grille que le résultat principal. Elle montre l’effet d’un changement sur la note estimée : elle ne prédit aucune note de ronde d’invitations et ne confirme ni votre admissibilité, ni une invitation. <a className="font-semibold text-blue-800 underline" href={IRCC_TOOL_URL} target="_blank" rel="noreferrer noopener">Vérifier avec l’outil officiel d’IRCC</a></p>
+            </div>
+          )}
+          <details open className="rounded-xl border border-slate-200" data-testid="crs-compare-form">
+            <summary className="flex min-h-11 cursor-pointer items-center px-3 py-2 text-sm font-black text-slate-900">Réponses du scénario B (les réponses modifiées sont signalées)</summary>
+            <div className="space-y-3 border-t border-slate-200 p-3">
+              <CrsQuestions answers={scenario} setAnswers={setScenario as React.Dispatch<React.SetStateAction<CrsOfficialAnswers>>} prefix="crs-b" changedFields={scenarioChanged} />
+              <button type="button" onClick={() => setScenario({ ...answers, firstBands: { ...answers.firstBands }, secondBands: { ...answers.secondBands }, spouseBands: { ...answers.spouseBands } })} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-800 hover:bg-slate-50" data-testid="crs-compare-reset"><RotateCcw className="h-4 w-4" aria-hidden="true" />Revenir au profil A</button>
+            </div>
+          </details>
         </section>
       )}
     </section>
