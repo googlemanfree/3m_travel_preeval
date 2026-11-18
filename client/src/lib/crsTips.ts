@@ -1,6 +1,6 @@
 /**
  * Infobulles de la calculatrice CRS : une explication en langage simple pour CHAQUE question, adossée aux notes de l'outil officiel d'IRCC
- * (« Vérifiez votre note », relu le 2026-11-04). La clé est l'identifiant du champ. Aucune de ces aides n'annonce un résultat : elles
+ * (« Vérifiez votre note », relu le 2026-11-18). La clé est l'identifiant du champ. Aucune de ces aides n'annonce un résultat : elles
  * expliquent d'où vient la réponse attendue et à quoi elle sert dans le calcul.
  */
 export const CRS_TIPS: Record<string, string> = {

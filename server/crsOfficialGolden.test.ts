@@ -17,7 +17,7 @@ const bandsOf = (test: CrsLanguageTest, labels: [string, string, string, string]
 });
 
 const base = (patch: Partial<CrsOfficialAnswers>): CrsOfficialAnswers => ({
-  ...EMPTY_CRS_ANSWERS, maritalStatus: "single", canadianCredential: "no", languageTestRecent: "yes", canadianWorkYears: "0", highWageExperience: "no", foreignWorkYears: "0",
+  ...EMPTY_CRS_ANSWERS, maritalStatus: "single", canadianCredential: "no", languageTestRecent: "yes", secondTest: "none", canadianWorkYears: "0", highWageExperience: "no", foreignWorkYears: "0",
   certificate: "no", jobOffer: "no", nomination: "no", sibling: "no", ...patch,
 });
 const celpip = (level: string) => ({ firstTest: "celpip", firstBands: bandsOf("celpip", [level, level, level, level]) });
