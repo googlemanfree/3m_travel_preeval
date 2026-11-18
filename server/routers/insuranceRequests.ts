@@ -5,6 +5,7 @@ import { z } from "zod";
 import { adminNotifications, insuranceRequests } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
+import { EVALUATION_SUBMISSION_LIMITS, createSubmissionGuard } from "../_core/publicRateLimit";
 import { notifyInsuranceRequest, sendInsuranceClientDelivery } from "../services/insuranceRequestNotification";
 import { createInsuranceCouponPdf } from "../services/insuranceCoupon";
 import { storageGetSignedUrl, storagePut } from "../storage";
@@ -35,7 +36,12 @@ const requestSchema = z.object({
   emergencyContactPhone: z.string().trim().min(6).max(50),
   notes: z.string().trim().max(1500).optional(),
   acceptedConsent: z.literal(true),
+  /** Piège à robots : champ caché que seuls les programmes automatiques remplissent. */
+  website: z.string().max(500).optional(),
 }).refine(input => input.returnDate >= input.departureDate, { message: "La date de retour doit être postérieure au départ.", path: ["returnDate"] });
+
+/** Formulaire public sans compte : plafonné par adresse, par e-mail et au global (comme le formulaire de contact). */
+export const insuranceSubmissionGuard = createSubmissionGuard(EVALUATION_SUBMISSION_LIMITS);
 
 const statusSchema = z.enum(["new", "contacted", "quote_sent", "completed", "cancelled"]);
 const makeReference = () => `ASR-${new Date().getFullYear()}-${randomInt(100000, 1000000)}`;
@@ -50,7 +56,10 @@ const whatsappSummary = (input: z.infer<typeof requestSchema>, reference: string
 ].join("\n");
 
 export const insuranceRequestsRouter = router({
-  create: publicProcedure.input(requestSchema).mutation(async ({ input }) => {
+  create: publicProcedure.input(requestSchema).mutation(async ({ input, ctx }) => {
+    // Champ piège rempli : c'est un robot. Rien n'est enregistré ni envoyé, et il reçoit la réponse d'un succès (sans coupon).
+    if (input.website?.trim()) return { reference: "ASR-0000-000000", requestId: 0, couponReady: false, whatsappMessage: "" };
+    insuranceSubmissionGuard.assertAllowed(ctx?.req as any, input.email);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     const reference = makeReference();

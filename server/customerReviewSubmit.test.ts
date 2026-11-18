@@ -71,3 +71,17 @@ describe("dépôt d'un avis client", () => {
     await expect(fixed.submit(review({ email: "unique9@example.com", reviewText: "Un de plus, toujours détaillé." }))).rejects.toMatchObject({ code: "TOO_MANY_REQUESTS" });
   });
 });
+
+describe("piège à robots du formulaire d'avis", () => {
+  it("un champ piège rempli n'enregistre rien, ne prévient personne et renvoie la réponse d'un succès", async () => {
+    const result = await caller().submit(review({ website: "https://spam.example" }));
+    expect(result.success).toBe(true);
+    expect(state.inserted).toHaveLength(0);
+    expect(state.notified).toHaveLength(0);
+  });
+
+  it("un champ piège vide (visiteur réel) ne change rien", async () => {
+    await caller().submit(review({ website: "" }));
+    expect(state.inserted).toHaveLength(1);
+  });
+});
