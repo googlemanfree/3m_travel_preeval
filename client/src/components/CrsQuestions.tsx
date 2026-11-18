@@ -80,7 +80,7 @@ export function Choice({ id, value, onChange, options, placeholder = "Sélection
 }
 
 /** Test de langue (cinq tests officiels) puis une note par compétence, comme l'outil d'IRCC. */
-function LanguageBlock({ idPrefix, test, bands, tests, onTest, onBand }: { idPrefix: string; test: string; bands: Record<CrsAbility, string>; tests: CrsLanguageTest[]; onTest: (value: string) => void; onBand: (ability: CrsAbility, value: string) => void }) {
+export function LanguageBlock({ idPrefix, test, bands, tests, onTest, onBand }: { idPrefix: string; test: string; bands: Record<CrsAbility, string>; tests: CrsLanguageTest[]; onTest: (value: string) => void; onBand: (ability: CrsAbility, value: string) => void }) {
   const chosen = tests.includes(test as CrsLanguageTest) ? (test as CrsLanguageTest) : null;
   return (
     <div className="mt-2 space-y-3">

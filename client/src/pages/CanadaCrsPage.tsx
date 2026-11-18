@@ -6,6 +6,7 @@ import { SimulatorRetryBoundary } from "@/components/SimulatorRetryBoundary";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 import CrsOfficialCalculator from "@/components/CrsOfficialCalculator";
+import FswGridCalculator from "@/components/FswGridCalculator";
 
 const IRCC_CALCULATOR_URL = "https://www.canada.ca/fr/immigration-refugies-citoyennete/services/immigrer-canada/entree-express/verifier-note.html#calculatrice";
 const IRCC_CRS_CRITERIA_URL = "https://www.canada.ca/fr/immigration-refugies-citoyennete/services/immigrer-canada/entree-express/verifier-note/criteries-scg.html";
@@ -24,6 +25,7 @@ const crsFaq = [
   { question: "Pourquoi dois-je renseigner chaque compétence linguistique séparément ?", answer: "IRCC note la compréhension écrite, l’expression écrite, la compréhension orale et l’expression orale indépendamment, puis combine les quatre résultats. Un score global ne reflète pas toujours cette répartition : c’est pourquoi la calculatrice reprend le même détail que l’outil officiel." },
   { question: "Mon score est sous le seuil d’une ronde récente, dois-je abandonner mon projet ?", answer: "Non. Les seuils varient à chaque ronde selon la taille du bassin de candidats et le programme ciblé (Entrée express général, Candidats des provinces, Catégorie de l’expérience canadienne, tirages catégoriels). Améliorer un résultat de langue, obtenir une évaluation comparative des études, cumuler de l’expérience qualifiée ou explorer une nomination provinciale peut faire évoluer votre classement." },
   { question: "Puis-je garder une trace de ma simulation ?", answer: "Oui : la calculatrice mémorise vos réponses sur cet appareil, vous permet de copier le résultat et de l’envoyer à un conseiller 3M TRAVEL AGENCY par WhatsApp. Pour un suivi complet de votre dossier, faites évaluer votre profil Canada." },
+  { question: "Quelle différence entre la note CRS et les 67 points sur 100 ?", answer: "Les deux notes sont distinctes. La grille de sélection de 67 points sur 100 (langues, études, expérience, âge, emploi réservé, adaptabilité) sert à savoir si vous pouvez entrer dans le bassin Entrée express par le Programme des travailleurs qualifiés (fédéral) : sous 67 points, vous n’êtes pas admissible à ce programme. La note CRS sur 1 270 sert ensuite à classer les profils du bassin pour les rondes d’invitations. Avoir 67 points ne garantit ni une invitation ni l’admissibilité finale : les exigences minimales (langue CLB 7, un an d’expérience qualifiée, évaluation des diplômes étrangers) s’y ajoutent." },
   { question: "À quoi sert « Comparer deux scénarios » ?", answer: "Une fois votre note calculée, ce mode garde votre profil de départ (scénario A) et vous laisse changer seulement quelques réponses dans un scénario B : par exemple la note d’expression orale de votre TCF Canada. Vous voyez le nouveau total, l’écart en points et les rubriques qui changent. C’est une simulation avec la même grille : elle ne prédit aucune note de ronde d’invitations, ne garantit rien et ne confirme ni votre admissibilité à Entrée express ni une invitation." },
   { question: "Qu’est-ce qui a changé dans le calcul le 3 novembre 2026 ?", answer: "IRCC a remplacé les points d’expérience canadienne par le « facteur d’intégration sur le marché du travail » : durée de l’expérience canadienne plus points pour les professions à salaire élevé, ou, à la place, une offre d’emploi valide dans une profession à salaire élevé (50, 70 ou 100 points). IRCC retient le plus avantageux des deux. Aucune EIMT n’est plus exigée pour l’offre d’emploi, et la note maximale passe à 1 270 points. IRCC recalcule les profils existants, ce qui peut prendre jusqu’à deux semaines." },
 ];
@@ -57,6 +59,14 @@ export default function CanadaCrsPage() {
         <ServiceSection tone="blue" title="Calculatrice CRS Canada" introduction="Les questions, leur ordre et la présentation du résultat sont ceux de l’outil officiel d’IRCC « Vérifiez votre note ». Renseignez chaque compétence linguistique séparément : le résultat détaille les points obtenus, ce qui pourrait les augmenter, et vous pouvez comparer deux scénarios.">
           <SimulatorRetryBoundary label="La calculatrice CRS Canada" onRetry={() => window.location.reload()} onFailure={() => undefined}>
             <CrsOfficialCalculator />
+          </SimulatorRetryBoundary>
+        </ServiceSection>
+      </div>
+
+      <div id="grille-67-points" className="scroll-mt-24">
+        <ServiceSection tone="slate" title="Êtes-vous admissible ? La grille des 67 points" introduction="Avant d’être classé avec la note CRS, il faut entrer dans le bassin Entrée express : pour le Programme des travailleurs qualifiés (fédéral), IRCC exige au moins 67 points sur 100 à sa grille de sélection, en plus des exigences minimales (langue, expérience, études).">
+          <SimulatorRetryBoundary label="La grille des 67 points" onRetry={() => window.location.reload()} onFailure={() => undefined}>
+            <FswGridCalculator />
           </SimulatorRetryBoundary>
         </ServiceSection>
       </div>

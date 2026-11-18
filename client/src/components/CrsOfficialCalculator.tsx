@@ -197,6 +197,8 @@ export default function CrsOfficialCalculator() {
             <strong>Note estimée, à titre indicatif.</strong> Elle ne confirme ni votre admissibilité à Entrée express, ni une invitation à présenter une demande de résidence permanente : seul IRCC décide, sur la base de vos documents, et le résultat du système Entrée express prévaut.
           </p>
 
+          <p className="crs-no-print rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs leading-5 text-blue-950" data-testid="crs-fsw-link">Cette note CRS classe les profils déjà dans le bassin. Pour y entrer par le Programme des travailleurs qualifiés (fédéral), il faut aussi <strong>67 points sur 100</strong> à la grille de sélection : <a className="font-bold underline" href="#grille-67-points">calculer ma grille de 67 points</a>.</p>
+
           {resultSections(breakdown, result.withSpouse).map((section) => (
             <div key={section.title} className="rounded-xl border border-slate-200 p-4">
               <h4 className="text-sm font-black text-slate-950">{section.title}</h4>
