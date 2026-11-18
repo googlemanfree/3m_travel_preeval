@@ -21,11 +21,11 @@ Vérifié sur le vrai site (www.3mtravelagency.com) avec un navigateur automatis
 | 15 | Page 404 personnalisée | Existait | page « Page introuvable » avec retour à l'accueil, code HTTP 404 réel |
 | 16 | Liens cassés | Vérifié | 230 adresses du sitemap + 135 liens internes relevés sur 10 pages : tous répondent 200 |
 | 17 | Validation des formulaires | Existait | contrôle côté écran (champs signalés avant envoi) et côté serveur (zod) |
-| 18 | Protection anti-spam | Ajouté | limitation de débit par adresse IP et par e-mail existait. Ajout d'un champ piège invisible sur le formulaire de contact : rempli, il ne déclenche ni enregistrement ni e-mail et le robot reçoit la réponse d'un succès. Pas de captcha (il imposerait un service tiers et un consentement de plus) |
+| 18 | Protection anti-spam | Ajouté | limitation de débit par adresse IP et par e-mail existait. Ajout d'un champ piège invisible sur les formulaires de contact, d'avis clients et d'assurance voyage (ce dernier n'avait aucune limitation de débit : ajoutée) : rempli, il ne déclenche ni enregistrement ni e-mail et le robot reçoit la réponse d'un succès. Pas de captcha (il imposerait un service tiers et un consentement de plus) |
 | 19 | Mesure d'audience | Existait | Google Analytics 4 et Umami, chargés uniquement après consentement |
 | 20 | Un seul appel à l'action clair | Existait | l'accueil met en avant « Évaluer mon projet — gratuit » (bouton principal orange) ; « Parler à un conseiller » est secondaire |
 
 ## Pistes non faites
 - Politique de sécurité du contenu (CSP) complète : l'actuelle se limite à `object-src` et `base-uri`, volontairement, pour ne casser ni Google, ni CinetPay, ni l'aperçu de l'hébergeur. À introduire d'abord en mode « rapport seul ».
-- Piège à robots sur les autres formulaires publics (évaluation, avis, partenariat) : protégés par la limitation de débit uniquement.
+- Piège à robots sur les formulaires publics restants (évaluation, partenariat) : protégés par la limitation de débit uniquement.
 - 9 grosses images de `client/public/brand/` (5,5 Mo au total) ne sont référencées par aucune page : elles alourdissent la publication mais pas le chargement ; à supprimer après accord.

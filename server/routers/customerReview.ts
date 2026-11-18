@@ -72,6 +72,8 @@ const reviewInput = z.object({
   reviewText: z.string().trim().min(10).max(1000),
   consentToPublish: z.boolean(),
   displayNameChoice: displayNameChoiceSchema.default("first_name_only"),
+  /** Piège à robots : champ caché que seuls les programmes automatiques remplissent. */
+  website: z.string().max(500).optional(),
 });
 
 // Formulaire public sans compte : plafonné pour ne pas noyer la file de modération (aucun avis n'est publié sans validation).
@@ -83,6 +85,8 @@ const reviewSubmissionGuard = createSubmissionGuard({
 
 export const customerReviewRouter = router({
   submit: publicProcedure.input(reviewInput).mutation(async ({ ctx, input }) => {
+    // Champ piège rempli : c'est un robot. Rien n'est enregistré et il reçoit la réponse d'un succès.
+    if (input.website?.trim()) return { success: true, message: "Votre avis a été reçu et sera publié après validation par notre équipe." };
     reviewSubmissionGuard.assertAllowed(ctx?.req as any, input.email);
     if (!input.consentToPublish) {
       throw new TRPCError({

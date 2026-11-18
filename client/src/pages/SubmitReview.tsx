@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { HoneypotField } from "@/components/HoneypotField";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,7 @@ export default function SubmitReview({ embedded = false, initialFullName = "", i
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
   // Intégré dans /avis ou l'espace d'évaluation, la page a déjà son h1 : le titre du formulaire devient h2.
   const Heading = embedded ? "h2" : "h1";
 
@@ -81,6 +83,7 @@ export default function SubmitReview({ embedded = false, initialFullName = "", i
         reviewText: formData.reviewText,
         consentToPublish: formData.consentToPublish,
         displayNameChoice: formData.displayNameChoice,
+        website: honeypot,
       });
 
       setSubmitted(true);
@@ -148,6 +151,7 @@ export default function SubmitReview({ embedded = false, initialFullName = "", i
         >
           <Card className="p-8 shadow-lg">
             <form onSubmit={handleSubmit} className="space-y-6">
+              <HoneypotField value={honeypot} onChange={setHoneypot} testId="review-honeypot" />
               {/* Name */}
               <div>
                 <Label htmlFor="fullName" className="text-sm font-semibold">
