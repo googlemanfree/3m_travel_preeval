@@ -158,14 +158,14 @@ export default function CrsOfficialCalculator() {
       </form>
 
       {submitted && !result.complete && (
-        <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950" data-testid="crs-missing">
+        <div role="alert" className="panel-in rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950" data-testid="crs-missing">
           <p className="font-black"><AlertCircle className="mr-1 inline h-4 w-4" aria-hidden="true" />Répondez d’abord aux questions suivantes pour obtenir votre note :</p>
           <ul className="mt-2 list-disc space-y-1 pl-5">{result.missing.map((entry) => <li key={entry}>{entry}</li>)}</ul>
         </div>
       )}
 
       {submitted && breakdown && result.complete && (
-        <section id="crs-print-area" aria-labelledby="crs-results-title" className="space-y-4 rounded-2xl border-2 border-blue-300 bg-white p-5 shadow-md" data-testid="crs-results">
+        <section id="crs-print-area" aria-labelledby="crs-results-title" className="panel-in space-y-4 rounded-2xl border-2 border-blue-300 bg-white p-5 shadow-md" data-testid="crs-results">
           {/* Impression / PDF : seule cette zone est imprimée ; l'en-tête ci-dessous n'apparaît qu'à l'impression. */}
           <style>{`.crs-print-only{display:none}@media print{body *{visibility:hidden!important}#crs-print-area,#crs-print-area *{visibility:visible!important}#crs-print-area{position:absolute;left:0;top:0;width:100%;border:0;box-shadow:none}.crs-no-print{display:none!important}.crs-print-only{display:block!important}}`}</style>
           <div className="crs-print-only" data-testid="crs-print-header">
@@ -177,7 +177,7 @@ export default function CrsOfficialCalculator() {
               <h3 id="crs-results-title" className="text-xl font-black text-slate-950">Vos résultats</h3>
               <p className="mt-1 text-sm text-slate-600">Tous les candidats inscrits à Entrée express obtiennent une note sur {fmt(CRS_TOTAL_MAX)}, déterminée à partir des quatre éléments de la formule du SCG.</p>
             </div>
-            <p className="text-right" data-testid="crs-total"><span className="text-5xl font-black text-blue-900">{breakdown.total}</span><span className="ml-1 text-lg font-semibold text-slate-600">/ {fmt(CRS_TOTAL_MAX)}</span></p>
+            <p className="text-right" data-testid="crs-total"><span key={breakdown.total} className="value-pop text-5xl font-black text-blue-900">{breakdown.total}</span><span className="ml-1 text-lg font-semibold text-slate-600">/ {fmt(CRS_TOTAL_MAX)}</span></p>
           </div>
 
           <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="crs-summary-tiles" aria-label="Répartition de la note estimée">
@@ -238,7 +238,7 @@ export default function CrsOfficialCalculator() {
         </section>
       )}
       {scenario && (
-        <section aria-labelledby="crs-compare-title" className="space-y-4 rounded-2xl border-2 border-amber-300 bg-white p-4 shadow-md sm:p-5" data-testid="crs-compare">
+        <section aria-labelledby="crs-compare-title" className="panel-in space-y-4 rounded-2xl border-2 border-amber-300 bg-white p-4 shadow-md sm:p-5" data-testid="crs-compare">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h3 id="crs-compare-title" className="text-xl font-black text-slate-950">Comparer deux scénarios</h3>
@@ -258,8 +258,8 @@ export default function CrsOfficialCalculator() {
             <div className="space-y-4" data-testid="crs-compare-result" aria-live="polite">
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-[11px] font-bold text-slate-600">Scénario A</p><p className="text-2xl font-black text-slate-900" data-testid="crs-compare-a">{comparison.totalA}</p></div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-[11px] font-bold text-slate-600">Scénario B</p><p className="text-2xl font-black text-slate-900" data-testid="crs-compare-b">{comparison.totalB}</p></div>
-                <div className="rounded-xl border-2 border-amber-300 bg-amber-50 p-3"><p className="text-[11px] font-bold text-slate-700">Différence</p><p className={`text-2xl font-black ${deltaTone(comparison.delta)}`} data-testid="crs-compare-delta">{signed(comparison.delta)}</p></div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-[11px] font-bold text-slate-600">Scénario B</p><p key={comparison.totalB} className="value-pop text-2xl font-black text-slate-900" data-testid="crs-compare-b">{comparison.totalB}</p></div>
+                <div className="rounded-xl border-2 border-amber-300 bg-amber-50 p-3"><p className="text-[11px] font-bold text-slate-700">Différence</p><p key={comparison.delta} className={`value-pop text-2xl font-black ${deltaTone(comparison.delta)}`} data-testid="crs-compare-delta">{signed(comparison.delta)}</p></div>
               </div>
 
               {comparison.identical ? (

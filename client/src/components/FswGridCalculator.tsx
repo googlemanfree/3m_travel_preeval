@@ -144,20 +144,20 @@ export default function FswGridCalculator() {
       </form>
 
       {submitted && !built.complete && (
-        <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950" data-testid="fsw-missing">
+        <div role="alert" className="panel-in rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950" data-testid="fsw-missing">
           <p className="font-black"><AlertCircle className="mr-1 inline h-4 w-4" aria-hidden="true" />Répondez d’abord aux questions suivantes :</p>
           <ul className="mt-2 list-disc space-y-1 pl-5">{built.missing.map((entry) => <li key={entry}>{entry}</li>)}</ul>
         </div>
       )}
 
       {submitted && breakdown && (
-        <section aria-labelledby="fsw-results-title" className="space-y-4 rounded-2xl border-2 border-blue-300 bg-white p-4 shadow-md sm:p-5" data-testid="fsw-results">
+        <section aria-labelledby="fsw-results-title" className="panel-in space-y-4 rounded-2xl border-2 border-blue-300 bg-white p-4 shadow-md sm:p-5" data-testid="fsw-results">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h3 id="fsw-results-title" className="text-xl font-black text-slate-950">Votre grille de sélection</h3>
               <p className="mt-1 text-sm text-slate-600">Seuil à atteindre : {FSW_PASS_MARK} points sur {FSW_MAX}.</p>
             </div>
-            <p className="text-right" data-testid="fsw-total"><span className="text-5xl font-black text-blue-900">{breakdown.total}</span><span className="ml-1 text-lg font-semibold text-slate-600">/ {FSW_MAX}</span></p>
+            <p className="text-right" data-testid="fsw-total"><span key={breakdown.total} className="value-pop text-5xl font-black text-blue-900">{breakdown.total}</span><span className="ml-1 text-lg font-semibold text-slate-600">/ {FSW_MAX}</span></p>
           </div>
 
           {breakdown.meetsPassMark && breakdown.meetsMinimums && (
