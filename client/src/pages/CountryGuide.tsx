@@ -9,6 +9,7 @@ import { clampSeoTitle } from "@/lib/seoText";
 import { trackEvent } from "@/lib/analytics";
 import { ServicePageShell } from "@/components/ServicePageShell";
 import { SocialShareButtons } from "@/components/SocialShareButtons";
+import { getCountryById } from "@/data/procedures107Complete";
 import NotFound from "./NotFound";
 
 const dateLabel = (value: string | null) => (value ? new Date(value).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : null);
@@ -120,6 +121,19 @@ export default function CountryGuide() {
               <p className="mt-2 text-sm leading-6 text-slate-700">Évaluation gratuite de votre profil pour {name}, puis un conseiller prépare et suit votre dossier avec vous, étape par étape.</p>
               <Link href={startHref} onClick={() => trackEvent("country_guide_start_click", { country: name, pathway: current?.pathway ?? "" })} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-800 px-5 py-3 text-sm font-bold text-white hover:bg-blue-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Évaluer mon profil gratuitement<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
             </aside>
+            <nav className="mt-8 rounded-2xl border border-slate-200 bg-white p-6" aria-labelledby="guide-further-title" data-testid="country-guide-further">
+              <h2 id="guide-further-title" className="text-xl font-black text-slate-950">Pour aller plus loin</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-700">Les fiches détaillées de 3M TRAVEL AGENCY pour {name}, et les outils gratuits pour préparer votre dossier.</p>
+              <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                {([["travail", "Fiche procédure : travail"], ["etudes", "Fiche procédure : études"], ["visiteur", "Fiche procédure : visiteur"]] as const)
+                  .filter(([type]) => Boolean(getCountryById(`${slug}-${type}`)))
+                  .map(([type, label]) => (<li key={type}><Link href={`/procedures/${slug}-${type}`} className="inline-flex min-h-11 items-center gap-1 font-bold text-blue-800 underline underline-offset-4">{label} {name}<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link></li>))}
+                {slug === "canada" ? <li><Link href="/canada/crs" className="inline-flex min-h-11 items-center gap-1 font-bold text-blue-800 underline underline-offset-4">Calculatrice CRS et grille des 67 points<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link></li> : null}
+                <li><Link href="/outils/liste-de-pieces" className="inline-flex min-h-11 items-center gap-1 font-bold text-blue-800 underline underline-offset-4">Ma liste de pièces à préparer<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link></li>
+                <li><Link href="/outils/budget-mobilite" className="inline-flex min-h-11 items-center gap-1 font-bold text-blue-800 underline underline-offset-4">Estimer mon budget de mobilité<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link></li>
+                <li><Link href="/afrique-centrale" className="inline-flex min-h-11 items-center gap-1 font-bold text-blue-800 underline underline-offset-4">Depuis l’Afrique centrale<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link></li>
+              </ul>
+            </nav>
             <SocialShareButtons title={`Visa ${name} : procédures détaillées`} className="mt-8" />
           </>
         ) : null}

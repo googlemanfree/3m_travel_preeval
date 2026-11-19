@@ -58,3 +58,18 @@ describe("Quoi de neuf : mises à jour éditoriales", () => {
     expect(new Set(SITE_UPDATES.map((update) => update.id)).size).toBe(SITE_UPDATES.length);
   });
 });
+
+describe("page d'accueil anglaise enrichie", () => {
+  it("présente les parcours, les huit étapes, les outils et l'Afrique centrale, avec des liens existants et sans promesse", async () => {
+    const { EN_HOME_CENTRAL_AFRICA, EN_HOME_PATHWAYS, EN_HOME_STEPS, EN_HOME_TOOLS } = await import("@/data/enHomeContent");
+    const known = new Set(getIndexablePublicPaths());
+    expect(EN_HOME_STEPS).toHaveLength(8);
+    for (const link of [...EN_HOME_PATHWAYS, ...EN_HOME_TOOLS, EN_HOME_CENTRAL_AFRICA]) expect(known.has(link.href.split("#")[0]), link.href).toBe(true);
+    const all = JSON.stringify([EN_HOME_PATHWAYS, EN_HOME_STEPS, EN_HOME_TOOLS, EN_HOME_CENTRAL_AFRICA]);
+    expect(all).not.toMatch(/\b\d{2,}\s?%|guarantee[sd]?\b(?! )|best agency|number one|#1/i);
+    const rendered = composePublicPrerender('<html><head><title>x</title></head><body><div id="root"><!--prerender-app--></div></body></html>', "/en");
+    expect(rendered.html).toContain("How it works: eight steps, one path");
+    expect(rendered.html).toContain("Free tools");
+    expect(rendered.html).toContain("/afrique-centrale");
+  });
+});

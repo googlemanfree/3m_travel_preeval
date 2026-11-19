@@ -85,3 +85,15 @@ describe("guides par pays côté public", () => {
     expect(screen.getByText("Page introuvable")).toBeTruthy();
   });
 });
+
+describe("« Pour aller plus loin » sur le guide d'un pays", () => {
+  it("renvoie vers les fiches procédure qui existent, les outils gratuits et la page Afrique centrale (liens internes uniquement)", () => {
+    state.slug = "canada";
+    state.guide = { data: guide, isLoading: false };
+    render(<CountryGuide />);
+    const further = screen.getByTestId("country-guide-further");
+    const hrefs = Array.from(further.querySelectorAll("a")).map((link) => link.getAttribute("href"));
+    expect(hrefs).toEqual(expect.arrayContaining(["/procedures/canada-travail", "/procedures/canada-etudes", "/canada/crs", "/outils/liste-de-pieces", "/outils/budget-mobilite", "/afrique-centrale"]));
+    expect(hrefs.every((href) => href?.startsWith("/"))).toBe(true);
+  });
+});
