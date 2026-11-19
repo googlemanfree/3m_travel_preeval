@@ -17,7 +17,7 @@ Chaque brouillon reprend les règles du court séjour communes à tout l'espace 
 
 ## Comment les importer et les publier (administration)
 
-1. Administration, catalogue pays : bouton **« Importer les brouillons (32 pays) »**. L'import ne touche jamais une fiche déjà publiée ni déjà détaillée, ne marque aucune source « vérifiée » et ne publie rien.
+1. Administration, catalogue pays : bouton **« Importer les brouillons (35 pays) »**. L'import ne touche jamais une fiche déjà publiée ni déjà détaillée, ne marque aucune source « vérifiée » et ne publie rien.
 2. Pour chaque pays : ouvrir la source, vérifier que la page décrit bien le visa de court séjour, la marquer **vérifiée** (la date du jour est enregistrée).
 3. Relire le texte puis **publier** la fiche. Le guide apparaît dans `/pays` et dans « Pour aller plus loin » du pays.
 
