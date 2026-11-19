@@ -208,13 +208,15 @@ describe("gouvernance du contenu : écrans", () => {
     expect(screen.getByTestId("share-whatsapp").getAttribute("href")).toMatch(/^https:\/\/wa\.me\/\?text=/);
   });
 
-  it("Quoi de neuf (public) : liste datée, ou message d'attente sans entrée", () => {
+  it("Quoi de neuf (public) : liste datée ; sans entrée de l'équipe, les mises à jour éditoriales vérifiées s'affichent", () => {
     render(<WhatsNew />);
-    expect(screen.getByTestId("whats-new").textContent).toMatch(/Aucune mise à jour publiée/);
+    expect(screen.getByTestId("whats-new").textContent).not.toMatch(/Aucune mise à jour publiée/);
+    expect(screen.getByTestId("whats-new").textContent).toMatch(/Grille des 67 points/);
     cleanup();
     state.publicUpdates = { data: [{ id: 1, title: "Nouvelle liste de pièces", summary: "La liste de pièces a été revue.", pagePath: "/outils/liste-de-pieces", publishedAt: "2026-10-20T10:00:00.000Z" }] };
     render(<WhatsNew />);
     expect(screen.getByTestId("whats-new").textContent).toMatch(/Nouvelle liste de pièces/);
-    expect(screen.getByText("Voir la page concernée").getAttribute("href")).toBe("/outils/liste-de-pieces");
+    // l'entrée de l'équipe s'affiche avec ses mises à jour éditoriales, et chacune renvoie vers sa page
+    expect(screen.getAllByText("Voir la page concernée").some((link) => link.getAttribute("href") === "/outils/liste-de-pieces")).toBe(true);
   });
 });

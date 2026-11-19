@@ -363,6 +363,9 @@ export default function Home() {
           <p className="mt-4 text-center">
             <a href="/procedures" className="text-sm font-bold text-blue-700 hover:text-blue-900">Consulter le catalogue des procédures documentées →</a>
           </p>
+          <p className="mt-2 text-center text-sm text-slate-700" data-testid="home-central-africa-link">
+            Vous êtes au Cameroun, au Gabon, au Congo, en RDC ou au Tchad ? <a href="/afrique-centrale" className="font-bold text-blue-700 underline underline-offset-4 hover:text-blue-900">Découvrez notre accompagnement depuis l’Afrique centrale →</a>
+          </p>
         </div>
       </section>
 

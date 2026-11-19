@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { ServicePageShell } from "@/components/ServicePageShell";
 import { trpc } from "@/lib/trpc";
 import { setPageSeo } from "@/lib/pageSeo";
+import { SITE_UPDATES } from "@/data/siteUpdates";
 
 /** « Quoi de neuf » : changements de règles et de contenu, datés, rédigés et publiés par l'équipe. */
 export default function WhatsNew() {
@@ -10,7 +11,9 @@ export default function WhatsNew() {
     setPageSeo({ title: "Quoi de neuf : changements de règles et de contenu | 3M TRAVEL AGENCY", description: "Les derniers changements de règles, de procédures et de contenu relevés par 3M TRAVEL AGENCY, avec leur date et la page concernée." });
   }, []);
   const updates = trpc.adminContent.publicUpdates.useQuery(undefined, { retry: false });
-  const items = updates.data ?? [];
+  // mises à jour de l'équipe (administration) + mises à jour éditoriales vérifiées du dépôt, de la plus récente à la plus ancienne
+  const items = [...(updates.data ?? []), ...SITE_UPDATES.filter((entry) => !(updates.data ?? []).some((item) => String(item.id) === entry.id))]
+    .sort((a, b) => String(b.publishedAt ?? "").localeCompare(String(a.publishedAt ?? "")));
   return (
     <ServicePageShell
       eyebrow="Mises à jour"

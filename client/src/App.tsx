@@ -56,6 +56,7 @@ import Canada from "./pages/Canada";
 const CanadaCrsPage = lazyWithTimeout(() => import("./pages/CanadaCrsPage"));
 import Schengen from "./pages/Schengen";
 import Formation from "./pages/Formation";
+import AfriqueCentrale from "./pages/AfriqueCentrale";
 import CniPasseport from "./pages/CniPasseport";
 // Pages de contenu chargées à la demande : hors du lot d'entrée, et leur <html lang> n'est plus écrasé par LanguageProvider au montage.
 const Faq = lazyWithTimeout(() => import("./pages/Faq"));
@@ -299,6 +300,7 @@ function Router() {
       <Route path={"/travail"} component={VisaTravail} />
       <Route path={"/visa-travail"}>{() => <Redirect to="/travail" />}</Route>
       <Route path={"/formation"} component={Formation} />
+      <Route path={"/afrique-centrale"} component={AfriqueCentrale} />
       <Route path={"/cni-passeport"} component={CniPasseport} />
       <Route path={"/services"} component={Services} />
       <Route path={"/paiement"} component={Paiement} />

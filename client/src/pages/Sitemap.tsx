@@ -58,6 +58,7 @@ const SITE_SECTIONS: SitemapSection[] = [
   {
     key: "resources", title: { fr: "Ressources et procédures", en: "Resources & procedures" }, description: { fr: "Les contenus utiles pour préparer un dossier documenté et retrouver les sources institutionnelles.", en: "Useful content to prepare a documented case and find institutional sources." }, icon: BookOpen,
     links: [
+      { key: "central_africa", label: { fr: "Afrique centrale", en: "Central Africa" }, href: "/afrique-centrale", description: { fr: "Mobilité internationale depuis le Cameroun, le Gabon, le Congo, la RDC et le Tchad : étapes, pièces et destinations.", en: "International mobility from Cameroon, Gabon, Congo, the DRC and Chad: steps, documents and destinations." } },
       { key: "resources", label: { fr: "Ressources", en: "Resources" }, href: "/ressources", description: { fr: "Parcourir la bibliothèque pays et les PDF publiés.", en: "Browse the country library and published PDFs." } },
       { key: "budget_simulator", label: { fr: "Simulateur de budget de mobilité", en: "Mobility budget simulator" }, href: "/outils/budget-mobilite", description: { fr: "Outil gratuit : vos propres montants, un total par devise, imprimable.", en: "Free tool: your own amounts, a total per currency, printable." } },
       { key: "whats_new", label: { fr: "Quoi de neuf", en: "What's new" }, href: "/quoi-de-neuf", description: { fr: "Changements de règles et de contenu, datés.", en: "Dated changes to rules and content." } },
