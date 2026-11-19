@@ -99,7 +99,7 @@ export function AdminCountryCatalog({ sessionToken }: { sessionToken: string }) 
         </div>
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="outline" onClick={() => seed.mutate({ sessionToken })} disabled={seed.isPending}><Database className="mr-2 h-4 w-4" aria-hidden="true" />{rows.length === 0 ? "Initialiser les 196 pays" : "Compléter le catalogue"}</Button>
-          {rows.length > 0 ? <Button type="button" variant="outline" onClick={() => importDrafts.mutate({ sessionToken })} disabled={importDrafts.isPending} data-testid="import-wave1-drafts" title="Étapes, pièces, délais et sources de 7 pays, en « À confirmer »">Importer les brouillons de 7 pays</Button> : null}
+          {rows.length > 0 ? <Button type="button" variant="outline" onClick={() => importDrafts.mutate({ sessionToken })} disabled={importDrafts.isPending} data-testid="import-wave1-drafts" title="Étapes, pièces, délais et sources de 7 pays (vague 1) et visiteur Schengen de 25 autres pays (vague 2), en « À confirmer »">Importer les brouillons (32 pays)</Button> : null}
         </div>
       </div>
 

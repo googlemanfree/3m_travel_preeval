@@ -35,7 +35,7 @@ const SCHENGEN_VISIT_STEPS: DraftStep[] = [
 ];
 const SCHENGEN_NOTE = "Séjour de 90 jours au maximum sur toute période de 180 jours ; visa à entrées multiples possible dans cette limite cumulée.";
 const schengenProgram: DraftProgram = { officialName: "Visa Schengen de court séjour (visa C)", nameFr: "Visa Schengen de court séjour", durationNote: SCHENGEN_NOTE, feesNote: "90 € de frais de dossier pour un court séjour.", steps: SCHENGEN_VISIT_STEPS };
-const visit = (countryCode: string, label: string, url: string): DraftPathway => ({
+export const schengenVisitDraft = (countryCode: string, label: string, url: string): DraftPathway => ({
   countryCode, pathway: "visit",
   summary: "Pour un séjour touristique, familial ou professionnel de moins de 90 jours, un visa Schengen est demandé selon la nationalité. Les pièces dépendent du poste de dépôt.",
   programs: [schengenProgram],
@@ -130,7 +130,7 @@ export const COUNTRY_CATALOG_DRAFTS: readonly DraftPathway[] = [
     }],
     sources: [{ label: "France-Visas : étudiant", url: "https://france-visas.gouv.fr/etudiant", authority: "immigration" }],
   },
-  visit("FR", "France-Visas : visa de court séjour", "https://france-visas.gouv.fr/en/visa-de-court-sejour"),
+  schengenVisitDraft("FR", "France-Visas : visa de court séjour", "https://france-visas.gouv.fr/en/visa-de-court-sejour"),
 
   // ─── Allemagne ────────────────────────────────────────────────────────────────────────────────
   {
@@ -169,7 +169,7 @@ export const COUNTRY_CATALOG_DRAFTS: readonly DraftPathway[] = [
     }],
     sources: [{ label: "Ambassade d'Allemagne : visa pour études", url: "https://www.germany.info/us-en/service/visa/study-visa-916776", authority: "embassy" }],
   },
-  visit("DE", "Auswärtiges Amt : visa Schengen", "https://www.auswaertiges-amt.de/en/visa-service"),
+  schengenVisitDraft("DE", "Auswärtiges Amt : visa Schengen", "https://www.auswaertiges-amt.de/en/visa-service"),
 
   // ─── Belgique ─────────────────────────────────────────────────────────────────────────────────
   {
@@ -202,7 +202,7 @@ export const COUNTRY_CATALOG_DRAFTS: readonly DraftPathway[] = [
     }],
     sources: [{ label: "Ambassade de Belgique : visa d'études", url: "https://cameroon.diplomatie.belgium.be/sites/default/files/files/procedure_demande_visa_etudes.pdf", authority: "embassy" }],
   },
-  visit("BE", "Diplomatie belge : visa C court séjour", "https://republiquedecoree.diplomatie.belgium.be/en/travel-belgium/visa-belgium/visa-c-short-stays-90-days"),
+  schengenVisitDraft("BE", "Diplomatie belge : visa C court séjour", "https://republiquedecoree.diplomatie.belgium.be/en/travel-belgium/visa-belgium/visa-c-short-stays-90-days"),
 
   // ─── Luxembourg ───────────────────────────────────────────────────────────────────────────────
   {
@@ -236,7 +236,7 @@ export const COUNTRY_CATALOG_DRAFTS: readonly DraftPathway[] = [
     }],
     sources: [{ label: "Guichet.lu : étudiant de pays tiers", url: "https://guichet.public.lu/fr/citoyens/immigration/plus-3-mois/ressortissant-tiers/etudiant/etudiant-pays-tiers.html", authority: "immigration" }],
   },
-  visit("LU", "Guichet.lu : entrée au Luxembourg", "https://guichet.public.lu/fr/citoyens/immigration/plus-3-mois/ressortissant-tiers/demarches-communes/entree-visa.html"),
+  schengenVisitDraft("LU", "Guichet.lu : entrée au Luxembourg", "https://guichet.public.lu/fr/citoyens/immigration/plus-3-mois/ressortissant-tiers/demarches-communes/entree-visa.html"),
 
   // ─── Royaume-Uni ──────────────────────────────────────────────────────────────────────────────
   {
