@@ -2,6 +2,7 @@ import { OFFICIAL_SITE_ORIGIN } from "./canonicalDomain";
 import { PUBLIC_FAQ_ITEMS } from "@shared/publicFaq";
 import { getProcedureDisplayTitle, getProcedureFaqItems, getProcedureSeoDescription } from "@shared/procedureSeo";
 import { getVerifiedProcedureFee } from "../client/src/data/verifiedProcedureFees";
+import { EN_HOME_CENTRAL_AFRICA, EN_HOME_PATHWAYS, EN_HOME_STEPS, EN_HOME_TOOLS } from "../client/src/data/enHomeContent";
 import { getPublicDestinationDetail, PUBLIC_DESTINATION_DETAILS } from "../client/src/lib/publicDestinationCatalog";
 import { getInstitutionalProcedureSource } from "../client/src/data/institutionalProcedureSources";
 import {
@@ -515,7 +516,11 @@ const routeSpecificPrerender = (path: string) => {
       .filter((entry): entry is ProcedureEnglishContent => Boolean(entry))
       .map((entry) => `<li><a href="/en/procedures/${encodeURIComponent(entry.enSlug)}">${esc(entry.description)}</a></li>`)
       .join("");
-    return `<section aria-label="Mobility services"><h2>Prepare your international mobility project</h2><p>Discover our most requested procedures, verified institutional sources, and a free initial evaluation before any step.</p><p><a href="/?project=travail&amp;destination=canada#evaluation-multi">Start the free evaluation</a> · <a href="/en">Explore priority procedures</a> · <a href="/sources-officielles">View official sources</a></p></section><section aria-label="Priority destinations"><h2>Most requested procedures from Yaoundé</h2><ul>${links}</ul></section>`;
+    return `<section aria-label="Mobility services"><h2>Prepare your international mobility project</h2><p>Discover our most requested procedures, verified institutional sources, and a free initial evaluation before any step.</p><p><a href="/?project=travail&amp;destination=canada#evaluation-multi">Start the free evaluation</a> · <a href="/en">Explore priority procedures</a> · <a href="/sources-officielles">View official sources</a></p></section><section aria-label="Priority destinations"><h2>Most requested procedures from Yaoundé</h2><ul>${links}</ul></section>`
+      + `<section aria-label="Where to start"><h2>Where to start</h2><ul>${EN_HOME_PATHWAYS.map((item) => `<li><a href="${item.href}">${esc(item.title)}</a> — ${esc(item.text)}</li>`).join("")}</ul></section>`
+      + `<section aria-label="How it works"><h2>How it works: eight steps, one path</h2><ol>${EN_HOME_STEPS.map((step) => `<li><strong>${esc(step.title)}</strong> — ${esc(step.text)}</li>`).join("")}</ol></section>`
+      + `<section aria-label="Free tools"><h2>Free tools</h2><ul>${EN_HOME_TOOLS.map((tool) => `<li><a href="${tool.href}">${esc(tool.title)}</a> — ${esc(tool.text)} (${esc(tool.note)})</li>`).join("")}</ul></section>`
+      + `<section aria-label="${esc(EN_HOME_CENTRAL_AFRICA.title)}"><h2>${esc(EN_HOME_CENTRAL_AFRICA.title)}</h2><p>${esc(EN_HOME_CENTRAL_AFRICA.text)} <a href="${EN_HOME_CENTRAL_AFRICA.href}">${esc(EN_HOME_CENTRAL_AFRICA.cta)}</a></p></section>`;
   }
   if (path === "/en/faq") {
     return EN_FAQ_GROUPS.map((group) => `<section aria-label="${esc(group.title)}"><h2>${esc(group.title)}</h2>${group.items.map((item) => `<h3>${esc(item.question)}</h3><p>${esc(item.answer)}</p>`).join("")}</section>`).join("");

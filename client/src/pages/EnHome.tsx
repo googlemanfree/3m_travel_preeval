@@ -6,6 +6,7 @@ import { INTERNATIONAL_BRAND } from "@/data/internationalBrand";
 import { PremiumCoverImage } from "@/components/PremiumCoverImage";
 import { PremiumAtmosphere } from "@/components/PremiumAtmosphere";
 import { getServiceVisual } from "@/data/premiumVisuals";
+import { EN_HOME_CENTRAL_AFRICA, EN_HOME_PATHWAYS, EN_HOME_STEPS, EN_HOME_TOOLS } from "@/data/enHomeContent";
 
 const PRIORITY_DESTINATIONS = [
   { href: "/en/procedures/canada-work", flag: "🇨🇦", title: "Canada — Work Visa", blurb: "Job-offer based work visa process, with remote support from Africa to Ottawa." },
@@ -89,6 +90,61 @@ export default function EnHome() {
           More destinations are being translated. For the full documented procedures catalogue, see the{" "}
           <a href="/procedures" className="font-bold text-blue-700 hover:text-blue-900">French procedures directory</a>.
         </p>
+      </section>
+
+      <section aria-label="Where to start" className="mx-auto max-w-6xl px-4 pb-6 sm:px-6 lg:px-8" data-testid="en-home-pathways">
+        <h2 className="text-center text-2xl font-black text-slate-950 sm:text-3xl">Where to start</h2>
+        <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600">Three clear pathways. Pick yours — flights, insurance and other services come after.</p>
+        <div className="mt-8 grid gap-5 md:grid-cols-3">
+          {EN_HOME_PATHWAYS.map((item) => (
+            <a key={item.href} href={item.href} className="block">
+              <article className="premium-surface card-lift flex h-full flex-col rounded-2xl p-6">
+                <h3 className="text-lg font-black text-slate-900">{item.title}</h3>
+                <p className="mt-2 flex-1 text-sm leading-6 text-slate-600">{item.text}</p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-blue-700">{item.cta} <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" /></span>
+              </article>
+            </a>
+          ))}
+        </div>
+        <p className="mt-4 text-center text-xs text-slate-500">Most pathway pages are currently written in French; the procedures below have English versions.</p>
+      </section>
+
+      <section aria-label="How it works" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8" data-testid="en-home-steps">
+        <h2 className="text-center text-2xl font-black text-slate-950 sm:text-3xl">How it works: eight steps, one path</h2>
+        <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600">From the first contact to follow-up after filing, every step is logged. You know what to prepare, what you pay to third parties, and what remains the authorities’ responsibility.</p>
+        <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {EN_HOME_STEPS.map((step, index) => (
+            <li key={step.title} className="rounded-2xl border border-slate-200/80 bg-white/90 p-5">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-700 text-sm font-black text-white" aria-hidden="true">{index + 1}</span>
+              <h3 className="mt-3 font-bold text-slate-900"><span className="sr-only">Step {index + 1}: </span>{step.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{step.text}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section aria-label="Free tools" className="border-y border-slate-200/70 bg-white/70 px-4 py-14 sm:px-6 lg:px-8" data-testid="en-home-tools">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="text-center text-2xl font-black text-slate-950 sm:text-3xl">Free tools</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-slate-600">Use them before you commit to anything. No result is promised: they help you prepare a serious discussion.</p>
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {EN_HOME_TOOLS.map((tool) => (
+              <a key={tool.href} href={tool.href} className="block">
+                <article className="premium-surface card-lift flex h-full flex-col rounded-2xl p-6">
+                  <h3 className="font-bold text-slate-900">{tool.title}</h3>
+                  <p className="mt-2 flex-1 text-sm leading-6 text-slate-600">{tool.text}</p>
+                  <span className="mt-4 text-xs font-bold uppercase tracking-wide text-slate-500">{tool.note}</span>
+                </article>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section aria-label={EN_HOME_CENTRAL_AFRICA.title} className="mx-auto max-w-4xl px-4 py-14 text-center sm:px-6 lg:px-8" data-testid="en-home-central-africa">
+        <h2 className="text-2xl font-black text-slate-950 sm:text-3xl">{EN_HOME_CENTRAL_AFRICA.title}</h2>
+        <p className="mt-3 text-slate-600">{EN_HOME_CENTRAL_AFRICA.text}</p>
+        <a href={EN_HOME_CENTRAL_AFRICA.href} className="mt-5 inline-flex min-h-11 items-center gap-2 font-bold text-blue-700 underline underline-offset-4 hover:text-blue-900">{EN_HOME_CENTRAL_AFRICA.cta} <ArrowRight className="h-4 w-4" aria-hidden="true" /></a>
       </section>
 
       <section aria-label="Why 3M TRAVEL AGENCY" className="border-y border-slate-200/70 bg-white/70 px-4 py-14 sm:px-6 lg:px-8">
