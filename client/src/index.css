@@ -658,6 +658,58 @@ html[data-animation-preference="fast"] .admin-table-skeleton {
   animation-duration: 850ms;
 }
 
+/* ───────────────────────────── Mouvement : finitions communes ─────────────────────────────
+   Sans résidu de transformation à la fin (remplissage « backwards »). Respectent « réduire les animations » du système et le réglage Animations du site (html.motion-disabled
+   ramène déjà toute durée à ~0). Aucune ne déplace la mise en page : opacité et transformation seulement. */
+
+/* Accordéons (FAQ, aides, détails) : le contenu se déploie en fondu au lieu de surgir. */
+details[open] > :not(summary) {
+  animation: details-content-in 260ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) backwards;
+}
+
+@keyframes details-content-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Valeur qui change (total d'une calculatrice, écart d'un scénario) : brève mise en relief, pour voir ce qui a bougé. */
+.value-pop {
+  display: inline-block;
+  animation: value-pop 320ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) backwards;
+}
+
+@keyframes value-pop {
+  0% { opacity: 0.35; transform: scale(0.94); }
+  60% { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* Panneaux qui apparaissent après une action (résultat, aide, message d'état). */
+.panel-in {
+  animation: panel-in 320ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) backwards;
+}
+
+@keyframes panel-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Lien-bouton : même retour au toucher que les boutons (enfoncement léger). */
+.secondary-page-surface a[class*="rounded-xl"][class*="font-black"] {
+  transition: transform 160ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), box-shadow 160ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), background-color 160ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+}
+
+.secondary-page-surface a[class*="rounded-xl"][class*="font-black"]:active {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  details[open] > :not(summary),
+  .value-pop,
+  .panel-in { animation: none; }
+  .secondary-page-surface a[class*="rounded-xl"][class*="font-black"]:active { transform: none; }
+}
+
 html.motion-disabled *,
 html.motion-disabled *::before,
 html.motion-disabled *::after {

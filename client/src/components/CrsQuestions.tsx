@@ -64,7 +64,7 @@ export function Question({ id, label, children, changed = false }: { id: string;
           </button>
         ) : null}
       </div>
-      {tip && open ? <p id={`${id}-tip`} role="note" className="mt-2 rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs leading-5 text-slate-700" data-testid={`${id}-tip`}>{tip}</p> : null}
+      {tip && open ? <p id={`${id}-tip`} role="note" className="panel-in mt-2 rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs leading-5 text-slate-700" data-testid={`${id}-tip`}>{tip}</p> : null}
       {children}
     </div>
   );
