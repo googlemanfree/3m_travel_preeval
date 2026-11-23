@@ -21,6 +21,7 @@ import { COUNTRY_CATALOG_DRAFTS_WAVE_2 } from "../../shared/countryCatalogDrafts
 import { COUNTRY_CATALOG_DRAFTS_WAVE_3 } from "../../shared/countryCatalogDraftsWave3";
 import { COUNTRY_CATALOG_DRAFTS_WAVE_4 } from "../../shared/countryCatalogDraftsWave4";
 import { COUNTRY_CATALOG_DRAFTS_WAVE_5 } from "../../shared/countryCatalogDraftsWave5";
+import { COUNTRY_CATALOG_DRAFTS_WAVE_6 } from "../../shared/countryCatalogDraftsWave6";
 import { guideSlugForCode } from "../../shared/countryGuides";
 import { WORLD_COUNTRY_ROWS } from "../../shared/worldCountries";
 import { publicProcedure, router } from "../_core/trpc";
@@ -148,7 +149,7 @@ export const countryCatalogRouter = router({
   })),
 
   /**
-   * Importe les brouillons rédigés des vagues 1 à 5 (étapes, pièces, délais, sources) en « À confirmer ».
+   * Importe les brouillons rédigés des vagues 1 à 6 (étapes, pièces, délais, sources) en « À confirmer ».
    * Ne touche jamais une fiche publiée ni un dispositif déjà documenté, ne marque aucune source « vérifiée » et ne publie rien.
    */
   adminImportDrafts: publicProcedure.input(z.object({ sessionToken: session })).mutation(({ input }) => guarded(async () => {
@@ -158,7 +159,7 @@ export const countryCatalogRouter = router({
     let stepsAdded = 0;
     let sourcesAdded = 0;
     let skipped = 0;
-    for (const draft of [...COUNTRY_CATALOG_DRAFTS, ...COUNTRY_CATALOG_DRAFTS_WAVE_2, ...COUNTRY_CATALOG_DRAFTS_WAVE_3, ...COUNTRY_CATALOG_DRAFTS_WAVE_4, ...COUNTRY_CATALOG_DRAFTS_WAVE_5]) {
+    for (const draft of [...COUNTRY_CATALOG_DRAFTS, ...COUNTRY_CATALOG_DRAFTS_WAVE_2, ...COUNTRY_CATALOG_DRAFTS_WAVE_3, ...COUNTRY_CATALOG_DRAFTS_WAVE_4, ...COUNTRY_CATALOG_DRAFTS_WAVE_5, ...COUNTRY_CATALOG_DRAFTS_WAVE_6]) {
       const where = and(eq(countryVisaPrograms.countryCode, draft.countryCode), eq(countryVisaPrograms.pathway, draft.pathway));
       const existing = await db.select().from(countryVisaPrograms).where(where);
       const live = existing.filter((program) => program.status !== "retired");
@@ -190,14 +191,14 @@ export const countryCatalogRouter = router({
       if (newSources.length) {
         await db.insert(countrySources).values(newSources.map((source) => ({
           countryCode: draft.countryCode, pathway: draft.pathway, label: source.label, url: source.url, authority: source.authority, status: "needs_review" as const,
-          note: "Ajoutée avec un brouillon (vagues 1 à 5) : à ouvrir et à confirmer avant toute publication.", checkedAt: null, checkedByAdminId: null, checkedByLabel: null,
+          note: "Ajoutée avec un brouillon (vagues 1 à 6) : à ouvrir et à confirmer avant toute publication.", checkedAt: null, checkedByAdminId: null, checkedByLabel: null,
         })));
         sourcesAdded += newSources.length;
       }
       const [pathwayRow] = await db.select().from(countryPathways).where(where).limit(1);
       if (pathwayRow && !pathwayRow.summary && pathwayRow.status !== "published") await db.update(countryPathways).set({ summary: draft.summary, coverage: "named" }).where(eq(countryPathways.id, pathwayRow.id));
     }
-    await audit(db, admin, "country_catalog.drafts_imported", "wave1-5", `${programsAdded} dispositif(s), ${stepsAdded} étape(s), ${sourcesAdded} source(s) ; ${skipped} fiche(s) déjà détaillée(s) laissée(s) telle(s)`);
+    await audit(db, admin, "country_catalog.drafts_imported", "wave1-6", `${programsAdded} dispositif(s), ${stepsAdded} étape(s), ${sourcesAdded} source(s) ; ${skipped} fiche(s) déjà détaillée(s) laissée(s) telle(s)`);
     return { programsAdded, stepsAdded, sourcesAdded, skipped };
   })),
 
