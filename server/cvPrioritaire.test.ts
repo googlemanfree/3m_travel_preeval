@@ -26,9 +26,22 @@ describe("dossiers avec CV : prioritaires pour le traitement du bilan", () => {
     expect(read("client/src/lib/adminCandidatePagination.ts")).toContain('readText(params, "sort", "priorite")');
     expect(read("client/src/pages/CandidatesManager.tsx")).toContain("Priorité : CV à traiter d’abord");
     expect(read("server/services/candidateListQuery.ts")).toContain('filter.sortBy === "priorite"');
-    expect(read("server/routers/adminCandidateManagement.ts")).toContain('z.enum(["createdAt", "fullName", "score", "priorite"])');
+    expect(read("server/routers/adminCandidateManagement.ts")).toContain('z.enum(["createdAt", "fullName", "score", "priorite", "soumission"])');
   });
   it("l'activation automatique ne touche que la file « prêts à activer » (la nouvelle file ne déclenche rien)", () => {
     expect(read("server/services/autoActivatePreDossier.ts")).toContain('item.category === "ready_to_activate"');
+  });
+});
+
+describe("ordre de soumission des dossiers à évaluer", () => {
+  const source = (file: string) => readFileSync(resolve(process.cwd(), file), "utf8");
+  it("les onglets « Non évalués » et « CV reçu à traiter » classent du plus ancien au plus récent, avec le rang dans la file", () => {
+    const page = source("client/src/pages/CandidatesManager.tsx");
+    expect(page).toMatch(/id: "non-evalues"[^}]*sort: "soumission"/);
+    expect(page).toMatch(/id: "cv-a-traiter"[^}]*sort: "soumission"/);
+    expect(page).toContain("setSortBy(tab.sort)");
+    expect(page).toContain('data-testid="submission-rank"');
+    expect(page).toContain("Ordre de soumission (plus anciens d’abord)");
+    expect(source("server/services/candidateListQuery.ts")).toContain('ORDER BY ${def.createdAt} ASC, ${def.id} ASC');
   });
 });

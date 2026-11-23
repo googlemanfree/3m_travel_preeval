@@ -16,4 +16,9 @@ describe("pagination candidats persistante", () => {
   it("construit une numérotation compacte et accessible pour de nombreuses pages", () => {
     expect(getPageTokens(5, 12)).toEqual([1, "ellipsis", 4, 5, 6, "ellipsis", 12]);
   });
+
+  it("le tri « ordre de soumission » se lit et s'écrit dans l'adresse", () => {
+    expect(parseCandidateListUrl("?sort=soumission").sortBy).toBe("soumission");
+    expect(serializeCandidateListUrl({ ...parseCandidateListUrl(""), sortBy: "soumission" })).toBe("?sort=soumission");
+  });
 });

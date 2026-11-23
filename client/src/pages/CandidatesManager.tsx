@@ -486,7 +486,7 @@ export default function CandidatesManager() {
       portraitStatus: "all" as const,
       cvStatus: cvFilter,
       evaluationStatus: evaluationFilter,
-      sortBy: sortBy as "createdAt" | "fullName" | "score" | "priorite",
+      sortBy: sortBy as "createdAt" | "fullName" | "score" | "priorite" | "soumission",
       sortDirection: "desc" as const,
       page,
       pageSize,
@@ -542,7 +542,7 @@ export default function CandidatesManager() {
   const totalCandidates = data?.total ?? 0;
   const currentViewState = React.useMemo(() => ({
     searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter,
-    sortBy: sortBy as "createdAt" | "fullName" | "score" | "priorite", page, pageSize,
+    sortBy: sortBy as "createdAt" | "fullName" | "score" | "priorite" | "soumission", page, pageSize,
   }), [searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy, page, pageSize]);
   const saveViewMutation = trpc.adminSavedViews.save.useMutation({
     onSuccess: () => {
@@ -572,7 +572,7 @@ export default function CandidatesManager() {
   }, []);
 
   React.useEffect(() => {
-    const urlState = { searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy: sortBy as "createdAt" | "fullName" | "score" | "priorite", page, pageSize };
+    const urlState = { searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy: sortBy as "createdAt" | "fullName" | "score" | "priorite" | "soumission", page, pageSize };
     const nextUrl = `${window.location.pathname}${serializeCandidateListUrl(urlState)}${window.location.hash}`;
     if (`${window.location.pathname}${window.location.search}${window.location.hash}` !== nextUrl) {
       window.history.replaceState(null, "", nextUrl);
@@ -753,15 +753,15 @@ export default function CandidatesManager() {
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Classement rapide</p>
             <div className="flex flex-wrap gap-2">
               {([
-                { id: "tous", label: "Tous", count: data?.tabCounts?.all, cv: "all", evaluation: "all", tone: "slate" },
-                { id: "cv-a-traiter", label: "CV reçu à traiter", count: data?.tabCounts?.cvToProcess, cv: "a_traiter", evaluation: "all", tone: "emerald" },
-                { id: "non-evalues", label: "Non évalués", count: data?.tabCounts?.notEvaluated, cv: "all", evaluation: "non_evalue", tone: "amber" },
-                { id: "evalues", label: "Déjà évalués", count: data?.tabCounts?.evaluated, cv: "all", evaluation: "evalue", tone: "slate" },
+                { id: "tous", label: "Tous", count: data?.tabCounts?.all, cv: "all", evaluation: "all", tone: "slate", sort: "priorite" },
+                { id: "cv-a-traiter", label: "CV reçu à traiter", count: data?.tabCounts?.cvToProcess, cv: "a_traiter", evaluation: "all", tone: "emerald", sort: "soumission" },
+                { id: "non-evalues", label: "Non évalués", count: data?.tabCounts?.notEvaluated, cv: "all", evaluation: "non_evalue", tone: "amber", sort: "soumission" },
+                { id: "evalues", label: "Déjà évalués", count: data?.tabCounts?.evaluated, cv: "all", evaluation: "evalue", tone: "slate", sort: "createdAt" },
               ] as const).map((tab) => {
                 const active = cvFilter === tab.cv && evaluationFilter === tab.evaluation;
                 const activeClass = tab.tone === "emerald" ? "border-emerald-700 bg-emerald-700 text-white" : tab.tone === "amber" ? "border-amber-600 bg-amber-600 text-white" : "border-[#0B2A52] bg-[#0B2A52] text-white";
                 return (
-                  <button key={tab.id} type="button" role="tab" aria-selected={active} data-testid={`classement-${tab.id}`} onClick={() => { setCvFilter(tab.cv); setEvaluationFilter(tab.evaluation); resetToFirstPage(); }} className={`inline-flex h-10 items-center gap-2 rounded-lg border px-4 text-sm font-semibold ${active ? activeClass : "border-slate-300 bg-white text-slate-800 hover:bg-slate-50"}`}>
+                  <button key={tab.id} type="button" role="tab" aria-selected={active} data-testid={`classement-${tab.id}`} onClick={() => { setCvFilter(tab.cv); setEvaluationFilter(tab.evaluation); setSortBy(tab.sort); resetToFirstPage(); }} className={`inline-flex h-10 items-center gap-2 rounded-lg border px-4 text-sm font-semibold ${active ? activeClass : "border-slate-300 bg-white text-slate-800 hover:bg-slate-50"}`}>
                     {tab.label}
                     <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${active ? "bg-white/25 text-white" : "bg-slate-100 text-slate-700"}`}>{tab.count ?? "…"}</span>
                   </button>
@@ -866,10 +866,11 @@ export default function CandidatesManager() {
 
             <div>
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Tri</p>
-            <Select value={sortBy} onValueChange={(value) => { setSortBy(value as "createdAt" | "fullName" | "score" | "priorite"); resetToFirstPage(); }}>
+            <Select value={sortBy} onValueChange={(value) => { setSortBy(value as "createdAt" | "fullName" | "score" | "priorite" | "soumission"); resetToFirstPage(); }}>
               <SelectTrigger aria-label="Trier les candidats"><SelectValue placeholder="Trier" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="priorite">Priorité : CV à traiter d’abord</SelectItem>
+                <SelectItem value="soumission">Ordre de soumission (plus anciens d’abord)</SelectItem>
                 <SelectItem value="createdAt">Plus récents</SelectItem>
                 <SelectItem value="fullName">Nom du candidat</SelectItem>
                 <SelectItem value="score">Score décroissant</SelectItem>
@@ -950,6 +951,11 @@ export default function CandidatesManager() {
                         <p className="text-xs text-gray-500">
                           {candidate.applicationNumber}
                         </p>
+                        {sortBy === "soumission" && (
+                          <p className="mt-0.5 text-xs font-semibold text-slate-700" data-testid="submission-rank">
+                            N° {(page - 1) * pageSize + idx + 1} dans la file · soumis le {new Date(candidate.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+                          </p>
+                        )}
                         {candidate.cvReceived && (
                           <a href={`/admin/bilans?q=${encodeURIComponent(candidate.email)}`} className={`mr-1 mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${candidate.evaluated ?? candidate.bilanSent ? "bg-slate-100 text-slate-700" : "bg-emerald-100 text-emerald-900"}`} data-testid="cv-badge" title={candidate.evaluated ?? candidate.bilanSent ? "CV reçu, déjà évalué — ouvrir le bilan" : "CV reçu : bilan à traiter — ouvrir le bilan"}>
                             {candidate.bilanSent ? "CV reçu · bilan envoyé" : (candidate.evaluated ?? false) ? "CV reçu · évalué" : "CV reçu · à traiter"}
