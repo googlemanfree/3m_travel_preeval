@@ -7,7 +7,7 @@ export type CandidateListUrlState = {
   paymentFilter: string;
   scoreFilter: string;
   destinationFilter: string;
-  sortBy: "createdAt" | "fullName" | "score" | "priorite";
+  sortBy: "createdAt" | "fullName" | "score" | "priorite" | "soumission";
   page: number;
   pageSize: CandidatePageSize;
 };
@@ -29,7 +29,7 @@ export function parseCandidateListUrl(search: string): CandidateListUrlState {
     paymentFilter: readText(params, "payment", "tous"),
     scoreFilter: readText(params, "score", "tous"),
     destinationFilter: readText(params, "destination", "tous"),
-    sortBy: rawSort === "fullName" || rawSort === "score" || rawSort === "createdAt" || rawSort === "priorite" ? rawSort : "priorite",
+    sortBy: rawSort === "fullName" || rawSort === "score" || rawSort === "createdAt" || rawSort === "priorite" || rawSort === "soumission" ? rawSort : "priorite",
     page: readPositiveInt(params.get("page"), 1),
     pageSize,
   };

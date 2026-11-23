@@ -17,7 +17,8 @@ describe("liste des candidats : classement rapide par CV et par évaluation", ()
     expect(client).toMatch(/id: "cv-a-traiter"[^}]*cv: "a_traiter", evaluation: "all"/);
     expect(client).toMatch(/id: "non-evalues"[^}]*cv: "all", evaluation: "non_evalue"/);
     expect(client).toMatch(/id: "evalues"[^}]*cv: "all", evaluation: "evalue"/);
-    expect(client).toContain("setCvFilter(tab.cv); setEvaluationFilter(tab.evaluation); resetToFirstPage();");
+    // chaque onglet applique aussi son tri (« Non évalués » et « CV reçu à traiter » : ordre de soumission)
+    expect(client).toContain("setCvFilter(tab.cv); setEvaluationFilter(tab.evaluation); setSortBy(tab.sort); resetToFirstPage();");
   });
   it("le choix part au serveur et relance la liste", () => {
     expect(client).toContain("evaluationStatus: evaluationFilter,");

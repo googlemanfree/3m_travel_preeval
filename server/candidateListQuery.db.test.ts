@@ -116,6 +116,7 @@ describe.skipIf(!URL)("liste des candidats : SQL = ancien calcul en mémoire", (
     ["recherche par nom accentué", { search: "éloïse" }], ["recherche par référence agence", { search: "3M-AGN-" }], ["recherche par référence compte", { search: "COMPTE-" }], ["recherche avec caractères spéciaux", { search: "100%_x" }],
     ["déjà évalués", { evaluationStatus: "evalue" }], ["non évalués", { evaluationStatus: "non_evalue" }], ["non évalués avec CV reçu", { evaluationStatus: "non_evalue", cvStatus: "recu" }], ["évalués et paiement", { evaluationStatus: "evalue", paymentStatus: "paye" }], ["non évalués par étape", { evaluationStatus: "non_evalue", status: "paiement" }],
     ["tri priorité (CV à traiter d'abord)", { sortBy: "priorite" }], ["priorité + non évalués", { sortBy: "priorite", evaluationStatus: "non_evalue" }],
+    ["ordre de soumission", { sortBy: "soumission" }], ["ordre de soumission + non évalués", { sortBy: "soumission", evaluationStatus: "non_evalue" }], ["ordre de soumission + CV à traiter", { sortBy: "soumission", cvStatus: "a_traiter" }],
     ["tri par score croissant", { sortBy: "score", sortDirection: "asc" }], ["tri par nom", { sortBy: "fullName", sortDirection: "asc" }], ["tri par date croissante", { sortDirection: "asc" }],
     ["combinaison", { status: "documents", paymentStatus: "non_paye", cvStatus: "recu", sortBy: "score" }],
   ];
@@ -149,6 +150,12 @@ describe.skipIf(!URL)("liste des candidats : SQL = ancien calcul en mémoire", (
         const times = (rows: any[]) => rows.map((r) => new Date(r.createdAt).getTime());
         expect(times(todoRows)).toEqual([...times(todoRows)].sort((a, b) => a - b));
         expect(times(others)).toEqual([...times(others)].sort((a, b) => b - a));
+        return;
+      }
+      if (filter.sortBy === "soumission") {
+        // premier déposé, premier en tête : du plus ancien au plus récent, quel que soit le sens demandé
+        const times = actual.map((r: any) => new Date(r.createdAt).getTime());
+        expect(times).toEqual([...times].sort((a, b) => a - b));
         return;
       }
       const sortKey = (r: any) => (filter.sortBy === "score" ? r.scoringTotal : filter.sortBy === "fullName" ? r.fullName : new Date(r.createdAt).getTime());

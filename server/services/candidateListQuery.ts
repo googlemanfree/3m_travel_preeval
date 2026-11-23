@@ -20,7 +20,7 @@ export type ListFilter = {
   destination: string; portraitStatus: "all" | "missing" | "pending" | "verified" | "rejected"; cvStatus: "all" | "a_traiter" | "recu" | "sans";
   /** « evalue » : bilan envoyé ou évaluation validée par un conseiller ; « non_evalue » : ni l'un ni l'autre. */
   evaluationStatus: "all" | "evalue" | "non_evalue";
-  sortBy: "createdAt" | "fullName" | "score" | "priorite"; sortDirection: "asc" | "desc"; page: number; pageSize: number;
+  sortBy: "createdAt" | "fullName" | "score" | "priorite" | "soumission"; sortDirection: "asc" | "desc"; page: number; pageSize: number;
 };
 
 export type ListedCandidate = {
@@ -161,6 +161,8 @@ const rowsOf = (result: unknown): Array<Record<string, unknown>> => {
 
 function orderBy(source: Source, filter: ListFilter): SQL {
   const def = definition(source);
+  // Ordre de soumission : le dossier déposé en premier est en tête (file de traitement, premier arrivé, premier évalué).
+  if (filter.sortBy === "soumission") return sql` ORDER BY ${def.createdAt} ASC, ${def.id} ASC`;
   // Priorité : CV reçu et bilan à faire d'abord (le plus ancien en tête), puis tous les autres du plus récent au plus ancien.
   if (filter.sortBy === "priorite") {
     const todo = sql`(${def.ownCv} OR cvx.em IS NOT NULL) AND NOT ${evaluatedExpression(def)}`;
@@ -234,6 +236,7 @@ export async function queryCandidateList(db: Db, filter: ListFilter): Promise<Li
     const perSource = firstTry && page === filter.page ? firstTry : await fetchWindow(page);
     const direction = filter.sortDirection === "asc" ? 1 : -1;
     const merged = perSource.flat().sort((a, b) => {
+      if (filter.sortBy === "soumission") return new Date(a.row.createdAt as string).getTime() - new Date(b.row.createdAt as string).getTime();
       if (filter.sortBy === "priorite") {
         const todoA = Number(a.row.todo) > 0, todoB = Number(b.row.todo) > 0;
         const timeDiff = new Date(a.row.createdAt as string).getTime() - new Date(b.row.createdAt as string).getTime();
