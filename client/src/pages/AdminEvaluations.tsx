@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import { toast } from "sonner";
+import { sortBySubmission } from "@/lib/evaluationQueue";
 
 export default function AdminEvaluations() {
   const sessionToken = getAdminSessionToken();
@@ -122,7 +123,7 @@ export default function AdminEvaluations() {
   };
 
   // Filtrer les bilans
-  const filteredBilans = (bilans as any[]).filter((bilan: any) => {
+  const filteredBilans = sortBySubmission(bilans as any[]).filter((bilan: any) => {
     const matchesSearch = 
       bilan.candidateName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       bilan.candidateEmail?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -274,6 +275,7 @@ export default function AdminEvaluations() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
+                    <th className="text-left py-3 px-4 font-semibold" title="Ordre de soumission : le premier dossier soumis est en tête">N° · soumis le</th>
                     <th className="text-left py-3 px-4 font-semibold">Candidat</th>
                     <th className="text-left py-3 px-4 font-semibold">Email</th>
                     <th className="text-left py-3 px-4 font-semibold">Score</th>
@@ -282,8 +284,12 @@ export default function AdminEvaluations() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredBilans.map((bilan: any) => (
+                  {filteredBilans.map((bilan: any, index: number) => (
                     <tr key={bilan.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-700" data-testid="queue-rank">
+                        <span className="font-bold text-gray-900">N° {index + 1}</span>
+                        {bilan.generatedAt ? <span className="block text-xs text-gray-500">{new Date(bilan.generatedAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</span> : null}
+                      </td>
                       <td className="py-3 px-4">{bilan.candidateName}</td>
                       <td className="py-3 px-4">{bilan.candidateEmail}</td>
                       <td className="py-3 px-4">

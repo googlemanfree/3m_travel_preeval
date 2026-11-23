@@ -1221,8 +1221,9 @@ export const adminRouter = router({
           .select()
           .from(bilans)
           .where(eq(bilans.status, "draft"))
-          .orderBy(desc(bilans.generatedAt))
-          .limit(50);
+          // File de traitement : le bilan soumis en premier est en tête (même règle que « Ordre de soumission » des candidats).
+          .orderBy(asc(bilans.generatedAt), asc(bilans.id))
+          .limit(200);
 
         return pendingBilans;
       } catch (err) {
