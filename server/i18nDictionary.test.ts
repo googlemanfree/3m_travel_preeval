@@ -35,7 +35,10 @@ describe("dictionnaire français → anglais du site", () => {
   });
 
   it("ne contient aucune « traduction » qui soit encore du français", () => {
-    for (const [key, value] of Object.entries(dictionary)) {
+    // noms propres qui gardent leurs accents en anglais
+    const PROPER_NOUNS = /Yaoundé|Côte d’Ivoire|São Tomé|Príncipe|Türkiye|Bahraïn|Montréal|Québec|Biyem-Assi|Obili/g;
+    for (const [key, original] of Object.entries(dictionary)) {
+      const value = original.replace(PROPER_NOUNS, "");
       const french = (value.match(FRENCH) ?? []).length;
       const english = (value.match(ENGLISH) ?? []).length;
       expect(french >= 2 && french > english, `traduction encore française : ${value.slice(0, 80)}`).toBe(false);
