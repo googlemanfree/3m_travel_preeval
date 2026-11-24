@@ -29,8 +29,9 @@ describe("dictionnaire français → anglais du site", () => {
     }
   });
 
-  it("garde les emplacements de date : une clé avec {date} a une traduction avec {date}, et inversement", () => {
-    for (const [key, value] of Object.entries(dictionary)) expect(key.includes("{date}"), key.slice(0, 60)).toBe(value.includes("{date}"));
+  it("garde les emplacements ({date}, {q}, {c}) : une clé en contient exactement les mêmes que sa traduction", () => {
+    const slots = (text: string) => (text.match(/\{(date|q|c)\}/g) ?? []).sort().join(",");
+    for (const [key, value] of Object.entries(dictionary)) expect(slots(value), key.slice(0, 60)).toBe(slots(key));
   });
 
   it("ne contient aucune « traduction » qui soit encore du français", () => {

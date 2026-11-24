@@ -8,6 +8,8 @@ const dictionary = new Map<string, string>([
   ["Vérifié le {date}", "Verified on {date}"],
   ["Rechercher un pays", "Search for a country"],
   ["3M TRAVEL AGENCY", "3M TRAVEL AGENCY"],
+  ["Autres procédures pour {c}", "Other procedures for {c}"],
+  ["La durée indiquée est «{q}».", "The stated length is “{q}”."],
 ]);
 const settle = () => new Promise((resolve) => setTimeout(resolve, 60));
 let stop: (() => void) | null = null;
@@ -23,6 +25,16 @@ describe("traduction du texte visible par dictionnaire", () => {
     expect(translateDates("1er décembre 2026")).toBe("December 1, 2026");
     expect(translateString("Vérifié le 27 octobre 2026", dictionary)).toBe("Verified on October 27, 2026");
     expect(translateString("Texte inconnu du dictionnaire", dictionary)).toBeNull();
+  });
+
+  it("traduit les phrases-modèles : nom de pays ({c}) et valeur entre guillemets français ({q})", () => {
+    expect(translateString("Autres procédures pour Allemagne", dictionary)).toBe("Other procedures for Germany");
+    expect(translateString("Autres procédures pour Pays-Bas", dictionary)).toBe("Other procedures for Netherlands");
+    expect(translateString("Autres procédures pour Rép. Tchèque", dictionary)).toBe("Other procedures for Czech Republic");
+    expect(translateString("Autres procédures pour États-Unis", dictionary)).toBe("Other procedures for United States");
+    expect(translateString("La durée indiquée est « 30 jours ».", dictionary)).toBe("The stated length is “30 days”.");
+    expect(translateString("La durée indiquée est « 6 mois ».", dictionary)).toBe("The stated length is “6 months”.");
+    expect(translateString("Autres procédures pour Atlantide", dictionary)).toBeNull();
   });
 
   it("remplace les textes connus en gardant les espaces autour, laisse intacts les textes inconnus et les noms propres", () => {

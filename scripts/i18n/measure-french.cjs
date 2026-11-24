@@ -5,7 +5,7 @@
  *   node scripts/i18n/measure-french.cjs https://www.3mtravelagency.com /tarifs /services /faq   (adresses relatives à la base)
  *   node scripts/i18n/measure-french.cjs --sitemap https://www.3mtravelagency.com                (toutes les pages du plan du site)
  *
- * Variables : CRS_CHROMIUM_PATH (navigateur à utiliser), HTTPS_PROXY. Sortie : mots visibles, mots français, pourcentage, et les premiers textes restants.
+ * Variables : CRS_CHROMIUM_PATH (navigateur à utiliser), HTTPS_PROXY, WAIT_MS (attente après chargement, 3500 par défaut ; 9000 sur un serveur de développement à froid). Sortie : mots visibles, mots français, pourcentage, et les premiers textes restants.
  */
 const { chromium } = require("playwright");
 const FR = /\b(le|la|les|des|du|de la|un|une|et|pour|vous|votre|vos|nous|notre|avec|dans|sur|est|sont|pas|ou|au|aux|ce|cette|ces|que|qui|à|ne|plus|par|sans|être|avoir|d’|l’|qu’|n’)\b/gi;
@@ -18,7 +18,7 @@ async function main() {
   let paths = sitemap ? [] : args.slice(1);
   const options = { headless: true };
   if (process.env.CRS_CHROMIUM_PATH) options.executablePath = process.env.CRS_CHROMIUM_PATH;
-  if (process.env.HTTPS_PROXY) options.proxy = { server: process.env.HTTPS_PROXY };
+  if (process.env.HTTPS_PROXY) options.proxy = { server: process.env.HTTPS_PROXY, bypass: "127.0.0.1,localhost" };
   const browser = await chromium.launch(options);
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   await context.addInitScript(() => { try { localStorage.setItem("3m_travel_lang", "en"); localStorage.setItem("3m_travel_lang_manual", "1"); } catch { /* ignoré */ } });
@@ -30,17 +30,9 @@ async function main() {
   let words = 0, french = 0; const remaining = new Map();
   for (const path of paths) {
     await page.goto(`${base}${path}`, { waitUntil: "domcontentloaded", timeout: 60000 });
-    await page.waitForTimeout(3500);
-    const nodes = await page.evaluate(() => {
-      const found = []; const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-        const text = node.nodeValue.replace(/\s+/g, " ").trim(); const parent = node.parentElement;
-        if (text.length < 12 || !parent || /SCRIPT|STYLE|NOSCRIPT/.test(parent.tagName)) continue;
-        const style = getComputedStyle(parent); if (style.display === "none" || style.visibility === "hidden") continue;
-        found.push(text);
-      }
-      return found;
-    });
+    await page.waitForTimeout(Number(process.env.WAIT_MS || 3500));
+    // texte réellement visible, ligne par ligne (même rendu que ce que lit le visiteur)
+    const nodes = await page.evaluate(() => document.body.innerText.split("\n").map((line) => line.replace(/\s+/g, " ").trim()).filter((line) => line.length >= 12));
     for (const text of nodes) {
       const count = text.split(" ").length; words += count;
       const f = (text.match(FR) || []).length, e = (text.match(EN) || []).length;
