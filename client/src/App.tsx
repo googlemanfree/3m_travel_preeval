@@ -159,6 +159,7 @@ import PageLoadingFallback from "./components/PageLoadingFallback";
 import ChunkReloadNotice from "./components/ChunkReloadNotice";
 import NavigationProgress from "./components/NavigationProgress";
 import ScrollRevealManager from "./components/ScrollRevealManager";
+import DomTranslationBridge from "./i18n/DomTranslationBridge";
 import ReadingProgress from "./components/ReadingProgress";
 import PremiumPointerEffects from "./components/PremiumPointerEffects";
 import MotionPreferenceBridge from "./components/MotionPreferenceBridge";
@@ -709,6 +710,7 @@ function AppShell() {
                       {/* Header global visible sur toutes les pages avec barre de progression de chargement */}
                       <NavigationProgress />
                       <ScrollRevealManager />
+                      <DomTranslationBridge />
                       <ReadingProgress />
                       <PremiumPointerEffects />
                       <Navbar />
