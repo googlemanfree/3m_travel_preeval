@@ -24,6 +24,10 @@ Le mécanisme `t(fr, en)` existant reste la bonne méthode pour tout nouveau tex
 3. `npx tsx scripts/i18n/build-dictionary.mts` assemble `client/src/i18n/frToEn.json` (refuse un lot mal aligné, une traduction vide ou un doublon contradictoire).
 4. Les tests (`server/i18nDictionary.test.ts`) vérifient l'alignement, les clés normalisées, les emplacements `{date}` et l'absence de « traduction » encore française.
 
+## Phrases-modèles
+
+Une chaîne qui ne figure pas telle quelle au dictionnaire est ramenée à un modèle avant la recherche : une date devient `{date}`, une valeur entre « » devient `«{q}»` (avec « jours », « mois », « ans »… traduits), un nom de pays du site devient `{c}` (liste `COUNTRIES_FR_EN` dans `domTranslator.ts`). Exemple : « Autres procédures pour Allemagne » → « Other procedures for Germany » grâce à l'entrée « Autres procédures pour {c} ».
+
 ## Avancement
 
-Lot 1 à 3 : 380 chaînes (les plus répétées : étapes des procédures, listes de pièces, e-Visa, mises en garde). Sur une page de procédure, les textes français visibles sont passés de 239 à 83 ; sur une page e-Visa, de 49 à 1. Il reste environ 3 900 chaînes uniques (environ 52 000 mots), surtout propres à une seule page : procédures par pays, e-Visa par pays, blog, guides, Canada, FAQ.
+Lots 1 à 5 : 523 chaînes (les plus répétées : étapes des procédures, listes de pièces, e-Visa, mises en garde, protocole d'ouverture, FAQ de sécurité). Mesure en local sur 7 pages représentatives (accueil, tarifs, deux procédures, e-Visa, guides, FAQ) : **25 % des mots visibles restent en français** (contre plus de la moitié avant). Il reste environ 3 800 chaînes uniques (environ 50 000 mots), surtout propres à une seule page : procédures par pays, e-Visa par pays, blog, guides, Canada, FAQ, tarifs.

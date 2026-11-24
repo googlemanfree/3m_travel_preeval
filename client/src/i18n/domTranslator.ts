@@ -27,21 +27,45 @@ export function translateDates(text: string): string {
   return text.replace(DATE_FR, (_match, day: string, month: string, year: string) => `${MONTHS_FR[month.toLowerCase()]} ${Number(day)}, ${year}`);
 }
 
-/** Traduction d'une chaîne : dictionnaire d'abord, puis dates ; null si rien ne change. */
+/** Noms de pays du site (français → anglais), pour les phrases-modèles du type « Autres procédures pour {c} ». */
+export const COUNTRIES_FR_EN: Record<string, string> = {
+  "Afrique du Sud": "South Africa", Albanie: "Albania", Algérie: "Algeria", Allemagne: "Germany", "Arabie saoudite": "Saudi Arabia", Australie: "Australia", Autriche: "Austria",
+  Bahreïn: "Bahrain", Belgique: "Belgium", Brésil: "Brazil", Bulgarie: "Bulgaria", Cambodge: "Cambodia", Cameroun: "Cameroon", Canada: "Canada", Chine: "China", Chypre: "Cyprus",
+  "Corée du Sud": "South Korea", "Côte d’Ivoire": "Côte d’Ivoire", "Côte d'Ivoire": "Côte d’Ivoire", Croatie: "Croatia", Danemark: "Denmark", Djibouti: "Djibouti", Égypte: "Egypt",
+  "Émirats arabes unis": "United Arab Emirates", Espagne: "Spain", Estonie: "Estonia", "États-Unis": "United States", Éthiopie: "Ethiopia", Finlande: "Finland", France: "France",
+  Gabon: "Gabon", Ghana: "Ghana", Grèce: "Greece", Hongrie: "Hungary", Inde: "India", Indonésie: "Indonesia", Irlande: "Ireland", Islande: "Iceland", Israël: "Israel", Italie: "Italy",
+  Japon: "Japan", Jordanie: "Jordan", Kenya: "Kenya", Koweït: "Kuwait", Lettonie: "Latvia", Liban: "Lebanon", Liechtenstein: "Liechtenstein", Lituanie: "Lithuania", Luxembourg: "Luxembourg",
+  Malaisie: "Malaysia", Malte: "Malta", Maroc: "Morocco", Maurice: "Mauritius", Mexique: "Mexico", Nigéria: "Nigeria", Norvège: "Norway", "Nouvelle-Zélande": "New Zealand", Oman: "Oman",
+  Ouganda: "Uganda", "Pays-Bas": "Netherlands", Philippines: "Philippines", Pologne: "Poland", Portugal: "Portugal", Qatar: "Qatar", RDC: "DR Congo", Roumanie: "Romania",
+  "Royaume-Uni": "United Kingdom", Russie: "Russia", Rwanda: "Rwanda", "Rép. Tchèque": "Czech Republic", Sénégal: "Senegal", Singapour: "Singapore", Slovaquie: "Slovakia", Slovénie: "Slovenia",
+  "Sri Lanka": "Sri Lanka", Suède: "Sweden", Suisse: "Switzerland", Tanzanie: "Tanzania", Tchad: "Chad", Thaïlande: "Thailand", Tunisie: "Tunisia", Turquie: "Türkiye", Ukraine: "Ukraine", "Viêt Nam": "Vietnam",
+};
+const COUNTRY_NAMES = Object.keys(COUNTRIES_FR_EN).sort((a, b) => b.length - a.length).map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+const COUNTRY_RE = new RegExp(`(?<![\\p{L}])(${COUNTRY_NAMES.join("|")})(?![\\p{L}])`, "gu");
+const QUOTE_RE = /«\s*([^»]{1,60}?)\s*»/g;
+const UNITS: Array<[RegExp, string]> = [[/\bjours?\b/gi, "days"], [/\bmois\b/gi, "months"], [/\bans?\b/gi, "years"], [/\bsemaines?\b/gi, "weeks"], [/\bheures?\b/gi, "hours"], [/\billimité(e)?s?\b/gi, "unlimited"]];
+const translateQuoted = (value: string): string => UNITS.reduce((text, [pattern, english]) => text.replace(pattern, english), value);
+
+/**
+ * Traduction d'une chaîne : dictionnaire d'abord ; sinon la chaîne est ramenée à un modèle (dates → {date}, valeurs entre « » → «{q}»,
+ * noms de pays → {c}) cherché dans le dictionnaire, puis les valeurs sont remises en anglais. Null si rien ne change.
+ */
 export function translateString(text: string, dictionary: Dictionary): string | null {
   const key = normalizeKey(text);
   if (!key) return null;
   const direct = dictionary.get(key);
   if (direct !== undefined) return direct === key ? null : translateDates(direct);
-  const dated = translateDates(key);
-  if (dated !== key) {
-    // « Vérifié le 27 octobre 2026 » : la partie fixe est cherchée avec une date modèle.
-    const template = key.replace(DATE_FR, "{date}");
-    const hit = dictionary.get(template);
-    if (hit !== undefined) return hit.replace(/\{date\}/g, () => dated.match(/[A-Z][a-z]+ \d{1,2}, \d{4}/)?.[0] ?? "");
-    return null;
-  }
-  return null;
+  const dates: string[] = []; const quotes: string[] = []; const countries: string[] = [];
+  const template = key
+    .replace(DATE_FR, (match) => { dates.push(translateDates(match)); return "{date}"; })
+    .replace(QUOTE_RE, (_match, value: string) => { quotes.push(translateQuoted(value)); return "«{q}»"; })
+    .replace(COUNTRY_RE, (match) => { countries.push(COUNTRIES_FR_EN[match] ?? match); return "{c}"; });
+  if (template === key) return null;
+  const hit = dictionary.get(template);
+  if (hit === undefined) return null;
+  const take = (list: string[]) => { let index = 0; return () => list[index++] ?? list[list.length - 1] ?? ""; };
+  const nextDate = take(dates), nextQuote = take(quotes), nextCountry = take(countries);
+  return hit.replace(/\{date\}/g, nextDate).replace(/\{q\}/g, nextQuote).replace(/\{c\}/g, nextCountry);
 }
 
 type TranslatorOptions = { dictionary: Dictionary; root?: Node; shouldSkip?: (element: Element) => boolean };
