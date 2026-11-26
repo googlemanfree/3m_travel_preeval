@@ -1,4 +1,6 @@
 ﻿import { TRPCError } from "@trpc/server";
+import { isWhatsAppConfigured } from "../whatsappService";
+import { sendBilanPdfByWhatsApp } from "../services/bilanFollowUpActions";
 import { evaluationDisplayReference } from "../../shared/evaluationReference";
 import { isProvisionalReference } from "../../shared/accountKeys";
 import { agencyMirrorKey, isEvalAgencyShell } from "../../shared/evalAgencyShell";
@@ -1091,6 +1093,10 @@ initializeEvaluationDelivery: publicProcedure
       }
       // Alerte interne systématique : l'évaluation est effectuée (le bilan est parti), la suite dépend de la réponse du candidat.
       try { await db.insert(adminNotifications).values({ type: "new_evaluation", title: "Évaluation effectuée : bilan envoyé", message: `${application.fullName} (${evaluationDisplayReference(application) ?? "sans référence"}) — bilan ${visaJournal.kindLabel} envoyé dans l'espace client et par e-mail. Étape suivante : le candidat valide son bilan et ouvre son dossier.`.slice(0, 1000), relatedId: `evaluation_sent:${application.id}`, targetAdminType: null, isRead: false }); } catch { /* l'alerte ne bloque jamais l'envoi déjà effectué */ }
+      // Bilan en PDF aussi par WhatsApp quand l'envoi automatique est configuré : au mieux, sans jamais faire échouer l'envoi du bilan.
+      if (isWhatsAppConfigured()) {
+        void sendBilanPdfByWhatsApp(db, application.id).catch((error) => console.warn("[sendEvaluationNow] WhatsApp PDF non envoyé:", error instanceof Error ? error.message : error));
+      }
       void acknowledgeBilanSent({ fullName: application.fullName, email: application.email, dossierNumber: evaluationDisplayReference(application) ?? "sans référence", destination: application.destination, kindLabel: visaJournal.kindLabel, sentBy: admin.fullName || admin.email || "un administrateur" });
       const journalComment = `Bilan ${visaJournal.kindLabel} validé et envoyé (espace client + e-mail) après contrôle d’aperçu. Type de visa utilisé : ${visaJournal.journalVisaLabel}.`;
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);

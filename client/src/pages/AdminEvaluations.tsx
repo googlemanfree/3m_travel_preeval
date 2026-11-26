@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import { toast } from "sonner";
-import { sortBySubmission } from "@/lib/evaluationQueue";
+import { sortBySubmission, waitingTime } from "@/lib/evaluationQueue";
 
 export default function AdminEvaluations() {
   const sessionToken = getAdminSessionToken();
@@ -289,6 +289,7 @@ export default function AdminEvaluations() {
                       <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-700" data-testid="queue-rank">
                         <span className="font-bold text-gray-900">N° {index + 1}</span>
                         {bilan.generatedAt ? <span className="block text-xs text-gray-500">{new Date(bilan.generatedAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</span> : null}
+                        {(() => { const wait = waitingTime(bilan); return wait ? <span data-testid="queue-waiting" className={`mt-0.5 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${wait.level === "overdue" ? "bg-rose-100 text-rose-800" : wait.level === "late" ? "bg-amber-100 text-amber-900" : "bg-emerald-50 text-emerald-800"}`}>{wait.label}</span> : null; })()}
                       </td>
                       <td className="py-3 px-4">{bilan.candidateName}</td>
                       <td className="py-3 px-4">{bilan.candidateEmail}</td>

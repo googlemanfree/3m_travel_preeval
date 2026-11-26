@@ -65,6 +65,58 @@ export async function sendWhatsAppMessage(
   }
 }
 
+/** L’envoi WhatsApp automatique (Twilio) est-il réellement configuré ? Sans cela, rien n’est envoyé. */
+export function isWhatsAppConfigured(): boolean {
+  return Boolean(TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN && TWILIO_WHATSAPP_NUMBER);
+}
+
+export type WhatsAppDocumentResult = {
+  success: boolean;
+  /** false : aucun envoi n’a été tenté (Twilio non configuré) — jamais un faux succès. */
+  configured: boolean;
+  messageId?: string;
+  error?: string;
+};
+
+/**
+ * Envoie un message WhatsApp avec une pièce jointe (PDF) via Twilio (`MediaUrl`, 16 Mo maximum).
+ * Contrairement à sendWhatsAppMessage, un environnement non configuré renvoie `configured: false`
+ * et `success: false` : l’appelant ne doit pas annoncer un envoi qui n’a pas eu lieu.
+ * Rappel WhatsApp : hors fenêtre de 24 h après le dernier message du candidat, un message libre peut
+ * être refusé par WhatsApp tant qu’un modèle (template) approuvé n’est pas configuré chez Twilio.
+ */
+export async function sendWhatsAppDocument(
+  toPhoneNumber: string,
+  message: string,
+  mediaUrl: string,
+): Promise<WhatsAppDocumentResult> {
+  const formattedPhone = toE164WhatsApp(toPhoneNumber);
+  if (!formattedPhone) return { success: false, configured: isWhatsAppConfigured(), error: "Numéro de téléphone invalide" };
+  if (!/^https:\/\//i.test(mediaUrl)) return { success: false, configured: isWhatsAppConfigured(), error: "Lien du document invalide (https requis)" };
+  const body = String(message || "").trim().slice(0, 1500);
+  if (!body) return { success: false, configured: isWhatsAppConfigured(), error: "Message WhatsApp vide" };
+  if (!isWhatsAppConfigured()) {
+    return { success: false, configured: false, error: "Envoi WhatsApp automatique non configuré (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_NUMBER)." };
+  }
+  try {
+    const params = new URLSearchParams();
+    params.set("From", `whatsapp:${TWILIO_WHATSAPP_NUMBER.startsWith("+") ? TWILIO_WHATSAPP_NUMBER : `+${TWILIO_WHATSAPP_NUMBER}`}`);
+    params.set("To", `whatsapp:${formattedPhone}`);
+    params.set("Body", body);
+    params.set("MediaUrl", mediaUrl);
+    const auth = Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString("base64");
+    const response = await axios.post(
+      `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
+      params.toString(),
+      { headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/x-www-form-urlencoded" } },
+    );
+    return { success: true, configured: true, messageId: response.data.sid };
+  } catch (err) {
+    const detail = (err as { response?: { data?: { message?: string } } }).response?.data?.message;
+    return { success: false, configured: true, error: detail || (err instanceof Error ? err.message : "Erreur WhatsApp") };
+  }
+}
+
 /** Messages purs — testables sans Twilio. */
 export function buildAgencyDocumentsPublishedWhatsApp(params: {
   candidateName: string;
