@@ -14,6 +14,18 @@ import {
 
 export const COUNTRY_EVAL_FORM_DOCUMENT_TYPE = "Formulaire d’évaluation préliminaire";
 
+/** Adresse de retour du formulaire rempli (affichée dans l’e-mail, la notification et le PDF). */
+export const COUNTRY_FORM_RETURN_EMAIL = "hello@3mtravelagency.com";
+
+/**
+ * Consigne de retour, identique partout : le formulaire pays est DISTINCT de l’évaluation déjà
+ * remplie en ligne ; il doit être rempli puis renvoyé par e-mail OU déposé dans l’espace client.
+ */
+export const COUNTRY_FORM_RETURN_INSTRUCTION =
+  `Une fois le formulaire rempli, renvoyez-le à l’agence : soit par e-mail à ${COUNTRY_FORM_RETURN_EMAIL} `
+  + "(PDF en pièce jointe, en répondant à ce message), soit en le déposant dans votre espace client "
+  + "(Mon espace › Documents).";
+
 export type CountryEvaluationFormTemplate = {
   countryKey: string;
   countryLabel: string;
@@ -131,7 +143,7 @@ function buildCopy(
     `Remplissez toutes les sections. Langues attendues : ${profile.languageFocus}. Tests typiques : ${profile.languageTestsHint}. Ne joignez pas de numéro de passeport ni de données bancaires.`,
     `Pour les diplômes, précisez toute reconnaissance déjà obtenue (${profile.diplomaRecognitionHint}).`,
     "Enregistrez le fichier sous votre nom (ex. Formulaire-evaluation-Prenom-Nom.pdf).",
-    "Déposez le PDF rempli dans votre espace client (coffre), ou renvoyez-le à l’agence si un conseiller vous le demande.",
+    COUNTRY_FORM_RETURN_INSTRUCTION,
     "Un conseiller 3M relira ensuite votre formulaire pour préparer l’accompagnement et la checklist de pièces.",
   ];
 
@@ -146,7 +158,7 @@ function buildCopy(
     notificationTitle: `Formulaire d’évaluation ${countryLabel}`,
     notificationBody:
       `Votre formulaire d’évaluation préliminaire pour ${countryLabel} est disponible dans votre coffre. `
-      + `Remplissez-le, enregistrez-le, puis redéposez-le dans votre espace. `
+      + `Ce formulaire est distinct de l’évaluation déjà remplie en ligne : remplissez-le, puis renvoyez-le par e-mail à ${COUNTRY_FORM_RETURN_EMAIL} ou déposez-le dans votre espace client. `
       + `Il sert à orienter votre dossier — ce n’est pas une demande de visa.`,
   };
 }
@@ -201,7 +213,8 @@ export function resolveCountryEvaluationForm(destination: string | null | undefi
         "Téléchargez le PDF depuis cet e-mail ou depuis votre espace client (section Documents / coffre).",
         "Ouvrez-le dans un lecteur compatible formulaires (Adobe Reader, Preview, Edge…) et remplissez les 5 sections. Ne joignez pas de numéro de passeport ni de données bancaires.",
         "Précisez l’EDE (WES, IQAS…) et les tests TEF/TCF ou IELTS/CELPIP dès qu’ils sont disponibles.",
-        "Enregistrez le fichier sous votre nom, puis redéposez-le dans votre coffre.",
+        "Enregistrez le fichier sous votre nom (ex. Formulaire-evaluation-Prenom-Nom.pdf).",
+        COUNTRY_FORM_RETURN_INSTRUCTION,
         "Un conseiller 3M relira le formulaire pour l’orientation et la checklist de pièces.",
       ],
     };

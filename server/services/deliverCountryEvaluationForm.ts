@@ -10,6 +10,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import {
   COUNTRY_EVAL_FORM_DOCUMENT_TYPE,
+  COUNTRY_FORM_RETURN_EMAIL,
   resolveCountryEvaluationForm,
   type CountryEvaluationFormTemplate,
 } from "../../shared/countryEvaluationForms";
@@ -105,6 +106,10 @@ function buildInstructionEmailHtml(input: {
       <div style="padding:28px 30px;background:#f8fafc;">
         <p>Bonjour <strong>${safeName}</strong>,</p>
         <p>${escapeHtml(input.template.emailIntro).replace(/\n/g, "<br/>")}</p>
+        <div style="background:#fff7ed;border:1px solid #fdba74;border-left:5px solid #ea580c;border-radius:10px;padding:14px 16px;margin:18px 0;">
+          <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#9a3412;text-transform:uppercase;letter-spacing:.04em;">À faire : remplir puis renvoyer ce formulaire</p>
+          <p style="margin:0;line-height:1.6;color:#431407;">Ce formulaire s’ajoute à l’évaluation que vous avez déjà remplie en ligne : il est nécessaire pour réunir toutes les informations de votre procédure. Une fois complété, renvoyez-le <strong>soit par e-mail</strong> à <a href="mailto:${COUNTRY_FORM_RETURN_EMAIL}" style="color:#9a3412;font-weight:700;">${COUNTRY_FORM_RETURN_EMAIL}</a> (PDF en pièce jointe, en répondant à ce message), <strong>soit en le déposant dans votre espace client</strong> (Mon espace › Documents).</p>
+        </div>
         <div style="background:#fff;border:1px solid #dbeafe;border-radius:12px;padding:16px 18px;margin:18px 0;">
           <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:.04em;">À quoi sert ce PDF ?</p>
           <p style="margin:0;line-height:1.6;color:#334155;">${safePurpose}</p>
@@ -288,12 +293,14 @@ export async function deliverCountryEvaluationForm(
 
   let alreadyEmailed = false;
   if (candidateId) {
+    // Une notification (et un e-mail) par pays : un candidat qui a choisi plusieurs pays reçoit chaque formulaire.
     const prior = await db
       .select({ id: clientNotifications.id, emailSentAt: clientNotifications.emailSentAt })
       .from(clientNotifications)
       .where(and(
         eq(clientNotifications.candidateId, candidateId),
         eq(clientNotifications.type, "country_evaluation_form"),
+        eq(clientNotifications.title, template.notificationTitle),
       ))
       .limit(1);
     alreadyEmailed = Boolean(prior[0]?.emailSentAt);
@@ -338,6 +345,7 @@ export async function deliverCountryEvaluationForm(
           .where(and(
             eq(clientNotifications.candidateId, candidateId),
             eq(clientNotifications.type, "country_evaluation_form"),
+            eq(clientNotifications.title, template.notificationTitle),
           ));
       }
     } catch (error) {

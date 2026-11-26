@@ -2,6 +2,7 @@
  * Routeur tRPC — Espace Candidat
  * Gère l'inscription, la connexion, le profil, le dossier, les documents et la messagerie.
  */
+import { deliverCountryFormsForCandidateSafely } from "../services/candidateCountryForms";
 import { evaluationDisplayReference } from "../../shared/evaluationReference";
 import { isActivatedStatus } from "../../shared/candidateStatus";
 import { TRPCError } from "@trpc/server";
@@ -790,6 +791,16 @@ export const candidateRouter = router({
       }
 
       await db.update(candidates).set(updateData).where(eq(candidates.id, ctx.candidate.id));
+      // Nouveaux pays favoris : le formulaire de chaque pays non encore envoyé part automatiquement.
+      if (input.preferredDestinations !== undefined && ctx.candidate.emailVerified) {
+        void deliverCountryFormsForCandidateSafely(db, {
+          id: ctx.candidate.id,
+          email: ctx.candidate.email,
+          fullName: ctx.candidate.fullName,
+          preferredDestinations: String(updateData.preferredDestinations),
+          destination: String(updateData.destination ?? ctx.candidate.destination ?? ""),
+        });
+      }
       return { success: true };
     }),
 
@@ -1459,6 +1470,8 @@ export const candidateRouter = router({
         isRead: false,
       });
       try { await sendWelcomeEmail(candidate.email, candidate.fullName, primaryDestinationOf(candidate)); } catch {}
+      // Formulaire d’évaluation de chaque pays choisi : e-mail (PDF) + coffre, sans bloquer l’activation.
+      void deliverCountryFormsForCandidateSafely(db, candidate);
       const token = signCandidateToken(candidate.id);
       return { success: true, token, candidate: activationCandidatePayload(candidate), message: "Email vérifié avec succès. Bienvenue !" };
     }),
@@ -1495,6 +1508,7 @@ export const candidateRouter = router({
         isRead: false,
       });
       try { await sendWelcomeEmail(candidate.email, candidate.fullName, primaryDestinationOf(candidate)); } catch {}
+      void deliverCountryFormsForCandidateSafely(db, candidate);
       const token = signCandidateToken(input.candidateId);
       return { success: true, token, message: "Email vérifié avec succès. Bienvenue !" };
     }),
