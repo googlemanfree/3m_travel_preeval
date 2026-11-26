@@ -21,12 +21,46 @@ export function AdminBilanFollowUp({ sessionToken }: { sessionToken: string }) {
     onSuccess: (result) => { toast.success("Paiement en deux versements proposé", { description: `${result.items[0].amount} puis ${result.items[1].amount} XAF — le candidat est prévenu.` }); refresh(); },
     onError: (error) => toast.error(error.message),
   });
+  const whatsappSend = trpc.bilanFollowUp.sendWhatsApp.useMutation({
+    onSuccess: (result) => {
+      if (result.sent) { toast.success("Bilan envoyé par WhatsApp (PDF en pièce jointe)", { description: result.phone ?? undefined }); refresh(); }
+      else if (!result.configured && result.manualLink) {
+        window.open(result.manualLink, "_blank", "noopener,noreferrer");
+        toast.message("WhatsApp ouvert avec le message prêt", { description: "L'envoi automatique n'est pas configuré : validez l'envoi dans WhatsApp. Le message contient le lien de téléchargement du PDF." });
+      } else toast.error("WhatsApp n'a pas accepté l'envoi", { description: result.error ?? "Réessayez ou écrivez au candidat depuis WhatsApp." });
+    },
+    onError: (error) => toast.error(error.message),
+  });
+  const auto = trpc.bilanFollowUp.autoRelanceStatus.useQuery({ sessionToken }, { enabled: Boolean(sessionToken), retry: false, refetchOnWindowFocus: false });
+  const setAuto = trpc.bilanFollowUp.setAutoRelance.useMutation({
+    onSuccess: (result) => { toast.success(result.enabled ? "Relance automatique activée" : "Relance automatique désactivée"); void utils.bilanFollowUp.autoRelanceStatus.invalidate(); },
+    onError: (error) => toast.error(error.message),
+  });
+  const runAuto = trpc.bilanFollowUp.runAutoRelanceNow.useMutation({
+    onSuccess: (result) => { toast.success(`${result.sent} relance(s) envoyée(s)`, { description: result.deferred > 0 ? `${result.deferred} autre(s) partiront au prochain passage.` : undefined }); refresh(); void utils.bilanFollowUp.autoRelanceStatus.invalidate(); },
+    onError: (error) => toast.error(error.message),
+  });
   const data = query.data;
   const stats = data?.stats;
   const pct = (part: number, total: number) => (total > 0 ? `${Math.round((part / total) * 100)} %` : "—");
   return (
     <div className="space-y-4" data-testid="ops-followup">
-      <p className="text-sm text-slate-700">Bilans envoyés sans réponse ou refusés. Aucune relance n'est automatique : chaque envoi est un clic de votre part, limité à une relance par 24 h et par dossier, et inscrit au journal.</p>
+      <p className="text-sm text-slate-700">Bilans envoyés sans réponse ou refusés. Les relances automatiques (J+2, J+5, J+10) s'arrêtent dès que le candidat répond ; vous pouvez aussi relancer à la main (une relance par 24 h et par dossier) ou envoyer le bilan en PDF par WhatsApp. Chaque action est inscrite au journal.</p>
+      <div className="rounded-lg border border-slate-200 bg-white p-3" data-testid="auto-relance-panel">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="text-sm font-semibold text-slate-900">Relance automatique : {auto.data ? (auto.data.enabled ? "activée" : "désactivée") : "…"}</p>
+            <p className="text-xs text-slate-600">
+              {auto.data?.enabled ? `${auto.data.due} relance(s) prévue(s) au prochain passage (aux heures de bureau, 25 maximum par passage).` : "Aucune relance ne part tant qu'elle est désactivée."}
+              {auto.data && !auto.data.whatsappConfigured ? " WhatsApp automatique non configuré : les relances partent par espace client et e-mail." : ""}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" size="sm" variant="outline" disabled={!auto.data || setAuto.isPending} onClick={() => setAuto.mutate({ sessionToken, enabled: !auto.data?.enabled })} data-testid="auto-relance-toggle">{auto.data?.enabled ? "Désactiver" : "Activer"}</Button>
+            <Button type="button" size="sm" variant="outline" disabled={!auto.data?.enabled || (auto.data?.due ?? 0) === 0 || runAuto.isPending} onClick={() => { if (window.confirm(`Envoyer maintenant les ${auto.data?.due ?? 0} relance(s) prévue(s) ?`)) runAuto.mutate({ sessionToken }); }} data-testid="auto-relance-run">Envoyer maintenant</Button>
+          </div>
+        </div>
+      </div>
       {query.error && <p className="text-sm text-rose-700" role="alert">{query.error.message}</p>}
       {stats && (
         <>
@@ -68,6 +102,7 @@ export function AdminBilanFollowUp({ sessionToken }: { sessionToken: string }) {
                   {item.lastReminderAt && <p className="text-xs text-slate-500">Dernière relance le {when(item.lastReminderAt)} ({item.reminderCount} au total)</p>}
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  <Button type="button" size="sm" variant="outline" disabled={whatsappSend.isPending} onClick={() => { if (window.confirm(`Envoyer le bilan de ${item.fullName} en PDF par WhatsApp ?`)) whatsappSend.mutate({ sessionToken, applicationId: item.id }); }} data-testid={`followup-whatsapp-${item.id}`}>WhatsApp + PDF</Button>
                   <Button type="button" size="sm" variant="outline" disabled={!item.canRemind || remind.isPending} onClick={() => { if (window.confirm(`Relancer ${item.fullName} (notification + e-mail) ?`)) remind.mutate({ sessionToken, applicationId: item.id }); }} data-testid={`followup-remind-${item.id}`}>{item.canRemind ? "Relancer" : item.candidateId ? "Relancé il y a moins de 24 h" : "Pas de compte lié"}</Button>
                   <Button type="button" size="sm" variant="outline" disabled={installments.isPending || !item.candidateId} onClick={() => { if (window.confirm(`Proposer à ${item.fullName} de payer ${item.paymentAmount.toLocaleString("fr-FR")} XAF en deux versements ?`)) installments.mutate({ sessionToken, applicationId: item.id }); }} data-testid={`followup-installments-${item.id}`}>Proposer 2 versements</Button>
                 </div>

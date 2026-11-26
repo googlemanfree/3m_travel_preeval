@@ -39,6 +39,7 @@ import { applications, evaluationEmails } from "../../drizzle/schema";
 import { and, eq, isNull } from "drizzle-orm";
 import { verifyEvaluationEmailTrackingToken } from "../services/evaluationEmailCommunication";
 import { startActivationGuard } from "../services/activationGuard";
+import { startBilanAutoRelance } from "../services/bilanFollowUpActions";
 import { recordBilanViewed } from "../services/bilanReceipts";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -218,6 +219,7 @@ async function startServer() {
     initScheduledJobsCron(port);
     startCountryGuidesRefresh();
     startActivationGuard();
+    startBilanAutoRelance();
     startBilanAutoWorker();
   });
 }

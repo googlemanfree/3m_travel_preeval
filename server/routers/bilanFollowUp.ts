@@ -12,6 +12,8 @@ import { getDb } from "../db";
 import { sendClientNotificationEmail } from "../emailService";
 import { adminLabel } from "../services/partnerProfiles";
 import { emailAllowed } from "../services/candidateSecurity";
+import { isWhatsAppConfigured } from "../whatsappService";
+import { runBilanAutoRelances, sendBilanPdfByWhatsApp, setAutoRelanceEnabled } from "../services/bilanFollowUpActions";
 import { recordPrivacyEvent } from "../services/privacyAudit";
 import { requireValidAdminSession } from "./adminAuth";
 import { unifiedRequestsRouter } from "./unifiedRequests";
@@ -96,6 +98,46 @@ export const bilanFollowUpRouter = router({
     else await db.insert(agencySettings).values({ settingKey: key, settingValue: value });
     await recordPrivacyEvent(db, { actorType: "admin", actorId: admin.id, actorLabel: adminLabel(admin), action: "evaluation.reminded", resourceType: "application", resourceId: application.id, details: emailSent ? "relance : notification + e-mail" : "relance : notification seulement" });
     return { ok: true as const, emailSent };
+  }),
+
+  /** Envoi direct du bilan (PDF en pièce jointe) par WhatsApp ; sans WhatsApp automatique configuré, renvoie un lien WhatsApp prérempli. */
+  sendWhatsApp: publicProcedure.input(z.object({ sessionToken: session, applicationId: z.number().int().positive() })).mutation(async ({ input }) => {
+    const admin = await requireValidAdminSession(input.sessionToken);
+    const db = await requireDb();
+    await loadApplication(db, input.applicationId);
+    let result;
+    try {
+      result = await sendBilanPdfByWhatsApp(db, input.applicationId);
+    } catch (error) {
+      throw new TRPCError({ code: "PRECONDITION_FAILED", message: error instanceof Error ? error.message : "Envoi WhatsApp impossible." });
+    }
+    await recordPrivacyEvent(db, { actorType: "admin", actorId: admin.id, actorLabel: adminLabel(admin), action: "evaluation.whatsapp_sent", resourceType: "application", resourceId: input.applicationId, details: result.sent ? "bilan PDF envoyé par WhatsApp" : result.configured ? "envoi WhatsApp refusé" : "WhatsApp non configuré : lien manuel proposé" });
+    return result;
+  }),
+
+  /** État de la relance automatique, avec le nombre de relances prévues au prochain passage. */
+  autoRelanceStatus: publicProcedure.input(z.object({ sessionToken: session })).query(async ({ input }) => {
+    await requireValidAdminSession(input.sessionToken);
+    const db = await requireDb();
+    const preview = await runBilanAutoRelances(db, { dryRun: true });
+    return { enabled: preview.enabled, due: preview.due, deferred: preview.deferred, whatsappConfigured: isWhatsAppConfigured() };
+  }),
+
+  setAutoRelance: publicProcedure.input(z.object({ sessionToken: session, enabled: z.boolean() })).mutation(async ({ input }) => {
+    const admin = await requireValidAdminSession(input.sessionToken);
+    const db = await requireDb();
+    await setAutoRelanceEnabled(db, input.enabled);
+    await recordPrivacyEvent(db, { actorType: "admin", actorId: admin.id, actorLabel: adminLabel(admin), action: input.enabled ? "evaluation.auto_relance_enabled" : "evaluation.auto_relance_disabled", resourceType: "settings", resourceId: 0, details: "relance automatique des bilans" });
+    return { enabled: input.enabled };
+  }),
+
+  /** Lance un passage tout de suite (hors heures de bureau aussi) : « maintenant » ne s’applique qu’aux relances déjà dues. */
+  runAutoRelanceNow: publicProcedure.input(z.object({ sessionToken: session })).mutation(async ({ input }) => {
+    const admin = await requireValidAdminSession(input.sessionToken);
+    const db = await requireDb();
+    const report = await runBilanAutoRelances(db, { ignoreWindow: true });
+    await recordPrivacyEvent(db, { actorType: "admin", actorId: admin.id, actorLabel: adminLabel(admin), action: "evaluation.auto_relance_run", resourceType: "settings", resourceId: 0, details: `${report.sent} relance(s)` });
+    return { enabled: report.enabled, sent: report.sent, deferred: report.deferred };
   }),
 
   /** Frais d'ouverture en deux versements (le montant du dossier est inchangé) ; refusé si déjà payés ou déjà proposés. */

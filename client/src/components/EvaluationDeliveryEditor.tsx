@@ -342,6 +342,24 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
     }
   };
 
+  const whatsappSend = trpc.bilanFollowUp.sendWhatsApp.useMutation();
+  const handleWhatsApp = async () => {
+    if (!window.confirm(`Envoyer le bilan en PDF à ${application?.fullName ?? "ce candidat"} par WhatsApp ?`)) return;
+    try {
+      const result = await whatsappSend.mutateAsync({ sessionToken, applicationId: recordId });
+      if (result.sent) {
+        toast({ title: "Bilan envoyé par WhatsApp (PDF en pièce jointe)", description: result.phone ?? undefined });
+      } else if (!result.configured && result.manualLink) {
+        window.open(result.manualLink, "_blank", "noopener,noreferrer");
+        toast({ title: "WhatsApp ouvert avec le message prêt", description: "L'envoi automatique n'est pas configuré : validez l'envoi dans WhatsApp. Le message contient le lien de téléchargement du PDF." });
+      } else {
+        toast({ title: "WhatsApp n'a pas accepté l'envoi", description: result.error ?? "Réessayez ou écrivez au candidat depuis WhatsApp.", variant: "destructive" });
+      }
+    } catch (caught) {
+      fail("Envoi WhatsApp impossible", caught);
+    }
+  };
+
   const status = alreadySent ? "Envoyé au candidat" : validated ? "Validé — prêt à envoyer" : dirty ? "Modifications non enregistrées" : text.trim() ? "Enregistré — à valider" : "Aucun bilan saisi";
 
   const centered = (content: React.ReactNode, tone: "info" | "error" = "info") => (
@@ -442,6 +460,7 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
                   <Button type="button" variant="outline" className="border-amber-400 bg-amber-50 text-amber-950 hover:bg-amber-100" disabled={locked || busy || blockers.length > 0 || validated} onClick={() => void validateNow()} data-testid="bilan-validate">{validateDraft.isPending ? "Validation…" : validated ? "Validé" : "Valider"}</Button>
                   <Button type="button" variant="outline" disabled={locked || busy || sendTest.isPending || !text.trim()} onClick={() => void handleTest()} data-testid="bilan-test-email">{sendTest.isPending ? "Envoi du test…" : "M'envoyer un test"}</Button>
                   <Button type="button" className="bg-blue-700 hover:bg-blue-800" disabled={locked || busy || blockers.length > 0} onClick={() => void handleSend()} data-testid="bilan-validate-send">{alreadySent ? "Bilan déjà envoyé" : sendNow.isPending ? "Envoi…" : "Envoyer (espace client + e-mail)"}</Button>
+                  {alreadySent && <Button type="button" variant="outline" className="border-emerald-500 bg-emerald-50 text-emerald-950 hover:bg-emerald-100" disabled={whatsappSend.isPending} onClick={() => void handleWhatsApp()} data-testid="bilan-whatsapp-send">{whatsappSend.isPending ? "Envoi WhatsApp…" : "Envoyer le PDF par WhatsApp"}</Button>}
                 </div>
               </div>
             </>
