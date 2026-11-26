@@ -3545,6 +3545,20 @@ export const adminCandidateManagementRouter = router({
       };
     }),
 
+  /**
+   * Rattrapage : envoie le formulaire d’évaluation de chaque pays choisi aux candidats inscrits (confirmés)
+   * qui ne l’ont pas encore reçu par e-mail. `dryRun` (défaut) ne fait que compter, sans rien envoyer.
+   */
+  sendCountryFormsBackfill: publicProcedure
+    .input(z.object({ dryRun: z.boolean().default(true), limit: z.number().int().min(1).max(200).default(50) }))
+    .mutation(async ({ input, ctx }) => {
+      await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const { backfillCountryFormsForRegisteredCandidates } = await import("../services/candidateCountryForms");
+      return backfillCountryFormsForRegisteredCandidates(db, { dryRun: input.dryRun, limit: input.limit });
+    }),
+
   resendConfirmation: publicProcedure
     .input(z.object({ candidateId: z.string().regex(/^(online|agency)_\d+$/) }))
     .mutation(async ({ input, ctx }) => {

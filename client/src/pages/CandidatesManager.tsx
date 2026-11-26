@@ -502,6 +502,33 @@ export default function CandidatesManager() {
     onSuccess: ({ recipientEmail }) => toast.success(`E-mail de confirmation renvoyé à ${recipientEmail}.`),
     onError: error => toast.error(error.message || "Impossible de renvoyer l’e-mail de confirmation."),
   });
+  // Rattrapage : formulaires d’évaluation par pays pour les candidats inscrits qui ne les ont pas encore reçus.
+  const countryFormsBackfillMutation = trpc.adminCandidateManagement.sendCountryFormsBackfill.useMutation({
+    onError: error => toast.error(error.message || "Envoi des formulaires pays impossible."),
+  });
+  const sendCountryFormsToRegistered = async () => {
+    try {
+      const preview = await countryFormsBackfillMutation.mutateAsync({ dryRun: true, limit: 50 });
+      if (preview.candidatesPending === 0) {
+        toast.success("Tous les candidats inscrits ont déjà reçu le formulaire de leur pays.");
+        return;
+      }
+      const confirmed = window.confirm(
+        `${preview.candidatesPending} candidat(s) inscrit(s) n’ont pas encore reçu le formulaire de leur pays (${preview.formsPending} formulaire(s)).\n\n`
+        + "Envoyer maintenant par e-mail (PDF en pièce jointe, avec la consigne de le renvoyer par e-mail ou via l’espace client) ? "
+        + "Les envois partent par lots de 50 candidats.",
+      );
+      if (!confirmed) return;
+      const done = await countryFormsBackfillMutation.mutateAsync({ dryRun: false, limit: 50 });
+      toast.success(
+        `${done.emailsSent} e-mail(s) envoyé(s) à ${done.candidatesProcessed} candidat(s).`
+        + (done.remaining > 0 ? ` Il en reste ${done.remaining} : cliquez de nouveau sur le bouton pour continuer.` : " Tous les candidats sont à jour.")
+        + (done.failed > 0 ? ` ${done.failed} envoi(s) en échec (réessayez plus tard).` : ""),
+      );
+    } catch {
+      // l’erreur est déjà affichée par onError
+    }
+  };
   const archiveCandidateMutation = trpc.admin.archiveDuplicateRecord.useMutation({
     onSuccess: (result) => {
       toast.success(result.message || "Dossier placé dans la corbeille réversible.");
@@ -896,6 +923,9 @@ export default function CandidatesManager() {
               {activeSavedViewId && <Button variant="ghost" size="sm" onClick={() => removeViewMutation.mutate({ id: activeSavedViewId })} disabled={removeViewMutation.isPending}>Supprimer la vue</Button>}
               <Button variant="outline" size="sm" onClick={copyCurrentUrl}>
                 <Copy className="w-4 h-4 mr-2" />Copier le lien
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => void sendCountryFormsToRegistered()} disabled={countryFormsBackfillMutation.isPending} data-testid="send-country-forms-backfill">
+                {countryFormsBackfillMutation.isPending ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}Envoyer les formulaires pays
               </Button>
               <Button variant="outline" size="sm" onClick={() => exportMutation.mutate(filterInput)} disabled={exportMutation.isPending || isLoading}>
                 <Download className="w-4 h-4 mr-2" />{exportMutation.isPending ? "Export en cours..." : "Exporter"}
