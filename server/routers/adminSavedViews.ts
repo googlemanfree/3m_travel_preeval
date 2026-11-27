@@ -15,6 +15,8 @@ const savedViewStateSchema = z.object({
   sortBy: z.enum(["createdAt", "fullName", "score", "priorite", "soumission"]).default("priorite"),
   page: z.number().int().min(1).default(1),
   pageSize: z.union([z.literal(10), z.literal(25), z.literal(50), z.literal(100)]).default(25),
+  cvFilter: z.enum(["all", "a_traiter", "recu", "sans", "eval_cv"]).default("all"),
+  evaluationFilter: z.enum(["all", "evalue", "non_evalue"]).default("all"),
 });
 
 export const adminSavedViewsRouter = router({

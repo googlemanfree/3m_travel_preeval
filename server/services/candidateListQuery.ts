@@ -17,7 +17,7 @@ import { DOSSIER_STAGE_IDS, DOSSIER_STATUS_STAGE, dossierStageOf, dossierStatusL
 
 export type ListFilter = {
   search: string; status: string; paymentStatus: "all" | "paye" | "en_attente" | "non_paye"; scoreBand: "all" | "excellent" | "bon" | "moyen" | "faible";
-  destination: string; portraitStatus: "all" | "missing" | "pending" | "verified" | "rejected"; cvStatus: "all" | "a_traiter" | "recu" | "sans";
+  destination: string; portraitStatus: "all" | "missing" | "pending" | "verified" | "rejected"; cvStatus: "all" | "a_traiter" | "recu" | "sans" | "eval_cv";
   /** « evalue » : bilan envoyé ou évaluation validée par un conseiller ; « non_evalue » : ni l'un ni l'autre. */
   evaluationStatus: "all" | "evalue" | "non_evalue";
   sortBy: "createdAt" | "fullName" | "score" | "priorite" | "soumission"; sortDirection: "asc" | "desc"; page: number; pageSize: number;
@@ -28,13 +28,15 @@ export type ListedCandidate = {
   scoringBadge: "excellent" | "bon" | "moyen" | "faible"; status: string; stage: DossierStage; statusLabel: string; paymentStatus: "paye" | "en_attente" | "non_paye";
   createdAt: Date; documentsCount: number; source: "web" | "agence" | "compte" | "evaluation"; avatarUrl: string | null; avatarVerificationStatus: string;
   avatarVerificationReason: string | null; avatarFaceCount: number; cvReceived: boolean; bilanSent: boolean; evaluated: boolean;
+  /** Demande d'évaluation déposée ET CV déjà soumis : le dossier « Évaluation avec CV ». */
+  evaluationWithCv: boolean;
 };
 
 export type ListResult = {
   candidates: ListedCandidate[];
   stats: { scopeTotal: number; stageCounts: Record<DossierStage, number>; paidCount: number; withoutDossierCount: number; evaluationOnlyCount: number; cvToProcessCount: number; cvReceivedCount: number; evaluatedCount: number; notEvaluatedCount: number };
   /** Effectifs des classements rapides : calculés avec la recherche et les filtres actifs, mais SANS le choix de classement lui-même (ils ne bougent pas quand on change d'onglet). */
-  tabCounts: { all: number; cvToProcess: number; cvReceived: number; evaluated: number; notEvaluated: number };
+  tabCounts: { all: number; cvToProcess: number; cvReceived: number; evaluated: number; notEvaluated: number; evalCv: number; evalCvToProcess: number };
   total: number; page: number; pageSize: number; totalPages: number;
 };
 
@@ -61,7 +63,7 @@ function definition(source: Source) {
       band: sql.raw("CASE s.scoringBadge WHEN 'eligible' THEN 'excellent' WHEN 'admissible' THEN 'bon' ELSE 'faible' END"),
       payment: sql.raw("CASE s.paymentStatus WHEN 'SUCCESS' THEN 'paye' WHEN 'PENDING' THEN 'en_attente' ELSE 'non_paye' END"),
       ownCv: sql.raw("(s.cvUrl IS NOT NULL AND TRIM(s.cvUrl) <> '')"), ownBilan: sql.raw("(s.evaluationDeliveryStatus = 'sent')"),
-      base: sql.raw("1 = 1"),
+      base: sql.raw("1 = 1"), ownRequest: sql.raw("(1 = 1)"),
     };
   }
   if (source === "agence") {
@@ -71,7 +73,7 @@ function definition(source: Source) {
       number: sql.raw("CONCAT('3M-AGN-', IF(s.id < 1000, LPAD(s.id, 4, '0'), CAST(s.id AS CHAR)))"), status: sql.raw("s.status"),
       destination: sql.raw("COALESCE(NULLIF(s.destination, ''), 'Non spécifiée')"), visa: sql.raw("COALESCE(NULLIF(s.visaType, ''), 'Non spécifié')"),
       score: sql.raw("0"), band: sql.raw("'faible'"), payment: sql.raw("'non_paye'"), ownCv: sql.raw("0"), ownBilan: sql.raw("0"),
-      base: sql.raw("1 = 1"),
+      base: sql.raw("1 = 1"), ownRequest: sql.raw("(1 = 0)"),
     };
   }
   if (source === "evaluation") {
@@ -86,7 +88,7 @@ function definition(source: Source) {
       ownCv: sql.raw("(s.cvFileUrl IS NOT NULL AND TRIM(s.cvFileUrl) <> '')"), ownBilan: sql.raw("(s.finalResponseSentAt IS NOT NULL)"),
       // évaluation faite par une personne qui n'a NI compte, NI dossier en ligne, NI dossier agence (la dernière de chaque adresse) :
       // sans cette source, son CV et ses documents n'apparaissaient dans aucune liste de candidats. Les comptes supprimés comptent comme des comptes.
-      base: sql.raw(NOT_ARCHIVED_EVALUATION_SQL + " AND s.id IN (SELECT MAX(xe.id) FROM evaluations xe GROUP BY LOWER(xe.email)) AND LOWER(s.email) NOT IN (SELECT LOWER(xa.email) FROM applications xa) AND LOWER(s.email) NOT IN (SELECT LOWER(xg.email) FROM agency_dossiers xg) AND LOWER(s.email) NOT IN (SELECT LOWER(xc.email) FROM candidates xc)"),
+      base: sql.raw(NOT_ARCHIVED_EVALUATION_SQL + " AND s.id IN (SELECT MAX(xe.id) FROM evaluations xe GROUP BY LOWER(xe.email)) AND LOWER(s.email) NOT IN (SELECT LOWER(xa.email) FROM applications xa) AND LOWER(s.email) NOT IN (SELECT LOWER(xg.email) FROM agency_dossiers xg) AND LOWER(s.email) NOT IN (SELECT LOWER(xc.email) FROM candidates xc)"), ownRequest: sql.raw("(1 = 1)"),
     };
   }
   return {
@@ -97,7 +99,7 @@ function definition(source: Source) {
     score: sql.raw("0"), band: sql.raw("'faible'"), payment: sql.raw("'non_paye'"), ownCv: sql.raw("0"), ownBilan: sql.raw("0"),
     // compte sans dossier : ni en ligne ni agence, et non supprimé. « NOT IN (sous-requête) » est matérialisé une fois par la base :
     // mesuré 40 fois plus rapide que les formes « NOT EXISTS corrélé » ou « jointure sur sous-requête » (les adresses ne sont jamais nulles).
-    base: sql.raw("s.deletedAt IS NULL AND LOWER(s.email) NOT IN (SELECT LOWER(xa.email) FROM applications xa) AND LOWER(s.email) NOT IN (SELECT LOWER(xg.email) FROM agency_dossiers xg)"),
+    base: sql.raw("s.deletedAt IS NULL AND LOWER(s.email) NOT IN (SELECT LOWER(xa.email) FROM applications xa) AND LOWER(s.email) NOT IN (SELECT LOWER(xg.email) FROM agency_dossiers xg)"), ownRequest: sql.raw("(1 = 0)"),
   };
 }
 
@@ -107,6 +109,8 @@ function joins(options: Options, needPortrait: boolean): SQL {
   const parts: SQL[] = [
     sql` LEFT JOIN (SELECT LOWER(e.email) AS em FROM evaluations e WHERE e.cvFileUrl IS NOT NULL AND e.cvFileUrl <> '' UNION SELECT LOWER(c.email) FROM candidates c INNER JOIN candidate_files f ON f.candidateId = c.id WHERE f.fileType = 'cv' UNION SELECT LOWER(d.candidateEmail) FROM client_documents d WHERE d.documentType = 'cv') cvx ON cvx.em = LOWER(s.email)`,
   ];
+  // demande d'évaluation déposée par cette adresse : évaluation non archivée, dossier en ligne, ou évaluation déclarée / validée sur le compte
+  parts.push(sql` LEFT JOIN (SELECT LOWER(e.email) AS em FROM evaluations e WHERE ${sql.raw(NOT_ARCHIVED_EVALUATION_SQL.replace("s.id NOT IN", "e.id NOT IN"))} UNION SELECT LOWER(a.email) FROM applications a UNION SELECT LOWER(c.email) FROM candidates c WHERE c.evaluationDeclarationStatus IN ('pending_validation', 'validated')) evrx ON evrx.em = LOWER(s.email)`);
   parts.push(options.withPublished
     ? sql` LEFT JOIN (SELECT DISTINCT LOWER(e.email) AS em FROM evaluation_validation_cases v INNER JOIN evaluations e ON e.id = v.evaluationId WHERE v.publishedAt IS NOT NULL) pubx ON pubx.em = LOWER(s.email)`
     : sql` LEFT JOIN (SELECT NULL AS em) pubx ON 1 = 0`);
@@ -121,6 +125,16 @@ function evaluatedExpression(def: ReturnType<typeof definition>): SQL {
   return sql`(${def.ownBilan} OR pubx.em IS NOT NULL OR valx.em IS NOT NULL)`;
 }
 
+/** Demande d'évaluation déposée (par ce dossier ou par la même adresse). */
+function evaluationRequestedExpression(def: ReturnType<typeof definition>): SQL {
+  return sql`(${def.ownRequest} OR evrx.em IS NOT NULL)`;
+}
+
+/** Dossier « Évaluation avec CV » : demande d'évaluation déposée ET CV déjà soumis. */
+function evaluationWithCvExpression(def: ReturnType<typeof definition>): SQL {
+  return sql`(${evaluationRequestedExpression(def)} AND (${def.ownCv} OR cvx.em IS NOT NULL))`;
+}
+
 /** Conditions communes à tous les compteurs (le filtre d'étape en est exclu : les compteurs par étape l'ignorent). */
 function scopeConditions(source: Source, filter: ListFilter): SQL[] {
   const def = definition(source);
@@ -128,7 +142,7 @@ function scopeConditions(source: Source, filter: ListFilter): SQL[] {
   const query = filter.search.trim().toLowerCase();
   if (query) {
     const pattern = `%${escapeLike(query)}%`;
-    const searched = [def.name, def.email, ...("searchNumbers" in def ? def.searchNumbers : [def.number]), def.destination, def.visa];
+    const searched = [def.name, def.email, def.phone, ...("searchNumbers" in def ? def.searchNumbers : [def.number]), def.destination, def.visa];
     conditions.push(sql`(${sql.join(searched.map((column) => sql`LOWER(${column}) LIKE ${pattern}`), sql` OR `)})`);
   }
   if (filter.paymentStatus !== "all") conditions.push(sql`${def.payment} = ${filter.paymentStatus}`);
@@ -140,6 +154,7 @@ function scopeConditions(source: Source, filter: ListFilter): SQL[] {
   if (filter.cvStatus === "a_traiter") conditions.push(sql`(${hasCv} AND NOT ${evaluated})`);
   else if (filter.cvStatus === "recu") conditions.push(hasCv);
   else if (filter.cvStatus === "sans") conditions.push(sql`NOT ${hasCv}`);
+  else if (filter.cvStatus === "eval_cv") conditions.push(evaluationWithCvExpression(def));
   if (filter.evaluationStatus === "evalue") conditions.push(evaluated);
   else if (filter.evaluationStatus === "non_evalue") conditions.push(sql`NOT ${evaluated}`);
   return conditions;
@@ -192,9 +207,9 @@ async function tabCountsFor(db: Db, source: Source, filter: ListFilter, options:
   const where = sql.join(scopeConditions(source, neutral), sql` AND `);
   const hasCv = sql`(${def.ownCv} OR cvx.em IS NOT NULL)`;
   const evaluated = evaluatedExpression(def);
-  const query = sql`SELECT COUNT(*) AS n, SUM(CASE WHEN ${hasCv} AND NOT ${evaluated} THEN 1 ELSE 0 END) AS todo, SUM(CASE WHEN ${hasCv} THEN 1 ELSE 0 END) AS cv, SUM(CASE WHEN ${evaluated} THEN 1 ELSE 0 END) AS ev FROM ${def.table} s${joins(options, neutral.portraitStatus !== "all")} WHERE ${where}`;
+  const query = sql`SELECT COUNT(*) AS n, SUM(CASE WHEN ${hasCv} AND NOT ${evaluated} THEN 1 ELSE 0 END) AS todo, SUM(CASE WHEN ${hasCv} THEN 1 ELSE 0 END) AS cv, SUM(CASE WHEN ${evaluated} THEN 1 ELSE 0 END) AS ev, SUM(CASE WHEN ${evaluationWithCvExpression(def)} THEN 1 ELSE 0 END) AS evcv, SUM(CASE WHEN ${evaluationWithCvExpression(def)} AND NOT ${evaluated} THEN 1 ELSE 0 END) AS evcvtodo FROM ${def.table} s${joins(options, neutral.portraitStatus !== "all")} WHERE ${where}`;
   const [row] = rowsOf(await db.execute(query));
-  return { n: Number(row?.n ?? 0), todo: Number(row?.todo ?? 0), cv: Number(row?.cv ?? 0), ev: Number(row?.ev ?? 0) };
+  return { n: Number(row?.n ?? 0), todo: Number(row?.todo ?? 0), cv: Number(row?.cv ?? 0), ev: Number(row?.ev ?? 0), evcv: Number(row?.evcv ?? 0), evcvtodo: Number(row?.evcvtodo ?? 0) };
 }
 
 async function pageRows(db: Db, source: Source, filter: ListFilter, options: Options, limit: number) {
@@ -204,7 +219,7 @@ async function pageRows(db: Db, source: Source, filter: ListFilter, options: Opt
   const stage = stageCondition(source, filter.status);
   if (stage) conditions.push(stage);
   const where = sql.join(conditions, sql` AND `);
-  const query = sql`SELECT ${def.id} AS id, ${def.number} AS number, ${def.name} AS name, ${def.email} AS email, ${def.phone} AS phone, ${def.destination} AS destination, ${def.visa} AS visa, ${def.score} AS score, ${def.band} AS band, ${def.status} AS st, ${def.payment} AS pay, ${def.createdAt} AS createdAt, (${def.ownCv} OR cvx.em IS NOT NULL) AS cv, (${def.ownBilan} OR pubx.em IS NOT NULL) AS bilan, ${evaluatedExpression(def)} AS evaluated, (((${def.ownCv}) OR cvx.em IS NOT NULL) AND NOT ${evaluatedExpression(def)}) AS todo FROM ${def.table} s${joins(options, needPortrait)} WHERE ${where}${orderBy(source, filter)} LIMIT ${limit}`;
+  const query = sql`SELECT ${def.id} AS id, ${def.number} AS number, ${def.name} AS name, ${def.email} AS email, ${def.phone} AS phone, ${def.destination} AS destination, ${def.visa} AS visa, ${def.score} AS score, ${def.band} AS band, ${def.status} AS st, ${def.payment} AS pay, ${def.createdAt} AS createdAt, (${def.ownCv} OR cvx.em IS NOT NULL) AS cv, (${def.ownBilan} OR pubx.em IS NOT NULL) AS bilan, ${evaluatedExpression(def)} AS evaluated, (((${def.ownCv}) OR cvx.em IS NOT NULL) AND NOT ${evaluatedExpression(def)}) AS todo, ${evaluationWithCvExpression(def)} AS evcv FROM ${def.table} s${joins(options, needPortrait)} WHERE ${where}${orderBy(source, filter)} LIMIT ${limit}`;
   return rowsOf(await db.execute(query));
 }
 
@@ -270,10 +285,10 @@ export async function queryCandidateList(db: Db, filter: ListFilter): Promise<Li
         paymentStatus: row.pay as ListedCandidate["paymentStatus"], createdAt: new Date(row.createdAt as string), documentsCount: documentCounts.get(email.toLowerCase()) ?? 0, source,
         avatarUrl: (avatar?.avatarUrl as string | null | undefined) ?? null, avatarVerificationStatus: (avatar?.st as string | null | undefined) ?? "missing",
         avatarVerificationReason: (avatar?.reason as string | null | undefined) ?? null, avatarFaceCount: Number(avatar?.faces ?? 0),
-        cvReceived: Number(row.cv) > 0, bilanSent: Number(row.bilan) > 0, evaluated: Number(row.evaluated) > 0,
+        cvReceived: Number(row.cv) > 0, bilanSent: Number(row.bilan) > 0, evaluated: Number(row.evaluated) > 0, evaluationWithCv: Number(row.evcv) > 0,
       };
     });
-    return { candidates, stats: { scopeTotal, stageCounts, paidCount: paid, withoutDossierCount, evaluationOnlyCount, cvToProcessCount: cvToProcess, cvReceivedCount: cvReceived, evaluatedCount: evaluatedTotal, notEvaluatedCount: scopeTotal - evaluatedTotal }, tabCounts: { all: tabs.reduce((sum, t) => sum + t.n, 0), cvToProcess: tabs.reduce((sum, t) => sum + t.todo, 0), cvReceived: tabs.reduce((sum, t) => sum + t.cv, 0), evaluated: tabs.reduce((sum, t) => sum + t.ev, 0), notEvaluated: tabs.reduce((sum, t) => sum + t.n - t.ev, 0) }, total, page, pageSize: filter.pageSize, totalPages };
+    return { candidates, stats: { scopeTotal, stageCounts, paidCount: paid, withoutDossierCount, evaluationOnlyCount, cvToProcessCount: cvToProcess, cvReceivedCount: cvReceived, evaluatedCount: evaluatedTotal, notEvaluatedCount: scopeTotal - evaluatedTotal }, tabCounts: { all: tabs.reduce((sum, t) => sum + t.n, 0), cvToProcess: tabs.reduce((sum, t) => sum + t.todo, 0), cvReceived: tabs.reduce((sum, t) => sum + t.cv, 0), evaluated: tabs.reduce((sum, t) => sum + t.ev, 0), notEvaluated: tabs.reduce((sum, t) => sum + t.n - t.ev, 0), evalCv: tabs.reduce((sum, t) => sum + t.evcv, 0), evalCvToProcess: tabs.reduce((sum, t) => sum + t.evcvtodo, 0) }, total, page, pageSize: filter.pageSize, totalPages };
   };
 
   // La table du parcours de validation peut manquer sur une base non migrée : la liste continue de fonctionner sans « bilan publié ».
