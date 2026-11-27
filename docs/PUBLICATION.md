@@ -15,3 +15,4 @@ Le déploiement automatique se coupe ou se réactive avec les « watch patterns 
 ## Historique
 
 - 2026-11-27 : déploiement de l'instance de test Railway demandé par le propriétaire (watch patterns ouverts le temps du déploiement, puis à refermer).
+- 2026-11-27 : les commits restés « SKIPPED » (watch patterns fermés) ont été rejoués par Railway ; un commit final pousse la tête de `main` pour que le déploiement actif soit le plus récent.
