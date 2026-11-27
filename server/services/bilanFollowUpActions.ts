@@ -140,7 +140,8 @@ export async function runBilanAutoRelances(
     if (!plan.due || !row.candidateId) continue;
     const dossierNumber = evaluationDisplayReference(row) ?? "";
     const spaceUrl = `${siteUrl()}/mon-espace`;
-    const message = buildAutoRelanceMessage({ step: plan.step, viewed: plan.viewed, firstName: firstName(row.fullName), dossierNumber, spaceUrl });
+    // Bilan jamais consulté : le lien de téléchargement part avec la relance (l'e-mail est peut-être dans les indésirables).
+    const message = buildAutoRelanceMessage({ step: plan.step, viewed: plan.viewed, firstName: firstName(row.fullName), dossierNumber, spaceUrl, pdfUrl: !plan.viewed && row.evaluationReportPdfUrl ? absoluteSiteUrl(row.evaluationReportPdfUrl) : null });
 
     let notified = false;
     try {
@@ -180,7 +181,7 @@ export type BilanWhatsAppResult = {
   error?: string;
 };
 
-function absoluteUrl(url: string): string {
+export function absoluteSiteUrl(url: string): string {
   return /^https?:\/\//i.test(url) ? url : `${siteUrl()}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 
@@ -197,7 +198,7 @@ export async function sendBilanPdfByWhatsApp(db: Db, applicationId: number, now:
     phoneSource = candidate?.phone ?? null;
   }
   const phone = toE164WhatsApp(phoneSource);
-  const pdfUrl = absoluteUrl(application.evaluationReportPdfUrl);
+  const pdfUrl = absoluteSiteUrl(application.evaluationReportPdfUrl);
   const message = buildBilanPdfWhatsAppMessage({
     firstName: firstName(application.fullName),
     dossierNumber: evaluationDisplayReference(application) ?? "",

@@ -1,6 +1,6 @@
 ﻿import { TRPCError } from "@trpc/server";
 import { isWhatsAppConfigured } from "../whatsappService";
-import { sendBilanPdfByWhatsApp } from "../services/bilanFollowUpActions";
+import { absoluteSiteUrl, sendBilanPdfByWhatsApp } from "../services/bilanFollowUpActions";
 import { evaluationDisplayReference } from "../../shared/evaluationReference";
 import { isProvisionalReference } from "../../shared/accountKeys";
 import { agencyMirrorKey, isEvalAgencyShell } from "../../shared/evalAgencyShell";
@@ -1057,7 +1057,7 @@ initializeEvaluationDelivery: publicProcedure
         title: "Votre bilan d’évaluation",
         reference: evaluationDisplayReference(application),
         preheader: "Votre bilan est prêt : consultez-le, puis ouvrez votre dossier pour avancer.",
-        bodyHtml: `${plainEmailBaseHtml}<p style="margin:22px 0 0;font:14px/1.7 'Segoe UI',Calibri,Arial,Helvetica,sans-serif;color:#1f2937;text-align:justify"><strong style="color:#17375e">Et maintenant ?</strong> Si ce bilan vous convient, cliquez sur « Je valide et j’ouvre mon dossier » dans votre espace client. Réunir et vérifier les pièces demande souvent plusieurs semaines : commencer tôt laisse de la marge pour les rendez-vous et les délais de dépôt. Les frais d’ouverture sont confirmés par votre conseiller selon votre profil. Ce bilan évalue la préparation de votre dossier : il ne garantit aucune décision des autorités.</p>`,
+        bodyHtml: `${plainEmailBaseHtml}<p style="margin:22px 0 0;font:14px/1.7 'Segoe UI',Calibri,Arial,Helvetica,sans-serif;color:#1f2937;text-align:justify"><strong style="color:#17375e">Et maintenant ?</strong> Si ce bilan vous convient, cliquez sur « Je valide et j’ouvre mon dossier » dans votre espace client. Réunir et vérifier les pièces demande souvent plusieurs semaines : commencer tôt laisse de la marge pour les rendez-vous et les délais de dépôt. Les frais d’ouverture sont confirmés par votre conseiller selon votre profil. Ce bilan évalue la préparation de votre dossier : il ne garantit aucune décision des autorités.</p><p style="margin:16px 0 0;font:13px/1.6 'Segoe UI',Calibri,Arial,Helvetica,sans-serif;color:#475569;text-align:justify"><strong>Ce message est arrivé dans vos courriers indésirables ?</strong> Marquez-le « Non spam » pour recevoir nos prochains messages dans votre boîte principale. Vous pouvez aussi télécharger votre bilan en PDF : <a href="${absoluteSiteUrl(finalPdf.url)}" style="color:#17375e">télécharger mon bilan</a>.</p>`,
         cta: { label: "Je valide et j’ouvre mon dossier", url: candidateSpaceUrl },
       });
       const insertedTracking = await db.insert(evaluationEmails).values({ evaluationId: application.id, candidateEmail: application.email, candidateName: application.fullName, destinationCountry: application.destination || "Mobilité internationale", visaType: visaJournal.journalVisaLabel.slice(0, 100), emailType: "admissibility_report", language: deliveryDraft.language === "en" ? "en" : "fr", scheduledAt: new Date(), status: "pending", reportContent: emailBaseHtml, secureLink: candidateSpaceUrl });

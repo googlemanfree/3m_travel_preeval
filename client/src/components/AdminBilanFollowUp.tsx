@@ -40,8 +40,27 @@ export function AdminBilanFollowUp({ sessionToken }: { sessionToken: string }) {
     onSuccess: (result) => { toast.success(`${result.sent} relance(s) envoyée(s)`, { description: result.deferred > 0 ? `${result.deferred} autre(s) partiront au prochain passage.` : undefined }); refresh(); void utils.bilanFollowUp.autoRelanceStatus.invalidate(); },
     onError: (error) => toast.error(error.message),
   });
+  const [deliveryFilter, setDeliveryFilter] = React.useState<"all" | "unseen" | "failed">("all");
+  const copyPdfLink = async (url: string | null, name: string) => {
+    if (!url) { toast.error("Aucun PDF n'est enregistré pour ce bilan.", { description: "Ouvrez l'éditeur du bilan pour le régénérer." }); return; }
+    try {
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(url);
+      else {
+        const input = document.createElement("textarea");
+        input.value = url;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        input.remove();
+      }
+      toast.success(`Lien du bilan de ${name} copié`, { description: "Collez-le dans WhatsApp, un SMS ou un e-mail : le candidat télécharge son bilan en PDF." });
+    } catch {
+      toast.error("Impossible de copier le lien", { description: url });
+    }
+  };
   const data = query.data;
   const stats = data?.stats;
+  const visibleItems = (data?.items ?? []).filter((item) => deliveryFilter === "all" || item.delivery === deliveryFilter);
   const pct = (part: number, total: number) => (total > 0 ? `${Math.round((part / total) * 100)} %` : "—");
   return (
     <div className="space-y-4" data-testid="ops-followup">
@@ -61,6 +80,23 @@ export function AdminBilanFollowUp({ sessionToken }: { sessionToken: string }) {
           </div>
         </div>
       </div>
+      {stats && (stats.unseen > 0 || stats.failed > 0) && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950" role="status" data-testid="delivery-alert">
+          <p className="font-semibold">
+            {stats.unseen > 0 && `${stats.unseen} bilan(s) envoyé(s) depuis plus de 24 h et jamais consulté(s)`}
+            {stats.unseen > 0 && stats.failed > 0 && " · "}
+            {stats.failed > 0 && `${stats.failed} e-mail(s) en échec`}
+          </p>
+          <p className="mt-0.5 text-xs">Le message est probablement dans les courriers indésirables (spam) ou n'est pas arrivé. Copiez le lien du PDF ou envoyez-le par WhatsApp : le candidat télécharge son bilan sans passer par sa boîte e-mail.</p>
+        </div>
+      )}
+      {data && data.items.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer selon la réception" data-testid="delivery-filter">
+          {([["all", `Tous (${data.items.length})`], ["unseen", `Non consultés (${data.items.filter((item) => item.delivery === "unseen").length})`], ["failed", `E-mail en échec (${data.items.filter((item) => item.delivery === "failed").length})`]] as const).map(([value, label]) => (
+            <button key={value} type="button" aria-pressed={deliveryFilter === value} onClick={() => setDeliveryFilter(value)} className={`h-9 rounded-md border px-3 text-sm font-semibold ${deliveryFilter === value ? "border-[#0B2A52] bg-[#0B2A52] text-white" : "border-slate-300 bg-white text-slate-800 hover:bg-slate-50"}`}>{label}</button>
+          ))}
+        </div>
+      )}
       {query.error && <p className="text-sm text-rose-700" role="alert">{query.error.message}</p>}
       {stats && (
         <>
@@ -92,16 +128,25 @@ export function AdminBilanFollowUp({ sessionToken }: { sessionToken: string }) {
       {data && data.items.length === 0 && <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-900" data-testid="followup-empty">Aucun bilan en attente de réponse.</p>}
       {data && data.items.length > 0 && (
         <ul className="space-y-2" data-testid="followup-list">
-          {data.items.map((item) => (
+          {visibleItems.map((item) => (
             <li key={item.id} className="rounded-lg border border-slate-200 bg-white p-3" data-testid={`followup-item-${item.id}`}>
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className="font-semibold text-slate-900">{item.fullName} <span className="text-xs font-normal text-slate-500">{item.dossierNumber}</span></p>
                   <p className="text-xs text-slate-600">{[item.destination, item.visaType].filter(Boolean).join(" · ")} · {item.daysSinceSent === null ? "date d'envoi inconnue" : item.daysSinceSent === 0 ? "envoyé aujourd'hui" : `envoyé il y a ${item.daysSinceSent} j`} · {item.opened ? "bilan ouvert" : "pas encore ouvert"}</p>
                   {item.state === "declined" && <p className="mt-1 text-sm text-amber-900"><strong>Refusé</strong> — {reasonLabel(item.reason)}{item.comment ? ` : « ${item.comment} »` : ""}</p>}
+                  <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs" data-testid={`followup-delivery-${item.id}`}>
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-800">Envoyé {when(item.sentAt)}</span>
+                    {item.delivery === "viewed" && <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-semibold text-emerald-900">Consulté {when(item.viewedAt)}</span>}
+                    {item.delivery === "unseen" && <span className="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-950">Non consulté — vérifier les indésirables</span>}
+                    {item.delivery === "failed" && <span className="rounded-full bg-rose-100 px-2 py-0.5 font-semibold text-rose-900">E-mail non remis</span>}
+                    {item.delivery === "recent" && <span className="rounded-full bg-sky-50 px-2 py-0.5 font-semibold text-sky-900">Envoyé récemment</span>}
+                    {item.whatsappSentAt && <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-900">WhatsApp envoyé {when(item.whatsappSentAt)}</span>}
+                  </p>
                   {item.lastReminderAt && <p className="text-xs text-slate-500">Dernière relance le {when(item.lastReminderAt)} ({item.reminderCount} au total)</p>}
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  <Button type="button" size="sm" variant="outline" onClick={() => void copyPdfLink(item.pdfUrl, item.fullName)} data-testid={`followup-copy-link-${item.id}`}>Copier le lien PDF</Button>
                   <Button type="button" size="sm" variant="outline" disabled={whatsappSend.isPending} onClick={() => { if (window.confirm(`Envoyer le bilan de ${item.fullName} en PDF par WhatsApp ?`)) whatsappSend.mutate({ sessionToken, applicationId: item.id }); }} data-testid={`followup-whatsapp-${item.id}`}>WhatsApp + PDF</Button>
                   <Button type="button" size="sm" variant="outline" disabled={!item.canRemind || remind.isPending} onClick={() => { if (window.confirm(`Relancer ${item.fullName} (notification + e-mail) ?`)) remind.mutate({ sessionToken, applicationId: item.id }); }} data-testid={`followup-remind-${item.id}`}>{item.canRemind ? "Relancer" : item.candidateId ? "Relancé il y a moins de 24 h" : "Pas de compte lié"}</Button>
                   <Button type="button" size="sm" variant="outline" disabled={installments.isPending || !item.candidateId} onClick={() => { if (window.confirm(`Proposer à ${item.fullName} de payer ${item.paymentAmount.toLocaleString("fr-FR")} XAF en deux versements ?`)) installments.mutate({ sessionToken, applicationId: item.id }); }} data-testid={`followup-installments-${item.id}`}>Proposer 2 versements</Button>

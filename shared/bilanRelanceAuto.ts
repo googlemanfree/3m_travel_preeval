@@ -67,12 +67,14 @@ export type RelanceMessage = { title: string; body: string; whatsapp: string };
 const DISCLAIMER = "Ce bilan évalue la préparation de votre dossier et ne garantit aucune décision des autorités.";
 
 /** Textes des trois relances ; le ton reste factuel, sans pression ni promesse de résultat. */
-export function buildAutoRelanceMessage(input: {
+function buildAutoRelanceMessageBase(input: {
   step: 1 | 2 | 3;
   viewed: boolean;
   firstName: string;
   dossierNumber: string;
   spaceUrl: string;
+  /** Lien de téléchargement du bilan en PDF : ajouté quand le candidat n'a pas encore consulté son bilan (e-mail peut-être dans les indésirables). */
+  pdfUrl?: string | null;
 }): RelanceMessage {
   const hello = input.firstName.trim() ? `Bonjour ${input.firstName.trim()}` : "Bonjour";
   const ref = input.dossierNumber ? ` (dossier ${input.dossierNumber})` : "";
@@ -99,6 +101,16 @@ export function buildAutoRelanceMessage(input: {
     title,
     body,
     whatsapp: `${hello}, c’est notre dernier message automatique concernant votre bilan${ref}. Votre projet a changé, ou un point vous bloque (tarif, calendrier) ? Répondez ici : un conseiller en discute avec vous. Sans réponse, nous ne vous relancerons plus.\n\n3M TRAVEL AGENCY`,
+  };
+}
+
+export function buildAutoRelanceMessage(input: Parameters<typeof buildAutoRelanceMessageBase>[0]): RelanceMessage {
+  const message = buildAutoRelanceMessageBase(input);
+  if (!input.pdfUrl) return message;
+  return {
+    title: message.title,
+    body: message.body.replace(` ${DISCLAIMER}`, ` Téléchargez votre bilan en PDF : ${input.pdfUrl} ${DISCLAIMER}`),
+    whatsapp: `${message.whatsapp}\n\nVotre bilan en PDF : ${input.pdfUrl}`,
   };
 }
 
