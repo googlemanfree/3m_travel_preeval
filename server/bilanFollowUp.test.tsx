@@ -131,7 +131,7 @@ describe("garde-fous et branchements", () => {
   it("toutes les procédures de suivi exigent une session administrateur ; la relance est limitée à 24 h ; le test d'e-mail va à l'administrateur connecté seulement", () => {
     const router = read("server/routers/bilanFollowUp.ts");
     const names = Array.from(router.matchAll(/\n  ([A-Za-z]+): publicProcedure/g), (match) => match[1]);
-    expect(names).toEqual(["pending", "remind", "sendWhatsApp", "autoRelanceStatus", "setAutoRelance", "runAutoRelanceNow", "proposeInstallments", "sendTest"]);
+    expect(names).toEqual(["pending", "remind", "sendWhatsApp", "pdfLink", "autoRelanceStatus", "setAutoRelance", "runAutoRelanceNow", "proposeInstallments", "sendTest"]);
     expect((router.match(/await requireValidAdminSession\(input\.sessionToken\)/g) ?? []).length).toBe(names.length);
     expect(router).toContain("Une relance a déjà été envoyée il y a moins de 24 heures.");
     expect(router).toContain("testEmail: admin.email");

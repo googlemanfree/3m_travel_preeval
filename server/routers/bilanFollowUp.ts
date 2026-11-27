@@ -2,7 +2,7 @@ import { evaluationDisplayReference } from "../../shared/evaluationReference";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { agencySettings, applications } from "../../drizzle/schema";
+import { agencySettings, applications, evaluationEmails } from "../../drizzle/schema";
 import { clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { paymentScheduleItems } from "../../drizzle/remoteSupportSchema";
 import { buildFollowUp, reminderMessage, splitInTwo, type DecisionLite, type FollowUpRow, type ReminderLite } from "../../shared/bilanFollowUp";
@@ -13,7 +13,7 @@ import { sendClientNotificationEmail } from "../emailService";
 import { adminLabel } from "../services/partnerProfiles";
 import { emailAllowed } from "../services/candidateSecurity";
 import { isWhatsAppConfigured } from "../whatsappService";
-import { runBilanAutoRelances, sendBilanPdfByWhatsApp, setAutoRelanceEnabled } from "../services/bilanFollowUpActions";
+import { absoluteSiteUrl, runBilanAutoRelances, sendBilanPdfByWhatsApp, setAutoRelanceEnabled, WHATSAPP_PREFIX } from "../services/bilanFollowUpActions";
 import { recordPrivacyEvent } from "../services/privacyAudit";
 import { requireValidAdminSession } from "./adminAuth";
 import { unifiedRequestsRouter } from "./unifiedRequests";
@@ -52,7 +52,15 @@ export const bilanFollowUpRouter = router({
     await requireValidAdminSession(input.sessionToken);
     const db = await requireDb();
     const rows = await db.select().from(applications).where(eq(applications.evaluationDeliveryStatus, "sent")).orderBy(desc(applications.evaluationCompletedAt)).limit(400);
-    const settings = await settingsByKey(db, rows.flatMap((row) => [`${DECISION_PREFIX}${row.id}`, `${REMINDER_PREFIX}${row.id}`]));
+    const settings = await settingsByKey(db, rows.flatMap((row) => [`${DECISION_PREFIX}${row.id}`, `${REMINDER_PREFIX}${row.id}`, `${WHATSAPP_PREFIX}${row.id}`]));
+    // dernier e-mail du bilan par dossier : permet de repérer un envoi échoué ou rebondi (le candidat ne l'a alors jamais reçu)
+    const emailStatus = new Map<number, "sent" | "failed" | "bounced" | "pending">();
+    if (rows.length > 0) {
+      try {
+        const emails = await db.select({ evaluationId: evaluationEmails.evaluationId, status: evaluationEmails.status }).from(evaluationEmails).where(and(inArray(evaluationEmails.evaluationId, rows.map((row) => row.id)), eq(evaluationEmails.emailType, "admissibility_report"))).orderBy(evaluationEmails.id);
+        for (const email of emails) emailStatus.set(email.evaluationId, email.status);
+      } catch { /* suivi des e-mails indisponible : le reste de la liste fonctionne */ }
+    }
     const decisions: Record<number, DecisionLite | undefined> = {};
     const reminders: Record<number, ReminderLite | undefined> = {};
     for (const row of rows) {
@@ -72,6 +80,9 @@ export const bilanFollowUpRouter = router({
       sentAt: row.evaluationCompletedAt ? new Date(row.evaluationCompletedAt).toISOString() : null,
       viewedAt: row.evaluationReportViewedAt ? new Date(row.evaluationReportViewedAt).toISOString() : null,
       activationRequestedAt: row.activationRequestedAt ? new Date(row.activationRequestedAt).toISOString() : null,
+      pdfUrl: row.evaluationReportPdfUrl ? absoluteSiteUrl(row.evaluationReportPdfUrl) : null,
+      emailStatus: emailStatus.get(row.id) ?? null,
+      whatsappSentAt: parse<{ at: string; lastOk?: boolean }>(settings.get(`${WHATSAPP_PREFIX}${row.id}`))?.lastOk ? parse<{ at: string }>(settings.get(`${WHATSAPP_PREFIX}${row.id}`))?.at ?? null : null,
     }));
     return buildFollowUp(lines, decisions, reminders);
   }),
@@ -86,7 +97,7 @@ export const bilanFollowUpRouter = router({
     const key = `${REMINDER_PREFIX}${application.id}`;
     const previous = parse<ReminderLite>((await settingsByKey(db, [key])).get(key));
     if (previous && Date.now() - new Date(previous.at).getTime() < 24 * 60 * 60 * 1000) throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Une relance a déjà été envoyée il y a moins de 24 heures." });
-    const message = reminderMessage(firstName(application.fullName));
+    const message = reminderMessage(firstName(application.fullName), application.evaluationReportPdfUrl ? absoluteSiteUrl(application.evaluationReportPdfUrl) : null);
     try { await db.insert(clientNotifications).values({ candidateId: application.candidateId, type: "evaluation_reminder", title: message.title, body: message.body, actionUrl: "/mon-espace", isRead: false }); } catch { /* l'e-mail reste tenté */ }
     let emailSent = false;
     if (await emailAllowed(db, application.candidateId)) {
@@ -113,6 +124,15 @@ export const bilanFollowUpRouter = router({
     }
     await recordPrivacyEvent(db, { actorType: "admin", actorId: admin.id, actorLabel: adminLabel(admin), action: "evaluation.whatsapp_sent", resourceType: "application", resourceId: input.applicationId, details: result.sent ? "bilan PDF envoyé par WhatsApp" : result.configured ? "envoi WhatsApp refusé" : "WhatsApp non configuré : lien manuel proposé" });
     return result;
+  }),
+
+  /** Lien de téléchargement du bilan en PDF (à copier et coller dans WhatsApp, SMS ou e-mail). */
+  pdfLink: publicProcedure.input(z.object({ sessionToken: session, applicationId: z.number().int().positive() })).query(async ({ input }) => {
+    await requireValidAdminSession(input.sessionToken);
+    const db = await requireDb();
+    const application = await loadApplication(db, input.applicationId);
+    if (!application.evaluationReportPdfUrl) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le PDF de ce bilan est introuvable. Régénérez-le depuis l'éditeur du bilan." });
+    return { url: absoluteSiteUrl(application.evaluationReportPdfUrl) };
   }),
 
   /** État de la relance automatique, avec le nombre de relances prévues au prochain passage. */

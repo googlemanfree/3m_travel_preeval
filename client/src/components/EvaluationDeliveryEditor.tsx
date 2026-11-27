@@ -342,6 +342,24 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
     }
   };
 
+  const utilsLink = trpc.useUtils();
+  const handleCopyPdfLink = async () => {
+    try {
+      const { url } = await utilsLink.bilanFollowUp.pdfLink.fetch({ sessionToken, applicationId: recordId });
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(url);
+      else {
+        const input = document.createElement("textarea");
+        input.value = url;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        input.remove();
+      }
+      toast({ title: "Lien du bilan (PDF) copié", description: "Collez-le dans WhatsApp, un SMS ou un e-mail : le candidat télécharge son bilan directement." });
+    } catch (caught) {
+      fail("Lien du bilan indisponible", caught);
+    }
+  };
   const whatsappSend = trpc.bilanFollowUp.sendWhatsApp.useMutation();
   const handleWhatsApp = async () => {
     if (!window.confirm(`Envoyer le bilan en PDF à ${application?.fullName ?? "ce candidat"} par WhatsApp ?`)) return;
@@ -460,7 +478,8 @@ export function EvaluationDeliveryEditor({ sessionToken: providedSessionToken, s
                   <Button type="button" variant="outline" className="border-amber-400 bg-amber-50 text-amber-950 hover:bg-amber-100" disabled={locked || busy || blockers.length > 0 || validated} onClick={() => void validateNow()} data-testid="bilan-validate">{validateDraft.isPending ? "Validation…" : validated ? "Validé" : "Valider"}</Button>
                   <Button type="button" variant="outline" disabled={locked || busy || sendTest.isPending || !text.trim()} onClick={() => void handleTest()} data-testid="bilan-test-email">{sendTest.isPending ? "Envoi du test…" : "M'envoyer un test"}</Button>
                   <Button type="button" className="bg-blue-700 hover:bg-blue-800" disabled={locked || busy || blockers.length > 0} onClick={() => void handleSend()} data-testid="bilan-validate-send">{alreadySent ? "Bilan déjà envoyé" : sendNow.isPending ? "Envoi…" : "Envoyer (espace client + e-mail)"}</Button>
-                  {alreadySent && <Button type="button" variant="outline" className="border-emerald-500 bg-emerald-50 text-emerald-950 hover:bg-emerald-100" disabled={whatsappSend.isPending} onClick={() => void handleWhatsApp()} data-testid="bilan-whatsapp-send">{whatsappSend.isPending ? "Envoi WhatsApp…" : "Envoyer le PDF par WhatsApp"}</Button>}
+                  {alreadySent && <Button type="button" variant="outline" onClick={() => void handleCopyPdfLink()} data-testid="bilan-copy-pdf-link">Copier le lien PDF</Button>}
+                                    {alreadySent && <Button type="button" variant="outline" className="border-emerald-500 bg-emerald-50 text-emerald-950 hover:bg-emerald-100" disabled={whatsappSend.isPending} onClick={() => void handleWhatsApp()} data-testid="bilan-whatsapp-send">{whatsappSend.isPending ? "Envoi WhatsApp…" : "Envoyer le PDF par WhatsApp"}</Button>}
                 </div>
               </div>
             </>
