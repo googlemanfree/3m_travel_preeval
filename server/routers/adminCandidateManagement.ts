@@ -76,7 +76,7 @@ const candidateFilterSchema = z.object({
   destination: z.string().trim().max(100).optional().default("all"),
   portraitStatus: z.enum(["all", "missing", "pending", "verified", "rejected"]).default("all"),
   /** CV : « a_traiter » = CV reçu et bilan pas encore envoyé (file de traitement rapide). */
-  cvStatus: z.enum(["all", "a_traiter", "recu", "sans"]).default("all"),
+  cvStatus: z.enum(["all", "a_traiter", "recu", "sans", "eval_cv"]).default("all"),
   /** Évaluation : « evalue » = bilan envoyé ou évaluation validée par un conseiller ; « non_evalue » = ni l'un ni l'autre. */
   evaluationStatus: z.enum(["all", "evalue", "non_evalue"]).default("all"),
   sortBy: z.enum(["createdAt", "fullName", "score", "priorite", "soumission"]).default("createdAt"),
@@ -504,6 +504,7 @@ export function filterCandidateRecords(records: AdminCandidate[], filter: Candid
   if (filter.cvStatus === "a_traiter") candidateRecords = candidateRecords.filter(candidate => candidate.cvReceived && !candidate.evaluated);
   else if (filter.cvStatus === "recu") candidateRecords = candidateRecords.filter(candidate => candidate.cvReceived);
   else if (filter.cvStatus === "sans") candidateRecords = candidateRecords.filter(candidate => !candidate.cvReceived);
+  else if (filter.cvStatus === "eval_cv") candidateRecords = candidateRecords.filter(candidate => candidate.cvReceived && (candidate.source === "web" || candidate.source === "evaluation"));
   if (filter.evaluationStatus === "evalue") candidateRecords = candidateRecords.filter(candidate => candidate.evaluated);
   else if (filter.evaluationStatus === "non_evalue") candidateRecords = candidateRecords.filter(candidate => !candidate.evaluated);
 

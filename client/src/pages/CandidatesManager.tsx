@@ -62,6 +62,8 @@ import { useLocation } from "wouter";
 import { getAdminSessionToken } from "@/lib/adminSession";
 import {
   CANDIDATE_PAGE_SIZES,
+  type CandidateCvFilter,
+  type CandidateEvaluationFilter,
   type CandidatePageSize,
   getPageTokens,
   parseCandidateListUrl,
@@ -93,6 +95,7 @@ interface Candidate {
   avatarVerificationReason?: string | null;
   avatarFaceCount: number;
   cvReceived?: boolean;
+  evaluationWithCv?: boolean;
   bilanSent?: boolean;
   evaluated?: boolean;
 }
@@ -457,9 +460,9 @@ export default function CandidatesManager() {
   }, [searchQuery]);
   const [statusFilter, setStatusFilter] = useState(initialUrlState.statusFilter);
   // File de traitement rapide : candidats dont le CV est reçu et dont le bilan n'est pas encore envoyé.
-  const [cvFilter, setCvFilter] = useState<"all" | "a_traiter" | "recu" | "sans">("all");
+  const [cvFilter, setCvFilter] = useState<CandidateCvFilter>(initialUrlState.cvFilter);
   // Classement par évaluation : évalués (bilan envoyé ou validation conseiller) / non évalués.
-  const [evaluationFilter, setEvaluationFilter] = useState<"all" | "evalue" | "non_evalue">("all");
+  const [evaluationFilter, setEvaluationFilter] = useState<CandidateEvaluationFilter>(initialUrlState.evaluationFilter);
   const [paymentFilter, setPaymentFilter] = useState(initialUrlState.paymentFilter);
   const [scoreFilter, setScoreFilter] = useState(initialUrlState.scoreFilter);
   const [destinationFilter, setDestinationFilter] = useState(initialUrlState.destinationFilter);
@@ -493,7 +496,36 @@ export default function CandidatesManager() {
     };
   }, [debouncedSearch, statusFilter, paymentFilter, scoreFilter, destinationFilter, cvFilter, evaluationFilter, sortBy, page, pageSize]);
   // La liste précédente reste affichée pendant le chargement de la suivante (pas de page blanche à chaque filtre ou changement de page).
-  const { data, isLoading, error } = trpc.adminCandidateManagement.list.useQuery(filterInput, { placeholderData: (previous) => previous });
+  // Actualisation automatique : toutes les 30 s tant que l'onglet est visible et qu'aucune fiche n'est ouverte ; désactivable, et mémorisée sur cet appareil.
+  const [autoRefresh, setAutoRefresh] = useState<boolean>(() => {
+    try { return window.localStorage.getItem("3m_admin_candidates_autorefresh") !== "off"; } catch { return true; }
+  });
+  const { data, isLoading, error, isFetching, dataUpdatedAt, refetch } = trpc.adminCandidateManagement.list.useQuery(filterInput, {
+    placeholderData: (previous) => previous,
+    refetchInterval: autoRefresh && !isDetailOpen ? 30_000 : false,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+  });
+  const toggleAutoRefresh = () => {
+    setAutoRefresh((current) => {
+      const next = !current;
+      try { window.localStorage.setItem("3m_admin_candidates_autorefresh", next ? "on" : "off"); } catch { /* préférence non mémorisée */ }
+      return next;
+    });
+  };
+  // Raccourci « / » : place le curseur dans la recherche, comme sur la plupart des outils d'administration.
+  const searchInputRef = React.useRef<HTMLInputElement | null>(null);
+  React.useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (event.key !== "/" || event.ctrlKey || event.metaKey || event.altKey) return;
+      if (target && (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || target.isContentEditable)) return;
+      event.preventDefault();
+      searchInputRef.current?.focus();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   const savedViewsQuery = trpc.adminSavedViews.list.useQuery();
   const bilanReadyQuery = trpc.adminBilanAuto.list.useQuery({ sessionToken: getAdminSessionToken(), filter: "pret" }, { retry: false, staleTime: 60_000 });
   const bilansReadyCount = bilanReadyQuery.data && bilanReadyQuery.data.enabled ? bilanReadyQuery.data.rows.length : 0;
@@ -569,8 +601,8 @@ export default function CandidatesManager() {
   const totalCandidates = data?.total ?? 0;
   const currentViewState = React.useMemo(() => ({
     searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter,
-    sortBy: sortBy as "createdAt" | "fullName" | "score" | "priorite" | "soumission", page, pageSize,
-  }), [searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy, page, pageSize]);
+    sortBy: sortBy as "createdAt" | "fullName" | "score" | "priorite" | "soumission", page, pageSize, cvFilter, evaluationFilter,
+  }), [searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy, page, pageSize, cvFilter, evaluationFilter]);
   const saveViewMutation = trpc.adminSavedViews.save.useMutation({
     onSuccess: () => {
       utils.adminSavedViews.list.invalidate();
@@ -596,15 +628,17 @@ export default function CandidatesManager() {
     setSortBy(next.sortBy);
     setPage(next.page);
     setPageSize(next.pageSize);
+    setCvFilter(next.cvFilter);
+    setEvaluationFilter(next.evaluationFilter);
   }, []);
 
   React.useEffect(() => {
-    const urlState = { searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy: sortBy as "createdAt" | "fullName" | "score" | "priorite" | "soumission", page, pageSize };
+    const urlState = { searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy: sortBy as "createdAt" | "fullName" | "score" | "priorite" | "soumission", page, pageSize, cvFilter, evaluationFilter };
     const nextUrl = `${window.location.pathname}${serializeCandidateListUrl(urlState)}${window.location.hash}`;
     if (`${window.location.pathname}${window.location.search}${window.location.hash}` !== nextUrl) {
       window.history.replaceState(null, "", nextUrl);
     }
-  }, [searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy, page, pageSize]);
+  }, [searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy, page, pageSize, cvFilter, evaluationFilter]);
 
   React.useEffect(() => {
     window.addEventListener("popstate", updateFromUrl);
@@ -630,6 +664,8 @@ export default function CandidatesManager() {
     setSortBy(next.sortBy);
     setPage(next.page);
     setPageSize(next.pageSize as CandidatePageSize);
+    setCvFilter(next.cvFilter ?? "all");
+    setEvaluationFilter(next.evaluationFilter ?? "all");
     setActiveSavedViewId(selected.id);
   };
 
@@ -776,17 +812,33 @@ export default function CandidatesManager() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-lg shadow-md p-6 mb-8"
         >
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-sm" data-testid="refresh-bar">
+            <p className="text-gray-600" role="status" aria-live="polite">
+              {isFetching ? "Actualisation…" : dataUpdatedAt ? `À jour à ${new Date(dataUpdatedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "Chargement…"}
+              {autoRefresh ? " · actualisation automatique toutes les 30 s" : " · actualisation automatique désactivée"}
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => void refetch()} disabled={isFetching} data-testid="refresh-now">
+                <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />Actualiser
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={toggleAutoRefresh} aria-pressed={autoRefresh} data-testid="refresh-auto-toggle">
+                {autoRefresh ? "Désactiver l’actualisation auto" : "Activer l’actualisation auto"}
+              </Button>
+            </div>
+          </div>
           <div className="mb-5" data-testid="classement-rapide" role="tablist" aria-label="Classement rapide des candidats">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Classement rapide</p>
             <div className="flex flex-wrap gap-2">
               {([
                 { id: "tous", label: "Tous", count: data?.tabCounts?.all, cv: "all", evaluation: "all", tone: "slate", sort: "priorite" },
                 { id: "cv-a-traiter", label: "CV reçu à traiter", count: data?.tabCounts?.cvToProcess, cv: "a_traiter", evaluation: "all", tone: "emerald", sort: "soumission" },
+                { id: "eval-cv", label: "Évaluation avec CV", count: data?.tabCounts?.evalCv, cv: "eval_cv", evaluation: "all", tone: "indigo", sort: "soumission" },
+                { id: "eval-cv-a-evaluer", label: "Évaluation + CV à évaluer", count: data?.tabCounts?.evalCvToProcess, cv: "eval_cv", evaluation: "non_evalue", tone: "indigo", sort: "soumission" },
                 { id: "non-evalues", label: "Non évalués", count: data?.tabCounts?.notEvaluated, cv: "all", evaluation: "non_evalue", tone: "amber", sort: "soumission" },
                 { id: "evalues", label: "Déjà évalués", count: data?.tabCounts?.evaluated, cv: "all", evaluation: "evalue", tone: "slate", sort: "createdAt" },
               ] as const).map((tab) => {
                 const active = cvFilter === tab.cv && evaluationFilter === tab.evaluation;
-                const activeClass = tab.tone === "emerald" ? "border-emerald-700 bg-emerald-700 text-white" : tab.tone === "amber" ? "border-amber-600 bg-amber-600 text-white" : "border-[#0B2A52] bg-[#0B2A52] text-white";
+                const activeClass = tab.tone === "indigo" ? "border-indigo-700 bg-indigo-700 text-white" : tab.tone === "emerald" ? "border-emerald-700 bg-emerald-700 text-white" : tab.tone === "amber" ? "border-amber-600 bg-amber-600 text-white" : "border-[#0B2A52] bg-[#0B2A52] text-white";
                 return (
                   <button key={tab.id} type="button" role="tab" aria-selected={active} data-testid={`classement-${tab.id}`} onClick={() => { setCvFilter(tab.cv); setEvaluationFilter(tab.evaluation); setSortBy(tab.sort); resetToFirstPage(); }} className={`inline-flex h-10 items-center gap-2 rounded-lg border px-4 text-sm font-semibold ${active ? activeClass : "border-slate-300 bg-white text-slate-800 hover:bg-slate-50"}`}>
                     {tab.label}
@@ -800,18 +852,25 @@ export default function CandidatesManager() {
             <div className="relative lg:col-span-2">
               <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
               <Input
-                placeholder="Rechercher par nom, email..."
+                ref={searchInputRef}
+                placeholder="Rechercher : nom, e-mail, téléphone, n° de dossier, pays… (touche /)"
+                aria-label="Rechercher un candidat"
+                data-testid="candidate-search"
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); resetToFirstPage(); }}
                 maxLength={200}
-                className="pl-10"
+                className="pl-10 pr-10"
               />
+              {searchQuery && (
+                <button type="button" aria-label="Effacer la recherche" data-testid="candidate-search-clear" onClick={() => { setSearchQuery(""); resetToFirstPage(); searchInputRef.current?.focus(); }} className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-500 hover:bg-slate-100 hover:text-gray-900">×</button>
+              )}
             </div>
 
             <div data-testid="cv-filter">
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">CV</p>
               <div className="flex flex-wrap gap-1" role="group" aria-label="Filtrer selon le CV">
                 {([
+                  ["eval_cv", `Évaluation avec CV${data?.tabCounts ? ` (${data.tabCounts.evalCv})` : ""}`],
                   ["a_traiter", `CV reçu à traiter${data?.stats ? ` (${data.stats.cvToProcessCount})` : ""}`],
                   ["recu", `CV reçu${data?.stats ? ` (${data.stats.cvReceivedCount})` : ""}`],
                   ["sans", "Sans CV"],
@@ -905,6 +964,30 @@ export default function CandidatesManager() {
             </Select>
             </div>
           </div>
+          {(() => {
+            const cvLabels: Record<string, string> = { eval_cv: "Évaluation avec CV", a_traiter: "CV reçu à traiter", recu: "CV reçu", sans: "Sans CV" };
+            const evalLabels: Record<string, string> = { evalue: "Déjà évalués", non_evalue: "Non évalués" };
+            const active: Array<{ key: string; label: string; clear: () => void }> = [];
+            if (searchQuery) active.push({ key: "q", label: `Recherche : « ${searchQuery} »`, clear: () => setSearchQuery("") });
+            if (cvFilter !== "all") active.push({ key: "cv", label: cvLabels[cvFilter] ?? cvFilter, clear: () => setCvFilter("all") });
+            if (evaluationFilter !== "all") active.push({ key: "ev", label: evalLabels[evaluationFilter] ?? evaluationFilter, clear: () => setEvaluationFilter("all") });
+            if (statusFilter !== "tous") active.push({ key: "status", label: `Étape : ${statusFilter}`, clear: () => setStatusFilter("tous") });
+            if (paymentFilter !== "tous") active.push({ key: "payment", label: `Paiement : ${paymentFilter}`, clear: () => setPaymentFilter("tous") });
+            if (scoreFilter !== "tous") active.push({ key: "score", label: `Score : ${scoreFilter}`, clear: () => setScoreFilter("tous") });
+            if (destinationFilter !== "tous") active.push({ key: "destination", label: `Destination : ${destinationFilter}`, clear: () => setDestinationFilter("tous") });
+            if (active.length === 0) return null;
+            return (
+              <div className="mt-4 flex flex-wrap items-center gap-2" data-testid="active-filters" aria-label="Filtres actifs">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Filtres actifs</span>
+                {active.map((item) => (
+                  <button key={item.key} type="button" onClick={() => { item.clear(); resetToFirstPage(); }} title="Retirer ce filtre" className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-800 hover:bg-slate-100">
+                    {item.label}<span aria-hidden="true">×</span><span className="sr-only">Retirer ce filtre</span>
+                  </button>
+                ))}
+                <button type="button" data-testid="reset-all-filters" onClick={() => { setSearchQuery(""); setCvFilter("all"); setEvaluationFilter("all"); setStatusFilter("tous"); setPaymentFilter("tous"); setScoreFilter("tous"); setDestinationFilter("tous"); setSortBy("priorite"); resetToFirstPage(); }} className="text-xs font-semibold text-[#0B2A52] underline underline-offset-2">Tout réinitialiser</button>
+              </div>
+            );
+          })()}
           <div className="flex items-center justify-between mt-4 text-sm">
             <p className="font-medium text-gray-700">
               {isLoading ? "Mise à jour du compteur..." : `${totalCandidates} dossier(s) correspondant aux filtres`}
@@ -985,6 +1068,9 @@ export default function CandidatesManager() {
                           <p className="mt-0.5 text-xs font-semibold text-slate-700" data-testid="submission-rank">
                             N° {(page - 1) * pageSize + idx + 1} dans la file · soumis le {new Date(candidate.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
                           </p>
+                        )}
+                        {candidate.evaluationWithCv && (
+                          <span className="mr-1 mt-1 inline-block rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-semibold text-indigo-900" data-testid="badge-evaluation-cv">Évaluation + CV</span>
                         )}
                         {candidate.cvReceived && (
                           <a href={`/admin/bilans?q=${encodeURIComponent(candidate.email)}`} className={`mr-1 mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${candidate.evaluated ?? candidate.bilanSent ? "bg-slate-100 text-slate-700" : "bg-emerald-100 text-emerald-900"}`} data-testid="cv-badge" title={candidate.evaluated ?? candidate.bilanSent ? "CV reçu, déjà évalué — ouvrir le bilan" : "CV reçu : bilan à traiter — ouvrir le bilan"}>

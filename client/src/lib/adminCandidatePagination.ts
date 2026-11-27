@@ -10,7 +10,15 @@ export type CandidateListUrlState = {
   sortBy: "createdAt" | "fullName" | "score" | "priorite" | "soumission";
   page: number;
   pageSize: CandidatePageSize;
+  /** Filtre CV (onglets de classement rapide) : conservé dans l'adresse, donc dans le lien copié et les vues favorites. */
+  cvFilter: CandidateCvFilter;
+  evaluationFilter: CandidateEvaluationFilter;
 };
+
+export const CANDIDATE_CV_FILTERS = ["all", "a_traiter", "recu", "sans", "eval_cv"] as const;
+export type CandidateCvFilter = (typeof CANDIDATE_CV_FILTERS)[number];
+export const CANDIDATE_EVALUATION_FILTERS = ["all", "evalue", "non_evalue"] as const;
+export type CandidateEvaluationFilter = (typeof CANDIDATE_EVALUATION_FILTERS)[number];
 
 const readText = (params: URLSearchParams, key: string, fallback: string) => params.get(key)?.trim() || fallback;
 const readPositiveInt = (value: string | null, fallback: number) => {
@@ -32,6 +40,8 @@ export function parseCandidateListUrl(search: string): CandidateListUrlState {
     sortBy: rawSort === "fullName" || rawSort === "score" || rawSort === "createdAt" || rawSort === "priorite" || rawSort === "soumission" ? rawSort : "priorite",
     page: readPositiveInt(params.get("page"), 1),
     pageSize,
+    cvFilter: CANDIDATE_CV_FILTERS.includes(params.get("cv") as CandidateCvFilter) ? params.get("cv") as CandidateCvFilter : "all",
+    evaluationFilter: CANDIDATE_EVALUATION_FILTERS.includes(params.get("evaluation") as CandidateEvaluationFilter) ? params.get("evaluation") as CandidateEvaluationFilter : "all",
   };
 }
 
@@ -45,6 +55,8 @@ export function serializeCandidateListUrl(state: CandidateListUrlState): string 
   if (state.sortBy !== "priorite") params.set("sort", state.sortBy);
   if (state.page !== 1) params.set("page", String(state.page));
   if (state.pageSize !== 25) params.set("pageSize", String(state.pageSize));
+  if (state.cvFilter && state.cvFilter !== "all") params.set("cv", state.cvFilter);
+  if (state.evaluationFilter && state.evaluationFilter !== "all") params.set("evaluation", state.evaluationFilter);
   const query = params.toString();
   return query ? `?${query}` : "";
 }

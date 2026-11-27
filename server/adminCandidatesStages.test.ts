@@ -56,7 +56,7 @@ describe("administration candidats et dossiers : garde-fous de l'interface", () 
   });
 
   it("le changement de taille de page relance la requête (pageSize dans les dépendances)", () => {
-    expect(manager).toContain("sortBy, page, pageSize]);\n  // La liste précédente reste affichée pendant le chargement de la suivante (pas de page blanche à chaque filtre ou changement de page).\n  const { data, isLoading, error } = trpc.adminCandidateManagement.list.useQuery(filterInput, { placeholderData: (previous) => previous });");
+    expect(manager).toMatch(/sortBy, page, pageSize\]\);\n  \/\/ La liste précédente reste affichée pendant le chargement de la suivante \(pas de page blanche à chaque filtre ou changement de page\)\.[\s\S]*trpc\.adminCandidateManagement\.list\.useQuery\(filterInput, \{\n    placeholderData: \(previous\) => previous,/);
   });
 
   it("filtres avec libellés visibles et statuts lisibles (jamais de snake_case)", () => {
