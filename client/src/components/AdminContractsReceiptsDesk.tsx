@@ -1,9 +1,11 @@
-import { Bell, FileText, KeyRound, Loader2, Printer, RefreshCw, Send, ShieldCheck, UserRound } from "lucide-react";
+import React from "react";
+import { Bell, FilePenLine, FileText, KeyRound, Loader2, Printer, RefreshCw, Send, ShieldCheck, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { AdminReceiptProtocolEditor } from "@/components/AdminReceiptProtocolEditor";
 
 const STAGE_LABELS = {
   receipt_pending: { label: "Reçu à préparer", className: "border-amber-200 bg-amber-50 text-amber-900" },
@@ -30,6 +32,7 @@ type Props = {
 
 export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandidate }: Props) {
   const utils = trpc.useUtils();
+  const [editingId, setEditingId] = React.useState<string | null>(null);
   const query = trpc.adminCandidateManagement.contractsReceiptsDesk.useQuery(
     { sessionToken },
     { enabled: Boolean(sessionToken), refetchInterval: 45_000 },
@@ -206,6 +209,11 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
                                 <UserRound className="h-3.5 w-3.5" /> Fiche
                               </Button>
                             ) : null}
+                            {/^(online|agency)_\d+$/.test(row.candidateId) ? (
+                              <Button type="button" size="sm" className="h-8 gap-1 bg-indigo-700 px-2 text-xs text-white hover:bg-indigo-800" onClick={() => setEditingId(row.candidateId)} data-testid={`receipt-edit-${row.candidateId}`} title="Modifier le reçu et le protocole d'accord, puis les envoyer">
+                                <FilePenLine className="h-3.5 w-3.5" /> Modifier reçu & protocole
+                              </Button>
+                            ) : null}
                             <Button type="button" size="sm" variant="outline" className="h-8 gap-1 px-2 text-xs" onClick={() => void printA5(row.candidateId)} data-testid={`receipt-print-a5-${row.candidateId}`}>
                               <Printer className="h-3.5 w-3.5" /> A5
                             </Button>
@@ -292,6 +300,13 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
             )}
           </>
         )}
+        <AdminReceiptProtocolEditor
+          sessionToken={sessionToken}
+          candidateId={editingId}
+          open={editingId !== null}
+          onOpenChange={(next) => { if (!next) setEditingId(null); }}
+          onChanged={() => void query.refetch()}
+        />
       </CardContent>
     </Card>
   );

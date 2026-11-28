@@ -107,6 +107,7 @@ import { adminContentRouter } from "./routers/adminContent";
 import { clientSpaceRouter } from "./routers/clientSpace";
 import { evaluationDecisionRouter } from "./routers/evaluationDecision";
 import { bilanFollowUpRouter } from "./routers/bilanFollowUp";
+import { adminDocumentDraftsRouter } from "./routers/adminDocumentDrafts";
 import { profileUndoRouter } from "./routers/profileUndo";
 import { consistencyRouter } from "./routers/consistency";
 import { bilanAiRouter } from "./routers/bilanAi";
@@ -258,6 +259,7 @@ export const appRouter = router({
   clientSpace: clientSpaceRouter,
   evaluationDecision: evaluationDecisionRouter,
   bilanFollowUp: bilanFollowUpRouter,
+  adminDocumentDrafts: adminDocumentDraftsRouter,
   profileUndo: profileUndoRouter,
   consistency: consistencyRouter,
   bilanAi: bilanAiRouter,

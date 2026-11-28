@@ -1,0 +1,185 @@
+import { TRPCError } from "@trpc/server";
+import { and, desc, eq } from "drizzle-orm";
+import { z } from "zod";
+import { paymentAuditLogs } from "../../drizzle/schema";
+import { buildProtocolOneRichText } from "../../shared/agreementProtocolCountryTemplates";
+import { createAgreementProtocolOnePdf } from "../agreementProtocolPdfService";
+import { publicProcedure, router } from "../_core/trpc";
+import { getDb } from "../db";
+import {
+  clearProtocolDraft,
+  clearReceiptDraft,
+  readProtocolDraft,
+  readReceiptDraft,
+  saveProtocolDraft,
+  saveReceiptDraft,
+  validateProtocolContent,
+  validateReceiptDraft,
+  applyReceiptDraft,
+  type ReceiptDraftInput,
+} from "../services/documentDrafts";
+import { buildProtocolVariables, loadDossier, type PaymentReference } from "../services/paymentPackage";
+import { buildPaymentReceiptPdf } from "../utils/paymentReceipt";
+import { parseAdminCandidateReference, requireAdminTreatmentSession } from "./adminCandidateManagement";
+
+/**
+ * Éditeurs du reçu et du Protocole d'accord N°01 : le contenu par défaut est proposé, l'administrateur le modifie à tout moment,
+ * visualise le PDF puis envoie (l'envoi lui-même reste réservé aux paiements confirmés).
+ */
+const base = z.object({ sessionToken: z.string().min(1), candidateId: z.string().regex(/^(online|agency)_\d+$/) });
+const receiptInput = z.object({
+  amount: z.number().positive().max(1_000_000_000),
+  currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/, "La devise doit comporter trois lettres (XAF, EUR, CAD…)."),
+  paymentDate: z.string().min(8).max(40),
+  paymentMethod: z.string().trim().min(1).max(120),
+  paymentReference: z.string().trim().max(120).nullable().optional(),
+});
+
+async function context(input: z.infer<typeof base>, cookie: string | undefined) {
+  const admin = await requireAdminTreatmentSession(cookie, input.sessionToken);
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+  const reference = parseAdminCandidateReference(input.candidateId) as PaymentReference | null;
+  if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Identifiant candidat invalide." });
+  return { admin, db, reference, actor: admin.email || "Administrateur" };
+}
+
+const toReceiptInput = (value: z.infer<typeof receiptInput>): ReceiptDraftInput => ({
+  amount: value.amount,
+  currency: value.currency,
+  paymentDate: value.paymentDate,
+  paymentMethod: value.paymentMethod,
+  paymentReference: value.paymentReference ?? null,
+});
+
+function asBase64(bytes: Uint8Array | Buffer) {
+  return Buffer.from(bytes).toString("base64");
+}
+
+export const adminDocumentDraftsRouter = router({
+  /** Valeurs par défaut, brouillons enregistrés, et état du dossier (paiement confirmé ? lot déjà envoyé ?). */
+  get: publicProcedure.input(base).query(async ({ input, ctx }) => {
+    const { db, reference, actor } = await context(input, ctx.req.headers.cookie);
+    const dossier = await loadDossier(db, reference);
+    const [receiptDraft, protocolDraft] = await Promise.all([readReceiptDraft(db, reference), readProtocolDraft(db, reference)]);
+    const defaults = {
+      amount: dossier.amount,
+      currency: dossier.currency,
+      paymentDate: dossier.paymentDate.toISOString(),
+      paymentMethod: dossier.paymentMethod,
+      paymentReference: dossier.paymentReference,
+    };
+    const protocolDefault = buildProtocolOneRichText(buildProtocolVariables(dossier, actor), dossier.destination || "", dossier.visaType || null);
+    const [sent] = await db.select({ createdAt: paymentAuditLogs.createdAt }).from(paymentAuditLogs)
+      .where(and(eq(paymentAuditLogs.paymentId, reference.id), eq(paymentAuditLogs.candidateEmail, dossier.email), eq(paymentAuditLogs.action, "receipt_protocol_sent")))
+      .orderBy(desc(paymentAuditLogs.createdAt)).limit(1);
+    return {
+      dossierNumber: dossier.dossierNumber,
+      fullName: dossier.fullName,
+      email: dossier.email,
+      paymentConfirmed: dossier.paymentConfirmed,
+      packageSentAt: sent?.createdAt ? sent.createdAt.toISOString() : null,
+      receipt: {
+        defaults,
+        saved: receiptDraft ? { ...defaults, ...receiptDraft } : null,
+        modified: Boolean(receiptDraft),
+        updatedAt: receiptDraft?.updatedAt ?? null,
+        updatedBy: receiptDraft?.updatedBy ?? null,
+      },
+      protocol: {
+        defaultContent: protocolDefault,
+        content: protocolDraft?.content ?? protocolDefault,
+        modified: Boolean(protocolDraft),
+        updatedAt: protocolDraft?.updatedAt ?? null,
+        updatedBy: protocolDraft?.updatedBy ?? null,
+      },
+    };
+  }),
+
+  saveReceipt: publicProcedure.input(base.extend({ receipt: receiptInput })).mutation(async ({ input, ctx }) => {
+    const { db, reference, actor } = await context(input, ctx.req.headers.cookie);
+    const values = toReceiptInput(input.receipt);
+    const error = validateReceiptDraft(values);
+    if (error) throw new TRPCError({ code: "BAD_REQUEST", message: error });
+    const draft = await saveReceiptDraft(db, reference, values, actor);
+    return { updatedAt: draft.updatedAt };
+  }),
+
+  resetReceipt: publicProcedure.input(base).mutation(async ({ input, ctx }) => {
+    const { db, reference } = await context(input, ctx.req.headers.cookie);
+    await clearReceiptDraft(db, reference);
+    return { ok: true as const };
+  }),
+
+  saveProtocol: publicProcedure.input(base.extend({ content: z.string().max(80_000) })).mutation(async ({ input, ctx }) => {
+    const { db, reference, actor } = await context(input, ctx.req.headers.cookie);
+    const error = validateProtocolContent(input.content);
+    if (error) throw new TRPCError({ code: "BAD_REQUEST", message: error });
+    const draft = await saveProtocolDraft(db, reference, input.content, actor);
+    return { updatedAt: draft.updatedAt };
+  }),
+
+  resetProtocol: publicProcedure.input(base).mutation(async ({ input, ctx }) => {
+    const { db, reference } = await context(input, ctx.req.headers.cookie);
+    await clearProtocolDraft(db, reference);
+    return { ok: true as const };
+  }),
+
+  /** Aperçu PDF du reçu avec les valeurs en cours de saisie (rien n'est enregistré ni envoyé). */
+  previewReceipt: publicProcedure.input(base.extend({ receipt: receiptInput.optional() })).mutation(async ({ input, ctx }) => {
+    const { db, reference, actor } = await context(input, ctx.req.headers.cookie);
+    const dossier = await loadDossier(db, reference);
+    if (input.receipt) {
+      const values = toReceiptInput(input.receipt);
+      const error = validateReceiptDraft(values);
+      if (error) throw new TRPCError({ code: "BAD_REQUEST", message: error });
+      dossier.amount = Math.round(values.amount);
+      dossier.currency = values.currency;
+      dossier.paymentDate = new Date(values.paymentDate);
+      dossier.paymentMethod = values.paymentMethod.trim();
+      dossier.paymentReference = values.paymentReference?.trim() || null;
+    } else {
+      applyReceiptDraft(dossier, await readReceiptDraft(db, reference));
+    }
+    const pdf = await buildPaymentReceiptPdf({
+      dossierNumber: dossier.dossierNumber,
+      fullName: dossier.fullName,
+      email: dossier.email,
+      amount: dossier.amount,
+      currency: dossier.currency,
+      paymentDate: dossier.paymentDate,
+      paymentMethod: dossier.paymentMethod,
+      paymentReference: dossier.paymentReference,
+      validatedBy: actor,
+      destination: dossier.destination,
+      visaType: dossier.visaType,
+    });
+    return { fileName: `Apercu-recu-${dossier.dossierNumber}.pdf`, pdfBase64: asBase64(pdf) };
+  }),
+
+  /** Aperçu PDF du protocole avec le texte en cours de saisie (aucun dépôt dans le stockage). */
+  previewProtocol: publicProcedure.input(base.extend({ content: z.string().max(80_000).optional() })).mutation(async ({ input, ctx }) => {
+    const { db, reference, actor } = await context(input, ctx.req.headers.cookie);
+    const dossier = await loadDossier(db, reference);
+    applyReceiptDraft(dossier, await readReceiptDraft(db, reference));
+    const variables = buildProtocolVariables(dossier, actor);
+    let content = input.content?.trim();
+    if (content) {
+      const error = validateProtocolContent(content);
+      if (error) throw new TRPCError({ code: "BAD_REQUEST", message: error });
+    } else {
+      content = (await readProtocolDraft(db, reference))?.content ?? buildProtocolOneRichText(variables, dossier.destination || "", dossier.visaType || null);
+    }
+    const pdf = await createAgreementProtocolOnePdf({
+      dossierNumber: dossier.dossierNumber,
+      fullName: dossier.fullName,
+      destination: dossier.destination,
+      variables,
+      visaType: dossier.visaType,
+      content,
+      documentTitle: "APERÇU — Protocole d’accord N°01",
+      skipStorage: true,
+    });
+    return { fileName: `Apercu-protocole-${dossier.dossierNumber}.pdf`, pdfBase64: asBase64(pdf.bytes) };
+  }),
+});

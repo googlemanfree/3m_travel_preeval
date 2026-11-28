@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
+import { AdminReceiptProtocolEditor } from "@/components/AdminReceiptProtocolEditor";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { BarChart3, CreditCard, CheckCircle2, Clock, XCircle, Download, Eye, Mail, Loader2, AlertCircle, History, FileSpreadsheet, FileText, Printer, Pencil } from "lucide-react";
+import { BarChart3, CreditCard, CheckCircle2, Clock, XCircle, Download, Eye, Mail, Loader2, AlertCircle, History, FileSpreadsheet, FileText, Printer, Pencil, FilePenLine } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { paymentAuditLogsToCsv } from "@shared/paymentAuditCsv";
@@ -58,6 +59,7 @@ interface AdminPaymentManagementProps {
 }
 
 export function AdminPaymentManagement({ sessionToken, onPaymentUpdated, onOpenCandidate }: AdminPaymentManagementProps) {
+  const [documentEditorId, setDocumentEditorId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "PENDING" | "SUCCESS" | "FAILED">("all");
   const [filterMethod, setFilterMethod] = useState<"all" | "mobile_money" | "agency">("all");
@@ -892,6 +894,9 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated, onOpenC
                               <span className="hidden xl:inline">Annuler paiement</span>
                             </Button>
                           )}
+                          <Button onClick={() => setDocumentEditorId(`online_${payment.id}`)} variant="ghost" size="sm" title="Modifier le reçu et le protocole d’accord (montant propre au dossier), voir l’aperçu PDF, puis les envoyer" aria-label={`Modifier le reçu et le protocole du dossier ${payment.dossierNumber}`} className="text-indigo-800 hover:bg-indigo-50" data-testid={`edit-documents-${payment.id}`}>
+                            <FilePenLine className="h-4 w-4" /><span className="hidden xl:inline">Reçu & protocole</span>
+                          </Button>
                           {payment.paymentStatus === "SUCCESS" && (
                             <>
                               <Button onClick={() => openCorrectPayment(payment)} variant="ghost" size="sm" title="Corriger le montant confirmé ou la référence du reçu" aria-label={`Corriger le reçu du dossier ${payment.dossierNumber}`} className="text-indigo-700 hover:bg-indigo-50" data-testid="correct-payment-details-action">
@@ -1222,6 +1227,12 @@ export function AdminPaymentManagement({ sessionToken, onPaymentUpdated, onOpenC
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <AdminReceiptProtocolEditor
+        sessionToken={sessionToken}
+        candidateId={documentEditorId}
+        open={documentEditorId !== null}
+        onOpenChange={(next) => { if (!next) setDocumentEditorId(null); }}
+      />
     </div>
   );
 }

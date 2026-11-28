@@ -101,10 +101,16 @@ describe("reçu et protocole N°01 envoyés ensemble", () => {
   });
 
   it("un reçu déjà validé et signé est réutilisé, pas dupliqué", async () => {
-    state.rows.set(paymentReceiptApprovals, [{ approvedAt: new Date("2026-09-24"), signatureLabel: "3M TRAVEL AGENCY · autre@agence.com", signatureHash: "h".repeat(64) }]);
+    state.rows.set(paymentReceiptApprovals, [{ approvedAt: new Date("2026-09-24"), amount: "65000 XAF", signatureLabel: "3M TRAVEL AGENCY · autre@agence.com", signatureHash: "h".repeat(64) }]);
     await sendReceiptAndProtocol(fakeDb, { source: "online", id: 12 }, { email: "agent@3mtravelagency.com" });
     expect(state.inserts.filter((entry) => entry.table === paymentReceiptApprovals)).toHaveLength(0);
     expect(state.emails).toHaveLength(1);
+  });
+
+  it("un reçu signé pour un autre montant est signé à nouveau : la signature ne couvre jamais un autre montant", async () => {
+    state.rows.set(paymentReceiptApprovals, [{ approvedAt: new Date("2026-09-24"), amount: "50000 XAF", signatureLabel: "3M TRAVEL AGENCY · autre@agence.com", signatureHash: "h".repeat(64) }]);
+    await sendReceiptAndProtocol(fakeDb, { source: "online", id: 12 }, { email: "agent@3mtravelagency.com" });
+    expect(state.inserts.filter((entry) => entry.table === paymentReceiptApprovals)).toHaveLength(1);
   });
 
   it("le protocole est aussi déposé dans l'espace client et une notification prévient le candidat", async () => {

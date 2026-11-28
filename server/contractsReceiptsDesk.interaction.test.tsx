@@ -14,7 +14,17 @@ vi.mock("@/lib/trpc", () => ({
       adminCandidateManagement: {
         getPaymentReceiptA5Html: { fetch: vi.fn() },
       },
+      adminDocumentDrafts: { get: { invalidate: vi.fn() } },
     }),
+    adminDocumentDrafts: {
+      get: { useQuery: () => ({ data: undefined, isLoading: false, isError: false }) },
+      saveReceipt: { useMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }) },
+      resetReceipt: { useMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }) },
+      previewReceipt: { useMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }) },
+      saveProtocol: { useMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }) },
+      resetProtocol: { useMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }) },
+      previewProtocol: { useMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }) },
+    },
     adminCandidateManagement: {
       contractsReceiptsDesk: {
         useQuery: () => ({
@@ -57,6 +67,7 @@ vi.mock("@/lib/trpc", () => ({
       approvePaymentReceipt: { useMutation: () => ({ mutate: vi.fn(), isPending: false, variables: undefined }) },
       sendPaymentReceiptForCandidate: { useMutation: () => ({ mutate: vi.fn(), isPending: false, variables: undefined }) },
       resendClientAccessLink: { useMutation: () => ({ mutate: vi.fn(), isPending: false, variables: undefined }) },
+      sendReceiptAndProtocol: { useMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }) },
       resendAgreementSignatureReminder: {
         useMutation: () => ({ mutate: remindMutate, isPending: false, variables: undefined }),
       },
