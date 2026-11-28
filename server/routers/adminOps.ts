@@ -2,7 +2,7 @@ import { mapWithLimit } from "../utils/mapWithLimit";
 import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq, gte, inArray, isNull, lte, max, notInArray, sql } from "drizzle-orm";
 import { z } from "zod";
-import { adminAccounts, candidateFiles, candidates, emailDeliveryIncidents } from "../../drizzle/schema";
+import { adminAccounts, candidateFiles, candidates, emailDeliveryIncidents, emailDeliveryLogs, evaluationEmails, paymentAuditLogs } from "../../drizzle/schema";
 import { clientNotifications, unifiedClientRequestHistory, unifiedClientRequests } from "../../drizzle/caseTrackingSchema";
 import { jobOffers } from "../../drizzle/jobOffersSchema";
 import { bilanTemplates, caseOutcomes, paymentScheduleItems } from "../../drizzle/remoteSupportSchema";
@@ -24,6 +24,8 @@ import { getDb } from "../db";
 import { sendClientNotificationEmail } from "../emailService";
 import { adminLabel } from "../services/partnerProfiles";
 import { emailAllowed } from "../services/candidateSecurity";
+import { isAutoRelanceEnabled } from "../services/bilanFollowUpActions";
+import { isWhatsAppConfigured } from "../whatsappService";
 import { recordPrivacyEvent } from "../services/privacyAudit";
 import { requireValidAdminSession } from "./adminAuth";
 import { candidateProcedure } from "./candidate";
@@ -282,7 +284,28 @@ export const adminOpsRouter = router({
     }
     const [incidents] = await db.select({ total: sql<number>`count(*)` }).from(emailDeliveryIncidents).where(eq(emailDeliveryIncidents.status, "open")).catch(() => [{ total: 0 }]);
     const mode = resolveScheduledJobsMode(process.env.SCHEDULED_JOBS_MODE);
-    return { database: true as const, missingMigrations: missing, openEmailIncidents: Number(incidents?.total ?? 0), scheduler: { mode, jobs: SCHEDULED_JOBS.length, automaticReminders: mode === "live" } };
+    // Canaux d'envoi : ce qui est réellement configuré, et les derniers échecs (un envoi qui échoue ne doit plus passer inaperçu).
+    const since7 = new Date(Date.now() - 7 * 86_400_000);
+    const since14 = new Date(Date.now() - 14 * 86_400_000);
+    const since30 = new Date(Date.now() - 30 * 86_400_000);
+    const safe = async <T,>(read: () => Promise<T>, fallback: T): Promise<T> => { try { return await read(); } catch { return fallback; } };
+    const [emailFailures, bilanEmailFailures, receiptFailures, relanceAuto] = await Promise.all([
+      safe(() => db.select({ id: emailDeliveryLogs.id, recipientEmail: emailDeliveryLogs.recipientEmail, subject: emailDeliveryLogs.subject, errorDetails: emailDeliveryLogs.errorDetails, createdAt: emailDeliveryLogs.createdAt }).from(emailDeliveryLogs).where(and(eq(emailDeliveryLogs.status, "failed"), gte(emailDeliveryLogs.createdAt, since7))).orderBy(desc(emailDeliveryLogs.createdAt)).limit(10), []),
+      safe(() => db.select({ id: evaluationEmails.id, evaluationId: evaluationEmails.evaluationId, candidateEmail: evaluationEmails.candidateEmail, candidateName: evaluationEmails.candidateName, status: evaluationEmails.status, failureReason: evaluationEmails.failureReason, createdAt: evaluationEmails.createdAt }).from(evaluationEmails).where(and(inArray(evaluationEmails.status, ["failed", "bounced"]), gte(evaluationEmails.createdAt, since30))).orderBy(desc(evaluationEmails.createdAt)).limit(10), []),
+      safe(() => db.select({ id: paymentAuditLogs.id, candidateEmail: paymentAuditLogs.candidateEmail, details: paymentAuditLogs.details, createdAt: paymentAuditLogs.createdAt }).from(paymentAuditLogs).where(and(eq(paymentAuditLogs.action, "receipt_failed"), gte(paymentAuditLogs.createdAt, since14))).orderBy(desc(paymentAuditLogs.createdAt)).limit(10), []),
+      safe(() => isAutoRelanceEnabled(db), false),
+    ]);
+    const channels = {
+      email: { configured: Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) },
+      whatsapp: { configured: isWhatsAppConfigured() },
+      bilanRelanceAuto: { enabled: relanceAuto },
+    };
+    const failures = {
+      emails: emailFailures.map((row) => ({ ...row, errorDetails: (row.errorDetails ?? "").slice(0, 200), createdAt: row.createdAt.toISOString() })),
+      bilanEmails: bilanEmailFailures.map((row) => ({ ...row, failureReason: (row.failureReason ?? "").slice(0, 200), createdAt: row.createdAt.toISOString() })),
+      receiptPackages: receiptFailures.map((row) => ({ ...row, details: (row.details ?? "").slice(0, 200), createdAt: row.createdAt.toISOString() })),
+    };
+    return { database: true as const, channels, failures, missingMigrations: missing, openEmailIncidents: Number(incidents?.total ?? 0), scheduler: { mode, jobs: SCHEDULED_JOBS.length, automaticReminders: mode === "live" } };
   })),
 });
 

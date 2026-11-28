@@ -202,6 +202,10 @@ function AssignPanel({ sessionToken }: { sessionToken: string }) {
 
 function HealthPanel({ sessionToken }: { sessionToken: string }) {
   const health = trpc.adminOps.adminSystemHealth.useQuery({ sessionToken }, { enabled: Boolean(sessionToken), retry: false });
+  const resendBilan = trpc.unifiedRequests.resendEvaluationHistory.useMutation({
+    onSuccess: (result) => { toast.success("E-mail du bilan renvoyé", { description: result.message }); void health.refetch(); },
+    onError: (error) => toast.error(error.message),
+  });
   const data = health.data as Out["adminSystemHealth"] | undefined;
   return (
     <div className="space-y-3" data-testid="ops-health">
@@ -214,6 +218,52 @@ function HealthPanel({ sessionToken }: { sessionToken: string }) {
             : <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-950" role="alert"><p className="font-bold">Migrations à appliquer (tables manquantes) :</p><ul className="mt-1 list-disc pl-5">{data.missingMigrations.map((entry) => <li key={entry.migration}>{entry.migration} — {entry.tables.join(", ")}</li>)}</ul></div>}
           <p className={`rounded-lg border p-3 text-sm ${data.openEmailIncidents > 0 ? "border-amber-300 bg-amber-50 text-amber-950" : "border-slate-200 bg-white text-slate-800"}`}>{data.openEmailIncidents > 0 ? `${data.openEmailIncidents} incident(s) d'envoi d'e-mails ouvert(s) : voir l'onglet E-mails.` : "Aucun incident d'envoi d'e-mails ouvert."}</p>
           <p className={`rounded-lg border p-3 text-sm ${data.scheduler.automaticReminders ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-amber-300 bg-amber-50 text-amber-950"}`}>Relances automatiques : {data.scheduler.automaticReminders ? "actives." : `éteintes (mode « ${data.scheduler.mode} »). Les ${data.scheduler.jobs} tâches planifiées ne partent pas seules ; le mode se règle par la variable SCHEDULED_JOBS_MODE de l'hébergement.`}</p>
+          <div className="space-y-2" data-testid="ops-delivery-health">
+            <p className="text-sm font-semibold text-slate-900">Santé des envois</p>
+            <dl className="grid gap-2 sm:grid-cols-3">
+              {([
+                ["E-mail", data.channels.email.configured, "Configuré", "Non configuré : aucun e-mail ne part"],
+                ["WhatsApp automatique", data.channels.whatsapp.configured, "Configuré", "Non configuré : lien WhatsApp manuel seulement"],
+                ["Relance automatique des bilans", data.channels.bilanRelanceAuto.enabled, "Activée", "Désactivée"],
+              ] as const).map(([label, ok, yes, no]) => (
+                <div key={label} className={`rounded-lg border p-3 text-sm ${ok ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-amber-300 bg-amber-50 text-amber-950"}`}>
+                  <dt className="text-xs font-semibold uppercase tracking-wide">{label}</dt>
+                  <dd className="mt-0.5 font-semibold">{ok ? yes : no}</dd>
+                </div>
+              ))}
+            </dl>
+            {data.failures.bilanEmails.length + data.failures.receiptPackages.length + data.failures.emails.length === 0
+              ? <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-900" data-testid="delivery-no-failure">Aucun envoi en échec récemment.</p>
+              : (
+                <div className="space-y-2" data-testid="delivery-failures">
+                  {data.failures.bilanEmails.length > 0 && (
+                    <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-950">
+                      <p className="font-bold">Bilans non remis ({data.failures.bilanEmails.length}) — 30 derniers jours</p>
+                      <ul className="mt-1 space-y-1">
+                        {data.failures.bilanEmails.map((row) => (
+                          <li key={row.id} className="flex flex-wrap items-center justify-between gap-2">
+                            <span>{row.candidateName} · {row.candidateEmail} · {row.status === "bounced" ? "rebond" : "échec"}{row.failureReason ? ` : ${row.failureReason}` : ""}</span>
+                            <Button type="button" size="sm" variant="outline" disabled={resendBilan.isPending} onClick={() => { if (window.confirm(`Renvoyer le bilan à ${row.candidateEmail} ?`)) resendBilan.mutate({ sessionToken, emailId: row.id }); }} data-testid={`resend-bilan-email-${row.id}`}>Renvoyer</Button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {data.failures.receiptPackages.length > 0 && (
+                    <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-950">
+                      <p className="font-bold">Reçus et protocoles non partis ({data.failures.receiptPackages.length}) — 14 derniers jours</p>
+                      <ul className="mt-1 space-y-1">{data.failures.receiptPackages.map((row) => <li key={row.id}>{row.candidateEmail} · {new Date(row.createdAt).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}. À renvoyer depuis le Bureau reçus &amp; protocoles (« Reçu &amp; protocole »).</li>)}</ul>
+                    </div>
+                  )}
+                  {data.failures.emails.length > 0 && (
+                    <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+                      <p className="font-bold">Autres e-mails en échec ({data.failures.emails.length}) — 7 derniers jours</p>
+                      <ul className="mt-1 space-y-1">{data.failures.emails.map((row) => <li key={row.id}>{row.recipientEmail} · {row.subject}{row.errorDetails ? ` — ${row.errorDetails}` : ""}</li>)}</ul>
+                    </div>
+                  )}
+                </div>
+              )}
+          </div>
           <p className="text-xs text-slate-500">Cet écran se met à jour à l'ouverture. Une alerte en temps réel (site ou e-mails hors service) demande un outil de surveillance externe : ce contrôle ne s'exécute pas tout seul.</p>
         </>
       )}
