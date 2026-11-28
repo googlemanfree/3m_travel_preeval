@@ -612,8 +612,6 @@ export interface ProtocolOneVariables {
   /** Solde restant dû, pour une avance. */
   soldeRestant?: number;
   devise?: string;
-  /** Référence de compte antérieure (COMPTE-…), rappelée à côté du numéro de dossier actif 3M-…. */
-  ancienneReferenceCompte?: string;
 }
 
 export interface ProtocolTwoVariables {
@@ -679,7 +677,7 @@ ${clauses.titleSuffix}
 
 IDENTIFICATION DES PARTIES
 D'une part, L'AGENCE MANDATAIRE : 3M Group SARL, RC/YAO/2019/A/2567, NIU M092618996818Q, représentée par la Direction Générale des Opérations et son Conseiller Validateur habilité, ci-après « L'AGENCE ».
-D'autre part, LE CLIENT / CANDIDAT : ${vars.clientNomComplet}, Dossier actif n° ${vars.dossierRef}${vars.ancienneReferenceCompte ? ` (ancienne référence de compte : ${vars.ancienneReferenceCompte})` : ""}, Projet/Destination : ${vars.destinationProjet}${visaType ? `, Type de procédure : ${visaType}` : ""}, Pièce d'identité : ${vars.clientNumeroPiece ?? "à compléter"}, Téléphone/WhatsApp : ${vars.clientTelephoneWhatsapp ?? "à compléter"}, Email : ${vars.clientEmail ?? "à compléter"}, ci-après « LE CANDIDAT » ou « LE CLIENT ».
+D'autre part, LE CLIENT / CANDIDAT : ${vars.clientNomComplet}, Dossier actif n° ${vars.dossierRef}, Projet/Destination : ${vars.destinationProjet}${visaType ? `, Type de procédure : ${visaType}` : ""}, Pièce d'identité : ${vars.clientNumeroPiece ?? "à compléter"}, Téléphone/WhatsApp : ${vars.clientTelephoneWhatsapp ?? "à compléter"}, Email : ${vars.clientEmail ?? "à compléter"}, ci-après « LE CANDIDAT » ou « LE CLIENT ».
 
 PRÉAMBULE ET CONTEXTE
 LE CLIENT a souscrit à une évaluation via la plateforme www.3mtravelagency.com. Suite à la notification du bilan d'évaluation dans son Espace Client, LE CLIENT a validé le projet ${profile.destinationLabel} (${program}) et s'est acquitté des frais d'ouverture et de traitement. Le présent protocole donne pleine valeur contractuelle aux mentions du Reçu de Confirmation de Paiement délivré par L'AGENCE. Les étapes de traitement suivent le guide de procédure publié pour ce programme sur www.3mtravelagency.com, synchronisé avec l'Espace Client.

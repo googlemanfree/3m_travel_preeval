@@ -350,7 +350,7 @@ export async function sendDossierConfirmationEmail(
           <p>Bonjour <strong>${escapeEmailHtml(fullName)}</strong>,</p>
           <p>Votre dossier d'immigration a été <strong>créé avec succès</strong>.</p>
           ${referenceCard("Numéro de dossier", dossierNumber, "Conservez ce numéro précieusement")}
-          ${previousAccountReference ? `<p style="background:#eff6ff;border-left:4px solid #2b6cb8;padding:12px 16px;border-radius:8px;font-size:14px;color:#1e3a8a">Votre référence de compte <strong>${escapeEmailHtml(previousAccountReference)}</strong> est remplacée par votre numéro de dossier <strong>${escapeEmailHtml(dossierNumber)}</strong>. Utilisez désormais ${escapeEmailHtml(dossierNumber)} dans tous vos échanges avec l’agence.</p>` : ""}
+          ${previousAccountReference ? `<p style="background:#eff6ff;border-left:4px solid #2b6cb8;padding:12px 16px;border-radius:8px;font-size:14px;color:#1e3a8a">Utilisez ce numéro de dossier <strong>${escapeEmailHtml(dossierNumber)}</strong> dans tous vos échanges avec l’agence.</p>` : ""}
           ${detailsTable([["Destination", destination.toUpperCase()], ...(amount > 0 ? [["Montant", `${amount.toLocaleString("fr-FR")} FCFA`] as [string, string]] : [])])}
           <h3 style="color:#17375e;margin:22px 0 6px;font-size:16px">Prochaines étapes</h3>
           <ol style="margin:0;padding-left:20px;line-height:1.9;font-size:14px">

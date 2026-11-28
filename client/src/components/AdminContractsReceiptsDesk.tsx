@@ -206,9 +206,6 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
                               Envoyé avant l'adaptation à la procédure : ouvrez « Modifier reçu &amp; protocole », vérifiez puis renvoyez.
                             </p>
                           )}
-                          {row.formerAccountReference && (
-                            <p className="mt-1 text-[11px] text-slate-500">Ancien compte : {row.formerAccountReference}</p>
-                          )}
                           {row.dossierNumber !== row.workingReference && (
                             <p className="mt-1 text-[11px] text-slate-400">Dossier source : {row.dossierNumber}</p>
                           )}

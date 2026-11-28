@@ -11,7 +11,7 @@ import type { getDb } from "../db";
 import { buildPaymentReceiptPdf, formatPaymentAmount } from "../utils/paymentReceipt";
 import { proposedOpeningFee } from "../../shared/openingFee";
 import { buildPaymentPackageEmail } from "./paymentPackageEmail";
-import { accountReference, isActiveDossierReference } from "../../shared/caseReference";
+import { promoteOnlineApplicationToActiveNumber } from "./promotePaidReference";
 import type { PaymentNature } from "../../shared/paymentNature";
 import { applyReceiptDraft, readProtocolDraft, readReceiptDraft } from "./documentDrafts";
 
@@ -110,8 +110,6 @@ export function buildProtocolVariables(dossier: Loaded, adminEmail: string) {
     natureVersement: dossier.paymentNature ?? undefined,
     soldeRestant: dossier.balanceDue ?? undefined,
     devise: dossier.currency,
-    // Numéro de dossier actif 3M-… ; la référence de compte antérieure (COMPTE-…) est rappelée à côté.
-    ancienneReferenceCompte: dossier.candidateId && isActiveDossierReference(dossier.dossierNumber) ? accountReference(dossier.candidateId) : undefined,
   };
 }
 
@@ -121,6 +119,15 @@ export function buildProtocolVariables(dossier: Loaded, adminEmail: string) {
  * Ne valide jamais un paiement : il exige un paiement déjà confirmé.
  */
 export async function sendReceiptAndProtocol(db: Db, reference: PaymentReference, admin: { email: string }, options: { resend?: boolean } = {}): Promise<PaymentPackageResult> {
+  // Paiement confirmé : la référence « COMPTE-… » est remplacée par le numéro de dossier 3M-… AVANT de charger le dossier,
+  // pour que le reçu, le protocole et l'e-mail portent le numéro 3M-… (jamais « COMPTE »).
+  if (reference.source === "online") {
+    try {
+      await promoteOnlineApplicationToActiveNumber(db, reference.id, admin.email || "system");
+    } catch (error) {
+      console.error("[paymentPackage] promotion de la référence impossible", { reference, error });
+    }
+  }
   const dossier = await loadDossier(db, reference);
   // Reçu et protocole modifiés par l'administrateur : ce sont ces valeurs qui partent (montant propre à chaque dossier).
   applyReceiptDraft(dossier, await readReceiptDraft(db, reference));

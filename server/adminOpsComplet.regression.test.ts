@@ -5,7 +5,6 @@ import {
   ADMIN_MESSAGE_TEMPLATES,
   buildMailtoRelance,
   fillAdminTemplate,
-  formatActivationTransition,
   preDossierReadinessBadge,
   todayQueueToCsv,
 } from "../shared/adminOpsToolkit";
@@ -32,7 +31,6 @@ describe("admin ops complet — toolkit", () => {
     expect(csv).toContain("Aïcha");
     expect(preDossierReadinessBadge({ source: "ACCOUNT_ONLY", evaluationDeclarationStatus: "validated", paymentStatus: "SUCCESS" })?.label).toBe("Prêt à activer");
     expect(preDossierReadinessBadge({ source: "WEB" })).toBeNull();
-    expect(formatActivationTransition({ formerAccountReference: "COMPTE-00042", folderCode: "3M-AGN-0034" })).toContain("COMPTE-00042 → 3M-AGN-0034");
   });
 });
 
@@ -57,7 +55,9 @@ describe("admin ops complet — câblage UI", () => {
     expect(cockpit).toContain("Envoyer e-mail");
     expect(cockpit).not.toContain("buildMailtoRelance");
     expect(workspace).toContain("candidate360-message-templates");
-    expect(workspace).toContain("candidate360-activation-history");
+    // La référence COMPTE disparaît après paiement : plus de « transition COMPTE → 3M » affichée.
+    expect(workspace).not.toContain("candidate360-activation-history");
+    expect(workspace).not.toContain("Ancien compte");
     expect(workspace).toContain("ADMIN_MESSAGE_TEMPLATES");
     expect(docs).toContain("documents-bulk-bar");
     expect(docs).toContain('event.key === "a"');

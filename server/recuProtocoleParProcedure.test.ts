@@ -50,9 +50,10 @@ describe("le protocole suit la procédure choisie", () => {
     expect(lux).toContain("Déclaration de poste vacant ADEM");
     expect(rp).not.toContain("Demande de permis de travail IRCC");
   });
-  it("le numéro de dossier actif 3M-… figure avec l'ancienne référence de compte", () => {
-    const text = protocol("Canada", "Canada RP", { ancienneReferenceCompte: "COMPTE-00012" });
-    expect(text).toContain("Dossier actif n° 3M-2026-0042 (ancienne référence de compte : COMPTE-00012)");
+  it("le protocole porte le numéro de dossier actif 3M-… et jamais la référence de compte", () => {
+    const text = protocol("Canada", "Canada RP");
+    expect(text).toContain("Dossier actif n° 3M-2026-0042");
+    expect(text).not.toContain("COMPTE");
   });
   it("avance ou somme totale : mentionné dans l'article 2 et l'article 1", () => {
     const avance = protocol("Canada", "Canada RP", { natureVersement: "avance", soldeRestant: 50000, devise: "XAF" });

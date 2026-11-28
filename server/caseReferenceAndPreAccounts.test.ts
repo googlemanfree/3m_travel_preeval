@@ -62,9 +62,9 @@ describe("références : du compte au dossier actif", () => {
     expect(resolveClientReference({ candidateId: 5, agencyDossier: { id: 9, status: "documents_requis" }, onlineApplication: { dossierNumber: "3M-2026-0042", paymentStatus: "SUCCESS", paymentValidatedAt: new Date() } }).reference).toBe("3M-AGN-0009");
   });
 
-  it("la phrase de changement nomme les deux références", () => {
+  it("la phrase de changement donne le numéro de dossier et ne rappelle plus la référence de compte", () => {
     const sentence = referenceChangeSentence("COMPTE-00012", "3M-AGN-0034");
-    expect(sentence).toContain("COMPTE-00012");
+    expect(sentence).not.toContain("COMPTE");
     expect(sentence).toContain("3M-AGN-0034");
   });
 });

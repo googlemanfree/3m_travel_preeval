@@ -2,6 +2,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { agencyDossiers, applications } from "../../drizzle/schema";
 import { parseEvalAgencyShellId } from "../../shared/evalAgencyShell";
 import { ensureAgencyActiveReference } from "./canonicalizeActiveDossier";
+import { promoteOnlineApplicationToActiveNumber } from "./promotePaidReference";
 
 type Db = NonNullable<Awaited<ReturnType<typeof import("../db").getDb>>>;
 
@@ -46,6 +47,9 @@ export async function normalizeAfterOpeningPayment(
 
   const agencyDossierId = parseEvalAgencyShellId(application.dossierNumber);
   if (agencyDossierId == null) {
+    // Demande en ligne portant « COMPTE-… » : le paiement vient d'être confirmé, elle reçoit son numéro 3M-… définitif.
+    const promotion = await promoteOnlineApplicationToActiveNumber(db, input.dossierId, input.adminEmail || "system");
+    if (promotion.promoted) return { normalized: true, canonical: promotion.to, purged: 0 };
     return { normalized: false, purged: 0, reason: "not_eval_agency_shell" };
   }
 

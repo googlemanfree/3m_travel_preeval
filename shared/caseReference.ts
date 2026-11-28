@@ -57,8 +57,9 @@ export function currentReference(input: { candidateId: number; activeDossierRefe
 }
 
 /** Phrase du changement de référence, reprise dans l'historique, la notification et l'e-mail d'activation. */
-export function referenceChangeSentence(accountRef: string, dossierRef: string): string {
-  return `Votre référence de compte ${accountRef} est remplacée par votre numéro de dossier ${dossierRef}. Utilisez désormais ${dossierRef} dans tous vos échanges avec l’agence.`;
+export function referenceChangeSentence(_accountRef: string, dossierRef: string): string {
+  // L'ancienne référence « COMPTE-… » n'est plus jamais rappelée : le numéro de dossier la remplace définitivement.
+  return `Votre dossier est activé : votre numéro de dossier est ${dossierRef}. Utilisez-le dans tous vos échanges avec l’agence.`;
 }
 
 /**

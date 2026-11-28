@@ -43,7 +43,7 @@ import { ADMIN_DOSSIER_POLL_MS, adminDossierPolling, formatAdminSyncTime } from 
 import PanelErrorBoundary from "@/components/PanelErrorBoundary";
 
 const DOSSIER_360_POLL_MS = ADMIN_DOSSIER_POLL_MS * 2;
-import { ADMIN_MESSAGE_TEMPLATES, fillAdminTemplate, formatActivationTransition, templateForStage } from "@shared/adminOpsToolkit";
+import { ADMIN_MESSAGE_TEMPLATES, fillAdminTemplate, templateForStage } from "@shared/adminOpsToolkit";
 import { resolveEvaluationProjectKind } from "@shared/evaluationVisaCv";
 import { whatsappLink } from "@shared/remoteSupport";
 import { normalizeWhatsAppPhone } from "@shared/whatsappPhone";
@@ -1037,25 +1037,6 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
         </DialogContent>
       </Dialog>
 
-      {formatActivationTransition({
-        formerAccountReference: candidate.formerAccountReference,
-        folderCode: (data as any)?.canonicalFolderCode || candidate.folderCode,
-      }) ? (
-        <div
-          className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950"
-          data-testid="candidate360-activation-history"
-          role="status"
-        >
-          <p className="text-xs font-bold uppercase tracking-wide text-emerald-800">Activation dossier</p>
-          <p className="mt-1 font-mono text-sm font-semibold">
-            {formatActivationTransition({
-              formerAccountReference: candidate.formerAccountReference,
-              folderCode: (data as any)?.canonicalFolderCode || candidate.folderCode,
-            })}
-          </p>
-          <p className="mt-1 text-xs text-emerald-800">Transition COMPTE-… → 3M-… conservée pour le suivi ops.</p>
-        </div>
-      ) : null}
       {duplicateSuggestions.length > 0 ? (
         <div
           className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950"
@@ -1137,8 +1118,6 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh, init
             {(data as any)?.canonicalFolderCode || candidate.folderCode}
             {(data as any)?.evalShellFolderCode ? (
               <span className="ml-2 font-sans font-normal text-amber-800">Miroir à supprimer : {(data as any).evalShellFolderCode}</span>
-            ) : candidate.formerAccountReference ? (
-              <span className="ml-2 font-sans font-normal text-slate-500">Ancien compte : {candidate.formerAccountReference}</span>
             ) : candidate.referenceKind === "account" ? (
               <span className="ml-2 font-sans font-normal text-slate-500">Compte — dossier non activé</span>
             ) : null}

@@ -163,7 +163,8 @@ describe("activation : mêmes conditions, mêmes messages, et la référence cha
     const journal = state.inserts.find((row) => row.action === "reference_changed");
     expect(journal).toMatchObject({ oldValue: "COMPTE-00042", newValue: "3M-AGN-0034" });
     const notification = state.inserts.find((row) => row.title === "Votre dossier est activé");
-    expect(notification.body).toContain("COMPTE-00042");
+    // La référence COMPTE n'est plus rappelée au candidat : le numéro de dossier la remplace.
+    expect(notification.body).not.toContain("COMPTE");
     expect(notification.body).toContain("3M-AGN-0034");
     expect(state.emails[0][2]).toBe("3M-AGN-0034");
     expect(state.emails[0][5]).toBe("COMPTE-00042");

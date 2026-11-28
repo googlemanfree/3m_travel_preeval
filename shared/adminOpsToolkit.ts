@@ -335,20 +335,3 @@ export function preDossierReadinessBadge(input: {
   if (!evalOk) return { label: "Éval à valider", tone: "amber" };
   return { label: "Paiement à valider", tone: "amber" };
 }
-
-export function formatActivationTransition(input: {
-  formerAccountReference?: string | null;
-  folderCode?: string | null;
-  activatedAt?: string | Date | null;
-  activatedBy?: string | null;
-}): string | null {
-  if (!input.formerAccountReference || !input.folderCode) return null;
-  if (input.formerAccountReference === input.folderCode) return null;
-  const when = input.activatedAt
-    ? new Date(input.activatedAt).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })
-    : null;
-  const by = input.activatedBy ? ` par ${input.activatedBy}` : "";
-  return when
-    ? `${input.formerAccountReference} → ${input.folderCode} · ${when}${by}`
-    : `${input.formerAccountReference} → ${input.folderCode}${by}`;
-}

@@ -6,6 +6,7 @@ import { parseEvalAgencyShellId } from "../../shared/evalAgencyShell";
 import { proofKey } from "../../shared/paymentProof";
 import { isEvaluationPaid } from "../../shared/evaluationReference";
 import { purgeEvalAgencyShell } from "./canonicalizeActiveDossier";
+import { promotePaidAccountKeys } from "./promotePaidReference";
 import { getOpeningPaymentEvidence } from "./openingPaymentEvidence";
 
 type Db = NonNullable<Awaited<ReturnType<typeof import("../db").getDb>>>;
@@ -22,9 +23,32 @@ export type NormalizationReport = {
   sweep: { candidatesCleared: number; casesRenamed: number };
   /** Nombre de lignes encore en « EVAL » après l'opération (0 attendu après application). */
   remainingEval: number;
+  /** Demandes DÉJÀ payées restées sur « COMPTE-… » : numéro 3M- attribué (ou à attribuer, en aperçu). */
+  paidAccountKeys: { found: number; promoted: number };
 };
 
 const LEGACY_PATTERNS = ["EVAL-%", "3M-EVAL-%"] as const;
+
+type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
+
+/**
+ * Renomme une demande ET toutes les lignes qui la citent par son numéro (bilans, commentaires, transactions, approbations de reçu,
+ * accès de récupération, compte actif, preuve de paiement, dossier opérationnel). À appeler dans une transaction.
+ */
+export async function renameApplicationReferenceRows(tx: Tx, item: { applicationId: number; from: string; to: string; outcome: "account" | "active" }): Promise<void> {
+      await tx.update(applications).set({ dossierNumber: item.to, updatedAt: new Date() }).where(eq(applications.id, item.applicationId));
+      await tx.update(bilans).set({ dossierNumber: item.to }).where(eq(bilans.dossierNumber, item.from));
+      await tx.update(evaluationComments).set({ dossierNumber: item.to }).where(eq(evaluationComments.dossierNumber, item.from));
+      await tx.update(transactions).set({ dossierNumber: item.to }).where(eq(transactions.dossierNumber, item.from));
+      await tx.update(paymentReceiptApprovals).set({ dossierNumber: item.to }).where(eq(paymentReceiptApprovals.dossierNumber, item.from));
+      await tx.update(candidateAccessRecoveryRequests).set({ dossierNumber: item.to }).where(eq(candidateAccessRecoveryRequests.dossierNumber, item.from));
+      // Compte : « 3M- » seulement après paiement ; avant, aucun numéro actif (la référence de compte s'affiche d'elle-même).
+      await tx.update(candidates).set({ activeDossierNumber: item.outcome === "active" ? item.to : null }).where(eq(candidates.activeDossierNumber, item.from));
+      // Le nom du fichier de preuve de paiement porte la référence : on le suit pour que la preuve reste retrouvée à côté du dossier.
+      const oldProof = `${proofKey(item.from)}--`;
+      await tx.update(candidateFiles).set({ fileName: sql`CONCAT(${`${proofKey(item.to)}--`}, SUBSTRING(${candidateFiles.fileName}, ${oldProof.length + 1}))` }).where(like(candidateFiles.fileName, `${oldProof.replace(/[%_\\]/g, "\\$&")}%`));
+      if (item.outcome === "active") await tx.update(cases).set({ caseNumber: item.to, updatedAt: new Date() }).where(eq(cases.legacyApplicationId, item.applicationId));
+}
 
 /**
  * Remet toutes les références « EVAL-… » dans la règle de l'agence :
@@ -93,20 +117,7 @@ export async function normalizeAccountReferences(db: Db, input: { apply: boolean
   let sweep = { candidatesCleared: 0, casesRenamed: 0 };
   if (input.apply) {
     for (const item of plan) {
-      await db.transaction(async (tx) => {
-        await tx.update(applications).set({ dossierNumber: item.to, updatedAt: new Date() }).where(eq(applications.id, item.applicationId));
-        await tx.update(bilans).set({ dossierNumber: item.to }).where(eq(bilans.dossierNumber, item.from));
-        await tx.update(evaluationComments).set({ dossierNumber: item.to }).where(eq(evaluationComments.dossierNumber, item.from));
-        await tx.update(transactions).set({ dossierNumber: item.to }).where(eq(transactions.dossierNumber, item.from));
-        await tx.update(paymentReceiptApprovals).set({ dossierNumber: item.to }).where(eq(paymentReceiptApprovals.dossierNumber, item.from));
-        await tx.update(candidateAccessRecoveryRequests).set({ dossierNumber: item.to }).where(eq(candidateAccessRecoveryRequests.dossierNumber, item.from));
-        // Compte : « 3M- » seulement après paiement ; avant, aucun numéro actif (la référence de compte s'affiche d'elle-même).
-        await tx.update(candidates).set({ activeDossierNumber: item.outcome === "active" ? item.to : null }).where(eq(candidates.activeDossierNumber, item.from));
-        // Le nom du fichier de preuve de paiement porte la référence : on le suit pour que la preuve reste retrouvée à côté du dossier.
-        const oldProof = `${proofKey(item.from)}--`;
-        await tx.update(candidateFiles).set({ fileName: sql`CONCAT(${`${proofKey(item.to)}--`}, SUBSTRING(${candidateFiles.fileName}, ${oldProof.length + 1}))` }).where(like(candidateFiles.fileName, `${oldProof.replace(/[%_\\]/g, "\\$&")}%`));
-        if (item.outcome === "active") await tx.update(cases).set({ caseNumber: item.to, updatedAt: new Date() }).where(eq(cases.legacyApplicationId, item.applicationId));
-      });
+      await db.transaction((tx) => renameApplicationReferenceRows(tx, item));
     }
 
     // Balayage final : comptes restés sur un numéro « EVAL » sans demande correspondante, et dossiers opérationnels numérotés « EVAL ».
@@ -124,6 +135,9 @@ export async function normalizeAccountReferences(db: Db, input: { apply: boolean
   const [remaining] = await db.select({ total: sql<number>`count(*)` }).from(applications).where(or(...LEGACY_PATTERNS.map((pattern) => like(applications.dossierNumber, pattern))));
 
 
+  // Rattrapage : payé mais encore « COMPTE-… » → numéro 3M- définitif (remplace la référence de compte partout).
+  const paid = await promotePaidAccountKeys(db, { apply: input.apply, actor, limit });
+
   return {
     applied: input.apply,
     scanned: legacy.length,
@@ -133,5 +147,6 @@ export async function normalizeAccountReferences(db: Db, input: { apply: boolean
     unpaidWithActiveNumber: demotable.map((row) => ({ applicationId: row.id, dossierNumber: row.dossierNumber, fullName: row.fullName })),
     sweep,
     remainingEval: Number(remaining?.total ?? 0),
+    paidAccountKeys: { found: paid.found, promoted: paid.promoted },
   };
 }

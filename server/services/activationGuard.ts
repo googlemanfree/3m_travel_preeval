@@ -111,13 +111,13 @@ export function referenceGuardEnabled(value: string | undefined = process.env.RE
 export async function enforceReferenceInvariant(db: Db): Promise<{ corrected: number; toAccount: number; toActive: number }> {
   if (!referenceGuardEnabled()) return { corrected: 0, toAccount: 0, toActive: 0 };
   const report = await normalizeAccountReferences(db, { apply: true, adminEmail: ACTIVATION_GUARD_ACTOR, limit: 50 });
-  const corrected = report.toAccount + report.toActive;
+  const corrected = report.toAccount + report.toActive + report.paidAccountKeys.promoted;
   if (corrected > 0) {
     try {
       await db.insert(adminNotifications).values({ type: "payment_received", title: "Références remises en règle", message: `${report.toAccount} compte(s) non payé(s) remis en COMPTE et ${report.toActive} compte(s) payé(s) passé(s) en 3M-. Aucune pièce supprimée.`.slice(0, 1000), relatedId: "reference_guard" } as typeof adminNotifications.$inferInsert);
     } catch { /* l'alerte est facultative : la correction est déjà faite */ }
   }
-  return { corrected, toAccount: report.toAccount, toActive: report.toActive };
+  return { corrected, toAccount: report.toAccount, toActive: report.toActive + report.paidAccountKeys.promoted };
 }
 
 let timer: ReturnType<typeof setInterval> | null = null;
