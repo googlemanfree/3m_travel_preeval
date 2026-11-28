@@ -14,6 +14,7 @@ import {
   documentRequirements,
 } from "../../drizzle/caseTrackingSchema";
 import type { getDb } from "../db";
+import { ensureRequirementsForDocuments } from "./caseDocumentRequirements";
 import { fileKeyFromDocumentUrl } from "./publishAgencyDocumentsToCase";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
@@ -330,6 +331,13 @@ export async function publishCandidateFilesToCase(
         .where(eq(documentRequirements.id, matchedRequirement.id));
       matchedRequirement.status = nextStatus;
     }
+  }
+
+  // Chaque pièce reçue apparaît dans la liste des pièces du dossier, sans validation préalable.
+  try {
+    await ensureRequirementsForDocuments(db, operational.id);
+  } catch (error) {
+    console.warn("[publishCandidateFilesToCase] lignes de pièces non créées", error instanceof Error ? error.message : error);
   }
 
   if (published > 0 || updated > 0) {
