@@ -7,6 +7,7 @@ import { DOSSIER_STAGE_IDS, dossierStageOf, dossierStatusLabel, isDossierStage, 
 import { TRPCError } from "@trpc/server";
 import crypto from "node:crypto";
 import { z } from "zod";
+import { evaluationDisplayReference } from "../../shared/evaluationReference";
 import { and, desc, eq, inArray, isNull, isNotNull, like, or, sql } from "drizzle-orm";
 import { checkNoProofReason, checkPaymentReference, referenceKey } from "../../shared/openingPaymentReference";
 import { declaredProjectWarnings } from "../../shared/declaredConsistency";
@@ -22,7 +23,7 @@ import { runOpeningPaymentAutomation } from "../services/openingPaymentAutomatio
 import { generateReceiptA5HTML } from "../receiptA5Service";
 import { archiveRedundantPreAccounts, loadEmailsWithActiveDossier, loadRedundantPreAccounts } from "../services/redundantPreAccountsStore";
 import { loadPilotageQueue } from "../services/pilotageQueueStore";
-import { accountReference, agencyDossierReference, referenceChangeSentence, resolveClientReference } from "../../shared/caseReference";
+import { accountReference, agencyDisplayReference, agencyDossierReference, referenceChangeSentence, resolveClientReference } from "../../shared/caseReference";
 import { buildAdminReferenceView } from "../../shared/adminReferenceDisplay";
 import { buildNoEvaluationOutreachDraft } from "../../shared/noEvaluationOutreach";
 import {
@@ -322,7 +323,7 @@ export async function requireAdminTreatmentSession(cookieHeader: string | undefi
  * textes JSON) de TOUTES les lignes à chaque affichage ou rafraîchissement, puis filtrait en mémoire.
  */
 const onlineListColumns = { id: applications.id, dossierNumber: applications.dossierNumber, fullName: applications.fullName, email: applications.email, whatsappNumber: applications.whatsappNumber, destination: applications.destination, visaType: applications.visaType, scoringTotal: applications.scoringTotal, evaluationScore: applications.evaluationScore, scoringBadge: applications.scoringBadge, dossierStatus: applications.dossierStatus, paymentStatus: applications.paymentStatus, createdAt: applications.createdAt, evaluationDeliveryStatus: applications.evaluationDeliveryStatus, cvUrl: applications.cvUrl };
-const agencyListColumns = { id: agencyDossiers.id, fullName: agencyDossiers.fullName, email: agencyDossiers.email, phone: agencyDossiers.phone, destination: agencyDossiers.destination, visaType: agencyDossiers.visaType, status: agencyDossiers.status, createdAt: agencyDossiers.createdAt };
+const agencyListColumns = { id: agencyDossiers.id, fullName: agencyDossiers.fullName, email: agencyDossiers.email, phone: agencyDossiers.phone, destination: agencyDossiers.destination, visaType: agencyDossiers.visaType, status: agencyDossiers.status, initialPaymentStatus: agencyDossiers.initialPaymentStatus, createdAt: agencyDossiers.createdAt };
 const candidateListColumns = { id: candidates.id, evaluationDeclarationStatus: candidates.evaluationDeclarationStatus, email: candidates.email, fullName: candidates.fullName, phone: candidates.phone, destination: candidates.destination, visaType: candidates.visaType, dossierStatus: candidates.dossierStatus, createdAt: candidates.createdAt, deletedAt: candidates.deletedAt, avatarUrl: candidates.avatarUrl, avatarVerificationStatus: candidates.avatarVerificationStatus, avatarVerificationReason: candidates.avatarVerificationReason, avatarFaceCount: candidates.avatarFaceCount };
 
 // Un même chargement sert les appels simultanés (tableau de bord, liste, compteurs) : une seule lecture de la base au lieu d'une par appel.
@@ -371,7 +372,7 @@ async function loadCandidateRecordsFromDb(sourceLimit = 5000): Promise<AdminCand
 
   const onlineCandidates: AdminCandidate[] = online.map(application => ({
       id: `online_${application.id}`,
-      applicationNumber: application.dossierNumber,
+      applicationNumber: evaluationDisplayReference(application) ?? `Évaluation n° ${application.id}`,
       fullName: application.fullName,
       email: application.email,
       phone: application.whatsappNumber,
@@ -396,7 +397,7 @@ async function loadCandidateRecordsFromDb(sourceLimit = 5000): Promise<AdminCand
     }) as AdminCandidate);
   const agencyCandidates: AdminCandidate[] = agency.map(dossier => ({
       id: `agency_${dossier.id}`,
-      applicationNumber: `3M-AGN-${String(dossier.id).padStart(4, "0")}`,
+      applicationNumber: agencyDisplayReference({ id: dossier.id, status: dossier.status, initialPaymentStatus: dossier.initialPaymentStatus }, candidateByEmail.get(dossier.email.toLowerCase())?.id ?? null),
       fullName: dossier.fullName,
       email: dossier.email,
       phone: dossier.phone,

@@ -1,5 +1,6 @@
 import { sql, type SQL } from "drizzle-orm";
 import { NOT_ARCHIVED_EVALUATION_SQL } from "./evaluationArchive";
+import { PAID_APPLICATION_STATUSES } from "../../shared/evaluationReference";
 import { DOSSIER_STAGE_IDS, DOSSIER_STATUS_STAGE, dossierStageOf, dossierStatusLabel, isDossierStage, type DossierStage } from "../../shared/dossierStages";
 
 /**
@@ -57,7 +58,12 @@ function definition(source: Source) {
     return {
       table: sql.raw("applications"), alias: sql.raw("s"),
       id: sql.raw("s.id"), createdAt: sql.raw("s.createdAt"), email: sql.raw("s.email"), name: sql.raw("s.fullName"), phone: sql.raw("s.whatsappNumber"),
-      number: sql.raw("s.dossierNumber"), status: sql.raw("s.dossierStatus"),
+      // Référence AFFICHÉE (comme evaluationDisplayReference) : « 3M-… » seulement une fois les frais d'ouverture payés, sinon la référence de compte
+      // « COMPTE-… ». Le numéro technique « 3M-… » attribué plus tôt à l'évaluation ne doit jamais faire croire que le dossier est activé.
+      number: sql.raw(`CASE WHEN (s.paymentStatus = 'SUCCESS' OR s.dossierStatus IN (${PAID_APPLICATION_STATUSES.map((status) => `'${status}'`).join(", ")})) AND s.dossierNumber LIKE '3M-%' THEN s.dossierNumber WHEN s.candidateId IS NOT NULL AND s.candidateId > 0 THEN CONCAT('COMPTE-', IF(s.candidateId < 100000, LPAD(s.candidateId, 5, '0'), CAST(s.candidateId AS CHAR))) ELSE CONCAT('Évaluation n° ', CAST(s.id AS CHAR)) END`),
+      // le numéro technique reste cherchable
+      searchNumbers: [sql.raw(`CASE WHEN (s.paymentStatus = 'SUCCESS' OR s.dossierStatus IN (${PAID_APPLICATION_STATUSES.map((status) => `'${status}'`).join(", ")})) AND s.dossierNumber LIKE '3M-%' THEN s.dossierNumber WHEN s.candidateId IS NOT NULL AND s.candidateId > 0 THEN CONCAT('COMPTE-', IF(s.candidateId < 100000, LPAD(s.candidateId, 5, '0'), CAST(s.candidateId AS CHAR))) ELSE CONCAT('Évaluation n° ', CAST(s.id AS CHAR)) END`), sql.raw("s.dossierNumber")],
+      status: sql.raw("s.dossierStatus"),
       destination: sql.raw("COALESCE(NULLIF(s.destination, ''), 'Non spécifiée')"), visa: sql.raw("COALESCE(NULLIF(s.visaType, ''), 'Non spécifié')"),
       score: sql.raw("COALESCE(s.scoringTotal, s.evaluationScore, 0)"),
       band: sql.raw("CASE s.scoringBadge WHEN 'eligible' THEN 'excellent' WHEN 'admissible' THEN 'bon' ELSE 'faible' END"),
@@ -70,7 +76,10 @@ function definition(source: Source) {
     return {
       table: sql.raw("agency_dossiers"), alias: sql.raw("s"),
       id: sql.raw("s.id"), createdAt: sql.raw("s.createdAt"), email: sql.raw("s.email"), name: sql.raw("s.fullName"), phone: sql.raw("s.phone"),
-      number: sql.raw("CONCAT('3M-AGN-', IF(s.id < 1000, LPAD(s.id, 4, '0'), CAST(s.id AS CHAR)))"), status: sql.raw("s.status"),
+      // Pré-dossier agence non payé rattaché à un compte : référence « COMPTE-… » (comme agencyDisplayReference) ; « 3M-AGN-… » une fois activé.
+      number: sql.raw(`CASE WHEN LOWER(s.initialPaymentStatus) = 'paid' OR (s.status IS NOT NULL AND s.status <> '' AND s.status <> 'nouveau') OR (SELECT MAX(xc.id) FROM candidates xc WHERE xc.deletedAt IS NULL AND LOWER(xc.email) = LOWER(s.email)) IS NULL THEN CONCAT('3M-AGN-', IF(s.id < 1000, LPAD(s.id, 4, '0'), CAST(s.id AS CHAR))) ELSE CONCAT('COMPTE-', IF((SELECT MAX(xc.id) FROM candidates xc WHERE xc.deletedAt IS NULL AND LOWER(xc.email) = LOWER(s.email)) < 100000, LPAD((SELECT MAX(xc.id) FROM candidates xc WHERE xc.deletedAt IS NULL AND LOWER(xc.email) = LOWER(s.email)), 5, '0'), CAST((SELECT MAX(xc.id) FROM candidates xc WHERE xc.deletedAt IS NULL AND LOWER(xc.email) = LOWER(s.email)) AS CHAR))) END`),
+      searchNumbers: [sql.raw(`CASE WHEN LOWER(s.initialPaymentStatus) = 'paid' OR (s.status IS NOT NULL AND s.status <> '' AND s.status <> 'nouveau') OR (SELECT MAX(xc.id) FROM candidates xc WHERE xc.deletedAt IS NULL AND LOWER(xc.email) = LOWER(s.email)) IS NULL THEN CONCAT('3M-AGN-', IF(s.id < 1000, LPAD(s.id, 4, '0'), CAST(s.id AS CHAR))) ELSE CONCAT('COMPTE-', IF((SELECT MAX(xc.id) FROM candidates xc WHERE xc.deletedAt IS NULL AND LOWER(xc.email) = LOWER(s.email)) < 100000, LPAD((SELECT MAX(xc.id) FROM candidates xc WHERE xc.deletedAt IS NULL AND LOWER(xc.email) = LOWER(s.email)), 5, '0'), CAST((SELECT MAX(xc.id) FROM candidates xc WHERE xc.deletedAt IS NULL AND LOWER(xc.email) = LOWER(s.email)) AS CHAR))) END`), sql.raw("CONCAT('3M-AGN-', IF(s.id < 1000, LPAD(s.id, 4, '0'), CAST(s.id AS CHAR)))")],
+      status: sql.raw("s.status"),
       destination: sql.raw("COALESCE(NULLIF(s.destination, ''), 'Non spécifiée')"), visa: sql.raw("COALESCE(NULLIF(s.visaType, ''), 'Non spécifié')"),
       score: sql.raw("0"), band: sql.raw("'faible'"), payment: sql.raw("'non_paye'"), ownCv: sql.raw("0"), ownBilan: sql.raw("0"),
       base: sql.raw("1 = 1"), ownRequest: sql.raw("(1 = 0)"),
