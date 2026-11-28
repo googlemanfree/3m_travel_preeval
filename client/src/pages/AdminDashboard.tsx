@@ -554,6 +554,8 @@ export function CandidateDetailModal({
   const [activationDialogOpen, setActivationDialogOpen] = useState(false);
   const [activationAmount, setActivationAmount] = useState("");
   const [activationPaymentRef, setActivationPaymentRef] = useState("");
+  const [activationReason, setActivationReason] = useState("");
+  const [activationExpected, setActivationExpected] = useState(0);
   const paymentAlreadyConfirmed = paymentConfirmedOptimistically
     || ["SUCCESS", "success", "completed", "paye", "paid"].includes(String(paymentSnapshot?.status ?? ""))
     || ["SUCCESS", "success", "completed", "paye", "paid"].includes(String((candidate as Candidate | undefined)?.paymentStatus ?? ""));
@@ -1436,10 +1438,13 @@ export function CandidateDetailModal({
                           Référence actuelle : <span className="font-mono font-semibold">{candidate.folderCode}</span>
                           {candidateRefs?.activationTargetReference ? <> → après activation : <span className="font-mono font-semibold">{candidateRefs?.activationTargetReference}</span></> : null}
                         </p>
+                        <p className="mt-1 text-sm text-amber-950" data-testid="activation-amount-line">
+                          Frais d’ouverture du dossier : <span className="font-semibold">{paymentSnapshot?.amount ? `${Math.round(Number(paymentSnapshot.amount)).toLocaleString("fr-FR")} XAF` : "montant proposé selon la procédure"}</span> <span className="text-xs">(propre à chaque dossier, fixé dans l’éditeur du bilan, modifiable à l’activation avec un motif)</span>
+                        </p>
                         <p className="mt-1 text-xs text-amber-900">À l’activation (paiement des frais d’ouverture confirmé) : la référence passe de COMPTE à 3M, le reçu et le protocole d’accord N°01 partent ensemble, et vous pouvez les modifier avant l’envoi.</p>
                         <Button
                           type="button"
-                          onClick={() => { setActivationAmount(paymentSnapshot?.amount ? String(Math.round(Number(paymentSnapshot.amount))) : ""); setActivationPaymentRef(""); setActivationDialogOpen(true); }}
+                          onClick={() => { const expected = paymentSnapshot?.amount ? Math.round(Number(paymentSnapshot.amount)) : 0; setActivationExpected(expected); setActivationAmount(expected ? String(expected) : ""); setActivationPaymentRef(""); setActivationReason(""); setActivationDialogOpen(true); }}
                           disabled={confirmPaymentForCandidateMutation.isPending}
                           className="mt-3 w-full bg-amber-700 text-white hover:bg-amber-800"
                           data-testid="activate-dossier-button"
@@ -1607,6 +1612,13 @@ export function CandidateDetailModal({
                 <Label htmlFor="activation-amount">Montant des frais d’ouverture (XAF)</Label>
                 <Input id="activation-amount" data-testid="activation-amount" inputMode="numeric" value={activationAmount} onChange={(event) => setActivationAmount(event.target.value.replace(/[^\d]/g, ""))} placeholder="Montant proposé si vide" />
               </div>
+              {activationAmount && Number(activationAmount) !== activationExpected && (
+                <div className="sm:col-span-2 rounded-lg border border-amber-300 bg-amber-50 p-3" data-testid="activation-reason-block">
+                  <Label htmlFor="activation-reason" className="text-amber-950">Motif de la modification du montant (obligatoire)</Label>
+                  <Input id="activation-reason" data-testid="activation-reason" maxLength={300} value={activationReason} onChange={(event) => setActivationReason(event.target.value)} placeholder="Ex. frais négociés, tarif du visa travail…" />
+                  <p className="mt-1 text-xs text-amber-900">{activationExpected ? `Montant du dossier : ${activationExpected.toLocaleString("fr-FR")} XAF. ` : ""}Le montant confirmé est inscrit au journal des paiements avec ce motif.</p>
+                </div>
+              )}
               <div>
                 <Label htmlFor="activation-reference">Référence du paiement (facultatif)</Label>
                 <Input id="activation-reference" data-testid="activation-reference" maxLength={255} value={activationPaymentRef} onChange={(event) => setActivationPaymentRef(event.target.value)} />
@@ -1622,7 +1634,7 @@ export function CandidateDetailModal({
                   if (!candidate?.id) return;
                   const amount = activationAmount ? Number(activationAmount) : undefined;
                   confirmPaymentForCandidateMutation.mutate(
-                    { sessionToken, candidateId: candidate.id, ...(amount ? { confirmedAmount: amount } : {}), ...(activationPaymentRef.trim() ? { paymentReference: activationPaymentRef.trim() } : {}) },
+                    { sessionToken, candidateId: candidate.id, ...(amount ? { confirmedAmount: amount } : {}), ...(activationPaymentRef.trim() ? { paymentReference: activationPaymentRef.trim() } : {}), ...(activationReason.trim() ? { amountReason: activationReason.trim() } : {}) },
                     { onSuccess: () => setActivationDialogOpen(false) },
                   );
                 }}

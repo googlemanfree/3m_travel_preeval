@@ -19,6 +19,7 @@ import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../em
 import { PAYMENT_PROOF_REQUIRED_MESSAGE } from "../services/openingPaymentEvidence";
 import { describeDossierProgress, progressText } from "../../shared/dossierProgress";
 import { sendReceiptAndProtocol } from "../services/paymentPackage";
+import { amountChangeError } from "../services/documentDrafts";
 import { runOpeningPaymentAutomation } from "../services/openingPaymentAutomation";
 import { generateReceiptA5HTML } from "../receiptA5Service";
 import { archiveRedundantPreAccounts, loadEmailsWithActiveDossier, loadRedundantPreAccounts } from "../services/redundantPreAccountsStore";
@@ -2468,6 +2469,8 @@ export const adminCandidateManagementRouter = router({
       candidateId: z.string().regex(/^(online|agency)_\d+$/),
       paymentReference: z.string().trim().max(255).optional(),
       confirmedAmount: z.number().int().nonnegative().max(100000000).optional(),
+      /** Motif quand le montant confirmé diffère du montant attendu du dossier. */
+      amountReason: z.string().trim().max(300).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
@@ -2483,6 +2486,7 @@ export const adminCandidateManagementRouter = router({
       let candidateEmail: string;
       let fullName: string;
       let alreadyConfirmed = false;
+      let amountNote = "";
 
       if (reference.source === "online") {
         const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
@@ -2494,7 +2498,13 @@ export const adminCandidateManagementRouter = router({
         dossierNumber = application.dossierNumber;
         candidateEmail = application.email;
         fullName = application.fullName;
-        if (input.confirmedAmount === undefined) amount = application.paymentAmount ?? application.paymentExpectedAmount ?? proposedOpeningFee(application.visaType);
+        const expectedAmount = application.paymentAmount ?? application.paymentExpectedAmount ?? proposedOpeningFee(application.visaType);
+        if (input.confirmedAmount === undefined) amount = expectedAmount;
+        else {
+          const reasonError = amountChangeError({ newAmount: input.confirmedAmount, defaultAmount: expectedAmount, reason: input.amountReason });
+          if (reasonError) throw new TRPCError({ code: "PRECONDITION_FAILED", message: reasonError });
+          amountNote = input.confirmedAmount !== expectedAmount ? ` Montant ${expectedAmount} → ${input.confirmedAmount} XAF. Motif : ${input.amountReason?.trim()}.` : "";
+        }
         await db.update(applications).set({
           paymentStatus: "SUCCESS",
           paymentDate: application.paymentDate ?? validatedAt,
@@ -2516,6 +2526,11 @@ export const adminCandidateManagementRouter = router({
         candidateEmail = dossier.email;
         fullName = dossier.fullName;
         if (input.confirmedAmount === undefined) amount = proposedOpeningFee(dossier.visaType);
+        else {
+          const reasonError = amountChangeError({ newAmount: input.confirmedAmount, defaultAmount: proposedOpeningFee(dossier.visaType), reason: input.amountReason });
+          if (reasonError) throw new TRPCError({ code: "PRECONDITION_FAILED", message: reasonError });
+          amountNote = input.confirmedAmount !== proposedOpeningFee(dossier.visaType) ? ` Montant ${proposedOpeningFee(dossier.visaType)} → ${input.confirmedAmount} XAF. Motif : ${input.amountReason?.trim()}.` : "";
+        }
         const auditNote = `[Paiement confirmé] ${referenceLabel} · ${admin.email || "Administrateur"} · ${validatedAt.toISOString()}`;
         await db.update(agencyDossiers).set({
           initialPaymentStatus: "paid",
@@ -2532,7 +2547,7 @@ export const adminCandidateManagementRouter = router({
         paymentId: reference.id,
         candidateEmail,
         amount: `${amount} XAF`,
-        details: `Dossier ${dossierNumber} · ${referenceLabel} · validation en un clic depuis la fiche candidat.`,
+        details: `Dossier ${dossierNumber} · ${referenceLabel} · validation en un clic depuis la fiche candidat.${amountNote}`,
       });
 
       // Dès que le paiement est confirmé : pack reçu+protocole + purge miroir EVAL (Vague 1).
