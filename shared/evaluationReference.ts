@@ -6,7 +6,7 @@ import { accountReference } from "./caseReference";
  * d'un dossier non activé (bilan, e-mails, PDF, notifications, listes de suivi).
  * Sans compte rattaché et sans paiement : aucune référence plutôt qu'une fausse référence « 3M ».
  */
-const PAID_APPLICATION_STATUSES = ["paye", "en_attente_documents", "documents_recus", "soumis_agences", "en_cours_recrutement", "contrat_obtenu", "visa_approuve"];
+export const PAID_APPLICATION_STATUSES = ["paye", "en_attente_documents", "documents_recus", "soumis_agences", "en_cours_recrutement", "contrat_obtenu", "visa_approuve"];
 
 export type EvaluationReferenceSource = { dossierNumber?: unknown; candidateId?: unknown; paymentStatus?: unknown; dossierStatus?: unknown };
 
