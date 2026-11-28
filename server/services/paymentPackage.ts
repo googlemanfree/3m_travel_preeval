@@ -11,6 +11,7 @@ import type { getDb } from "../db";
 import { buildPaymentReceiptPdf, formatPaymentAmount } from "../utils/paymentReceipt";
 import { proposedOpeningFee } from "../../shared/openingFee";
 import { buildPaymentPackageEmail } from "./paymentPackageEmail";
+import { applyReceiptDraft, readProtocolDraft, readReceiptDraft } from "./documentDrafts";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
 export type PaymentReference = { source: "online" | "agency"; id: number };
@@ -22,7 +23,7 @@ export function receiptSignatureHash(input: { source: "online" | "agency"; payme
   return crypto.createHash("sha256").update(JSON.stringify(input)).digest("hex");
 }
 
-type Loaded = {
+export type Loaded = {
   email: string;
   fullName: string;
   dossierNumber: string;
@@ -40,7 +41,7 @@ type Loaded = {
   paymentConfirmed: boolean;
 };
 
-async function loadDossier(db: Db, reference: PaymentReference): Promise<Loaded> {
+export async function loadDossier(db: Db, reference: PaymentReference): Promise<Loaded> {
   if (reference.source === "agency") {
     const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
     if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
@@ -85,6 +86,25 @@ async function loadDossier(db: Db, reference: PaymentReference): Promise<Loaded>
   };
 }
 
+/** Variables du Protocole d'accord N°01 d'un dossier (reprises par l'envoi et par l'éditeur du protocole). */
+export function buildProtocolVariables(dossier: Loaded, adminEmail: string) {
+  return {
+    clientNomComplet: dossier.fullName,
+    dossierRef: dossier.dossierNumber,
+    destinationProjet: dossier.destination || "Non spécifiée",
+    clientTelephoneWhatsapp: dossier.whatsapp || undefined,
+    clientEmail: dossier.email,
+    // Dossier en ligne : montant confirmé du dossier. Dossier d'agence : le texte renvoie au reçu (pas de chiffre supposé).
+    montantValide: dossier.applicationId ? dossier.amount : undefined,
+    modePaiement: dossier.paymentMethod || "Validation manuelle par un conseiller",
+    dateHeurePaiement: dossier.paymentDate.toLocaleString("fr-FR", { timeZone: "Africa/Douala" }),
+    conseillerEmail: adminEmail,
+    empreinteSha: crypto.createHash("sha256").update(`${dossier.dossierNumber}|${dossier.email}|${dossier.destination ?? ""}|${Date.now()}`).digest("hex").slice(0, 24),
+    clientIpAddress: "Non applicable (envoi initié par l'agence, signature à venir dans l'espace client)",
+    dateDuJour: new Date().toLocaleDateString("fr-FR", { timeZone: "Africa/Douala" }),
+  };
+}
+
 /**
  * Après confirmation du paiement : le reçu (signé par l'administrateur qui agit) et le Protocole d'accord N°01 sont envoyés
  * ENSEMBLE, dans un seul e-mail avec les deux PDF. Un second appel sans `resend` ne renvoie rien (pas de doublon).
@@ -92,6 +112,9 @@ async function loadDossier(db: Db, reference: PaymentReference): Promise<Loaded>
  */
 export async function sendReceiptAndProtocol(db: Db, reference: PaymentReference, admin: { email: string }, options: { resend?: boolean } = {}): Promise<PaymentPackageResult> {
   const dossier = await loadDossier(db, reference);
+  // Reçu et protocole modifiés par l'administrateur : ce sont ces valeurs qui partent (montant propre à chaque dossier).
+  applyReceiptDraft(dossier, await readReceiptDraft(db, reference));
+  const protocolDraft = await readProtocolDraft(db, reference);
   if (!dossier.paymentConfirmed) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le reçu et le protocole ne partent qu’après confirmation du paiement." });
   if (!dossier.email) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Aucune adresse e-mail client n’est disponible pour ce dossier." });
   const adminEmail = admin.email || "Administrateur";
@@ -103,7 +126,8 @@ export async function sendReceiptAndProtocol(db: Db, reference: PaymentReference
 
   // Le reçu est signé par l'administrateur qui envoie (comme la validation du reçu), sans seconde manipulation.
   let [approval] = await db.select().from(paymentReceiptApprovals).where(and(eq(paymentReceiptApprovals.source, reference.source), eq(paymentReceiptApprovals.paymentId, reference.id), eq(paymentReceiptApprovals.candidateEmail, dossier.email))).orderBy(desc(paymentReceiptApprovals.approvedAt)).limit(1);
-  if (!approval) {
+  // Un montant modifié depuis la dernière signature est signé à nouveau : la signature ne couvre jamais un autre montant que celui du reçu.
+  if (!approval || approval.amount !== `${dossier.amount} ${dossier.currency}`) {
     const approvedAt = new Date();
     const signatureLabel = `3M TRAVEL AGENCY · ${adminEmail}`;
     const signatureHash = receiptSignatureHash({ source: reference.source, paymentId: reference.id, dossierNumber: dossier.dossierNumber, candidateEmail: dossier.email, amount: String(dossier.amount), currency: dossier.currency, approvedByEmail: adminEmail, approvedAt });
@@ -129,27 +153,13 @@ export async function sendReceiptAndProtocol(db: Db, reference: PaymentReference
     receiptSignatureHash: approval?.signatureHash,
   });
 
-  const protocolVariables = {
-    clientNomComplet: dossier.fullName,
-    dossierRef: dossier.dossierNumber,
-    destinationProjet: dossier.destination || "Non spécifiée",
-    clientTelephoneWhatsapp: dossier.whatsapp || undefined,
-    clientEmail: dossier.email,
-    // Dossier en ligne : montant confirmé du dossier. Dossier d'agence : le texte renvoie au reçu (pas de chiffre supposé).
-    montantValide: dossier.applicationId ? dossier.amount : undefined,
-    modePaiement: dossier.paymentMethod || "Validation manuelle par un conseiller",
-    dateHeurePaiement: dossier.paymentDate.toLocaleString("fr-FR", { timeZone: "Africa/Douala" }),
-    conseillerEmail: adminEmail,
-    empreinteSha: crypto.createHash("sha256").update(`${dossier.dossierNumber}|${dossier.email}|${dossier.destination ?? ""}|${Date.now()}`).digest("hex").slice(0, 24),
-    clientIpAddress: "Non applicable (envoi initié par l'agence, signature à venir dans l'espace client)",
-    dateDuJour: new Date().toLocaleDateString("fr-FR", { timeZone: "Africa/Douala" }),
-  };
+  const protocolVariables = buildProtocolVariables(dossier, adminEmail);
   const protocolPdf = await createAgreementProtocolOnePdf({
     dossierNumber: dossier.dossierNumber,
     fullName: dossier.fullName,
     destination: dossier.destination,
     variables: protocolVariables,
-    content: buildProtocolOneRichText(protocolVariables, dossier.destination || "", dossier.visaType || null),
+    content: protocolDraft?.content ?? buildProtocolOneRichText(protocolVariables, dossier.destination || "", dossier.visaType || null),
   });
 
   const receiptFileName = `Recu-paiement-${dossier.dossierNumber}.pdf`;

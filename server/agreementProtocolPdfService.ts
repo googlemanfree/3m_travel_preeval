@@ -42,6 +42,8 @@ export async function createAgreementProtocolOnePdf(input: {
   documentTitle?: string;
   /** Si fourni, le PDF est l’exemplaire signé (bloc signature + statut signé). */
   signature?: AgreementProtocolSignature | null;
+  /** Aperçu : le PDF n'est pas déposé dans le stockage (rien n'est conservé). */
+  skipStorage?: boolean;
 }): Promise<{ key: string; url: string; bytes: Buffer }> {
   const destination = input.destination || "Non spécifiée";
   const richText = input.content?.trim() && input.content.trim().length >= 50
@@ -158,5 +160,6 @@ export async function createAgreementProtocolOnePdf(input: {
   const bytes = Buffer.from(doc.output("arraybuffer"));
   const reference = safeText(input.dossierNumber || "dossier").replace(/[^a-zA-Z0-9_-]/g, "-");
   const fileName = signed ? "protocole-01-signe.pdf" : "protocole-01.pdf";
+  if (input.skipStorage) return { key: "", url: "", bytes };
   return { ...await storagePut(`agreement-protocols/${reference}/${fileName}`, bytes, "application/pdf"), bytes };
 }
