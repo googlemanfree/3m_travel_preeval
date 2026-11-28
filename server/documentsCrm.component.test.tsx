@@ -103,8 +103,8 @@ describe("vue CRM des pièces", () => {
       renderCrm();
       expect(screen.getByTestId("crm-progress").textContent).toBe("1 sur 5 validée");
       expect(within(row(1)).getByText("À fournir")).toBeTruthy();
-      expect(within(row(2)).getByText("À vérifier")).toBeTruthy();
-      expect(within(row(3)).getByText("À corriger")).toBeTruthy();
+      expect(within(row(2)).getByText("Reçue")).toBeTruthy();
+      expect(within(row(3)).getByText("Rejetée — à corriger")).toBeTruthy();
       expect(within(row(4)).getByText("Validée")).toBeTruthy();
       expect(within(row(5)).getByText("Non requise")).toBeTruthy();
       expect(screen.queryByText("pending")).toBeNull();
@@ -118,7 +118,7 @@ describe("vue CRM des pièces", () => {
 
   it("filtre au clic sur un compteur", () => {
     renderCrm();
-    fireEvent.click(screen.getByRole("tab", { name: "À corriger (1)" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Rejetées (1)" }));
     expect(screen.getAllByTestId(/crm-row-/)).toHaveLength(1);
     expect(screen.getByTestId("crm-row-3")).toBeTruthy();
     fireEvent.click(screen.getByRole("tab", { name: "Toutes (6)" }));
@@ -147,7 +147,7 @@ describe("vue CRM des pièces", () => {
 
   it("« À corriger » exige d'expliquer au candidat ce qui manque, puis envoie l'explication", async () => {
     renderCrm();
-    fireEvent.click(within(row(2)).getByRole("button", { name: /À corriger — Passeport/ }));
+    fireEvent.click(within(row(2)).getByRole("button", { name: /Rejeter — Passeport/ }));
     const dialog = await screen.findByRole("dialog");
     fireEvent.click(within(dialog).getByRole("button", { name: "Demander la correction" }));
     expect(within(dialog).getByRole("alert").textContent).toMatch(/5 caractères/);

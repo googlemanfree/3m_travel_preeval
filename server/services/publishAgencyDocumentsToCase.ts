@@ -425,6 +425,14 @@ export async function publishAgencyDocumentsToCase(
     }
   }
 
+  // Chaque pièce remise en agence apparaît dans la liste des pièces du dossier (et dans le suivi du candidat), sans validation préalable.
+  try {
+    const { ensureRequirementsForDocuments } = await import("./caseDocumentRequirements");
+    await ensureRequirementsForDocuments(db, operational.id);
+  } catch (error) {
+    console.warn("[publishAgencyDocumentsToCase] lignes de pièces non créées", error instanceof Error ? error.message : error);
+  }
+
   let whatsappSent = false;
   if (published > 0 || updated > 0) {
     const parts: string[] = [];

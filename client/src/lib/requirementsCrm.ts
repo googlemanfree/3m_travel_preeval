@@ -9,17 +9,17 @@ export type RowAction = "deposit" | "approve" | "reject" | "waive" | "reopen";
 
 export const REQUIREMENT_STATUS_LABELS: Record<RequirementStatus, string> = {
   pending: "À fournir",
-  received: "À vérifier",
+  received: "Reçue",
   approved: "Validée",
-  rejected: "À corriger",
+  rejected: "Rejetée — à corriger",
   waived: "Non requise",
 };
 
 export const CRM_FILTER_LABELS: Record<CrmFilter, string> = {
   all: "Toutes",
   to_provide: "À fournir",
-  to_review: "À vérifier",
-  to_fix: "À corriger",
+  to_review: "Reçues",
+  to_fix: "Rejetées",
   done: "Terminées",
 };
 
@@ -28,7 +28,7 @@ export const CRM_FILTERS: CrmFilter[] = ["all", "to_provide", "to_review", "to_f
 export const ROW_ACTION_LABELS: Record<RowAction, string> = {
   deposit: "Déposer",
   approve: "Valider",
-  reject: "À corriger",
+  reject: "Rejeter",
   waive: "Non requise",
   reopen: "Rouvrir",
 };

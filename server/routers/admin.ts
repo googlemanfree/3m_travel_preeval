@@ -4799,6 +4799,16 @@ export const adminRouter = router({
         ? safeCollection(db.select({ id: evaluationBilanVersions.id, applicationId: evaluationBilanVersions.applicationId, versionNumber: evaluationBilanVersions.versionNumber, approvalStatus: evaluationBilanVersions.approvalStatus, requiresSecondApproval: evaluationBilanVersions.requiresSecondApproval, pdfUrl: evaluationBilanVersions.pdfUrl, sentAt: evaluationBilanVersions.sentAt, createdAt: evaluationBilanVersions.createdAt }).from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, reference.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(50), [] as Array<Pick<typeof evaluationBilanVersions.$inferSelect, "id" | "applicationId" | "versionNumber" | "approvalStatus" | "requiresSecondApproval" | "pdfUrl" | "sentAt" | "createdAt">>, "evaluationBilanVersions")
         : Promise.resolve([] as Array<Pick<typeof evaluationBilanVersions.$inferSelect, "id" | "applicationId" | "versionNumber" | "approvalStatus" | "requiresSecondApproval" | "pdfUrl" | "sentAt" | "createdAt">>);
 
+      // Rattrapage automatique, sans action de l'administrateur : les pièces déjà déposées (candidat ou agence) rejoignent le dossier et sa liste de pièces.
+      // Idempotent, ne crée aucun dossier, et ne bloque jamais l'ouverture de la fiche.
+      try {
+        if (agencyCandidateId) await publishCandidateFilesToCase(db, { candidateId: agencyCandidateId, actorAdminId: admin.id ?? null, actorRole: "system" });
+        if (reference.source === "agency") await publishAgencyDocumentsToCase(db, { agencyDossierId: reference.id, actorAdminId: admin.id ?? null, actorEmail: admin.email ?? null, notify: false, createCaseIfMissing: false });
+        const { ensureRequirementsForDocuments } = await import("../services/caseDocumentRequirements");
+        await ensureRequirementsForDocuments(db, operationalCase.id);
+      } catch (error) {
+        console.warn("[getCandidate360] rattrapage des pièces non effectué", error instanceof Error ? error.message : error);
+      }
       const [requirements, operationalDocuments, legacyDocuments, tasks, notes, statusHistory, activityLogs, notifications, messages, documentClarifications, documentClarificationEventHistory, advisors, requestHistory, latestEvaluations] = await Promise.all([
         safeCollection(db.select().from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(asc(documentRequirements.requestedAt)).limit(100), [], "requirements", { critical: true }),
         safeCollection(db.select().from(caseDocuments).where(eq(caseDocuments.caseId, operationalCase.id)).orderBy(desc(caseDocuments.uploadedAt)).limit(100), [], "caseDocuments", { critical: true }),
