@@ -266,6 +266,10 @@ interface Candidate {
   id: string;
   internalId: number;
   folderCode: string;
+  /** Numéro technique du dossier (recherche, modules paiements / documents / e-mails) : peut commencer par « 3M- » avant l'activation. */
+  technicalFolderCode?: string;
+  /** Numéro « 3M- » que prendra le dossier à l'activation (après confirmation du paiement). */
+  activationTargetReference?: string | null;
   fullName: string;
   email: string;
   whatsapp: string;
@@ -546,6 +550,10 @@ export function CandidateDetailModal({
   );
   const candidate = data?.candidate;
   const paymentSnapshot = (data as { payments?: Array<{ status?: string | null; validatedBy?: string | null; validatedAt?: string | Date | null; paidAt?: string | Date | null; amount?: number | null; currency?: string | null }> } | undefined)?.payments?.[0];
+  const candidateRefs = candidate as { technicalFolderCode?: string; activationTargetReference?: string | null } | undefined;
+  const [activationDialogOpen, setActivationDialogOpen] = useState(false);
+  const [activationAmount, setActivationAmount] = useState("");
+  const [activationPaymentRef, setActivationPaymentRef] = useState("");
   const paymentAlreadyConfirmed = paymentConfirmedOptimistically
     || ["SUCCESS", "success", "completed", "paye", "paid"].includes(String(paymentSnapshot?.status ?? ""))
     || ["SUCCESS", "success", "completed", "paye", "paid"].includes(String((candidate as Candidate | undefined)?.paymentStatus ?? ""));
@@ -1065,17 +1073,17 @@ export function CandidateDetailModal({
                         return;
                       }
                       if (target.tab === "payments" || target.key === "payment_missing" || target.key === "confirm_payment" || target.key === "receipt_missing") {
-                        onOpenOperations("payments", candidate.folderCode);
+                        onOpenOperations("payments", candidateRefs?.technicalFolderCode ?? candidate.folderCode);
                         toast({ title: "Paiements", description: `Module paiements ouvert pour ${candidate.folderCode}.` });
                         return;
                       }
                       if (target.tab === "documents" || target.key === "documents_pending") {
-                        onOpenOperations("documents", candidate.folderCode);
+                        onOpenOperations("documents", candidateRefs?.technicalFolderCode ?? candidate.folderCode);
                         toast({ title: "Documents", description: `Module documents ouvert pour ${candidate.folderCode}.` });
                         return;
                       }
                       if (target.tab === "messages") {
-                        onOpenOperations("emails", candidate.folderCode);
+                        onOpenOperations("emails", candidateRefs?.technicalFolderCode ?? candidate.folderCode);
                         toast({ title: "E-mails", description: `Module e-mails ouvert pour ${candidate.folderCode}.` });
                         return;
                       }
@@ -1422,15 +1430,23 @@ export function CandidateDetailModal({
                         </Button>
                       </div>
                     ) : (
-                      <Button
-                        type="button"
-                        onClick={() => confirmPaymentForCandidateMutation.mutate({ sessionToken, candidateId: candidate.id })}
-                        disabled={confirmPaymentForCandidateMutation.isPending}
-                        className="mt-2 w-full bg-amber-700 text-white hover:bg-amber-800"
-                        data-testid="confirm-payment-button"
-                      >
-                        {confirmPaymentForCandidateMutation.isPending ? <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Validation du paiement…</> : <>Valider le paiement</>}
-                      </Button>
+                      <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-3" data-testid="dossier-activation-panel">
+                        <p className="text-xs font-bold uppercase tracking-wider text-amber-900">Activation du dossier</p>
+                        <p className="mt-1 text-sm text-amber-950">
+                          Référence actuelle : <span className="font-mono font-semibold">{candidate.folderCode}</span>
+                          {candidateRefs?.activationTargetReference ? <> → après activation : <span className="font-mono font-semibold">{candidateRefs?.activationTargetReference}</span></> : null}
+                        </p>
+                        <p className="mt-1 text-xs text-amber-900">À l’activation (paiement des frais d’ouverture confirmé) : la référence passe de COMPTE à 3M, le reçu et le protocole d’accord N°01 partent ensemble, et vous pouvez les modifier avant l’envoi.</p>
+                        <Button
+                          type="button"
+                          onClick={() => { setActivationAmount(paymentSnapshot?.amount ? String(Math.round(Number(paymentSnapshot.amount))) : ""); setActivationPaymentRef(""); setActivationDialogOpen(true); }}
+                          disabled={confirmPaymentForCandidateMutation.isPending}
+                          className="mt-3 w-full bg-amber-700 text-white hover:bg-amber-800"
+                          data-testid="activate-dossier-button"
+                        >
+                          {confirmPaymentForCandidateMutation.isPending ? <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Activation en cours…</> : <><FileCheck className="mr-2 h-4 w-4" />Activer le dossier (COMPTE → 3M)</>}
+                        </Button>
+                      </div>
                     )}
                     {guidedNext.canAdvance && guidedNext.nextStage ? (
                       <Button
@@ -1578,6 +1594,44 @@ export function CandidateDetailModal({
           <Button variant="outline" onClick={onClose}>Fermer</Button>
           <p className="hidden text-xs text-slate-500 md:block">Toutes les actions sont journalisées dans l’historique du dossier.</p>
         </DialogFooter>
+        <AlertDialog open={activationDialogOpen} onOpenChange={setActivationDialogOpen}>
+          <AlertDialogContent data-testid="activate-dossier-dialog">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Activer le dossier de {candidate?.fullName} ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Valider le paiement des frais d’ouverture active le dossier : la référence {candidate?.folderCode}{candidateRefs?.activationTargetReference ? ` devient ${candidateRefs?.activationTargetReference}` : " passe en référence 3M"}, puis le reçu et le protocole d’accord N°01 partent ensemble. Le montant est propre à chaque dossier : vérifiez-le avant de confirmer.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="activation-amount">Montant des frais d’ouverture (XAF)</Label>
+                <Input id="activation-amount" data-testid="activation-amount" inputMode="numeric" value={activationAmount} onChange={(event) => setActivationAmount(event.target.value.replace(/[^\d]/g, ""))} placeholder="Montant proposé si vide" />
+              </div>
+              <div>
+                <Label htmlFor="activation-reference">Référence du paiement (facultatif)</Label>
+                <Input id="activation-reference" data-testid="activation-reference" maxLength={255} value={activationPaymentRef} onChange={(event) => setActivationPaymentRef(event.target.value)} />
+              </div>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={confirmPaymentForCandidateMutation.isPending}>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={confirmPaymentForCandidateMutation.isPending || !candidate?.id}
+                data-testid="confirm-payment-button"
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (!candidate?.id) return;
+                  const amount = activationAmount ? Number(activationAmount) : undefined;
+                  confirmPaymentForCandidateMutation.mutate(
+                    { sessionToken, candidateId: candidate.id, ...(amount ? { confirmedAmount: amount } : {}), ...(activationPaymentRef.trim() ? { paymentReference: activationPaymentRef.trim() } : {}) },
+                    { onSuccess: () => setActivationDialogOpen(false) },
+                  );
+                }}
+              >
+                Valider le paiement et activer le dossier
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         <AlertDialog open={preDossierConfirmationOpen} onOpenChange={(open) => { setPreDossierConfirmationOpen(open); if (!open) setPreDossierActivationError(null); }}>
           <AlertDialogContent>
             <AlertDialogHeader>

@@ -1967,7 +1967,9 @@ export const adminRouter = router({
         const normalizedOnline = onlineApps.map(app => ({
           id: `online_${app.id}`,
           internalId: app.id,
-          folderCode: app.dossierNumber,
+          // Référence affichée : « COMPTE-… » tant que les frais d'ouverture ne sont pas payés ; le numéro technique reste disponible (recherche, modules).
+          folderCode: evaluationDisplayReference(app) ?? app.dossierNumber,
+          technicalFolderCode: app.dossierNumber,
           searchableFolderCodes: [
             app.dossierNumber,
             ...(candidateByEmail.get(app.email.toLowerCase()) ? [`COMPTE-${String(candidateByEmail.get(app.email.toLowerCase())!.id).padStart(5, "0")}`] : []),
@@ -2013,7 +2015,8 @@ export const adminRouter = router({
         const normalizedAgency = agencyApps.map(app => ({
           id: `agency_${app.id}`,
           internalId: app.id,
-          folderCode: `3M-AGN-${app.id.toString().padStart(4, "0")}`,
+          folderCode: agencyDisplayReference({ id: app.id, status: app.status, initialPaymentStatus: (app as { initialPaymentStatus?: string | null }).initialPaymentStatus }, candidateByEmail.get(app.email.toLowerCase())?.id ?? null),
+          technicalFolderCode: `3M-AGN-${app.id.toString().padStart(4, "0")}`,
           fullName: app.fullName,
           email: app.email,
           whatsapp: app.phone || "",
@@ -3582,7 +3585,10 @@ export const adminRouter = router({
             candidate: {
               id: `online_${app.id}`,
               internalId: app.id,
-              folderCode: app.dossierNumber,
+              folderCode: evaluationDisplayReference({ dossierNumber: app.dossierNumber, candidateId: candRec?.id ?? app.candidateId, paymentStatus: app.paymentStatus, dossierStatus: app.dossierStatus }) ?? app.dossierNumber,
+              technicalFolderCode: app.dossierNumber,
+              // Numéro que prendra le dossier à l'activation (après confirmation du paiement).
+              activationTargetReference: /^3M-/i.test(app.dossierNumber) ? app.dossierNumber : null,
               fullName: app.fullName,
               email: app.email,
               whatsapp: app.whatsappNumber || "",
@@ -3703,6 +3709,8 @@ export const adminRouter = router({
               id: `agency_${dossier.id}`,
               internalId: dossier.id,
               folderCode: agencyDisplayReference(dossier, candRec?.id),
+              technicalFolderCode: `3M-AGN-${dossier.id.toString().padStart(4, "0")}`,
+              activationTargetReference: `3M-AGN-${dossier.id.toString().padStart(4, "0")}`,
               formerFolderCodes: [agencyMirrorKey(dossier.id)],
               fullName: dossier.fullName,
               email: dossier.email,
