@@ -241,6 +241,7 @@ import { AdminPreDossierEvaluationPanel } from "@/components/AdminPreDossierEval
 import { isBilanSent } from "@/lib/bilanSent";
 import { AdminProfileUndo } from "@/components/AdminProfileUndo";
 import type { EvaluationDeclarationStatus } from "@shared/evaluationDeclaration";
+import { AdminWorkQueueBar } from "@/components/AdminWorkQueueBar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatAdminSyncTime } from "@shared/adminSync";
@@ -2830,6 +2831,7 @@ export default function AdminDashboard() {
         )}
 
         <SchedulerDryRunBanner />
+        <AdminWorkQueueBar sessionToken={sessionToken || ""} onGo={setActiveAdminTab} />
         {/* Onglets : Dossiers, Paiements, Documents, Paramètres Vols */}
         <Tabs value={activeAdminTab} onValueChange={setActiveAdminTab} className="w-full" aria-label="Sections du tableau de bord administrateur">
           <div className="mb-2 flex items-baseline justify-between gap-3">

@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, like } from "drizzle-orm";
 import { z } from "zod";
-import { paymentAuditLogs } from "../../drizzle/schema";
+import { agencyDossierDocuments, clientDocuments, paymentAuditLogs } from "../../drizzle/schema";
 import { buildProtocolOneRichText } from "../../shared/agreementProtocolCountryTemplates";
 import { createAgreementProtocolOnePdf } from "../agreementProtocolPdfService";
 import { publicProcedure, router } from "../_core/trpc";
@@ -145,6 +145,26 @@ export const adminDocumentDraftsRouter = router({
     const { db, reference } = await context(input, ctx.req.headers.cookie);
     await clearProtocolDraft(db, reference);
     return { ok: true as const };
+  }),
+
+  /** Lien du dernier protocole envoyé (PDF), à copier et coller dans WhatsApp, un SMS ou un e-mail. */
+  protocolLink: publicProcedure.input(base).query(async ({ input, ctx }) => {
+    const { db, reference } = await context(input, ctx.req.headers.cookie);
+    let url: string | null = null;
+    if (reference.source === "agency") {
+      const [doc] = await db.select({ documentUrl: agencyDossierDocuments.documentUrl }).from(agencyDossierDocuments)
+        .where(and(eq(agencyDossierDocuments.dossierId, reference.id), eq(agencyDossierDocuments.documentType, "protocole_accord")))
+        .orderBy(desc(agencyDossierDocuments.id)).limit(1);
+      url = doc?.documentUrl ?? null;
+    } else {
+      const [doc] = await db.select({ documentUrl: clientDocuments.documentUrl }).from(clientDocuments)
+        .where(and(eq(clientDocuments.evaluationId, reference.id), like(clientDocuments.documentName, "Protocole d’accord N°01%")))
+        .orderBy(desc(clientDocuments.id)).limit(1);
+      url = doc?.documentUrl ?? null;
+    }
+    if (!url) throw new TRPCError({ code: "NOT_FOUND", message: "Aucun protocole n'a encore été envoyé pour ce dossier." });
+    const site = (process.env.SITE_URL || "https://www.3mtravelagency.com").replace(/\/+$/, "");
+    return { url: /^https?:\/\//i.test(url) ? url : `${site}${url.startsWith("/") ? "" : "/"}${url}` };
   }),
 
   /** Aperçu PDF du reçu avec les valeurs en cours de saisie (rien n'est enregistré ni envoyé). */

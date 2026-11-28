@@ -132,7 +132,7 @@ describe("outils d'administration : serveur", () => {
 
   it("toute procédure d'administration vérifie la session ; une seule procédure candidat", () => {
     const names = Array.from(router.matchAll(/\n  (admin[A-Za-z]+): publicProcedure/g), (match) => match[1]);
-    expect(names.length).toBe(17);
+    expect(names.length).toBe(18);
     expect((router.match(/await requireValidAdminSession\(input\.sessionToken\)/g) ?? []).length).toBe(names.length);
     expect(Array.from(router.matchAll(/\n  ([A-Za-z]+): candidateProcedure/g), (match) => match[1])).toEqual(["myPaymentPlan"]);
   });
