@@ -38,6 +38,7 @@ import { getDb } from "../db";
 import { applications, evaluationEmails } from "../../drizzle/schema";
 import { and, eq, isNull } from "drizzle-orm";
 import { verifyEvaluationEmailTrackingToken } from "../services/evaluationEmailCommunication";
+import { backgroundJobsEnabled } from "../services/backgroundJobsSwitch";
 import { startActivationGuard } from "../services/activationGuard";
 import { startBilanAutoRelance } from "../services/bilanFollowUpActions";
 import { recordBilanViewed } from "../services/bilanReceipts";
@@ -216,6 +217,10 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    if (!backgroundJobsEnabled()) {
+      console.log("[taches-automatiques] JOBS_ENABLED=off : aucune tâche automatique ni envoi planifié sur cette instance.");
+      return;
+    }
     initScheduledJobsCron(port);
     startCountryGuidesRefresh();
     startActivationGuard();

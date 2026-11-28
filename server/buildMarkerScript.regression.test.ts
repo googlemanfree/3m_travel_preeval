@@ -17,7 +17,7 @@ function project(options: { staleMarker?: string; git?: boolean } = {}) {
   temps.push(dir);
   mkdirSync(join(dir, "scripts"), { recursive: true });
   mkdirSync(join(dir, "client", "public"), { recursive: true });
-  for (const file of ["prepare-build-marker.mjs", "build-marker-resolve.mjs"]) copyFileSync(join(root, "scripts", file), join(dir, "scripts", file));
+  for (const file of ["prepare-build-marker.mjs", "build-marker-resolve.mjs", "source-hash.mjs"]) copyFileSync(join(root, "scripts", file), join(dir, "scripts", file));
   writeFileSync(join(dir, "package.json"), '{"type":"module"}');
   if (options.staleMarker) writeFileSync(join(dir, "client/public/build-commit.json"), JSON.stringify({ commit: options.staleMarker, generatedAt: "2026-01-01T00:00:00.000Z" }));
   let headShort = "";
@@ -43,9 +43,21 @@ afterAll(() => {
 });
 
 describe("résolution du commit (fonction pure)", () => {
-  it("SHA de la plateforme valide : raccourci à 8 caractères, PUBLIC_BUILD_COMMIT prioritaire", () => {
+  it("SHA de la plateforme valide : raccourci à 8 caractères", () => {
     expect(resolveBuildCommit({ env: { RAILWAY_GIT_COMMIT_SHA: SHA_A }, strict: true })).toEqual({ commit: "aaaaaaaa", source: "RAILWAY_GIT_COMMIT_SHA" });
-    expect(resolveBuildCommit({ env: { RAILWAY_GIT_COMMIT_SHA: SHA_A, PUBLIC_BUILD_COMMIT: SHA_B }, strict: true }).commit).toBe("bbbbbbbb");
+  });
+
+  it("PUBLIC_BUILD_COMMIT (variable posée à la main, figée sur WebDev) ne prime plus sur rien et ne bloque plus", () => {
+    // Avec Git : le HEAD réel gagne, la variable figée est signalée puis ignorée (avant : build bloqué).
+    const withGit = resolveBuildCommit({ env: { PUBLIC_BUILD_COMMIT: "08913b3f" }, gitCommit: "ea8a737e", strict: true });
+    expect(withGit.commit).toBe("ea8a737e");
+    expect(withGit.ignored).toEqual({ key: "PUBLIC_BUILD_COMMIT", sha: "08913b3f" });
+    // Variable de plateforme réelle : elle gagne aussi sur la variable posée à la main.
+    expect(resolveBuildCommit({ env: { RAILWAY_GIT_COMMIT_SHA: SHA_A, PUBLIC_BUILD_COMMIT: SHA_B }, strict: true }).commit).toBe("aaaaaaaa");
+    // Sans Git ni plateforme : le build passe, mais le marqueur n'affiche jamais l'ancien commit figé.
+    expect(resolveBuildCommit({ env: { PUBLIC_BUILD_COMMIT: "08913b3f" }, strict: true })).toEqual({ commit: "nogit", source: "nogit", ignored: { key: "PUBLIC_BUILD_COMMIT", sha: "08913b3f" } });
+    // Valeur identique au commit réel : rien à signaler.
+    expect(resolveBuildCommit({ env: { PUBLIC_BUILD_COMMIT: "ea8a737e" }, gitCommit: "ea8a737e", strict: true }).ignored).toBeUndefined();
   });
 
   it("SHA Git valide quand la plateforme n'en donne pas", () => {
@@ -96,6 +108,35 @@ describe("script prepare-build-marker.mjs (exécution réelle)", () => {
     expect(result.status).toBe(1);
     expect(result.out).toContain("Aucun SHA Git fiable");
     expect(result.marker).toBeNull();
+  });
+
+  it("PUBLIC_BUILD_COMMIT figé à un ancien commit : le build strict réussit et écrit le vrai HEAD ainsi qu'une empreinte du code", () => {
+    const { dir, headShort } = project({ git: true });
+    const result = run(dir, { PUBLIC_BUILD_COMMIT: "08913b3f" });
+    expect(result.status).toBe(0);
+    expect(result.marker).toBe(headShort);
+    expect(result.out).toContain("ignorée");
+    const file = JSON.parse(readFileSync(join(dir, "client/public/build-commit.json"), "utf8"));
+    expect(file.sourceHash).toMatch(/^[0-9a-f]{16}$/);
+  });
+
+  it("PUBLIC_BUILD_COMMIT figé sans Git : le build réussit avec « nogit », jamais l'ancien commit", () => {
+    const { dir } = project();
+    const result = run(dir, { PUBLIC_BUILD_COMMIT: "08913b3f" });
+    expect(result.status).toBe(0);
+    expect(result.marker).toBe("nogit");
+  });
+
+  it("l'empreinte du code est la même pour le même code et change quand le code change", async () => {
+    // @ts-expect-error module .mjs sans déclaration de types
+    const { computeSourceHash } = await import("../scripts/source-hash.mjs");
+    const { dir } = project();
+    mkdirSync(join(dir, "shared"), { recursive: true });
+    writeFileSync(join(dir, "shared/a.ts"), "export const a = 1;\n");
+    const first = computeSourceHash(dir);
+    expect(computeSourceHash(dir)).toBe(first);
+    writeFileSync(join(dir, "shared/a.ts"), "export const a = 2;\n");
+    expect(computeSourceHash(dir)).not.toBe(first);
   });
 
   it("ancien marqueur périmé : jamais réutilisé, le build strict échoue et le fichier reste intact", () => {

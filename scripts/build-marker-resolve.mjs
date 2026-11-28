@@ -3,9 +3,12 @@
 
 export const COMMIT_PATTERN = /^[0-9a-f]{7,40}$/i;
 
-/** Variables posées par les plateformes d'intégration / d'hébergement, par ordre de priorité. */
+/**
+ * Variables posées PAR les plateformes d'intégration / d'hébergement à chaque build, par ordre de priorité.
+ * `PUBLIC_BUILD_COMMIT` n'en fait volontairement pas partie : c'est une variable posée à la main (et persistante sur WebDev),
+ * elle reste figée sur un ancien commit et bloquait toute publication. Elle ne peut plus ni primer sur Git ni bloquer le build.
+ */
 export const PLATFORM_COMMIT_VARIABLES = [
-  "PUBLIC_BUILD_COMMIT",
   "RAILWAY_GIT_COMMIT_SHA",
   "GIT_COMMIT",
   "SOURCE_COMMIT",
@@ -22,6 +25,9 @@ export function normalizeSha(value) {
   const text = typeof value === "string" ? value.trim() : "";
   return COMMIT_PATTERN.test(text) ? text.slice(0, 8).toLowerCase() : undefined;
 }
+
+/** Variable posée à la main, jamais fiable : lue seulement pour être signalée, jamais utilisée comme commit. */
+export const MANUAL_COMMIT_VARIABLE = "PUBLIC_BUILD_COMMIT";
 
 export function commitFromPlatform(env) {
   for (const key of PLATFORM_COMMIT_VARIABLES) {
@@ -48,6 +54,12 @@ export function resolveBuildCommit({ env = {}, gitCommit, strict = false } = {})
   }
 
   const commit = platform?.sha ?? git;
+  const manual = normalizeSha(env[MANUAL_COMMIT_VARIABLE]);
+  if (!commit && manual) {
+    // Ni Git ni variable de plateforme : la valeur posée à la main n'est pas vérifiable (elle reste figée d'un build à l'autre).
+    // Le build passe, mais le marqueur est « nogit » : jamais un ancien commit présenté comme le commit publié.
+    return { commit: "nogit", source: "nogit", ignored: { key: MANUAL_COMMIT_VARIABLE, sha: manual } };
+  }
   if (!commit) {
     if (strict) {
       throw new BuildMarkerError(
@@ -61,5 +73,8 @@ export function resolveBuildCommit({ env = {}, gitCommit, strict = false } = {})
     throw new BuildMarkerError(`Commit attendu ${expected} différent du commit construit ${commit}. Publication bloquée.`);
   }
 
-  return { commit, source: platform ? platform.key : "git" };
+  const result = { commit, source: platform ? platform.key : "git" };
+  // Valeur posée à la main différente du commit réel : ignorée (et signalée), elle ne bloque plus la publication.
+  if (manual && manual !== commit) result.ignored = { key: MANUAL_COMMIT_VARIABLE, sha: manual };
+  return result;
 }
