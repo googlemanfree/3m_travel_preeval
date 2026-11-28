@@ -16,3 +16,12 @@ Le déploiement automatique se coupe ou se réactive avec les « watch patterns 
 
 - 2026-11-27 : déploiement de l'instance de test Railway demandé par le propriétaire (watch patterns ouverts le temps du déploiement, puis à refermer).
 - 2026-11-27 : les commits restés « SKIPPED » (watch patterns fermés) ont été rejoués par Railway ; un commit final pousse la tête de `main` pour que le déploiement actif soit le plus récent.
+
+## `PUBLIC_BUILD_COMMIT` figé sur WebDev (2026-11-28)
+
+La variable `PUBLIC_BUILD_COMMIT=08913b3f`, posée à la main sur WebDev et impossible à supprimer depuis l'interface, bloquait la publication : `scripts/build-marker-resolve.mjs` lui donnait la priorité absolue et le build strict s'arrêtait dès que Git donnait un autre commit (« Publication bloquée »).
+
+Désormais :
+- `PUBLIC_BUILD_COMMIT` ne fait plus partie des variables fiables : elle ne prime sur rien et ne bloque jamais le build. Elle est signalée dans le journal puis ignorée. **Il n'y a rien à supprimer chez Manus.**
+- Avec Git : le marqueur est le HEAD réel. Sans Git ni variable de plateforme : le build passe avec le marqueur « nogit » (jamais l'ancien commit).
+- `build-commit.json` contient en plus `sourceHash` : empreinte du code embarqué. `node scripts/source-hash.mjs` la calcule sur un dépôt local pour la comparer au site en ligne. Elle est indicative (des fichiers ajoutés par la plateforme la modifieraient) ; la date `generatedAt` reste le premier contrôle.

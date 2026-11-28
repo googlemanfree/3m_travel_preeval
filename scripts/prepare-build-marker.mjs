@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { BuildMarkerError, normalizeSha, resolveBuildCommit } from "./build-marker-resolve.mjs";
+import { computeSourceHash } from "./source-hash.mjs";
 
 const root = resolve(import.meta.dirname, "..");
 const output = resolve(root, "client/public/build-commit.json");
@@ -36,7 +37,7 @@ try {
 mkdirSync(dirname(output), { recursive: true });
 writeFileSync(
   output,
-  `${JSON.stringify({ commit: resolved.commit, generatedAt: new Date().toISOString() }, null, 2)}\n`
+  `${JSON.stringify({ commit: resolved.commit, generatedAt: new Date().toISOString(), sourceHash: computeSourceHash(root) }, null, 2)}\n`
 );
 
 // Relecture : le fichier écrit doit contenir exactement le commit résolu (ou « nogit » hors mode strict).
@@ -47,4 +48,7 @@ if (!matches) {
   process.exit(1);
 }
 
+if (resolved.ignored) {
+  console.warn(`[build-marker] ${resolved.ignored.key}=${resolved.ignored.sha} ignorée : variable posée à la main, non vérifiable. Commit retenu : ${resolved.commit}. Supprimer cette variable n'est pas nécessaire.`);
+}
 console.log(`[build-marker] Commit préparé : ${resolved.commit} (source : ${resolved.source})`);
