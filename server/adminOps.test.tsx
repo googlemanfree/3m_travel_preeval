@@ -20,6 +20,7 @@ vi.mock("@/lib/trpc", () => {
     trpc: {
       useUtils: () => new Proxy({}, { get: () => new Proxy({}, { get: () => ({ invalidate: vi.fn(), fetch: vi.fn() }) }) }),
       remoteSupport: { adminFindCandidate: query(() => ({ data: [] })) },
+      unifiedRequests: { resendEvaluationHistory: mutation(vi.fn()) },
       adminOps: {
         adminBilanTemplates: query(() => state.templates), adminSaveBilanTemplate: mutation(state.save), adminArchiveBilanTemplate: mutation(vi.fn()),
         adminDocumentChecks: query(() => ({ data: { checked: 3, passports: [{ candidateId: 4, fullName: "Aïcha Diallo", status: "too_short", daysLeft: 60, expiryDate: "2026-12-30", message: "Valide moins de 6 mois après le voyage." }], discrepancies: [], offersClosingSoon: [] } })),
@@ -177,7 +178,7 @@ describe("outils d'administration : écrans", () => {
 
   it("affectation et santé : aperçu avant exécution, migrations manquantes signalées", () => {
     state.assign = { data: { unassigned: 3, plan: 3, agents: [{ id: 1, label: "Marie", open: 2, willReceive: 3 }] } };
-    state.health = { data: { database: true, missingMigrations: [{ migration: "0093", tables: ["bilan_templates"] }], openEmailIncidents: 2, scheduler: { mode: "off", jobs: 4, automaticReminders: false } } };
+    state.health = { data: { database: true, missingMigrations: [{ migration: "0093", tables: ["bilan_templates"] }], openEmailIncidents: 2, scheduler: { mode: "off", jobs: 4, automaticReminders: false }, channels: { email: { configured: true }, whatsapp: { configured: false }, bilanRelanceAuto: { enabled: true } }, failures: { emails: [], bilanEmails: [], receiptPackages: [] } } };
     render(<AdminOps sessionToken={"t".repeat(40)} />);
     fireEvent.click(screen.getByTestId("ops-tab-assign"));
     expect(screen.getByTestId("ops-assign").textContent).toMatch(/3 dossier\(s\) non assigné/);
