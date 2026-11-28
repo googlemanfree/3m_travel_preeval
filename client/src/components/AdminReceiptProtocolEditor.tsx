@@ -54,6 +54,8 @@ export function AdminReceiptProtocolEditor({ sessionToken, candidateId, open, on
   const [method, setMethod] = React.useState("");
   const [reference, setReference] = React.useState("");
   const [amountReason, setAmountReason] = React.useState("");
+  const [paymentNature, setPaymentNature] = React.useState<"" | "total" | "avance">("");
+  const [balanceDue, setBalanceDue] = React.useState("");
   const [protocol, setProtocol] = React.useState("");
   const [loadedFor, setLoadedFor] = React.useState<string | null>(null);
 
@@ -67,6 +69,8 @@ export function AdminReceiptProtocolEditor({ sessionToken, candidateId, open, on
     setMethod(effective.paymentMethod);
     setReference(effective.paymentReference ?? "");
     setAmountReason(data.receipt.amountReason ?? "");
+    setPaymentNature(effective.paymentNature ?? "");
+    setBalanceDue(effective.balanceDue ? String(Math.round(effective.balanceDue)) : "");
     setProtocol(data.protocol.content);
     setLoadedFor(candidateId);
   }, [data, candidateId, loadedFor]);
@@ -81,6 +85,8 @@ export function AdminReceiptProtocolEditor({ sessionToken, candidateId, open, on
     paymentMethod: method,
     paymentReference: reference.trim() ? reference.trim() : null,
     amountReason: amountReason.trim() ? amountReason.trim() : null,
+    paymentNature: paymentNature || null,
+    balanceDue: paymentNature === "avance" && Number(balanceDue.replace(/\s/g, "")) > 0 ? Number(balanceDue.replace(/\s/g, "")) : null,
   });
 
   const refresh = () => {
@@ -89,7 +95,17 @@ export function AdminReceiptProtocolEditor({ sessionToken, candidateId, open, on
   };
   const fail = (title: string) => (error: { message: string }) => toast.error(title, { description: error.message });
 
-  const saveReceipt = trpc.adminDocumentDrafts.saveReceipt.useMutation({ onSuccess: () => { toast.success("Reçu enregistré", { description: "C'est cette version qui partira avec le protocole." }); refresh(); }, onError: fail("Reçu non enregistré") });
+  const saveReceipt = trpc.adminDocumentDrafts.saveReceipt.useMutation({ onSuccess: async () => {
+      toast.success("Reçu enregistré", { description: "C'est cette version qui partira avec le protocole." });
+      // Protocole non modifié à la main : son texte par défaut reprend le montant et la nature du versement du reçu enregistré.
+      if (candidateId && !data?.protocol.modified) {
+        try {
+          const fresh = await utils.adminDocumentDrafts.get.fetch({ sessionToken, candidateId });
+          if (!fresh.protocol.modified) setProtocol(fresh.protocol.content);
+        } catch { /* le texte reste celui affiché */ }
+      }
+      refresh();
+    }, onError: fail("Reçu non enregistré") });
   const resetReceipt = trpc.adminDocumentDrafts.resetReceipt.useMutation({ onSuccess: () => { toast.success("Reçu rétabli aux valeurs par défaut"); setLoadedFor(null); refresh(); }, onError: fail("Rétablissement impossible") });
   const previewReceipt = trpc.adminDocumentDrafts.previewReceipt.useMutation({ onSuccess: (result) => openPdf(result.pdfBase64), onError: fail("Aperçu du reçu impossible") });
   const saveProtocol = trpc.adminDocumentDrafts.saveProtocol.useMutation({ onSuccess: () => { toast.success("Protocole enregistré", { description: "C'est ce texte qui partira au candidat." }); refresh(); }, onError: fail("Protocole non enregistré") });
@@ -174,6 +190,27 @@ export function AdminReceiptProtocolEditor({ sessionToken, candidateId, open, on
                       <p className="mt-1 text-xs text-amber-900">Le montant du dossier est {Math.round(data.receipt.defaults.amount).toLocaleString("fr-FR")} {data.receipt.defaults.currency}. Le changement est inscrit au journal des paiements (qui, quand, motif).</p>
                     </div>
                   )}
+                  <div className="sm:col-span-3 rounded-lg border border-blue-200 bg-blue-50 p-3" data-testid="receipt-nature-block">
+                    <Label htmlFor="receipt-nature" className="text-blue-950">Les frais déposés sont…</Label>
+                    <select
+                      id="receipt-nature"
+                      data-testid="receipt-nature"
+                      className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={paymentNature}
+                      onChange={(event) => setPaymentNature(event.target.value as "" | "total" | "avance")}
+                    >
+                      <option value="">Non précisé (aucune mention sur le reçu)</option>
+                      <option value="total">La somme totale des frais d'ouverture</option>
+                      <option value="avance">Une avance (le solde reste à régler)</option>
+                    </select>
+                    {paymentNature === "avance" && (
+                      <div className="mt-2">
+                        <Label htmlFor="receipt-balance">Solde restant dû (facultatif)</Label>
+                        <Input id="receipt-balance" data-testid="receipt-balance" inputMode="numeric" value={balanceDue} onChange={(event) => setBalanceDue(event.target.value.replace(/[^\d\s]/g, ""))} placeholder="Ex. 50 000" />
+                      </div>
+                    )}
+                    <p className="mt-1 text-xs text-blue-900">Cette mention figure sur le reçu (PDF et e-mail) et dans l'article 2 du protocole d'accord.</p>
+                  </div>
                   <div className="sm:col-span-3">
                     <Label htmlFor="receipt-reference">Référence de transaction (facultatif)</Label>
                     <Input id="receipt-reference" data-testid="receipt-reference" maxLength={120} value={reference} onChange={(event) => setReference(event.target.value)} />

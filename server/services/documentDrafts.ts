@@ -9,6 +9,7 @@
 import { eq } from "drizzle-orm";
 import { agencySettings } from "../../drizzle/schema";
 import type { getDb } from "../db";
+import { isPaymentNature, paymentNatureError, type PaymentNature } from "../../shared/paymentNature";
 import type { Loaded, PaymentReference } from "./paymentPackage";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
@@ -22,6 +23,10 @@ export type ReceiptDraft = {
   paymentReference: string | null;
   /** Motif de la modification du montant par rapport au montant du dossier (obligatoire quand il diffère). */
   amountReason?: string | null;
+  /** Les frais déposés sont-ils la somme totale ou une avance ? (absent : non précisé, texte inchangé). */
+  paymentNature?: PaymentNature | null;
+  /** Solde restant dû, pour une avance (optionnel). */
+  balanceDue?: number | null;
   updatedAt: string;
   updatedBy: string;
 };
@@ -72,7 +77,11 @@ export async function readProtocolDraft(db: Db, reference: PaymentReference): Pr
   return draft && typeof draft.content === "string" && draft.content.trim().length >= PROTOCOL_MIN_LENGTH ? draft : null;
 }
 
-export type ReceiptDraftInput = Omit<ReceiptDraft, "updatedAt" | "updatedBy" | "amountReason"> & { amountReason?: string | null };
+export type ReceiptDraftInput = Omit<ReceiptDraft, "updatedAt" | "updatedBy" | "amountReason" | "paymentNature" | "balanceDue"> & {
+  amountReason?: string | null;
+  paymentNature?: PaymentNature | null;
+  balanceDue?: number | null;
+};
 
 /** Contrôle des valeurs saisies : renvoie un message clair, ou null si tout est valide. */
 export function validateReceiptDraft(input: ReceiptDraftInput): string | null {
@@ -83,6 +92,8 @@ export function validateReceiptDraft(input: ReceiptDraftInput): string | null {
   if (!Number.isFinite(time)) return "La date du paiement est invalide.";
   if (time > Date.now() + 24 * 60 * 60 * 1000) return "La date du paiement ne peut pas être dans le futur.";
   if (!input.paymentMethod.trim()) return "Indiquez le mode de paiement.";
+  if (input.paymentNature != null && !isPaymentNature(input.paymentNature)) return "La nature du paiement doit être « total » ou « avance ».";
+  if (input.paymentNature) return paymentNatureError(input.paymentNature, input.balanceDue);
   return null;
 }
 
@@ -103,6 +114,8 @@ export async function saveReceiptDraft(db: Db, reference: PaymentReference, inpu
     paymentMethod: input.paymentMethod.trim().slice(0, 120),
     paymentReference: input.paymentReference?.trim() ? input.paymentReference.trim().slice(0, 120) : null,
     amountReason: input.amountReason?.trim() ? input.amountReason.trim().slice(0, 300) : null,
+    paymentNature: input.paymentNature ?? null,
+    balanceDue: input.paymentNature === "avance" && input.balanceDue ? Math.round(input.balanceDue) : null,
     updatedAt: new Date().toISOString(),
     updatedBy: actor,
   };
@@ -129,6 +142,8 @@ export function applyReceiptDraft(dossier: Loaded, draft: ReceiptDraft | null): 
   dossier.paymentDate = new Date(draft.paymentDate);
   dossier.paymentMethod = draft.paymentMethod;
   dossier.paymentReference = draft.paymentReference;
+  dossier.paymentNature = draft.paymentNature ?? null;
+  dossier.balanceDue = draft.balanceDue ?? null;
 }
 
 export const AMOUNT_REASON_MIN_LENGTH = 5;

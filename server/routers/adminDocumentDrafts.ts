@@ -35,6 +35,9 @@ const receiptInput = z.object({
   paymentMethod: z.string().trim().min(1).max(120),
   paymentReference: z.string().trim().max(120).nullable().optional(),
   amountReason: z.string().trim().max(300).nullable().optional(),
+  /** Frais déposés : somme totale ou avance (mention sur le reçu et dans le protocole). */
+  paymentNature: z.enum(["total", "avance"]).nullable().optional(),
+  balanceDue: z.number().positive().max(1_000_000_000).nullable().optional(),
 });
 
 async function context(input: z.infer<typeof base>, cookie: string | undefined) {
@@ -53,6 +56,8 @@ const toReceiptInput = (value: z.infer<typeof receiptInput>): ReceiptDraftInput 
   paymentMethod: value.paymentMethod,
   paymentReference: value.paymentReference ?? null,
   amountReason: value.amountReason ?? null,
+  paymentNature: value.paymentNature ?? null,
+  balanceDue: value.balanceDue ?? null,
 });
 
 function asBase64(bytes: Uint8Array | Buffer) {
@@ -66,13 +71,18 @@ export const adminDocumentDraftsRouter = router({
     const dossier = await loadDossier(db, reference);
     const [receiptDraft, protocolDraft] = await Promise.all([readReceiptDraft(db, reference), readProtocolDraft(db, reference)]);
     const defaults = {
+      paymentNature: null as "total" | "avance" | null,
+      balanceDue: null as number | null,
       amount: dossier.amount,
       currency: dossier.currency,
       paymentDate: dossier.paymentDate.toISOString(),
       paymentMethod: dossier.paymentMethod,
       paymentReference: dossier.paymentReference,
     };
-    const protocolDefault = buildProtocolOneRichText(buildProtocolVariables(dossier, actor), dossier.destination || "", dossier.visaType || null);
+    // Le texte par défaut du protocole reprend le reçu enregistré (montant, nature du versement : total ou avance).
+    const withReceipt = { ...dossier };
+    applyReceiptDraft(withReceipt, receiptDraft);
+    const protocolDefault = buildProtocolOneRichText(buildProtocolVariables(withReceipt, actor), dossier.destination || "", dossier.visaType || null);
     const [sent] = await db.select({ createdAt: paymentAuditLogs.createdAt }).from(paymentAuditLogs)
       .where(and(eq(paymentAuditLogs.paymentId, reference.id), eq(paymentAuditLogs.candidateEmail, dossier.email), eq(paymentAuditLogs.action, "receipt_protocol_sent")))
       .orderBy(desc(paymentAuditLogs.createdAt)).limit(1);
@@ -180,6 +190,8 @@ export const adminDocumentDraftsRouter = router({
       dossier.paymentDate = new Date(values.paymentDate);
       dossier.paymentMethod = values.paymentMethod.trim();
       dossier.paymentReference = values.paymentReference?.trim() || null;
+      dossier.paymentNature = values.paymentNature ?? null;
+      dossier.balanceDue = values.paymentNature === "avance" ? values.balanceDue ?? null : null;
     } else {
       applyReceiptDraft(dossier, await readReceiptDraft(db, reference));
     }
@@ -195,6 +207,8 @@ export const adminDocumentDraftsRouter = router({
       validatedBy: actor,
       destination: dossier.destination,
       visaType: dossier.visaType,
+      paymentNature: dossier.paymentNature,
+      balanceDue: dossier.balanceDue,
     });
     return { fileName: `Apercu-recu-${dossier.dossierNumber}.pdf`, pdfBase64: asBase64(pdf) };
   }),

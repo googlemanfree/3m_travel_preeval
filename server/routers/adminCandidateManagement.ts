@@ -39,6 +39,7 @@ import { sendEmail as sendGenericEmail } from "../_core/email";
 import { storagePut } from "../storage";
 import { buildPaymentReceiptEmailHtml, buildPaymentReceiptPdf } from "../utils/paymentReceipt";
 import { AGREEMENT_PROTOCOL_VERSION } from "../../shared/agreementProtocolContent";
+import { needsProcedureRefresh, resolveProcedureKind, type ProcedureKind } from "../../shared/procedureKind";
 import { buildProtocolOneRichText, buildProtocolTwoRichText } from "../../shared/agreementProtocolCountryTemplates";
 import { createAgreementProtocolOnePdf } from "../agreementProtocolPdfService";
 import { storageKeyFromStoredUrl } from "../../shared/storedFileUrl";
@@ -1271,6 +1272,8 @@ export const adminCandidateManagementRouter = router({
           agreementSigned: applications.agreementSigned,
           paymentValidatedAt: applications.paymentValidatedAt,
           candidateId: applications.candidateId,
+          visaType: applications.visaType,
+          destination: applications.destination,
         }).from(applications).where(and(
           eq(applications.paymentStatus, "SUCCESS"),
           isNull(applications.deletedAt),
@@ -1327,6 +1330,8 @@ export const adminCandidateManagementRouter = router({
           formerAccountReference: reference.formerAccountReference,
           fullName: app.fullName,
           email: app.email,
+          procedureKind: resolveProcedureKind(app.visaType),
+          procedureLabel: [app.destination, app.visaType].filter(Boolean).join(" · ") || null,
           paymentConfirmed: true,
           receiptAvailable,
           protocolSigned: Boolean(app.agreementSigned),
@@ -1346,6 +1351,8 @@ export const adminCandidateManagementRouter = router({
         status: agencyDossiers.status,
         updatedAt: agencyDossiers.updatedAt,
         createdAt: agencyDossiers.createdAt,
+        visaType: agencyDossiers.visaType,
+        destination: agencyDossiers.destination,
       }).from(agencyDossiers).where(and(
         eq(agencyDossiers.initialPaymentStatus, "paid"),
         isNull(agencyDossiers.deletedAt),
@@ -1370,6 +1377,8 @@ export const adminCandidateManagementRouter = router({
           formerAccountReference: null as string | null,
           fullName: dossier.fullName,
           email: dossier.email,
+          procedureKind: resolveProcedureKind(dossier.visaType),
+          procedureLabel: [dossier.destination, dossier.visaType].filter(Boolean).join(" · ") || null,
           paymentConfirmed: true,
           receiptAvailable,
           protocolSigned,
@@ -1391,7 +1400,10 @@ export const adminCandidateManagementRouter = router({
       const packageSentByEmail = new Map(packageRows.map((row) => [String(row.candidateEmail).trim().toLowerCase(), new Date(row.sentAt as unknown as string)] as const));
       const withPackageDate = <T extends { email: string }>(row: T) => {
         const sentAt = packageSentByEmail.get(row.email.trim().toLowerCase());
-        return { ...row, packageSentAt: sentAt && Number.isFinite(sentAt.getTime()) ? sentAt.toISOString() : null };
+        const packageSentAt = sentAt && Number.isFinite(sentAt.getTime()) ? sentAt.toISOString() : null;
+        const kind = (row as unknown as { procedureKind: ProcedureKind }).procedureKind;
+        // Dossiers déjà activés et payés : le reçu/protocole parti avant l'adaptation par procédure (résidence, e-Visa, procédure inconnue) est à revoir.
+        return { ...row, packageSentAt, procedureRefreshNeeded: needsProcedureRefresh(kind, packageSentAt) };
       };
 
       const pipeline = [...onlinePipeline, ...agencyPipeline].map(withPackageDate)

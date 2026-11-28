@@ -11,6 +11,8 @@ import type { getDb } from "../db";
 import { buildPaymentReceiptPdf, formatPaymentAmount } from "../utils/paymentReceipt";
 import { proposedOpeningFee } from "../../shared/openingFee";
 import { buildPaymentPackageEmail } from "./paymentPackageEmail";
+import { accountReference, isActiveDossierReference } from "../../shared/caseReference";
+import type { PaymentNature } from "../../shared/paymentNature";
 import { applyReceiptDraft, readProtocolDraft, readReceiptDraft } from "./documentDrafts";
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
@@ -39,6 +41,9 @@ export type Loaded = {
   applicationId: number | null;
   agencyDossierId: number | null;
   paymentConfirmed: boolean;
+  /** Frais déposés : somme totale ou avance (renseigné par l'administrateur sur le reçu). */
+  paymentNature?: PaymentNature | null;
+  balanceDue?: number | null;
 };
 
 export async function loadDossier(db: Db, reference: PaymentReference): Promise<Loaded> {
@@ -102,6 +107,11 @@ export function buildProtocolVariables(dossier: Loaded, adminEmail: string) {
     empreinteSha: crypto.createHash("sha256").update(`${dossier.dossierNumber}|${dossier.email}|${dossier.destination ?? ""}|${Date.now()}`).digest("hex").slice(0, 24),
     clientIpAddress: "Non applicable (envoi initié par l'agence, signature à venir dans l'espace client)",
     dateDuJour: new Date().toLocaleDateString("fr-FR", { timeZone: "Africa/Douala" }),
+    natureVersement: dossier.paymentNature ?? undefined,
+    soldeRestant: dossier.balanceDue ?? undefined,
+    devise: dossier.currency,
+    // Numéro de dossier actif 3M-… ; la référence de compte antérieure (COMPTE-…) est rappelée à côté.
+    ancienneReferenceCompte: dossier.candidateId && isActiveDossierReference(dossier.dossierNumber) ? accountReference(dossier.candidateId) : undefined,
   };
 }
 
@@ -151,6 +161,8 @@ export async function sendReceiptAndProtocol(db: Db, reference: PaymentReference
     receiptApprovedAt: approval?.approvedAt,
     receiptSignatureLabel: approval?.signatureLabel,
     receiptSignatureHash: approval?.signatureHash,
+    paymentNature: dossier.paymentNature,
+    balanceDue: dossier.balanceDue,
   });
 
   const protocolVariables = buildProtocolVariables(dossier, adminEmail);
@@ -158,6 +170,7 @@ export async function sendReceiptAndProtocol(db: Db, reference: PaymentReference
     dossierNumber: dossier.dossierNumber,
     fullName: dossier.fullName,
     destination: dossier.destination,
+    visaType: dossier.visaType,
     variables: protocolVariables,
     content: protocolDraft?.content ?? buildProtocolOneRichText(protocolVariables, dossier.destination || "", dossier.visaType || null),
   });

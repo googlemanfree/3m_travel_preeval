@@ -198,6 +198,14 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
                       <tr key={row.candidateId} className="hover:bg-slate-50/80" data-testid={`receipts-row-${row.candidateId}`}>
                         <td className="px-4 py-3">
                           <p className="font-mono text-xs font-semibold text-blue-900">{row.workingReference}</p>
+                          {(row as { procedureLabel?: string | null }).procedureLabel && (
+                            <p className="mt-1 text-[11px] text-slate-600" data-testid={`row-procedure-${row.candidateId}`}>Procédure : {(row as { procedureLabel?: string | null }).procedureLabel}</p>
+                          )}
+                          {(row as { procedureRefreshNeeded?: boolean }).procedureRefreshNeeded && (
+                            <p className="mt-1 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900" data-testid={`row-procedure-refresh-${row.candidateId}`}>
+                              Envoyé avant l'adaptation à la procédure : ouvrez « Modifier reçu &amp; protocole », vérifiez puis renvoyez.
+                            </p>
+                          )}
                           {row.formerAccountReference && (
                             <p className="mt-1 text-[11px] text-slate-500">Ancien compte : {row.formerAccountReference}</p>
                           )}
