@@ -356,7 +356,16 @@ export const placementPortalRouter = router({
     }
     const style = styleForCountry(evaluation.destinationCountry || candidate.destination || null);
     const language = CV_STYLES[style].defaultLanguage;
-    const outcome = await generateCvDraft(evaluation, { style, language });
+    // Le CV de l'évaluation prime ; à défaut, le CV le plus récent déposé par le candidat dans son espace (sans validation préalable, sauf rejet).
+    // Le consentement à la lecture reste celui de l'évaluation : sans lui, rien n'est transmis au modèle.
+    let source = evaluation;
+    if (!evaluation.cvFileUrl) {
+      const deposited = (await db.select({ fileUrl: candidateFiles.fileUrl, fileName: candidateFiles.fileName, status: candidateFiles.status }).from(candidateFiles)
+        .where(and(eq(candidateFiles.candidateId, input.candidateId), eq(candidateFiles.fileType, "cv")))
+        .orderBy(desc(candidateFiles.uploadedAt)).limit(5)).find((file) => file.fileUrl && String(file.status ?? "").toLowerCase() !== "rejected");
+      if (deposited) source = { ...evaluation, cvFileUrl: deposited.fileUrl, cvFileName: deposited.fileName };
+    }
+    const outcome = await generateCvDraft(source, { style, language });
     logger.info("[placementSummary] résumé depuis le CV", { candidateId: input.candidateId, admin: admin.email, ok: outcome.ok, ...(outcome.ok === false ? { reason: outcome.reason } : {}) });
     if (outcome.ok === false) return { ok: false as const, reason: outcome.reason, error: outcome.error };
     return { ok: true as const, fields: summaryFieldsFromCvDraft(outcome.draft), unverified: outcome.unverified, missing: outcome.draft.missing };

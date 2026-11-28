@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { and, eq, ne } from "drizzle-orm";
-import { candidates, clientDocuments, evaluations } from "../../../drizzle/schema";
+import { and, desc, eq, ne, sql } from "drizzle-orm";
+import { agencyDossierDocuments, agencyDossiers, candidateFiles, candidates, clientDocuments, evaluations } from "../../../drizzle/schema";
 import { storageKeyFromStoredUrl } from "../../../shared/storedFileUrl";
 import type { ClientReport } from "../../../shared/evaluationValidation";
 import { getDb } from "../../db";
@@ -26,6 +26,52 @@ const DOC_KIND: Record<string, EvaluationInputs["documents"][number]["kind"]> = 
   diploma: "diplome", educational_transcript: "diplome", certificate: "autre", employment_letter: "attestation_travail", employment_contract: "attestation_travail",
   language_test: "test_langue", passport: "passeport", cv: "cv",
 };
+/** Nature d'une pièce déposée dans l'espace du candidat (candidate_files) pour l'analyse. */
+const FILE_KIND: Record<string, EvaluationInputs["documents"][number]["kind"]> = {
+  passeport: "passeport", diplome: "diplome", releve_notes: "diplome", attestation_travail: "attestation_travail", test_langue: "test_langue",
+};
+
+type ExtraSource = { id: string; kind: EvaluationInputs["documents"][number]["kind"]; url: string; name: string; isCv: boolean };
+
+/**
+ * Pièces envoyées par le candidat dans son espace ou remises en agence : elles servent à l'analyse AU MÊME TITRE que celles jointes à l'évaluation,
+ * sans validation préalable (seule une pièce rejetée est écartée). Sans cela, un CV ou un diplôme déposé après l'inscription restait ignoré
+ * (« CV manquant », pièces non lues). Ne lève jamais : en cas de problème, l'analyse continue avec les pièces de l'évaluation.
+ */
+export async function loadCandidateDeposits(db: Db, ev: { candidateId: number | null; email: string }): Promise<ExtraSource[]> {
+  try {
+    const email = String(ev.email ?? "").trim().toLowerCase();
+    let candidateId = ev.candidateId ?? null;
+    if (!candidateId && email) {
+      const [account] = await db.select({ id: candidates.id }).from(candidates).where(sql`LOWER(${candidates.email}) = ${email}`).limit(1);
+      candidateId = account?.id ?? null;
+    }
+    const sources: ExtraSource[] = [];
+    if (candidateId) {
+      const files = await db.select().from(candidateFiles).where(eq(candidateFiles.candidateId, candidateId)).orderBy(desc(candidateFiles.uploadedAt)).limit(100);
+      for (const file of files) {
+        if (!file.fileUrl || String(file.status ?? "").toLowerCase() === "rejected") continue;
+        const type = String(file.fileType ?? "").toLowerCase();
+        sources.push({ id: `file-${file.id}`, kind: FILE_KIND[type] ?? (type === "cv" ? "cv" : "autre"), url: file.fileUrl, name: file.fileName ?? "", isCv: type === "cv" });
+      }
+    }
+    if (email) {
+      const agencyDocs = await db.select({ id: agencyDossierDocuments.id, type: agencyDossierDocuments.documentType, name: agencyDossierDocuments.documentName, url: agencyDossierDocuments.documentUrl, status: agencyDossierDocuments.verificationStatus })
+        .from(agencyDossierDocuments).innerJoin(agencyDossiers, eq(agencyDossierDocuments.dossierId, agencyDossiers.id))
+        .where(sql`LOWER(${agencyDossiers.email}) = ${email}`).orderBy(desc(agencyDossierDocuments.id)).limit(100);
+      for (const doc of agencyDocs) {
+        if (!doc.url || String(doc.status ?? "").toLowerCase() === "rejected") continue;
+        const type = String(doc.type ?? "").toLowerCase();
+        sources.push({ id: `agency-${doc.id}`, kind: DOC_KIND[type] ?? FILE_KIND[type] ?? "autre", url: doc.url, name: doc.name ?? "", isCv: type === "cv" });
+      }
+    }
+    return sources;
+  } catch (error) {
+    console.warn("[bilanAuto] pièces du candidat non lues", error instanceof Error ? error.message : error);
+    return [];
+  }
+}
+
 const mimeFromName = (name: string): "application/pdf" | "image/png" | "image/jpeg" | "image/webp" | null => {
   const lower = name.toLowerCase();
   if (lower.endsWith(".pdf")) return "application/pdf";
@@ -61,10 +107,22 @@ export function makeLoadInputs(db: Db, io: { fetchBuffer: (url: string) => Promi
       completenessFields: { fullName: ev.fullName, email: ev.email, phone: ev.phone, dateOfBirth: ev.dateOfBirth, nationality: ev.nationality, educationLevel: ev.educationLevel, diplomaTitle: ev.diplomaTitle, fieldOfStudy: ev.fieldOfStudy, currentJobTitle: ev.currentJobTitle, yearsOfExperience: ev.yearsOfExperience, mainTasks: ev.mainTasks, frenchLevel: ev.frenchLevel, englishLevel: ev.englishLevel, destinationCountry: ev.destinationCountry },
     };
 
-    const cvUrl = ev.cvFileUrl ?? null;
-    const cv: EvaluationInputs["cv"] = { key: storageKeyFromStoredUrl(cvUrl) ?? cvUrl, fileName: ev.cvFileName ?? null, sha256: null, stored: Boolean(cvUrl), attachedToAccount: Boolean(candidate), text: null, file: null };
-    const docRows = await db.select().from(clientDocuments).where(and(eq(clientDocuments.evaluationId, evaluationId), ne(clientDocuments.documentType, "cv")));
-    const documents: EvaluationInputs["documents"] = docRows.map((row) => ({ id: String(row.id), kind: DOC_KIND[row.documentType] ?? "autre", key: storageKeyFromStoredUrl(row.documentUrl) ?? row.documentUrl ?? null, sha256: null, text: null, file: null }));
+    const deposits = await loadCandidateDeposits(db, { candidateId: ev.candidateId ?? null, email: ev.email });
+    // Le CV de l'évaluation prime ; à défaut, le CV le plus récent déposé par le candidat ou remis en agence.
+    const depositedCv = deposits.find((source) => source.isCv) ?? null;
+    const cvUrl = ev.cvFileUrl ?? depositedCv?.url ?? null;
+    const cvName = ev.cvFileName ?? (ev.cvFileUrl ? null : depositedCv?.name ?? null);
+    const cv: EvaluationInputs["cv"] = { key: storageKeyFromStoredUrl(cvUrl) ?? cvUrl, fileName: cvName, sha256: null, stored: Boolean(cvUrl), attachedToAccount: Boolean(candidate), text: null, file: null };
+    const attachedRows = await db.select().from(clientDocuments).where(and(eq(clientDocuments.evaluationId, evaluationId), ne(clientDocuments.documentType, "cv")));
+    // Pièces déposées par le candidat / en agence, sans doublon avec celles déjà jointes à l'évaluation.
+    const knownKeys = new Set(attachedRows.map((row) => storageKeyFromStoredUrl(row.documentUrl) ?? row.documentUrl ?? "").filter(Boolean));
+    const docRows: Array<{ id: string; kind: EvaluationInputs["documents"][number]["kind"]; documentUrl: string | null; documentName: string }> = [
+      ...attachedRows.map((row) => ({ id: String(row.id), kind: DOC_KIND[row.documentType] ?? ("autre" as const), documentUrl: row.documentUrl, documentName: row.documentName })),
+      ...deposits
+        .filter((source) => !source.isCv && !knownKeys.has(storageKeyFromStoredUrl(source.url) ?? source.url))
+        .map((source) => ({ id: source.id, kind: source.kind, documentUrl: source.url, documentName: source.name })),
+    ];
+    const documents: EvaluationInputs["documents"] = docRows.map((row) => ({ id: row.id, kind: row.kind, key: storageKeyFromStoredUrl(row.documentUrl) ?? row.documentUrl ?? null, sha256: null, text: null, file: null }));
 
     // Sans l'accord du candidat à la lecture de son CV, aucun fichier n'est téléchargé ni lu.
     const consented = cvAnalysisConsented(ev);
