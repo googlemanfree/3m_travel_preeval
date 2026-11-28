@@ -2,6 +2,7 @@ import { jsPDF } from "jspdf";
 import { paymentReceiptCopyForVisa } from "../../shared/agreementProtocolCountryTemplates";
 import { applyLetterhead, BRAND, letterheadLayout, renderBrandedEmailHtml, serviceFocusLabel, type LetterheadOptions } from "../../shared/brandLetterhead";
 import { loadBrandLogo } from "./brandLogo";
+import { PAYMENT_NATURE_LABELS, paymentNatureSentence, type PaymentNature } from "../../shared/paymentNature";
 
 const AGENCY = {
   name: BRAND.legalName,
@@ -27,6 +28,9 @@ export interface PaymentReceiptInput {
   receiptApprovedAt?: Date | null;
   receiptSignatureLabel?: string | null;
   receiptSignatureHash?: string | null;
+  /** Frais déposés : somme totale ou avance (mention sur le reçu). */
+  paymentNature?: PaymentNature | null;
+  balanceDue?: number | null;
 }
 
 function escapeHtml(value: unknown) {
@@ -92,12 +96,26 @@ export async function buildPaymentReceiptPdf(input: PaymentReceiptInput) {
   pdf.text(`Validé le ${paymentDate} · ${input.paymentMethod}`, margin + 7, y + 17);
   y += 30;
 
+  const natureText = paymentNatureSentence({ nature: input.paymentNature, amount: input.amount, currency: input.currency, balanceDue: input.balanceDue });
+  if (input.paymentNature && natureText) {
+    pdf.setTextColor(30, 41, 59);
+    pdf.setFontSize(11);
+    pdf.setFont("helvetica", "bold");
+    y = ensureRoom(16, y);
+    pdf.text(`Nature du paiement : ${PAYMENT_NATURE_LABELS[input.paymentNature]}`, margin, y);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(9);
+    y += 6;
+    (pdf.splitTextToSize(natureText, contentWidth) as string[]).forEach((line) => { y = ensureRoom(4.5, y); pdf.text(line, margin, y); y += 4.5; });
+    y += 4;
+  }
+
   pdf.setTextColor(30, 41, 59);
   pdf.setFontSize(11);
   pdf.setFont("helvetica", "bold");
   pdf.text("Objet des frais", margin, y);
   pdf.setFont("helvetica", "normal");
-  const receiptCopy = paymentReceiptCopyForVisa(input.visaType);
+  const receiptCopy = paymentReceiptCopyForVisa(input.visaType, input.destination);
   y += 7;
   (pdf.splitTextToSize(receiptCopy.objectText, contentWidth) as string[]).forEach((line) => { y = ensureRoom(5, y); pdf.text(line, margin, y); y += 5; });
 
@@ -109,6 +127,18 @@ export async function buildPaymentReceiptPdf(input: PaymentReceiptInput) {
   pdf.setFontSize(9);
   y += 6;
   (pdf.splitTextToSize(receiptCopy.importantText, contentWidth) as string[]).forEach((line) => { y = ensureRoom(4.3, y); pdf.text(line, margin, y); y += 4.3; });
+
+  if (receiptCopy.steps.length) {
+    y = ensureRoom(18, y + 5);
+    pdf.setTextColor(30, 41, 59);
+    pdf.setFontSize(11);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Étapes de votre procédure", margin, y);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(9);
+    y += 6;
+    receiptCopy.steps.forEach((label, index) => { y = ensureRoom(4.5, y); pdf.text(`${index + 1}. ${label}`, margin, y); y += 4.5; });
+  }
 
   y = ensureRoom(26, y + 5);
   pdf.setTextColor(30, 41, 59);
@@ -149,11 +179,18 @@ export async function buildPaymentReceiptPdf(input: PaymentReceiptInput) {
 export function buildPaymentReceiptEmailHtml(input: PaymentReceiptInput) {
   const formattedAmount = formatPaymentAmount(input.amount, input.currency);
   const paymentDate = input.paymentDate.toLocaleString("fr-FR");
-  const copy = paymentReceiptCopyForVisa(input.visaType);
+  const copy = paymentReceiptCopyForVisa(input.visaType, input.destination);
+  const natureText = paymentNatureSentence({ nature: input.paymentNature, amount: input.amount, currency: input.currency, balanceDue: input.balanceDue });
+  const natureHtml = input.paymentNature && natureText
+    ? `<p style="padding:12px;background:#eff6ff;border-left:4px solid #2563eb;font-size:13px"><strong>${escapeHtml(PAYMENT_NATURE_LABELS[input.paymentNature])}.</strong> ${escapeHtml(natureText)}</p>`
+    : "";
+  const stepsHtml = copy.steps.length
+    ? `<p style="font-size:13px;margin-bottom:4px"><strong>Étapes de votre procédure :</strong></p><ol style="font-size:13px;margin-top:0">${copy.steps.map((label) => `<li>${escapeHtml(label)}</li>`).join("")}</ol>`
+    : "";
   const approvalHtml = input.receiptApprovedAt && input.receiptSignatureLabel && input.receiptSignatureHash
     ? `<div style="margin:18px 0;padding:14px;border:1px solid #93c5fd;border-radius:10px;background:#eff6ff;color:#1e3a8a"><strong>Reçu validé électroniquement par l’agence</strong><br/><span style="font-size:12px">${escapeHtml(input.receiptSignatureLabel)} · ${escapeHtml(input.receiptApprovedAt.toLocaleString("fr-FR"))}</span><br/><span style="font-size:11px">Empreinte : ${escapeHtml(input.receiptSignatureHash.slice(0, 24))}…</span></div>`
     : "";
-  const body = `<p>Bonjour ${escapeHtml(input.fullName)},</p><p>Nous vous confirmons l’enregistrement de votre paiement de <strong>${formattedAmount}</strong> pour le dossier <strong>${escapeHtml(input.dossierNumber)}</strong>.</p><div style="margin:20px 0;padding:16px;border:1px solid #bbf7d0;border-radius:10px;background:#ecfdf5;color:#065f46"><strong>Frais concernés :</strong><br/>${escapeHtml(copy.emailFeesLine)}<br/><span style="font-size:13px">Paiement confirmé le ${paymentDate} · ${escapeHtml(input.paymentMethod)}</span></div><p>Les diligences peuvent aboutir ou ne pas aboutir. Des démarches complémentaires ou une réorientation peuvent être envisagées avec vous jusqu’à l’aboutissement ou la clôture convenue du mandat, selon votre éligibilité et les conditions applicables.</p><p style="padding:14px;background:#fff7ed;border-left:4px solid #d97706;font-size:13px"><strong>Information importante :</strong> ${escapeHtml(copy.emailImportant)}</p><p>Les frais d’ouverture et de traitement sont non remboursables après le début des diligences administratives et de préparation, sauf disposition impérative contraire applicable au dossier. Un protocole d’accord distinct pourra être signé pour lancer la procédure complète selon votre type de visa.</p>${approvalHtml}<p>Votre dossier reste suivi par un conseiller 3M TRAVEL AGENCY. Consultez votre espace candidat pour les prochaines étapes et les documents disponibles.</p>`;
+  const body = `<p>Bonjour ${escapeHtml(input.fullName)},</p><p>Nous vous confirmons l’enregistrement de votre paiement de <strong>${formattedAmount}</strong> pour le dossier <strong>${escapeHtml(input.dossierNumber)}</strong>.</p><div style="margin:20px 0;padding:16px;border:1px solid #bbf7d0;border-radius:10px;background:#ecfdf5;color:#065f46"><strong>Frais concernés :</strong><br/>${escapeHtml(copy.emailFeesLine)}<br/><span style="font-size:13px">Paiement confirmé le ${paymentDate} · ${escapeHtml(input.paymentMethod)}</span></div>${natureHtml}${stepsHtml}<p>Les diligences peuvent aboutir ou ne pas aboutir. Des démarches complémentaires ou une réorientation peuvent être envisagées avec vous jusqu’à l’aboutissement ou la clôture convenue du mandat, selon votre éligibilité et les conditions applicables.</p><p style="padding:14px;background:#fff7ed;border-left:4px solid #d97706;font-size:13px"><strong>Information importante :</strong> ${escapeHtml(copy.emailImportant)}</p><p>Les frais d’ouverture et de traitement sont non remboursables après le début des diligences administratives et de préparation, sauf disposition impérative contraire applicable au dossier. Un protocole d’accord distinct pourra être signé pour lancer la procédure complète selon votre type de visa.</p>${approvalHtml}<p>Votre dossier reste suivi par un conseiller 3M TRAVEL AGENCY. Consultez votre espace candidat pour les prochaines étapes et les documents disponibles.</p>`;
   return renderBrandedEmailHtml({
     title: "Reçu de confirmation de paiement",
     preheader: `Paiement de ${formattedAmount} confirmé pour le dossier ${input.dossierNumber}`,

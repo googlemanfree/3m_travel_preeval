@@ -1,5 +1,6 @@
 import { PUBLIC_DESTINATION_DETAILS } from "../client/src/lib/publicDestinationCatalog";
 import { OFFICIAL_SOURCE_CATALOG } from "./officialSourceCatalog";
+import { resolveProcedureKind } from "./procedureKind";
 import {
   resolveEvaluationProjectKind,
   type EvaluationProjectKind,
@@ -1178,6 +1179,35 @@ const VERIFIED_EUROPEAN_JOURNEYS: CandidateJourney[] = [
 const normalize = (value: string | null | undefined) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 const is = (value: string, ...terms: string[]) => terms.some((term) => value.includes(normalize(term)));
 
+/** Étapes pays propres aux procédures sans parcours détaillé dans le catalogue (résidence, regroupement, e-Visa). */
+function genericProcedureSteps(kind: "residence" | "famille" | "evisa", officialSource: string): JourneyStep[] {
+  if (kind === "residence") {
+    return [
+      step("pr_profile", "Évaluation du profil et du programme", "Choisir le programme de résidence adapté au profil (sélection fédérale, provinciale ou autre) selon l’éligibilité réelle.", ["Identité", "Profil professionnel", "Programme visé"], officialSource),
+      step("pr_documents", "Diplômes, langue et état civil", "Réunir diplômes, évaluation des diplômes, résultats de tests de langue et pièces d’état civil exigés par le programme.", ["Diplômes", "Test de langue", "État civil"], officialSource),
+      step("pr_selection", "Profil de sélection / candidature au programme", "Créer le profil ou déposer la candidature de sélection et suivre l’invitation éventuelle.", ["Profil de sélection", "Accusé de dépôt"], officialSource),
+      step("pr_application", "Demande de résidence permanente", "Déposer la demande après invitation ou nomination, avec les preuves de fonds et les antécédents.", ["Preuves de fonds", "Certificats de police", "Formulaires officiels"], officialSource),
+      step("pr_biometrics", "Biométrie et examens médicaux", "Passer la biométrie et l’examen médical auprès des centres désignés.", ["Convocation biométrie", "Examen médical"], officialSource),
+      step("pr_decision", "Décision et arrivée", "Suivre uniquement les notifications du portail officiel ; préparer l’arrivée et l’installation.", ["Référence de demande", "Notifications"], officialSource),
+    ];
+  }
+  if (kind === "famille") {
+    return [
+      step("fam_eligibility", "Éligibilité et lien familial", "Vérifier le lien de parenté et les conditions du membre de famille garant.", ["Identité", "Preuve du lien familial"], officialSource),
+      step("fam_documents", "Pièces d’état civil et garanties", "Réunir actes d’état civil, justificatifs de ressources et de logement du garant.", ["Actes d’état civil", "Ressources du garant", "Logement"], officialSource),
+      step("fam_application", "Dépôt de la demande de regroupement", "Déposer la demande auprès de l’autorité compétente et conserver l’accusé de réception.", ["Formulaires officiels", "Accusé de dépôt"], officialSource),
+      step("fam_appointment", "Rendez-vous consulaire et biométrie", "Prendre rendez-vous pour le dépôt consulaire et la biométrie si demandée.", ["Rendez-vous", "Biométrie si demandée"], officialSource),
+      step("fam_decision", "Décision et conditions d’entrée", "Suivre uniquement les notifications de l’autorité ; préparer le voyage après décision.", ["Référence de demande", "Notifications"], officialSource),
+    ];
+  }
+  return [
+    step("evisa_eligibility", "Éligibilité et durée du séjour", "Vérifier que l’e-Visa ou l’autorisation électronique correspond au motif et à la durée du séjour.", ["Passeport", "Motif du séjour"], officialSource),
+    step("evisa_form", "Formulaire en ligne et pièces", "Remplir le formulaire du portail officiel et préparer les pièces demandées.", ["Passeport valide", "Photo d’identité", "Itinéraire"], officialSource),
+    step("evisa_payment", "Droits officiels du portail", "Régler les droits officiels directement sur le portail, sans intermédiaire.", ["Reçu de paiement du portail"], officialSource),
+    step("evisa_decision", "Réception de l’autorisation", "Recevoir l’autorisation par voie électronique et la conserver avec le passeport pour le voyage.", ["Autorisation électronique"], officialSource),
+  ];
+}
+
 export function getCandidateJourney(destination?: string | null, visaType?: string | null, procedureLabel?: string | null): CandidateJourney {
   const country = normalize(destination);
   const visa = normalize([visaType, procedureLabel].filter(Boolean).join(" "));
@@ -1188,6 +1218,10 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     if (is(visa, "visiteur", "visitor", "tourisme")) return CANDIDATE_JOURNEYS[0];
     if (is(visa, "express", "pnp", "residence permanente", "permanent residence", "entree express")) return CANDIDATE_JOURNEYS[3];
     if (is(visa, "travail", "worker", "travailleur", "emploi", "permis de travail")) return CANDIDATE_JOURNEYS[2];
+    // « Canada RP », « canada_rp », « Résidence / installation » : parcours résidence permanente (jamais visiteur).
+    const canadaKind = resolveProcedureKind(visaType, procedureLabel);
+    if (canadaKind === "residence") return CANDIDATE_JOURNEYS[3];
+    if (canadaKind === "evisa") return CANDIDATE_JOURNEYS[0];
     // Visa inconnu : ne pas forcer Entrée Express / travail — parcours générique plus bas.
   }
   if (is(country, "luxembourg")) {
@@ -1195,11 +1229,14 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
     if (is(visa, "etude", "etudes", "study")) return CANDIDATE_JOURNEYS[7];
     if (is(visa, "visiteur", "visitor", "tourisme")) return CANDIDATE_JOURNEYS[5];
     if (is(visa, "travail", "worker", "travailleur", "emploi", "salarie")) return CANDIDATE_JOURNEYS[6];
-    // Visa inconnu : ne pas forcer Travailleur.
+    if (resolveProcedureKind(visaType, procedureLabel) === "evisa") return CANDIDATE_JOURNEYS[5];
+    // Visa inconnu (résidence, regroupement…) : ne pas forcer Travailleur — parcours générique plus bas.
   }
   const countryKey = country.replace(/[^a-z0-9]+/g, " ").trim();
   const detailedCountry = ["france", "belgique", "suisse", "pays bas", "allemagne", "espagne", "portugal", "autriche", "pologne", "suede", "norvege", "finlande", "danemark", "republique tcheque", "irlande", "grece", "croatie", "slovaquie", "serbie", "turkiye", "turquie", "royaume uni", "etats unis", "australie", "japon", "nouvelle zelande", "new zealand", "coree du sud", "south korea", "inde", "india", "afrique du sud", "south africa", "bresil", "brazil", "emirats arabes unis", "uae", "united arab emirates", "mexique", "mexico", "argentine", "argentina", "chili", "chile", "colombie", "colombia", "perou", "peru", "nigeria", "ghana", "kenya", "tanzanie", "tanzania", "maroc", "morocco", "rwanda", "rouanda", "ethiopie", "ethiopia", "maurice", "mauritius", "algerie", "algeria", "tunisie", "tunisia", "ouganda", "uganda", "roumanie", "slovenie", "estonie", "lettonie", "lituanie", "bulgarie"].find((candidate) => countryKey.includes(candidate));
-  if (detailedCountry) {
+  const procedureKind = resolveProcedureKind(visaType, procedureLabel);
+  // Résidence et regroupement familial n'ont pas de parcours « visiteur » : parcours générique dédié plus bas.
+  if (detailedCountry && procedureKind !== "residence" && procedureKind !== "famille") {
     const kind = is(visa, "etude", "etudes", "study") ? "Études" : is(visa, "travail", "worker", "emploi", "professional") ? "Travail" : "Visiteur";
     const verifiedJourney = VERIFIED_EUROPEAN_JOURNEYS.find((candidate) => normalize(candidate.country).replace(/[^a-z0-9]+/g, " ").trim() === detailedCountry && candidate.visaType === kind);
     if (verifiedJourney) return verifiedJourney;
@@ -1208,6 +1245,9 @@ export function getCandidateJourney(destination?: string | null, visaType?: stri
   const displayCountry = destination?.trim() || "Destination à confirmer";
   const displayVisa = visaType?.trim() || procedureLabel?.trim() || "Procédure à qualifier";
   const officialSource = source || "";
+  if (procedureKind === "residence" || procedureKind === "famille" || procedureKind === "evisa") {
+    return { ...common(displayCountry, displayVisa, officialSource, genericProcedureSteps(procedureKind, officialSource)), officialSources: officialSource ? [officialSource] : [] };
+  }
   return { ...common(displayCountry, displayVisa, officialSource, [
     step("evaluation", "Évaluation du projet", "Clarifier le motif, le profil et la procédure choisie.", ["Identité", "Motif", "Parcours"], officialSource),
     step("documents", "Documents selon la procédure", "Réunir les documents affichés par le portail officiel de la destination.", ["Passeport", "Formulaires", "Justificatifs spécifiques"], officialSource),
@@ -1308,6 +1348,12 @@ function buildEnrichedCandidateJourney(destination?: string | null, visaType?: s
   // Les 13 premières étapes du parcours de base sont le traitement interne d’une
   // agence de mobilité internationale ; journeyStepIndex() suppose ces 13 positions.
   const internalAgencySteps = baseJourney.steps.slice(0, 13);
+
+  // Résidence et regroupement familial n'ont pas de guide publié propre : le traitement publié les confond avec
+  // « visiteur ». On garde le parcours de base de la procédure choisie plutôt que d'afficher des étapes visiteur.
+  const ownKind = resolveProcedureKind(visaType, procedureLabel);
+  // (L'e-Visa garde le traitement publié « visiteur » : c'est bien une démarche de séjour temporaire.)
+  if (ownKind === "residence" || ownKind === "famille") return { ...baseJourney, publishedGuide: null };
 
   const published = resolvePublishedProcedureTreatment(destination, visaType, procedureLabel);
   if (published && published.countrySteps.length > 0) {

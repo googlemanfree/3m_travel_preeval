@@ -4,6 +4,10 @@
 // n'est aujourd'hui renseigne que pour le Luxembourg (placement salarie) ; pour les autres
 // destinations, le texte s'adapte au visa sans inventer de montants.
 
+import { resolveProcedureKind } from "./procedureKind";
+import { paymentNatureSentence, type PaymentNature } from "./paymentNature";
+import { getEnrichedCandidateJourney } from "./candidateJourneyCatalog";
+
 export interface CountryProtocolFormula {
   label: string;
   amount: string;
@@ -245,19 +249,12 @@ function foldProtocolKey(value: string | null | undefined): string {
     .toLowerCase();
 }
 
-/** Kind de procédure pour protocoles N°01 / N°02 (tous pays). */
-export type ProtocolVisaKind = "travail" | "etudes" | "visiteurs" | "famille" | "residence" | "autre";
+/** Kind de procédure pour protocoles N°01 / N°02 et reçu (tous pays). */
+export type ProtocolVisaKind = "travail" | "etudes" | "visiteurs" | "famille" | "residence" | "evisa" | "autre";
 
 export function detectProtocolVisaKind(visaType?: string | null): ProtocolVisaKind {
-  const visa = foldProtocolKey(visaType);
-  if (!visa) return "autre";
-  if (/etud|study|student|academ|formation|ausbildung|apprentissage/.test(visa)) return "etudes";
-  if (/famill|family|regroupement|conjoint|spouse|parrainage familial/.test(visa)) return "famille";
-  if (/express|pnp|arrima|resident permanent|residence permanente|installation/.test(visa)) return "residence";
-  if (/travail|work|emploi|worker|lmia|eimt|permis de travail|travailleur|salarie|qualified|qualifie/.test(visa)) return "travail";
-  if (/visiteur|visitor|touris|ave|eta|court sejour|loisirs|visite/.test(visa)) return "visiteurs";
-  if (/\bschengen\b/.test(visa) && !/travail|etud|work|study/.test(visa)) return "visiteurs";
-  return "autre";
+  const kind = resolveProcedureKind(visaType);
+  return kind === "visiteur" ? "visiteurs" : kind;
 }
 
 /** Variantes Canada (IRCC / DLI / EIMT) selon le type de visa. */
@@ -293,10 +290,20 @@ function canadaProtocolForVisa(base: CountryProtocolProfile, visaType?: string |
       reorientationAlternatives: "une autre procédure familiale ou destination adaptée au profil du candidat",
     };
   }
+  if (kind === "evisa") {
+    return {
+      ...base,
+      procedureProgramLabel: "AVE / autorisation de voyage électronique — Canada",
+      employmentAuthority: "non applicable — autorisation électronique de voyage, sans autorisation de travail",
+      immigrationAuthority: "Immigration, Réfugiés et Citoyenneté Canada (IRCC) — AVE",
+      procedureObjectClause: "la préparation et le dépôt en ligne de la demande d’autorisation de voyage électronique (AVE) auprès d’IRCC, sans promesse d’emploi, de séjour prolongé ni d’entrée garantie",
+      reorientationAlternatives: "une autre destination de séjour temporaire adaptée au profil du candidat",
+    };
+  }
   if (kind === "residence") {
     return {
       ...base,
-      procedureProgramLabel: "Sélection permanente / Entrée Express / PNP — Canada",
+      procedureProgramLabel: "Résidence permanente (RP) — Entrée Express / PNP / Arrima — Canada",
       employmentAuthority: "le programme fédéral ou provincial de sélection applicable (Entrée Express, PNP ou Arrima)",
       immigrationAuthority: "Immigration, Réfugiés et Citoyenneté Canada (IRCC) et, le cas échéant, le ministère de l’Immigration du Québec",
       procedureObjectClause: "la préparation du profil de sélection et du dossier fédéral/provincial selon le programme retenu, sans garantie d’invitation ni de résidence permanente",
@@ -355,10 +362,21 @@ export function protocolProfileForVisa(
     };
   }
 
+  if (kind === "evisa") {
+    return {
+      ...base,
+      procedureProgramLabel: `e-Visa / autorisation électronique — ${label}`,
+      employmentAuthority: "non applicable — autorisation électronique, sans autorisation de travail",
+      procedureObjectClause: `la préparation et le dépôt de la demande d’e-Visa ou d’autorisation électronique de voyage pour ${label} (formulaire en ligne, pièces justificatives, paiement des droits officiels par le candidat), sans garantie d’octroi ni d’entrée sur le territoire`,
+      reorientationAlternatives: `une autre destination de séjour temporaire adaptée au profil du candidat`,
+    };
+  }
+
   if (kind === "residence") {
     return {
       ...base,
       procedureProgramLabel: `Résidence / installation — ${label}`,
+      employmentAuthority: "non applicable — procédure de résidence / installation (aucune promesse d’employeur)",
       procedureObjectClause: `la préparation du dossier d’installation ou de sélection permanente pour ${label}, selon le programme retenu, sans garantie d’invitation ni de résidence`,
     };
   }
@@ -398,6 +416,27 @@ export function getCountryProtocolProfile(
   return protocolProfileForVisa(slug, profile, visaType);
 }
 
+/** Étapes de la procédure retenue (parcours du dossier), pour le protocole et le reçu : propres à chaque pays et type de procédure. */
+export function procedureStepLabels(destination?: string | null, visaType?: string | null, max = 10): string[] {
+  try {
+    const journey = getEnrichedCandidateJourney(destination || null, visaType || null, visaType || null);
+    // Les 13 premières étapes sont le traitement interne de l'agence ; les suivantes sont celles du pays et de la procédure.
+    return journey.steps.slice(13).map((item) => item.label).filter(Boolean).slice(0, max);
+  } catch {
+    return [];
+  }
+}
+
+function procedureStepsAnnex(destination: string | null | undefined, visaType: string | null | undefined, program: string): string {
+  const labels = procedureStepLabels(destination, visaType);
+  if (!labels.length) return "";
+  return `
+ANNEXE — Étapes de la procédure retenue (${program})
+${labels.map((label, index) => `${index + 1}. ${label}`).join("\n")}
+Ces étapes sont indicatives et propres à la procédure choisie par LE CLIENT ; leur durée et leur issue dépendent des autorités compétentes.
+`;
+}
+
 /** Clauses articles 4 / 6 / 7 du protocole N°01 selon le type de visa. */
 export function protocolOneKindClauses(kind: ProtocolVisaKind, profile: CountryProtocolProfile): {
   noGuarantee: string;
@@ -425,6 +464,26 @@ export function protocolOneKindClauses(kind: ProtocolVisaKind, profile: CountryP
         "Après validation du projet de séjour et, le cas échéant, obtention des justificatifs complémentaires demandés, un protocole d'accord distinct (Protocole N° 02) pourra être signé si un accompagnement consulaire étendu est requis. Toute prestation ou frais d'honoraires ultérieurs feront l'objet de cet accord distinct.",
     };
   }
+  if (kind === "residence") {
+    return {
+      titleSuffix: "MANDAT D'OUVERTURE DE DOSSIER RÉSIDENCE PERMANENTE / INSTALLATION",
+      noGuarantee:
+        "Ce document et le présent protocole ne garantissent ni invitation à présenter une demande, ni sélection, ni résidence permanente, ni visa, ni délai d'instruction, ni résultat absolu. L'AGENCE est tenue à une stricte obligation de moyens professionnels dans l'évaluation du profil, la préparation du dossier de sélection et la vérification des pièces. Les décisions de sélection, d'invitation et d'admission à la résidence relèvent exclusivement de " + profile.immigrationAuthority + ".",
+      transparency: `L'AGENCE réitère que la procédure de résidence ne comporte ni « frais de placement », ni promesse d'employeur, ni garantie de points ou de classement. Les droits officiels (traitement, droit d'établissement, biométrie, examens médicaux, évaluation des diplômes, tests de langue) sont payés directement par LE CLIENT à ${profile.immigrationAuthority} ou aux organismes désignés ; aucun frais « caché » ne peut être exigé au nom de L'AGENCE. Le CLIENT demeure seul responsable de l'exactitude de ses déclarations : toute fausse déclaration peut entraîner un refus et une interdiction de territoire.`,
+      transition:
+        "Après obtention effective d'une invitation, d'une nomination provinciale ou d'une étape équivalente du programme retenu, et validation du projet par LE CLIENT, un protocole d'accord distinct (Protocole N° 02) pourra être signé pour l'accompagnement jusqu'au dépôt de la demande de résidence permanente. Toute prestation ou frais d'honoraires ultérieurs devra faire l'objet d'un accord distinct et explicite.",
+    };
+  }
+  if (kind === "evisa") {
+    return {
+      titleSuffix: "MANDAT D'OUVERTURE DE DOSSIER E-VISA / AUTORISATION ÉLECTRONIQUE",
+      noGuarantee:
+        "Ce document et le présent protocole ne garantissent ni octroi de l'e-Visa ou de l'autorisation électronique, ni entrée sur le territoire, ni durée de séjour, ni délai de traitement, ni résultat absolu. L'AGENCE est tenue à une stricte obligation de moyens professionnels dans la préparation et le dépôt de la demande en ligne. La décision relève exclusivement de " + profile.immigrationAuthority + ".",
+      transparency: `L'AGENCE réitère qu'aucun frais d'employeur ni de « placement » ne s'applique à une demande d'e-Visa. Les droits officiels de la demande sont acquittés par LE CLIENT sur le portail officiel ; L'AGENCE ne perçoit à ce titre que les frais d'ouverture et de traitement confirmés par le Reçu Officiel. Le CLIENT demeure seul responsable de l'exactitude des informations saisies (identité, passeport, itinéraire).`,
+      transition:
+        "L'e-Visa est une procédure en ligne : aucun protocole d'accord supplémentaire n'est requis sauf accompagnement complémentaire convenu par écrit (par exemple un dépôt consulaire si l'autorisation électronique est refusée). Toute prestation ou frais d'honoraires ultérieurs devra faire l'objet d'un accord distinct et explicite.",
+    };
+  }
   if (kind === "famille") {
     return {
       titleSuffix: "MANDAT D'OUVERTURE DE DOSSIER REGROUPEMENT FAMILIAL",
@@ -446,12 +505,20 @@ export function protocolOneKindClauses(kind: ProtocolVisaKind, profile: CountryP
 }
 
 /** Textes du reçu de paiement alignés sur le type de visa (tous pays). */
-export function paymentReceiptCopyForVisa(visaType?: string | null): {
+export type PaymentReceiptCopy = {
   objectText: string;
   importantText: string;
   emailFeesLine: string;
   emailImportant: string;
-} {
+  /** Étapes de la procédure retenue (vide si le parcours n'est pas connu). */
+  steps: string[];
+};
+
+export function paymentReceiptCopyForVisa(visaType?: string | null, destination?: string | null): PaymentReceiptCopy {
+  return { ...receiptCopyByKind(visaType), steps: procedureStepLabels(destination, visaType, 8) };
+}
+
+function receiptCopyByKind(visaType?: string | null): Omit<PaymentReceiptCopy, "steps"> {
   const kind = detectProtocolVisaKind(visaType);
   if (kind === "etudes") {
     return {
@@ -475,6 +542,30 @@ export function paymentReceiptCopyForVisa(visaType?: string | null): {
         "Ouverture du dossier, traitement administratif et préparation de votre dossier visiteurs / séjour temporaire (statut, motif, attaches).",
       emailImportant:
         "ce reçu ne constitue pas une garantie de visa, d’entrée ou de résultat, et ne comporte aucune promesse d’emploi. Toute prestation ou tout frais supplémentaire doit faire l’objet d’un accord distinct et explicite.",
+    };
+  }
+  if (kind === "residence") {
+    return {
+      objectText:
+        "Les frais confirmés couvrent l’ouverture du dossier, le traitement administratif, l’évaluation du profil et la préparation du dossier de résidence permanente / installation (profil de sélection, pièces d’identité et d’état civil, diplômes, langue, antécédents) selon le programme retenu et l’éligibilité du candidat. Ces frais sont distincts des droits officiels versés aux autorités.",
+      importantText:
+        "Ce reçu ne garantit ni invitation, ni sélection, ni résidence permanente, ni visa, ni délai, ni résultat. Aucune promesse d’emploi n’est associée à cette procédure. Les droits officiels sont payés directement aux autorités. Un protocole d’accord distinct pourra être signé pour l’accompagnement jusqu’au dépôt de la demande.",
+      emailFeesLine:
+        "Ouverture du dossier, traitement administratif et préparation de votre dossier de résidence permanente / installation.",
+      emailImportant:
+        "ce reçu ne constitue pas une garantie d’invitation, de sélection, de résidence permanente ou de résultat, et ne comporte aucune promesse d’emploi. Toute prestation ou tout frais supplémentaire doit faire l’objet d’un accord distinct et explicite.",
+    };
+  }
+  if (kind === "evisa") {
+    return {
+      objectText:
+        "Les frais confirmés couvrent l’ouverture du dossier, le traitement administratif et la préparation de la demande d’e-Visa / d’autorisation électronique de voyage (formulaire en ligne, pièces, vérification des informations saisies). Les droits officiels du portail sont payés séparément par le candidat.",
+      importantText:
+        "Ce reçu ne garantit ni octroi de l’autorisation, ni entrée sur le territoire, ni durée de séjour, ni délai de traitement. Aucune promesse d’emploi n’est associée à une procédure e-Visa.",
+      emailFeesLine:
+        "Ouverture du dossier, traitement administratif et préparation de votre demande d’e-Visa / autorisation électronique.",
+      emailImportant:
+        "ce reçu ne constitue pas une garantie d’octroi de l’autorisation, d’entrée ou de résultat, et ne comporte aucune promesse d’emploi. Toute prestation ou tout frais supplémentaire doit faire l’objet d’un accord distinct et explicite.",
     };
   }
   if (kind === "famille") {
@@ -516,6 +607,13 @@ export interface ProtocolOneVariables {
   empreinteSha: string;
   clientIpAddress: string;
   dateDuJour: string;
+  /** Les frais déposés sont la somme totale ou une avance (indiqué par l'administrateur sur le reçu). */
+  natureVersement?: PaymentNature;
+  /** Solde restant dû, pour une avance. */
+  soldeRestant?: number;
+  devise?: string;
+  /** Référence de compte antérieure (COMPTE-…), rappelée à côté du numéro de dossier actif 3M-…. */
+  ancienneReferenceCompte?: string;
 }
 
 export interface ProtocolTwoVariables {
@@ -554,16 +652,23 @@ export function buildProtocolOneRichText(
   const amountLabel = typeof vars.montantValide === "number" && Number.isFinite(vars.montantValide) && vars.montantValide > 0
     ? `${Math.round(vars.montantValide).toLocaleString("fr-FR").replace(/[\u202f\u00a0]/g, " ")} XAF`
     : null;
-  const amountClause = amountLabel ? `d'un montant de ${amountLabel}` : "dont le montant est celui indiqué sur le Reçu Officiel de paiement";
+  const amountClause = amountLabel ? `d'un montant de ${amountLabel}${vars.natureVersement === "avance" ? " (avance)" : ""}` : "dont le montant est celui indiqué sur le Reçu Officiel de paiement";
   const amountValidated = amountLabel ?? "tel qu'indiqué sur le Reçu Officiel de paiement";
   const objectClause = profile.procedureObjectClause
     ?? `la préparation et la soumission du profil auprès des partenaires compétents pour ${profile.destinationLabel}, selon le projet et l'éligibilité constatée du candidat`;
+  const natureSentence = paymentNatureSentence({
+    nature: vars.natureVersement,
+    amount: vars.montantValide ?? 0,
+    currency: vars.devise || "XAF",
+    balanceDue: vars.soldeRestant,
+  });
+  const stepsBlock = procedureStepsAnnex(destinationSlugOrLabel || vars.destinationProjet, visaType, program);
   const article3Tail =
     kind === "travail" || kind === "autre"
       ? "La recherche auprès des partenaires peut aboutir ou non ; les frais d'ouverture et de traitement demeurent acquis à L'AGENCE dès le début des diligences, sauf disposition impérative contraire expressément actée."
       : "Les diligences de préparation du dossier peuvent aboutir ou non auprès des autorités ; les frais d'ouverture et de traitement demeurent acquis à L'AGENCE dès le début des diligences, sauf disposition impérative contraire expressément actée.";
   const article5Lead =
-    kind === "etudes" || kind === "visiteurs" || kind === "famille"
+    kind === "etudes" || kind === "visiteurs" || kind === "famille" || kind === "residence" || kind === "evisa"
       ? `Si le projet ${profile.destinationLabel} (${program}) ne peut aboutir dans un délai indicatif de ${profile.reorientationDelayDays} jours ouvrés`
       : `Si la prospection menée pour ${profile.destinationLabel} n'aboutit pas à une sélection dans un délai indicatif de ${profile.reorientationDelayDays} jours ouvrés`;
   return `${LETTERHEAD}
@@ -574,7 +679,7 @@ ${clauses.titleSuffix}
 
 IDENTIFICATION DES PARTIES
 D'une part, L'AGENCE MANDATAIRE : 3M Group SARL, RC/YAO/2019/A/2567, NIU M092618996818Q, représentée par la Direction Générale des Opérations et son Conseiller Validateur habilité, ci-après « L'AGENCE ».
-D'autre part, LE CLIENT / CANDIDAT : ${vars.clientNomComplet}, Dossier n° ${vars.dossierRef}, Projet/Destination : ${vars.destinationProjet}${visaType ? `, Type de procédure : ${visaType}` : ""}, Pièce d'identité : ${vars.clientNumeroPiece ?? "à compléter"}, Téléphone/WhatsApp : ${vars.clientTelephoneWhatsapp ?? "à compléter"}, Email : ${vars.clientEmail ?? "à compléter"}, ci-après « LE CANDIDAT » ou « LE CLIENT ».
+D'autre part, LE CLIENT / CANDIDAT : ${vars.clientNomComplet}, Dossier actif n° ${vars.dossierRef}${vars.ancienneReferenceCompte ? ` (ancienne référence de compte : ${vars.ancienneReferenceCompte})` : ""}, Projet/Destination : ${vars.destinationProjet}${visaType ? `, Type de procédure : ${visaType}` : ""}, Pièce d'identité : ${vars.clientNumeroPiece ?? "à compléter"}, Téléphone/WhatsApp : ${vars.clientTelephoneWhatsapp ?? "à compléter"}, Email : ${vars.clientEmail ?? "à compléter"}, ci-après « LE CANDIDAT » ou « LE CLIENT ».
 
 PRÉAMBULE ET CONTEXTE
 LE CLIENT a souscrit à une évaluation via la plateforme www.3mtravelagency.com. Suite à la notification du bilan d'évaluation dans son Espace Client, LE CLIENT a validé le projet ${profile.destinationLabel} (${program}) et s'est acquitté des frais d'ouverture et de traitement. Le présent protocole donne pleine valeur contractuelle aux mentions du Reçu de Confirmation de Paiement délivré par L'AGENCE. Les étapes de traitement suivent le guide de procédure publié pour ce programme sur www.3mtravelagency.com, synchronisé avec l'Espace Client.
@@ -583,7 +688,7 @@ Article 1 — Objet des frais et nature de la prestation
 Conformément au Reçu Officiel de paiement, les frais confirmés ${amountClause} couvrent exclusivement : (1) l'ouverture administrative du dossier du CLIENT au sein des registres de L'AGENCE et sur sa plateforme numérique ; (2) le traitement administratif, la vérification d'authenticité et la mise en conformité des pièces documentaires ; (3) ${objectClause}.
 
 Article 2 — Modalités de règlement, traçabilité et reçu officiel
-Le paiement fait l'objet d'un enregistrement automatique sous les références suivantes : Montant validé : ${amountValidated}. Mode de validation : ${vars.modePaiement}. Date et heure de validation : ${vars.dateHeurePaiement}. Conseiller validateur habilité : ${vars.conseillerEmail}. Empreinte cryptographique de sécurité : ${vars.empreinteSha}. Le Reçu de Confirmation de Paiement demeure archivé en permanence dans l'Espace Client du CANDIDAT comme justificatif comptable et juridique.
+Le paiement fait l'objet d'un enregistrement automatique sous les références suivantes : Montant validé : ${amountValidated}. Mode de validation : ${vars.modePaiement}. Date et heure de validation : ${vars.dateHeurePaiement}. Conseiller validateur habilité : ${vars.conseillerEmail}. Empreinte cryptographique de sécurité : ${vars.empreinteSha}. Le Reçu de Confirmation de Paiement demeure archivé en permanence dans l'Espace Client du CANDIDAT comme justificatif comptable et juridique.${natureSentence ? ` ${natureSentence}` : ""}
 
 Article 3 — Caractère strictement non remboursable des frais
 Conformément au Reçu de paiement, ces frais sont strictement non remboursables une fois le traitement administratif engagé, car ils rémunèrent les diligences, vérifications et démarches déjà réalisées avant et pendant le traitement. ${article3Tail}
@@ -602,6 +707,7 @@ ${clauses.transition}
 
 Article 8 — Valeur probante de la signature électronique
 L'acceptation numérique du présent protocole dans l'Espace Client, combinée aux données du Reçu de Confirmation de Paiement horodaté, constitue un contrat bilatéral parfait et juridiquement opposable.
+${stepsBlock}
 
 Fait à Yaoundé, sous format numérique certifié, le ${vars.dateDuJour}.
 Pour 3M Group SARL : Conseiller ${vars.conseillerEmail} — Empreinte : ${vars.empreinteSha}
@@ -627,18 +733,25 @@ export function buildProtocolTwoRichText(
 
   const partnerLabel =
     kind === "etudes" ? "Établissement / partenaire d'accueil"
-      : kind === "visiteurs" || kind === "famille" ? "Partenaire / hébergeur / membre de famille"
-        : "Employeur/Partenaire d'accueil";
+      : kind === "visiteurs" || kind === "famille" || kind === "evisa" ? "Partenaire / hébergeur / membre de famille"
+        : kind === "residence" ? "Programme / organisme de sélection"
+          : "Employeur/Partenaire d'accueil";
   const projectLabel =
     kind === "etudes" ? "Programme / cycle retenu"
       : kind === "visiteurs" ? "Motif / projet de séjour"
         : kind === "famille" ? "Lien familial / projet"
-          : "Poste/Projet retenu";
+          : kind === "residence" ? "Programme de résidence retenu"
+            : kind === "evisa" ? "Motif / durée du séjour"
+              : "Poste/Projet retenu";
 
   const mission =
     kind === "etudes"
       ? `L'AGENCE reçoit mandat d'assister, coordonner et représenter LE CANDIDAT dans : (1) l'examen de la lettre d'admission ou de l'offre de formation ; (2) le suivi auprès de ${profile.employmentAuthority} lorsque applicable ; (3) l'instruction du permis d'études / séjour auprès de ${profile.immigrationAuthority} ; (4) la constitution de la requête consulaire et la prise de rendez-vous auprès de ${profile.consulate} ; (5) la préparation à l'installation étudiante.`
-      : kind === "visiteurs"
+      : kind === "residence"
+        ? `L'AGENCE reçoit mandat d'assister LE CANDIDAT dans : (1) la finalisation du profil et du dossier de sélection (programme retenu : ${program}) ; (2) la vérification des pièces (identité, état civil, diplômes, langue, antécédents) ; (3) le suivi auprès de ${profile.immigrationAuthority} jusqu'au dépôt de la demande de résidence permanente ; (4) le suivi des étapes biométrie, examens médicaux et décision. L'AGENCE n'est en aucun cas habilitée à signer à la place du CANDIDAT ni à garantir une invitation ou une résidence.`
+        : kind === "evisa"
+          ? `L'AGENCE reçoit mandat d'assister LE CANDIDAT dans : (1) la préparation de la demande d'e-Visa / d'autorisation électronique ; (2) la vérification des informations saisies et des pièces ; (3) le dépôt en ligne et le suivi auprès de ${profile.immigrationAuthority} ; (4) l'information du CANDIDAT sur la décision et les conditions d'entrée.`
+          : kind === "visiteurs"
         ? `L'AGENCE reçoit mandat d'assister LE CANDIDAT dans : (1) la finalisation du dossier de séjour temporaire ; (2) la vérification des justificatifs (statut, motif, attaches) ; (3) l'instruction auprès de ${profile.immigrationAuthority} ; (4) la constitution de la requête consulaire et la prise de rendez-vous auprès de ${profile.consulate} ; (5) le suivi jusqu'à la décision.`
         : kind === "famille"
           ? `L'AGENCE reçoit mandat d'assister LE CANDIDAT dans : (1) la constitution du dossier de regroupement ; (2) le suivi auprès de ${profile.immigrationAuthority} ; (3) la constitution de la requête consulaire et la prise de rendez-vous auprès de ${profile.consulate} ; (4) le suivi jusqu'à la décision.`

@@ -48,7 +48,7 @@ export async function createAgreementProtocolOnePdf(input: {
   const destination = input.destination || "Non spécifiée";
   const richText = input.content?.trim() && input.content.trim().length >= 50
     ? input.content.trim()
-    : buildProtocolOneRichText(input.variables, destination);
+    : buildProtocolOneRichText(input.variables, destination, input.visaType);
   const signed = Boolean(input.signature?.name);
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const defaultTitle = signed
