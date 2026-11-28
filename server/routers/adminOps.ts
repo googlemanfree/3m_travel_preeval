@@ -269,6 +269,25 @@ export const adminOpsRouter = router({
   })),
 
   // ───────────── Santé du système ─────────────
+  /**
+   * Poste de travail du jour : ce qui attend un administrateur, en quatre compteurs légers (une seule lecture).
+   * — bilans à faire depuis plus de 24 h ; — bilans envoyés et non consultés depuis plus de 24 h ;
+   * — paiements à confirmer (le candidat a validé son bilan) ; — dossiers payés dont le reçu n'est pas encore signé.
+   */
+  adminWorkQueue: publicProcedure.input(z.object({ sessionToken: session })).query(({ input }) => guarded(async () => {
+    await requireValidAdminSession(input.sessionToken);
+    const db = await requireDb();
+    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const result = await db.execute(sql`SELECT
+      COALESCE(SUM(CASE WHEN a.evaluationDeliveryStatus <> 'sent' AND a.dossierStatus IN ('nouveau', 'en_evaluation') AND a.createdAt < ${dayAgo} THEN 1 ELSE 0 END), 0) AS lateBilans,
+      COALESCE(SUM(CASE WHEN a.evaluationDeliveryStatus = 'sent' AND a.evaluationReportViewedAt IS NULL AND a.evaluationCompletedAt < ${dayAgo} AND COALESCE(a.paymentStatus, '') <> 'SUCCESS' AND a.activationRequestedAt IS NULL THEN 1 ELSE 0 END), 0) AS unseenBilans,
+      COALESCE(SUM(CASE WHEN a.activationRequestedAt IS NOT NULL AND COALESCE(a.paymentStatus, '') <> 'SUCCESS' THEN 1 ELSE 0 END), 0) AS paymentsToConfirm
+      FROM applications a WHERE a.deletedAt IS NULL`);
+    const first = Array.isArray(result) ? result[0] : result;
+    const row = (Array.isArray(first) ? first[0] : undefined) as Record<string, unknown> | undefined;
+    return { lateBilans: Number(row?.lateBilans ?? 0), unseenBilans: Number(row?.unseenBilans ?? 0), paymentsToConfirm: Number(row?.paymentsToConfirm ?? 0) };
+  })),
+
   adminSystemHealth: publicProcedure.input(z.object({ sessionToken: session })).query(({ input }) => guarded(async () => {
     await requireValidAdminSession(input.sessionToken);
     const db = await requireDb();

@@ -1381,7 +1381,20 @@ export const adminCandidateManagementRouter = router({
         };
       });
 
-      const pipeline = [...onlinePipeline, ...agencyPipeline]
+      // Date d'envoi du lot reçu + protocole (journal des paiements, par adresse e-mail) : sert à repérer les protocoles envoyés mais non signés.
+      const packageRows = await db
+        .select({ candidateEmail: paymentAuditLogs.candidateEmail, sentAt: sql<Date>`MAX(${paymentAuditLogs.createdAt})` })
+        .from(paymentAuditLogs)
+        .where(inArray(paymentAuditLogs.action, ["receipt_protocol_sent", "receipt_protocol_resent"]))
+        .groupBy(paymentAuditLogs.candidateEmail)
+        .catch(() => [] as Array<{ candidateEmail: string; sentAt: Date }>);
+      const packageSentByEmail = new Map(packageRows.map((row) => [String(row.candidateEmail).trim().toLowerCase(), new Date(row.sentAt as unknown as string)] as const));
+      const withPackageDate = <T extends { email: string }>(row: T) => {
+        const sentAt = packageSentByEmail.get(row.email.trim().toLowerCase());
+        return { ...row, packageSentAt: sentAt && Number.isFinite(sentAt.getTime()) ? sentAt.toISOString() : null };
+      };
+
+      const pipeline = [...onlinePipeline, ...agencyPipeline].map(withPackageDate)
         .sort((a, b) => Number(a.receiptAvailable) - Number(b.receiptAvailable) || a.fullName.localeCompare(b.fullName, "fr"));
 
       return {

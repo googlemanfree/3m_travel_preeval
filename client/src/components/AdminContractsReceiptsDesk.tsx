@@ -1,5 +1,5 @@
 import React from "react";
-import { Bell, FilePenLine, FileText, KeyRound, Loader2, Printer, RefreshCw, Send, ShieldCheck, UserRound } from "lucide-react";
+import { Bell, Copy, FilePenLine, FileText, KeyRound, Loader2, Printer, RefreshCw, Send, ShieldCheck, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +33,25 @@ type Props = {
 export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandidate }: Props) {
   const utils = trpc.useUtils();
   const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [deskFilter, setDeskFilter] = React.useState<"all" | "prepare" | "unsigned">("all");
+  const copyProtocolLink = async (candidateId: string) => {
+    try {
+      const { url } = await utils.adminDocumentDrafts.protocolLink.fetch({ sessionToken, candidateId });
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(url);
+      else {
+        const input = document.createElement("textarea");
+        input.value = url;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        input.remove();
+      }
+      toast.success("Lien du protocole copié", { description: "Collez-le dans WhatsApp, un SMS ou un e-mail : le candidat télécharge son protocole directement." });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Lien du protocole indisponible.");
+    }
+  };
+  const daysSince = (iso: string | null | undefined) => (iso ? Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)) : null);
   const query = trpc.adminCandidateManagement.contractsReceiptsDesk.useQuery(
     { sessionToken },
     { enabled: Boolean(sessionToken), refetchInterval: 45_000 },
@@ -154,6 +173,11 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
           <p className="rounded-xl border border-red-200 bg-red-50 py-6 text-center text-sm text-red-800">Impossible de charger le bureau contrats.</p>
         ) : (
           <>
+            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer le bureau reçus et protocoles" data-testid="desk-filter">
+              {([["all", "Tous"], ["prepare", `Reçus à préparer (${data?.counts.receiptPending ?? 0})`], ["unsigned", `Protocoles non signés (${data?.counts.protocolPending ?? 0})`]] as const).map(([value, label]) => (
+                <button key={value} type="button" aria-pressed={deskFilter === value} onClick={() => setDeskFilter(value)} className={`h-9 rounded-md border px-3 text-sm font-semibold ${deskFilter === value ? "border-[#0B2A52] bg-[#0B2A52] text-white" : "border-slate-300 bg-white text-slate-800 hover:bg-slate-50"}`}>{label}</button>
+              ))}
+            </div>
             <div className="overflow-x-auto rounded-xl border">
               <table className="min-w-full text-sm">
                 <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
@@ -167,7 +191,7 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
                   </tr>
                 </thead>
                 <tbody className="divide-y bg-white">
-                  {(data?.pipeline ?? []).map((row) => {
+                  {(data?.pipeline ?? []).filter((row) => deskFilter === "all" || (deskFilter === "prepare" ? row.stage === "receipt_pending" : row.stage === "protocol_pending")).map((row) => {
                     const stage = STAGE_LABELS[row.stage];
                     const rowBusy = busyId === row.candidateId;
                     return (
@@ -201,12 +225,22 @@ export default function AdminContractsReceiptsDesk({ sessionToken, onOpenCandida
                           ) : (
                             <span className="text-blue-700">Signature attendue</span>
                           )}
+                          {(() => {
+                            const days = daysSince((row as { packageSentAt?: string | null }).packageSentAt);
+                            if (days === null) return row.protocolSigned ? null : <p className="mt-0.5 text-[11px] text-slate-500" data-testid={`protocol-not-sent-${row.candidateId}`}>Pas encore envoyé</p>;
+                            return <p className={`mt-0.5 text-[11px] ${!row.protocolSigned && days >= 3 ? "font-semibold text-amber-800" : "text-slate-500"}`} data-testid={`protocol-sent-${row.candidateId}`}>{`Envoyé il y a ${days} j`}{!row.protocolSigned && days >= 3 ? " — non signé" : ""}</p>;
+                          })()}
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-1.5">
                             {onOpenCandidate ? (
                               <Button type="button" size="sm" variant="outline" className="h-8 gap-1 px-2 text-xs" onClick={() => onOpenCandidate(row.candidateId)}>
                                 <UserRound className="h-3.5 w-3.5" /> Fiche
+                              </Button>
+                            ) : null}
+                            {/^(online|agency)_\d+$/.test(row.candidateId) && (row as { packageSentAt?: string | null }).packageSentAt ? (
+                              <Button type="button" size="sm" variant="outline" className="h-8 gap-1 px-2 text-xs" onClick={() => void copyProtocolLink(row.candidateId)} data-testid={`protocol-copy-link-${row.candidateId}`} title="Copier le lien de téléchargement du protocole (PDF)">
+                                <Copy className="h-3.5 w-3.5" /> Lien protocole
                               </Button>
                             ) : null}
                             {/^(online|agency)_\d+$/.test(row.candidateId) ? (

@@ -75,7 +75,7 @@ describe("éditeurs du reçu et du protocole — branchements", () => {
     const router = read("server/routers/adminDocumentDrafts.ts");
     expect(router).toContain("skipStorage: true");
     const procedures = Array.from(router.matchAll(/\n  (\w+): publicProcedure/g), (match) => match[1]);
-    expect(procedures).toEqual(["get", "saveReceipt", "resetReceipt", "saveProtocol", "resetProtocol", "previewReceipt", "previewProtocol"]);
+    expect(procedures).toEqual(["get", "saveReceipt", "resetReceipt", "saveProtocol", "resetProtocol", "protocolLink", "previewReceipt", "previewProtocol"]);
     expect((router.match(/await context\(input, ctx\.req\.headers\.cookie\)|= await context\(input, ctx\.req\.headers\.cookie\)/g) ?? []).length).toBe(procedures.length);
     expect(read("server/routers.ts")).toContain("adminDocumentDrafts: adminDocumentDraftsRouter");
     expect(read("server/agreementProtocolPdfService.ts")).toContain("if (input.skipStorage) return { key: \"\", url: \"\", bytes };");

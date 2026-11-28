@@ -5,9 +5,10 @@
  * - Confirmation de bilan manquante (J+2)
  */
 
-import { and, desc, eq, gte, isNotNull, isNull, lt, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNotNull, isNull, like, lt, sql } from "drizzle-orm";
 import {
   applications,
+  clientDocuments,
   candidates,
   candidateMessages,
   paymentAuditLogs,
@@ -94,10 +95,26 @@ async function resolvePhone(
   return row?.phone || null;
 }
 
-function protocolOneEmailHtml(fullName: string, dossierNumber: string): string {
+/** Lien du dernier protocole N°01 déposé pour ce dossier en ligne (absolu), ou null. */
+async function protocolPdfUrl(db: Db, applicationId: number): Promise<string | null> {
+  try {
+    const [doc] = await db.select({ documentUrl: clientDocuments.documentUrl }).from(clientDocuments)
+      .where(and(eq(clientDocuments.evaluationId, applicationId), like(clientDocuments.documentName, "Protocole d’accord N°01%")))
+      .orderBy(desc(clientDocuments.id)).limit(1);
+    const url = doc?.documentUrl;
+    if (!url) return null;
+    return /^https?:\/\//i.test(url) ? url : `${siteUrl()}${url.startsWith("/") ? "" : "/"}${url}`;
+  } catch {
+    return null;
+  }
+}
+
+function protocolOneEmailHtml(fullName: string, dossierNumber: string, pdfUrl?: string | null): string {
   const safeName = escapeHtml(fullName);
   const safeDossier = escapeHtml(dossierNumber);
-  return `<!doctype html><html lang="fr"><body style="margin:0;background:#eef2f7;padding:24px;font-family:Arial,sans-serif"><div style="max-width:620px;margin:auto;background:#fff;border-radius:18px;overflow:hidden"><div style="background:#0f2460;color:#fff;padding:28px;text-align:center"><strong style="font-size:22px">3M TRAVEL AGENCY</strong><p style="margin:8px 0 0;color:#dbeafe">Rappel : signature de votre protocole d’accord</p></div><div style="padding:30px;color:#1f2937"><p>Bonjour ${safeName},</p><p>Votre paiement est confirmé, mais votre protocole d’accord n’est pas encore signé. Pour poursuivre votre dossier <strong>${safeDossier}</strong>, connectez-vous à votre espace client et finalisez la signature.</p><p style="text-align:center;margin:28px 0"><a href="${siteUrl()}/mon-espace?section=dossier" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;border-radius:9px;padding:13px 24px;font-weight:bold">Ouvrir mon espace client</a></p></div><div style="border-top:2px solid #f1f5f9;padding:18px;text-align:center;color:#64748b;font-size:11px">3M TRAVEL AGENCY</div></div></body></html>`;
+  // Lien direct du protocole (PDF) : le candidat qui n'a pas retrouvé l'e-mail d'origine (indésirables) peut le télécharger sans chercher.
+  const pdfLine = pdfUrl ? `<p style="font-size:13px;color:#475569">Vous ne retrouvez plus le message d'origine ? <a href="${escapeHtml(pdfUrl)}" style="color:#1d4ed8">Téléchargez votre protocole d’accord (PDF)</a>.</p>` : "";
+  return `<!doctype html><html lang="fr"><body style="margin:0;background:#eef2f7;padding:24px;font-family:Arial,sans-serif"><div style="max-width:620px;margin:auto;background:#fff;border-radius:18px;overflow:hidden"><div style="background:#0f2460;color:#fff;padding:28px;text-align:center"><strong style="font-size:22px">3M TRAVEL AGENCY</strong><p style="margin:8px 0 0;color:#dbeafe">Rappel : signature de votre protocole d’accord</p></div><div style="padding:30px;color:#1f2937"><p>Bonjour ${safeName},</p><p>Votre paiement est confirmé, mais votre protocole d’accord n’est pas encore signé. Pour poursuivre votre dossier <strong>${safeDossier}</strong>, connectez-vous à votre espace client et finalisez la signature.</p><p style="text-align:center;margin:28px 0"><a href="${siteUrl()}/mon-espace?section=dossier" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;border-radius:9px;padding:13px 24px;font-weight:bold">Ouvrir mon espace client</a></p>${pdfLine}</div><div style="border-top:2px solid #f1f5f9;padding:18px;text-align:center;color:#64748b;font-size:11px">3M TRAVEL AGENCY</div></div></body></html>`;
 }
 
 function protocolTwoEmailHtml(fullName: string, dossierNumber: string, employer?: string | null): string {
@@ -164,7 +181,7 @@ export async function runSignatureAndConfirmationReminders(
       await sendEmail({
         to: row.email,
         subject: `Rappel — signature du protocole ${row.dossierNumber}`,
-        html: protocolOneEmailHtml(row.fullName, row.dossierNumber),
+        html: protocolOneEmailHtml(row.fullName, row.dossierNumber, await protocolPdfUrl(db, row.id)),
       });
       emailSent = true;
     } catch (error) {
