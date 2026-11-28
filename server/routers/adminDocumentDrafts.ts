@@ -7,6 +7,7 @@ import { createAgreementProtocolOnePdf } from "../agreementProtocolPdfService";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import {
+  amountChangeError,
   clearProtocolDraft,
   clearReceiptDraft,
   readProtocolDraft,
@@ -33,6 +34,7 @@ const receiptInput = z.object({
   paymentDate: z.string().min(8).max(40),
   paymentMethod: z.string().trim().min(1).max(120),
   paymentReference: z.string().trim().max(120).nullable().optional(),
+  amountReason: z.string().trim().max(300).nullable().optional(),
 });
 
 async function context(input: z.infer<typeof base>, cookie: string | undefined) {
@@ -50,6 +52,7 @@ const toReceiptInput = (value: z.infer<typeof receiptInput>): ReceiptDraftInput 
   paymentDate: value.paymentDate,
   paymentMethod: value.paymentMethod,
   paymentReference: value.paymentReference ?? null,
+  amountReason: value.amountReason ?? null,
 });
 
 function asBase64(bytes: Uint8Array | Buffer) {
@@ -85,6 +88,7 @@ export const adminDocumentDraftsRouter = router({
         modified: Boolean(receiptDraft),
         updatedAt: receiptDraft?.updatedAt ?? null,
         updatedBy: receiptDraft?.updatedBy ?? null,
+        amountReason: receiptDraft?.amountReason ?? null,
       },
       protocol: {
         defaultContent: protocolDefault,
@@ -101,7 +105,25 @@ export const adminDocumentDraftsRouter = router({
     const values = toReceiptInput(input.receipt);
     const error = validateReceiptDraft(values);
     if (error) throw new TRPCError({ code: "BAD_REQUEST", message: error });
+    const dossier = await loadDossier(db, reference);
+    const defaultAmount = dossier.amount;
+    const reasonError = amountChangeError({ newAmount: values.amount, defaultAmount, reason: values.amountReason });
+    if (reasonError) throw new TRPCError({ code: "BAD_REQUEST", message: reasonError });
+    const previous = await readReceiptDraft(db, reference);
     const draft = await saveReceiptDraft(db, reference, values, actor);
+    // Traçabilité : chaque changement de montant du reçu est inscrit au journal des paiements (qui, quand, de combien à combien, pourquoi).
+    const before = Math.round(previous?.amount ?? defaultAmount);
+    if (Math.round(values.amount) !== before) {
+      await db.insert(paymentAuditLogs).values({
+        adminName: actor,
+        adminEmail: actor,
+        action: "receipt_amount_changed",
+        paymentId: reference.id,
+        candidateEmail: dossier.email,
+        amount: `${Math.round(values.amount)} ${values.currency}`,
+        details: `Reçu ${dossier.dossierNumber} : montant ${before.toLocaleString("fr-FR")} → ${Math.round(values.amount).toLocaleString("fr-FR")} ${values.currency}${values.amountReason?.trim() ? `. Motif : ${values.amountReason.trim()}` : ""}.`,
+      });
+    }
     return { updatedAt: draft.updatedAt };
   }),
 

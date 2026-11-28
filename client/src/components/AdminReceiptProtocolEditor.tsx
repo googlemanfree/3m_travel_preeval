@@ -53,6 +53,7 @@ export function AdminReceiptProtocolEditor({ sessionToken, candidateId, open, on
   const [paymentDate, setPaymentDate] = React.useState("");
   const [method, setMethod] = React.useState("");
   const [reference, setReference] = React.useState("");
+  const [amountReason, setAmountReason] = React.useState("");
   const [protocol, setProtocol] = React.useState("");
   const [loadedFor, setLoadedFor] = React.useState<string | null>(null);
 
@@ -65,6 +66,7 @@ export function AdminReceiptProtocolEditor({ sessionToken, candidateId, open, on
     setPaymentDate(toLocalInput(effective.paymentDate));
     setMethod(effective.paymentMethod);
     setReference(effective.paymentReference ?? "");
+    setAmountReason(data.receipt.amountReason ?? "");
     setProtocol(data.protocol.content);
     setLoadedFor(candidateId);
   }, [data, candidateId, loadedFor]);
@@ -78,6 +80,7 @@ export function AdminReceiptProtocolEditor({ sessionToken, candidateId, open, on
     paymentDate: fromLocalInput(paymentDate),
     paymentMethod: method,
     paymentReference: reference.trim() ? reference.trim() : null,
+    amountReason: amountReason.trim() ? amountReason.trim() : null,
   });
 
   const refresh = () => {
@@ -164,6 +167,13 @@ export function AdminReceiptProtocolEditor({ sessionToken, candidateId, open, on
                     <Label htmlFor="receipt-method">Mode de paiement</Label>
                     <Input id="receipt-method" data-testid="receipt-method" maxLength={120} value={method} onChange={(event) => setMethod(event.target.value)} />
                   </div>
+                  {Math.round(Number(amount.replace(/\s/g, "")) || 0) !== Math.round(data.receipt.defaults.amount) && (
+                    <div className="sm:col-span-3 rounded-lg border border-amber-300 bg-amber-50 p-3" data-testid="receipt-amount-reason-block">
+                      <Label htmlFor="receipt-amount-reason" className="text-amber-950">Motif de la modification du montant (obligatoire)</Label>
+                      <Input id="receipt-amount-reason" data-testid="receipt-amount-reason" maxLength={300} value={amountReason} onChange={(event) => setAmountReason(event.target.value)} placeholder="Ex. frais négociés, tarif du visa travail, erreur de saisie corrigée…" />
+                      <p className="mt-1 text-xs text-amber-900">Le montant du dossier est {Math.round(data.receipt.defaults.amount).toLocaleString("fr-FR")} {data.receipt.defaults.currency}. Le changement est inscrit au journal des paiements (qui, quand, motif).</p>
+                    </div>
+                  )}
                   <div className="sm:col-span-3">
                     <Label htmlFor="receipt-reference">Référence de transaction (facultatif)</Label>
                     <Input id="receipt-reference" data-testid="receipt-reference" maxLength={120} value={reference} onChange={(event) => setReference(event.target.value)} />

@@ -20,6 +20,8 @@ export type ReceiptDraft = {
   paymentDate: string;
   paymentMethod: string;
   paymentReference: string | null;
+  /** Motif de la modification du montant par rapport au montant du dossier (obligatoire quand il diffère). */
+  amountReason?: string | null;
   updatedAt: string;
   updatedBy: string;
 };
@@ -70,7 +72,7 @@ export async function readProtocolDraft(db: Db, reference: PaymentReference): Pr
   return draft && typeof draft.content === "string" && draft.content.trim().length >= PROTOCOL_MIN_LENGTH ? draft : null;
 }
 
-export type ReceiptDraftInput = Omit<ReceiptDraft, "updatedAt" | "updatedBy">;
+export type ReceiptDraftInput = Omit<ReceiptDraft, "updatedAt" | "updatedBy" | "amountReason"> & { amountReason?: string | null };
 
 /** Contrôle des valeurs saisies : renvoie un message clair, ou null si tout est valide. */
 export function validateReceiptDraft(input: ReceiptDraftInput): string | null {
@@ -100,6 +102,7 @@ export async function saveReceiptDraft(db: Db, reference: PaymentReference, inpu
     paymentDate: new Date(input.paymentDate).toISOString(),
     paymentMethod: input.paymentMethod.trim().slice(0, 120),
     paymentReference: input.paymentReference?.trim() ? input.paymentReference.trim().slice(0, 120) : null,
+    amountReason: input.amountReason?.trim() ? input.amountReason.trim().slice(0, 300) : null,
     updatedAt: new Date().toISOString(),
     updatedBy: actor,
   };
@@ -126,4 +129,15 @@ export function applyReceiptDraft(dossier: Loaded, draft: ReceiptDraft | null): 
   dossier.paymentDate = new Date(draft.paymentDate);
   dossier.paymentMethod = draft.paymentMethod;
   dossier.paymentReference = draft.paymentReference;
+}
+
+export const AMOUNT_REASON_MIN_LENGTH = 5;
+
+/** Un montant différent du montant du dossier exige un motif (traçabilité des sommes). Renvoie le message d'erreur, ou null. */
+export function amountChangeError(input: { newAmount: number; defaultAmount: number; reason?: string | null }): string | null {
+  if (Math.round(input.newAmount) === Math.round(input.defaultAmount)) return null;
+  if ((input.reason ?? "").trim().length < AMOUNT_REASON_MIN_LENGTH) {
+    return `Le montant (${Math.round(input.newAmount).toLocaleString("fr-FR")}) diffère du montant du dossier (${Math.round(input.defaultAmount).toLocaleString("fr-FR")}) : indiquez le motif de la modification (${AMOUNT_REASON_MIN_LENGTH} caractères minimum).`;
+  }
+  return null;
 }
